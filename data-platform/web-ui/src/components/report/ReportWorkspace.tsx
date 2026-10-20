@@ -6,6 +6,7 @@ import { formatChartValue } from '../../utils/aiChartConfig.mjs';
 import { analysisChartGroups, analysisPlanLabel } from '../../utils/analysisPresentation.mjs';
 import { groupDifference, kpiStrip, missionTabs, orderChartsByMission, reportContext } from '../../utils/workspacePresentation.mjs';
 import { inspectedGroupDraft } from '../../utils/missionWorkspace.mjs';
+import { coverageSummary, lensBadge } from '../../utils/analysisCoverage.mjs';
 import { KpiStrip } from '../workspace/KpiStrip';
 import { FollowUpChips } from '../workspace/FollowUpChips';
 import { ForecastPanel } from '../ForecastPanel';
@@ -32,11 +33,11 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
       <div className="min-w-0"><div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{ background: accent }} /><h5 className="text-xs font-semibold text-slate-900">{conciseChartTitle(chart)}</h5></div>
         <p className="text-[11px] text-slate-500 mt-1">{chart.x_label || chart.lens_label || chart.domain_label || 'Trong phạm vi đã chọn'}{chart.unit ? ` · ${chart.unit}` : ''}</p>
         {difference && <p data-group-difference className="text-xs font-medium text-slate-700 mt-1.5">{difference.text}</p>}
-        {chart.role === 'supporting' && <span className="inline-block mt-2 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-medium text-teal-700">Góc nhìn bổ sung</span>}
+        {chart.role === 'supporting' && <span data-lens-role={chart.analysis_lens_role || undefined} className="inline-block mt-2 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-medium text-teal-700">{lensBadge(chart) ? `Góc nhìn ${lensBadge(chart)!.toLowerCase()}` : 'Góc nhìn bổ sung'}</span>}
       </div>
       <details className="relative shrink-0 text-xs"><summary aria-label={`Tùy chọn ${conciseChartTitle(chart)}`} className="cursor-pointer list-none rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-50">•••</summary>
         <div className="absolute right-0 z-10 w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-lg space-y-2">
-          {chart.purpose && <p className="text-slate-500 leading-relaxed">{chart.purpose}</p>}
+          {(chart.analysis_lens_question || chart.purpose) && <p className="text-slate-500 leading-relaxed">{chart.analysis_lens_question || chart.purpose}</p>}
           {types.length > 0 && <label className="block text-slate-600">Cách trình bày<select aria-label={`Cách trình bày: ${chart.title}`} value={type} disabled={editing}
             onChange={e => { setType(e.target.value); onChartTypeChange?.(chart.id, e.target.value); }} className="mt-1 w-full border border-slate-200 rounded-lg p-2">{types.map(t => <option key={t} value={t}>{analysisPlanLabel({ chart_type: t })}</option>)}</select></label>}
         </div>
@@ -138,7 +139,9 @@ export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChart
   const tabs = missionTabs(dashboardChartTabs(ordered), report.mission_layout, { forecast: forecasts });
   const activeTab = tabs.find(t => t.id === view) || tabs[0];
 
-  const visibleCharts = view === 'all' ? [...(curated || showAll ? ordered : primary)] : activeTab.charts;
+  // FINAL P5: a lens-governed report shows every counted view of the chosen depth in "Tất cả" (no hidden diagnostics).
+  const coverage = coverageSummary(report);
+  const visibleCharts = view === 'all' ? [...(curated || showAll || coverage ? ordered : primary)] : activeTab.charts;
   const context = reportContext(report, capabilities);
   const definitions: Record<string, string> = Object.fromEntries((report.analysis_explanation || []).flatMap((o: any) => (o.metrics || []).map((m: any) => [m.id, m.business_meaning])));
   const caveats = [...new Set((report.charts || []).flatMap((c: any) => c.insight?.caveats || []))].slice(0, 4) as string[];
@@ -169,6 +172,14 @@ export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChart
       {report.view_coverage.filter((v:any)=>v.required && v.status==='missing').map((v:any,i:number)=><p key={i}>{v.requirement_id}: {v.reason || 'Chưa có bằng chứng phù hợp'}</p>)}
     </div>}
     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-semibold text-slate-900">Các góc nhìn phân tích <span className="font-normal text-slate-400">· {selected.charts.length} biểu đồ</span></h3>
+    {coverage && <details data-analysis-coverage={coverage.tone} className={`text-[11px] rounded-full border px-2 py-1 open:rounded-xl ${coverage.tone === 'ok' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : coverage.tone === 'gap' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
+      <summary className="cursor-pointer">{coverage.label}</summary>
+      <div className="mt-2 space-y-1 text-slate-700 max-w-md">
+        {coverage.summary && <p>{coverage.summary}</p>}
+        <p>{coverage.roles.map(r => `${r.label} ${r.rendered}/${r.target}`).join(' · ')}</p>
+        {!!coverage.missing.length && <ul className="space-y-0.5">{coverage.missing.map((m, i) => <li key={i}>• {m}</li>)}</ul>}
+        {coverage.origin === 'legacy_auto' && <p className="text-slate-500">Mức phân tích do máy chủ tự chọn vì yêu cầu không gửi mức.</p>}
+      </div></details>}
     {tabs.length > 1 && <div role="tablist" aria-label="Góc nhìn biểu đồ" className="flex flex-wrap gap-1">{tabs.map(t => <button key={t.id} id={`chart-tab-${t.id}`} role="tab" aria-selected={activeTab.id === t.id} aria-controls="analysis-chart-panel" onClick={() => setView(t.id)} className={`rounded-lg border px-2 py-1.5 text-[11px] ${activeTab.id === t.id ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-600'}`}>{t.label}{t.id === 'forecast' ? '' : ` · ${t.charts.length}`}</button>)}</div>}
     </div>
     <div id="analysis-chart-panel" role={tabs.length > 1 ? 'tabpanel' : undefined} aria-labelledby={tabs.length > 1 ? `chart-tab-${activeTab.id}` : undefined} className="space-y-4">
@@ -177,12 +188,13 @@ export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChart
     {view === 'all' && forecasts && report.analysis_mission !== 'forecast' && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
     </div>
     {!selected.charts.length && !forecasts && <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed">Chưa có biểu đồ phù hợp được kiểm chứng cho kết quả này. Xem bảng dữ liệu trong tab “Dữ liệu / SQL” và mục “Kiểm chứng & nguồn”.</div>}
-    {view === 'all' && !curated && selected.charts.length > primary.length && <button onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-slate-200 py-3 text-xs text-slate-600 hover:bg-white">{showAll ? 'Thu gọn biểu đồ' : `Xem thêm ${selected.charts.length - primary.length} góc nhìn chi tiết`}</button>}
+    {view === 'all' && !curated && !coverage && selected.charts.length > primary.length && <button onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-slate-200 py-3 text-xs text-slate-600 hover:bg-white">{showAll ? 'Thu gọn biểu đồ' : `Xem thêm ${selected.charts.length - primary.length} góc nhìn chi tiết`}</button>}
     {!report.view_coverage && <details data-coverage-legacy className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Độ đầy đủ bằng chứng · Chưa đo</summary><p className="mt-2">Báo cáo legacy: Chưa đo độ đầy đủ yêu cầu theo chính sách bằng chứng hiện tại.</p></details>}
     {!!caveats.length && <details data-report-limitations className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600"><summary className="cursor-pointer font-medium text-slate-700">Giới hạn quan trọng</summary><ul className="mt-2 space-y-1">{caveats.map((c, i) => <li key={i}>• {c}</li>)}</ul></details>}
     {report.conclusion?.answer && <details data-conclusion className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs"><summary className="cursor-pointer font-medium text-slate-700">Kết luận phân tích</summary><div className="mt-2 space-y-2">
       <p className="text-xs text-slate-700 leading-relaxed">{report.conclusion.answer}</p>
       {!!report.conclusion.findings?.length && <ul className="space-y-1 text-xs text-slate-700">{report.conclusion.findings.map((f: any, i: number) => <li key={i} data-evidence-id={f.evidence_id}>• {f.statement}</li>)}</ul>}
+      {!!report.conclusion.view_findings?.length && <ul data-view-findings className="space-y-1 text-xs text-slate-700">{report.conclusion.view_findings.map((f: any, i: number) => <li key={i} data-lens-id={f.lens_id}>• {f.statement}{f.question && <span className="block text-[11px] text-slate-400">Góc nhìn: {f.question}</span>}</li>)}</ul>}
       {!!report.conclusion.unanswered?.length && <p data-conclusion-unanswered className="text-[11px] text-rose-700"><span className="font-medium">Chưa trả lời được:</span> {report.conclusion.unanswered.join(' · ')}</p>}
       {!!report.conclusion.caveats?.length && <p className="text-[11px] text-amber-800"><span className="font-medium">Lưu ý:</span> {report.conclusion.caveats.join(' · ')}</p>}
       {!!report.conclusion.actions?.length && <p className="text-[11px] text-slate-600"><span className="font-medium">Nên làm tiếp:</span> {report.conclusion.actions.join(' · ')}</p>}</div></details>}

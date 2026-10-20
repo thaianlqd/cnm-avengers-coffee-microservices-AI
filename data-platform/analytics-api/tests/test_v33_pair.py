@@ -52,7 +52,9 @@ class PairPipelineTests(f.unittest.TestCase):
         counts = [(9, 1), (8, 2), (6, 4), (5, 5), (3, 7)]
         p, proposal, report = self.run_pair(counts)
         self.assertEqual(report["status"], "success")
-        self.assertEqual(len(report["analytical_queries"]), 2)  # two separate aggregates, no shared/raw join
+        # two separate requested aggregates, no shared/raw join (FINAL 2026-10-19: server lenses of each variable are
+        # separate supporting operations over the same scope and never join the pair).
+        self.assertEqual(sum(q["role"] == "requested" for q in report["analytical_queries"]), 2)
         pearson = next(e for e in report["evidence"] if e["feature"] == "pearson")
         revenue = [100 * d for d, _ in counts]
         rate = [100 * c / (d + c) for d, c in counts]

@@ -209,8 +209,12 @@ class HybridTests(unittest.TestCase):
 
     def test_catalog_index_property_every_metric_dimension_lens(self):
         index=compatibility_index(self.catalog)
-        self.assertEqual(len(index.metrics),43);self.assertEqual(len(index.lenses),44)  # V3.0: +5 delivery metrics, +2 lenses; V3.1: +5 metrics, +4 lenses
+        public=[m for m in index.metrics if not self.catalog.registry['metrics'][m].get('component_only')]
+        # FINAL 2026-10-19: +9 component_only metrics (ratio/average parts) are compiler-only, never public vocabulary.
+        self.assertEqual(len(public),43);self.assertEqual(len(index.metrics),52);self.assertEqual(len(index.lenses),44)  # V3.0: +5 delivery metrics, +2 lenses; V3.1: +5 metrics, +4 lenses
         for metric,definition in index.metrics.items():
+            if metric not in public:
+                continue  # component_only: compiled only inside server lens shapes
             for lens in index.lenses:
                 req=requirement(metric_ids=[metric],dimension_ids=[],ranking=None,derived_features=[],analysis_kind='aggregate',time=None,lens_hint=lens)
                 resolved=AnalyticalResolver(self.catalog,REFERENCE).resolve(AnalysisIntentEnvelope.model_validate(envelope(req)))
@@ -385,6 +389,8 @@ class HybridTests(unittest.TestCase):
         agent.semantic.discovered.update(index.references)
         checked=0
         for metric,definition in index.metrics.items():
+            if self.catalog.registry['metrics'][metric].get('component_only'):
+                continue  # never a requested meaning; compiled only inside server lens shapes (test_ai_final_depth_contract)
             for dimension in definition['dimensions']:
                 for kind in ('aggregate','ranking','distribution','trend'):
                     req=requirement(metric_ids=[metric],dimension_ids=[dimension],analysis_kind=kind,derived_features=[],time=None,

@@ -315,7 +315,10 @@ class DepthAndRelevanceTests(Guarded):
         results = {d: self.depth_report(d) for d in ("focused", "deep", "comprehensive")}
         counts = {d: len(r[1]["charts"]) for d, r in results.items()}
         support = {d: r[0]["diagnostics"]["supporting_operation_count"] for d, r in results.items()}
-        self.assertEqual(support["focused"], 0)
+        # FINAL 2026-10-19: focused carries the 4 core lenses; deeper modes ADD lenses and keep earlier ones.
+        lenses = {d: {c.get("analysis_lens_id") for c in r[1]["charts"] if c.get("analysis_lens_id")} for d, r in results.items()}
+        self.assertTrue(lenses["focused"] <= lenses["deep"] <= lenses["comprehensive"], lenses)
+        self.assertLessEqual(support["focused"], support["deep"])
         self.assertLess(counts["focused"], counts["deep"]); self.assertLessEqual(counts["deep"], counts["comprehensive"])
         self.assertLess(support["deep"], support["comprehensive"] + 1)
         # Depth never changes the requested meaning or its numbers.

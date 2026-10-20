@@ -3190,6 +3190,9 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "components": {
+          "exposure_metric": "valid_order_count"
         }
       },
       "voucher_revenue": {
@@ -3867,6 +3870,9 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "components": {
+          "exposure_metric": "valid_order_count"
         }
       },
       "customer_count": {
@@ -4413,6 +4419,9 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "components": {
+          "exposure_metric": "review_count"
         }
       },
       "review_count": {
@@ -4528,6 +4537,9 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "components": {
+          "exposure_metric": "store_review_count"
         }
       },
       "store_review_count": {
@@ -5420,6 +5432,11 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "components": {
+          "numerator_metric": "delivered_terminal_count",
+          "denominator_metric": "terminal_delivery_count",
+          "partition_dimension": "delivery_status"
         }
       },
       "avg_delivery_minutes": {
@@ -5500,6 +5517,9 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "components": {
+          "exposure_metric": "timed_delivered_count"
         }
       },
       "order_cancellation_rate": {
@@ -5592,6 +5612,11 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "components": {
+          "numerator_metric": "cancelled_terminal_order_count",
+          "denominator_metric": "terminal_order_count",
+          "partition_dimension": "order_status"
         }
       },
       "order_completion_rate": {
@@ -5680,6 +5705,11 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "components": {
+          "numerator_metric": "completed_terminal_order_count",
+          "denominator_metric": "terminal_order_count",
+          "partition_dimension": "order_status"
         }
       },
       "late_shift_rate": {
@@ -5766,6 +5796,11 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "components": {
+          "numerator_metric": "late_terminal_shift_count",
+          "denominator_metric": "terminal_shift_count",
+          "partition_dimension": "attendance_status"
         }
       },
       "large_cash_discrepancy_shift_count": {
@@ -5903,6 +5938,576 @@
           "deprecated_in": null,
           "replacement_id": null
         }
+      },
+      "terminal_order_count": {
+        "business_name": "Số đơn đã kết thúc",
+        "aliases": [],
+        "expression": "COUNT(*)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "đơn",
+        "subjects": [
+          "orders"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DA_HUY"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số đơn đã kết thúc (HOAN_THANH + DA_HUY) — mẫu số của tỷ lệ hủy/hoàn thành.",
+        "quality_direction": "neutral",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số đơn đã kết thúc (HOAN_THANH + DA_HUY) — mẫu số của tỷ lệ hủy/hoàn thành.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "comparison"
+        ],
+        "business_definition": "Số đơn đã kết thúc (HOAN_THANH + DA_HUY) — mẫu số của tỷ lệ hủy/hoàn thành.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục; cộng được giữa các nhóm không giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Thành phần nội bộ của chỉ số tỷ lệ/trung bình; không dùng để hỏi trực tiếp."
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        },
+        "component_only": true,
+        "compatible_dimensions": [
+          "order_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method",
+          "weekday",
+          "hour",
+          "reporting_region"
+        ]
+      },
+      "cancelled_terminal_order_count": {
+        "business_name": "Số đơn bị hủy (trên đơn đã kết thúc)",
+        "aliases": [],
+        "expression": "COUNT(*) FILTER (WHERE silver.don_hang.trang_thai_don_hang = 'DA_HUY')",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "đơn",
+        "subjects": [
+          "orders"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DA_HUY"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số đơn DA_HUY trong tập đơn đã kết thúc — tử số của tỷ lệ hủy đơn.",
+        "quality_direction": "neutral",
+        "aggregation_semantics": "conditional_count",
+        "business_meaning": "Số đơn DA_HUY trong tập đơn đã kết thúc — tử số của tỷ lệ hủy đơn.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "comparison"
+        ],
+        "business_definition": "Số đơn DA_HUY trong tập đơn đã kết thúc — tử số của tỷ lệ hủy đơn.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục; cộng được giữa các nhóm không giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Thành phần nội bộ của chỉ số tỷ lệ/trung bình; không dùng để hỏi trực tiếp."
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        },
+        "component_only": true,
+        "compatible_dimensions": [
+          "order_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method",
+          "weekday",
+          "hour",
+          "reporting_region"
+        ]
+      },
+      "completed_terminal_order_count": {
+        "business_name": "Số đơn hoàn thành (trên đơn đã kết thúc)",
+        "aliases": [],
+        "expression": "COUNT(*) FILTER (WHERE silver.don_hang.trang_thai_don_hang = 'HOAN_THANH')",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "đơn",
+        "subjects": [
+          "orders"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DA_HUY"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số đơn HOAN_THANH trong tập đơn đã kết thúc — tử số của tỷ lệ hoàn thành.",
+        "quality_direction": "neutral",
+        "aggregation_semantics": "conditional_count",
+        "business_meaning": "Số đơn HOAN_THANH trong tập đơn đã kết thúc — tử số của tỷ lệ hoàn thành.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "comparison"
+        ],
+        "business_definition": "Số đơn HOAN_THANH trong tập đơn đã kết thúc — tử số của tỷ lệ hoàn thành.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục; cộng được giữa các nhóm không giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Thành phần nội bộ của chỉ số tỷ lệ/trung bình; không dùng để hỏi trực tiếp."
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        },
+        "component_only": true,
+        "compatible_dimensions": [
+          "order_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method",
+          "weekday",
+          "hour",
+          "reporting_region"
+        ]
+      },
+      "valid_order_count": {
+        "business_name": "Số đơn hợp lệ (HOAN_THANH + DANG_GIAO)",
+        "aliases": [],
+        "expression": "COUNT(*)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "đơn",
+        "subjects": [
+          "orders",
+          "stores"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số đơn hợp lệ cùng quần thể với giá trị đơn trung bình — mẫu của trung bình.",
+        "quality_direction": "neutral",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số đơn hợp lệ cùng quần thể với giá trị đơn trung bình — mẫu của trung bình.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "comparison"
+        ],
+        "business_definition": "Số đơn hợp lệ cùng quần thể với giá trị đơn trung bình — mẫu của trung bình.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục; cộng được giữa các nhóm không giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Thành phần nội bộ của chỉ số tỷ lệ/trung bình; không dùng để hỏi trực tiếp."
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        },
+        "component_only": true
+      },
+      "terminal_delivery_count": {
+        "business_name": "Số chuyến đã kết thúc",
+        "aliases": [],
+        "expression": "COUNT(*)",
+        "source": "silver.giao_hang",
+        "grain": "delivery",
+        "time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "unit": "lượt",
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "business_filters": [
+          {
+            "dimension": "delivery_status",
+            "operator": "in",
+            "value": [
+              "DELIVERED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số chuyến giao đã kết thúc (DELIVERED + FAILED + CANCELLED) — mẫu số của tỷ lệ giao thành công.",
+        "quality_direction": "neutral",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số chuyến giao đã kết thúc (DELIVERED + FAILED + CANCELLED) — mẫu số của tỷ lệ giao thành công.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ chuyến giao",
+        "recommended_uses": [
+          "comparison"
+        ],
+        "business_definition": "Số chuyến giao đã kết thúc (DELIVERED + FAILED + CANCELLED) — mẫu số của tỷ lệ giao thành công.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục; cộng được giữa các nhóm không giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "delivery"
+        ],
+        "invalid_uses": [
+          "Thành phần nội bộ của chỉ số tỷ lệ/trung bình; không dùng để hỏi trực tiếp."
+        ],
+        "compatible_dimensions": [
+          "driver_id",
+          "delivery_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method",
+          "reporting_region"
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        },
+        "component_only": true
+      },
+      "delivered_terminal_count": {
+        "business_name": "Số chuyến giao thành công (trên chuyến đã kết thúc)",
+        "aliases": [],
+        "expression": "COUNT(*) FILTER (WHERE silver.giao_hang.trang_thai_giao_hang = 'DELIVERED')",
+        "source": "silver.giao_hang",
+        "grain": "delivery",
+        "time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "unit": "lượt",
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "business_filters": [
+          {
+            "dimension": "delivery_status",
+            "operator": "in",
+            "value": [
+              "DELIVERED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số chuyến DELIVERED trong tập chuyến đã kết thúc — tử số của tỷ lệ giao thành công.",
+        "quality_direction": "neutral",
+        "aggregation_semantics": "conditional_count",
+        "business_meaning": "Số chuyến DELIVERED trong tập chuyến đã kết thúc — tử số của tỷ lệ giao thành công.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ chuyến giao",
+        "recommended_uses": [
+          "comparison"
+        ],
+        "business_definition": "Số chuyến DELIVERED trong tập chuyến đã kết thúc — tử số của tỷ lệ giao thành công.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục; cộng được giữa các nhóm không giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "delivery"
+        ],
+        "invalid_uses": [
+          "Thành phần nội bộ của chỉ số tỷ lệ/trung bình; không dùng để hỏi trực tiếp."
+        ],
+        "compatible_dimensions": [
+          "driver_id",
+          "delivery_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method",
+          "reporting_region"
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        },
+        "component_only": true
+      },
+      "timed_delivered_count": {
+        "business_name": "Số chuyến đã giao có đủ mốc thời gian",
+        "aliases": [],
+        "expression": "COUNT(*)",
+        "source": "silver.giao_hang",
+        "grain": "delivery",
+        "time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "unit": "lượt",
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "business_filters": [
+          {
+            "dimension": "delivery_status",
+            "operator": "eq",
+            "value": "DELIVERED"
+          }
+        ],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số chuyến DELIVERED có đủ thời điểm lấy hàng và kết thúc — mẫu của thời gian giao trung bình.",
+        "quality_direction": "neutral",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số chuyến DELIVERED có đủ thời điểm lấy hàng và kết thúc — mẫu của thời gian giao trung bình.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ chuyến giao",
+        "recommended_uses": [
+          "comparison"
+        ],
+        "business_definition": "Số chuyến DELIVERED có đủ thời điểm lấy hàng và kết thúc — mẫu của thời gian giao trung bình.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục; cộng được giữa các nhóm không giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "delivery"
+        ],
+        "invalid_uses": [
+          "Thành phần nội bộ của chỉ số tỷ lệ/trung bình; không dùng để hỏi trực tiếp."
+        ],
+        "compatible_dimensions": [
+          "driver_id",
+          "delivery_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method",
+          "reporting_region"
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        },
+        "component_only": true,
+        "required_non_null": [
+          "silver.giao_hang.thoi_gian_lay_hang",
+          "silver.giao_hang.thoi_gian_ket_thuc"
+        ]
+      },
+      "terminal_shift_count": {
+        "business_name": "Số ca đã chấm công",
+        "aliases": [],
+        "expression": "COUNT(*)",
+        "source": "silver.ca_lam_viec_nhan_vien",
+        "grain": "shift",
+        "time_column": "silver.ca_lam_viec_nhan_vien.ngay_lam_viec",
+        "unit": "lượt",
+        "subjects": [
+          "staff_shifts"
+        ],
+        "business_filters": [
+          {
+            "dimension": "attendance_status",
+            "operator": "in",
+            "value": [
+              "DUNG_GIO",
+              "DI_TRE",
+              "VE_SOM"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số ca có trạng thái chấm công DUNG_GIO/DI_TRE/VE_SOM — mẫu số của tỷ lệ ca đi trễ.",
+        "quality_direction": "neutral",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số ca có trạng thái chấm công DUNG_GIO/DI_TRE/VE_SOM — mẫu số của tỷ lệ ca đi trễ.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "comparison"
+        ],
+        "business_definition": "Số ca có trạng thái chấm công DUNG_GIO/DI_TRE/VE_SOM — mẫu số của tỷ lệ ca đi trễ.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục; cộng được giữa các nhóm không giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "shift"
+        ],
+        "invalid_uses": [
+          "Thành phần nội bộ của chỉ số tỷ lệ/trung bình; không dùng để hỏi trực tiếp."
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        },
+        "component_only": true
+      },
+      "late_terminal_shift_count": {
+        "business_name": "Số ca đi trễ (trên ca đã chấm công)",
+        "aliases": [],
+        "expression": "COUNT(*) FILTER (WHERE silver.ca_lam_viec_nhan_vien.trang_thai_cham_cong = 'DI_TRE')",
+        "source": "silver.ca_lam_viec_nhan_vien",
+        "grain": "shift",
+        "time_column": "silver.ca_lam_viec_nhan_vien.ngay_lam_viec",
+        "unit": "lượt",
+        "subjects": [
+          "staff_shifts"
+        ],
+        "business_filters": [
+          {
+            "dimension": "attendance_status",
+            "operator": "in",
+            "value": [
+              "DUNG_GIO",
+              "DI_TRE",
+              "VE_SOM"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số ca DI_TRE trong tập ca đã chấm công — tử số của tỷ lệ ca đi trễ.",
+        "quality_direction": "neutral",
+        "aggregation_semantics": "conditional_count",
+        "business_meaning": "Số ca DI_TRE trong tập ca đã chấm công — tử số của tỷ lệ ca đi trễ.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "comparison"
+        ],
+        "business_definition": "Số ca DI_TRE trong tập ca đã chấm công — tử số của tỷ lệ ca đi trễ.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục; cộng được giữa các nhóm không giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "shift"
+        ],
+        "invalid_uses": [
+          "Thành phần nội bộ của chỉ số tỷ lệ/trung bình; không dùng để hỏi trực tiếp."
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        },
+        "component_only": true
       }
     },
     "dimensions": {
@@ -6449,7 +7054,11 @@
         "cardinality_hint": "enumerated",
         "value_labels": {
           "DANG_GIAO": "Đang giao",
-          "HOAN_THANH": "Hoàn thành"
+          "HOAN_THANH": "Hoàn thành",
+          "CHO_THANH_TOAN": "Chờ thanh toán",
+          "DA_XAC_NHAN": "Đã xác nhận",
+          "MOI_TAO": "Mới tạo",
+          "DA_HUY": "Đã hủy"
         },
         "logical_type": "category",
         "owner": "avengers-data-team",
@@ -6500,7 +7109,10 @@
           "NGAN_HANG_QR": "Chuyển khoản QR",
           "THANH_TOAN_KHI_NHAN_HANG": "Thanh toán khi nhận hàng",
           "VI_DIEN_TU": "Ví điện tử",
-          "VNPAY": "VNPay"
+          "VNPAY": "VNPay",
+          "TIEN_MAT": "Tiền mặt",
+          "THE_NGAN_HANG": "Thẻ ngân hàng",
+          "CHUYEN_KHOAN": "Chuyển khoản"
         },
         "logical_type": "category",
         "owner": "avengers-data-team",
@@ -6783,6 +7395,14 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "value_labels": {
+          "DUNG_GIO": "Đúng giờ",
+          "DI_TRE": "Đi trễ",
+          "VE_SOM": "Về sớm",
+          "VANG_MAT": "Vắng mặt",
+          "ASSIGNED": "Đã phân ca",
+          "NGHI_PHEP": "Nghỉ phép"
         }
       },
       "stock_quantity_detail": {
@@ -6856,7 +7476,7 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result",
+        "cardinality_hint": 24,
         "logical_type": "cyclic",
         "owner": "avengers-data-team",
         "lifecycle": {
@@ -6896,7 +7516,9 @@
         "value_labels": {
           "DUNG_TAI_CHO": "Dùng tại chỗ",
           "GIAO_TAN_NOI": "Giao tận nơi",
-          "MANG_DI": "Mang đi"
+          "MANG_DI": "Mang đi",
+          "TAI_CHO": "Tại chỗ",
+          "LAY_TAI_QUAN": "Lấy tại quán"
         },
         "logical_type": "category",
         "owner": "avengers-data-team",
@@ -7038,6 +7660,15 @@
           "introduced_in": "legacy",
           "deprecated_in": null,
           "replacement_id": null
+        },
+        "value_labels": {
+          "PENDING": "Chờ nhận",
+          "CONFIRMED": "Đã xác nhận",
+          "PICKING_UP": "Đang lấy hàng",
+          "IN_TRANSIT": "Đang giao",
+          "DELIVERED": "Giao thành công",
+          "FAILED": "Giao thất bại",
+          "CANCELLED": "Đã hủy"
         }
       },
       "weekday": {
@@ -7070,7 +7701,7 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result",
+        "cardinality_hint": 7,
         "logical_type": "cyclic",
         "owner": "avengers-data-team",
         "lifecycle": {
@@ -7208,7 +7839,11 @@
           "aov",
           "purchasing_customer_count",
           "order_cancellation_rate",
-          "order_completion_rate"
+          "order_completion_rate",
+          "terminal_order_count",
+          "cancelled_terminal_order_count",
+          "completed_terminal_order_count",
+          "valid_order_count"
         ],
         "detail_columns": [
           "order_id",
@@ -7435,7 +8070,8 @@
           "store_revenue",
           "store_order_count",
           "store_aov",
-          "purchasing_customer_count"
+          "purchasing_customer_count",
+          "valid_order_count"
         ],
         "detail_columns": [
           "store"
@@ -7761,7 +8397,9 @@
         "metrics": [
           "shift_count",
           "late_count",
-          "late_shift_rate"
+          "late_shift_rate",
+          "terminal_shift_count",
+          "late_terminal_shift_count"
         ],
         "detail_columns": [
           "shift_name"
@@ -7970,7 +8608,10 @@
           "delivered_count",
           "failed_or_cancelled_delivery_count",
           "delivery_success_rate",
-          "avg_delivery_minutes"
+          "avg_delivery_minutes",
+          "terminal_delivery_count",
+          "delivered_terminal_count",
+          "timed_delivered_count"
         ],
         "detail_columns": [
           "driver_id",
@@ -8845,6 +9486,15 @@
             "no_causal_interpretation",
             "non_additive",
             "distinct_populations"
+          ],
+          "lens_axes": [
+            "store",
+            "order_type",
+            "payment_method",
+            "store_type",
+            "weekday",
+            "hour",
+            "city"
           ]
         },
         "order_items": {
@@ -9113,6 +9763,15 @@
           "business_caveats": [
             "no_causal_interpretation",
             "distinct_populations"
+          ],
+          "lens_axes": [
+            "product",
+            "category",
+            "store",
+            "order_type",
+            "payment_method",
+            "weekday",
+            "city"
           ]
         },
         "products": {
@@ -9537,6 +10196,14 @@
           "business_caveats": [
             "no_causal_interpretation",
             "distinct_populations"
+          ],
+          "lens_axes": [
+            "category",
+            "store",
+            "order_type",
+            "weekday",
+            "city",
+            "product"
           ]
         },
         "stores": {
@@ -9912,6 +10579,14 @@
             "no_causal_interpretation",
             "non_additive",
             "distinct_populations"
+          ],
+          "lens_axes": [
+            "store",
+            "store_type",
+            "order_type",
+            "payment_method",
+            "weekday",
+            "city"
           ]
         },
         "customers": {
@@ -10173,6 +10848,9 @@
           ],
           "business_caveats": [
             "no_causal_interpretation"
+          ],
+          "lens_axes": [
+            "customer_role"
           ]
         },
         "promotions": {
@@ -10680,6 +11358,14 @@
           "business_caveats": [
             "no_causal_interpretation",
             "distinct_populations"
+          ],
+          "lens_axes": [
+            "promotion",
+            "store",
+            "order_type",
+            "payment_method",
+            "weekday",
+            "city"
           ]
         },
         "payments": {
@@ -11006,6 +11692,14 @@
           "business_caveats": [
             "no_causal_interpretation",
             "distinct_populations"
+          ],
+          "lens_axes": [
+            "payment_gateway",
+            "payment_transaction_status",
+            "store",
+            "weekday",
+            "order_type",
+            "city"
           ]
         },
         "delivery": {
@@ -11445,6 +12139,15 @@
             "historical_unavailable",
             "non_additive",
             "sample_size_required"
+          ],
+          "lens_axes": [
+            "driver_id",
+            "store",
+            "order_type",
+            "payment_method",
+            "store_type",
+            "city",
+            "delivery_status"
           ]
         },
         "inventory": {
@@ -11703,6 +12406,13 @@
             "no_causal_interpretation",
             "snapshot_only",
             "historical_unavailable"
+          ],
+          "lens_axes": [
+            "category",
+            "store",
+            "store_type",
+            "product",
+            "city"
           ]
         },
         "product_reviews": {
@@ -11863,6 +12573,13 @@
             "no_causal_interpretation",
             "non_additive",
             "sample_size_required"
+          ],
+          "lens_axes": [
+            "category",
+            "store",
+            "weekday",
+            "product",
+            "city"
           ]
         },
         "store_reviews": {
@@ -12023,6 +12740,11 @@
             "no_causal_interpretation",
             "non_additive",
             "sample_size_required"
+          ],
+          "lens_axes": [
+            "store",
+            "store_type",
+            "city"
           ]
         },
         "staff_shifts": {
@@ -12353,6 +13075,13 @@
           ],
           "business_caveats": [
             "no_causal_interpretation"
+          ],
+          "lens_axes": [
+            "shift_name",
+            "store",
+            "store_type",
+            "city",
+            "attendance_status"
           ]
         },
         "cashier_reconciliation": {
@@ -12676,6 +13405,11 @@
           ],
           "business_caveats": [
             "no_causal_interpretation"
+          ],
+          "lens_axes": [
+            "store",
+            "store_type",
+            "city"
           ]
         },
         "customer_surveys": {
@@ -12819,6 +13553,11 @@
           ],
           "business_caveats": [
             "no_causal_interpretation"
+          ],
+          "lens_axes": [
+            "store",
+            "store_type",
+            "city"
           ]
         },
         "wishlist_favorites": {
@@ -12962,6 +13701,10 @@
           ],
           "business_caveats": [
             "no_causal_interpretation"
+          ],
+          "lens_axes": [
+            "category",
+            "product"
           ]
         },
         "hourly": {
@@ -13120,6 +13863,15 @@
           ],
           "business_caveats": [
             "no_causal_interpretation"
+          ],
+          "lens_axes": [
+            "hour",
+            "weekday",
+            "order_type",
+            "store",
+            "payment_method",
+            "store_type",
+            "city"
           ]
         }
       },
@@ -13637,12 +14389,12 @@
     ],
     "dashboard_policy": {
       "minimum_views": 0,
-      "target_views": 5,
+      "target_views": 8,
       "default_depth": "deep",
       "depth_budgets": {
         "focused": {
           "minimum_views": 0,
-          "max_supporting_operations": 0,
+          "max_supporting_operations": 5,
           "related_domains": false,
           "segmented_trends": false,
           "max_segment_dimensions": 0
@@ -13650,19 +14402,150 @@
         "deep": {
           "minimum_views": 0,
           "max_supporting_operations": 6,
-          "related_domains": true,
+          "related_domains": false,
           "segmented_trends": true,
           "max_segment_dimensions": 1
         },
         "comprehensive": {
           "minimum_views": 0,
-          "max_supporting_operations": 8,
-          "related_domains": true,
+          "max_supporting_operations": 7,
+          "related_domains": false,
           "segmented_trends": true,
           "max_segment_dimensions": 3
         }
       },
-      "narrow_top_n": 5
+      "narrow_top_n": 5,
+      "lens_policy": {
+        "version": "4.0.0",
+        "view_targets": {
+          "focused": {
+            "core": 4,
+            "diagnostic": 0,
+            "extended": 0
+          },
+          "deep": {
+            "core": 4,
+            "diagnostic": 2,
+            "extended": 0
+          },
+          "comprehensive": {
+            "core": 4,
+            "diagnostic": 2,
+            "extended": 2
+          }
+        },
+        "max_lens_metrics": 2,
+        "max_composition_groups": 8,
+        "trend_granularity": [
+          {
+            "max_days": 45,
+            "granularity": "day"
+          },
+          {
+            "max_days": 200,
+            "granularity": "week"
+          },
+          {
+            "max_days": 1100,
+            "granularity": "month"
+          },
+          {
+            "granularity": "quarter"
+          }
+        ],
+        "min_groups": {
+          "trend": 2,
+          "segment": 2,
+          "composition": 2,
+          "cross_tab": 4,
+          "exposure_rate": 3,
+          "contribution": 2,
+          "segmented_trend": 2
+        },
+        "sequences": {
+          "ratio": {
+            "core": [
+              "trend",
+              "composition",
+              "segment",
+              "segment",
+              "segment"
+            ],
+            "diagnostic": [
+              "cross_tab",
+              "exposure_rate",
+              "contribution",
+              "segment"
+            ],
+            "extended": [
+              "segmented_trend",
+              "contribution",
+              "contribution",
+              "segmented_trend",
+              "cross_tab"
+            ]
+          },
+          "additive": {
+            "core": [
+              "trend",
+              "composition",
+              "segment",
+              "segment",
+              "segment"
+            ],
+            "diagnostic": [
+              "cross_tab",
+              "segmented_trend",
+              "segment"
+            ],
+            "extended": [
+              "mix_shift",
+              "segmented_trend",
+              "cross_tab",
+              "segmented_trend"
+            ]
+          },
+          "average": {
+            "core": [
+              "trend",
+              "segment",
+              "segment",
+              "segment"
+            ],
+            "diagnostic": [
+              "cross_tab",
+              "exposure_rate",
+              "segment"
+            ],
+            "extended": [
+              "segmented_trend",
+              "exposure_rate",
+              "cross_tab",
+              "segmented_trend"
+            ]
+          },
+          "distinct": {
+            "core": [
+              "trend",
+              "segment",
+              "segment",
+              "segment"
+            ],
+            "diagnostic": [
+              "cross_tab",
+              "segmented_trend",
+              "segment"
+            ],
+            "extended": [
+              "segmented_trend",
+              "cross_tab",
+              "segmented_trend"
+            ]
+          }
+        },
+        "max_reserve_lenses_per_role": 2,
+        "max_cross_tab_cells": 120
+      }
     },
     "ranking_partition_qualifiers": [
       "trong mỗi",
@@ -15261,9 +16144,7 @@
             {
               "id": "customers",
               "goal": "Quy mô khách hàng",
-              "metric_ids": [
-                "customer_count"
-              ],
+              "metric_ids": ["customer_count"],
               "analysis_kind": "aggregate",
               "dimension_ids": []
             },
@@ -15279,9 +16160,7 @@
             {
               "id": "buyers",
               "goal": "Khách phát sinh mua hàng",
-              "metric_ids": [
-                "purchasing_customer_count"
-              ],
+              "metric_ids": ["purchasing_customer_count"],
               "analysis_kind": "aggregate",
               "dimension_ids": []
             },
@@ -15304,9 +16183,7 @@
             {
               "id": "loyalty",
               "goal": "Theo điểm hội viên",
-              "metric_ids": [
-                "customer_count"
-              ],
+              "metric_ids": ["customer_count"],
               "analysis_kind": "aggregate",
               "dimension_ids": [
                 "loyalty_points"

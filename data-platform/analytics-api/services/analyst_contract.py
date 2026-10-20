@@ -179,6 +179,7 @@ class DashboardVisual(Contract):
         "stacked_bar",
         "stacked_100",
         "scatter",
+        "pareto",
         "table",
     ]
     metrics: List[str] = Field(default_factory=list, max_length=6)
@@ -190,6 +191,9 @@ class DashboardVisual(Contract):
         "ranking", "trend", "comparison", "distribution", "relationship", "detail"
     ] = "comparison"
     compare_query_ids: List[str] = Field(default_factory=list, max_length=5)
+    # FINAL P3: server-planned analytical lens this view realises (None for requested/legacy views).
+    analysis_lens_id: Optional[str] = Field(default=None, max_length=120)
+    analysis_lens_role: Optional[Literal["core", "diagnostic", "extended"]] = None
 
 
 class InsightClaim(Contract):

@@ -39,7 +39,10 @@ class DashboardMinimumTests(f.unittest.TestCase):
         p,proposal,report=self.report(req,'Thống kê số giao dịch và doanh thu thanh toán theo cổng thanh toán và trạng thái giao dịch trong 30 ngày gần nhất.')
         self.check_dashboard(report)
         self.assertTrue(any(c['chart_type']=='heatmap' for c in report['charts']))
-        self.assertTrue(any(c['x_field']=='period' for c in report['charts']))
+        # FINAL 2026-10-19: a time view needs >=2 observed periods; a one-period fixture is disclosed, never drawn as a line.
+        trend_ok = any(c['x_field']=='period' for c in report['charts']) or any(
+            o.get('reason')=='insufficient_periods' for o in report['dashboard_plan']['omitted_visuals'])
+        self.assertTrue(trend_ok)
         self.assertEqual(p.provider.call_count,1)
         for q in report['analytical_queries']:
             self.assertEqual(q['filters'],report['analytical_queries'][0]['filters'])
@@ -67,9 +70,13 @@ class DashboardMinimumTests(f.unittest.TestCase):
         # V3.2 §78 supersedes V2.12: "Tập trung" shows the requested views only
         # (floor 1), "Phân tích sâu" keeps the 4-view floor. Verification follows
         # the server-recorded depth, so focused is not reported as incomplete.
+        from evals import fixture_warehouse as w
+        from evals.rich_fixture import rich_world
+        self.enterContext(patch.dict(w.DATA, rich_world()))  # breadth needs data with real variation (FINAL 2026-10-19)
         p,proposal,report=self.report(f.requirement(),analysis_depth='focused')
         self.assertEqual(proposal['diagnostics']['minimum_visuals'],0)
-        self.assertEqual(proposal['diagnostics']['supporting_operation_count'],0)
+        # FINAL 2026-10-19: focused = core lenses only (no diagnostic/extended), still a real smaller budget than deep.
+        self.assertTrue(all(c.get('analysis_lens_role') in (None,'core') for c in report['charts']))
         depth=next(c for c in report['quality_assessment']['verification_checks'] if c['id']=='analysis_depth_coverage')
         self.assertEqual(depth['status'],'passed')
         _,deep,deep_report=self.report(f.requirement(),analysis_depth='deep')

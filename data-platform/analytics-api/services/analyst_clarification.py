@@ -129,6 +129,8 @@ def clarify_decision(planner, arguments, *, choices=None):
         choices = []
         needed = set(data["dimensions"]) | {f["dimension"] for f in data["filters"]}
         for metric in planner.catalog.registry["subjects"][subject]["metrics"]:
+            if planner.catalog.registry["metrics"][metric].get("component_only"):
+                continue
             try:
                 planner.semantic.describe("metric", metric)
                 if not needed <= set(planner.catalog.compatible_dimensions(metric)):

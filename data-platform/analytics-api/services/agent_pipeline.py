@@ -538,6 +538,7 @@ class AnalysisPipeline:
         artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
         check_request_deadline()
         context.update(server_supporting_expansion=self.semantic_info.get('server_supporting_expansion'),
+            depth_selection_origin=self.semantic_info.get('depth_selection_origin'), requested_depth=self.semantic_info.get('requested_depth'),
             minimum_visuals=self.semantic_info.get('minimum_visuals',0),
             omitted_supporting_ids=self.semantic_info.get('omitted_supporting_ids',[]))
         self.enforce_ui(artifacts, context)
@@ -787,8 +788,11 @@ class AnalysisPipeline:
         artifacts = agent.queries.artifacts
         plan = DashboardPlan.model_validate(session.dashboard_plan)
         evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"), as_of=session.agent_reference_date)
+        lenses, lens_groups, lens_targets = self.lens_context(self.semantic_info.get("resolved_requirement_coverage") or session.requirement_coverage,
+            catalog, (session.ui_constraints or {}).get("server_supporting_expansion") or session.analysis_depth)
         current = build_dashboard(artifacts, evidence, plan, self.budget.charts, self.budget.categories, self.budget.series,
-                                  minimum_visuals=self.semantic_info.get('minimum_visuals',0))
+                                  minimum_visuals=self.semantic_info.get('minimum_visuals',0), lenses=lenses, min_groups=lens_groups,
+                                  lens_targets=lens_targets)
         # Include validated defaults supplied by the dashboard when a prior
         # optional visual was ineligible. These are genuine server chart choices.
         visuals = [DashboardVisual.model_validate(v) for v in current["dashboard_plan"]["visuals"]]
@@ -842,12 +846,20 @@ class AnalysisPipeline:
             analysis_components=resolved['components'],derived_feature_bindings=resolved['feature_bindings'],
             optional_execution_partial=True)
 
+    @staticmethod
+    def lens_context(coverage, catalog, depth=None):
+        from services.dashboard_planner_service import lens_context
+        return lens_context(coverage, catalog, depth)
+
     def report(self, artifacts, plan, catalog, session, reference, refined=False):
         from services.provider_budget import request_observer
         observer = request_observer.get()
         if observer:
             observer('verifying', {})
         evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"), as_of=reference)
+        coverage_map = self.semantic_info.get("resolved_requirement_coverage") or session.requirement_coverage
+        lenses, lens_groups, lens_targets = self.lens_context(coverage_map, catalog,
+            (session.ui_constraints or {}).get("server_supporting_expansion") or self.semantic_info.get("analysis_depth", session.analysis_depth))
         dashboard = build_dashboard(
             artifacts,
             evidence,
@@ -857,13 +869,13 @@ class AnalysisPipeline:
             self.budget.series,
             catalog=catalog,
             minimum_visuals=self.semantic_info.get('minimum_visuals',0),
+            lenses=lenses, min_groups=lens_groups, lens_targets=lens_targets,
         )
         # V3.2 mission evidence contract: every visible chart maps to a requirement;
         # charts outside the mission's governed evidence or over the depth budget
         # for SUPPORTING views are dropped (values are never altered).
         from services import chart_relevance_service
         mission_hint = self.semantic_info.get("analysis_mission") or (session.ui_constraints or {}).get("analysis_mission")
-        coverage_map = self.semantic_info.get("resolved_requirement_coverage") or session.requirement_coverage
         relevance = None
         if coverage_map:
             relevance = chart_relevance_service.apply(dashboard, artifacts, catalog, mission_id=mission_hint,
@@ -882,7 +894,8 @@ class AnalysisPipeline:
                     row.get(metric) is not None for row in a.result["rows"] for metric in a.plan.metrics
                 )):
                     raise AnalysisError("insufficient_data", "No rows for the requested population")
-                if a.plan.kind != "detail" and (a.plan.dimensions or a.plan.kind == "trend") and not any(a.query.id in c.get("scope_refs", [c["scope_ref"]]) for c in dashboard["charts"]):
+                from services.dashboard_planner_service import pinned_by_scope
+                if a.plan.kind != "detail" and (a.plan.dimensions or a.plan.kind == "trend") and not pinned_by_scope(a, artifacts) and not any(a.query.id in c.get("scope_refs", [c["scope_ref"]]) for c in dashboard["charts"]):
                     # The validated table already contains every row. A visual
                     # density/shape limit must not discard successful analysis.
                     reasons = sorted({v["reason"] for v in dashboard["dashboard_plan"]["omitted_visuals"] if v["query_id"] == a.query.id})
@@ -947,11 +960,24 @@ class AnalysisPipeline:
         main = next(iter(artifacts.values()))
         first = results[main.query.id]
         depth = self.semantic_info.get("analysis_depth", session.analysis_depth)
+        # FINAL P3: breadth is measured from the executed lens plan and the charts that survived every gate; it is
+        # reported separately from numeric verification (verified numbers ≠ a rich report, and vice versa).
+        from services.view_requirement_service import analysis_coverage
+        from services.analysis_expansion_service import view_targets, lens_policy
+        ui = session.ui_constraints or {}
+        effective = ui.get("server_supporting_expansion") or depth
+        lens_plan = self.semantic_info.get("lens_plan") or (session.diagnostics or {}).get("lens_plan") or {}
+        coverage_view = analysis_coverage(coverage_map, dashboard["charts"], dashboard["dashboard_plan"].get("omitted_visuals", []),
+            view_targets(catalog, effective) if lens_plan or lenses else {}, lens_decisions=lens_plan.get("decisions", []),
+            depth=effective, origin=ui.get("depth_selection_origin"), family=lens_plan.get("family"),
+            policy_version=lens_policy(catalog).get("version"), forecasts=forecasts)
+        self.semantic_info["analysis_coverage"] = coverage_view
         if depth in DEPTH_POLICIES:
             target = DEPTH_POLICIES[depth]["target_views"]
             self.semantic_info["depth_coverage"] = {
-                "target_views": target, "validated_views": len(dashboard["charts"]),
-                "status": "adequate" if len(dashboard["charts"]) >= target[0] else "limited",
+                "target_views": target, "validated_views": coverage_view["rendered_total"] if coverage_view else len(dashboard["charts"]),
+                "status": (coverage_view["status"] if coverage_view else
+                           "adequate" if len(dashboard["charts"]) >= target[0] else "limited"),
                 "planned_operations": len(artifacts),
             }
         meaning = self.interpretation(artifacts)
@@ -993,6 +1019,7 @@ class AnalysisPipeline:
             refined=refined,diagnostics=self.diagnostics(catalog,{
                 "plan":"passed","sql_semantics":"passed","security":"passed",
                 "results":"passed","dashboard":"passed","insights":"passed"}))
+        response["analysis_coverage"] = deepcopy(coverage_view)
         from services.analysis_quality_service import assess_report, report_limitations
         from services.analysis_coverage_service import canonical_components
         declared = self.semantic_info.get("analysis_components") or (session.analysis_components if session.coverage_origin == "declared" else [])
@@ -1136,7 +1163,14 @@ class AnalysisPipeline:
         telemetry_logging.getLogger('ai-analytics').info('[V32Telemetry] %s', json.dumps({k: self.semantic_info.get(k) for k in (
             "input_mode", "analysis_mission", "preflight_state", "guided_contract_used", "guided_source", "logical_provider_calls",
             "provider_http_attempts", "credential_failover_used", "semantic_repair_count", "chart_count",
-            "dropped_irrelevant_charts", "verification_status", "analysis_depth")}, default=str))
+            "dropped_irrelevant_charts", "verification_status", "analysis_depth")} | {
+            # FINAL P3 coverage telemetry: counts/enums/lens IDs only.
+            "depth_selection_origin": (session.ui_constraints or {}).get("depth_selection_origin"),
+            "coverage_status": (self.semantic_info.get("analysis_coverage") or {}).get("status"),
+            "coverage_gap_kind": (self.semantic_info.get("analysis_coverage") or {}).get("gap_kind"),
+            "coverage_views": [(self.semantic_info.get("analysis_coverage") or {}).get(k) for k in ("rendered_total", "target_total")],
+            "lens_rejections": sorted({l["reason"] for l in (self.semantic_info.get("analysis_coverage") or {}).get("lenses", []) if l["status"] == "rejected"})},
+            default=str))
         if response["quality_context"]["version"] == "2.8" and response["quality_assessment"]["status"] == "not_scored":
             raise AnalysisError("quality_verification","Report provenance failed independent verification")
         self.semantic_info["failure_stage"] = None

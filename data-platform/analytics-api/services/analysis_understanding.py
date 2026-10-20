@@ -449,6 +449,7 @@ def fast_spec(prompt, catalog, hint):
         permitted = {
             m: catalog.registry["metrics"][m]
             for m in catalog.registry["subjects"][subject]["metrics"]
+            if not catalog.registry["metrics"][m].get("component_only")
         }
         metric = _alias_id(slots["metric"], permitted)
         if not metric:

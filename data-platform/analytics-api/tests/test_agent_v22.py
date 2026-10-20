@@ -429,7 +429,8 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(r["interpretation"]["time_range"]["start"], "2026-09-01")
         self.assertEqual(
             {c["id"] for c in r["options"]},
-            set(self.catalog.registry["subjects"]["stores"]["metrics"]),
+            {m for m in self.catalog.registry["subjects"]["stores"]["metrics"]
+             if not self.catalog.registry["metrics"][m].get("component_only")},  # components are never user choices
         )
         p.executor.assert_not_called()
 

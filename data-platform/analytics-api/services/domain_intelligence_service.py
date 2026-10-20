@@ -63,6 +63,9 @@ class DomainProfile(Contract):
     health_signals: List[HealthSignal] = Field(default_factory=list, max_length=8)
     diagnostic_dimensions: List[str] = Field(default_factory=list, max_length=8)
     drilldown_hierarchies: List[List[str]] = Field(default_factory=list, max_length=4)
+    # Ordered business axes the server lens planner may segment this domain by (FINAL plan P1). Per-metric
+    # compatibility, pinned filters and cardinality are still checked at planning time.
+    lens_axes: List[str] = Field(default_factory=list, max_length=12)
     comparison_semantics: List[Baseline] = Field(default_factory=list, max_length=5)
     related_domains: List[str] = Field(default_factory=list, max_length=12)
     supporting_analysis_capabilities: List[str] = Field(default_factory=list, max_length=12)
@@ -114,6 +117,8 @@ def validate_profiles(registry):
                     raise ValueError("Snapshot lens cannot offer history")
                 if lens.supports_distribution and any(not registry["metrics"][m].get("additive") for m in lens.metric_refs):
                     raise ValueError("Non-additive composition")
+            if len(p.lens_axes) != len(set(p.lens_axes)) or not set(p.lens_axes) <= registry["dimensions"].keys():
+                raise ValueError("Invalid lens axes")
             for path in p.drilldown_hierarchies:
                 if len(path) < 2 or len(path) != len(set(path)) or not set(path) <= dims:
                     raise ValueError("Invalid drilldown")
@@ -211,7 +216,13 @@ class DomainIntelligence:
         return False
 
     def domain_for(self, subject):
-        return next((p for p in self.available().values() if subject in p["primary_subjects"]), None)
+        # Read path used per chart/operation: copy only the matching profile, not every profile (FINAL P7 profiling).
+        key = (self.catalog.fingerprint, "profiles")
+        with _lock:
+            cached = _cache.get(key)
+        profiles = cached if cached is not None else self.available()
+        found = next((p for p in profiles.values() if subject in p["primary_subjects"]), None)
+        return deepcopy(found) if found is not None else None
 
     def validate_lens(self, query):
         if not query.lens_id:
@@ -528,27 +539,30 @@ TIME_PRESETS = {"auto": "Tự động", "today": "Hôm nay", "7d": "7 ngày qua"
                 "previous_quarter": "Quý trước", "all_time": "Toàn bộ thời gian", "custom": "Tùy chọn"}
 
 def depth_options(catalog):
-    """V3.2: what each depth really adds, from the governed depth budgets."""
+    """What each depth really adds, worded from the governed lens policy (single source for 4/6/8)."""
     from services.analysis_expansion_service import dashboard_policy
     labels = {"focused": "Tập trung", "deep": "Phân tích sâu", "comprehensive": "Phân tích toàn diện"}
+    adds = {"core": "{n} góc nhìn cốt lõi (diễn biến, cơ cấu, so sánh giữa các nhóm)",
+            "diagnostic": "thêm {n} góc nhìn chẩn đoán (tương tác hai chiều, quy mô so với tỷ lệ)",
+            "extended": "thêm {n} góc nhìn mở rộng (diễn biến theo nhóm, mức đóng góp)"}
     out = []
     for id, label in labels.items():
         p = dashboard_policy(catalog, id)
-        parts = ["chỉ các góc nhìn trả lời trực tiếp câu hỏi"] if not p.get("max_supporting_operations") else [
-            f"thêm tối đa {p['max_supporting_operations']} góc nhìn hỗ trợ đúng phạm vi"]
-        if p.get("max_segment_dimensions"):
-            parts.append(f"tự tìm {p['max_segment_dimensions']} chiều diễn biến liên quan")
-        if p.get("related_domains") and p.get("max_supporting_operations"):
-            parts.append("đối chiếu miền dữ liệu liên quan")
+        targets = p.get("view_targets") or {}
+        parts = [adds[role].format(n=n) for role, n in targets.items() if n] or ["chỉ các góc nhìn trả lời trực tiếp câu hỏi"]
         out.append({"id": id, "label": label, "minimum_views": p["minimum_views"], "target_views": p["target_views"],
+                    "view_targets": targets,
                     "max_supporting_operations": p.get("max_supporting_operations"),
                     "max_segment_dimensions": p.get("max_segment_dimensions", 0),
-                    "description": label + ": " + "; ".join(parts) + "."})
+                    "description": label + ": tối đa " + "; ".join(parts)
+                    + ". Chỉ hiện góc nhìn có dữ liệu thật; thiếu dữ liệu sẽ được nêu rõ."})
     return out
 
 
+# Context-pack budgets (prompt size) are NOT chart budgets. ``target_views`` mirrors the governed lens policy
+# (dashboard_policy.lens_policy.view_targets → 4/6/8) and is kept here only for older readers of this table.
 DEPTH_POLICIES = {
-    "focused": {"supports": 1, "packs": 1, "domain_chars": 1800, "body_chars": 24000, "target_views": [2, 4]},
-    "deep": {"supports": 6, "packs": 2, "domain_chars": 3500, "body_chars": 24000, "target_views": [4, 6]},
-    "comprehensive": {"supports": 7, "packs": 8, "domain_chars": 8000, "body_chars": 24000, "target_views": [6, 8]},
+    "focused": {"supports": 1, "packs": 1, "domain_chars": 1800, "body_chars": 24000, "target_views": [4, 4]},
+    "deep": {"supports": 6, "packs": 2, "domain_chars": 3500, "body_chars": 24000, "target_views": [6, 6]},
+    "comprehensive": {"supports": 7, "packs": 8, "domain_chars": 8000, "body_chars": 24000, "target_views": [8, 8]},
 }

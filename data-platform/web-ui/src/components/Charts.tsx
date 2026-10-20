@@ -102,9 +102,27 @@ export const AnalystHorizontalBars: React.FC<{ data: any[]; unit: string; color:
   </div>;
 };
 
+/** Pareto (FINAL P4): server-computed share of the FULL total per group + cumulative share, largest first.
+ * Only the display subset is listed; shares/cumulative always use the complete population total. */
+export const ParetoChart: React.FC<{ data: any[]; populationCount?: number; displayedCount?: number }> = ({ data, populationCount, displayedCount }) => {
+  if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
+  const top = Math.max(...data.map(r => Number(r.value) || 0), 1);
+  return <div data-pareto className="text-xs">
+    <div className="grid grid-cols-[minmax(6rem,1fr)_minmax(5rem,2fr)_auto] gap-x-2 gap-y-1.5 items-center">
+      {data.map((r: any, i: number) => <React.Fragment key={i}>
+        <div className="truncate text-slate-600" title={r.label}>{i + 1}. {r.label}</div>
+        <div className="relative h-2.5 rounded-full bg-slate-100"><span className="absolute inset-y-0 left-0 rounded-full bg-indigo-500" style={{ width: `${Math.max(1, (Number(r.value) || 0) / top * 100)}%` }} /></div>
+        <div className="tabular-nums text-right whitespace-nowrap text-slate-700"><b>{Number(r.value).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%</b><span className="text-slate-400"> · lũy kế {Number(r.cumulative_pct).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%</span></div>
+      </React.Fragment>)}
+    </div>
+    {populationCount && displayedCount && populationCount > displayedCount ? <p className="mt-2 text-[11px] text-slate-500">{displayedCount}/{populationCount} nhóm lớn nhất; tỷ trọng tính trên tổng của toàn bộ {populationCount} nhóm.</p> : null}
+  </div>;
+};
+
 export const AnalystChart: React.FC<{ chart: any; onInspect?: (row: any) => void }> = ({ chart, onInspect }) => {
   const data = (chart.data || []).map((r: any, i: number) => ({ ...r, color: r.color || categoryColor(r.label, i), label: r.label == null ? r.label : businessCategory(r.label) })), unit = chart.unit || '', color = chart.accent_color || '#2563eb';
   if (['grouped_bar', 'stacked_bar', 'stacked_100'].includes(chart.chart_type)) return <SeriesBarChart data={data} series={chart.series || []} stacked={chart.chart_type !== 'grouped_bar'} percentage={chart.chart_type === 'stacked_100'} unit={unit} />;
+  if (chart.chart_type === 'pareto') return <ParetoChart data={data} populationCount={chart.population_count} displayedCount={chart.displayed_count} />;
   if (chart.chart_type === 'scatter') return <ScatterChart data={data} xLabel={chart.x_label} yLabel={chart.y_label} xUnit={unit} yUnit={chart.y_unit} />;
   if (chart.chart_type === 'heatmap') return <HeatmapChart data={data} valueSuffix={unit ? ` ${unit}` : ''} xLabel={chart.x_label || 'Chiều phân tích'} yLabel={chart.series_label || 'Nhóm phân tích'} />;
   if (chart.chart_type === 'multi_line') return <SeriesLineChart data={data} series={chart.series || []} unit={unit} granularity={chart.granularity} period={chart.period} />;

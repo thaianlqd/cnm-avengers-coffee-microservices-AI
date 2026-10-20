@@ -94,7 +94,10 @@ class PopulationDashboardTests(f.unittest.TestCase):
         f.approve(request,proposal);report=p.generate(request)
         self.assertGreaterEqual(len(report['charts']),4)
         self.assertEqual(len({c['semantic_view_key'] for c in report['charts']}),len(report['charts']))
-        self.assertTrue(any(c['x_field']=='period' for c in report['charts']))
+        # FINAL 2026-10-19: a time view needs >=2 observed periods; a one-period fixture is disclosed, never drawn as a line.
+        trend_ok = any(c['x_field']=='period' for c in report['charts']) or any(
+            o.get('reason')=='insufficient_periods' for o in report['dashboard_plan']['omitted_visuals'])
+        self.assertTrue(trend_ok)
         self.assertTrue(any(c.get('selection')=='Top N' for c in report['charts']))
         self.assertEqual(report['quality_assessment'],verify_saved_report(report,self.catalog))
         check=next(c for c in report['quality_assessment']['verification_checks'] if c['id']=='analysis_depth_coverage')

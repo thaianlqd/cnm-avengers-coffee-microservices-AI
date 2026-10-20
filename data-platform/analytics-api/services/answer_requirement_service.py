@@ -33,7 +33,7 @@ def conclusion_from_report(report, artifacts, catalog, evidence=None):
     """Replay all visible conclusion fields from validated artifacts/metadata."""
     from services.insight_service import analytical_features, grounded_narrative
     from services.analyst_contract import DashboardPlan
-    from services.chart_insight_service import build_conclusion, chart_insights, short_answer
+    from services.chart_insight_service import build_conclusion, chart_insights, short_answer, lens_findings
     from services.forecast_service import report_forecasts
     from copy import deepcopy
     from datetime import date
@@ -68,5 +68,6 @@ def conclusion_from_report(report, artifacts, catalog, evidence=None):
     result=build_conclusion(answers,narrative,evidence,caveats,report.get('follow_up_questions') or [],forecasts=forecasts,
         chart_caveats=[c for ch in charts for c in ch.get('insight',{}).get('caveats',[])],
         unanswered=[c.get('goal') or c['requirement_id'] for c in coverage if c.get('state') not in {'RESOLVED',None}],
-        cadence_labels=catalog.registry.get('workspace',{}).get('forecast_cadence_labels',{}))
+        cadence_labels=catalog.registry.get('workspace',{}).get('forecast_cadence_labels',{}),
+        lens_facts=lens_findings(charts))
     return result,answers,bindings

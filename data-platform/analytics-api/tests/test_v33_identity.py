@@ -45,8 +45,15 @@ class CapabilityProjectionTests(unittest.TestCase):
         cls.caps = {k: metric_capability(k, v) for k, v in reg["metrics"].items()}
 
     def test_all_metrics_classified(self):
-        self.assertEqual(len(self.caps), 43)
+        # 43 public metrics + 9 compiler-only components (FINAL 2026-10-19); every one is classified.
+        self.assertEqual(len(self.caps), 52)
+        self.assertEqual(sum(not v.get("component_only") for v in self.reg["metrics"].values()), 43)
         self.assertTrue(all(c["semantics"] for c in self.caps.values()))
+        for owner, definition in self.reg["metrics"].items():
+            for part in (definition.get("components") or {}).values():
+                if part in self.reg["metrics"]:  # numerator/denominator/exposure share the owner's population
+                    self.assertEqual(self.reg["metrics"][part]["business_filters"], definition["business_filters"], (owner, part))
+                    self.assertEqual(self.reg["metrics"][part]["time_column"], definition["time_column"], (owner, part))
 
     def test_additivity_rules(self):
         from services.semantic_preflight_contract import additive_across as ok

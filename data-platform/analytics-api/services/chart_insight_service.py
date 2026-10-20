@@ -401,6 +401,27 @@ def compare_cards(charts, artifacts, catalog, mission_id):
 
 
 DERIVED_ANSWER_FEATURES = {"driver_delta", "driver_status", "pair_status"}
+LENS_ROLE_ORDER = {"core": 0, "diagnostic": 1, "extended": 2}
+
+
+def lens_findings(charts, limit=4):
+    """FINAL P4: one verified fact per analytical lens (core first), so the conclusion synthesizes the views the report
+    actually shows. Facts come from the deterministic chart insight of the full artifact; no new number is computed."""
+    out, seen = [], set()
+    ordered = sorted((c for c in charts if c.get("analysis_lens_id")),
+                     key=lambda c: (LENS_ROLE_ORDER.get(c.get("analysis_lens_role"), 3), c.get("id") or ""))
+    for chart in ordered:
+        insight = chart.get("insight") or {}
+        facts = insight.get("key_facts") or []
+        text = facts[0]["text"] if facts else insight.get("interpretation")
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        out.append({"statement": text, "evidence_id": None, "chart_id": chart.get("id"), "lens_id": chart.get("analysis_lens_id"),
+                    "lens_role": chart.get("analysis_lens_role"), "question": chart.get("analysis_lens_question")})
+        if len(out) >= limit:
+            break
+    return out
 
 
 def _forecast_sentences(forecasts, cadence_labels):
@@ -438,7 +459,7 @@ def _forecast_sentences(forecasts, cadence_labels):
 
 
 def build_conclusion(short_answer, narrative, evidence, caveats, follow_ups, forecasts=None, chart_caveats=(),
-                     unanswered=(), cadence_labels=None):
+                     unanswered=(), cadence_labels=None, lens_facts=()):
     """V3.3 conclusion artifact: (1) direct answer to ALL requested parts, (2) findings with typed references,
     (3) caveats from data/scope/period/method/forecast, (4) readable actions.
 
@@ -451,6 +472,8 @@ def build_conclusion(short_answer, narrative, evidence, caveats, follow_ups, for
     d_findings = [{"statement": e["statement"], "evidence_id": e["id"]} for e in derived][:3]
     findings = d_findings + [{"statement": f["finding"], "evidence_id": f["evidence_id"]}
                 for f in (narrative or {}).get("key_findings", []) if f.get("evidence_id") in known][:3] + f_findings[:3]
+    present = {f["statement"] for f in findings}
+    view_findings = [f for f in lens_facts if f["statement"] not in present]  # each bound to a verified chart, not evidence
     answers = list(dict.fromkeys([*(f["statement"] for f in d_findings), *f_answers, *(short_answer or [])]))
     if not answers and (narrative or {}).get("executive_summary"):
         answers = [narrative["executive_summary"]]
@@ -463,7 +486,9 @@ def build_conclusion(short_answer, narrative, evidence, caveats, follow_ups, for
             actions.append(text.strip())  # the readable sentence, never the action enum or a dict repr
     actions = list(dict.fromkeys(actions)) or [q for q in (follow_ups or []) if isinstance(q, str)]
     all_caveats = [*caveats, *chart_caveats, *f_caveats]
-    return {"version": "3.3", "answer": " ".join(answers), "answers": answers, "findings": findings,
+    synthesis = [*answers[:2], *(f["statement"] for f in lens_facts[:3])] if lens_facts else []
+    return {"version": "3.4" if lens_facts else "3.3", "answer": " ".join(answers), "answers": answers, "findings": findings,
+            **({"synthesis": synthesis, "view_findings": view_findings} if synthesis else {}),
             "caveats": list(dict.fromkeys(c for c in all_caveats if isinstance(c, str) and c.strip())),
             "actions": actions[:3],
             "evidence_ids": [f["evidence_id"] for f in findings if f.get("evidence_id")],

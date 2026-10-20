@@ -67,6 +67,7 @@ def plan_fingerprint(operations, coverage, catalog_fingerprint, policy_version=N
         return {k:v for k,v in op.items() if k not in {"id", "parent_id", "replaces", "changed_fields"}}
     requirements = [{"state": c["state"], "reason": c.get("reason"),
                      "features": c["derived_features"], **({"forecast": c["forecast"]} if c.get("forecast") else {}),
+                     **({"lenses": sorted(l["id"] for l in c["lenses"])} if c.get("lenses") else {}),
                      "operations": sorted((meaning(by_id[id]) for id in c["operation_ids"]), key=digest)} for c in coverage]
     unique={digest(r):r for r in requirements}
     body = [VERSION, catalog_fingerprint, [unique[k] for k in sorted(unique)]]
@@ -91,7 +92,7 @@ def previous_window(period):
 
 class CompatibilityIndex:
     def __init__(self, catalog):
-        manifest, _ = build_manifest(catalog, max_chars=2_000_000)
+        manifest, _ = build_manifest(catalog, max_chars=2_000_000, include_components=True)
         if not manifest['complete']:
             raise AnalysisError('domain_metadata_invalid','Complete compatibility index exceeds bounded server capacity')
         self.references = manifest_references(manifest)
@@ -135,6 +136,7 @@ class AnalyticalResolver:
     def __init__(self, catalog, reference, ui=None):
         self.catalog, self.reference, self.ui = catalog, reference, ui or {}
         self.index = compatibility_index(catalog)
+        self.lens_plan, self.lens_selected = None, {}  # FINAL P2: server lens plan of the last expansion
 
     def evaluate_capability(self, req):
         from services.semantic_preflight_contract import evaluate_capability
@@ -311,7 +313,11 @@ class AnalyticalResolver:
                                         for field in ('availability','reason')])
             return req, [], req.availability.upper(), req.reason, []
         issues = []
-        for field, ids, known in (("metric_ids",req.metric_ids,self.catalog.registry["metrics"]), ("dimension_ids",req.dimension_ids,self.catalog.registry["dimensions"]), ("filters",[f.dimension for f in req.filters],self.catalog.registry["dimensions"])):
+        # Component-only metrics (ratio numerators/denominators) are server evidence for supporting lenses; a
+        # requested meaning can never name them, so they never become an interpretable vocabulary.
+        metric_vocabulary = (self.catalog.registry["metrics"] if req.supporting_for else
+            {k: v for k, v in self.catalog.registry["metrics"].items() if not v.get("component_only")})
+        for field, ids, known in (("metric_ids",req.metric_ids,metric_vocabulary), ("dimension_ids",req.dimension_ids,self.catalog.registry["dimensions"]), ("filters",[f.dimension for f in req.filters],self.catalog.registry["dimensions"])):
             if any(id not in known for id in ids):
                 # Proposed IDs are diagnostics only; they never enter issue
                 # fingerprints, so renaming an unknown concept is not progress.
@@ -659,7 +665,8 @@ class AnalyticalResolver:
             baseline_ui={k:v for k,v in self.ui.items() if k!='server_supporting_expansion'}
             baseline=AnalyticalResolver(self.catalog,self.reference,baseline_ui).resolve(
                 AnalysisIntentEnvelope(decision='analyze',requirements=requested))
-            from services.analysis_expansion_service import supporting_candidates, dashboard_policy, estimated_views, mission_relevant
+            from services import analysis_expansion_service as expansion
+            from services.analysis_expansion_service import dashboard_policy, estimated_views, mission_relevant
             from services.analytical_capacity_planner import AnalyticalCapacityContract
             from services.semantic_tools import SemanticTools
             from services.analytical_tool_contract import canonicalize
@@ -671,49 +678,62 @@ class AnalyticalResolver:
                 return signature(query,period,self.catalog.fingerprint)
             signatures={identity(op) for op in baseline['operations']}
             selected=[]; added=0
-            planned_views=estimated_views(baseline['operations'],self.catalog)
-            policy=dashboard_policy(self.catalog,self.ui.get('server_supporting_expansion'))
-            target_views=policy['target_views']
+            depth=self.ui.get('server_supporting_expansion')
+            policy=dashboard_policy(self.catalog,depth)
             support_limit=policy.get('max_supporting_operations',6 if self.ui.get('minimum_visuals') else 3)
             parent_metrics={r.id:set(r.metric_ids) for r in requested}
             mission_id=self.ui.get('analysis_mission')
             capacity=min(8,AnalyticalCapacityContract.from_env().operations)
-            for candidate in supporting_candidates(self,baseline['intent'].requirements):
+            self.pending_lens_plan=None
+            shapes=expansion.supporting_candidates(self,baseline['intent'].requirements,estimated_views(baseline['operations'],self.catalog))
+            plan=self.pending_lens_plan or dict(version=None,depth=depth,targets={},shapes=list(shapes),lenses=[],decisions=[],family=None)
+            by_shape={}
+            for lens in plan['lenses']:
+                by_shape.setdefault(lens['shape'],[]).append(lens)
+            decisions=plan['decisions']
+            def refuse(candidate,reason):
+                for lens in by_shape.get(candidate.id,[]):
+                    decisions.append(dict(kind=lens['kind'],lens_id=lens['id'],role=lens['role'],status='rejected',reason=reason,requirement_id=lens['requirement_id']))
+            for candidate in shapes:
                 if ('executed_supporting_ids' in self.ui and
                     candidate.id not in self.ui['executed_supporting_ids']):
                     continue
                 if candidate.id in self.ui.get('omitted_supporting_ids',[]):
-                    continue
+                    refuse(candidate,'cost_budget'); continue
                 if len(requested)+len(selected)>=16 or added>=support_limit:
-                    break
+                    refuse(candidate,'cost_budget'); continue
                 if not mission_relevant(candidate,parent_metrics.get(candidate.supporting_for,set()),self.catalog,mission_id):
-                    continue
-                if planned_views>=target_views and 'scalar' not in candidate.derived_features:
-                    continue
+                    refuse(candidate,'mission_grammar'); continue
                 try:
                     req,ops,state,reason,features=self.resolve_requirement(candidate)
-                except (AnalysisError,ValueError,KeyError,TypeError):
-                    continue
+                except (AnalysisError,ValueError,KeyError,TypeError) as error:
+                    refuse(candidate,'unsupported_join' if isinstance(error,AnalysisError) and getattr(error,'category','')=='unsupported_join' else 'capability_blocked'); continue
                 parents=[o for c in baseline['coverage'] if c['requirement_id']==candidate.supporting_for
                          for o in baseline['operations'] if o['id'] in c['operation_ids']]
-                if state!='RESOLVED' or not ops or any(identity(o) in signatures for o in ops):
-                    continue
+                if state!='RESOLVED' or not ops:
+                    refuse(candidate,'unsupported_join' if state=='UNSUPPORTED' else 'capability_blocked'); continue
+                new_ops=[o for o in ops if identity(o) not in signatures]
+                if not new_ops:
+                    refuse(candidate,'duplicate_meaning'); continue
                 if not any(all(p['time']==o['time'] and p['filters']==o['filters'] and
                     tools.related_population(p['subject'],o['subject'],p['metrics'],o['metrics'],
                         allow_snapshot=o['time'].get('mode')=='all_time') for o in ops) for p in parents):
-                    continue
-                if added+len(ops)>support_limit or len(baseline['operations'])+added+len(ops)>capacity:
-                    continue
-                signatures.update(identity(o) for o in ops)
-                selected.append(req);added+=len(ops)
-                planned_views+=estimated_views(ops,self.catalog)
+                    refuse(candidate,'incompatible_population'); continue
+                if added+len(new_ops)>support_limit or len(baseline['operations'])+added+len(new_ops)>capacity:
+                    refuse(candidate,'cost_budget'); continue
+                signatures.update(identity(o) for o in new_ops)
+                selected.append(req);added+=len(new_ops)
+                self.lens_selected[req.id]=[dict(l) for l in by_shape.get(candidate.id,[])]
+            plan['decisions']=decisions
+            plan['selected']=sorted(l['id'] for ls in self.lens_selected.values() for l in ls)
+            self.lens_plan=plan
             intent=AnalysisIntentEnvelope(decision='analyze',requirements=requested+selected)
         normalized, operations, coverage, bindings, issues, seen = [], [], [], [], [], set()
         # Requested work always resolves first. Optional model-proposed views may
         # enrich the approved plan, but never substitute for a requested goal.
         ordered = sorted(intent.requirements, key=lambda r: bool(r.supporting_for))
         requested_ops = {}
-        support_count = 0
+        support_count, shared_aliases, executable = 0, {}, []
         from services.analysis_expansion_service import dashboard_policy as _policy
         support_limit=(_policy(self.catalog,self.ui.get('server_supporting_expansion')).get('max_supporting_operations')
             if self.ui.get('server_supporting_expansion') else None)
@@ -737,29 +757,37 @@ class AnalyticalResolver:
                     # deduplication before deciding whether a drilldown fits.
                     from services.analytical_tool_contract import canonicalize
                     from services.analytical_query_service import signature
-                    identities = set()
-                    for op in [*operations, *ops]:
+                    def ident(op):
                         query, _ = canonicalize(op, {}, {})
                         period = resolve_time(query.time.model_dump(mode='json'), self.reference, self.catalog.registry['timezone'])[2]
-                        identities.add((signature(query, period, self.catalog.fingerprint), op['role'], op.get('parent_id')))
-                    if state != 'RESOLVED' or not parent or not ops or support_count + len(ops) > support_limit or len(identities) > 8:
+                        return (signature(query, period, self.catalog.fingerprint), op['role'], op.get('parent_id'))
+                    # A supporting operation identical to an already planned one (e.g. the canonical whole-scope
+                    # total of a requested scalar) executes once and is shared, whatever its role label.
+                    existing = {ident(op)[0]: op['id'] for op in operations}
+                    shared = {op['id']: existing[ident(op)[0]] for op in ops if ident(op)[0] in existing}
+                    fresh_ops = [op for op in ops if op['id'] not in shared]
+                    identities = {ident(op)[0] for op in [*operations, *fresh_ops]}
+                    if state != 'RESOLVED' or not parent or not ops or support_count + len(fresh_ops) > support_limit or len(identities) > 8:
                         req = req.model_copy(update={'availability':'unsupported','reason':'definition_unavailable'})
                         ops, features, state, reason = [], [], 'UNSUPPORTED', 'definition_unavailable'
                     else:
-                        support_count += len(ops)
+                        support_count += len(fresh_ops)
+                        shared_aliases.update(shared)
+                        executable = fresh_ops
                 else:
                     requested_ops[req.id] = ops
                 key = digest(requirement_meaning(req,self.reference,self.catalog))
                 if (key,req.id) in seen:
                     continue
                 seen.add((key,req.id))
-                normalized.append(req); operations.extend(ops); bindings.extend(features)
+                normalized.append(req); operations.extend(ops if not raw.supporting_for or state != 'RESOLVED' else executable); bindings.extend(features)
                 coverage.append({"requirement_id":req.id,"state":state,"reason":reason,"operation_ids":[op["id"] for op in ops],
                                  "derived_features":req.derived_features,"goal":req.goal,"supporting_for":req.supporting_for,
                                  # View requirements are compiled BEFORE any query: what must be shown to answer this requirement.
                                  **({"views":[{**v.model_dump(mode="json"),"required":not raw.supporting_for}
                                               for v in self.evaluate_capability(req).views]} if state=="RESOLVED" and not req.forecast else {}),
-                                 **({"forecast":req.forecast.model_dump(mode="json")} if req.forecast and state=="RESOLVED" else {})})
+                                 **({"forecast":req.forecast.model_dump(mode="json")} if req.forecast and state=="RESOLVED" else {}),
+                                 **({"lenses":self.lens_selected[req.id]} if state=="RESOLVED" and self.lens_selected.get(req.id) else {})})
             except ResolutionIssues as error:
                 if raw.supporting_for:
                     req = raw.model_copy(update={'availability':'unsupported','reason':'definition_unavailable'})
@@ -798,6 +826,8 @@ class AnalyticalResolver:
             if key not in unique:
                 unique[key] = op
             aliases[op['id']] = unique[key]['id']
+        for dropped, kept in shared_aliases.items():
+            aliases[dropped] = aliases.get(kept, kept)
         operations = list(unique.values())
         for op in operations:
             if op.get('parent_id'):
@@ -842,7 +872,7 @@ class AnalyticalResolver:
                 "lens_id":None,"requested_or_supporting":"supporting" if next(r for r in normalized if r.id==c["requirement_id"]).supporting_for else "requested","operation_ids":c["operation_ids"],
                 "status":"planned" if c["state"]=="RESOLVED" else c["state"].lower(),"reason":c["reason"]})
         return {"intent":intent,"operations":operations,"coverage":coverage,"components":components,"feature_bindings":bindings,
-                "intent_fingerprint":intent_fingerprint(intent,self.reference,self.catalog),
+                "lens_plan":self.lens_plan,"intent_fingerprint":intent_fingerprint(intent,self.reference,self.catalog),
                 "plan_fingerprint":plan_fingerprint(operations,coverage,self.catalog.fingerprint,POLICY_VERSION),"resolver_version":VERSION}
 
 

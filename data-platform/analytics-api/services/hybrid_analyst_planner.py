@@ -731,10 +731,12 @@ class HybridAnalystPlanner(OneShotPlanner):
                     missing += verify_anchors(anchors,resolved["intent"].requirements,self.reference,self.catalog)
                     if missing:
                         raise ResolutionIssues(missing)
-                    from services.analysis_expansion_service import analysis_depth, dashboard_policy
-                    depth=analysis_depth(resolved['intent'],resolver.index,{**context,
+                    from services.analysis_expansion_service import depth_selection, dashboard_policy
+                    depth,origin=depth_selection(resolved['intent'],resolver.index,{**context,
                         'request_breadth':self.anchors.get('analysis_breadth'),
                         'narrow_top_n':dashboard_policy(self.catalog).get('narrow_top_n',5)})
+                    context['depth_selection_origin']=origin
+                    context['requested_depth']=context.get('analysis_depth') if context.get('analysis_depth_explicit') else None
                     context['minimum_visuals']=dashboard_policy(self.catalog,depth)['minimum_views']
                     context['server_supporting_expansion']=depth
                     resolved=resolver.resolve(resolved['intent'])
@@ -996,6 +998,8 @@ class HybridAnalystPlanner(OneShotPlanner):
                 supporting_operation_count=sum(a.query.role=='supporting' for a in prepared.values()),
                 omitted_supporting_operation_count=len(context.get('omitted_supporting_ids',[]))+sum(c['requested_or_supporting']=='supporting' and c['status']!='planned' for c in resolved['components']),
                 server_supporting_expansion=depth,minimum_visuals=context.get('minimum_visuals',0),omitted_supporting_ids=context.get('omitted_supporting_ids',[]),
+                requested_depth=context.get('requested_depth'),effective_depth=depth,depth_selection_origin=context.get('depth_selection_origin'),
+                lens_plan={k:v for k,v in (resolved.get('lens_plan') or {}).items() if k!='shapes'} or None,
                 agent_contract_status="valid",agent_contract_error=None,semantic_status="grounded",failure_stage=None,terminal_error=None,contract_issues=[])
             if any(c["status"]!="planned" and c["requested_or_supporting"]=="requested" for c in resolved["components"]) and not self.proposal:
                 raise AnalysisError("approval_required","Partial requirements need current explicit approval")

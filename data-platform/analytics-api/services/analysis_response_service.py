@@ -64,7 +64,11 @@ def restore_report_presentation(report, artifacts, catalog):
     hydrated = restore_artifacts(report, catalog)
     evidence = analytical_features(hydrated, catalog, report.get('derived_feature_bindings'), as_of=(report.get('quality_context') or {}).get('reference_date'))
     report['evidence'] = evidence[:c.evidence_preview]
-    dashboard=build_dashboard(hydrated, evidence, DashboardPlan.model_validate(report['dashboard_plan_input']), catalog=catalog)
+    from services.dashboard_planner_service import lens_context
+    depth = ((report.get('quality_context') or {}).get('ui_constraints') or {}).get('server_supporting_expansion') or report.get('analysis_breadth')
+    lenses, lens_groups, lens_targets = lens_context(report.get('resolved_requirement_coverage'), catalog, depth)
+    dashboard=build_dashboard(hydrated, evidence, DashboardPlan.model_validate(report['dashboard_plan_input']), catalog=catalog,
+                              lenses=lenses, min_groups=lens_groups, lens_targets=lens_targets)
     # Saved summaries retain verified view bindings/insights, but omit only data.
     # Rebuilding presentation must not drop those later pipeline annotations.
     rebuilt={chart['id']:chart for chart in dashboard['charts']}

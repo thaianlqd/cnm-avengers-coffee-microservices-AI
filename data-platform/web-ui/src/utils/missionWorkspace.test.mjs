@@ -91,7 +91,9 @@ test('scope is recognized from the question; depth options explain their budget'
   const depths = depthOptions(caps);
   assert.deepEqual(depths.map(x => x.id), ['focused', 'deep', 'comprehensive']);
   assert.ok(depths.every(x => x.description && x.description.length > 20));
-  assert.equal(depths[0].max_supporting_operations, 0);
+  // FINAL 2026-10-19: one governed policy — 4 core / +2 diagnostic / +2 extended views (focused also plans core lenses).
+  assert.deepEqual(depths.map(x => Object.values(x.view_targets).reduce((a, b) => a + b, 0)), [4, 6, 8]);
+  assert.ok(depths.every(x => /góc nhìn/.test(x.description)));
   assert.ok(depths[2].max_supporting_operations > depths[1].max_supporting_operations - 1);
   assert.ok(depths[2].max_segment_dimensions > depths[1].max_segment_dimensions);
 });

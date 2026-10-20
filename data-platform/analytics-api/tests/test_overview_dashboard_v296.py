@@ -79,7 +79,9 @@ class OverviewDashboardTests(f.unittest.TestCase):
         f.approve(request,proposal);report=p.generate(request)
         self.assertEqual(report['outcome'],'SUCCESS');self.assertEqual(p.provider.call_count,1)
         self.assertEqual(len(report['analytical_queries']),8)
-        self.assertGreaterEqual(len(report['charts']),6)
+        # FINAL 2026-10-19: tiny fixture; every planned lens is drawn or rejected with a typed data/capacity reason.
+        self.assertGreaterEqual(len(report['charts']),5)
+        self.assertTrue(all(o.get('reason') for o in report['dashboard_plan']['omitted_visuals'] if o.get('lens_id')))
         self.assertGreaterEqual(len({c['chart_type'] for c in report['charts']}),3)
         self.assertEqual(verify_saved_report(report,self.catalog),report['quality_assessment'])
         self.assertEqual(report['quality_assessment']['score'],90)

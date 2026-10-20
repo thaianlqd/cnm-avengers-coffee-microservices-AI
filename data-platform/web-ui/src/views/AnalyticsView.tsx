@@ -79,7 +79,6 @@ export const AnalyticsView: React.FC = () => {
   const [aiDomain, setAiDomain] = useState('auto');
   const [aiAnalysisDepth, setAiAnalysisDepth] = useState('deep');
   // V3.3: the default Deep is a display default; only an active user choice is sent (server keeps narrow requests focused).
-  const [aiDepthChosen, setAiDepthChosen] = useState(false);
   const [aiCapabilities, setAiCapabilities] = useState<any>(null);
   const [aiScope, setAiScope] = useState<any>(restoredDraft?.scope || { mode: 'auto', filters: [] });
   const [aiStart, setAiStart] = useState(restoredDraft?.start || '');
@@ -101,7 +100,7 @@ export const AnalyticsView: React.FC = () => {
     showToast(`Chế độ “${label(aiMission)}” đã được gộp vào “${label(mapped)}”; yêu cầu cũ vẫn chạy lại được.`, 'info');
     setAiMission(mapped); setAiGuided(null);
   }, [aiCapabilities, aiMission]);
-  const aiInput = (prompt: string) => ({ ...analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiDepthChosen ? aiAnalysisDepth : undefined, mission: aiMission }),
+  const aiInput = (prompt: string) => ({ ...analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission }),
     ...(activeModule ? {} : workspaceRequestFields(aiGuided, prompt)),
     ...sourceAnalysisPayload(aiSourceDraft,{question:prompt,guided:aiGuided,scope:aiScope,
       time:{mode:aiTimeRange,start:aiStart,end:aiEnd},moduleId:activeModule?.module_id}) });
@@ -110,7 +109,6 @@ export const AnalyticsView: React.FC = () => {
     setActiveModule(null); setAiPlan(null); setPendingClarification(null); setGeneratedReport(null);
     setAiPrompt(draft.question); setAiMission(draft.mission); setAiGuided(draft.guided);
     setAiScope(draft.scope); setAiTimeRange(draft.time.mode); setAiStart(draft.time.start); setAiEnd(draft.time.end);
-    setAiDepthChosen(false);
     setAiSourceDraft(draft);
     showToast('Yêu cầu mới đã giữ nhóm và kỳ báo cáo. Hãy kiểm tra phạm vi trước khi phân tích.', 'info');
   };
@@ -193,7 +191,7 @@ export const AnalyticsView: React.FC = () => {
     setActiveModule(null);
     setAiTimeRange('auto'); setAiStart(''); setAiEnd('');
     setAiScope({ mode: 'auto', filters: [] });
-    setAiAnalysisDepth('deep'); setAiDepthChosen(false);
+    setAiAnalysisDepth('deep');
     setIsProposingPlan(false); setIsRefining(false); refinementInFlight.current = false;
     setAiPlan(null);
     setGeneratedReport(null);
@@ -279,7 +277,7 @@ export const AnalyticsView: React.FC = () => {
       const record = JSON.parse(sessionStorage.getItem(accountJobStorageKey) || 'null');
       if (record?.key && record?.input) {
         if (record.input.analysis_scope) setAiScope(record.input.analysis_scope);
-        if (record.input.analysis_depth) { setAiAnalysisDepth(record.input.analysis_depth); setAiDepthChosen(true); }
+        if (record.input.analysis_depth) { setAiAnalysisDepth(record.input.analysis_depth); }
         setAiMission(record.input.analysis_mission || null);
         setAiTimeRange(record.input.time?.mode || 'auto');
         setAiStart(record.input.time?.start || ''); setAiEnd(record.input.time?.end || '');
@@ -2587,7 +2585,7 @@ export const AnalyticsView: React.FC = () => {
                   if ('prompt' in patch) { setAiPrompt(patch.prompt || ''); if (!patch.prompt) setAiPlan(null); }
                   if ('guided' in patch) setAiGuided(patch.guided ?? null);
                   if ('time' in patch) setAiTimeRange(patch.time || 'auto'); if ('start' in patch) setAiStart(patch.start || ''); if ('end' in patch) setAiEnd(patch.end || '');
-                  if ('scope' in patch) setAiScope(patch.scope); if ('depth' in patch) { setAiAnalysisDepth(patch.depth || 'deep'); setAiDepthChosen(true); }
+                  if ('scope' in patch) setAiScope(patch.scope); if ('depth' in patch) { setAiAnalysisDepth(patch.depth || 'deep'); }
                 }}
                 onSubmit={() => handleOneClick()} onPreview={() => handleProposePlan()}>
                 {/* Recent Questions Pill Bar */}

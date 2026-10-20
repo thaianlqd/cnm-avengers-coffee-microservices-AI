@@ -23,7 +23,8 @@ class FourthRunRegressions(f.unittest.TestCase):
         except f.AnalysisError as error:
             self.fail('proposal failed: %s' % error)
         reqs = proposal['diagnostics']['semantic_intent']['requirements']
-        self.assertEqual([m for r in reqs if r.get('availability') == 'requested' for m in r['metric_ids']], ['revenue'])
+        # Server lens views carry supporting_for; they are not user requirements (FINAL 2026-10-19).
+        self.assertEqual([m for r in reqs if r.get('availability') == 'requested' and not r.get('supporting_for') for m in r['metric_ids']], ['revenue'])
 
 
 import json

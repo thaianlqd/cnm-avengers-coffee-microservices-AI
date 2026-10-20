@@ -27,9 +27,11 @@ def char_limit(name, default, maximum):
         raise AnalysisError("context_configuration", "Invalid context allowance") from None
 
 
-def build_manifest(catalog, max_chars=None, subject_priority=()):
+def build_manifest(catalog, max_chars=None, subject_priority=(), include_components=False):
+    """`component_only` metrics (numerators/denominators/exposure of governed ratios and averages) exist for the
+    compiler and the server-side lens planner only; they are never offered to the interpreter or to the UI."""
     maximum = max_chars if max_chars is not None else char_limit("DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS", 14000, 20000)
-    key = (catalog.fingerprint, maximum, tuple(subject_priority))
+    key = (catalog.fingerprint, maximum, tuple(subject_priority), bool(include_components))
     with _lock:
         if key in _cache:
             _cache.move_to_end(key)
@@ -48,6 +50,8 @@ def build_manifest(catalog, max_chars=None, subject_priority=()):
         dtype = dimension_logical_type(id,d)
         dims[id] = [id, d["business_name"], dtype, d.get("value_grounding", {}).get("mode", "lookup")]
     for id, m in sorted(r["metrics"].items()):
+        if m.get("component_only") and not include_components:
+            continue
         try:
             if m["source"] not in catalog.tables:
                 continue

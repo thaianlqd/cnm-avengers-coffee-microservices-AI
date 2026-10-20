@@ -103,3 +103,12 @@ test('actionable issue renders known meaning, missing choice and explicit snapsh
   for (const text of ['Chưa có lịch sử', 'Giao hàng', 'Chưa có ngày thực hiện chuyến', 'Xem hiện trạng']) assert.ok(html.includes(text));
   assert.ok(!html.includes('group_by'));
 });
+
+test('FINAL P0: the depth badge the user sees is always the depth that is submitted (no silent server auto-pick)', () => {
+  const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
+  assert.ok(!source.includes('aiDepthChosen'), 'a "chosen" flag lets the default deep badge omit analysis_depth');
+  assert.ok(source.includes('depth: aiAnalysisDepth, mission: aiMission'));
+  for (const depth of ['focused', 'deep', 'comprehensive']) {
+    assert.equal(analysisInputPayload({ question: 'x', depth }).analysis_depth, depth);
+  }
+});

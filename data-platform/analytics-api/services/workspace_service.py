@@ -237,7 +237,7 @@ def mission_for(registry, value):
 
 
 FORM_OF = {"line": "line", "area": "line", "multi_line": "line", "bar": "bar", "horizontal_bar": "horizontal_bar",
-           "grouped_bar": "grouped_bar", "stacked_bar": "bar", "donut": "donut", "stacked_100": "stacked_100",
+           "grouped_bar": "grouped_bar", "stacked_bar": "bar", "donut": "donut", "stacked_100": "stacked_100", "pareto": "bar",
            "heatmap": "table", "scatter": "scatter", "table": "table"}
 
 

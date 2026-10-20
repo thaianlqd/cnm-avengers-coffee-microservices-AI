@@ -129,7 +129,7 @@ test('natural fields replace depth configuration and approval reuses submitted i
   const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
   // V3.1: question + time + scope + depth + optional mission; the overlapping
   // context/expectation fields were removed from the normal workflow.
-  assert.ok(source.includes('analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiDepthChosen ? aiAnalysisDepth : undefined, mission: aiMission })'));
+  assert.ok(source.includes('analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission })'));
   assert.ok(source.includes('body: JSON.stringify(submittedInput)'));
   assert.ok(source.includes('aiPlan?.submittedInput || aiInput(promptToSend)'));
   const form = readFileSync(new URL('../components/AnalysisInputForm.tsx', import.meta.url), 'utf8');

@@ -145,7 +145,8 @@ class GeographyTests(f.unittest.TestCase):
         p=self.pipeline(f.scripted(f.envelope(req)),executor=warehouse)
         request=self.request('Giá trị đơn trung bình',analysis_depth='focused')
         proposal=p.propose(request);f.approve(request,proposal);report=p.generate(request)
-        self.assertEqual(len(report['analytical_queries']),2)
+        # FINAL 2026-10-19: focused now adds core lenses; the requested grouped view + its canonical total stay exactly 2.
+        self.assertEqual(sum(q['role']=='requested' for q in report['analytical_queries']),2)
         scalar=[a for a in report['result_sets'].values() if a['rows'] and set(a['rows'][0])=={'aov'}]
         self.assertEqual(len(scalar),1)
         self.assertAlmostEqual(scalar[0]['rows'][0]['aov'],700/3,places=2)

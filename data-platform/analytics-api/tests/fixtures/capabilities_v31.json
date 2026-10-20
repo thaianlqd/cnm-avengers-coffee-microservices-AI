@@ -1,10 +1,10 @@
 {
   "status": "ready",
   "version": "3.0",
-  "fingerprint": "2f7ea31b519ce31e8c7d68c85135f1feb338a14654ed79cea8bdb83c88f00c05",
-  "semantic_fingerprint": "ed1ad678b1fc71b5c94ea0783c8fdab2c168840fb59d3b606503f7329ecfb9e8",
+  "fingerprint": "8d40f8bb0a5c2026951ffbb82afee396db822939d71fa8f9ffa600b5a801f600",
+  "semantic_fingerprint": "4c9ed877ff27af103cf2abc8e59921b5ebfebd740d66edf3e65757ebfee5dddc",
   "governance_contract_version": "3.4.0",
-  "registry_fingerprint": "eb184b6d30fcb4bbd5562826c9f33342d6ccb5efbd334ca6a067252d098d2f03",
+  "registry_fingerprint": "ac5315ce984e58a0ca22e31798bb1e72d9233c07d29ae494e40edd0d1c3dcf55",
   "domains": [
     {
       "id": "orders",
@@ -3688,28 +3688,43 @@
       "id": "focused",
       "label": "Tập trung",
       "minimum_views": 0,
-      "target_views": 2,
-      "max_supporting_operations": 0,
+      "target_views": 4,
+      "view_targets": {
+        "core": 4,
+        "diagnostic": 0,
+        "extended": 0
+      },
+      "max_supporting_operations": 5,
       "max_segment_dimensions": 0,
-      "description": "Tập trung: chỉ các góc nhìn trả lời trực tiếp câu hỏi."
+      "description": "Tập trung: tối đa 4 góc nhìn cốt lõi (diễn biến, cơ cấu, so sánh giữa các nhóm). Chỉ hiện góc nhìn có dữ liệu thật; thiếu dữ liệu sẽ được nêu rõ."
     },
     {
       "id": "deep",
       "label": "Phân tích sâu",
       "minimum_views": 0,
-      "target_views": 5,
+      "target_views": 6,
+      "view_targets": {
+        "core": 4,
+        "diagnostic": 2,
+        "extended": 0
+      },
       "max_supporting_operations": 6,
       "max_segment_dimensions": 1,
-      "description": "Phân tích sâu: thêm tối đa 6 góc nhìn hỗ trợ đúng phạm vi; tự tìm 1 chiều diễn biến liên quan; đối chiếu miền dữ liệu liên quan."
+      "description": "Phân tích sâu: tối đa 4 góc nhìn cốt lõi (diễn biến, cơ cấu, so sánh giữa các nhóm); thêm 2 góc nhìn chẩn đoán (tương tác hai chiều, quy mô so với tỷ lệ). Chỉ hiện góc nhìn có dữ liệu thật; thiếu dữ liệu sẽ được nêu rõ."
     },
     {
       "id": "comprehensive",
       "label": "Phân tích toàn diện",
       "minimum_views": 0,
       "target_views": 8,
-      "max_supporting_operations": 8,
+      "view_targets": {
+        "core": 4,
+        "diagnostic": 2,
+        "extended": 2
+      },
+      "max_supporting_operations": 7,
       "max_segment_dimensions": 3,
-      "description": "Phân tích toàn diện: thêm tối đa 8 góc nhìn hỗ trợ đúng phạm vi; tự tìm 3 chiều diễn biến liên quan; đối chiếu miền dữ liệu liên quan."
+      "description": "Phân tích toàn diện: tối đa 4 góc nhìn cốt lõi (diễn biến, cơ cấu, so sánh giữa các nhóm); thêm 2 góc nhìn chẩn đoán (tương tác hai chiều, quy mô so với tỷ lệ); thêm 2 góc nhìn mở rộng (diễn biến theo nhóm, mức đóng góp). Chỉ hiện góc nhìn có dữ liệu thật; thiếu dữ liệu sẽ được nêu rõ."
     }
   ],
   "time_presets": [
@@ -8110,6 +8125,22 @@
       {
         "value": "HOAN_THANH",
         "label": "Hoàn thành"
+      },
+      {
+        "value": "CHO_THANH_TOAN",
+        "label": "Chờ thanh toán"
+      },
+      {
+        "value": "DA_XAC_NHAN",
+        "label": "Đã xác nhận"
+      },
+      {
+        "value": "MOI_TAO",
+        "label": "Mới tạo"
+      },
+      {
+        "value": "DA_HUY",
+        "label": "Đã hủy"
       }
     ],
     "payment_method": [
@@ -8128,6 +8159,18 @@
       {
         "value": "VNPAY",
         "label": "VNPay"
+      },
+      {
+        "value": "TIEN_MAT",
+        "label": "Tiền mặt"
+      },
+      {
+        "value": "THE_NGAN_HANG",
+        "label": "Thẻ ngân hàng"
+      },
+      {
+        "value": "CHUYEN_KHOAN",
+        "label": "Chuyển khoản"
       }
     ],
     "payment_status": [
@@ -8144,6 +8187,32 @@
         "label": "Đã thanh toán"
       }
     ],
+    "attendance_status": [
+      {
+        "value": "DUNG_GIO",
+        "label": "Đúng giờ"
+      },
+      {
+        "value": "DI_TRE",
+        "label": "Đi trễ"
+      },
+      {
+        "value": "VE_SOM",
+        "label": "Về sớm"
+      },
+      {
+        "value": "VANG_MAT",
+        "label": "Vắng mặt"
+      },
+      {
+        "value": "ASSIGNED",
+        "label": "Đã phân ca"
+      },
+      {
+        "value": "NGHI_PHEP",
+        "label": "Nghỉ phép"
+      }
+    ],
     "order_type": [
       {
         "value": "DUNG_TAI_CHO",
@@ -8156,6 +8225,14 @@
       {
         "value": "MANG_DI",
         "label": "Mang đi"
+      },
+      {
+        "value": "TAI_CHO",
+        "label": "Tại chỗ"
+      },
+      {
+        "value": "LAY_TAI_QUAN",
+        "label": "Lấy tại quán"
       }
     ],
     "store_type": [
@@ -8170,6 +8247,36 @@
       {
         "value": "KIOSK_VE_TINH",
         "label": "Kiosk vệ tinh"
+      }
+    ],
+    "delivery_status": [
+      {
+        "value": "PENDING",
+        "label": "Chờ nhận"
+      },
+      {
+        "value": "CONFIRMED",
+        "label": "Đã xác nhận"
+      },
+      {
+        "value": "PICKING_UP",
+        "label": "Đang lấy hàng"
+      },
+      {
+        "value": "IN_TRANSIT",
+        "label": "Đang giao"
+      },
+      {
+        "value": "DELIVERED",
+        "label": "Giao thành công"
+      },
+      {
+        "value": "FAILED",
+        "label": "Giao thất bại"
+      },
+      {
+        "value": "CANCELLED",
+        "label": "Đã hủy"
       }
     ],
     "weekday": [

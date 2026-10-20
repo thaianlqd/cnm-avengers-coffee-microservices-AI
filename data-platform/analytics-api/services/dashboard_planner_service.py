@@ -26,6 +26,24 @@ def visible_dimensions(a):
     return [d for d in a.plan.dimensions if d not in identities]
 
 
+def pinned_by_scope(a, artifacts=None):
+    """Every visible grouping axis is fixed to ONE value by the query's own scope filter (e.g. "by city" with
+    city = X) AND the same value is already reported as a whole-scope KPI by a sibling result: a one-bar chart would
+    only restate the scope, so it is not drawn (FINAL §4.3). Without such a KPI the bar stays (never hide the answer)."""
+    plan = getattr(a, "plan", None)
+    if plan is None or not getattr(plan, "dimensions", None):
+        return False
+    visible = visible_dimensions(a)
+    def single(d):
+        return any(f.dimension == d and f.operator in {"eq", "in"} and len(set(map(str, f.value if isinstance(f.value, list) else [f.value]))) == 1
+                   for f in a.query.filters)
+    if not (visible and plan.kind in {"aggregate", "distribution", "ranking"} and all(single(d) for d in visible)):
+        return False
+    return any(b is not a and getattr(b, "plan", None) is not None and b.plan.kind == "aggregate" and not b.plan.dimensions
+               and b.query.filters == a.query.filters and b.grounded.period == a.grounded.period
+               and set(plan.metrics) <= set(b.plan.metrics) and b.result.get("rows") for b in (artifacts or {}).values())
+
+
 def category_fields(v, a):
     """A categorical bar represents each full returned tuple without regrouping."""
     return visible_dimensions(a) if v.chart_type in {'bar', 'horizontal_bar'} else [v.x_field]
@@ -52,18 +70,27 @@ def category_labeler(v, a, rows):
 
 
 def paired_aggregate(a):
-    """Complement volume comparisons with an average from the same entity rows."""
+    """Complement volume comparisons with an average from the same entity rows.
+
+    A governed ratio/average that declares its own exposure (``components``) pairs with THAT exposure, so the scatter
+    answers "is the rate high because the sample is small?" instead of pairing with an arbitrary count."""
     visible = visible_dimensions(a)
     if a.plan.kind != "aggregate" or a.plan.ranking or a.plan.explicit_limit or len(visible) != 1:
         return None
     totals = [m for m in a.plan.metrics if a.grounded.metrics[m].get("additive")]
     averages = [m for m in a.plan.metrics if a.grounded.metrics[m].get("aggregation_semantics") in NON_ADDITIVE_SEMANTICS]
-    return [totals[0], averages[0]] if totals and averages else None
+    if not (totals and averages):
+        return None
+    components = a.grounded.metrics[averages[0]].get("components") or {}
+    exposure = components.get("denominator_metric") or components.get("exposure_metric")
+    return [exposure if exposure in totals else totals[0], averages[0]]
 
 
-def defaults(artifacts, include_composition=False):
+def defaults(artifacts, include_composition=False, skip=()):
     visuals = []
     for id, a in artifacts.items():
+        if id in skip or pinned_by_scope(a, artifacts):
+            continue
         visible = visible_dimensions(a)
         if a.query.operation == "relationship" and len(a.plan.metrics) == 2:
             candidate = DashboardVisual(query_id=id, chart_type="scatter", metrics=a.plan.metrics, x_field=a.plan.metrics[0], role=a.query.role, priority=80, purpose="relationship")
@@ -147,7 +174,7 @@ def defaults(artifacts, include_composition=False):
         # complete additive cohort; never infer a composition from Top N rows.
         for id,a in artifacts.items():
             visible=visible_dimensions(a)
-            if a.plan.kind!='aggregate' or a.plan.ranking or a.plan.explicit_limit or len(visible)!=1 or a.result.get('truncated'):
+            if id in skip or a.plan.kind!='aggregate' or a.plan.ranking or a.plan.explicit_limit or len(visible)!=1 or a.result.get('truncated'):
                 continue
             for metric in a.plan.metrics:
                 v=DashboardVisual(query_id=id,chart_type='donut',metrics=[metric],x_field=visible[0],
@@ -155,7 +182,8 @@ def defaults(artifacts, include_composition=False):
                 if chart_reason(v,a,100,16) is None:
                     visuals.append(v)
     for id, a in artifacts.items():
-        pair = paired_aggregate(a)
+        # A requested relationship already has its scatter; the swapped-axes pairing would be the same view twice.
+        pair = None if id in skip or a.query.operation == "relationship" else paired_aggregate(a)
         if pair:
             candidate = DashboardVisual(query_id=id, chart_type="scatter", metrics=pair, x_field=pair[0], role=a.query.role, priority=60, purpose="relationship")
             if chart_reason(candidate, a, 100, 16) in (None, 'chart_point_budget'):
@@ -166,6 +194,7 @@ def defaults(artifacts, include_composition=False):
         if a.plan.kind == "aggregate"
         and not a.plan.dimensions
         and len(a.result["rows"]) == 1
+        and a.query.id not in skip
     ]
     for index, a in enumerate(scalar):
         for b in scalar[index + 1 :]:
@@ -181,6 +210,116 @@ def defaults(artifacts, include_composition=False):
                 if comparison_reason(v, artifacts) is None:
                     visuals.append(v)
     return visuals
+
+
+# ------------------------------------------------------------------------------------------ analytical lenses (FINAL P3)
+ROLE_RANK = {"core": 0, "diagnostic": 1, "extended": 2}
+LENS_PRIORITY = {"core": 90, "diagnostic": 80, "extended": 70}
+LENS_PURPOSE = {"line": "trend", "multi_line": "trend", "stacked_100": "distribution", "bars": "comparison", "donut": "distribution",
+                "heatmap": "comparison", "scatter": "relationship"}
+
+
+def lens_index(coverage):
+    """``{lens_id: dict(spec, operation_ids)}`` from the server-owned resolved coverage (empty for legacy plans)."""
+    found = {}
+    for entry in coverage or []:
+        for lens in entry.get("lenses") or []:
+            found.setdefault(lens["id"], {**lens, "operation_ids": list(entry.get("operation_ids", []))})
+    return found
+
+
+def lens_context(coverage, catalog, depth=None):
+    """Planned lenses (empty for legacy plans), the governed minimum-group rules and the role targets of ``depth``."""
+    from services.analysis_expansion_service import lens_policy, view_targets
+    if depth is None:
+        return lens_index(coverage), lens_policy(catalog).get("min_groups", {})
+    return lens_index(coverage), lens_policy(catalog).get("min_groups", {}), view_targets(catalog, depth)
+
+
+def lens_artifact(lens, artifacts):
+    kind, axes = {"cross_tab": "heatmap"}.get(lens["shape_key"][0], lens["shape_key"][0]), list(lens["shape_key"][1])  # compiler names a cross-tab plan "heatmap"
+    for query_id in lens["operation_ids"]:
+        a = artifacts.get(query_id)
+        if a and a.plan.kind == kind and sorted(visible_dimensions(a)) == sorted(axes) and lens_metrics(lens) <= set(a.plan.metrics):
+            return a
+    return None
+
+
+def lens_metrics(lens):
+    return {m for spec in lens["show"] for m in spec["metrics"]}
+
+
+def lens_visual(lens, spec, a):
+    """Concrete chart for one lens `show` spec on its executed artifact; ``None`` when the shape cannot draw it."""
+    form, metrics, visible = spec["form"], list(spec["metrics"]), visible_dimensions(a)
+    meta = a.grounded.metrics
+    if not set(metrics) <= set(a.plan.metrics):
+        return None
+    fields = dict(query_id=a.query.id, metrics=metrics, role=a.query.role, priority=LENS_PRIORITY[lens["role"]],
+                  purpose=LENS_PURPOSE[form], analysis_lens_id=lens["id"], analysis_lens_role=lens["role"])
+    if form == "line":
+        additive = meta[metrics[0]].get("additive") and meta[metrics[0]].get("non_negative")
+        return DashboardVisual(chart_type="area" if additive else "line", x_field="period", **fields)
+    if form == "multi_line" and len(visible) == 1:
+        return DashboardVisual(chart_type="multi_line", x_field="period", series_field=visible[0], **fields)
+    if form == "stacked_100" and len(visible) == 1 and a.plan.kind == "trend":
+        return DashboardVisual(chart_type="stacked_100", x_field="period", series_field=visible[0], **fields)
+    if form == "bars" and len(visible) == 1:
+        wide = any(len(str(r.get(visible[0]))) > 18 for r in a.result["rows"]) or len(a.result["rows"]) > 8
+        return DashboardVisual(chart_type="horizontal_bar" if wide else "bar", x_field=visible[0], **fields)
+    if form == "donut" and len(visible) == 1:
+        # Many groups (e.g. hundreds of branches): a share ranking with cumulative share (Pareto) stays readable and keeps
+        # the complete total; a donut would collapse almost everything into "Khác". Same artifact, same numbers.
+        many = len(a.result["rows"]) > 8 and lens.get("kind") == "contribution"
+        return DashboardVisual(chart_type="pareto" if many else "donut", x_field=visible[0], **fields)
+    if form == "heatmap" and len(visible) == 2:
+        return DashboardVisual(chart_type="heatmap", x_field=visible[0], series_field=visible[1], **fields)
+    if form == "scatter" and len(visible) == 1 and len(metrics) == 2:
+        return DashboardVisual(chart_type="scatter", x_field=metrics[0], **fields)
+    return None
+
+
+def lens_reason(lens, spec, a, min_groups):
+    """Post-execution eligibility of one lens view from the ACTUAL artifact (never from the planning estimate)."""
+    rows, form = a.result["rows"], spec["form"]
+    if not rows:
+        return "no_rows"
+    if form in {"line", "multi_line", "stacked_100"}:
+        if len({str(r.get("period"))[:10] for r in rows}) < min_groups.get("trend", 2):
+            return "insufficient_periods"
+        if form in {"multi_line", "stacked_100"} and len({tuple(r.get(d) for d in visible_dimensions(a)) for r in rows}) < min_groups.get("segmented_trend", 2):
+            return "singleton"
+    elif form in {"bars", "donut"}:
+        if len(rows) < min_groups.get("segment" if form == "bars" else "composition", 2):
+            return "singleton"
+    elif form == "heatmap":
+        x, y = visible_dimensions(a)
+        if len({r.get(x) for r in rows}) < 2 or len({r.get(y) for r in rows}) < 2 or len(rows) < min_groups.get("cross_tab", 4):
+            return "singleton"
+    elif form == "scatter":
+        if len(rows) < min_groups.get("exposure_rate", 3):
+            return "insufficient_groups"
+    return None
+
+
+def lens_visuals(artifacts, lenses, min_groups):
+    """Visuals for every planned lens (priority order) plus typed rejections for lenses that cannot be drawn."""
+    visuals, rejected = [], []
+    for lens in sorted(lenses.values(), key=lambda l: tuple(l["rank"])):
+        a = lens_artifact(lens, artifacts)
+        if a is None:
+            rejected.append(dict(query_id=(lens["operation_ids"] or [None])[0], lens_id=lens["id"], lens_role=lens["role"],
+                                 chart_type=None, role="supporting", priority=0, reason="source_unavailable"))
+            continue
+        for spec in lens["show"]:
+            reason = lens_reason(lens, spec, a, min_groups)
+            visual = None if reason else lens_visual(lens, spec, a)
+            if visual is None:
+                rejected.append(dict(query_id=a.query.id, lens_id=lens["id"], lens_role=lens["role"], chart_type=None, role=a.query.role,
+                                     priority=0, reason=reason or "renderer_unsupported"))
+            else:
+                visuals.append(visual)
+    return visuals, rejected
 
 
 def comparison_reason(v, artifacts):
@@ -258,7 +397,7 @@ def chart_reason(v, a, max_categories, max_series):
     if v.chart_type == "table":
         return None
     from services.analytical_capacity_planner import AnalyticalCapacityContract
-    displayed_rows = min(len(rows), max_categories) if category_preview(v, a, max_categories) else len(rows)
+    displayed_rows = min(len(rows), max_categories) if category_preview(v, a, max_categories) else min(len(rows), 20) if v.chart_type == "pareto" else len(rows)
     if displayed_rows*(1 if v.chart_type=='scatter' else max(1,len(v.metrics))) > AnalyticalCapacityContract.from_env().chart_points:
         return 'chart_point_budget'
     if not v.metrics or not set(v.metrics) <= set(p.metrics):
@@ -278,7 +417,8 @@ def chart_reason(v, a, max_categories, max_series):
     if len(units) > 1 and v.chart_type != "scatter":
         return "mixed_units_require_linked_views"
     category = category_labeler(v, a, rows)
-    if len({category(r) for r in rows}) > max_categories and v.chart_type not in {"donut", "scatter"} and not category_preview(v, a, max_categories):
+    categories = len({str(r.get("period")) for r in rows}) if v.x_field == "period" else len({category(r) for r in rows})
+    if categories > max_categories and v.chart_type not in {"donut", "scatter", "pareto"} and not category_preview(v, a, max_categories):
         return "category_budget"
     visible = visible_dimensions(a)
     if v.chart_type in ("line", "area", "multi_line"):
@@ -306,6 +446,21 @@ def chart_reason(v, a, max_categories, max_series):
             return "requires_paired_observations"
         if any(len({r[m] for r in rows}) < 2 for m in v.metrics):
             return "constant_observations"
+    elif v.chart_type == "pareto":
+        meta = a.grounded.metrics[v.metrics[0]]
+        if (len(visible) != 1 or v.x_field != visible[0] or v.series_field or len(v.metrics) != 1 or p.kind != "aggregate"
+                or p.ranking or p.explicit_limit or a.result.get("truncated") or not meta.get("additive")):
+            return "invalid_part_to_whole"
+        if len(rows) < 2 or any(r[v.metrics[0]] < 0 for r in rows) or sum(r[v.metrics[0]] for r in rows) <= 0:
+            return "invalid_part_to_whole"
+        return None
+    elif v.chart_type == "stacked_100" and p.kind == "trend":
+        if (len(visible) != 1 or v.x_field != "period" or v.series_field != visible[0] or len(v.metrics) != 1
+                or [str(r["period"]) for r in rows] != sorted(str(r["period"]) for r in rows)):
+            return "requires_partition_series"
+        meta = a.grounded.metrics[v.metrics[0]]
+        if p.explicit_limit or not meta.get("additive") or any(r[v.metrics[0]] < 0 for r in rows):
+            return "invalid_part_to_whole"
     elif v.chart_type in ("heatmap", "stacked_bar", "stacked_100"):
         if (
             len(visible) != 2
@@ -396,6 +551,7 @@ def render(v, a, index, max_categories=100):
         "area": "Xu hướng",
         "multi_line": "Đa đường",
         "donut": "Cơ cấu",
+        "pareto": "Pareto (đóng góp lũy kế)",
     }[v.chart_type]
     output["x_label"] = (
         "Thời gian"
@@ -416,7 +572,7 @@ def render(v, a, index, max_categories=100):
         a.plan.time_column, a.plan.period, a.plan.granularity, a.plan.ranking.model_dump(mode="json") if a.plan.ranking else None,
         a.plan.row_limit, a.plan.explicit_limit, v.x_field, v.series_field,
         category_fields(v, a),
-        "share" if v.chart_type in {"donut", "stacked_100"} else "raw",
+        "share" if v.chart_type in {"donut", "stacked_100"} else "pareto" if v.chart_type == "pareto" else "raw",
     ]
     output["semantic_view_key"] = hashlib.sha256(json.dumps(identity, sort_keys=True, default=str).encode()).hexdigest()
     output["series_label"] = a.grounded.dimensions.get(v.series_field, {}).get(
@@ -446,7 +602,7 @@ def render(v, a, index, max_categories=100):
             output["title"] += ", chia theo " + axes
     elif axes:
         output["title"] += " theo " + axes
-    if v.chart_type in ("donut", "stacked_100") and not output["title"].startswith("Tỷ trọng"):
+    if v.chart_type in ("donut", "stacked_100", "pareto") and not output["title"].startswith("Tỷ trọng"):
         output["title"] = "Tỷ trọng " + output["title"][:1].lower() + output["title"][1:]
     output["title"] += " — " + population_label(a)
     output.update(selection="Top N" if a.plan.ranking else "limited" if a.plan.explicit_limit else "complete", layout="wide" if v.chart_type in ("line", "area", "multi_line", "heatmap", "scatter") else "standard")
@@ -483,6 +639,17 @@ def render(v, a, index, max_categories=100):
             y_label=a.grounded.metrics[v.metrics[1]]["business_name"],
             y_unit=a.grounded.metrics[v.metrics[1]]["unit"],
         )
+    elif v.chart_type == "pareto":
+        total = sum(r[metric] for r in rows)
+        ordered = sorted(rows, key=lambda r: (-r[metric], category(r)))
+        running, data = 0.0, []
+        for r in ordered[:20]:
+            running += r[metric]
+            data.append({"label": category(r), "value": r[metric] / total * 100, "amount": r[metric],
+                         "cumulative_pct": running / total * 100})
+        output.update(data=data, unit="%", numerator_unit=meta["unit"], population_count=len(rows), displayed_count=len(data),
+                      selection="complete" if len(data) == len(rows) else "display_subset",
+                      denominator_note="Tỷ trọng = giá trị nhóm / tổng của toàn bộ nhóm trong phạm vi × 100; lũy kế theo thứ tự giảm dần.")
     elif v.chart_type == "heatmap":
         output["data"] = [
             {"x": display(r,v.x_field), "y": display(r,v.series_field), "value": r[metric]}
@@ -553,10 +720,18 @@ def render(v, a, index, max_categories=100):
 
 
 def build_dashboard(
-    artifacts, evidence, plan=None, max_charts=8, max_categories=100, max_series=16, catalog=None, minimum_visuals=0
+    artifacts, evidence, plan=None, max_charts=8, max_categories=100, max_series=16, catalog=None, minimum_visuals=0,
+    lenses=None, min_groups=None, lens_targets=None
 ):
-    proposals = list(plan.visuals) if plan and plan.visuals else defaults(artifacts,include_composition=bool(minimum_visuals))
-    if plan and plan.visuals:
+    # Lens-governed (supporting) artifacts show ONLY what their planned lens declares; every other returned measure
+    # stays in the validated result table instead of becoming a chart of its own (component evidence, not padding).
+    lenses = lenses or {}
+    governed = {q for lens in lenses.values() for q in lens["operation_ids"]
+                if q in artifacts and artifacts[q].query.role == "supporting"}
+    lens_proposals, lens_rejected = lens_visuals(artifacts, lenses, min_groups or {}) if lenses else ([], [])
+    plan_visuals = [v for v in (plan.visuals if plan and plan.visuals else []) if not (lenses and (v.analysis_lens_id or v.query_id in governed))]
+    proposals = plan_visuals if plan_visuals else defaults(artifacts, include_composition=bool(minimum_visuals), skip=governed)
+    if plan_visuals:
         represented = {
             (v.query_id, m) for v in proposals for m in v.metrics
             if v.query_id in artifacts and (
@@ -567,10 +742,11 @@ def build_dashboard(
         table_only = {v.query_id for v in proposals if v.chart_type == "table"}
         proposals += [
             v
-            for v in defaults(artifacts,include_composition=bool(minimum_visuals))
+            for v in defaults(artifacts,include_composition=bool(minimum_visuals), skip=governed)
             if v.query_id not in table_only
             and any((v.query_id, m) not in represented for m in v.metrics)
         ]
+    proposals += lens_proposals
     charts = []
     from services.derived_chart_service import contribution_charts, pair_charts, driver_charts
     derived_views = contribution_charts(artifacts, evidence) + pair_charts(artifacts, evidence) + driver_charts(artifacts, evidence)
@@ -579,6 +755,8 @@ def build_dashboard(
     seen = {}
     covered = set()
     tables = []
+    omitted += lens_rejected
+    lens_rank = {l["id"]: (ROLE_RANK[l["role"]], l["rank"][1]) for l in lenses.values()}
     # A model cannot demote a requested source by claiming its chart is supporting.
     proposals = sorted(
         proposals,
@@ -588,6 +766,7 @@ def build_dashboard(
                 for id in [v.query_id, *v.compare_query_ids]
                 if id in artifacts
             ),
+            lens_rank.get(v.analysis_lens_id, (-1, -1)),
             {"ranking": 0, "aggregate": 1, "trend": 2, "distribution": 3,
              "cross_tab": 3, "relationship": 4, "detail": 5}.get(
                 artifacts[v.query_id].query.operation if v.query_id in artifacts else "", 6),
@@ -620,6 +799,10 @@ def build_dashboard(
             tables.append({"query_id": a.query.id, "role": a.query.role})
             continue
         preview = render(v, a, len(charts), max_categories) if not reason and not v.compare_query_ids else None
+        if preview and v.analysis_lens_id:
+            lens = lenses.get(v.analysis_lens_id) or {}
+            preview.update(analysis_lens_id=v.analysis_lens_id, analysis_lens_role=v.analysis_lens_role,
+                           analysis_lens_kind=lens.get("kind"), analysis_lens_question=lens.get("question"))
         key = ("physical_view", preview["semantic_view_key"]) if preview else (
             (
                 a.signature,
@@ -637,6 +820,13 @@ def build_dashboard(
             existing["scope_refs"] = list(dict.fromkeys([*existing.get("scope_refs", [existing["scope_ref"]]), v.query_id, *v.compare_query_ids]))
             covered.update((a.query.id, m) for m in v.metrics)
             reason = "duplicate_semantic_view"
+        # A reserve lens is drawn only while its role is still short after the primary lenses (one selection pass).
+        if not reason and v.analysis_lens_id and (lenses.get(v.analysis_lens_id) or {}).get("reserve"):
+            role = v.analysis_lens_role
+            have = sum(1 for c in charts if c.get("analysis_lens_role") == role) + (
+                sum(1 for c in charts if not c.get("analysis_lens_id") and c.get("role") == "requested") if role == "core" else 0)
+            if have >= (lens_targets or {}).get(role, 0):
+                reason = "reserve_not_needed"
         # Optional drilldowns cannot consume slots reserved for requested shares.
         chart_limit = max_charts - requested_derived if a and a.query.role == 'supporting' else max_charts
         if not reason and len(charts) >= chart_limit:
@@ -683,6 +873,7 @@ def build_dashboard(
                     "role": a.query.role if a else v.role,
                     "priority": v.priority,
                     "reason": reason,
+                    **({"lens_id": v.analysis_lens_id, "lens_role": v.analysis_lens_role} if v.analysis_lens_id else {}),
                 }
             )
         else:
@@ -712,6 +903,8 @@ def build_dashboard(
     for e in evidence:
         if ids and e["id"] not in ids:
             continue
+        if e.get("scope_ref") in governed and e.get("feature") != "scalar":
+            continue  # a supporting lens's local share/change is chart evidence, never a headline KPI
         field = {
             "scalar": "value",
             "top_gap": "gap",

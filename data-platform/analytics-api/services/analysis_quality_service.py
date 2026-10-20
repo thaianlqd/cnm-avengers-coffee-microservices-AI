@@ -245,6 +245,7 @@ def assess_report(report, catalog, *, artifacts=None):
         return not_scored()
     if context.get('catalog_fingerprint') != catalog.fingerprint:
         return not_scored('Danh mục đã thay đổi; cần chạy lại để kiểm chứng theo phiên bản hiện tại.')
+    breadth_plan, breadth = {}, None
     try:
         artifacts = artifacts or restore_artifacts(report, catalog)
         if not artifacts:
@@ -291,6 +292,7 @@ def assess_report(report, catalog, *, artifacts=None):
                 return not_scored('Thông tin kế hoạch hoặc SQL lưu không khớp compiler hiện tại.')
             if not verify_operation_bindings(resolved['operations'], artifacts):
                 return not_scored('Phép phân tích không khớp kế hoạch đã được máy chủ xác minh.')
+            breadth_plan = resolved.get('lens_plan') or {}
     except (ValueError, KeyError, TypeError):
         return not_scored('Ngữ nghĩa hoặc metadata báo cáo chưa vượt qua kiểm chứng.')
     canonical = {e['id']: e for e in analytical_features(artifacts, catalog, report.get('derived_feature_bindings'), as_of=(report.get('quality_context') or {}).get('reference_date'))}
@@ -350,7 +352,9 @@ def assess_report(report, catalog, *, artifacts=None):
         claims += [report['conclusion']==expected_conclusion, report.get('short_answer')==expected_answers,
                    report.get('answer_requirements')==expected_bindings]
     charts = chart_checks(report.get('charts', []), artifacts, list(canonical.values()))
-    applicable = [(id,m) for id,a in artifacts.items() if a.query.role == 'requested' and (a.plan.dimensions or a.plan.kind == 'trend') and a.plan.kind != 'detail' for m in a.plan.metrics]
+    from services.dashboard_planner_service import pinned_by_scope
+    applicable = [(id,m) for id,a in artifacts.items() if a.query.role == 'requested' and (a.plan.dimensions or a.plan.kind == 'trend')
+                  and a.plan.kind != 'detail' and not pinned_by_scope(a, artifacts) for m in a.plan.metrics]  # a scope-fixed grouping is a KPI
     capacity_tables = {v['query_id'] for v in report.get('dashboard_plan',{}).get('omitted_visuals',[])
                        if v['reason'] in {'chart_point_budget','chart_payload_budget','category_budget','series_budget'}}
     table_pairs = {(t['query_id'],m) for t in report.get('dashboard_plan',{}).get('tables',[]) for m in t.get('metrics',[])
@@ -449,6 +453,12 @@ def assess_report(report, catalog, *, artifacts=None):
             for v in required:
                 if v['status']!='satisfied':
                     unverified.append(item('missing_view:'+v['requirement_id'],f"Thiếu {v['kind']}: {v['reason']}"))
+        breadth = breadth_check(report, artifacts, catalog, charts, breadth_plan)
+        if breadth:
+            breadth = dict(id='analysis_breadth_coverage', label='Độ bao phủ góc nhìn', passed=breadth[0], total=breadth[1],
+                           summary=breadth[2], status=breadth[3] or ('passed' if breadth[0] >= breadth[1] else 'partial'))
+            if breadth['status'] in {'partial', 'failed'}:
+                unverified.append(item('analysis_breadth', breadth['summary']))
         if report.get('capacity'):
             from services.result_artifact_store import fingerprint
             population = []
@@ -474,20 +484,67 @@ def assess_report(report, catalog, *, artifacts=None):
                 check('provenance_completeness','Nguồn gốc kết quả',sum(provenance_checks),len(provenance_checks),
                       'Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập.')])
         unverified.append(item('independent_accuracy','Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.'))
-    complete = cap==100 and all(c['status'] in {'passed','not_applicable'} for c in measurements)
+    complete = cap==100 and all(c['status'] in {'passed','not_applicable'} for c in measurements) and not (
+        breadth and breadth['status'] in {'partial', 'failed'})
     scored = {}
     if hybrid:
         from services.verification_score import verification_score
         scored = verification_score(measurements)
         from services.verification_score import trust_dimensions
         scored['trust_dimensions'] = trust_dimensions(measurements)
-    return AnalysisQualityAssessment(**scored, **({} if hybrid else {'score':score}),
+    return AnalysisQualityAssessment(**scored, **({} if hybrid else {'score':score}), analysis_breadth=breadth,
         grade=('good' if complete else 'partial') if hybrid else 'excellent' if score>=90 else 'good' if score>=75 else 'partial' if score>=50 else 'needs_attention',
         status='verified' if complete else 'partially_verified', components=[] if hybrid else breakdown,
         measurement_mode='evidence_checks' if hybrid else 'legacy_weighted_checks',verification_checks=measurements,
         completed=completed_items, missing=missing_items, unverified=unverified,
         limitations=[item(f['id'],f['label'],f['scope_ref']) for f in facts], suggested_next_actions=actions,
         coverage=dict(requested_count=len(requested), completed_count=len(done), supporting_count=sum(c['requested_or_supporting']=='supporting' and c['status']=='planned' for c in components), omitted_count=len(missing))).model_dump(mode='json')
+
+
+def breadth_check(report, artifacts, catalog, chart_results, lens_plan):
+    """FINAL P3: recompute analytical breadth independently of the stored ``analysis_coverage``.
+
+    Lens eligibility is re-derived from the restored artifacts (a deleted chart cannot hide behind a stored
+    "no data" reason); only verified charts count. Returns ``(passed, total, summary, status_override)`` or None for
+    legacy (not lens-governed) reports, which stay "not evaluated" instead of failing.
+    """
+    from services.dashboard_planner_service import lens_context, lens_visuals
+    from services.view_requirement_service import analysis_coverage, CAPACITY_LIMIT
+    from services.analysis_expansion_service import view_targets, lens_policy
+    coverage = report.get('resolved_requirement_coverage') or []
+    stored = report.get('analysis_coverage')
+    lenses, groups = lens_context(coverage, catalog)
+    if not lenses and stored is None:
+        return None
+    ui = (report.get('quality_context') or {}).get('ui_constraints') or {}
+    depth = ui.get('server_supporting_expansion')
+    visuals, rejected = lens_visuals(artifacts, lenses, groups)
+    # The production chart grammar (e.g. constant scatter, invalid part-to-whole) is re-applied here too.
+    for v in visuals:
+        reason = chart_reason(v, artifacts[v.query_id], 100, 16) or (
+            None if render(v, artifacts[v.query_id], 0) is not None else 'invalid_composition_total')
+        if reason:
+            rejected.append(dict(lens_id=v.analysis_lens_id, reason=reason))
+    omitted = [dict(lens_id=r['lens_id'], reason=r['reason']) for r in rejected] + [
+        dict(lens_id=o.get('lens_id'), reason=o.get('reason')) for o in (report.get('dashboard_plan') or {}).get('omitted_visuals', [])
+        if o.get('lens_id') and o.get('reason') in CAPACITY_LIMIT]
+    charts = [c for c, r in zip(report.get('charts', []), chart_results) if r.get('valid')]
+    recomputed = analysis_coverage(coverage, charts, omitted, view_targets(catalog, depth), lens_decisions=lens_plan.get('decisions', []),
+                                   depth=depth, origin=ui.get('depth_selection_origin'), family=lens_plan.get('family'),
+                                   policy_version=lens_policy(catalog).get('version'), forecasts=report.get('forecasts') or [])
+    if recomputed is None:
+        return None
+    keys = ('status', 'gap_kind', 'counted', 'targets', 'rendered_total', 'target_total')
+    if not stored or any(stored.get(k) != recomputed.get(k) for k in keys) or [
+            (l['id'], l['status']) for l in stored.get('lenses', [])] != [(l['id'], l['status']) for l in recomputed['lenses']]:
+        return (0, recomputed['target_total'], 'Độ bao phủ góc nhìn đã lưu không khớp kết quả tính lại từ dữ liệu; cần chạy lại phân tích.', 'failed')
+    passed, total = recomputed['rendered_total'], recomputed['target_total']
+    if recomputed['status'] == 'complete':
+        return (passed, total, recomputed['summary'] + '.', None)
+    if recomputed['status'] == 'limited':
+        # Honest data/source/capacity limits do not make the numbers wrong; they are disclosed, not scored as failure.
+        return (passed, total, recomputed['summary'] + '.', 'not_applicable')
+    return (passed, total, recomputed['summary'] + '.', 'partial')
 
 
 def verify_saved_report(report, catalog):

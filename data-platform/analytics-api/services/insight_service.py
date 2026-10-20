@@ -315,7 +315,7 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                             "gap": largest[1] - smallest[1],
                             "observed_groups": len(pairs),
                         },
-                        f"Trong {len(pairs)} nhóm quan sát đã trả về, {label.lower()} cao nhất ở {entity(largest)} ({fmt(largest[1])} {unit}), thấp nhất ở {entity(smallest)} ({fmt(smallest[1])} {unit}); chênh lệch là {fmt(largest[1]-smallest[1])} {unit}.",
+                        f"Trong {len(pairs)} nhóm quan sát đã trả về, {label.lower()} cao nhất ở {entity(largest)} ({fmt(largest[1])} {unit}), thấp nhất ở {entity(smallest)} ({fmt(smallest[1])} {unit}); chênh lệch là {fmt(largest[1]-smallest[1])} {'điểm %' if unit == '%' else unit}.",
                         partition,
                     )
                 if (

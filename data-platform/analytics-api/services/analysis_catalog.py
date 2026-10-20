@@ -7,6 +7,7 @@ import re
 import unicodedata
 from collections import deque
 from copy import deepcopy
+from functools import lru_cache
 from datetime import datetime, date, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -64,6 +65,13 @@ def resolve_period(scope, today=None):
 
 
 def referenced_columns(expression):
+    # Pure function of the governed expression text; parsing dominated report latency once lens plans compile several
+    # views per report (FINAL P7 profiling), so the parse result is memoized. Callers receive a fresh list.
+    return list(_referenced_columns(expression))
+
+
+@lru_cache(maxsize=4096)
+def _referenced_columns(expression):
     tree = sqlglot.parse_one(expression, read="postgres")
     refs = []
     for col in tree.find_all(exp.Column):
@@ -72,7 +80,7 @@ def referenced_columns(expression):
                 "metadata", "Registry expressions require fully qualified columns"
             )
         refs.append((col.db + "." + col.table, col.name))
-    return refs
+    return tuple(refs)
 
 
 class AnalysisCatalog:

@@ -78,5 +78,7 @@ class AnalysisQualityAssessment(Contract):
     score_breakdown: list[ScorePart] = Field(default_factory=list)
     accuracy_assessment: AccuracyAssessment = Field(default_factory=AccuracyAssessment)
     trust_dimensions: list[dict] = Field(default_factory=list, description='Separate, never-blended trust dimensions (V3.3).')
+    # FINAL P3: analytical breadth recomputed from artifacts; separate from numeric correctness, never scored into it.
+    analysis_breadth: Optional[dict] = None
     confidence_probability: Optional[float] = Field(default=None, ge=0, le=1)
     confidence_reason: str = 'Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy.'

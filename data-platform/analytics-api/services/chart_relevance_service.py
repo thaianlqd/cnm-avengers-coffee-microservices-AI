@@ -7,6 +7,8 @@ mapping or outside the mission's governed evidence (e.g. product revenue in
 Risk Watch), and applies the depth budget to SUPPORTING charts only.
 """
 
+# Legacy plans (no lens coverage) keep the historical supporting budget; lens-governed plans are bounded by the lens
+# policy instead (core/diagnostic/extended view targets), never by this number.
 SUPPORTING_CHART_BUDGET = {"focused": 0, "deep": 4, "comprehensive": 6}
 
 
@@ -70,7 +72,7 @@ def grammar_decisions(charts, artifacts, mission, mapping):
                 drop[i] = "outside_mission_grammar"
         elif form not in supporting_forms:
             drop[i] = "outside_mission_grammar"
-        elif form != "table":
+        elif form != "table" and not chart.get("analysis_lens_id"):
             per_form[form] = per_form.get(form, 0) + 1
             if per_form[form] > cap:
                 drop[i] = "outside_mission_grammar"
@@ -86,6 +88,7 @@ def apply(dashboard, artifacts, catalog, *, mission_id=None, depth="deep", cover
     for e in evidence:
         evidence_by_scope.setdefault(e.get("scope_ref"), []).append(e.get("id"))
     kept, dropped, supporting = [], [], 0
+    lens_governed = any(c.get("lenses") for c in coverage or [])
     budget = SUPPORTING_CHART_BUDGET.get(depth or "deep", 3)
     mission = next((m for m in catalog.registry.get("analysis_missions", []) if m["id"] == mission_id), None)
     grammar = grammar_decisions(dashboard.get("charts", []), artifacts, mission, mapping) if mission and mission_id != "risk_watch" else {}
@@ -103,7 +106,9 @@ def apply(dashboard, artifacts, catalog, *, mission_id=None, depth="deep", cover
             reason = "no_requirement_mapping"
         elif allowed_metrics is not None and not set(metrics) <= allowed_metrics:
             reason = "outside_mission_evidence"
-        elif role == "supporting" and supporting >= budget:
+        elif role == "supporting" and lens_governed and not chart.get("analysis_lens_id"):
+            reason = "no_lens_binding"
+        elif role == "supporting" and not lens_governed and supporting >= budget:
             reason = "depth_budget"
         if reason:
             dropped.append({"chart_id": chart.get("id"), "title": chart.get("title"), "reason": reason, "query_id": query_id})
@@ -113,7 +118,7 @@ def apply(dashboard, artifacts, catalog, *, mission_id=None, depth="deep", cover
         dims = [d for d in (artifact.plan.dimensions or []) if d in catalog.registry["dimensions"]]
         chart.update(requirement_id=requirement, mission=mission_id, metric_ids=metrics, dimension_ids=dims,
                      query_id=query_id, relevance_role="primary" if role == "requested" else "supporting",
-                     requirement_goal=goals.get(requirement) or chart.get("purpose"))
+                     requirement_goal=chart.get("analysis_lens_question") or goals.get(requirement) or chart.get("purpose"))
         # Derived charts already carry verified evidence references; never rewrite them.
         chart.setdefault("evidence_refs", [r for q in refs for r in evidence_by_scope.get(q, [])][:20])
         signal = next((x for x in catalog.registry.get("risk_signals", []) if x["metric"] == chart.get("metric")), None)
@@ -141,7 +146,7 @@ def apply(dashboard, artifacts, catalog, *, mission_id=None, depth="deep", cover
     plan["requested_chart_count"] = sum(c["relevance_role"] == "primary" for c in kept)
     plan["supporting_chart_count"] = sum(c["relevance_role"] == "supporting" for c in kept)
     dashboard["dashboard_plan"] = plan
-    return {"version": "3.2", "mission": mission_id, "depth": depth, "supporting_chart_budget": budget,
+    return {"version": "4.0" if lens_governed else "3.2", "mission": mission_id, "depth": depth, "supporting_chart_budget": budget,
             "admitted": len(kept), "dropped": dropped,
             "dropped_irrelevant_charts": sum(d["reason"] not in {"depth_budget", "duplicate_view"} for d in dropped),
             "requirements": sorted({c["requirement_id"] for c in kept})}
