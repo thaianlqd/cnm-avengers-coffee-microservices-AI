@@ -20,9 +20,13 @@ ENV VITE_FACEBOOK_APP_ID=${VITE_FACEBOOK_APP_ID}
 
 COPY package*.json ./
 RUN npm ci
+RUN sha256sum package-lock.json | cut -d ' ' -f 1 > node_modules/.avengers-package-lock-sha256
 
 COPY . .
+COPY dev-entrypoint.sh /usr/local/bin/avengers-web-dev-entrypoint
+RUN chmod +x /usr/local/bin/avengers-web-dev-entrypoint
 RUN npm run build
+ENTRYPOINT ["/usr/local/bin/avengers-web-dev-entrypoint"]
 
 FROM nginx:1.27-alpine AS runner
 WORKDIR /usr/share/nginx/html

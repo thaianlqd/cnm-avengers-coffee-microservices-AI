@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { customerSessionExpired, clearCustomerActivity } from './idleSession';
 import { isGuestSessionId } from './guestSession';
 import { createPublicReadCache } from './publicReadCache';
 
@@ -22,6 +23,13 @@ apiClient.interceptors.request.use((config) => {
     return config;
   }
   const token = window.localStorage.getItem('token');
+  if (token && customerSessionExpired()) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    clearCustomerActivity();
+    window.dispatchEvent(new CustomEvent('auth:expired'));
+    return Promise.reject(new axios.CanceledError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'));
+  }
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;

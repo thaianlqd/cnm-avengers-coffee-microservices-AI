@@ -1,18 +1,20 @@
 import { nativeTileUrl, detailedNativeStyle } from '../../../shared-ui/nativeBasemap'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import React, { useState, useEffect, useRef } from 'react'
-import { View, StyleSheet, TouchableOpacity, Text,  Linking, Platform, Alert, ScrollView, Modal, Image, Animated, useWindowDimensions } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Text, Linking, Platform, Alert, ScrollView, Modal, Image, Animated, useWindowDimensions, PanResponder } from 'react-native'
 import * as Location from 'expo-location'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
 import { JourneyProgress, JourneyPin } from '../../../shared-ui/JourneyOverlay'
-import { journeyProgress, measuredRouteSummary } from '../../../web-customer/src/components/deliveryMapPresentation'
+import { journeyProgress, measuredRouteSummary } from '../../../web-customer/src/components/map/deliveryMapPresentation'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 import { useShipper, globalState } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { formatBranchFullTitle, formatBranchAddress, setGlobalBranchList } from '../lib/branchHelper'
+import { deliveryStatusLabels } from '../lib/shipperData'
 import { openGoogleMapsNavigation } from '../lib/navigationHelper'
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../lib/backgroundLocationManager'
+import { uploadProofImage } from '../lib/imageStorage'
 
 let MapView, Marker, Polyline, UrlTile
 if (Platform.OS !== 'web') {
@@ -39,7 +41,7 @@ if (Platform.OS !== 'web') {
   }
 }
 
-const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION === 'true'
+const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION !== 'false'
 const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
 const tileUrl = nativeTileUrl(process.env.EXPO_PUBLIC_VIETMAP_TILE_KEY);
 
@@ -99,7 +101,57 @@ export function MapScreen({ route, navigation }) {
   const { shipper } = useShipper()
   const [expanded, setExpanded] = useState(false)
   const nativeMap = useRef(null)
+  const insets = useSafeAreaInsets()
   const { height: windowHeight } = useWindowDimensions()
+  const minPanelHeight = Math.max(240, Math.round(windowHeight * 0.32))
+  const maxPanelHeight = Math.max(minPanelHeight, windowHeight - (insets.top || 44) - 78)
+  const currentPanelHeight = useRef(minPanelHeight)
+  const dragStartHeight = useRef(minPanelHeight)
+  const panelHeightAnim = useRef(new Animated.Value(minPanelHeight)).current
+
+  const togglePanel = () => {
+    const isTall = currentPanelHeight.current > (minPanelHeight + maxPanelHeight) / 2
+    const toValue = isTall ? minPanelHeight : maxPanelHeight
+    currentPanelHeight.current = toValue
+    setExpanded(!isTall)
+    Animated.spring(panelHeightAnim, {
+      toValue,
+      friction: 8,
+      tension: 65,
+      useNativeDriver: false,
+    }).start()
+  }
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 4,
+      onPanResponderGrant: () => {
+        dragStartHeight.current = currentPanelHeight.current
+      },
+      onPanResponderMove: (_, gestureState) => {
+        const nextH = Math.min(maxPanelHeight, Math.max(minPanelHeight, dragStartHeight.current - gestureState.dy))
+        panelHeightAnim.setValue(nextH)
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const nextH = Math.min(maxPanelHeight, Math.max(minPanelHeight, dragStartHeight.current - gestureState.dy))
+        currentPanelHeight.current = nextH
+        setExpanded(nextH > (minPanelHeight + maxPanelHeight) / 2)
+        panelHeightAnim.setValue(nextH)
+      },
+    })
+  ).current
+
+  const navPillOpacity = panelHeightAnim.interpolate({
+    inputRange: [minPanelHeight, minPanelHeight + 45],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  })
+  const navPillTranslateY = panelHeightAnim.interpolate({
+    inputRange: [minPanelHeight, minPanelHeight + 45],
+    outputRange: [0, -12],
+    extrapolate: 'clamp',
+  })
   const [location, setLocation] = useState(null)
   const [errorMsg, setErrorMsg] = useState(null)
   const [distance, setDistance] = useState(null)
@@ -456,11 +508,12 @@ export function MapScreen({ route, navigation }) {
     }
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
-        base64: false,
+        quality: 0.5,
+        base64: true,
         skipProcessing: false,
       })
-      setPodImage(photo.uri)
+      const finalUri = photo.base64 ? `data:image/jpeg;base64,${photo.base64}` : photo.uri
+      setPodImage(finalUri)
       setPodStep('preview')
     } catch (err) {
       Alert.alert('Lỗi camera', 'Không thể chụp ảnh. Thử lại.')
@@ -479,10 +532,11 @@ export function MapScreen({ route, navigation }) {
     setIsSubmitting(true);
     setPodStep('submitting');
     try {
+      const uploadedProofUrl = await uploadProofImage(podImage);
       await apiClient.post(`/shippers/${shipper.id}/deliveries/${delivery.id}/complete`, {
         latitude: location?.coords?.latitude || destLat,
         longitude: location?.coords?.longitude || destLng,
-        proof_image_url: podImage,
+        proof_image_url: uploadedProofUrl,
         proof_metadata: {
           timestamp: watermarkTime,
           gps_lat: formatCoord(location?.coords?.latitude || destLat),
@@ -603,24 +657,34 @@ export function MapScreen({ route, navigation }) {
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
-            <Text style={styles.headerTitle}>Bản đồ điều hướng</Text>
-            <Text style={styles.headerSub}>
-              #{(delivery?.ma_don_hang || delivery?.id || '').slice(0, 8).toUpperCase()}
-            </Text>
+            <Text style={styles.headerTitle}>#{delivery?.ma_don_hang?.slice(0, 8) || 'Đơn hàng'}</Text>
+            <View style={styles.headerStatusPill}>
+              <View style={styles.headerStatusDot} />
+              <Text style={styles.headerStatusText}>
+                {deliveryStatusLabels[delivery?.status] || 'Đang giao'}
+              </Text>
+            </View>
           </View>
           <TouchableOpacity
             style={styles.headerRightBtn}
-            onPress={() => {
-              if (delivery?.customer_phone) callCustomer();
-              else openExternalNav();
-            }}
+            onPress={openExternalNav}
+            accessibilityLabel="Chỉ đường"
           >
-            <Ionicons name="call-outline" size={20} color={colors.primary} />
+            <Ionicons name="navigate-outline" size={20} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
         {currentStepText ? (
-          <View style={styles.navInstructionPill}>
+          <Animated.View
+            style={[
+              styles.navInstructionPill,
+              {
+                opacity: navPillOpacity,
+                transform: [{ translateY: navPillTranslateY }],
+              },
+            ]}
+            pointerEvents={expanded ? 'none' : 'auto'}
+          >
             <Ionicons name="navigate-circle" size={18} color="#38BDF8" style={{ marginRight: 6 }} />
             <Text style={styles.navInstructionPillText} numberOfLines={1}>
               {currentStepText}
@@ -630,48 +694,70 @@ export function MapScreen({ route, navigation }) {
                 • {distance.toFixed(1)} km
               </Text>
             )}
-          </View>
+          </Animated.View>
         ) : null}
       </SafeAreaView>
 
-      <ScrollView style={[styles.footerPanel,{ maxHeight:expanded ? '54%' : '34%' }]} contentContainerStyle={{ paddingBottom: spacing.xxl + 24 }} showsVerticalScrollIndicator={false}>
-        {/* THANH CHỈ DẪN ĐIỀU HƯỚNG CHI TIẾT (ĐƯỢC ĐƯA XUỐNG DƯỚI) */}
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={expanded ? 'Thu gọn chi tiết chuyến' : 'Mở rộng chi tiết chuyến'} onPress={() => setExpanded(value => !value)} style={{ paddingBottom:12 }}><View style={{ alignSelf:'center',width:40,height:4,borderRadius:8,backgroundColor:'#d4deeb',marginBottom:12 }} /><View style={{ flexDirection:'row',gap:8,alignItems:'center' }}><Text style={{ flex:1,fontSize:13,fontWeight:'700',color:'#b12637' }}>{journeyProgress(delivery?.status,Boolean(location)).label}</Text><Ionicons name={expanded ? 'chevron-down' : 'chevron-up'} size={19} color="#8798ac" /></View></TouchableOpacity>
-        <JourneyProgress step={journeyProgress(delivery?.status,Boolean(location)).step} />
-        {currentStepText ? (
-          <View style={styles.navInstructionCard}>
-            <View style={styles.navInstructionIconWrap}>
-              <Ionicons name="navigate" size={22} color="#fff" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.navInstructionTitle}>{currentStepText}</Text>
-              {etaText ? (
-                <Text style={styles.navInstructionSub}>{etaText} • Cách {distance?.toFixed(1)} km</Text>
-              ) : null}
-            </View>
-          </View>
-        ) : null}
+      <Animated.View style={[styles.footerPanel, { height: panelHeightAnim }]}>
+        <View {...panResponder.panHandlers} style={styles.sheetHandleArea}>
+          <View style={styles.sheetHandleBar} />
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={expanded ? 'Thu gọn chi tiết chuyến' : 'Mở rộng chi tiết chuyến'}
+            onPress={togglePanel}
+            style={styles.sheetHeaderRow}
+          >
+            <Text style={styles.sheetHeaderTitle}>
+              {journeyProgress(delivery?.status, Boolean(location)).label}
+            </Text>
+            <Ionicons name={expanded ? 'chevron-down' : 'chevron-up'} size={20} color="#8798ac" />
+          </TouchableOpacity>
+        </View>
 
-        {/* CỤM NÚT ĐIỀU KHIỂN MÔ PHỎNG & TRẠNG THÁI (ĐƯỢC ĐƯA XUỐNG DƯỚI) */}
-        <View style={styles.controlSection}>
-          <Text style={styles.controlSectionTitle}>Điều hướng chuyến giao</Text>
-          {simulationEnabled && (<View style={styles.demoButtonsGrid}>
-            <TouchableOpacity
-              style={[styles.simBtn, { backgroundColor: '#2563EB' }]}
-              onPress={() => simulateMovement(storeLat, storeLng)}
-            >
-              <Ionicons name="storefront-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
-              <Text style={styles.simBtnText}>Mô phỏng tới Quán</Text>
-            </TouchableOpacity>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: spacing.xxl + 32 }}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          bounces={true}
+        >
+          <JourneyProgress step={journeyProgress(delivery?.status, Boolean(location)).step} />
+          {currentStepText ? (
+            <View style={styles.navInstructionCard}>
+              <View style={styles.navInstructionIconWrap}>
+                <Ionicons name="navigate" size={22} color="#fff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.navInstructionTitle}>{currentStepText}</Text>
+                {etaText ? (
+                  <Text style={styles.navInstructionSub}>{etaText} • Cách {distance?.toFixed(1)} km</Text>
+                ) : null}
+              </View>
+            </View>
+          ) : null}
 
-            <TouchableOpacity
-              style={[styles.simBtn, { backgroundColor: '#7C3AED' }]}
-              onPress={() => simulateMovement(destLat, destLng)}
-            >
-              <Ionicons name="person-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
-              <Text style={styles.simBtnText}>Mô phỏng tới Khách</Text>
-            </TouchableOpacity>
-          </View>)}
+          {/* Cụm nút điều khiển mô phỏng và trạng thái */}
+          <View style={styles.controlSection}>
+            <Text style={styles.controlSectionTitle}>Điều hướng chuyến giao</Text>
+            {simulationEnabled && (
+              <View style={styles.demoButtonsGrid}>
+                <TouchableOpacity
+                  style={[styles.simBtn, { backgroundColor: '#2563EB' }]}
+                  onPress={() => simulateMovement(storeLat, storeLng)}
+                >
+                  <Ionicons name="storefront-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                  <Text style={styles.simBtnText}>Mô phỏng tới quán</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.simBtn, { backgroundColor: '#7C3AED' }]}
+                  onPress={() => simulateMovement(destLat, destLng)}
+                >
+                  <Ionicons name="person-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                  <Text style={styles.simBtnText}>Mô phỏng tới khách</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
           {/* Nút hành động đơn hàng */}
           <View style={{ marginTop: 8 }}>
@@ -829,20 +915,21 @@ export function MapScreen({ route, navigation }) {
 
         {errorMsg && <Text style={styles.errText}>{errorMsg}</Text>}
 
-        {/* HÀNG NÚT DƯỚI CÙNG (NÚT MỞ GOOGLE MAPS XANH DƯƠNG THÂN THIỆN) */}
+        {/* Hàng nút dưới cùng matching Mockup Screen 3 */}
         <View style={styles.actionBtns}>
-          <TouchableOpacity style={[styles.fab, { flex: 1, backgroundColor: '#2563EB', marginRight: 8 }]} onPress={openExternalNav}>
-            <Ionicons name="map-outline" size={20} color="#fff" />
-            <Text style={styles.fabText}>Mở Google Maps</Text>
+          <TouchableOpacity style={[styles.fab, { flex: 1, backgroundColor: colors.primary, marginRight: 8 }]} onPress={openExternalNav}>
+            <Ionicons name="navigate-outline" size={20} color="#fff" />
+            <Text style={styles.fabText}>Chỉ đường</Text>
           </TouchableOpacity>
           {delivery?.customer_phone && (
-            <TouchableOpacity style={[styles.fab, { backgroundColor: colors.success, paddingHorizontal: 16 }]} onPress={callCustomer}>
-              <Ionicons name="call" size={20} color="#fff" style={{ marginRight: 6 }} />
-              <Text style={styles.fabText}>Gọi Khách</Text>
+            <TouchableOpacity style={[styles.fab, { backgroundColor: '#f1f5f9', paddingHorizontal: 16 }]} onPress={callCustomer}>
+              <Ionicons name="call" size={18} color={colors.text} style={{ marginRight: 6 }} />
+              <Text style={[styles.fabText, { color: colors.text }]}>Gọi khách</Text>
             </TouchableOpacity>
           )}
         </View>
       </ScrollView>
+    </Animated.View>
 
       <Modal visible={podStep !== 'idle'} transparent animationType="fade" statusBarTranslucent onRequestClose={closePodModal}>
         <View style={styles.podOverlay}>
@@ -897,14 +984,24 @@ export function MapScreen({ route, navigation }) {
 
                 <View style={styles.podCameraActions}>
                   {CameraView && cameraPermission?.granted ? (
-                    <TouchableOpacity style={styles.captureBtn} onPress={handleTakePhoto}>
-                      <View style={styles.captureInner} />
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+                      <TouchableOpacity style={styles.captureBtn} onPress={handleTakePhoto}>
+                        <View style={styles.captureInner} />
+                      </TouchableOpacity>
+                      {simulationEnabled && (
+                        <TouchableOpacity style={[styles.demoPhotoBtn, { paddingHorizontal: 14 }]} onPress={handleDemoPhoto}>
+                          <Ionicons name="images-outline" size={18} color="#fff" />
+                          <Text style={styles.demoPhotoBtnText}>Ảnh demo (kiểm thử)</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   ) : (
-                    (simulationEnabled ? (<TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
-                      <Ionicons name="images-outline" size={20} color="#fff" />
-                      <Text style={styles.demoPhotoBtnText}>Ảnh Demo (Test)</Text>
-                    </TouchableOpacity>) : null)
+                    (simulationEnabled ? (
+                      <TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
+                        <Ionicons name="images-outline" size={20} color="#fff" />
+                        <Text style={styles.demoPhotoBtnText}>Ảnh demo (kiểm thử)</Text>
+                      </TouchableOpacity>
+                    ) : null)
                   )}
                 </View>
               </>
@@ -1026,8 +1123,10 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
   headerInfo: { alignItems: 'center', flex: 1 },
-  headerTitle: { ...typography.bodyBold, color: colors.text, fontSize: 15 },
-  headerSub: { ...typography.caption, color: colors.primary, fontWeight: '700', fontSize: 11 },
+  headerTitle: { ...typography.bodyBold, color: colors.text, fontSize: 14 },
+  headerStatusPill: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, backgroundColor: '#f0fdf4' },
+  headerStatusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success },
+  headerStatusText: { fontSize: 10, fontWeight: '700', color: colors.success },
   headerRightBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' },
 
   navInstructionPill: {
@@ -1046,11 +1145,38 @@ const styles = StyleSheet.create({
 
   footerPanel: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    maxHeight: '54%',
-    backgroundColor: colors.surface, paddingHorizontal: spacing.md, paddingTop: spacing.md,
-    borderTopLeftRadius: 22, borderTopRightRadius: 22,
+    backgroundColor: colors.surface, paddingHorizontal: spacing.md, paddingTop: 4,
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
     ...shadows.lg,
-    borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)',
+    borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)',
+    overflow: 'hidden',
+    zIndex: 40,
+  },
+  sheetHandleArea: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    alignItems: 'center',
+  },
+  sheetHandleBar: {
+    width: 44,
+    height: 5,
+    borderRadius: 8,
+    backgroundColor: '#cbd5e1',
+    marginBottom: 8,
+  },
+  sheetHeaderRow: {
+    flexDirection: 'row',
+    width: '100%',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 2,
+    paddingBottom: 4,
+  },
+  sheetHeaderTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#b12637',
   },
 
   navInstructionCard: {

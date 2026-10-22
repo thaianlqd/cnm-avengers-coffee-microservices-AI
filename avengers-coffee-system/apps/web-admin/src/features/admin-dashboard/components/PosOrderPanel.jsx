@@ -1,3 +1,5 @@
+import SearchableSelect from '../../../components/console/SearchableSelect'
+import CurrencyInput from '../../../components/console/CurrencyInput'
 import React, { useState, useEffect } from 'react'
 import {
   Monitor,
@@ -17,7 +19,7 @@ import {
   Clock,
   ArrowRight,
   Sparkles
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 import { POS_ORDER_TYPE_OPTIONS, POS_PAYMENT_OPTIONS, ORDER_STATUS_LABEL } from '../constants'
 import { fmtMoney, normalizeViText, paymentTag } from '../utils'
 
@@ -73,12 +75,12 @@ export function PosOrderPanel({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem 1.5rem' }}>
       
       {/* HEADER TITLE */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e4df', paddingBottom: '1rem' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Monitor size={22} color="var(--primary)" /> {isKioskStaff ? 'POS Tạo Đơn Nhanh Mang Đi' : 'POS Tạo Đơn Nhanh Tại Quầy'}
           </h1>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: '#64748b' }}>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: '#69736a' }}>
             {isKioskStaff
               ? 'Tạo đơn nhanh cho khách mang đi (Takeaway), tự động tính tiền thối và in hóa đơn tức thì.'
               : 'Tạo đơn trực tiếp cho khách dùng tại chỗ hoặc mang đi, tự động tính tiền thối và in hóa đơn tức thì.'}
@@ -87,7 +89,7 @@ export function PosOrderPanel({
       </div>
 
       {(isKioskStaff || isStaff) && !activeKioskShift && (
-        <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+        <div style={{ backgroundColor: "#f4f5f2", border: '1px solid #fecaca', borderRadius: '12px', padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
           <AlertCircle size={24} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
           <div style={{ flex: 1 }}>
             <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: '700', color: '#991b1b' }}>Chưa mở ca làm việc</h3>
@@ -97,11 +99,10 @@ export function PosOrderPanel({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', width: '200px' }}>
                 <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#991b1b' }}>Tiền mặt đầu ca (VNĐ)</label>
-                <input 
-                  type="number" 
+                <CurrencyInput 
                   value={openShiftCash === 0 ? '' : openShiftCash} 
                   onChange={(e) => setOpenShiftCash(Number(e.target.value) || 0)} 
-                  placeholder="VD: 500000" 
+                  placeholder="VD: 500.000" 
                   style={{ height: '36px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #fca5a5', backgroundColor: '#fff', outline: 'none', fontSize: '0.8125rem' }} 
                 />
               </div>
@@ -128,7 +129,7 @@ export function PosOrderPanel({
         </div>
       )}
       {(isKioskStaff || isStaff) && activeKioskShift && (
-        <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ backgroundColor: "#f4f5f2", border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <Clock size={24} color="#2563eb" style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: '700', color: '#1e40af' }}>Ca làm việc hiện tại</h3>
@@ -145,11 +146,11 @@ export function PosOrderPanel({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
         
         {/* LEFT COLUMN: FORM & ITEMS SELECTION */}
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           
           {/* Order Type & Payment Method Switches */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.04em' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#69736a', letterSpacing: '0.04em' }}>
               Loại đơn &amp; Hình thức thanh toán:
             </span>
 
@@ -169,9 +170,9 @@ export function PosOrderPanel({
                       borderRadius: '8px',
                       fontSize: '0.8125rem',
                       fontWeight: isActive ? '700' : '600',
-                      border: isActive ? '1px solid var(--primary)' : '1px solid #cbd5e1',
+                      border: isActive ? '1px solid var(--primary)' : '1px solid #ccd3c7',
                       backgroundColor: isActive ? 'var(--primary)' : '#ffffff',
-                      color: isActive ? '#ffffff' : '#475569',
+                      color: isActive ? '#ffffff' : '#596255',
                       cursor: 'pointer',
                       boxShadow: isActive ? '0 2px 6px rgba(0, 0, 0, 0.15)' : 'none',
                       transition: 'all 0.15s ease'
@@ -200,9 +201,9 @@ export function PosOrderPanel({
                       borderRadius: '8px',
                       fontSize: '0.8125rem',
                       fontWeight: isActive ? '700' : '600',
-                      border: isActive ? '1px solid var(--primary)' : '1px solid #cbd5e1',
+                      border: isActive ? '1px solid var(--primary)' : '1px solid #ccd3c7',
                       backgroundColor: isActive ? 'var(--primary)' : '#ffffff',
-                      color: isActive ? '#ffffff' : '#475569',
+                      color: isActive ? '#ffffff' : '#596255',
                       cursor: 'pointer',
                       boxShadow: isActive ? '0 2px 6px rgba(0, 0, 0, 0.15)' : 'none',
                       transition: 'all 0.15s ease'
@@ -219,22 +220,22 @@ export function PosOrderPanel({
           {/* Customer & Table Inputs */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: '0.85rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <User size={14} color="#64748b" /> Tên khách hàng
+              <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <User size={14} color="#69736a" /> Tên khách hàng
               </label>
               <input
                 type="text"
                 placeholder="Khách vãng lai (không bắt buộc)"
                 value={posForm.ten_khach_hang}
                 onChange={(e) => setPosForm((prev) => ({ ...prev, ten_khach_hang: e.target.value }))}
-                style={{ height: '38px', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', color: '#0f172a', outline: 'none' }}
+                style={{ height: '38px', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927', outline: 'none' }}
               />
             </div>
 
             {!isKioskStaff && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <MapPin size={14} color="#64748b" /> Mã / Số bàn
+                <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <MapPin size={14} color="#69736a" /> Mã / Số bàn
                 </label>
                 <input
                   type="text"
@@ -242,7 +243,7 @@ export function PosOrderPanel({
                   disabled={!['TAI_CHO', 'DUNG_TAI_CHO'].includes(posForm.loai_don_hang)}
                   value={posForm.ma_ban}
                   onChange={(e) => setPosForm((prev) => ({ ...prev, ma_ban: e.target.value }))}
-                  style={{ height: '38px', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: ['TAI_CHO', 'DUNG_TAI_CHO'].includes(posForm.loai_don_hang) ? '#ffffff' : '#f1f5f9', fontSize: '0.8125rem', color: '#0f172a', outline: 'none' }}
+                  style={{ height: '38px', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: ['TAI_CHO', 'DUNG_TAI_CHO'].includes(posForm.loai_don_hang) ? '#ffffff' : '#f4f5f2', fontSize: '0.8125rem', color: '#252927', outline: 'none' }}
                 />
               </div>
             )}
@@ -250,22 +251,22 @@ export function PosOrderPanel({
 
           {/* Note Input */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-            <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <FileText size={14} color="#64748b" /> Ghi chú đơn
+            <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <FileText size={14} color="#69736a" /> Ghi chú đơn
             </label>
             <textarea
               placeholder="VD: Ít đường, mang đi gấp..."
               rows={2}
               value={posForm.ghi_chu}
               onChange={(e) => setPosForm((prev) => ({ ...prev, ghi_chu: e.target.value }))}
-              style={{ padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', color: '#0f172a', outline: 'none', resize: 'vertical' }}
+              style={{ padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927', outline: 'none', resize: 'vertical' }}
             />
           </div>
 
           {/* Items Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', borderTop: '1px solid #f1f5f9', paddingTop: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', borderTop: '1px solid #f4f5f2', paddingTop: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.84rem', fontWeight: '700', color: '#0f172a' }}>Danh sách món trong đơn:</span>
+              <span style={{ fontSize: '0.84rem', fontWeight: '700', color: '#252927' }}>Danh sách món trong đơn:</span>
               <button
                 type="button"
                 onClick={addPosItem}
@@ -277,40 +278,40 @@ export function PosOrderPanel({
             </div>
 
             {!inventoryState?.loading && !inventoryState?.items?.length ? (
-              <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: 0 }}>Không có món nào trong thực đơn để chọn.</p>
+              <p style={{ fontSize: '0.8125rem', color: '#69736a', margin: 0 }}>Không có món nào trong thực đơn để chọn.</p>
             ) : null}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               {posItems.map((item, index) => (
-                <div key={`${item.ma_san_pham}-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#f8fafc', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
-                  <select
+                <div key={`${item.ma_san_pham}-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#f8f9f6', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid #e2e4df', flexWrap: 'wrap' }}>
+                  <SearchableSelect
                     value={item.ma_san_pham}
                     onChange={(e) => updatePosItem(index, 'ma_san_pham', e.target.value)}
-                    style={{ flex: 2, height: '36px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', fontWeight: '600', color: '#0f172a' }}
+                    style={{ flex: 2, height: '36px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', fontWeight: '600', color: '#252927' }}
                   >
                     {(inventoryState?.items || []).map((menuItem) => (
                       <option key={menuItem.ma_san_pham} value={menuItem.ma_san_pham}>
                         {normalizeViText(menuItem.name)} {menuItem.dang_ban ? '' : '(Tạm hết)'}
                       </option>
                     ))}
-                  </select>
+                  </SearchableSelect>
 
                   <input
                     type="number"
                     min="1"
                     value={item.qty}
                     onChange={(e) => updatePosItem(index, 'qty', e.target.value)}
-                    style={{ width: '65px', height: '36px', padding: '0 0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', fontWeight: '700', textAlign: 'center' }}
+                    style={{ width: '65px', height: '36px', padding: '0 0.45rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', fontWeight: '700', textAlign: 'center' }}
                   />
 
-                  <div style={{ width: '100px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 0.5rem', backgroundColor: '#e2e8f0', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '700', color: '#0f172a' }}>
+                  <div style={{ width: '100px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 0.5rem', backgroundColor: "#f4f5f2", borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '700', color: '#252927' }}>
                     {fmtMoney(Number(item.price || 0) * Number(item.qty || 1))}
                   </div>
 
                   <button
                     type="button"
                     onClick={() => removePosItem(index)}
-                    style={{ backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', width: '36px', height: '36px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', width: '36px', height: '36px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                   >
                     <Trash2 size={15} />
                   </button>
@@ -319,13 +320,13 @@ export function PosOrderPanel({
             </div>
 
             {posStatus?.error ? (
-              <p style={{ margin: 0, fontSize: '0.78125rem', color: '#dc2626', fontWeight: '600', backgroundColor: '#fef2f2', padding: '0.5rem', borderRadius: '6px' }}>{posStatus.error}</p>
+              <p style={{ margin: 0, fontSize: '0.78125rem', color: '#dc2626', fontWeight: '600', backgroundColor: "#f4f5f2", padding: '0.5rem', borderRadius: '6px' }}>{posStatus.error}</p>
             ) : null}
             {posStatus?.success ? (
-              <p style={{ margin: 0, fontSize: '0.78125rem', color: '#2563eb', fontWeight: '600', backgroundColor: '#eff6ff', padding: '0.5rem', borderRadius: '6px' }}>{posStatus.success}</p>
+              <p style={{ margin: 0, fontSize: '0.78125rem', color: '#2563eb', fontWeight: '600', backgroundColor: "#f4f5f2", padding: '0.5rem', borderRadius: '6px' }}>{posStatus.success}</p>
             ) : null}
             {posHasUnavailableItem ? (
-              <p style={{ margin: 0, fontSize: '0.78125rem', color: '#dc2626', fontWeight: '600', backgroundColor: '#fef2f2', padding: '0.5rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <p style={{ margin: 0, fontSize: '0.78125rem', color: '#dc2626', fontWeight: '600', backgroundColor: "#f4f5f2", padding: '0.5rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <AlertCircle size={14} /> Có món tạm ngưng bán trong danh sách. Vui lòng đổi món khác.
               </p>
             ) : null}
@@ -336,21 +337,21 @@ export function PosOrderPanel({
         {/* RIGHT COLUMN: RECEIPT PREVIEW & CONFIRMATION */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#0f172a', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#252927', borderBottom: '1px solid #f4f5f2', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
               <Sparkles size={16} color="var(--primary)" /> Xem trước tính tiền
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.84rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#69736a' }}>
                 <span>Tạm tính tiền món:</span>
-                <strong style={{ color: '#0f172a' }}>{fmtMoney(posSubtotal)}</strong>
+                <strong style={{ color: '#252927' }}>{fmtMoney(posSubtotal)}</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#69736a' }}>
                 <span>VAT 8% (tham khảo):</span>
-                <strong style={{ color: '#0f172a' }}>{fmtMoney(posVat)}</strong>
+                <strong style={{ color: '#252927' }}>{fmtMoney(posVat)}</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', color: '#0f172a', borderTop: '1px solid #f1f5f9', paddingTop: '0.65rem', marginTop: '0.2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', color: '#252927', borderTop: '1px solid #f4f5f2', paddingTop: '0.65rem', marginTop: '0.2rem' }}>
                 <span>Tổng cộng thu khách:</span>
                 <strong style={{ color: 'var(--primary)', fontWeight: '600' }}>{fmtMoney(posTotal)}</strong>
               </div>
@@ -358,15 +359,13 @@ export function PosOrderPanel({
 
             {/* Cash input & calculation */}
             {isCashMethod ? (
-              <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.25rem' }}>
-                <label htmlFor="pos-cash-input" style={{ fontSize: '0.78125rem', fontWeight: '700', color: '#334155' }}>
+              <div style={{ backgroundColor: '#f8f9f6', border: '1px solid #e2e4df', borderRadius: '10px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.25rem' }}>
+                <label htmlFor="pos-cash-input" style={{ fontSize: '0.78125rem', fontWeight: '700', color: '#414743' }}>
                   Tiền khách đưa (VNĐ):
                 </label>
-                <input
+                <CurrencyInput
                   id="pos-cash-input"
-                  type="number"
-                  min="0"
-                  style={{ height: '36px', width: '100%', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.9rem', fontWeight: '700', color: '#0f172a' }}
+                  style={{ height: '36px', width: '100%', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.9rem', fontWeight: '700', color: '#252927' }}
                   value={posCashInput === 0 || posCashInput === '0' ? '' : posCashInput}
                   onChange={(e) => {
                     const val = e.target.value
@@ -376,7 +375,7 @@ export function PosOrderPanel({
                   placeholder="0"
                 />
                 <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.78125rem', fontWeight: '700', color: posCashInsufficient ? '#dc2626' : '#2563eb' }}>
-                  {posCashInsufficient ? '⚠️ Tiền khách đưa chưa đủ' : `Tiền thối lại: ${fmtMoney(posChange)}`}
+                  {posCashInsufficient ? "Tiền khách đưa chưa đủ" : `Tiền thối lại: ${fmtMoney(posChange)}`}
                 </p>
               </div>
             ) : null}
@@ -430,10 +429,10 @@ export function PosOrderPanel({
                 </button>
               </div>
 
-              <div style={{ fontSize: '0.8125rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              <div style={{ fontSize: '0.8125rem', color: '#414743', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Mã đơn hàng:</span>
-                  <strong style={{ color: '#0f172a' }}>#{lastPosOrder.order.ma_don_hang?.slice(0, 8)?.toUpperCase()}</strong>
+                  <strong style={{ color: '#252927' }}>#{lastPosOrder.order.ma_don_hang?.slice(0, 8)?.toUpperCase()}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>Trạng thái đơn:</span>
@@ -448,8 +447,8 @@ export function PosOrderPanel({
               </div>
 
               {lastPosOrder.order.phuong_thuc_thanh_toan !== 'THANH_TOAN_KHI_NHAN_HANG' && lastPosOrder.paymentDetails?.qr_img_url ? (
-                <div style={{ textAlign: 'center', backgroundColor: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '0.25rem' }}>
-                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: '600', marginBottom: '0.4rem' }}>Khách quét QR để thanh toán:</span>
+                <div style={{ textAlign: 'center', backgroundColor: '#f8f9f6', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e4df', marginTop: '0.25rem' }}>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#69736a', fontWeight: '600', marginBottom: '0.4rem' }}>Khách quét QR để thanh toán:</span>
                   <img src={lastPosOrder.paymentDetails.qr_img_url} alt="Mã QR thanh toán" style={{ width: '150px', height: '150px', objectFit: 'contain', margin: '0 auto', display: 'block', borderRadius: '6px' }} />
                 </div>
               ) : null}
@@ -471,7 +470,7 @@ export function PosOrderPanel({
                     capNhatTrangThaiDon(lastPosOrder.order.ma_don_hang, 'DANG_CHUAN_BI')
                     setActiveTab('orders')
                   }}
-                  style={{ flex: 1, backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', borderRadius: '6px', height: '34px', fontSize: '0.78125rem', fontWeight: '600', cursor: 'pointer' }}
+                  style={{ flex: 1, backgroundColor: '#f4f5f2', color: '#414743', border: '1px solid #ccd3c7', borderRadius: '6px', height: '34px', fontSize: '0.78125rem', fontWeight: '600', cursor: 'pointer' }}
                 >
                   Đang chuẩn bị
                 </button>

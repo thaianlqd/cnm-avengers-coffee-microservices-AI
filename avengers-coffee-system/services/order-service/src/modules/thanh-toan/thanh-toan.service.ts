@@ -1,10 +1,11 @@
-import { BadRequestException, ConflictException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, EntityManager, In, Not, Repository } from 'typeorm';
 import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
 import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service';
 import { quoteDeliveryFee } from '../cart/delivery-pricing';
+import { deliveryDistanceKm, deliveryRegion, MAX_DELIVERY_DISTANCE_KM, validCoordinates } from './delivery-distance';
 import { orderRevision, canonicalOrderLine, amendedAmounts, claimedVoucherDiscount } from './order-amendment';
 import { orderEditPolicy, orderEditAmounts } from './order-edit-policy';
 import { CustomerWallet } from '../customer-wallet/entities/customer-wallet.entity';
@@ -720,18 +721,22 @@ export class ThanhToanService {
     targetBranchCode?: string,
     clientLat?: number,
     clientLon?: number,
+    enforceDeliveryArea = false,
   ) {
     const DEFAULT_BRANCH = { code: 'HCM_DIEN_BIEN_PHU', lat: 10.7836, lon: 106.6896 };
     const allBranches = await this.layDanhSachChiNhanhHeThong();
 
-    // 1. Ưu tiên toạ độ client gửi lên nếu hợp lệ
-    let customerLat: number | null = (clientLat != null && !isNaN(Number(clientLat))) ? Number(clientLat) : null;
-    let customerLon: number | null = (clientLon != null && !isNaN(Number(clientLon))) ? Number(clientLon) : null;
+    // Địa chỉ giao hàng được geocode phía máy chủ trước; toạ độ client chỉ là dự phòng.
+    const addressCoordinates = diaChi?.trim() ? await this.geocodeDiaChiVietNam(diaChi) : null;
+    const clientCoordinatesValid = clientLat != null && clientLon != null && validCoordinates(Number(clientLat), Number(clientLon));
+    const geocodedValid = addressCoordinates && validCoordinates(addressCoordinates.lat, addressCoordinates.lon);
+    let customerLat: number | null = geocodedValid ? addressCoordinates.lat : (clientCoordinatesValid ? Number(clientLat) : null);
+    let customerLon: number | null = geocodedValid ? addressCoordinates.lon : (clientCoordinatesValid ? Number(clientLon) : null);
 
     // Nếu chưa có, giải mã địa chỉ bằng đa tầng geocode
     if (customerLat == null || customerLon == null) {
       const geo = await this.geocodeDiaChiVietNam(diaChi);
-      if (geo) {
+      if (geo && validCoordinates(geo.lat, geo.lon)) {
         customerLat = geo.lat;
         customerLon = geo.lon;
       }
@@ -743,30 +748,48 @@ export class ThanhToanService {
       const matchedBranch = allBranches.find(
         (b) => (b.ma_chi_nhanh || '').toUpperCase() === normalizedTarget,
       );
-      if (matchedBranch && matchedBranch.vi_do && matchedBranch.kinh_do) {
+      if (!matchedBranch) {
+        throw new BadRequestException({ code: 'DELIVERY_BRANCH_NOT_FOUND', message: 'Chi nhánh đã chọn không còn khả dụng. Vui lòng chọn lại.' });
+      }
+      const destinationRegion = deliveryRegion(diaChi);
+      const branchRegion = deliveryRegion(matchedBranch.thanh_pho || matchedBranch.dia_chi);
+      if (destinationRegion && branchRegion && destinationRegion !== branchRegion) {
+        throw new BadRequestException({ code: 'DELIVERY_BRANCH_REGION_MISMATCH', message: `Địa chỉ nhận ở ${destinationRegion} nhưng chi nhánh đã chọn ở ${branchRegion}. Vui lòng chọn chi nhánh gần địa chỉ nhận hàng.` });
+      }
+      if (enforceDeliveryArea && (customerLat == null || customerLon == null)) {
+        throw new BadRequestException({ code: 'DELIVERY_LOCATION_UNVERIFIED', message: 'Chưa xác minh được tọa độ địa chỉ nhận hàng. Vui lòng chọn địa chỉ chi tiết hơn.' });
+      }
+      if (matchedBranch.vi_do && matchedBranch.kinh_do) {
+        const branchLat = Number(matchedBranch.vi_do);
+        const branchLon = Number(matchedBranch.kinh_do);
+        if (customerLat != null && customerLon != null && validCoordinates(branchLat, branchLon)) {
+          const distanceKm = deliveryDistanceKm(customerLat, customerLon, branchLat, branchLon);
+          if (distanceKm > MAX_DELIVERY_DISTANCE_KM) {
+            throw new BadRequestException({
+              code: 'DELIVERY_BRANCH_TOO_FAR',
+              message: `Địa chỉ giao hàng cách chi nhánh đã chọn khoảng ${Math.round(distanceKm)} km. Vui lòng chọn chi nhánh gần địa chỉ nhận hàng.`,
+              distance_km: Math.round(distanceKm),
+              max_distance_km: MAX_DELIVERY_DISTANCE_KM,
+            });
+          }
+        }
         return {
           branchCode: matchedBranch.ma_chi_nhanh,
-          branchLat: Number(matchedBranch.vi_do),
-          branchLon: Number(matchedBranch.kinh_do),
+          branchLat,
+          branchLon,
           customerLat,
           customerLon,
         };
       }
+      if (enforceDeliveryArea) {
+        if (!destinationRegion || !branchRegion || customerLat == null || customerLon == null) {
+          throw new BadRequestException({ code: 'DELIVERY_LOCATION_UNVERIFIED', message: 'Chưa xác minh được vị trí chi nhánh và địa chỉ nhận hàng. Vui lòng chọn chi nhánh khác hoặc bổ sung địa chỉ.' });
+        }
+        return { branchCode: matchedBranch.ma_chi_nhanh, branchLat: null, branchLon: null, customerLat, customerLon };
+      }
     }
 
     // 3. Find closest branch if customer coordinates are known
-    const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-      const R = 6371;
-      const dLat = (lat2 - lat1) * (Math.PI / 180);
-      const dLon = (lon2 - lon1) * (Math.PI / 180);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    };
-
     if (customerLat != null && customerLon != null && allBranches.length > 0) {
       let nearest: any = null;
       let minDistance = Infinity;
@@ -775,7 +798,7 @@ export class ThanhToanService {
         if (branch.vi_do && branch.kinh_do) {
           const bLat = Number(branch.vi_do);
           const bLon = Number(branch.kinh_do);
-          const dist = getDistanceFromLatLonInKm(customerLat, customerLon, bLat, bLon);
+          const dist = deliveryDistanceKm(customerLat, customerLon, bLat, bLon);
           if (dist < minDistance) {
             minDistance = dist;
             nearest = {
@@ -788,7 +811,35 @@ export class ThanhToanService {
           }
         }
       }
-      if (nearest) return nearest;
+      if (nearest) {
+        const destinationRegion = deliveryRegion(diaChi);
+        const nearestBranch = allBranches.find(branch => branch.ma_chi_nhanh === nearest.branchCode);
+        const nearestRegion = deliveryRegion(nearestBranch?.thanh_pho || nearestBranch?.dia_chi);
+        if (enforceDeliveryArea && destinationRegion && nearestRegion && destinationRegion !== nearestRegion) {
+          throw new BadRequestException({ code: 'DELIVERY_BRANCH_REGION_MISMATCH', message: `Địa chỉ nhận ở ${destinationRegion} nhưng chi nhánh gần nhất xác định được ở ${nearestRegion}. Vui lòng kiểm tra lại địa chỉ.` });
+        }
+        if (minDistance > MAX_DELIVERY_DISTANCE_KM) {
+          throw new BadRequestException({ code: 'DELIVERY_OUT_OF_RANGE', message: 'Địa chỉ giao hàng nằm ngoài phạm vi phục vụ của các chi nhánh hiện tại.', distance_km: Math.round(minDistance), max_distance_km: MAX_DELIVERY_DISTANCE_KM });
+        }
+        return nearest;
+      }
+    }
+
+    if (enforceDeliveryArea) {
+      const destinationRegion = deliveryRegion(diaChi);
+      const regionalBranch = destinationRegion && allBranches.find(branch =>
+        deliveryRegion(branch.thanh_pho || branch.dia_chi) === destinationRegion,
+      );
+      if (regionalBranch && customerLat != null && customerLon != null) {
+        return {
+          branchCode: regionalBranch.ma_chi_nhanh,
+          branchLat: regionalBranch.vi_do ? Number(regionalBranch.vi_do) : null,
+          branchLon: regionalBranch.kinh_do ? Number(regionalBranch.kinh_do) : null,
+          customerLat,
+          customerLon,
+        };
+      }
+      throw new BadRequestException({ code: 'DELIVERY_LOCATION_UNVERIFIED', message: 'Chưa xác minh được địa chỉ giao hàng thuộc khu vực đang phục vụ. Vui lòng kiểm tra lại địa chỉ hoặc chọn chi nhánh.' });
     }
 
     // 4. Default fallback branch
@@ -1833,10 +1884,8 @@ export class ThanhToanService {
     }
 
     const isGuest = !maNguoiDung || maNguoiDung === 'anonymous' || maNguoiDung === 'guest' || maNguoiDung.startsWith('anon-');
-    if (isGuest) {
-      if (!dto.guest_email?.trim() || !dto.guest_phone?.trim()) {
-        throw new BadRequestException('Khách hàng cần nhập đầy đủ cả Email và Số điện thoại để hoàn tất đặt đơn.');
-      }
+    if (isGuest && !isKiosk) {
+      throw new UnauthorizedException('Khách vãng lai không được phép đặt hàng. Vui lòng đăng nhập để tiến hành đặt đơn.');
     }
 
     let gioHang = await this.cartRepo.find({ where: { ma_nguoi_dung: maNguoiDung } });
@@ -1847,6 +1896,16 @@ export class ThanhToanService {
     // ── KIOSK: Override giá từ bảng franchise.gia_san_pham_kiosk (backend verify, chống hack) ──
     if (isKiosk && dto.ma_kiosk) {
       const maKiosk = dto.ma_kiosk.trim();
+      if (dto.branch_code?.trim() && dto.branch_code.trim() !== maKiosk) {
+        throw new BadRequestException('Chi nhánh và kiosk trong yêu cầu không khớp nhau.');
+      }
+      const kioskRows: Array<{ ma_kiosk: string }> = await this.donHangRepo.manager.query(
+        `SELECT ma_kiosk FROM franchise.kiosk WHERE ma_kiosk = $1 AND trang_thai = 'DANG_HOAT_DONG' LIMIT 1`,
+        [maKiosk],
+      );
+      if (!kioskRows.length) {
+        throw new BadRequestException('Kiosk nhượng quyền chưa hoạt động hoặc không tồn tại.');
+      }
       // Lấy giá kiosk cho tất cả sản phẩm trong giỏ
       const maSanPhamList = gioHang.map(i => Number(i.ma_san_pham));
       const kioskPrices: Array<{ ma_san_pham: number; gia_kiosk: number }> = await this.donHangRepo.manager.query(
@@ -1855,6 +1914,10 @@ export class ThanhToanService {
         [maKiosk, maSanPhamList],
       );
       const kioskPriceMap = new Map(kioskPrices.map(p => [p.ma_san_pham, Number(p.gia_kiosk)]));
+      const unpricedItems = gioHang.filter(item => !Number.isFinite(kioskPriceMap.get(Number(item.ma_san_pham))));
+      if (unpricedItems.length) {
+        throw new BadRequestException('Có món chưa được định giá tại kiosk này. Vui lòng chọn món khác hoặc liên hệ kiosk.');
+      }
       // Override giá trong gioHang bằng giá kiosk (an toàn phía backend)
       gioHang = gioHang.map(item => {
         const kioskPrice = kioskPriceMap.get(Number(item.ma_san_pham));
@@ -1887,13 +1950,16 @@ export class ThanhToanService {
     let nearestInfo: any = null;
     let branchCode: string;
 
-    if (dto.delivery_mode === 'GIAO_TAN_NOI') {
+    if (isKiosk) {
+      branchCode = dto.ma_kiosk!.trim();
+    } else if (dto.delivery_mode === 'GIAO_TAN_NOI') {
       // Giao tận nơi (Ship): Bắt buộc tìm cửa hàng chính gần nhất
       nearestInfo = await this.xacDinhCoSoGanNhatTheoDiaChi(
         dto.dia_chi_giao_hang,
         dto.branch_code?.trim(),
         dto.destination_latitude,
         dto.destination_longitude,
+        true,
       );
       branchCode = nearestInfo.branchCode;
     } else {
@@ -2561,7 +2627,14 @@ export class ThanhToanService {
 
   // --- SEPAY WEBHOOK LOGIC ---
   async xuLyWebhookSepay(payload: SepayPayload, headers: any, rawBody: string) {
-    if ((payload.transferType || '').toLowerCase() !== 'in') return { success: true };
+    // --- Xử lý nạp tiền vào ví điện tử nếu nội dung chuyển khoản chứa WT_... ---
+    const content = payload.content || '';
+    const wtMatch = content.match(/WT[_-]*([A-Za-z0-9-]+)/i);
+    if (wtMatch) {
+      const normalizedTxnRef = `WT_${wtMatch[1]}`;
+      const processed = await this.customerWalletService.processTopUpSuccess(normalizedTxnRef, payload.transferAmount);
+      if (processed) return { success: true, message: 'Wallet topup processed' };
+    }
 
     const qrRef = this.trichXuatMaThamChieuQr(payload.content || '');
     if (!qrRef) return { success: true, message: 'No QR Ref' };

@@ -1,10 +1,9 @@
-import { WorkspaceSidebar, WorkspaceSearch } from '../../../components/console/WorkspaceNavigation'
+import { AdminWorkspace } from './AdminWorkspace'
 import { DashboardSkeleton } from '../../../components/console/DashboardCharts'
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import { WorkspaceErrorBoundary } from '../../../components/console/WorkspaceErrorBoundary'
 import { useSystemAdmin } from '../hooks/useSystemAdmin'
 const AdminShipperPanel = lazy(() => import('./AdminShipperPanel').then(module => ({ default: module.AdminShipperPanel })))
-import { AccountCenterPanel } from '../../shared/components/AccountCenterPanel'
 import { AdminNotificationBell } from '../../shared/components/AdminNotificationBell'
 import { ManagerSurveyPanel } from '../../manager-dashboard/components/ManagerSurveyPanel'
 const AdminMembershipConfigPanel = lazy(() => import('./AdminMembershipConfigPanel').then(module => ({ default: module.AdminMembershipConfigPanel })))
@@ -18,8 +17,8 @@ const AdminUserManagementPanel = lazy(() => import('./AdminUserManagementPanel')
 const AdminKioskManagementPanel = lazy(() => import('./AdminKioskManagementPanel').then(module => ({ default: module.AdminKioskManagementPanel })))
 const AdminCustomerManagementPanel = lazy(() => import('./AdminCustomerManagementPanel').then(module => ({ default: module.AdminCustomerManagementPanel })))
 const AdminSmtpConfigPanel = lazy(() => import('./AdminSmtpConfigPanel').then(module => ({ default: module.AdminSmtpConfigPanel })))
-const AdminSatelliteKioskPanel = lazy(() => import('./AdminSatelliteKioskPanel').then(module => ({ default: module.AdminSatelliteKioskPanel })))
-import { LayoutGrid, Users, UserCog, Settings, Store, FolderOpen, Coffee, ShieldCheck, Ticket, BarChart3, Brain, Activity, Bike, Search, ChevronDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, PieChart, Package, Map, UsersIcon, Monitor, TrendingUp, BarChart2, MapPin, Info, ArrowUpDown, UserPlus, Edit2, Trash2, Filter, MoreVertical, Coins, LogOut, MailCheck, Mail, Send } from 'lucide-react'
+import { LayoutGrid, Users, UserCog, Settings, Store, FolderOpen, Coffee, ShieldCheck, Ticket, BarChart3, Brain, Activity, Bike, Search, ChevronDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, PieChart, Package, Map, UsersIcon, Monitor, TrendingUp, BarChart2, MapPin, Info, ArrowUpDown, UserPlus, Edit2, Trash2, Filter, MoreVertical, Coins, LogOut, MailCheck, Mail, Send } from '../../../components/console/WorkspaceIcons'
+import { LayoutGrid as FiGrid, FolderOpen as FiFolder, Coffee as FiCoffee, Tag as FiTag, UsersIcon as FiUsers, Settings as FiSettings, BarChart2 as FiBarChart2, MapPin as FiMapPin, Truck as FiTruck, Monitor as FiMonitor, User as FiUser, Mail as FiMail, Shield as FiShield } from '../../../components/console/WorkspaceIcons'
 
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
@@ -39,25 +38,23 @@ function normalizeText(value) {
 }
 
 const ADMIN_NAV_GROUPS = [
-  { label: 'Tổng quan', items: [{ id: 'overview', label: 'Dashboard hệ thống', icon: LayoutGrid }] },
+  { label: 'Tổng quan', items: [{ id: 'overview', label: 'Dashboard hệ thống', icon: FiGrid }] },
   { label: 'Sản phẩm & khuyến mãi', items: [
-    { id: 'categories', label: 'Danh mục sản phẩm', icon: FolderOpen },
-    { id: 'menu', label: 'Thực đơn', icon: Coffee },
-    { id: 'promotions', label: 'Khuyến mãi & voucher', icon: Ticket },
+    { id: 'categories', label: 'Danh mục sản phẩm', icon: FiFolder },
+    { id: 'menu', label: 'Thực đơn', icon: FiCoffee },
+    { id: 'promotions', label: 'Khuyến mãi & voucher', icon: FiTag },
   ] },
   { label: 'Khách hàng', items: [
-    { id: 'customers', label: 'Quản lý khách hàng', icon: Users },
-    { id: 'membership-config', label: 'Hạng thành viên', icon: Settings },
-    { id: 'survey-manage', label: 'Khảo sát & phản hồi', icon: BarChart3 },
+    { id: 'customers', label: 'Quản lý khách hàng', icon: FiUsers },
+    { id: 'membership-config', label: 'Hạng thành viên', icon: FiSettings },
+    { id: 'survey-manage', label: 'Khảo sát & phản hồi', icon: FiBarChart2 },
   ] },
   { label: 'Mạng lưới & hệ thống', items: [
-    { id: 'branches', label: 'Chi nhánh', icon: Store },
-    { id: 'shippers', label: 'Nhân viên giao hàng', icon: Bike },
-    { id: 'kiosks', label: 'Kiosk nhượng quyền', icon: Coffee },
-    { id: 'satellite_kiosks', label: 'Kiosk vệ tinh', icon: Monitor },
-    { id: 'users', label: 'Tài khoản hệ thống', icon: UserCog },
-    { id: 'smtp', label: 'Email & SMTP', icon: MailCheck },
-    { id: 'account', label: 'Hồ sơ & bảo mật', icon: ShieldCheck },
+    { id: 'branches', label: 'Chi nhánh', icon: FiMapPin },
+    { id: 'shippers', label: 'Nhân viên giao hàng', icon: FiTruck },
+    { id: 'kiosks', label: 'Kiosk nhượng quyền', icon: FiCoffee },
+    { id: 'users', label: 'Quản lý nhân viên', icon: FiUsers },
+    { id: 'smtp', label: 'Email & SMTP', icon: FiMail },
   ] },
 ]
 
@@ -86,7 +83,7 @@ function buildPage(items = [], page = 1, pageSize = PAGE_SIZE) {
 function Pagination({ pageData, onPageChange }) {
   if (!pageData || pageData.total <= PAGE_SIZE) return null
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.875rem', color: '#6b7280', paddingTop: '0.85rem', marginTop: '0.5rem', borderTop: '1px solid #f1f5f9' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.875rem', color: '#6b7280', paddingTop: '0.85rem', marginTop: '0.5rem', borderTop: '1px solid #f4f5f2' }}>
       <span>Hiển thị {pageData.from} - {pageData.to} trên tổng số {pageData.total}</span>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
         <button type="button" className="admin-pg-btn" onClick={() => onPageChange(1)} disabled={pageData.page <= 1} title="Trang đầu">
@@ -95,7 +92,7 @@ function Pagination({ pageData, onPageChange }) {
         <button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page - 1)} disabled={pageData.page <= 1} title="Trang trước">
           <ChevronLeft size={18} />
         </button>
-        <span style={{ margin: '0 0.5rem', fontWeight: '600', color: '#334155', fontSize: '0.825rem' }}>Trang {pageData.page} trên {pageData.totalPages}</span>
+        <span style={{ margin: '0 0.5rem', fontWeight: '500', color: '#414743', fontSize: '0.825rem' }}>Trang {pageData.page} trên {pageData.totalPages}</span>
         <button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page + 1)} disabled={pageData.page >= pageData.totalPages} title="Trang sau">
           <ChevronRight size={18} />
         </button>
@@ -234,13 +231,57 @@ export function AdminSystemConsole({
     recentUsers,
   } = useSystemAdmin()
 
-  const staffUsersOnly = useMemo(() => {
-    return (usersState?.items || []).filter((u) => u && u.vai_tro !== 'CUSTOMER')
-  }, [usersState?.items])
+  const filteredCustomers = useMemo(() => {
+    const q = normalizeText(customerFilters?.q)
+    const status = String(customerFilters?.status || '').trim().toUpperCase()
+    const items = (customersState?.items || []).filter(Boolean)
+    return items.filter((item) => {
+      if (status && String(item.trang_thai || '').toUpperCase() !== status) return false
+      if (!q) return true
+      const haystack = normalizeText([
+        item.ho_ten || '',
+        item.ten_dang_nhap || '',
+        item.email || '',
+        item.so_dien_thoai || '',
+        item.ma_nguoi_dung || '',
+      ].join(' '))
+      return haystack.includes(q)
+    })
+  }, [customersState?.items, customerFilters?.q, customerFilters?.status])
 
-  const usersPageData = useMemo(() => buildPage(staffUsersOnly, usersPage), [staffUsersOnly, usersPage])
-  const customersPageData = useMemo(() => buildPage(customersState?.items || [], customersPage), [customersState?.items, customersPage])
+  const filteredStaffUsers = useMemo(() => {
+    const q = normalizeText(userFilters?.q)
+    const role = String(userFilters?.role || '').trim().toUpperCase()
+    const branchCode = String(userFilters?.branch_code || '').trim().toUpperCase()
+    const items = (usersState?.items || []).filter((u) => u && u.vai_tro !== 'CUSTOMER')
+    return items.filter((item) => {
+      if (role && String(item.vai_tro || '').toUpperCase() !== role) return false
+      if (branchCode && String(item.co_so_ma || '').toUpperCase() !== branchCode) return false
+      if (!q) return true
+      const haystack = normalizeText([
+        item.ho_ten || '',
+        item.ten_dang_nhap || '',
+        item.email || '',
+        item.so_dien_thoai || '',
+        item.co_so_ten || '',
+        item.co_so_ma || '',
+        item.ma_nguoi_dung || '',
+      ].join(' '))
+      return haystack.includes(q)
+    })
+  }, [usersState?.items, userFilters?.q, userFilters?.role, userFilters?.branch_code])
+
+  const usersPageData = useMemo(() => buildPage(filteredStaffUsers, usersPage), [filteredStaffUsers, usersPage])
+  const customersPageData = useMemo(() => buildPage(filteredCustomers, customersPage), [filteredCustomers, customersPage])
   const branchesPageData = useMemo(() => buildPage(branchesState?.items || [], branchesPage), [branchesState?.items, branchesPage])
+
+  useEffect(() => {
+    setCustomersPage(1)
+  }, [customerFilters?.q, customerFilters?.status])
+
+  useEffect(() => {
+    setUsersPage(1)
+  }, [userFilters?.q, userFilters?.role, userFilters?.branch_code])
 
   const filteredCategories = useMemo(() => {
     const keyword = normalizeText(categoryKeyword)
@@ -259,6 +300,7 @@ export function AdminSystemConsole({
       const haystack = normalizeText([
         item?.name || '',
         item?.category || '',
+        item?.parent_category || '',
         item?.description || '',
       ].join(' '))
       return haystack.includes(keyword)
@@ -397,67 +439,9 @@ export function AdminSystemConsole({
 
 
   return (
-    <div className="console-shell" data-actor="admin" style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: '#f7f9fb' }}>
-      <WorkspaceSidebar groups={ADMIN_NAV_GROUPS} activeTab={activeTab} onSelect={setActiveTab} session={session} label="Quản trị hệ thống" onLogout={onLogout} />
-
-      {/* MAIN CONTENT WRAPPER */}
-      <main className="console-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', backgroundColor: '#f7f9fb' }}>
-        
-        {/* TOP NAVIGATION BAR */}
-        <header
-          style={{
-            height: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 2rem',
-            backgroundColor: '#ffffff',
-            borderBottom: '1px solid #e5e7eb',
-            flexShrink: 0
-          }}
-        >
-          {(() => {
-            const TAB_BREADCRUMBS = {
-              'overview': { group: 'Tổng quan', label: 'Dashboard tổng' },
-              'categories': { group: 'Sản phẩm & Menu', label: 'Quản lý danh mục' },
-              'menu': { group: 'Sản phẩm & Menu', label: 'Quản lý menu tổng' },
-              'promotions': { group: 'Sản phẩm & Menu', label: 'Khuyến mãi & Voucher' },
-              'customers': { group: 'Khách hàng & CSKH', label: 'Quản lý khách hàng' },
-              'membership-config': { group: 'Khách hàng & CSKH', label: 'Thiết lập Membership' },
-              'survey-manage': { group: 'Khách hàng & CSKH', label: 'Quản lý Khảo sát' },
-              'branches': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý chi nhánh' },
-              'shippers': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý shipper' },
-              'satellite_kiosks': { group: 'Mạng lưới', label: 'Kiosk vệ tinh' },
-              'kiosks': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý Kiosk' },
-              'users': { group: 'Mạng lưới & Hệ thống', label: 'Quản lý người dùng' },
-              'smtp': { group: 'Mạng lưới & Hệ thống', label: 'Cấu hình Email & SMTP' },
-              'account': { group: 'Tài khoản', label: 'Hồ sơ & Bảo mật' },
-            }
-            const activeCrumb = TAB_BREADCRUMBS[activeTab] || { group: 'Quản trị', label: 'Hệ thống' }
-
-            return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.85rem' }}>
-                <LayoutGrid size={15} color="#9ca3af" />
-                <span style={{ color: '#6b7280', fontWeight: '500' }}>{activeCrumb.group}</span>
-                <span style={{ color: '#d1d5db', margin: '0 0.15rem' }}>/</span>
-                <span style={{ fontWeight: '700', color: '#111827' }}>{activeCrumb.label}</span>
-              </div>
-            )
-          })()}
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <WorkspaceSearch items={ADMIN_NAV_GROUPS.flatMap(group => group.items.map(item => ({ ...item, group: group.label })))} onSelect={setActiveTab} />
-
-            <AdminNotificationBell session={session} />
-          </div>
-        </header>
-
-        {/* SCROLLABLE VIEWPORT CONTENT */}
-        <div key={activeTab} className="custom-scrollbar console-admin-body" style={{ flex: 1, overflowY: 'auto', backgroundColor: '#f7f9fb' }}>
+    <AdminWorkspace groups={ADMIN_NAV_GROUPS} activeTab={activeTab} onSelect={setActiveTab} session={session} onLogout={onLogout}>
           <WorkspaceErrorBoundary key={activeTab} inline>
           <Suspense fallback={<DashboardSkeleton />}>
-          {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}
-
           {activeTab === 'overview' && (
             <AdminOverviewDashboardPanel
               statsState={statsState}
@@ -474,7 +458,7 @@ export function AdminSystemConsole({
           )}
 
         {activeTab === 'promotions' && (
-          <section style={{ padding: '1.75rem 2rem', backgroundColor: '#f7f9fb', minHeight: '100%' }}>
+          <section className="admin-feature-section">
             <AdminPromotionManagementPanel
               promotionsState={promotionsState}
               loadPromotions={loadPromotions}
@@ -526,6 +510,7 @@ export function AdminSystemConsole({
             usersPageData={usersPageData}
             usersPage={usersPage}
             setUsersPage={setUsersPage}
+            session={session}
           />
         )}
 
@@ -535,9 +520,6 @@ export function AdminSystemConsole({
 
         {activeTab === 'smtp' && (
           <AdminSmtpConfigPanel />
-        )}
-        {activeTab === 'satellite_kiosks' && (
-          <AdminSatelliteKioskPanel session={session} />
         )}
 
         {activeTab === 'customers' && (
@@ -583,7 +565,7 @@ export function AdminSystemConsole({
               onBack={() => setSelectedBranchForReview(null)}
             />
           ) : (
-            <section style={{ padding: '1.75rem 2rem', backgroundColor: '#f7f9fb', minHeight: '100%' }}>
+            <section className="admin-feature-section">
               <AdminBranchManagementPanel
                 branchesState={branchesState}
                 loadBranches={loadBranches}
@@ -608,7 +590,7 @@ export function AdminSystemConsole({
         )}
 
         {activeTab === 'categories' && (
-          <section style={{ padding: '1.75rem 2rem', backgroundColor: '#f7f9fb', minHeight: '100%' }}>
+          <section className="admin-feature-section">
             <AdminCategoryManagementPanel
               categoriesState={categoriesState}
               categoryForm={categoryForm}
@@ -626,12 +608,13 @@ export function AdminSystemConsole({
               categoriesPage={categoriesPage}
               setCategoriesPage={setCategoriesPage}
               onRefresh={loadCategories}
+              menuItems={menuState?.items || []}
             />
           </section>
         )}
 
         {activeTab === 'menu' && (
-          <section style={{ padding: '1.75rem 2rem', backgroundColor: '#f7f9fb', minHeight: '100%' }}>
+          <section className="admin-feature-section">
             <AdminMenuManagementPanel
               menuState={menuState}
               loadMenu={loadMenu}
@@ -663,28 +646,13 @@ export function AdminSystemConsole({
         )}
 
         {adminToast ? (
-          <div
-            style={{
-              position: 'fixed',
-              bottom: '20px',
-              right: '20px',
-              background: '#fff',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              padding: '16px 20px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              zIndex: 9999,
-              maxWidth: '320px',
-            }}
-          >
-            <p style={{ margin: '0 0 8px 0', fontWeight: '700', color: '#333', fontSize: '14px' }}>{adminToast.title}</p>
-            <p style={{ margin: 0, color: '#666', fontSize: '13px' }}>{adminToast.message}</p>
+          <div className="admin-toast" role="status">
+            <p>{adminToast.title}</p>
+            <p>{adminToast.message}</p>
           </div>
         ) : null}
           </Suspense>
           </WorkspaceErrorBoundary>
-        </div>
-      </main>
-    </div>
+    </AdminWorkspace>
   )
 }

@@ -598,6 +598,22 @@ export class DeliveryTrackingService {
       }
     }
 
+    // 4. Hỗ trợ tìm kiếm theo tiền tố mã đơn hàng (ví dụ 8 ký tự đầu, hoặc tiền tố DH-, AC-)
+    if (!tracking) {
+      const cleanCode = normalizedCode.replace(/^(DH|AC)[-_]?/i, '');
+      if (cleanCode.length >= 6) {
+        const partialMatch = await this.donHangRepo
+          .createQueryBuilder('dh')
+          .where('CAST(dh.ma_don_hang AS text) ILIKE :code', { code: `${cleanCode}%` })
+          .getOne();
+        if (partialMatch) {
+          const result = await this.getTrackingInfo(partialMatch.ma_don_hang);
+          try { await this.redisCacheService?.setJson(cacheKey, result, 15); } catch { }
+          return result;
+        }
+      }
+    }
+
     if (!tracking) {
       throw new NotFoundException('Không tìm thấy đơn hàng với mã này');
     }

@@ -12,7 +12,6 @@ export function BrandHeader({ title, subtitle, right }) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
         </View>
         {right}
       </View>

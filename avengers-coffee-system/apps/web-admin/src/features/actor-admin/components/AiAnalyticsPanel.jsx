@@ -1,3 +1,5 @@
+import { Coffee as WorkspaceSymbolCoffee, AlertTriangle as WorkspaceSymbolAlertTriangle, Flame as WorkspaceSymbolFlame, CreditCard as WorkspaceSymbolCreditCard, Heart as WorkspaceSymbolHeart, Ticket as WorkspaceSymbolTicket, Search as WorkspaceSymbolSearch } from '../../../components/console/WorkspaceIcons'
+import SearchableSelect from '../../../components/console/SearchableSelect'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAiAnalytics } from '../hooks/useAiAnalytics'
@@ -57,16 +59,16 @@ function HorizontalBar({ label, value, max, note, barGradient = 'linear-gradient
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5, padding: '4px 0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, gap: 8 }}>
         <span
-          style={{ fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          style={{ fontWeight: 600, color: '#30382e', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
           title={label}
         >
           {label}
         </span>
-        <span style={{ fontWeight: 700, color: '#0f172a', fontSize: 12, flexShrink: 0 }}>
+        <span style={{ fontWeight: 700, color: '#252927', fontSize: 12, flexShrink: 0 }}>
           {note || fmtNum(value)}
         </span>
       </div>
-      <div style={{ width: '100%', height: 8, borderRadius: 99, background: '#e2e8f0', overflow: 'hidden' }}>
+      <div style={{ width: '100%', height: 8, borderRadius: 99, background: "#f4f5f2", overflow: 'hidden' }}>
         <div style={{ width: `${width}%`, height: '100%', borderRadius: 99, background: barGradient, transition: 'width 0.4s ease-in-out' }} />
       </div>
     </div>
@@ -184,11 +186,11 @@ function ForecastChart({ history = [], forecast = [], metric }) {
 
       {/* Legend */}
       <rect x={W - PR - 140} y={PT} width={10} height={3} fill="var(--primary-hover)" rx="1" />
-      <text x={W - PR - 126} y={PT + 5} fontSize="9" fill="#374151">Thực tế</text>
+      <text x={W - PR - 126} y={PT + 5} fontSize="9" fill="#414743">Thực tế</text>
       <rect x={W - PR - 85} y={PT} width={10} height={3} fill="#3b82f6" rx="1" />
-      <text x={W - PR - 71} y={PT + 5} fontSize="9" fill="#374151">Dự báo</text>
+      <text x={W - PR - 71} y={PT + 5} fontSize="9" fill="#414743">Dự báo</text>
       <rect x={W - PR - 30} y={PT - 3} width={10} height={10} fill="#3b82f6" fillOpacity="0.15" rx="1" />
-      <text x={W - PR - 16} y={PT + 5} fontSize="9" fill="#374151">CI</text>
+      <text x={W - PR - 16} y={PT + 5} fontSize="9" fill="#414743">CI</text>
     </svg>
   )
 }
@@ -207,7 +209,7 @@ function RecommendCard({ item }) {
       }}>
         {item.image
           ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <span style={{ fontSize: 22 }}>☕</span>}
+          : <span style={{ fontSize: 22 }}><WorkspaceSymbolCoffee size="1.1em" aria-hidden="true" /></span>}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: '#111827' }}>{item.name}</p>
@@ -224,7 +226,7 @@ function RecommendCard({ item }) {
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
         <div style={{ fontSize: 11, color: '#9ca3af' }}>Score</div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#374151' }}>{item.score.toFixed(2)}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#414743' }}>{item.score.toFixed(2)}</div>
       </div>
     </div>
   )
@@ -447,12 +449,12 @@ export function AiAnalyticsPanel({ session }) {
       {/* ── AI Service Down Banner ───────────────────────────────────────── */}
       {isAiDown && (
         <div style={{
-          background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10,
+          background: "#f4f5f2", border: '1px solid #fecaca', borderRadius: 10,
           padding: '14px 20px', marginBottom: 24, color: '#991b1b',
         }}>
-          <strong>⚠️ AI Service chưa khởi động</strong>
+          <strong><WorkspaceSymbolAlertTriangle size="1.1em" aria-hidden="true" /> AI Service chưa khởi động</strong>
           <span style={{ marginLeft: 10, fontSize: 13 }}>
-            Chạy lệnh: <code style={{ background: '#fee2e2', padding: '2px 6px', borderRadius: 4 }}>docker compose up -d --build ai-service api-gateway</code>
+            Chạy lệnh: <code style={{ background: "#f4f5f2", padding: '2px 6px', borderRadius: 4 }}>docker compose up -d --build ai-service api-gateway</code>
           </span>
         </div>
       )}
@@ -490,17 +492,17 @@ export function AiAnalyticsPanel({ session }) {
             },
           ].map((card, i) => (
             <div key={i} style={{
-              background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
+              background: '#fff', border: '1px solid #e2e4df', borderRadius: 12,
               padding: '14px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}>
-              <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{ fontSize: 11, color: '#69736a', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {card.label}
               </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#252927', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <StatusDot ok={card.ok} />
                 <span>{card.value}</span>
               </div>
-              <div style={{ fontSize: 11, color: '#64748b' }}>{card.sub}</div>
+              <div style={{ fontSize: 11, color: '#69736a' }}>{card.sub}</div>
             </div>
           ))}
         </div>
@@ -520,7 +522,7 @@ export function AiAnalyticsPanel({ session }) {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
-                <tr style={{ background: '#f8fafc', color: '#374151' }}>
+                <tr style={{ background: '#f8f9f6', color: '#414743' }}>
                   <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Chỉ số</th>
                   <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Giá trị</th>
                   <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Diễn giải cho quản trị</th>
@@ -529,9 +531,9 @@ export function AiAnalyticsPanel({ session }) {
               <tbody>
                 {behaviorSummary.map((row, idx) => (
                   <tr key={idx}>
-                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', fontWeight: 700 }}>{row.label}</td>
-                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', color: '#0f172a' }}>{row.value}</td>
-                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>{row.note}</td>
+                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #f4f5f2', fontWeight: 700 }}>{row.label}</td>
+                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #f4f5f2', color: '#252927' }}>{row.value}</td>
+                    <td style={{ padding: '10px 12px', borderBottom: '1px solid #f4f5f2', color: '#69736a' }}>{row.note}</td>
                   </tr>
                 ))}
               </tbody>
@@ -549,10 +551,10 @@ export function AiAnalyticsPanel({ session }) {
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827' }}>
               Biểu đồ hành vi mua sắm Khách hàng
             </h3>
-            <p style={{ margin: '6px 0 0', fontSize: 12, color: '#64748b' }}>
+            <p style={{ margin: '6px 0 0', fontSize: 12, color: '#69736a' }}>
               Tổng hợp dữ liệu thực từ đơn hàng, đánh giá, yêu thích và voucher để đồng bộ với gợi ý cho Khách hàng.
             </p>
-            <span style={{ display: 'inline-block', marginTop: 8, padding: '3px 10px', borderRadius: 999, border: '1px solid #bfdbfe', background: 'var(--primary-light)', color: 'var(--primary-hover)', fontSize: 11, fontWeight: 700 }}>
+            <span className="workspace-inline-label" style={{ display: 'inline-block', marginTop: 8, padding: '3px 10px', borderRadius: 999, border: '1px solid #bfdbfe', background: 'var(--primary-light)', color: 'var(--primary-hover)', fontSize: 11, fontWeight: 700 }}>
               Đồng bộ Khách hàng
             </span>
           </div>
@@ -576,7 +578,7 @@ export function AiAnalyticsPanel({ session }) {
 
         {!behaviorQuery.isLoading && !behaviorQuery.isError ? (
           <>
-            <div style={{ marginTop: 14, border: '1px solid #e2e8f0', borderRadius: 12, background: '#f8fafc', overflowX: 'auto' }}>
+            <div style={{ marginTop: 14, border: '1px solid #e2e4df', borderRadius: 12, background: '#f8f9f6', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: 'var(--primary-light)' }}>
@@ -588,14 +590,14 @@ export function AiAnalyticsPanel({ session }) {
                 <tbody>
                   {topProductsSummaryRows.map((item, idx) => (
                     <tr key={`${item.name}-${idx}`}>
-                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>{idx + 1}</td>
-                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', fontWeight: 700, color: '#0f172a' }}>{item.name}</td>
-                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', color: 'var(--primary-hover)', fontWeight: 700 }}>{fmtNum(item.score, 2)}</td>
+                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e4df', fontWeight: 700 }}>{idx + 1}</td>
+                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e4df', fontWeight: 700, color: '#252927' }}>{item.name}</td>
+                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e4df', color: 'var(--primary-hover)', fontWeight: 700 }}>{fmtNum(item.score, 2)}</td>
                     </tr>
                   ))}
                   {topProductsSummaryRows.length === 0 ? (
                     <tr>
-                      <td colSpan={3} style={{ padding: '12px', color: '#64748b' }}>Chưa có dữ liệu top sản phẩm trong khoảng thời gian đã chọn.</td>
+                      <td colSpan={3} style={{ padding: '12px', color: '#69736a' }}>Chưa có dữ liệu top sản phẩm trong khoảng thời gian đã chọn.</td>
                     </tr>
                   ) : null}
                 </tbody>
@@ -603,9 +605,9 @@ export function AiAnalyticsPanel({ session }) {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 20, marginTop: 16 }}>
-              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 16 }}>🔥</span> Top sản phẩm được mua nhiều
+              <section style={{ border: '1px solid #e2e4df', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#252927', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}><WorkspaceSymbolFlame size="1.1em" aria-hidden="true" /></span> Top sản phẩm được mua nhiều
                 </h4>
                 <div style={{ display: 'grid', gap: 10 }}>
                   {behaviorInsights.topProducts.map((item) => (
@@ -621,9 +623,9 @@ export function AiAnalyticsPanel({ session }) {
                 </div>
               </section>
 
-              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 16 }}>💳</span> Tỷ lệ phương thức thanh toán
+              <section style={{ border: '1px solid #e2e4df', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#252927', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}><WorkspaceSymbolCreditCard size="1.1em" aria-hidden="true" /></span> Tỷ lệ phương thức thanh toán
                 </h4>
                 <div style={{ display: 'grid', gap: 10 }}>
                   {behaviorInsights.paymentMix.map((item) => (
@@ -639,8 +641,8 @@ export function AiAnalyticsPanel({ session }) {
                 </div>
               </section>
 
-              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <section style={{ border: '1px solid #e2e4df', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#252927', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 16 }}>⏰</span> Khung giờ mua sắm nổi bật
                 </h4>
                 <div style={{ display: 'grid', gap: 10 }}>
@@ -657,8 +659,8 @@ export function AiAnalyticsPanel({ session }) {
                 </div>
               </section>
 
-              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <section style={{ border: '1px solid #e2e4df', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#252927', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 16 }}>⭐</span> Top sản phẩm được đánh giá
                 </h4>
                 <div style={{ display: 'grid', gap: 10 }}>
@@ -668,16 +670,16 @@ export function AiAnalyticsPanel({ session }) {
                       label={item.name}
                       value={item.avgRating}
                       max={5}
-                      note={`${fmtNum(item.avgRating, 1)} ★ (${fmtNum(item.reviews)} đánh giá)`}
+                      note={`${fmtNum(item.avgRating, 1)}  (${fmtNum(item.reviews)} đánh giá)`}
                       barGradient="linear-gradient(90deg, var(--primary), #c084fc)"
                     />
                   ))}
                 </div>
               </section>
 
-              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 16 }}>❤️</span> Top sản phẩm được yêu thích
+              <section style={{ border: '1px solid #e2e4df', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#252927', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}><WorkspaceSymbolHeart size="1.1em" aria-hidden="true" /></span> Top sản phẩm được yêu thích
                 </h4>
                 <div style={{ display: 'grid', gap: 10 }}>
                   {(behaviorInsights.topFavorites || []).map((item) => (
@@ -693,9 +695,9 @@ export function AiAnalyticsPanel({ session }) {
                 </div>
               </section>
 
-              <section style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 16 }}>🎟️</span> Top sản phẩm mua kèm Voucher
+              <section style={{ border: '1px solid #e2e4df', borderRadius: 12, padding: 18, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#252927', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}><WorkspaceSymbolTicket size="1.1em" aria-hidden="true" /></span> Top sản phẩm mua kèm Voucher
                 </h4>
                 <div style={{ display: 'grid', gap: 10 }}>
                   {(behaviorInsights.topVoucherProducts || []).map((item) => (
@@ -730,10 +732,10 @@ export function AiAnalyticsPanel({ session }) {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <select value={branchCode} onChange={e => setBranchCode(e.target.value)}
+            <SearchableSelect value={branchCode} onChange={e => setBranchCode(e.target.value)}
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontWeight: 600 }}>
               {branchOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            </SearchableSelect>
             <select value={metric} onChange={e => setMetric(e.target.value)}
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontWeight: 600 }}>
               <option value="orders">Số đơn hàng</option>
@@ -788,7 +790,7 @@ export function AiAnalyticsPanel({ session }) {
             <div style={{ marginTop: 18, overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc', color: '#374151' }}>
+                  <tr style={{ background: '#f8f9f6', color: '#414743' }}>
                     <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Ngày dự báo</th>
                     <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Dự kiến trung bình</th>
                     <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Mức dao động thấp</th>
@@ -798,14 +800,14 @@ export function AiAnalyticsPanel({ session }) {
                 <tbody>
                   {forecastRows.map((row) => (
                     <tr key={row.ds}>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', fontWeight: 700 }}>{row.ds}</td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f4f5f2', fontWeight: 700 }}>{row.ds}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f4f5f2' }}>
                         {metric === 'revenue' ? fmtMoney(row.yhat) : fmtNum(row.yhat, 1)}
                       </td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f4f5f2', color: '#69736a' }}>
                         {metric === 'revenue' ? fmtMoney(row.lo) : fmtNum(row.lo, 1)}
                       </td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #f4f5f2', color: '#69736a' }}>
                         {metric === 'revenue' ? fmtMoney(row.hi) : fmtNum(row.hi, 1)}
                       </td>
                     </tr>
@@ -830,7 +832,7 @@ export function AiAnalyticsPanel({ session }) {
         </p>
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-          <input
+          <input className="ui-input"
             value={testUserId}
             onChange={e => setTestUserId(e.target.value)}
             placeholder="Nhập User ID (UUID) thật"
@@ -850,7 +852,7 @@ export function AiAnalyticsPanel({ session }) {
               fontSize: 13, fontWeight: 700, opacity: recommendTargetUserId ? 1 : 0.6,
             }}
           >
-            🔍 Gợi ý
+            <WorkspaceSymbolSearch size="1.1em" aria-hidden="true" /> Gợi ý
           </button>
         </div>
 
@@ -864,10 +866,10 @@ export function AiAnalyticsPanel({ session }) {
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
-                background: recs.is_personalized ? '#dbeafe' : '#fef3c7',
+                background: recs.is_personalized ? "#f4f5f2" : "#f4f5f2",
                 color: recs.is_personalized ? '#2563eb' : '#92400e',
               }}>
-                {recs.is_personalized ? '✓ Gợi ý cá nhân hóa' : '★ Sản phẩm phổ biến (cold start)'}
+                {recs.is_personalized ? "Gợi ý cá nhân hóa" : "Sản phẩm phổ biến (cold start)"}
               </span>
               <span style={{ fontSize: 11, color: '#9ca3af' }}>
                 Model: {recs.model} · User: {recs.user_id?.slice(0, 16)}…

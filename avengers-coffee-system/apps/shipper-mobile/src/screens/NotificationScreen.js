@@ -53,7 +53,6 @@ export function NotificationScreen({ navigation }) {
     isLoading,
     isError,
     refetch,
-    isRefetching,
   } = useQuery({
     queryKey: ['shipper-notifications', shipper?.id],
     queryFn: () => apiClient.get(`/shippers/${shipper.id}/notifications`),
@@ -61,6 +60,16 @@ export function NotificationScreen({ navigation }) {
     refetchInterval: focused ? 30000 : false,
     select: (res) => (Array.isArray(res) ? res : res?.items || res?.data || []),
   })
+
+  const [manualRefreshing, setManualRefreshing] = useState(false)
+  const handleRefresh = async () => {
+    setManualRefreshing(true)
+    try {
+      await refetch()
+    } finally {
+      setManualRefreshing(false)
+    }
+  }
 
   const notifications = notifData || []
 
@@ -103,7 +112,7 @@ export function NotificationScreen({ navigation }) {
 
   return (
     <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
-      <Header title="Thông báo" subtitle={`${notifications.length} thông báo`} onBack={() => navigation.goBack()} right={<IconButton name="refresh-outline" label="Làm mới thông báo" onPress={refetch} />} />
+      <Header title="Thông báo" onBack={() => navigation.goBack()} right={<IconButton name="refresh-outline" label="Làm mới thông báo" onPress={handleRefresh} />} />
 
       {/* Filter Tabs */}
       <View style={styles.filterRow}>
@@ -122,7 +131,7 @@ export function NotificationScreen({ navigation }) {
 
       {isLoading ? (
         <Skeleton />
-      ) : isError ? <EmptyState title="Chưa tải được thông báo" description="Kiểm tra kết nối và thử lại." retry={refetch} /> : (
+      ) : isError ? <EmptyState title="Chưa tải được thông báo" description="Kiểm tra kết nối và thử lại." retry={handleRefresh} /> : (
         <FlatList
           initialNumToRender={6} maxToRenderPerBatch={6} windowSize={5}
           data={filteredNotifs}
@@ -131,8 +140,8 @@ export function NotificationScreen({ navigation }) {
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
+              refreshing={manualRefreshing}
+              onRefresh={handleRefresh}
               tintColor={colors.primary}
             />
           }
@@ -168,20 +177,32 @@ const styles = StyleSheet.create({
   headerSub: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
   filterRow: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
   },
   filterTab: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
-    backgroundColor: colors.bg,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
   },
-  filterTabActive: { backgroundColor: colors.primary },
-  filterText: { ...typography.caption, color: colors.muted, fontWeight: '600' },
-  filterTextActive: { color: '#fff' },
+  filterTabActive: {
+    backgroundColor: colors.primary,
+  },
+  filterText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  filterTextActive: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   listContent: { padding: spacing.md, paddingBottom: spacing.xxl },
   card: {

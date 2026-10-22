@@ -17,7 +17,7 @@ export const FAQsSection = () => {
   return (
     <section className="bg-white px-6 py-10">
       <div className="max-w-[1024px] mx-auto border border-gray-100 bg-white shadow-[0_4px_25px_-5px_rgba(0,0,0,0.08)] rounded-2xl px-10 py-12 font-sans">
-        <h2 className="text-[32px] font-black text-center text-[#b22830] uppercase mb-10">FAQS</h2>
+        <h2 className="text-[32px] font-semibold text-center text-[#b22830]  mb-10">FAQS</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
           {/* Col 1 */}
           <div className="flex flex-col gap-3">

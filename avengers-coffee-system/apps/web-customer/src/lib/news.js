@@ -3,11 +3,11 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.h
 export const FALLBACK_ARTICLES = [
   {
     id: 'fb-1',
-    title: 'Highlands Coffee - Hành Trình 25 Năm Nâng Tầm Di Sản Cà Phê Phin Việt Nam',
+    title: "Avengers Coffee - Hành Trình 25 Năm Nâng Tầm Di Sản Cà Phê Phin Việt Nam",
     category: 'COFFEEHOLIC',
-    author: 'Highlands Brand Editorial',
+    author: "Avengers Coffee Brand Editorial",
     image: '/images/news/heritage.jpg',
-    excerpt: 'Bắt đầu từ tình yêu mãnh liệt với đất nước và hạt cà phê Robusta Buôn Ma Thuột, Highlands Coffee đã trải qua hành trình 25 năm gìn giữ nét văn hóa cà phê phin đậm đà truyền thống.',
+    excerpt: "Bắt đầu từ tình yêu mãnh liệt với đất nước và hạt cà phê Robusta Buôn Ma Thuột, Avengers Coffee đã trải qua hành trình 25 năm gìn giữ nét văn hóa cà phê phin đậm đà truyền thống.",
     content: `Bắt đầu với sản phẩm cà phê đóng gói tại Hà Nội vào năm 1999, Highlands Coffee® đã nhanh chóng phát triển thành thương hiệu cà phê hàng đầu Việt Nam. Hơn 25 năm qua, thương hiệu không ngừng nỗ lực mang đến cho khách hàng những sản phẩm cà phê thơm ngon, đậm đà trong không gian hiện đại và thân thiện.
 
 ### 1. Khởi Nguồn Từ Tình Yêu Cà Phê Việt

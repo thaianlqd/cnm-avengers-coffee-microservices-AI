@@ -76,6 +76,16 @@ export function BatchOrderScreen({ route, navigation }) {
     refetchInterval: 15000,
   })
 
+  const [manualRefreshing, setManualRefreshing] = useState(false)
+  const handleRefresh = async () => {
+    setManualRefreshing(true)
+    try {
+      await refetch()
+    } finally {
+      setManualRefreshing(false)
+    }
+  }
+
   useEffect(() => {
     if (serverBatch) {
       setBatchData(serverBatch)
@@ -228,8 +238,7 @@ export function BatchOrderScreen({ route, navigation }) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={{ alignItems: 'center' }}>
-          <Text style={styles.headerTitle}>Nhiệm Vụ Ghép Đơn</Text>
-          <Text style={styles.headerSubtitle}>Mã nhóm: #{batchCode}</Text>
+          <Text style={styles.headerTitle}>Ghép đơn</Text>
         </View>
         <View style={styles.statusBadge}>
           <View style={styles.statusDot} />
@@ -241,7 +250,7 @@ export function BatchOrderScreen({ route, navigation }) {
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={manualRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
         {/* Điểm lấy hàng (Cửa hàng) */}
         <LazySection minHeight={160}><View style={styles.storeCard}>

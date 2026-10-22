@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react'
 import { loadLeaflet } from '../screens/MapScreen.web'
-import { installDetailedBasemap } from '../../../web-customer/src/components/mapBasemap'
-import { mapPinHtml } from '../../../web-customer/src/components/deliveryMapPresentation'
-import '../../../web-customer/src/components/features_thaian/DeliveryJourney.css'
+import { installDetailedBasemap } from '../../../web-customer/src/components/map/mapBasemap'
+import { mapPinHtml } from '../../../web-customer/src/components/map/deliveryMapPresentation'
+import '../../../web-customer/src/components/delivery/DeliveryJourney.css'
 export default function BatchRouteMap({ stops, coordinates, currentStep }) {
   const element = useRef(null), map = useRef(null), L = useRef(null), pins = useRef(null), line = useRef(null)
   const current = useRef({stops,coordinates,currentStep}); current.current = {stops,coordinates,currentStep}

@@ -8,8 +8,8 @@ export default function About({ setActiveTab }) {
       {/* ── 1. NGUỒN GỐC ── */}
       <section className="w-full relative h-[600px] overflow-hidden">
         <img
-          src="/hc-assets/ABOUT-CAREER3.jpg"
-          alt={ui("NGUỒN GỐC")}
+          src="/images/brand/coffee-moments-hero-v1.jpg"
+          alt={ui("Nguồn gốc")}
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Gradient overlay on the left for text readability */}
@@ -17,10 +17,10 @@ export default function About({ setActiveTab }) {
 
         <div className="relative z-10 mx-auto h-full max-w-[1380px] px-4 md:px-6 flex items-center">
           <div className="max-w-[500px]">
-            <h2 className="text-[40px] font-bold text-[#4f2c1c] uppercase tracking-wide">{ui("NGUỒN GỐC")}</h2>
-            <p className="mt-2 text-[18px] font-bold text-[#4f2c1c] uppercase">{ui("CÂU CHUYỆN NÀY LÀ CỦA CHÚNG MÌNH")}</p>
-            <p className="mt-4 text-[16px] text-[#4f2c1c] leading-relaxed font-medium">{ui("Highlands Coffee® được thành lập vào năm 1999, bắt nguồn từ tình yêu dành cho đất Việt cùng với cà phê và cộng đồng nơi đây. Ngay từ những ngày đầu tiên, mục tiêu của chúng mình là có thể phục vụ và góp phần phát triển cộng đồng bằng cách siết chặt thêm sự kết nối và sự gắn bó giữa người với người.")}</p>
-            <button className="mt-8 px-10 py-3 border border-[#b22830] text-[#b22830] font-medium tracking-widest uppercase hover:bg-[#b22830] hover:text-white transition-all bg-transparent rounded-[4px]">{ui("XEM CHI TIẾT")}</button>
+            <h2 className="text-[40px] font-bold text-[#4f2c1c]  tracking-wide">{ui("Nguồn gốc")}</h2>
+            <p className="mt-2 text-[18px] font-bold text-[#4f2c1c] ">{ui("Câu chuyện này là của chúng mình")}</p>
+            <p className="mt-4 text-[16px] text-[#4f2c1c] leading-relaxed font-medium">{ui("Avengers Coffee mang đến những ly cà phê đậm đà, không gian gần gũi và những cuộc hẹn đầy cảm hứng.")}</p>
+            <button className="mt-8 px-10 py-3 border border-[#b22830] text-[#b22830] font-medium tracking-widest  hover:bg-[#b22830] hover:text-white transition-all bg-transparent rounded-[4px]">{ui("Xem chi tiết")}</button>
           </div>
         </div>
       </section>
@@ -28,7 +28,7 @@ export default function About({ setActiveTab }) {
       {/* ── 2. DỊCH VỤ ── */}
       <section className="w-full relative h-[600px] overflow-hidden">
         <img
-          src="/hc-assets/HLC___ngang_social_1920_x_1280_px_1_1.png"
+          src="/images/brand/tea-and-croissant-v1.jpg"
           alt={ui("DỊCH VỤ")}
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -37,10 +37,10 @@ export default function About({ setActiveTab }) {
 
         <div className="relative z-10 mx-auto h-full max-w-[1380px] px-4 md:px-6 flex items-center justify-end">
           <div className="max-w-[550px] text-right">
-            <h2 className="text-[40px] font-bold text-white uppercase tracking-wide">{ui("DỊCH VỤ")}</h2>
-            <p className="mt-2 text-[18px] font-bold text-white uppercase">{ui("DỊCH VỤ NÀY LÀ CỦA CHÚNG MÌNH")}</p>
-            <p className="mt-4 text-[16px] text-white leading-relaxed font-medium">{ui("Highlands Coffee® là không gian của chúng mình nên mọi thứ ở đây đều vì sự thoải mái của chúng mình. Đừng giữ trong lòng, hãy chia sẻ với chúng mình điều bạn mong muốn để cùng nhau giúp Highlands Coffee® trở nên tuyệt vời hơn.")}</p>
-            <button className="mt-8 px-10 py-3 border border-white text-white font-medium tracking-widest uppercase hover:bg-white hover:text-[#a57a44] transition-all bg-transparent rounded-[4px]">{ui("XEM CHI TIẾT")}</button>
+            <h2 className="text-[40px] font-bold text-white  tracking-wide">{ui("DỊCH VỤ")}</h2>
+            <p className="mt-2 text-[18px] font-bold text-white ">{ui("Dịch vụ này là của chúng mình")}</p>
+            <p className="mt-4 text-[16px] text-white leading-relaxed font-medium">{ui("Avengers Coffee là không gian của chúng mình nên mọi thứ ở đây đều vì sự thoải mái của chúng mình. Đừng giữ trong lòng, hãy chia sẻ với chúng mình điều bạn mong muốn để cùng nhau giúp Avengers Coffee trở nên tuyệt vời hơn.")}</p>
+            <button className="mt-8 px-10 py-3 border border-white text-white font-medium tracking-widest  hover:bg-white hover:text-[#a57a44] transition-all bg-transparent rounded-[4px]">{ui("Xem chi tiết")}</button>
           </div>
         </div>
       </section>
@@ -48,8 +48,8 @@ export default function About({ setActiveTab }) {
       {/* ── 3. NGHỀ NGHIỆP ── */}
       <section className="w-full relative h-[600px] overflow-hidden">
         <img
-          src="/hc-assets/8W1A6722_1.jpg"
-          alt={ui("NGHỀ NGHIỆP")}
+          src="/images/brand/coffee-space-v1.jpg"
+          alt={ui("Nghề nghiệp")}
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Gradient overlay on the left for text readability */}
@@ -57,16 +57,16 @@ export default function About({ setActiveTab }) {
 
         <div className="relative z-10 mx-auto h-full max-w-[1380px] px-4 md:px-6 flex items-center">
           <div className="max-w-[550px]">
-            <h2 className="text-[40px] font-bold text-white uppercase tracking-wide">{ui("NGHỀ NGHIỆP")}</h2>
-            <p className="mt-2 text-[18px] font-bold text-white uppercase">{ui("CƠ HỘI NÀY LÀ CỦA CHÚNG MÌNH")}</p>
-            <p className="mt-4 text-[16px] text-white/90 leading-relaxed font-medium">{ui("Là điểm hội tụ của cộng đồng, Highlands Coffee® luôn tìm kiếm những thành viên mới với mong muốn không ngừng hoàn thiện một không gian dành cho tất cả mọi người. Chúng mình luôn chào đón bạn trở thành một phần của Highlands Coffee® để cùng nhau siết chặt thêm những kết nối và sự gắn bó giữa người với người.")}</p>
+            <h2 className="text-[40px] font-bold text-white  tracking-wide">{ui("Nghề nghiệp")}</h2>
+            <p className="mt-2 text-[18px] font-bold text-white ">{ui("Cơ hội này là của chúng mình")}</p>
+            <p className="mt-4 text-[16px] text-white/90 leading-relaxed font-medium">{ui("Là điểm hội tụ của cộng đồng, Avengers Coffee luôn tìm kiếm những thành viên mới với mong muốn không ngừng hoàn thiện một không gian dành cho tất cả mọi người. Chúng mình luôn chào đón bạn trở thành một phần của Avengers Coffee để cùng nhau siết chặt thêm những kết nối và sự gắn bó giữa người với người.")}</p>
             <button
               onClick={() => {
                 setActiveTab?.('careers');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="mt-8 px-10 py-3 border border-white text-white font-medium tracking-widest uppercase hover:bg-white hover:text-[#6b4724] transition-all bg-transparent rounded-[4px]"
-            >{ui("XEM CHI TIẾT")}</button>
+              className="mt-8 px-10 py-3 border border-white text-white font-medium tracking-widest  hover:bg-white hover:text-[#6b4724] transition-all bg-transparent rounded-[4px]"
+            >{ui("Xem chi tiết")}</button>
           </div>
         </div>
       </section>

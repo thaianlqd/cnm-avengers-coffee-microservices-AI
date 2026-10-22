@@ -1,4 +1,8 @@
-import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query, UnauthorizedException, Req, Res } from '@nestjs/common';
+import type { AddressPayload } from './address-selection';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { avatarDataUrl, MAX_AVATAR_BYTES } from './avatar-upload';
+import type { AvatarFile } from './avatar-upload';
+import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query, UnauthorizedException, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { PublicBrowseCache } from '../../public-browse-cache';
 import { AllowInternal, CurrentUser, Public, Roles } from '../../auth/auth.decorators';
@@ -233,6 +237,18 @@ export class UserController {
   }
 
   @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
+  @Post('users/:userId/avatar')
+  @UseInterceptors(FileInterceptor('avatar', { limits: { fileSize: MAX_AVATAR_BYTES, files: 1 } }))
+  async uploadAvatar(
+    @Param('userId') userId: string,
+    @CurrentUser() currentUser: AuthUser | null,
+    @UploadedFile() file: AvatarFile,
+  ) {
+    this.ensureSelfOrAdmin(currentUser, userId);
+    return this.userService.capNhatThongTinCaNhan(userId, { avatarUrl: avatarDataUrl(file) });
+  }
+
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
   @Post('users/:userId/change-password')
   async doiMatKhau(
     @Param('userId') userId: string,
@@ -255,7 +271,7 @@ export class UserController {
   async themDiaChi(
     @Param('userId') userId: string,
     @CurrentUser() currentUser: AuthUser | null,
-    @Body() body: { tenDiaChi?: string; diaChiDayDu?: string; ghiChu?: string; macDinh?: boolean },
+    @Body() body: AddressPayload,
   ) {
     this.ensureSelfOrAdmin(currentUser, userId);
     return this.userService.themDiaChi(userId, body);
@@ -267,7 +283,7 @@ export class UserController {
     @Param('userId') userId: string,
     @Param('addressId') addressId: string,
     @CurrentUser() currentUser: AuthUser | null,
-    @Body() body: { tenDiaChi?: string; diaChiDayDu?: string; ghiChu?: string; macDinh?: boolean },
+    @Body() body: AddressPayload,
   ) {
     this.ensureSelfOrAdmin(currentUser, userId);
     return this.userService.capNhatDiaChi(userId, Number(addressId), body);
@@ -488,39 +504,6 @@ export class UserController {
   @Patch('admin/zones/:id')
   async capNhatKhuVuc(@Param('id') id: string, @Body() body: any) {
     return this.userService.capNhatKhuVuc(id, body);
-  }
-
-  @Roles('ADMIN', 'MANAGER')
-  @Get('admin/satellite-kiosks')
-  async layDanhSachKioskVeTinh(
-    @CurrentUser() currentUser: AuthUser | null,
-    @Query('khu_vuc_id') khu_vuc_id?: string,
-    @Query('trang_thai') trang_thai?: string,
-    @Query('thanh_pho') thanh_pho?: string,
-  ) {
-    const isManager = currentUser?.role === 'MANAGER';
-    const chi_nhanh_me_ma = isManager ? (currentUser?.branchCode || undefined) : undefined;
-    return this.userService.layDanhSachKioskVeTinh({ khu_vuc_id, trang_thai, thanh_pho, chi_nhanh_me_ma });
-  }
-
-  @Roles('ADMIN', 'MANAGER')
-  @Get('admin/satellite-kiosks/stats')
-  async thongKeKioskTheoCumKhuVuc(@CurrentUser() currentUser: AuthUser | null) {
-    const isManager = currentUser?.role === 'MANAGER';
-    const chi_nhanh_me_ma = isManager ? (currentUser?.branchCode || undefined) : undefined;
-    return this.userService.thongKeKioskTheoCumKhuVuc(chi_nhanh_me_ma);
-  }
-
-  @Roles('ADMIN')
-  @Post('admin/satellite-kiosks')
-  async taoKioskVeTinh(@Body() body: any) {
-    return this.userService.taoKioskVeTinh(body);
-  }
-
-  @Roles('ADMIN')
-  @Patch('admin/satellite-kiosks/:ma')
-  async capNhatKioskVeTinh(@Param('ma') ma: string, @Body() body: any) {
-    return this.userService.capNhatKioskVeTinh(ma, body);
   }
 
 

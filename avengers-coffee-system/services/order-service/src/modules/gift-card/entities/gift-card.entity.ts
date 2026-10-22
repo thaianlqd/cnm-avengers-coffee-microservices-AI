@@ -46,6 +46,9 @@ export class GiftCard {
   @Column({ type: 'timestamp', nullable: true })
   redeemed_at: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  expires_at: Date | null;
+
   @CreateDateColumn()
   created_at: Date;
 

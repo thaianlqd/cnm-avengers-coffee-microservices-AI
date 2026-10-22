@@ -7,7 +7,7 @@ import {
   Wallet,
   Eye,
   EyeOff,
-} from "lucide-react";
+} from '../../../components/console/WorkspaceIcons';
 
 const workspaces = [
   {
@@ -56,12 +56,12 @@ const workspaces = [
   },
   {
     id: "accountant",
-    label: "Kế toán",
+    label: "Quản lý nhượng quyền",
     icon: Wallet,
-    title: "Số liệu rõ ràng, đối soát dễ dàng",
+    title: "Điều hành mạng lưới kiosk",
     description:
-      "Tổng hợp tài chính nhượng quyền, theo dõi dòng tiền và các khoản cần đối soát.",
-    tags: ["Báo cáo tài chính", "Dòng tiền", "Đối soát công nợ"],
+      "Theo dõi vận hành kiosk, đơn nguyên liệu, hợp đồng và công nợ nhượng quyền.",
+    tags: ["Vận hành kiosk", "Đơn nguyên liệu", "Công nợ"],
     image: '/images/login/highlands-christmas-team.jpg',
     imageAlt: 'Đội ngũ Highlands cùng đón Giáng sinh',
   },
@@ -170,13 +170,10 @@ export function LoginScreen({
       <img key={selected.image} className="console-login-photo" src={selected.image} alt={selected.imageAlt} fetchPriority="high" />
       <section className="console-login-story" data-workspace={workspace}>
         <div className="console-login-logo">
-          <Coffee size={30} />
-          <span>
-            AVENGERS COFFEE <small>WORKSPACE</small>
-          </span>
+          <img src="/images/logo-white.png" alt="Avengers Coffee" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+          <span>Avengers Coffee</span>
         </div>
         <div className="console-login-copy">
-          <span className="console-eyebrow">KHÔNG GIAN LÀM VIỆC</span>
           <h1>{selected.title}</h1>
           <p>{selected.description}</p>
           <div className="console-login-tags">

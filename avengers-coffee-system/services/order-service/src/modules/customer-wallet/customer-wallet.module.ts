@@ -5,8 +5,13 @@ import { CustomerWalletTransaction } from './entities/customer-wallet-transactio
 import { CustomerWalletController } from './customer-wallet.controller';
 import { CustomerWalletService } from './customer-wallet.service';
 
+import { SmtpModule } from '../smtp/smtp.module';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([CustomerWallet, CustomerWalletTransaction])],
+  imports: [
+    TypeOrmModule.forFeature([CustomerWallet, CustomerWalletTransaction]),
+    SmtpModule,
+  ],
   controllers: [CustomerWalletController],
   providers: [CustomerWalletService],
   exports: [CustomerWalletService],

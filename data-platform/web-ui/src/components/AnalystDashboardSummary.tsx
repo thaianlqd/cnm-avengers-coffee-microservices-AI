@@ -53,14 +53,17 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
   useEffect(() => { setView('all'); setShowAll(false); }, [report.session_id, report.revision]);
   const [resultId, setResultId] = useState<string | null>(null);
   const selected = dashboardCharts(report.charts || [], report);
-  const primary = dashboardPrimaryCharts(selected.charts);
-  const highlights = dashboardHighlights(report), findings = dashboardFindings(report);
+  const depth = report.analysis_depth || report.analysis_breadth || report.diagnostics?.analysis_depth;
+  const primary = dashboardPrimaryCharts(selected.charts, depth === 'focused' ? 3 : 6);
+  const highlights = dashboardHighlights(report), findings = dashboardFindings(report, depth === 'focused' ? 3 : 6);
   const results = Object.entries(report.result_sets || {});
   const activeResult = results.find(([id]) => id === resultId) || results.find(([,data]: any) => (data.total_rows ?? data.rows?.length) > 1) || results[0];
   const tabs = dashboardChartTabs(selected.charts);
   const activeTab = tabs.find(tab => tab.id === view) || tabs[0];
   const visibleCharts = view === 'all' ? [...(showAll ? selected.charts : primary)] : activeTab.charts;
-  const minimum = Math.max(4, report.quality_assessment?.verification_checks?.find((c: any) => c.id === 'analysis_depth_coverage')?.total || report.diagnostics?.minimum_visuals || 0);
+  const minimum = report.quality_assessment?.verification_checks?.find((c: any) => c.id === 'analysis_depth_coverage')?.total
+    || report.diagnostics?.minimum_visuals
+    || (depth === 'focused' ? 2 : depth === 'comprehensive' ? 6 : 4);
   return <div className="space-y-5">
     {!!report.data_warnings?.length && <details className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800"><summary className="cursor-pointer font-medium">{report.data_warnings.length} lưu ý về dữ liệu · Xem chi tiết</summary><ul className="mt-2 space-y-1">{report.data_warnings.map((w: string, i: number) => <li key={i}>{w}</li>)}</ul></details>}
     {!!highlights.length && <div className={`grid grid-cols-1 ${highlights.length === 1 ? 'sm:grid-cols-1' : highlights.length === 3 ? 'sm:grid-cols-2 xl:grid-cols-3' : 'sm:grid-cols-2 xl:grid-cols-4'} gap-3`}>{highlights.map((card: any, i: number) => <section key={card.evidence_id || i} className="rounded-xl border border-slate-200 bg-white p-4 min-w-0">

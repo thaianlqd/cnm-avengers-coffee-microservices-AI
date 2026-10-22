@@ -1,11 +1,11 @@
 import React from 'react'
-import { ActivityIndicator, View, Text, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
 import { useShipper } from '../context/ShipperContext'
 import { colors } from '../theme'
+import { ShipperHomeSkeleton } from '../components/Experience'
 
 import { LoginScreen } from '../screens/LoginScreen'
 import { HomeScreen } from '../screens/HomeScreen'
@@ -30,7 +30,7 @@ function TabBarIcon({ routeName, color, size, focused }) {
     Home: { focused: 'navigate', unfocused: 'navigate-outline' },
     Wallet: { focused: 'wallet', unfocused: 'wallet-outline' },
     History: { focused: 'time', unfocused: 'time-outline' },
-    Profile: { focused: 'person-circle', unfocused: 'person-circle-outline' },
+    Profile: { focused: 'person', unfocused: 'person-outline' },
   }
   const icons = ICONS[routeName] || { focused: 'ellipse', unfocused: 'ellipse-outline' }
   return <Ionicons name={focused ? icons.focused : icons.unfocused} size={size} color={color} />
@@ -45,8 +45,8 @@ function MainTabs() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          backgroundColor: colors.card,
-          borderTopColor: colors.borderLight,
+          backgroundColor: '#ffffff',
+          borderTopColor: '#f1f5f9',
           borderTopWidth: 1,
           height: 60 + insets.bottom,
           paddingBottom: Math.max(8, insets.bottom),
@@ -58,12 +58,12 @@ function MainTabs() {
           fontWeight: '600',
         },
         tabBarIcon: ({ color, size, focused }) => (
-          <TabBarIcon routeName={route.name} color={color} size={23} focused={focused} />
+          <TabBarIcon routeName={route.name} color={color} size={22} focused={focused} />
         ),
       })}
     >
       <Tabs.Screen name="Home" component={HomeScreen} options={{ title: 'Công việc' }} />
-      <Tabs.Screen name="Wallet" component={WalletScreen} options={{ title: 'Ví & COD' }} />
+      <Tabs.Screen name="Wallet" component={WalletScreen} options={{ title: 'Ví & Cod' }} />
       <Tabs.Screen name="History" component={HistoryScreen} options={{ title: 'Lịch sử' }} />
       <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: 'Hồ sơ' }} />
           <Tabs.Screen name="OrderDetail" component={OrderDetailScreen} options={{ title: 'Chi tiết đơn', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
@@ -78,17 +78,12 @@ function MainTabs() {
     </Tabs.Navigator>
   )
 }
-
 export function AppNavigator() {
   const { shipper, hydrated } = useShipper()
+  const insets = useSafeAreaInsets()
 
   if (!hydrated) {
-    return (
-      <View style={styles.loadingWrap}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Đang khởi động Avengers Shipper...</Text>
-      </View>
-    )
+    return <ShipperHomeSkeleton topInset={insets.top} />
   }
 
   return (
@@ -104,18 +99,3 @@ export function AppNavigator() {
     </Stack.Navigator>
   )
 }
-
-const styles = StyleSheet.create({
-  loadingWrap: {
-    flex: 1,
-    backgroundColor: colors.primaryDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-})

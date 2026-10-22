@@ -15,6 +15,12 @@ export class CustomerWalletController {
     return this.walletService.getWallet(customerId);
   }
 
+  @Get('topup/active/pending')
+  getActivePendingTopUp(@Param('customerId') customerId: string, @Req() req: Request) {
+    assertAccountCheckoutOwner((req as any).user, customerId);
+    return this.walletService.getActivePendingTopUp(customerId);
+  }
+
   @Get('topup/:transactionId')
   topUpStatus(@Param('customerId') customerId: string,
     @Param('transactionId', ParseUUIDPipe) transactionId: string, @Req() req: Request) {
@@ -25,10 +31,30 @@ export class CustomerWalletController {
   @Post('topup')
   topUp(
     @Param('customerId') customerId: string,
-    @Body() payload: { amount: number },
+    @Body() payload: { amount: number; paymentMethod?: string },
     @Req() req: Request,
   ) {
     assertAccountCheckoutOwner((req as any).user, customerId);
-    return this.walletService.topUp(customerId, payload.amount, req.ip || '127.0.0.1');
+    return this.walletService.topUp(customerId, payload.amount, req.ip || '127.0.0.1', payload.paymentMethod);
+  }
+
+  @Post('topup/:transactionId/confirm')
+  confirmTopUp(
+    @Param('customerId') customerId: string,
+    @Param('transactionId', ParseUUIDPipe) transactionId: string,
+    @Req() req: Request,
+  ) {
+    assertAccountCheckoutOwner((req as any).user, customerId);
+    return this.walletService.confirmTopUp(customerId, transactionId);
+  }
+
+  @Post('topup/:transactionId/cancel')
+  cancelTopUp(
+    @Param('customerId') customerId: string,
+    @Param('transactionId', ParseUUIDPipe) transactionId: string,
+    @Req() req: Request,
+  ) {
+    assertAccountCheckoutOwner((req as any).user, customerId);
+    return this.walletService.cancelTopUp(customerId, transactionId);
   }
 }

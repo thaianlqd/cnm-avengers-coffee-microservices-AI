@@ -1,4 +1,9 @@
+import { Flame as WorkspaceSymbolFlame } from '../../../components/console/WorkspaceIcons'
+import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
+import SearchableSelect from '../../../components/console/SearchableSelect'
+import CurrencyInput from '../../../components/console/CurrencyInput'
 import React, { useState, useMemo, useEffect, Component } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Coffee,
   Plus,
@@ -25,10 +30,247 @@ import {
   ChevronsRight,
   Percent,
   MoreVertical
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 
 function fmtNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN')
+}
+
+function ShadcnCheckboxCard({ checked, onChange, title, subtitle, icon, id }) {
+  return (
+    <div
+      role="checkbox"
+      aria-checked={checked}
+      tabIndex={0}
+      id={id}
+      onClick={() => onChange(!checked)}
+      onKeyDown={(e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault()
+          onChange(!checked)
+        }
+      }}
+      className={`shadcn-checkbox-card ${checked ? 'is-checked' : ''}`}
+    >
+      <div className={`shadcn-checkbox-box ${checked ? 'is-checked' : ''}`}>
+        {checked && <Check size={13} strokeWidth={2.8} />}
+      </div>
+      <div className="shadcn-checkbox-content">
+        <div className="shadcn-checkbox-title">
+          <span>{title}</span>
+          {icon && <span className="shadcn-checkbox-icon">{icon}</span>}
+        </div>
+        {subtitle && <p className="shadcn-checkbox-subtitle">{subtitle}</p>}
+      </div>
+    </div>
+  )
+}
+
+function CreatableVariantGroupInput({ onAddGroup, existingGroups = {}, attributes = [] }) {
+  const [inputValue, setInputValue] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const wrapperRef = React.useRef(null)
+  const popoverRef = React.useRef(null)
+  const [placement, setPlacement] = useState({})
+
+  const defaultPresets = ['Kích thước', 'Topping', 'Lượng đá', 'Độ ngọt', 'Loại sữa']
+  const allAvailable = useMemo(() => {
+    const dynamicAttrs = (attributes || []).filter(Boolean).map((a) => a.name)
+    const combined = Array.from(new Set([...defaultPresets, ...dynamicAttrs]))
+    return combined.filter((name) => !existingGroups[name])
+  }, [attributes, existingGroups])
+
+  const filtered = useMemo(() => {
+    const q = inputValue.trim().toLowerCase()
+    if (!q) return allAvailable
+    return allAvailable.filter((name) => name.toLowerCase().includes(q))
+  }, [allAvailable, inputValue])
+
+  const exactMatch = useMemo(() => {
+    const q = inputValue.trim().toLowerCase()
+    if (!q) return false
+    return allAvailable.some((name) => name.toLowerCase() === q)
+  }, [allAvailable, inputValue])
+
+  // Smart floating placement: flips above when near bottom of viewport or modal
+  useEffect(() => {
+    if (!isOpen) return
+    const updatePosition = () => {
+      if (!wrapperRef.current) return
+      const rect = wrapperRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom - 12
+      const spaceAbove = rect.top - 12
+      const showAbove = spaceBelow < 250 && spaceAbove > spaceBelow
+
+      setPlacement({
+        position: 'fixed',
+        left: Math.max(12, Math.min(rect.left, window.innerWidth - Math.min(rect.width, 520) - 12)),
+        width: Math.min(rect.width, 520),
+        maxHeight: Math.max(140, Math.min(260, showAbove ? spaceAbove : spaceBelow)),
+        zIndex: 999999,
+        ...(showAbove
+          ? { bottom: window.innerHeight - rect.top + 6 }
+          : { top: rect.bottom + 6 }),
+      })
+    }
+
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target) &&
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target)
+      ) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', handleClickOutside)
+    return () => document.removeEventListener('pointerdown', handleClickOutside)
+  }, [])
+
+  const handleSelect = (name) => {
+    if (!name) return
+    onAddGroup(name)
+    setInputValue('')
+    setIsOpen(false)
+  }
+
+  const handleCreateNew = () => {
+    const trimmed = inputValue.trim()
+    if (!trimmed) return
+    onAddGroup(trimmed)
+    setInputValue('')
+    setIsOpen(false)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (filtered.length === 1 && !exactMatch) {
+        handleSelect(filtered[0])
+      } else if (inputValue.trim()) {
+        handleCreateNew()
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false)
+    }
+  }
+
+  return (
+    <div ref={wrapperRef} className="creatable-variant-wrapper">
+      <div className="creatable-variant-input-row">
+        <div className="creatable-input-box">
+
+          <input
+            type="text"
+            className="shadcn-input creatable-input ui-input"
+            placeholder="Nhập hoặc tìm tên nhóm (VD: Kích thước, Topping, Lượng đá...)"
+            value={inputValue}
+            onFocus={() => setIsOpen(true)}
+            onChange={(e) => {
+              setInputValue(e.target.value)
+              setIsOpen(true)
+            }}
+            onKeyDown={handleKeyDown}
+          />
+          {inputValue && (
+            <button
+              type="button"
+              className="creatable-clear-btn"
+              onClick={() => {
+                setInputValue('')
+                setIsOpen(false)
+              }}
+              title="Xóa"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="menu-btn menu-btn--success creatable-add-btn"
+          onClick={() => {
+            if (inputValue.trim()) {
+              handleCreateNew()
+            } else {
+              setIsOpen(true)
+            }
+          }}
+        >
+          <Plus size={15} />
+          <span>Tạo nhóm</span>
+        </button>
+      </div>
+
+      {/* Dropdown Suggestions rendered in portal to prevent clipping by modal boundaries or sticky footer */}
+      {isOpen &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            className="creatable-suggestions-popover"
+            style={{
+              ...placement,
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e4e4e7',
+              borderRadius: '8px',
+              boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.08)',
+              padding: '6px',
+            }}
+          >
+            {inputValue.trim() && !exactMatch && (
+              <div
+                className="creatable-suggestion-item is-create-action"
+                onClick={handleCreateNew}
+              >
+                <div className="creatable-create-badge">
+                  <Plus size={13} />
+                </div>
+                <div className="creatable-suggestion-text">
+                  <span className="creatable-create-label">Tạo mới nhóm:</span>
+                  <strong className="creatable-create-name">"{inputValue.trim()}"</strong>
+                </div>
+              </div>
+            )}
+
+            {filtered.length > 0 ? (
+              <>
+                <div className="creatable-suggestions-header">
+                  {inputValue.trim() ? 'Biến thể phù hợp có sẵn:' : 'GỢI Ý BIẾN THỂ PHỔ BIẾN:'}
+                </div>
+                {filtered.map((opt) => (
+                  <div
+                    key={opt}
+                    className="creatable-suggestion-item"
+                    onClick={() => handleSelect(opt)}
+                  >
+                    <Sparkles size={13} className="creatable-item-icon" />
+                    <span className="creatable-item-name">{opt}</span>
+                    <span className="creatable-item-action">Chọn nhóm</span>
+                  </div>
+                ))}
+              </>
+            ) : !inputValue.trim() ? (
+              <div className="creatable-empty-hint">Không còn nhóm biến thể gợi ý nào.</div>
+            ) : null}
+          </div>,
+          document.body
+        )}
+    </div>
+  )
 }
 
 // Error Boundary to prevent white screen crashes
@@ -49,21 +291,21 @@ class PanelErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #fee2e2', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <div className="admin-surface" style={{ padding: '2.5rem 1.5rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #fee2e2', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
           <AlertCircle size={32} color="#dc2626" style={{ marginBottom: '0.75rem' }} />
           <h3 style={{ color: '#dc2626', margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: '700' }}>
             Không thể hiển thị Giao diện Menu
           </h3>
-          <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
             Chi tiết lỗi: {this.state.error?.message || 'Có sự cố xảy ra khi xử lý dữ liệu menu.'}
           </p>
-          <button
+          <button className="admin-button-primary"
             type="button"
             onClick={() => this.setState({ hasError: false })}
             style={{
               padding: '0.6rem 1.25rem',
               borderRadius: '10px',
-              background: '#3b82f6',
+              background: "var(--primary)",
               color: '#ffffff',
               border: 'none',
               fontWeight: '600',
@@ -158,6 +400,7 @@ function AdminMenuManagementPanelContent({
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL')
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL') // 'ALL', 'ACTIVE', 'INACTIVE'
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [formError, setFormError] = useState('')
   const [modalActiveTab, setModalActiveTab] = useState('basic') // 'basic', 'variants', 'image'
   const [openMenuActionId, setOpenMenuActionId] = useState(null)
 
@@ -266,7 +509,8 @@ function AdminMenuManagementPanelContent({
   // Sync editing item to modal state
   useEffect(() => {
     if (editingMenuId) {
-      setIsModalOpen(true)
+      setFormError('')
+    setIsModalOpen(true)
     }
   }, [editingMenuId])
 
@@ -281,24 +525,207 @@ function AdminMenuManagementPanelContent({
     return { total, activeCount, hotCount, discountCount }
   }, [menuState?.items])
 
+  // Category hierarchical options for filtering
+  const categoryFilterOptions = useMemo(() => {
+    const rawItems = (categoriesState?.items || []).filter(Boolean)
+    if (!rawItems.length) return []
+
+    const menuItems = menuState?.items || []
+    const totalCount = menuItems.length
+
+    const parents = rawItems.filter((c) => Number(c.cap_bac) === 1 || !c.ma_danh_muc_cha)
+    const children = rawItems.filter((c) => Number(c.cap_bac) === 2 && c.ma_danh_muc_cha)
+
+    const list = []
+
+    // 1. All Categories option
+    list.push({
+      value: 'ALL',
+      label: 'Tất cả danh mục',
+      rawLabel: 'Tất cả danh mục',
+      displayLabel: 'Tất cả danh mục',
+      badge: `${totalCount} món`,
+      isAll: true,
+      level: 0,
+    })
+
+    parents.forEach((parent) => {
+      const myChildren = children.filter((ch) => Number(ch.ma_danh_muc_cha) === Number(parent.id))
+      const childIds = new Set(myChildren.map((ch) => Number(ch.id)))
+
+      // Total count in parent
+      const parentCount = menuItems.filter((item) => {
+        if (!item) return false
+        const pId = Number(item.parent_category_id || item.ma_danh_muc_cha || 0)
+        const cId = Number(item.ma_danh_muc || item.category_code || 0)
+        return (
+          pId === Number(parent.id) ||
+          cId === Number(parent.id) ||
+          childIds.has(cId) ||
+          String(item.parent_category || '').toLowerCase() === String(parent.label || '').toLowerCase()
+        )
+      }).length
+
+      list.push({
+        value: parent.label,
+        label: parent.label,
+        rawLabel: parent.label,
+        displayLabel: `${parent.label} (Tất cả)`,
+        badge: `${parentCount} món`,
+        isParent: true,
+        level: 1,
+        id: parent.id,
+        code: parent.code,
+        divider: true,
+      })
+
+      myChildren.forEach((child) => {
+        const childCount = menuItems.filter((item) => {
+          if (!item) return false
+          const cId = Number(item.ma_danh_muc || item.category_code || 0)
+          return (
+            cId === Number(child.id) ||
+            String(item.category || '').toLowerCase() === String(child.label || '').toLowerCase()
+          )
+        }).length
+
+        list.push({
+          value: child.label,
+          label: child.label,
+          rawLabel: `${parent.label} — ${child.label}`,
+          displayLabel: `${parent.label} › ${child.label}`,
+          badge: `${childCount} món`,
+          isChild: true,
+          level: 2,
+          id: child.id,
+          code: child.code,
+          parentLabel: parent.label,
+        })
+      })
+    })
+
+    const handledIds = new Set(
+      parents.flatMap((p) => children.filter((ch) => Number(ch.ma_danh_muc_cha) === Number(p.id)).map((c) => c.id))
+    )
+    children.filter((ch) => !handledIds.has(ch.id)).forEach((child) => {
+      const childCount = menuItems.filter((item) => {
+        if (!item) return false
+        const cId = Number(item.ma_danh_muc || item.category_code || 0)
+        return (
+          cId === Number(child.id) ||
+          String(item.category || '').toLowerCase() === String(child.label || '').toLowerCase()
+        )
+      }).length
+
+      list.push({
+        value: child.label,
+        label: child.label,
+        rawLabel: child.label,
+        displayLabel: child.label,
+        badge: `${childCount} món`,
+        isChild: true,
+        level: 2,
+        id: child.id,
+        code: child.code,
+      })
+    })
+
+    return list
+  }, [categoriesState?.items, menuState?.items])
+
+  // Category options for Modal Add/Edit (excluding ALL)
+  const modalCategoryOptions = useMemo(() => {
+    return categoryFilterOptions
+      .filter((opt) => opt.value !== 'ALL')
+      .map((opt) => {
+        const cat = (categoriesState?.items || []).find((c) => c.label === opt.value)
+        return {
+          value: cat ? String(cat.code || cat.id) : opt.value,
+          label: opt.label,
+          rawLabel: opt.rawLabel,
+          displayLabel: opt.isChild ? `${opt.parentLabel} › ${opt.label}` : opt.label,
+          isParent: opt.isParent,
+          isChild: opt.isChild,
+          level: opt.level,
+          badge: opt.isParent ? 'Danh mục chính' : undefined,
+          divider: opt.divider,
+        }
+      })
+  }, [categoryFilterOptions, categoriesState?.items])
+
   // Apply custom category and status filters (Defensive filtering)
   const displayedItems = useMemo(() => {
-    let result = (filteredMenuItems && Array.isArray(filteredMenuItems) && filteredMenuItems.length > 0
-      ? filteredMenuItems
-      : menuState?.items || []).filter(Boolean)
+    let result = (menuKeyword && String(menuKeyword).trim()
+      ? (filteredMenuItems || [])
+      : (filteredMenuItems?.length ? filteredMenuItems : menuState?.items || [])
+    ).filter(Boolean)
 
     if (selectedCategoryFilter !== 'ALL') {
-      result = result.filter(
-        (item) => item && String(item.category || '').toLowerCase() === selectedCategoryFilter.toLowerCase()
+      const selectedLower = String(selectedCategoryFilter || '').trim().toLowerCase()
+      const allCategories = categoriesState?.items || []
+      const matchedCat = allCategories.find(
+        (c) =>
+          String(c.label || '').trim().toLowerCase() === selectedLower ||
+          String(c.code || '').trim().toLowerCase() === selectedLower ||
+          String(c.id || '').trim().toLowerCase() === selectedLower
       )
+
+      if (matchedCat && Number(matchedCat.cap_bac) === 1) {
+        // Parent Category selected (e.g. "Cà Phê", ID: 101)
+        const childIds = allCategories
+          .filter((c) => Number(c.ma_danh_muc_cha) === Number(matchedCat.id))
+          .map((c) => Number(c.id))
+        const childNames = allCategories
+          .filter((c) => Number(c.ma_danh_muc_cha) === Number(matchedCat.id))
+          .map((c) => String(c.label || '').trim().toLowerCase())
+
+        result = result.filter((item) => {
+          if (!item) return false
+          const itemCat = String(item.category || '').trim().toLowerCase()
+          const itemParent = String(item.parent_category || '').trim().toLowerCase()
+          const itemCatId = Number(item.ma_danh_muc || item.category_code || 0)
+          const itemParentId = Number(item.parent_category_id || item.ma_danh_muc_cha || 0)
+
+          return (
+            itemParent === selectedLower ||
+            itemCat === selectedLower ||
+            (matchedCat.id && itemParentId === Number(matchedCat.id)) ||
+            (matchedCat.id && itemCatId === Number(matchedCat.id)) ||
+            childIds.includes(itemCatId) ||
+            childNames.includes(itemCat)
+          )
+        })
+      } else if (matchedCat && Number(matchedCat.cap_bac) === 2) {
+        // Child Category selected (e.g. "Americano")
+        result = result.filter((item) => {
+          if (!item) return false
+          const itemCat = String(item.category || '').trim().toLowerCase()
+          const itemCatId = Number(item.ma_danh_muc || item.category_code || 0)
+
+          return (
+            itemCat === selectedLower ||
+            itemCatId === Number(matchedCat.id) ||
+            String(item.category_code) === String(matchedCat.code)
+          )
+        })
+      } else {
+        // Fallback matching
+        result = result.filter((item) => {
+          if (!item) return false
+          const itemCat = String(item.category || '').trim().toLowerCase()
+          const itemParent = String(item.parent_category || '').trim().toLowerCase()
+          return itemCat === selectedLower || itemParent === selectedLower
+        })
+      }
     }
+
     if (selectedStatusFilter === 'ACTIVE') {
       result = result.filter((item) => item && item.dang_ban)
     } else if (selectedStatusFilter === 'INACTIVE') {
       result = result.filter((item) => item && !item.dang_ban)
     }
     return result
-  }, [filteredMenuItems, menuState?.items, selectedCategoryFilter, selectedStatusFilter])
+  }, [filteredMenuItems, menuState?.items, menuKeyword, selectedCategoryFilter, selectedStatusFilter, categoriesState?.items])
 
   // Custom paginated data for display
   const pageSize = 10
@@ -322,21 +749,30 @@ function AdminMenuManagementPanelContent({
   const handleOpenAddModal = () => {
     if (cancelEditMenu) cancelEditMenu()
     setModalActiveTab('basic')
+    setFormError('')
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
+    if (savingMenu) return
+    setFormError('')
     if (cancelEditMenu) cancelEditMenu()
     setIsModalOpen(false)
   }
 
   const handleFormSubmit = async (e) => {
     e.preventDefault()
+    if (savingMenu) return
+    setFormError('')
     try {
-      if (saveMenu) await saveMenu()
+      const result = await saveMenu?.()
+      if (result === false || result?.ok === false) {
+        setFormError(result?.error || 'Không lưu được dữ liệu. Vui lòng kiểm tra các trường và thử lại.')
+        return
+      }
       setIsModalOpen(false)
-    } catch {
-      // Keep modal open on error
+    } catch (error) {
+      setFormError(error.message || 'Không thể lưu. Dữ liệu bạn nhập vẫn được giữ lại.')
     }
   }
 
@@ -347,10 +783,44 @@ function AdminMenuManagementPanelContent({
       {/* Full Width Product Data Table Card */}
       <div className="menu-list-card">
         {/* Toolbar & Filters */}
+        <div className="workspace-section-title"><div><h2>Danh sách sản phẩm</h2><p>Tìm sản phẩm và cập nhật thông tin bán hàng.</p></div></div>
         <div className="menu-toolbar">
+          <div className="menu-filter-pills">
+              <button aria-pressed={selectedStatusFilter === 'ALL'}
+                type="button"
+                className={`menu-pill ${selectedStatusFilter === 'ALL' ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedStatusFilter('ALL')
+                  if (setMenuPage) setMenuPage(1)
+                }}
+              >
+                Tất cả
+              </button>
+              <button aria-pressed={selectedStatusFilter === 'ACTIVE'}
+                type="button"
+                className={`menu-pill ${selectedStatusFilter === 'ACTIVE' ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedStatusFilter('ACTIVE')
+                  if (setMenuPage) setMenuPage(1)
+                }}
+              >
+                Đang bán
+              </button>
+              <button aria-pressed={selectedStatusFilter === 'INACTIVE'}
+                type="button"
+                className={`menu-pill ${selectedStatusFilter === 'INACTIVE' ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedStatusFilter('INACTIVE')
+                  if (setMenuPage) setMenuPage(1)
+                }}
+              >
+                Tạm ngưng
+              </button>
+            </div>
+          <div className="menu-filter-group">
           <div className="menu-search-box">
             <div className="menu-search-input-wrap">
-              <input
+              <input className="ui-input"
                 type="text"
                 value={menuKeyword}
                 onChange={(e) => {
@@ -362,7 +832,7 @@ function AdminMenuManagementPanelContent({
               {menuKeyword && (
                 <button
                   type="button"
-                  className="menu-search-clear"
+                  aria-label="Xóa tìm kiếm" className="menu-search-clear"
                   onClick={() => setMenuKeyword && setMenuKeyword('')}
                   title="Xóa tìm kiếm"
                 >
@@ -370,62 +840,28 @@ function AdminMenuManagementPanelContent({
                 </button>
               )}
             </div>
-            <button type="button" className="menu-search-btn" title="Tìm kiếm">
-              <Search size={16} />
-            </button>
           </div>
 
-          <div className="menu-filter-group">
+
             {/* Filter Category Dropdown */}
-            <select
-              className="menu-filter-select"
-              value={selectedCategoryFilter}
-              onChange={(e) => {
-                setSelectedCategoryFilter(e.target.value)
-                if (setMenuPage) setMenuPage(1)
-              }}
-            >
-              <option value="ALL">Tất cả danh mục</option>
-              {(categoriesState?.items || []).filter(Boolean).map((cat) => (
-                <option key={cat.code || cat.id || Math.random()} value={cat.label || ''}>
-                  {cat.label || 'Danh mục'}
-                </option>
-              ))}
-            </select>
+            <div className="menu-filter-select-wrapper" style={{ minWidth: 240, width: 280, maxWidth: 320 }}>
+              <SearchableSelect
+                id="menu-category-filter"
+                aria-label="Lọc theo danh mục"
+                className="menu-filter-select"
+                value={selectedCategoryFilter}
+                onChange={(e) => {
+                  const val = e?.target?.value ?? e
+                  setSelectedCategoryFilter(val || 'ALL')
+                  if (setMenuPage) setMenuPage(1)
+                }}
+                options={categoryFilterOptions}
+                placeholder="Tất cả danh mục"
+              />
+            </div>
 
             {/* Filter Status Pills */}
-            <div className="menu-filter-pills">
-              <button
-                type="button"
-                className={`menu-pill ${selectedStatusFilter === 'ALL' ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedStatusFilter('ALL')
-                  if (setMenuPage) setMenuPage(1)
-                }}
-              >
-                Tất cả
-              </button>
-              <button
-                type="button"
-                className={`menu-pill ${selectedStatusFilter === 'ACTIVE' ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedStatusFilter('ACTIVE')
-                  if (setMenuPage) setMenuPage(1)
-                }}
-              >
-                Đang bán
-              </button>
-              <button
-                type="button"
-                className={`menu-pill ${selectedStatusFilter === 'INACTIVE' ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedStatusFilter('INACTIVE')
-                  if (setMenuPage) setMenuPage(1)
-                }}
-              >
-                Tạm ngưng
-              </button>
-            </div>
+
 
             {loadMenu && (
               <button type="button" className="menu-refresh-btn" onClick={loadMenu} title="Tải lại danh sách">
@@ -434,7 +870,7 @@ function AdminMenuManagementPanelContent({
               </button>
             )}
 
-            <button type="button" className="menu-btn menu-btn--success menu-btn--sm" onClick={handleOpenAddModal}>
+            <button type="button" className="menu-btn menu-btn--success menu-btn--sm menu-create-btn" onClick={handleOpenAddModal}>
               <Plus size={16} />
               <span>Tạo món</span>
             </button>
@@ -469,10 +905,10 @@ function AdminMenuManagementPanelContent({
                 <table className="menu-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '30%' }}>Sản phẩm</th>
-                      <th style={{ width: '14%' }}>Danh mục</th>
-                      <th style={{ width: '12%' }}>Giá bán</th>
-                      <th style={{ width: '17%' }}>Trạng thái</th>
+                      <th style={{ width: '28%' }}>Sản phẩm</th>
+                      <th style={{ width: '17%' }}>Danh mục</th>
+                      <th style={{ width: '13%' }}>Giá bán</th>
+                      <th style={{ width: '15%' }}>Trạng thái</th>
                       <th style={{ width: '15%' }}>Nhãn đặc trưng</th>
                       <th style={{ width: '12%', textAlign: 'center' }}>Thao tác</th>
                     </tr>
@@ -508,10 +944,22 @@ function AdminMenuManagementPanelContent({
                           </td>
 
                           {/* Category Tag */}
-                          <td>
-                            <span className="menu-cat-badge">
-                              <Tag size={12} />
-                              <span>{item.category || 'Chưa phân loại'}</span>
+                          <td style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                            <span
+                              className="menu-cat-badge"
+                              title={
+                                item.parent_category && item.category && item.parent_category.toLowerCase() !== item.category.toLowerCase()
+                                  ? `${item.parent_category} › ${item.category}`
+                                  : item.category || item.parent_category || ''
+                              }
+                            >
+                              <Tag size={12} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                              <span>
+                                {(() => {
+                                  const cat = item.category || (categoriesState?.items || []).find((c) => Number(c.id) === Number(item.ma_danh_muc) || String(c.code) === String(item.category_code))?.label
+                                  return cat || item.parent_category || 'Chưa phân loại'
+                                })()}
+                              </span>
                             </span>
                           </td>
 
@@ -574,7 +1022,8 @@ function AdminMenuManagementPanelContent({
                                 className="admin-table-action-btn btn-edit"
                                 onClick={() => {
                                   if (startEditMenu) startEditMenu(item)
-                                  setIsModalOpen(true)
+                                  setFormError('')
+    setIsModalOpen(true)
                                 }}
                                 title="Chỉnh sửa sản phẩm"
                               >
@@ -609,7 +1058,7 @@ function AdminMenuManagementPanelContent({
 
       {/* POPUP MODAL DIALOG FOR ADD / EDIT MENU ITEM */}
       {isModalOpen && (
-        <div className="menu-modal-overlay" onClick={handleCloseModal}>
+        <WorkspaceDialog busy={savingMenu} label="Thêm hoặc chỉnh sửa sản phẩm" onClose={handleCloseModal} className="workspace-dialog--editor">
           <div className="menu-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="menu-modal-head">
               <div className="menu-modal-title">
@@ -631,14 +1080,14 @@ function AdminMenuManagementPanelContent({
                   </>
                 )}
               </div>
-              <button type="button" className="menu-modal-close" onClick={handleCloseModal} title="Đóng">
+              <button type="button" disabled={savingMenu} aria-label="Đóng cửa sổ" className="menu-modal-close" onClick={handleCloseModal} title="Đóng">
                 <X size={18} />
               </button>
             </div>
 
             {/* Modal Internal Tab Nav */}
             <div className="menu-modal-tabs">
-              <button
+              <button aria-pressed={modalActiveTab === 'basic'}
                 type="button"
                 className={`menu-modal-tab-btn ${modalActiveTab === 'basic' ? 'active' : ''}`}
                 onClick={() => setModalActiveTab('basic')}
@@ -646,7 +1095,7 @@ function AdminMenuManagementPanelContent({
                 <Coffee size={15} />
                 <span>Thông tin cơ bản</span>
               </button>
-              <button
+              <button aria-pressed={modalActiveTab === 'variants'}
                 type="button"
                 className={`menu-modal-tab-btn ${modalActiveTab === 'variants' ? 'active' : ''}`}
                 onClick={() => setModalActiveTab('variants')}
@@ -657,7 +1106,7 @@ function AdminMenuManagementPanelContent({
                   <span className="menu-tab-count">{Object.keys(safeMenuForm.bien_the || {}).length}</span>
                 )}
               </button>
-              <button
+              <button aria-pressed={modalActiveTab === 'image'}
                 type="button"
                 className={`menu-modal-tab-btn ${modalActiveTab === 'image' ? 'active' : ''}`}
                 onClick={() => setModalActiveTab('image')}
@@ -668,6 +1117,7 @@ function AdminMenuManagementPanelContent({
             </div>
 
             <form onSubmit={handleFormSubmit} className="menu-modal-body">
+              {formError && <p className="workspace-form-error" role="alert">{formError}</p>}
               {/* TAB 1: BASIC INFORMATION */}
               {modalActiveTab === 'basic' && (
                 <div className="menu-modal-section">
@@ -677,7 +1127,7 @@ function AdminMenuManagementPanelContent({
                       <label htmlFor="menu-name-input">
                         Tên sản phẩm <span className="menu-required">*</span>
                       </label>
-                      <input
+                      <input className="ui-input"
                         id="menu-name-input"
                         type="text"
                         value={safeMenuForm.name || ''}
@@ -693,19 +1143,14 @@ function AdminMenuManagementPanelContent({
                       <label htmlFor="menu-category-select">
                         Danh mục phân loại <span className="menu-required">*</span>
                       </label>
-                      <select
+                      <SearchableSelect
                         id="menu-category-select"
                         value={safeMenuForm.category_code || ''}
-                        onChange={(e) => setMenuForm && setMenuForm((p) => ({ ...p, category_code: e.target.value }))}
+                        placeholder="-- Chọn hoặc tìm danh mục --"
+                        onChange={(e) => setMenuForm && setMenuForm((p) => ({ ...p, category_code: e?.target?.value ?? e }))}
+                        options={modalCategoryOptions}
                         required
-                      >
-                        <option value="">-- Chọn danh mục --</option>
-                        {(categoriesState?.items || []).filter(Boolean).map((cat) => (
-                          <option key={cat.code} value={cat.code}>
-                            {cat.label} {cat.cap_bac === 1 ? '(Danh mục chính)' : '(Danh mục phụ)'}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </div>
 
                     {/* Price (Selling) */}
@@ -713,14 +1158,11 @@ function AdminMenuManagementPanelContent({
                       <label htmlFor="menu-price-input">
                         Giá bán (VNĐ) <span className="menu-required">*</span>
                       </label>
-                      <input
+                      <CurrencyInput
                         id="menu-price-input"
-                        type="number"
-                        min="0"
-                        step="1000"
                         value={safeMenuForm.price ?? ''}
                         onChange={(e) => setMenuForm && setMenuForm((p) => ({ ...p, price: Number(e.target.value) }))}
-                        placeholder="Ví dụ: 35000"
+                        placeholder="Ví dụ: 35.000"
                         required
                       />
                     </div>
@@ -728,11 +1170,8 @@ function AdminMenuManagementPanelContent({
                     {/* Original Price */}
                     <div className="menu-form-group">
                       <label htmlFor="menu-orig-price-input">Giá gốc niêm yết (VNĐ)</label>
-                      <input
+                      <CurrencyInput
                         id="menu-orig-price-input"
-                        type="number"
-                        min="0"
-                        step="1000"
                         value={safeMenuForm.original_price || ''}
                         onChange={(e) => setMenuForm && setMenuForm((p) => ({ ...p, original_price: Number(e.target.value) }))}
                         placeholder="Để trống nếu không có giảm giá"
@@ -757,43 +1196,33 @@ function AdminMenuManagementPanelContent({
                     <h4>Trạng thái và Nhãn hiển thị</h4>
                     <div className="menu-toggles-grid">
                       {/* Active Selling Toggle */}
-                      <label className="menu-toggle-item">
-                        <input
-                          type="checkbox"
-                          checked={!!safeMenuForm.dang_ban}
-                          onChange={(e) => setMenuForm && setMenuForm((p) => ({ ...p, dang_ban: e.target.checked }))}
-                        />
-                        <span className="menu-toggle-label">
-                          <strong>Đang kinh doanh</strong>
-                          <small>Hiển thị sản phẩm trên menu khách đặt hàng</small>
-                        </span>
-                      </label>
+                      <ShadcnCheckboxCard
+                        id="chk-dang-ban"
+                        title="Đang kinh doanh"
+                        subtitle="Hiển thị sản phẩm trên menu khách đặt hàng"
+                        checked={Boolean(safeMenuForm.dang_ban)}
+                        onChange={(checked) => setMenuForm && setMenuForm((p) => ({ ...p, dang_ban: checked }))}
+                      />
 
                       {/* Hot Item Toggle */}
-                      <label className="menu-toggle-item">
-                        <input
-                          type="checkbox"
-                          checked={!!safeMenuForm.la_hot}
-                          onChange={(e) => setMenuForm && setMenuForm((p) => ({ ...p, la_hot: e.target.checked }))}
-                        />
-                        <span className="menu-toggle-label">
-                          <strong>Gắn nhãn Hot 🔥</strong>
-                          <small>Đánh dấu món bán chạy nổi bật</small>
-                        </span>
-                      </label>
+                      <ShadcnCheckboxCard
+                        id="chk-la-hot"
+                        title="Gắn nhãn Hot"
+                        icon={<WorkspaceSymbolFlame size="1.1em" aria-hidden="true" />}
+                        subtitle="Đánh dấu món bán chạy nổi bật"
+                        checked={Boolean(safeMenuForm.la_hot)}
+                        onChange={(checked) => setMenuForm && setMenuForm((p) => ({ ...p, la_hot: checked }))}
+                      />
 
                       {/* New Item Toggle */}
-                      <label className="menu-toggle-item">
-                        <input
-                          type="checkbox"
-                          checked={!!safeMenuForm.la_moi}
-                          onChange={(e) => setMenuForm && setMenuForm((p) => ({ ...p, la_moi: e.target.checked }))}
-                        />
-                        <span className="menu-toggle-label">
-                          <strong>Gắn nhãn Mới 🆕</strong>
-                          <small>Đánh dấu món mới ra mắt</small>
-                        </span>
-                      </label>
+                      <ShadcnCheckboxCard
+                        id="chk-la-moi"
+                        title="Gắn nhãn Mới"
+                        icon={<Sparkles size={14} aria-hidden="true" />}
+                        subtitle="Đánh dấu món mới ra mắt"
+                        checked={Boolean(safeMenuForm.la_moi)}
+                        onChange={(checked) => setMenuForm && setMenuForm((p) => ({ ...p, la_moi: checked }))}
+                      />
                     </div>
                   </div>
                 </div>
@@ -820,9 +1249,7 @@ function AdminMenuManagementPanelContent({
                               onClick={() => removeAttributeGroup(attrName)}
                               title={`Xóa nhóm "${attrName}"`}
                               style={{
-                                backgroundColor: '#fef2f2',
-                                color: '#dc2626',
-                                border: '1px solid #fecaca',
+                                backgroundColor: "#ffffff", color: "#dc2626", border: "1px solid var(--border-light)",
                                 borderRadius: '6px',
                                 padding: '0.3rem 0.6rem',
                                 fontSize: '0.75rem',
@@ -864,16 +1291,13 @@ function AdminMenuManagementPanelContent({
 
                           {/* Inline Add Option Form */}
                           <div className="menu-variant-add-option-inline">
-                            <input
+                            <input className="ui-input"
                               type="text"
                               placeholder="Tên tùy chọn (VD: Size L, Trân châu đen)..."
                               value={newOptionState[attrName]?.name || ''}
                               onChange={(e) => handleOptionStateChange(attrName, 'name', e.target.value)}
                             />
-                            <input
-                              type="number"
-                              min="0"
-                              step="500"
+                            <CurrencyInput
                               placeholder="Phụ thu (đ)..."
                               value={newOptionState[attrName]?.price || ''}
                               onChange={(e) => handleOptionStateChange(attrName, 'price', e.target.value)}
@@ -883,7 +1307,7 @@ function AdminMenuManagementPanelContent({
                               className="menu-btn menu-btn--success menu-btn--sm"
                               onClick={() => addOptionToGroup(attrName)}
                               style={{
-                                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                background: "linear-gradient(135deg, var(--primary) 0%, var(--primary) 100%)",
                                 color: '#ffffff',
                                 border: 'none',
                                 boxShadow: '0 2px 6px rgba(59, 130, 246, 0.25)'
@@ -900,52 +1324,24 @@ function AdminMenuManagementPanelContent({
                     {/* Section to add a new Attribute Group */}
                     <div className="menu-variant-add-group-card">
                       <h5>Thêm nhóm biến thể mới</h5>
-                      <div className="menu-variant-add-group-inputs">
-                        <select
-                          value={selectedAttributeSelect}
-                          onChange={(e) => setSelectedAttributeSelect(e.target.value)}
-                        >
-                          <option value="">-- Chọn biến thể phổ biến --</option>
-                          {['Kích thước', 'Topping', 'Lượng đá', 'Độ ngọt', 'Loại sữa'].map((attr) => (
-                            <option key={attr} value={attr}>
-                              {attr}
-                            </option>
-                          ))}
-                          {(attributesState?.items || []).filter(Boolean).map((attr) => {
-                            const defaults = ['Kích thước', 'Topping', 'Lượng đá', 'Độ ngọt', 'Loại sữa']
-                            if (defaults.includes(attr.name)) return null
-                            return (
-                              <option key={attr.id} value={attr.name}>
-                                {attr.name}
-                              </option>
-                            )
-                          })}
-                        </select>
-
-                        <span className="menu-or-divider">hoặc</span>
-
-                        <input
-                          type="text"
-                          placeholder="Nhập tên nhóm tự tạo..."
-                          value={customAttributeName}
-                          onChange={(e) => setCustomAttributeName(e.target.value)}
-                        />
-
-                        <button
-                          type="button"
-                          className="menu-btn menu-btn--success menu-btn--sm"
-                          onClick={addAttributeGroup}
-                          style={{
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                            color: '#ffffff',
-                            border: 'none',
-                            boxShadow: '0 2px 6px rgba(59, 130, 246, 0.25)'
-                          }}
-                        >
-                          <Plus size={14} color="#ffffff" />
-                          <span>Tạo nhóm</span>
-                        </button>
-                      </div>
+                      <CreatableVariantGroupInput
+                        existingGroups={safeMenuForm.bien_the || {}}
+                        attributes={attributesState?.items || []}
+                        onAddGroup={(name) => {
+                          const currentBienThe = menuForm?.bien_the || {}
+                          if (currentBienThe[name]) {
+                            window.alert('Nhóm biến thể này đã tồn tại!')
+                            return
+                          }
+                          const updated = { ...currentBienThe, [name]: {} }
+                          if (setMenuForm) {
+                            setMenuForm((prev) => ({
+                              ...prev,
+                              bien_the: updated,
+                            }))
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -961,18 +1357,28 @@ function AdminMenuManagementPanelContent({
                         <strong>Tải ảnh từ máy tính</strong>
                         <p>Chọn tệp ảnh sản phẩm (JPG, PNG, WEBP). Hệ thống tự động đặt tên chuẩn.</p>
                       </div>
-                      <label className="menu-upload-dropzone">
-                        <input
+                      <label className="menu-upload-dropzone" htmlFor="menu-file-upload-input">
+                        <input className="ui-input"
+                          id="menu-file-upload-input"
                           type="file"
                           accept="image/png,image/jpeg,image/webp"
+                          style={{ display: 'none' }}
                           onChange={(e) => uploadMenuImage && uploadMenuImage(e.target.files?.[0]).catch(() => {})}
                         />
-                        <Upload size={22} className="menu-upload-icon" />
-                        <span>{uploadState?.loading ? 'Đang tải ảnh...' : 'Nhấp vào đây để tải ảnh lên'}</span>
-                        <small>
+                        <div className="menu-upload-icon-circle">
+                          <Upload size={22} className="menu-upload-icon" />
+                        </div>
+                        <span className="menu-upload-title">
+                          {uploadState?.loading ? 'Đang tải ảnh...' : 'Nhấp vào đây hoặc kéo thả ảnh để tải lên'}
+                        </span>
+                        <div className="menu-upload-chip">
+                          <Plus size={13} />
+                          <span>Chọn tệp ảnh</span>
+                        </div>
+                        <small className="menu-upload-hint">
                           {safeMenuForm.name
-                            ? `File sẽ tự đổi tên theo món: ${safeMenuForm.name}`
-                            : 'Nhập tên món ở Tab cơ bản để tên file đẹp hơn'}
+                            ? `Tự động đặt tên: ${safeMenuForm.name}`
+                            : 'Định dạng hỗ trợ: JPG, PNG, WEBP (Tối đa 5MB)'}
                         </small>
                       </label>
                       {uploadState?.error && <p className="menu-error-msg">{uploadState.error}</p>}
@@ -982,7 +1388,7 @@ function AdminMenuManagementPanelContent({
                     {/* Direct Image URL Input */}
                     <div className="menu-form-group">
                       <label htmlFor="menu-img-url-input">Hoặc nhập đường dẫn ảnh (URL)</label>
-                      <input
+                      <input className="ui-input"
                         id="menu-img-url-input"
                         type="text"
                         value={safeMenuForm.image || ''}
@@ -1012,9 +1418,7 @@ function AdminMenuManagementPanelContent({
                             className="menu-act-btn menu-act-btn--danger"
                             onClick={() => clearMenuImage && clearMenuImage()}
                             style={{
-                              backgroundColor: '#fef2f2',
-                              color: '#dc2626',
-                              border: '1px solid #fecaca',
+                              backgroundColor: "#ffffff", color: "#dc2626", border: "1px solid var(--border-light)",
                               borderRadius: '6px',
                               padding: '0.35rem 0.75rem',
                               fontWeight: '600',
@@ -1039,23 +1443,23 @@ function AdminMenuManagementPanelContent({
                   onClick={handleCloseModal}
                   disabled={savingMenu}
                   style={{
-                    backgroundColor: '#fef2f2',
-                    background: '#fef2f2',
+                    backgroundColor: "#ffffff",
+                    background: "#ffffff",
                     color: '#dc2626',
-                    border: '1px solid #fecaca',
-                    height: '40px',
+                    border: '1px solid #fca5a5',
+                    height: '38px',
                     padding: '0 1.25rem',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
+                    borderRadius: '6px',
+                    fontSize: '0.8125rem',
+                    fontWeight: '500',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.4rem'
+                    gap: '0.4rem',
+                    transition: 'all 0.15s ease'
                   }}
                 >
-                  <X size={16} color="#dc2626" />
-                  <span style={{ color: '#dc2626' }}>Hủy bỏ</span>
+                  <X size={15} style={{ color: '#dc2626' }} /><span>Hủy bỏ</span>
                 </button>
 
                 <button
@@ -1063,19 +1467,19 @@ function AdminMenuManagementPanelContent({
                   className="menu-btn menu-btn--success"
                   disabled={savingMenu || !String(safeMenuForm.name || '').trim() || !safeMenuForm.category_code}
                   style={{
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    background: "#18181b",
                     color: '#ffffff',
-                    border: 'none',
-                    height: '40px',
-                    padding: '0 1.5rem',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
+                    border: '1px solid #18181b',
+                    height: '38px',
+                    padding: '0 1.35rem',
+                    borderRadius: '6px',
+                    fontSize: '0.8125rem',
+                    fontWeight: '500',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                   }}
                 >
                   {savingMenu ? (
@@ -1098,7 +1502,7 @@ function AdminMenuManagementPanelContent({
               </div>
             </form>
           </div>
-        </div>
+        </WorkspaceDialog>
       )}
     </div>
   )

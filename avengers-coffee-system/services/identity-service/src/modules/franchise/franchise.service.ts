@@ -66,6 +66,14 @@ export class FranchiseService {
     private readonly mailSender: MailSenderService,
   ) {}
 
+  // Cache danh sách Kiosk (Server-side TTL cache)
+  private kioskListCache: { data: any[]; timestamp: number } | null = null;
+  private readonly KIOSK_CACHE_TTL = 30 * 1000; // 30 seconds
+
+  public clearKioskCache() {
+    this.kioskListCache = null;
+  }
+
   // ─────────────────────────────────────────────
   // Email helper
   // ─────────────────────────────────────────────
@@ -84,247 +92,45 @@ export class FranchiseService {
   }
 
   private buildFranchiseBrandedHtml(options: {
-    heroTitle: string;
-    heroSubtitle?: string;
-    badgeTitle?: string;
-    badgeValue?: string;
-    badgeSub?: string;
-    greetingTitle: string;
-    greetingBody: string;
-    contentHtml?: string;
-    ctaText?: string;
-    ctaUrl?: string;
-    ctaSubText?: string;
-    noticeTitle?: string;
-    noticeHtml?: string;
+    heroTitle: string; heroSubtitle?: string; badgeTitle?: string; badgeValue?: string;
+    badgeSub?: string; greetingTitle: string; greetingBody: string; contentHtml?: string;
+    ctaText?: string; ctaUrl?: string; ctaSubText?: string; noticeTitle?: string; noticeHtml?: string;
   }): string {
-    const heroImage = 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&h=480&q=85';
-    const footerImage = 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1200&h=260&q=85';
+    const escape = (value: unknown) => this.escapeMailText(value);
+    const link = /^https?:\/\//i.test(options.ctaUrl || '') ? options.ctaUrl : '';
+    return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(options.heroTitle)}</title></head>
+<body style="margin:0;background:#f5f4f1;color:#262321;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f4f1;"><tr><td align="center" style="padding:32px 14px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border:1px solid #e7e2dc;">
+<tr><td style="padding:26px 32px;border-bottom:1px solid #e7e2dc;color:#6f1825;font-size:16px;font-weight:700;letter-spacing:2px;">AVENGERS COFFEE <span style="display:block;margin-top:8px;color:#756e68;font-size:11px;font-weight:400;letter-spacing:1px;">NHƯỢNG QUYỀN KIOSK</span></td></tr>
+<tr><td style="padding:32px 32px 12px;"><h1 style="margin:0 0 10px;font-size:25px;line-height:1.3;font-weight:600;">${escape(options.heroTitle)}</h1>${options.heroSubtitle ? `<p style="margin:0;color:#756e68;font-size:13px;line-height:1.6;">${escape(options.heroSubtitle)}</p>` : ''}
+${options.badgeValue ? `<div style="margin:24px 0 0;padding:16px 0;border-top:1px solid #e7e2dc;border-bottom:1px solid #e7e2dc;"><div style="font-size:11px;color:#756e68;letter-spacing:1px;">${escape(options.badgeTitle)}</div><div style="margin-top:5px;font-size:21px;color:#6f1825;font-weight:600;">${escape(options.badgeValue)}</div>${options.badgeSub ? `<div style="margin-top:5px;color:#756e68;font-size:12px;">${escape(options.badgeSub)}</div>` : ''}</div>` : ''}</td></tr>
+<tr><td style="padding:16px 32px 28px;"><h2 style="margin:0 0 10px;font-size:16px;font-weight:600;">${escape(options.greetingTitle)}</h2><div style="font-size:14px;line-height:1.7;color:#4d4843;">${escape(options.greetingBody.replace(/<\/?strong>/g, ''))}</div>
+${options.contentHtml ? `<div style="margin-top:20px;font-size:13px;line-height:1.6;">${options.contentHtml}</div>` : ''}
+${link && options.ctaText ? `<p style="margin:26px 0 0;"><a href="${escape(link)}" style="display:inline-block;background:#6f1825;color:#fff;text-decoration:none;padding:12px 20px;font-size:13px;font-weight:600;">${escape(options.ctaText)}</a></p>` : ''}
+${options.noticeHtml ? `<div style="margin-top:24px;padding:16px 0;border-top:1px solid #e7e2dc;color:#756e68;font-size:12px;line-height:1.6;">${options.noticeTitle ? `<strong style="display:block;margin-bottom:6px;color:#262321;">${escape(options.noticeTitle)}</strong>` : ''}${escape(options.noticeHtml.replace(/<\/?strong>/g, ''))}</div>` : ''}</td></tr>
+<tr><td style="padding:22px 32px;border-top:1px solid #e7e2dc;color:#756e68;font-size:12px;line-height:1.6;">Email tự động từ bộ phận Quản lý nhượng quyền Avengers Coffee.</td></tr>
+</table></td></tr></table></body></html>`;
+  }
 
-    return `
-      <!DOCTYPE html>
-      <html lang="vi">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${options.heroTitle}</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
-      </head>
-      <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 36px 0;">
-          <tr>
-            <td align="center">
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.14); border: 1px solid #e2e8f0;">
-                
-                <!-- 1. TOP BRAND HEADER -->
-                <tr>
-                  <td style="padding: 22px 32px; background-color: #170c08; text-align: center; border-bottom: 2px solid #d97706;">
-                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                      <tr>
-                        <td align="center">
-                          <table border="0" cellspacing="0" cellpadding="0">
-                            <tr>
-                              <td style="vertical-align: middle;">
-                                <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="46" height="46" alt="Avengers Coffee Logo" style="display: block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); object-fit: cover;" />
-                              </td>
-                              <td style="vertical-align: middle; padding-left: 14px; text-align: left;">
-                                <div style="font-size: 21px; font-weight: 900; color: #ffffff; letter-spacing: 2px; line-height: 1.1; text-transform: uppercase;">
-                                  AVENGERS COFFEE
-                                </div>
-                                <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 2.2px; text-transform: uppercase; margin-top: 3px;">
-                                  HỆ THỐNG NHƯỢNG QUYỀN TOÀN QUỐC
-                                </div>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
+  private escapeMailText(value: unknown): string {
+    return String(value ?? '').replace(/[&<>"']/g, char =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] || char);
+  }
 
-                <!-- 2. HERO BANNER IMAGE -->
-                <tr>
-                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
-                    <img src="${heroImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Franchise Banner" />
-                  </td>
-                </tr>
-
-                <!-- 3. HERO TITLE SECTION -->
-                <tr>
-                  <td style="padding: 0; background: linear-gradient(180deg, #7f1d1d 0%, #4c0519 100%); text-align: center;">
-                    <div style="padding: 28px 24px 28px 24px;">
-                      <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #fef08a; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(254, 240, 138, 0.4);">
-                        ● THÔNG TIN ĐỐI TÁC NHƯỢNG QUYỀN
-                      </div>
-                      <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.4);">
-                        ${options.heroTitle}
-                      </h1>
-                      ${options.heroSubtitle ? `
-                        <p style="margin: 0; font-size: 13px; color: #fef08a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                          ${options.heroSubtitle}
-                        </p>
-                      ` : ''}
-
-                      ${options.badgeValue ? `
-                        <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 18px auto 0 auto; background-color: #ffffff; border-radius: 16px; border: 2px solid #f59e0b; box-shadow: 0 12px 32px rgba(0,0,0,0.3); max-width: 480px; width: 92%;">
-                          <tr>
-                            <td style="padding: 16px 22px; text-align: center;">
-                              ${options.badgeTitle ? `
-                                <div style="font-size: 11.5px; font-weight: 800; color: #991b1b; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px;">
-                                  ${options.badgeTitle}
-                                </div>
-                              ` : ''}
-                              <div style="font-size: 26px; font-weight: 900; color: #7f1d1d; letter-spacing: 1px; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;">
-                                ${options.badgeValue}
-                              </div>
-                              ${options.badgeSub ? `
-                                <div style="font-size: 12px; color: #475569; margin-top: 5px; font-weight: 600;">
-                                  ${options.badgeSub}
-                                </div>
-                              ` : ''}
-                            </td>
-                          </tr>
-                        </table>
-                      ` : ''}
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- 4. GREETING & MAIN CONTENT -->
-                <tr>
-                  <td style="padding: 36px 36px 20px 36px;">
-                    <h2 style="margin: 0 0 14px 0; font-size: 18px; font-weight: 800; color: #0f172a; text-align: center;">
-                      ${options.greetingTitle}
-                    </h2>
-                    <div style="font-size: 14.5px; color: #334155; line-height: 1.75; margin: 0 0 20px 0; text-align: left;">
-                      ${options.greetingBody}
-                    </div>
-
-                    ${options.contentHtml ? `
-                      <div style="margin-bottom: 22px;">
-                        ${options.contentHtml}
-                      </div>
-                    ` : ''}
-
-                    ${options.ctaUrl && options.ctaText ? `
-                      <div style="margin: 24px 0 16px 0; text-align: center;">
-                        <a href="${options.ctaUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #15803d 0%, #16a34a 100%); color: #ffffff; text-decoration: none; padding: 18px 44px; border-radius: 14px; font-weight: 900; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 8px 24px rgba(22, 163, 74, 0.35); line-height: 1.2;">
-                          <div style="color: #ffffff;">${options.ctaText}</div>
-                          ${options.ctaSubText ? `
-                            <div style="font-size: 11px; opacity: 0.92; font-weight: 700; margin-top: 4px; letter-spacing: 1.8px; color: #e2fbe8;">${options.ctaSubText}</div>
-                          ` : ''}
-                        </a>
-                      </div>
-                    ` : ''}
-
-                    ${options.noticeHtml ? `
-                      <div style="background-color: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; padding: 16px 20px; font-size: 13px; color: #475569; line-height: 1.7;">
-                        ${options.noticeTitle ? `
-                          <div style="font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
-                            ● ${options.noticeTitle}
-                          </div>
-                        ` : ''}
-                        ${options.noticeHtml}
-                      </div>
-                    ` : ''}
-                  </td>
-                </tr>
-
-                <!-- 5. FOOTER ARTWORK BANNER -->
-                <tr>
-                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
-                    <img src="${footerImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Footer" />
-                  </td>
-                </tr>
-
-                <!-- 6. LUXURY FOOTER -->
-                <tr>
-                  <td style="background-color: #170c08; padding: 36px 28px; text-align: center; color: #ffffff; border-top: 2px solid #d97706;">
-                    
-                    <div style="margin-bottom: 14px;">
-                      <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="48" height="48" alt="Avengers Coffee" style="display: inline-block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 14px rgba(0,0,0,0.5); object-fit: cover;" />
-                    </div>
-
-                    <div style="font-size: 18px; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px; text-transform: uppercase; color: #ffffff;">
-                      AVENGERS COFFEE VIETNAM
-                    </div>
-                    <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 1.8px; text-transform: uppercase; margin-bottom: 20px;">
-                      HỆ THỐNG NHƯỢNG QUYỀN VÀNG
-                    </div>
-
-                    <!-- Social Icons -->
-                    <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 20px auto;">
-                      <tr>
-                        <td style="padding: 0 8px;">
-                          <a href="https://facebook.com" target="_blank" style="text-decoration: none;">
-                            <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="30" height="30" alt="Facebook" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                          </a>
-                        </td>
-                        <td style="padding: 0 8px;">
-                          <a href="https://tiktok.com" target="_blank" style="text-decoration: none;">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" width="30" height="30" alt="TikTok" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                          </a>
-                        </td>
-                        <td style="padding: 0 8px;">
-                          <a href="https://instagram.com" target="_blank" style="text-decoration: none;">
-                            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="30" height="30" alt="Instagram" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                          </a>
-                        </td>
-                        <td style="padding: 0 8px;">
-                          <a href="https://youtube.com" target="_blank" style="text-decoration: none;">
-                            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="30" height="30" alt="YouTube" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <p style="margin: 0 0 6px 0; font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.5;">
-                      Hotline đối tác nhượng quyền: <strong style="color: #fef08a;">1800 6936</strong> • Email: <strong style="color: #ffffff;">support@avengers.coffee</strong>
-                    </p>
-                    <p style="margin: 0; font-size: 11.5px; color: rgba(255, 255, 255, 0.65);">
-                      Bản quyền © 2026 Avengers Coffee. Tất cả quyền được bảo hộ.
-                    </p>
-                  </td>
-                </tr>
-
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
+  private mailRows(rows: Array<[string, unknown]>): string {
+    return `<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-top:1px solid #e7e2dc;'>${rows.map(([label, value]) =>
+      `<tr><td style='width:40%;padding:11px 0;border-bottom:1px solid #e7e2dc;color:#756e68;font-size:13px;vertical-align:top;'>${this.escapeMailText(label)}</td><td style='padding:11px 0;border-bottom:1px solid #e7e2dc;color:#262321;font-size:13px;font-weight:600;'>${this.escapeMailText(value)}</td></tr>`
+    ).join('')}</table>`;
   }
 
   private mailAutoReply(hoSo: any): string {
-    const infoTableHtml = `
-      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;">
-        <div style="font-size: 12.5px; font-weight: 800; color: #991b1b; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.8px;">
-          ● THÔNG TIN HỒ SƠ ĐÃ ĐĂNG KÝ:
-        </div>
-        <table style="width: 100%; font-size: 13.5px; border-collapse: collapse;">
-          <tr><td style="color: #64748b; padding: 6px 0; width: 38%;">Họ tên đối tác:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.ho_ten}</td></tr>
-          <tr><td style="color: #64748b; padding: 6px 0;">Email liên hệ:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.email}</td></tr>
-          <tr><td style="color: #64748b; padding: 6px 0;">Số điện thoại:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.so_dien_thoai}</td></tr>
-          <tr><td style="color: #64748b; padding: 6px 0;">Khu vực đăng ký:</td><td style="font-weight: 700; color: #0f172a;">${hoSo.phuong_xa ? hoSo.phuong_xa + ' - ' : ''}${hoSo.thanh_pho || 'Chưa xác định'}</td></tr>
-          <tr><td style="color: #64748b; padding: 6px 0;">Gói nhượng quyền:</td><td style="font-weight: 800; color: #b45309;">${hoSo.goi_kiosk}</td></tr>
-        </table>
-      </div>
-
-      <div style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 14px; padding: 18px 20px;">
-        <div style="font-size: 12.5px; font-weight: 800; color: #166534; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.8px;">
-          ● CÁC BƯỚC TIẾP THEO:
-        </div>
-        <ol style="margin: 0; padding-left: 18px; color: #374151; font-size: 13.5px; line-height: 1.8;">
-          <li>Đội ngũ tư vấn nhượng quyền sẽ liên hệ thẩm định trong vòng <strong>24 giờ làm việc</strong>.</li>
-          <li>Khảo sát vị trí mặt bằng và tính toán dung lượng thị trường độc quyền theo quận/huyện.</li>
-          <li>Sau khi hoàn tất hồ sơ và ký kết hợp đồng, tài khoản Kiosk sẽ được cấp tự động qua email.</li>
-        </ol>
-      </div>
-    `;
+    const infoTableHtml = this.mailRows([
+      ['Họ tên đối tác', hoSo.ho_ten], ['Email liên hệ', hoSo.email],
+      ['Số điện thoại', hoSo.so_dien_thoai],
+      ['Khu vực đăng ký', [hoSo.phuong_xa, hoSo.thanh_pho].filter(Boolean).join(' - ') || 'Chưa xác định'],
+      ['Gói nhượng quyền', hoSo.goi_kiosk],
+    ]);
 
     return this.buildFranchiseBrandedHtml({
       heroTitle: 'TIẾP NHẬN HỒ SƠ ĐĂNG KÝ',
@@ -340,27 +146,9 @@ export class FranchiseService {
   private mailCredentials(hoTen: string, username: string, password: string, maKiosk: string): string {
     const loginUrl = String(process.env.WEB_ADMIN_URL || 'http://127.0.0.1:5174').trim();
     
-    const credentialsHtml = `
-      <div style="background-color: #fffbeb; border: 2px solid #f59e0b; border-radius: 16px; padding: 22px 24px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.1);">
-        <div style="font-size: 12.5px; font-weight: 800; color: #92400e; text-transform: uppercase; margin-bottom: 14px; letter-spacing: 0.8px;">
-          ● THÔNG TIN ĐĂNG NHẬP HỆ THỐNG:
-        </div>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr>
-            <td style="color: #64748b; font-size: 13.5px; padding: 8px 0; width: 40%;">Tên đăng nhập:</td>
-            <td style="font-size: 17px; font-weight: 900; color: #0f172a; font-family: 'Plus Jakarta Sans', monospace;">${username}</td>
-          </tr>
-          <tr>
-            <td style="color: #64748b; font-size: 13.5px; padding: 8px 0;">Mật khẩu mặc định:</td>
-            <td style="font-size: 17px; font-weight: 900; color: #b91c1c; font-family: 'Plus Jakarta Sans', monospace;">${password}</td>
-          </tr>
-          <tr>
-            <td style="color: #64748b; font-size: 13.5px; padding: 8px 0;">Mã Kiosk cấp quyền:</td>
-            <td style="font-size: 15px; font-weight: 800; color: #15803d;">${maKiosk}</td>
-          </tr>
-        </table>
-      </div>
-    `;
+    const credentialsHtml = this.mailRows([
+      ['Tên đăng nhập', username], ['Mật khẩu tạm thời', password], ['Mã kiosk', maKiosk],
+    ]);
 
     return this.buildFranchiseBrandedHtml({
       heroTitle: 'HỒ SƠ NHƯỢNG QUYỀN ĐÃ ĐƯỢC PHÊ DUYỆT',
@@ -550,20 +338,14 @@ export class FranchiseService {
     const bankName = process.env.SEPAY_BANK_CODE || 'MBBank';
     const bankAccount = process.env.SEPAY_ACCOUNT_NO || '025452790502';
     
-    const depositTableHtml = `
-      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;">
-        <div style="font-size: 12.5px; font-weight: 800; color: #991b1b; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.8px;">
-          ● THÔNG TIN CHUYỂN KHOẢN ĐẶT CỌC:
-        </div>
-        <table style="width: 100%; font-size: 13.5px; border-collapse: collapse;">
-          <tr><td style="color: #64748b; padding: 6px 0; width: 40%;">Ngân hàng thụ hưởng:</td><td style="font-weight: 800; color: #0f172a;">${bankName}</td></tr>
-          <tr><td style="color: #64748b; padding: 6px 0;">Số tài khoản:</td><td style="font-weight: 900; color: #1e40af; font-family: 'Plus Jakarta Sans', monospace; font-size: 16px;">${bankAccount}</td></tr>
-          <tr><td style="color: #64748b; padding: 6px 0;">Chủ tài khoản:</td><td style="font-weight: 800; color: #0f172a;">NGUYEN THAI AN</td></tr>
-          <tr><td style="color: #64748b; padding: 6px 0;">Số tiền đặt cọc:</td><td style="font-weight: 900; color: #b91c1c; font-size: 16px;">5.000.000 VNĐ</td></tr>
-          <tr><td style="color: #64748b; padding: 6px 0;">Cú pháp chuyển khoản:</td><td style="font-weight: 800; color: #0f172a; font-family: monospace; background: #eff6ff; padding: 2px 8px; border-radius: 6px;">COC KIOSK ${hoSo.so_dien_thoai}</td></tr>
-        </table>
-      </div>
-    `;
+    const depositTableHtml = this.mailRows([
+      ['Ngân hàng thụ hưởng', bankName], ['Số tài khoản', bankAccount],
+      ['Chủ tài khoản', 'NGUYEN THAI AN'], ['Số tiền đặt cọc', '5.000.000 VNĐ'],
+      ['Nội dung chuyển khoản', `COC KIOSK ${hoSo.so_dien_thoai}`],
+    ]);
+
+    const webCustomerUrl = (process.env.WEB_CUSTOMER_URL || 'http://localhost:5175').trim();
+    const paymentUrl = `${webCustomerUrl}/?tab=franchise-deposit&ho_so_id=${hoSo.id}`;
 
     this.sendMail(
       hoSo.email,
@@ -577,13 +359,18 @@ export class FranchiseService {
         greetingTitle: `Kính chào ${hoSo.ho_ten},`,
         greetingBody: `Hồ sơ đăng ký của bạn đã vượt qua vòng thẩm định sơ bộ. Để hệ thống tiến hành cấp tài khoản quản trị Kiosk và thiết lập độc quyền khu vực (${hoSo.phuong_xa ? hoSo.phuong_xa + ' - ' : ''}${hoSo.thanh_pho}), vui lòng hoàn tất khoản đặt cọc giữ chỗ:`,
         contentHtml: depositTableHtml,
+        ctaText: 'THANH TOÁN ĐẶT CỌC TRỰC TUYẾN (VIETQR / VNPAY)',
+        ctaUrl: paymentUrl,
         noticeTitle: 'XÁC NHẬN TỰ ĐỘNG:',
-        noticeHtml: 'Sau khi thanh toán thành công, hệ thống tự động sẽ đối soát giao dịch và gửi tài khoản quản lý Kiosk về email của bạn trong vòng vài phút.',
+        noticeHtml: 'Sau khi thanh toán thành công, hệ thống tự động đối soát giao dịch, kích hoạt điểm bán và gửi tài khoản quản lý Kiosk về email của bạn ngay lập tức.',
       }),
-
     ).catch(e => console.error('[franchise-mail] deposit email error:', e.message));
 
-    return { success: true, message: 'Đã yêu cầu khách hàng đặt cọc 5.000.000đ.', data: hoSo };
+    return { 
+      success: true, 
+      message: 'Đã yêu cầu khách hàng đặt cọc 5.000.000đ và gửi link thanh toán online.', 
+      data: { hoSo, payment_url: paymentUrl } 
+    };
   }
 
   async duyetHoSo(id: string, adminId: string) {
@@ -654,6 +441,7 @@ export class FranchiseService {
       franchisee_id: franchiseeId,
       trang_thai: 'CHO_KY_HOP_DONG',
     }));
+    this.clearKioskCache();
 
     // Tạo Công nợ khởi tạo (Phí nhượng quyền - chỉ bao gồm Tài sản & Setup)
     // Phần Combo nguyên liệu đầu kỳ đối tác sẽ tự đặt hàng ở tab "Đặt Combo"
@@ -674,6 +462,20 @@ export class FranchiseService {
         trang_thai: 'DA_THANH_TOAN',
         ghi_chu: 'Tiền đặt cọc giữ chỗ (Đã thu)',
       }));
+
+      // Ghi nhận Phiếu Thu vào Dòng tiền & Đối soát
+      try {
+        await this.thuChiRepo.save(this.thuChiRepo.create({
+          kiosk_id: newKiosk.id,
+          loai_phieu: 'THU',
+          danh_muc: 'DAT_COC',
+          so_tien: 5000000,
+          ghi_chu: `Thu tiền đặt cọc giữ chỗ Kiosk ${maKiosk} (${hoSo.ho_ten})`,
+          nguoi_thuc_hien_id: (adminId && adminId !== 'PAYMENT_GATEWAY_CALLBACK') ? adminId : franchiseeId,
+        }));
+      } catch (err: any) {
+        console.warn('[franchise-thu-chi] Lỗi ghi nhận phiếu thu đặt cọc:', err.message);
+      }
 
       // Khoản 2: Còn lại
       await this.congNoRepo.save(this.congNoRepo.create({
@@ -734,6 +536,7 @@ export class FranchiseService {
       franchisee_id: franchiseeId,
       trang_thai: 'CHO_KY_HOP_DONG',
     }));
+    this.clearKioskCache();
 
     // Tạo công nợ đầu tư ban đầu (không có cọc vì khách quen)
     let soTienKhoiTao = 0;
@@ -766,6 +569,240 @@ export class FranchiseService {
     };
   }
 
+  /**
+   * Lấy thông tin thanh toán đặt cọc (public, dùng cho trang thanh toán cọc)
+   */
+  async layThongTinThanhToanCoc(id: string) {
+    const hoSo = await this.hoSoRepo.findOne({ where: { id } });
+    if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ đăng ký nhượng quyền');
+
+    const bankName = process.env.SEPAY_BANK_CODE || 'MBBank';
+    const bankAccount = process.env.SEPAY_ACCOUNT_NO || '025452790502';
+    const accountName = 'AVENGERS COFFEE';
+    const depositAmount = 5000000;
+    const transferContent = `COC KIOSK ${hoSo.so_dien_thoai || hoSo.id.substring(0, 8)}`;
+    const qrUrl = `https://img.vietqr.io/image/MB-025452790502-compact2.png?amount=${depositAmount}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(accountName)}`;
+
+    let tongGiaTriGoi = 0;
+    if (hoSo.goi_kiosk === 'XE_LUU_DONG') tongGiaTriGoi = 16500000;
+    else if (hoSo.goi_kiosk === 'KIOSK_CO_DINH') tongGiaTriGoi = 44500000;
+    else if (hoSo.goi_kiosk === 'CONTAINER_CAFE') tongGiaTriGoi = 67500000;
+
+    return {
+      success: true,
+      data: {
+        id: hoSo.id,
+        ho_ten: hoSo.ho_ten,
+        email: hoSo.email,
+        so_dien_thoai: hoSo.so_dien_thoai,
+        dia_chi_mat_bang: hoSo.dia_chi_mat_bang,
+        phuong_xa: hoSo.phuong_xa,
+        thanh_pho: hoSo.thanh_pho,
+        goi_kiosk: hoSo.goi_kiosk,
+        trang_thai: hoSo.trang_thai,
+        deposit_amount: depositAmount,
+        tong_gia_tri_goi: tongGiaTriGoi,
+        so_tien_con_lai: Math.max(0, tongGiaTriGoi - depositAmount),
+        bank_name: bankName,
+        bank_account: bankAccount,
+        account_name: accountName,
+        transfer_content: transferContent,
+        qr_url: qrUrl,
+        ngay_tao: hoSo.ngay_tao,
+      }
+    };
+  }
+
+  /**
+   * Xác nhận thanh toán đặt cọc (qua VietQR, VNPay hoặc Admin duyệt)
+   * Tự động duyệt hồ sơ, tạo Kiosk, cấp tài khoản và gửi email credentials
+   */
+  async xacNhanThanhToanCoc(id: string, body?: any) {
+    const hoSo = await this.hoSoRepo.findOne({ where: { id } });
+    if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ đăng ký');
+
+    if (hoSo.trang_thai === 'DA_DUYET') {
+      return {
+        success: true,
+        message: 'Hồ sơ đã được đặt cọc và kích hoạt thành công trước đó.',
+        data: { hoSo, already_processed: true }
+      };
+    }
+
+    if (hoSo.trang_thai === 'TU_CHOI' || hoSo.trang_thai === 'DA_HUY') {
+      throw new BadRequestException(`Hồ sơ đã ở trạng thái "${hoSo.trang_thai}", không thể tiếp tục đặt cọc.`);
+    }
+
+    // Nếu hồ sơ đang ở trạng thái CHO_XEM_XET, tự động nâng lên CHO_DAT_COC để duyệt
+    if (hoSo.trang_thai === 'CHO_XEM_XET') {
+      hoSo.trang_thai = 'CHO_DAT_COC';
+      await this.hoSoRepo.save(hoSo);
+    }
+
+    const adminId = body?.adminId || body?.admin_id || 'PAYMENT_GATEWAY_CALLBACK';
+    const duyetRes = await this.duyetHoSo(id, adminId);
+    return duyetRes;
+  }
+
+  /**
+   * Lấy thông tin tất toán phần còn lại của gói nhượng quyền cho một Kiosk
+   */
+  async layThongTinTatToanGoi(kioskId: string, franchiseeId?: string) {
+    const kiosk = await this.kioskRepo.findOne({ where: { id: kioskId } });
+    if (!kiosk) throw new NotFoundException('Không tìm thấy Kiosk');
+    if (franchiseeId && kiosk.franchisee_id !== franchiseeId) {
+      throw new BadRequestException('Bạn không sở hữu Kiosk này');
+    }
+
+    const congNoGoi = await this.congNoRepo.findOne({
+      where: {
+        kiosk_id: kioskId,
+        loai_phat_sinh: 'KHOI_TAO',
+        trang_thai: 'CON_NO',
+      }
+    });
+
+    let tongGiaTriGoi = 0;
+    if (kiosk.loai_kiosk === 'XE_LUU_DONG') tongGiaTriGoi = 16500000;
+    else if (kiosk.loai_kiosk === 'KIOSK_CO_DINH') tongGiaTriGoi = 44500000;
+    else if (kiosk.loai_kiosk === 'CONTAINER_CAFE') tongGiaTriGoi = 67500000;
+
+    const soTienConNo = congNoGoi ? Number(congNoGoi.so_tien) : 0;
+    const daDatCoc = 5000000;
+    const bankName = process.env.SEPAY_BANK_CODE || 'MBBank';
+    const bankAccount = process.env.SEPAY_ACCOUNT_NO || '025452790502';
+    const accountName = 'AVENGERS COFFEE';
+    const transferContent = `THANHTOAN GOI ${kiosk.ma_kiosk}`;
+    const qrUrl = soTienConNo > 0
+      ? `https://img.vietqr.io/image/MB-025452790502-compact2.png?amount=${soTienConNo}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(accountName)}`
+      : null;
+
+    return {
+      success: true,
+      data: {
+        kiosk_id: kiosk.id,
+        ma_kiosk: kiosk.ma_kiosk,
+        ten_kiosk: kiosk.ten_kiosk,
+        dia_chi: kiosk.dia_chi,
+        loai_kiosk: kiosk.loai_kiosk,
+        trang_thai_kiosk: kiosk.trang_thai,
+        tong_gia_tri_goi: tongGiaTriGoi,
+        da_dat_coc: daDatCoc,
+        so_tien_con_no: soTienConNo,
+        da_tat_toan_du: soTienConNo <= 0,
+        cong_no_id: congNoGoi?.id || null,
+        bank_name: bankName,
+        bank_account: bankAccount,
+        account_name: accountName,
+        transfer_content: transferContent,
+        qr_url: qrUrl,
+      }
+    };
+  }
+
+  /**
+   * Tất toán nốt phần còn lại của gói nhượng quyền (VietQR, VNPay, hoặc Ví)
+   */
+  async tatToanGoiNhuongQuyen(kioskId: string, franchiseeId: string, body: any) {
+    const kiosk = await this.kioskRepo.findOne({ where: { id: kioskId } });
+    if (!kiosk) throw new NotFoundException('Không tìm thấy Kiosk');
+    if (franchiseeId && kiosk.franchisee_id !== franchiseeId) {
+      throw new BadRequestException('Bạn không sở hữu Kiosk này');
+    }
+
+    const congNoGoi = await this.congNoRepo.findOne({
+      where: {
+        kiosk_id: kioskId,
+        loai_phat_sinh: 'KHOI_TAO',
+        trang_thai: 'CON_NO',
+      }
+    });
+
+    if (!congNoGoi) {
+      return {
+        success: true,
+        message: 'Gói nhượng quyền đã được thanh toán đầy đủ 100% trước đó.',
+        data: { kiosk, da_tat_toan: true }
+      };
+    }
+
+    const soTien = Number(congNoGoi.so_tien);
+    const phuongThuc = body?.phuong_thuc || 'VIETQR'; // 'VIETQR' | 'VNPAY' | 'VI'
+
+    if (phuongThuc === 'VI') {
+      const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: franchiseeId } });
+      if (!user) throw new NotFoundException('Không tìm thấy tài khoản người dùng');
+      const balance = Number(user.so_du_vi || 0);
+      if (balance < soTien) {
+        throw new BadRequestException(`Số dư ví không đủ (${balance.toLocaleString('vi-VN')}đ < ${soTien.toLocaleString('vi-VN')}đ). Vui lòng nạp thêm tiền hoặc chọn VietQR.`);
+      }
+      user.so_du_vi = balance - soTien;
+      await this.userRepo.save(user);
+
+      await this.walletTxRepo.save(this.walletTxRepo.create({
+        ma_nguoi_dung: franchiseeId,
+        so_tien: -soTien,
+        loai_giao_dich: 'TRA_CONG_NO',
+        mo_ta: `Tất toán gói nhượng quyền Kiosk ${kiosk.ma_kiosk}`
+      }));
+    }
+
+    // Đánh dấu công nợ hoàn tất
+    congNoGoi.trang_thai = 'DA_THANH_TOAN';
+    congNoGoi.ngay_xac_nhan_thanh_toan = new Date();
+    congNoGoi.nguoi_xac_nhan_id = franchiseeId;
+    congNoGoi.ghi_chu = (congNoGoi.ghi_chu || '') + ` [Tất toán 100% gói qua ${phuongThuc}]`;
+    await this.congNoRepo.save(congNoGoi);
+
+    // Ghi nhận Phiếu Thu vào Dòng tiền & Đối soát
+    try {
+      await this.thuChiRepo.save(this.thuChiRepo.create({
+        kiosk_id: kiosk.id,
+        loai_phieu: 'THU',
+        danh_muc: 'NHUONG_QUYEN',
+        so_tien: soTien,
+        ghi_chu: `Tất toán 100% gói nhượng quyền Kiosk ${kiosk.ma_kiosk} (${phuongThuc})`,
+        nguoi_thuc_hien_id: franchiseeId,
+      }));
+    } catch (err: any) {
+      console.warn('[franchise-thu-chi] Lỗi ghi nhận phiếu thu tất toán:', err.message);
+    }
+
+    // Nếu Kiosk đang ở CHO_KY_HOP_DONG, chuyển sang DANG_THIET_LAP
+    if (kiosk.trang_thai === 'CHO_KY_HOP_DONG') {
+      kiosk.trang_thai = 'DANG_THIET_LAP';
+      await this.kioskRepo.save(kiosk);
+    }
+
+    await this.logAction(franchiseeId, 'TAT_TOAN_GOI_NHUONG_QUYEN', `Kiosk: ${kiosk.ma_kiosk}, Số tiền: ${soTien}`);
+
+    // Gửi email chúc mừng đối tác đã tất toán thành công
+    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: kiosk.franchisee_id } });
+    if (user?.email) {
+      this.sendMail(
+        user.email,
+        `[Avengers Coffee] Xác nhận tất toán 100% gói nhượng quyền Kiosk ${kiosk.ma_kiosk}`,
+        this.buildFranchiseBrandedHtml({
+          heroTitle: 'TẤT TOÁN GÓI NHƯỢNG QUYỀN THÀNH CÔNG',
+          heroSubtitle: `KIOSK: ${kiosk.ten_kiosk} (${kiosk.ma_kiosk})`,
+          badgeTitle: 'SỐ TIỀN ĐÃ THANH TOÁN',
+          badgeValue: `${soTien.toLocaleString('vi-VN')} VNĐ`,
+          badgeSub: 'Đã hoàn tất nghĩa vụ tài chính ban đầu cho gói nhượng quyền',
+          greetingTitle: `Kính chào đối tác ${user.ho_ten || 'Avengers Coffee'},`,
+          greetingBody: `Hệ thống xác nhận bạn đã <strong>thanh toán đủ 100% chi phí gói nhượng quyền</strong> cho điểm bán <strong>${kiosk.ten_kiosk} (${kiosk.ma_kiosk})</strong>. Điểm bán của bạn hiện đã đủ điều kiện tiến hành nghiệm thu trang thiết bị và chuẩn bị khai trương!`,
+          noticeTitle: 'BƯỚC TIẾP THEO:',
+          noticeHtml: 'Đội ngũ kỹ thuật và đào tạo sẽ liên hệ để lên lịch bàn giao thiết bị, cài đặt máy POS và đào tạo pha chế chuẩn quy trình.',
+        }),
+      ).catch(e => console.error('[franchise-mail] settlement email error:', e.message));
+    }
+
+    return {
+      success: true,
+      message: `Tất toán gói nhượng quyền Kiosk ${kiosk.ma_kiosk} thành công!`,
+      data: { kiosk, congNo: congNoGoi }
+    };
+  }
+
   async tuChoiHoSo(id: string, adminId: string, ly_do: string) {
     const hoSo = await this.hoSoRepo.findOne({ where: { id } });
     if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
@@ -785,16 +822,7 @@ export class FranchiseService {
         heroSubtitle: `KHU VỰC: ${hoSo.phuong_xa ? hoSo.phuong_xa + ' - ' : ''}${hoSo.thanh_pho}`,
         greetingTitle: `Kính chào ${hoSo.ho_ten},`,
         greetingBody: `Cảm ơn bạn đã quan tâm đến hệ thống nhượng quyền Avengers Coffee. Rất tiếc, hồ sơ đăng ký nhượng quyền khu vực (${hoSo.phuong_xa ? hoSo.phuong_xa + ' - ' : ''}${hoSo.thanh_pho}) của bạn chưa phù hợp ở thời điểm hiện tại.`,
-        contentHtml: `
-          <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 14px; padding: 18px 20px;">
-            <div style="font-size: 12.5px; font-weight: 800; color: #be123c; text-transform: uppercase; margin-bottom: 6px;">
-              ● LÝ DO CHƯA THỂ PHÊ DUYỆT:
-            </div>
-            <div style="font-size: 14px; color: #881337; line-height: 1.6;">
-              ${ly_do}
-            </div>
-          </div>
-        `,
+        contentHtml: this.mailRows([['Lý do chưa thể phê duyệt', ly_do]]),
         noticeTitle: 'CƠ HỘI HỢP TÁC TRONG TƯƠNG LAI:',
         noticeHtml: 'Chúng tôi luôn chào đón bạn đăng ký lại khi đã chuẩn bị xong mặt bằng hoặc khu vực tiềm năng mới. Xin trân trọng cảm ơn!',
       }),
@@ -866,27 +894,61 @@ export class FranchiseService {
   }
 
   async layDanhSachKiosk() {
+    if (this.kioskListCache && Date.now() - this.kioskListCache.timestamp < this.KIOSK_CACHE_TTL) {
+      return this.kioskListCache.data;
+    }
+
     const kiosks = await this.kioskRepo.find({ order: { ngay_tao: 'DESC' } });
-    const result = await Promise.all(kiosks.map(async (k) => {
-      const hopDong = await this.hopDongRepo.findOne({ where: { kiosk_id: k.id }, order: { ngay_tao: 'DESC' } });
-      const danhSachCongNo = await this.congNoRepo.find({ where: { kiosk_id: k.id } });
-      const danhSachDoiSoat = await this.doiSoatRepo.find({ where: { kiosk_id: k.id } });
+    if (!kiosks || kiosks.length === 0) return [];
+
+    // Tối ưu hóa: Bulk query 3 bảng liên quan 1 lần duy nhất thay vì 150+ queries N+1
+    const [hopDongs, allCongNo, allDoiSoat] = await Promise.all([
+      this.hopDongRepo.find({ order: { ngay_tao: 'DESC' } }),
+      this.congNoRepo.find(),
+      this.doiSoatRepo.find(),
+    ]);
+
+    const hopDongMap = new Map<string, any>();
+    for (const hd of hopDongs) {
+      if (!hopDongMap.has(hd.kiosk_id)) {
+        hopDongMap.set(hd.kiosk_id, hd);
+      }
+    }
+
+    const congNoMap = new Map<string, any[]>();
+    for (const cn of allCongNo) {
+      const list = congNoMap.get(cn.kiosk_id) || [];
+      list.push(cn);
+      congNoMap.set(cn.kiosk_id, list);
+    }
+
+    const doiSoatMap = new Map<string, any[]>();
+    for (const ds of allDoiSoat) {
+      const list = doiSoatMap.get(ds.kiosk_id) || [];
+      list.push(ds);
+      doiSoatMap.set(ds.kiosk_id, list);
+    }
+
+    const result = kiosks.map((k) => {
+      const hopDong = hopDongMap.get(k.id) || null;
+      const danhSachCongNo = congNoMap.get(k.id) || [];
+      const danhSachDoiSoat = doiSoatMap.get(k.id) || [];
 
       let congNoCount = 0;
       let score = 100;
 
-      danhSachCongNo.forEach(cn => {
+      for (const cn of danhSachCongNo) {
         if (cn.trang_thai === 'CON_NO') {
           congNoCount++;
           score -= 5;
         }
         if (cn.trang_thai === 'QUA_HAN') score -= 20;
-      });
+      }
 
-      danhSachDoiSoat.forEach(ds => {
+      for (const ds of danhSachDoiSoat) {
         if (ds.muc_canh_bao === 'VANG') score -= 15;
         if (ds.muc_canh_bao === 'DO') score -= 30;
-      });
+      }
 
       if (k.so_combo_hien_tai > 50) score += 10;
 
@@ -902,7 +964,9 @@ export class FranchiseService {
         diem_danh_gia: score,
         xep_hang: rank
       };
-    }));
+    });
+
+    this.kioskListCache = { data: result, timestamp: Date.now() };
     return result;
   }
 
@@ -972,14 +1036,16 @@ export class FranchiseService {
     kiosk.so_combo_hien_tai = (kiosk.so_combo_hien_tai || 0) + (body.so_combo_khoi_diem || 0);
     kiosk.trang_thai = 'DANG_THIET_LAP';
     await this.kioskRepo.save(kiosk);
+    this.clearKioskCache();
 
     await this.logAction(adminId, 'TAO_HOP_DONG', `Kiosk: ${kioskId}`);
     return { success: true, message: 'Hợp đồng đã được tạo. Kiosk đang trong giai đoạn thiết lập.', data: hopDong };
   }
 
-  async xacNhanKhaiTruong(kioskId: string, adminId: string) {
+  async xacNhanKhaiTruong(kioskId: string, adminId: string, actorRole: string) {
     const kiosk = await this.kioskRepo.findOne({ where: { id: kioskId } });
     if (!kiosk) throw new NotFoundException('Không tìm thấy kiosk');
+    if (actorRole !== 'ADMIN' && kiosk.franchisee_id !== adminId) throw new BadRequestException('Bạn không có quyền khai trương kiosk này');
     if (kiosk.trang_thai !== 'DANG_THIET_LAP') throw new BadRequestException('Kiosk không ở trạng thái đang thiết lập');
     kiosk.trang_thai = 'DANG_HOAT_DONG';
     await this.kioskRepo.save(kiosk);
@@ -989,6 +1055,7 @@ export class FranchiseService {
       hopDong.ngay_khai_truong = new Date().toISOString().split('T')[0];
       await this.hopDongRepo.save(hopDong);
     }
+    this.clearKioskCache();
     await this.logAction(adminId, 'KHAI_TRUONG_KIOSK', `Kiosk: ${kioskId}`);
     return { success: true, message: 'Kiosk đã khai trương và chính thức hoạt động!', data: kiosk };
   }
@@ -1002,61 +1069,43 @@ export class FranchiseService {
   }
 
   async datMuaCombo(franchiseeId: string, body: any) {
-    // Tìm kiosk của franchisee
-    const kiosk = await this.kioskRepo.findOne({ where: { id: body.kiosk_id, franchisee_id: franchiseeId } });
+    const soLuong = Number(body?.so_luong ?? 1);
+    if (!Number.isSafeInteger(soLuong) || soLuong < 1 || soLuong > 100) throw new BadRequestException('Số lượng combo phải từ 1 đến 100');
+    const method = String(body?.phuong_thuc_thanh_toan || 'CONG_NO');
+    if (!['VNPAY', 'VI_DIEN_TU', 'CONG_NO'].includes(method)) throw new BadRequestException('Phương thức thanh toán combo không hợp lệ');
+    const kiosk = await this.kioskRepo.findOne({ where: { id: body?.kiosk_id, franchisee_id: franchiseeId } });
     if (!kiosk) throw new NotFoundException('Không tìm thấy kiosk hoặc bạn không có quyền');
     if (kiosk.trang_thai === 'NGUNG_HOAT_DONG') throw new BadRequestException('Kiosk đã ngừng hoạt động, không thể đặt combo');
-
-    const combo = await this.comboRepo.findOne({ where: { id: body.combo_id } });
-    if (!combo) throw new NotFoundException('Không tìm thấy combo');
-
-    const soLuong = body.so_luong || 1;
+    const combo = await this.comboRepo.findOne({ where: { id: body?.combo_id, trang_thai: 'ACTIVE' } });
+    if (!combo) throw new NotFoundException('Không tìm thấy combo đang bán');
     const tongTien = Number(combo.gia_ban) * soLuong;
+    if (!Number.isSafeInteger(tongTien) || tongTien <= 0) throw new BadRequestException('Giá trị đơn combo không hợp lệ');
 
-    const don = await this.donMuaComboRepo.save(this.donMuaComboRepo.create({
-      kiosk_id: kiosk.id,
-      combo_id: combo.id,
-      so_luong: soLuong,
-      don_gia: combo.gia_ban,
-      tong_tien: tongTien,
-      trang_thai: 'DA_DAT',
-      phuong_thuc_thanh_toan: body.phuong_thuc_thanh_toan || 'CONG_NO',
-      thanh_toan_ngay: false,
-    }));
-
-    if (don.phuong_thuc_thanh_toan === 'VNPAY') {
-      const vnpayUrl = this.taoVnPayUrl(don.id, don.tong_tien, body.ipAddr || '127.0.0.1');
-      return { success: true, message: `Đang chuyển hướng sang VNPAY...`, vnpay_url: vnpayUrl, data: don };
-    }
-
-    if (don.phuong_thuc_thanh_toan === 'VI_DIEN_TU') {
-      const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: franchiseeId } });
-      if (!user) throw new NotFoundException('Không tìm thấy tài khoản');
-
-      const currentBalance = Number(user.so_du_vi || 0);
-      if (currentBalance < tongTien) {
-        throw new BadRequestException(`Số dư ví không đủ để thanh toán. Bạn cần ${tongTien.toLocaleString('vi-VN')}đ nhưng ví chỉ có ${currentBalance.toLocaleString('vi-VN')}đ.`);
+    const don = await this.dataSource.transaction(async manager => {
+      const orders = manager.getRepository(DonMuaCombo);
+      if (method === 'VI_DIEN_TU') {
+        const users = manager.getRepository(User);
+        const user = await users.findOne({ where: { ma_nguoi_dung: franchiseeId }, lock: { mode: 'pessimistic_write' } });
+        if (!user) throw new NotFoundException('Không tìm thấy tài khoản');
+        const balance = Number(user.so_du_vi || 0);
+        if (balance < tongTien) throw new BadRequestException(`Số dư ví không đủ. Cần ${tongTien.toLocaleString('vi-VN')}đ, hiện có ${balance.toLocaleString('vi-VN')}đ.`);
+        user.so_du_vi = balance - tongTien;
+        await users.save(user);
+        await manager.getRepository(WalletTransaction).save(manager.getRepository(WalletTransaction).create({
+          ma_nguoi_dung: franchiseeId, so_tien: -tongTien, loai_giao_dich: 'MUA_COMBO',
+          mo_ta: `Mua combo: ${soLuong} x ${combo.ten_combo} (Kiosk ${kiosk.ma_kiosk})`,
+        }));
       }
-
-      // Trừ tiền ví
-      user.so_du_vi = currentBalance - tongTien;
-      await this.userRepo.save(user);
-
-      // Ghi log giao dịch ví
-      await this.walletTxRepo.save(this.walletTxRepo.create({
-        ma_nguoi_dung: franchiseeId,
-        so_tien: -tongTien,
-        loai_giao_dich: 'MUA_COMBO',
-        mo_ta: `Mua combo: ${soLuong} x ${combo.ten_combo} (Kiosk ${kiosk.ma_kiosk})`
-      }));
-
-      don.trang_thai = 'DA_DAT'; // Cập nhật trạng thái thành công
-      don.thanh_toan_ngay = true;
-      await this.donMuaComboRepo.save(don);
-      return { success: true, message: `Thanh toán qua Ví điện tử thành công. Đã trừ ${tongTien.toLocaleString()}đ.`, data: don };
+      return orders.save(orders.create({ kiosk_id: kiosk.id, combo_id: combo.id, so_luong: soLuong,
+        don_gia: combo.gia_ban, tong_tien: tongTien, trang_thai: 'DA_DAT',
+        phuong_thuc_thanh_toan: method as DonMuaCombo['phuong_thuc_thanh_toan'],
+        thanh_toan_ngay: method === 'VI_DIEN_TU' }));
+    });
+    if (method === 'VNPAY') {
+      const vnpayUrl = this.taoVnPayUrl(don.id, don.tong_tien, body.ipAddr || '127.0.0.1');
+      return { success: true, message: 'Đang chuyển hướng sang VNPAY', vnpay_url: vnpayUrl, data: don };
     }
-
-    return { success: true, message: `Đã đặt ${soLuong} ${combo.ten_combo}. Admin sẽ xác nhận giao hàng sớm.`, data: don };
+    return { success: true, message: method === 'VI_DIEN_TU' ? 'Đã thanh toán qua ví và đặt combo' : 'Đã đặt combo, chờ xác nhận giao hàng', data: don };
   }
 
   taoVnPayUrl(maDonHang: string, soTien: number, ipAddr: string = '127.0.0.1') {
@@ -1097,34 +1146,28 @@ export class FranchiseService {
     return `${vnpUrl}?${signData}&vnp_SecureHash=${signed}`;
   }
 
-  async ketQuaVnpay(query: Record<string, string>) {
+  async ketQuaVnpay(rawQuery: Record<string, string>) {
+    const query = { ...rawQuery };
+    const provided = String(query.vnp_SecureHash || '');
+    delete query.vnp_SecureHash;
+    delete query.vnp_SecureHashType;
+    if (!/^[0-9a-f]{128}$/i.test(provided)) return { success: false, isValid: false };
     const secretKey = secretWithDevDefault('VNPAY_HASH_SECRET', 'test-only-vnpay-signing-secret');
-    const vnp_SecureHash = query['vnp_SecureHash'];
-    delete query['vnp_SecureHash'];
-    delete query['vnp_SecureHashType'];
-
-    const sortedKeys = Object.keys(query).sort();
-    const sortedParams: string[] = [];
-    for (const key of sortedKeys) {
-      sortedParams.push(`${key}=${encodeURIComponent(query[key])}`);
+    const signData = Object.keys(query).sort().map(key => `${key}=${encodeURIComponent(query[key])}`).join('&');
+    const expected = crypto.createHmac('sha512', secretKey).update(Buffer.from(signData, 'utf-8')).digest('hex');
+    if (!crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(provided, 'hex'))) return { success: false, isValid: false };
+    const don = await this.donMuaComboRepo.findOne({ where: { id: query.vnp_TxnRef } });
+    if (!don || don.phuong_thuc_thanh_toan !== 'VNPAY' ||
+        query.vnp_TmnCode !== secretWithDevDefault('VNPAY_TMN_CODE', 'test-vnpay-terminal') ||
+        query.vnp_CurrCode !== 'VND' || Number(query.vnp_Amount) !== Number(don.tong_tien) * 100) {
+      return { success: false, isValid: false };
     }
-    const signData = sortedParams.join('&');
-    const hmac = crypto.createHmac('sha512', secretKey);
-    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
-
-    const maDonHang = query['vnp_TxnRef'];
-    const don = await this.donMuaComboRepo.findOne({ where: { id: maDonHang } });
-    if (!don) return { success: false, isValid: false };
-
-    if (signed === vnp_SecureHash) {
-      const isSuccess = query['vnp_ResponseCode'] === '00';
-      if (isSuccess) {
-        don.thanh_toan_ngay = true;
-        await this.donMuaComboRepo.save(don);
-      }
-      return { success: isSuccess, isValid: true };
+    const success = query.vnp_ResponseCode === '00' && query.vnp_TransactionStatus === '00';
+    if (success && !don.thanh_toan_ngay) {
+      don.thanh_toan_ngay = true;
+      await this.donMuaComboRepo.save(don);
     }
-    return { success: false, isValid: false };
+    return { success, isValid: true };
   }
 
   async layDanhSachDonMuaCombo(trang_thai?: string, kiosk_id?: string) {
@@ -1153,33 +1196,28 @@ export class FranchiseService {
   }
 
   async xacNhanDaGiaoCombo(donId: string, adminId: string, ghi_chu?: string) {
-    const don = await this.donMuaComboRepo.findOne({ where: { id: donId } });
-    if (!don) throw new NotFoundException('Không tìm thấy đơn');
-    if (don.trang_thai !== 'DA_DAT') throw new BadRequestException('Đơn không ở trạng thái đã đặt');
-
-    don.trang_thai = 'DA_GIAO';
-    don.ngay_giao = new Date();
-    don.nguoi_xu_ly_id = adminId;
-    don.ghi_chu_admin = ghi_chu || null;
-    await this.donMuaComboRepo.save(don);
-
-    // Cộng combo vào kho kiosk
-    await this.kioskRepo.increment({ id: don.kiosk_id }, 'so_combo_hien_tai', don.so_luong);
-
-    // Nếu chưa thanh toán ngay → tạo công nợ
-    if (!don.thanh_toan_ngay && don.phuong_thuc_thanh_toan === 'CONG_NO') {
-      const hanThanhToan = new Date();
-      hanThanhToan.setDate(hanThanhToan.getDate() + 14); // 14 ngày
-      await this.congNoRepo.save(this.congNoRepo.create({
-        kiosk_id: don.kiosk_id,
-        don_mua_combo_id: don.id,
-        loai_phat_sinh: 'NGUYEN_LIEU',
-        so_tien: don.tong_tien,
-        han_thanh_toan: hanThanhToan.toISOString().split('T')[0],
-        trang_thai: 'CON_NO',
-      }));
-    }
-
+    const don = await this.dataSource.transaction(async manager => {
+      const orders = manager.getRepository(DonMuaCombo);
+      const order = await orders.findOne({ where: { id: donId }, lock: { mode: 'pessimistic_write' } });
+      if (!order) throw new NotFoundException('Không tìm thấy đơn');
+      if (order.trang_thai !== 'DA_DAT') throw new BadRequestException('Đơn không ở trạng thái đã đặt');
+      if (!order.thanh_toan_ngay && order.phuong_thuc_thanh_toan !== 'CONG_NO') throw new BadRequestException('Đơn combo chưa được xác nhận thanh toán');
+      order.trang_thai = 'DA_GIAO';
+      order.ngay_giao = new Date();
+      order.nguoi_xu_ly_id = adminId;
+      order.ghi_chu_admin = ghi_chu || null;
+      await orders.save(order);
+      await manager.getRepository(Kiosk).increment({ id: order.kiosk_id }, 'so_combo_hien_tai', order.so_luong);
+      if (!order.thanh_toan_ngay && order.phuong_thuc_thanh_toan === 'CONG_NO') {
+        const hanThanhToan = new Date();
+        hanThanhToan.setDate(hanThanhToan.getDate() + 14);
+        const debts = manager.getRepository(CongNo);
+        await debts.save(debts.create({ kiosk_id: order.kiosk_id, don_mua_combo_id: order.id,
+          loai_phat_sinh: 'NGUYEN_LIEU', so_tien: order.tong_tien,
+          han_thanh_toan: hanThanhToan.toISOString().split('T')[0], trang_thai: 'CON_NO' }));
+      }
+      return order;
+    });
     await this.logAction(adminId, 'GIAO_DON_COMBO', `Đơn: ${donId}`);
     return { success: true, message: 'Đã xác nhận giao combo và cộng vào kho kiosk.', data: don };
   }
@@ -1187,6 +1225,7 @@ export class FranchiseService {
   async tamHoanDon(donId: string, adminId: string, ghi_chu: string) {
     const don = await this.donMuaComboRepo.findOne({ where: { id: donId } });
     if (!don) throw new NotFoundException('Không tìm thấy đơn');
+    if (don.trang_thai !== 'DA_DAT') throw new BadRequestException('Chỉ được tạm hoãn đơn chưa giao');
     don.trang_thai = 'TAM_HOAN';
     don.ghi_chu_admin = ghi_chu;
     don.nguoi_xu_ly_id = adminId;
@@ -1497,6 +1536,7 @@ export class FranchiseService {
     if (!kiosk) throw new NotFoundException('Không tìm thấy kiosk');
     kiosk.trang_thai = trang_thai;
     await this.kioskRepo.save(kiosk);
+    this.clearKioskCache();
     return { success: true, message: `Đã cập nhật trạng thái Kiosk thành ${trang_thai}` };
   }
 
@@ -1505,6 +1545,7 @@ export class FranchiseService {
     const kiosk = await this.kioskRepo.findOne({ where: { id } });
     if (!kiosk) throw new NotFoundException('Không tìm thấy kiosk');
     await this.kioskRepo.remove(kiosk);
+    this.clearKioskCache();
     return { success: true, message: 'Đã xóa Kiosk thành công' };
   }
 
@@ -1563,20 +1604,13 @@ export class FranchiseService {
           const hoSo = await this.hoSoRepo.findOne({ where: { id: kiosk.ho_so_id } });
           if (hoSo && hoSo.email) {
             const portalUrl = String(process.env.WEB_ADMIN_URL || 'http://127.0.0.1:5174').trim();
-            const debtHtml = `
-              <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;">
-                <div style="font-size: 12.5px; font-weight: 800; color: #92400e; text-transform: uppercase; margin-bottom: 10px;">
-                  ● CHI TIẾT KHOẢN NỢ QUÁ HẠN:
-                </div>
-                <table style="width: 100%; font-size: 13.5px; border-collapse: collapse;">
-                  <tr><td style="color: #64748b; padding: 6px 0; width: 45%;">Kiosk quản lý:</td><td style="font-weight: 700; color: #0f172a;">${kiosk.ten_kiosk} (${kiosk.ma_kiosk})</td></tr>
-                  <tr><td style="color: #64748b; padding: 6px 0;">Số ngày quá hạn:</td><td style="font-weight: 800; color: #b91c1c;">${diffDays} ngày (Ân hạn: ${soNgayAnHan} ngày)</td></tr>
-                  <tr><td style="color: #64748b; padding: 6px 0;">Nợ gốc cần trả:</td><td style="font-weight: 800; color: #0f172a;">${Number(cn.so_tien).toLocaleString('vi-VN')} đ</td></tr>
-                  <tr><td style="color: #64748b; padding: 6px 0;">Phí phạt trễ hạn (${phanTramPhat * 100}%):</td><td style="font-weight: 800; color: #b91c1c;">${Number(cn.phi_phat_tre_han).toLocaleString('vi-VN')} đ</td></tr>
-                  <tr><td style="color: #64748b; padding: 6px 0;">Tổng thanh toán:</td><td style="font-weight: 900; color: #991b1b; font-size: 15.5px;">${(Number(cn.so_tien) + Number(cn.phi_phat_tre_han)).toLocaleString('vi-VN')} đ</td></tr>
-                </table>
-              </div>
-            `;
+            const debtHtml = this.mailRows([
+              ['Kiosk', `${kiosk.ten_kiosk} (${kiosk.ma_kiosk})`],
+              ['Số ngày quá hạn', `${diffDays} ngày`],
+              ['Nợ gốc', `${Number(cn.so_tien).toLocaleString('vi-VN')} đ`],
+              ['Phí trễ hạn', `${Number(cn.phi_phat_tre_han).toLocaleString('vi-VN')} đ`],
+              ['Tổng cần thanh toán', `${(Number(cn.so_tien) + Number(cn.phi_phat_tre_han)).toLocaleString('vi-VN')} đ`],
+            ]);
 
             this.sendMail(
               hoSo.email,
@@ -1628,16 +1662,7 @@ export class FranchiseService {
                   badgeSub: 'Hệ thống tự động khóa sau 3 lần gửi thông báo nhắc nợ',
                   greetingTitle: `Kính gửi đối tác ${hoSo.ho_ten},`,
                   greetingBody: `Kiosk <strong>${kiosk.ten_kiosk} (${kiosk.ma_kiosk})</strong> của bạn đã bị <strong>TẠM KHÓA HỆ THỐNG BÁN HÀNG POS</strong> do vi phạm thời hạn thanh toán công nợ (quá hạn ${diffDays} ngày).`,
-                  contentHtml: `
-                    <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 14px; padding: 18px 20px;">
-                      <div style="font-size: 12.5px; font-weight: 800; color: #be123c; text-transform: uppercase; margin-bottom: 6px;">
-                        ● HƯỚNG DẪN MỞ KHÓA KIOSK:
-                      </div>
-                      <div style="font-size: 13.5px; color: #881337; line-height: 1.7;">
-                        Vui lòng truy cập Cổng Nhượng Quyền và thanh toán toàn bộ công nợ gốc kèm phí phạt trễ hạn. Hệ thống sẽ tự động khôi phục quyền truy cập POS ngay sau khi ghi nhận thanh toán.
-                      </div>
-                    </div>
-                  `,
+                  contentHtml: this.mailRows([['Hướng dẫn mở khóa', 'Truy cập Cổng Nhượng quyền và thanh toán toàn bộ công nợ gốc cùng phí trễ hạn. Hệ thống sẽ khôi phục quyền truy cập sau khi ghi nhận thanh toán.']]),
                   ctaText: 'THANH TOÁN CÔNG NỢ NGAY',
                   ctaSubText: 'RESTORE KIOSK ACCESS',
                   ctaUrl: portalUrl,
@@ -1784,6 +1809,7 @@ export class FranchiseService {
     if (!hd) throw new NotFoundException('Không tìm thấy hợp đồng');
     hd.ngay_het_han = ngayHetHanMoi;
     await this.hopDongRepo.save(hd);
+    this.clearKioskCache();
     await this.logAction(adminId, 'GIA_HAN_HOP_DONG', `Kiosk: ${kioskId}, Hạn mới: ${ngayHetHanMoi}`);
     return { success: true, message: 'Đã gia hạn hợp đồng thành công.' };
   }
@@ -1812,6 +1838,7 @@ export class FranchiseService {
       hd.trang_thai = 'CHAM_DUT';
       await this.hopDongRepo.save(hd);
     }
+    this.clearKioskCache();
     await this.dataSource.query('UPDATE identity.users SET is_active = false WHERE id = $1', [kiosk.franchisee_id]);
     await this.logAction(adminId, 'CHAM_DUT_HOP_DONG', `Kiosk: ${kioskId}`);
     return { success: true, message: 'Đã chấm dứt hợp đồng Kiosk vĩnh viễn.' };

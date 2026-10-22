@@ -1,0 +1,21 @@
+// Standard Heroicons 2 collection distributed through React Icons.
+export {
+  HiArrowPath as ArrowPathIcon,
+  HiBuildingStorefront as BuildingStorefrontIcon,
+  HiCheckBadge as CheckBadgeIcon,
+  HiCheckCircle as CheckCircleIcon,
+  HiCheck as CheckIcon,
+  HiChevronDown as ChevronDownIcon,
+  HiChevronUp as ChevronUpIcon,
+  HiClock as ClockIcon,
+  HiExclamationTriangle as ExclamationTriangleIcon,
+  HiGift as GiftIcon,
+  HiHeart as HeartIcon,
+  HiMagnifyingGlass as MagnifyingGlassIcon,
+  HiMapPin as MapPinIcon,
+  HiPencil as PencilIcon,
+  HiSparkles as SparklesIcon,
+  HiStar as StarIcon,
+  HiTrophy as TrophyIcon,
+  HiXMark as XMarkIcon,
+} from 'react-icons/hi2';

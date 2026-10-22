@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useEffect, useMemo, useCallback, useState } from 'react'
+import { AppState } from 'react-native'
+import { useQueryClient } from '@tanstack/react-query'
 import apiClient, { setAuthToken, clearAuthToken } from '../lib/apiClient'
-import { clearAdminSession, loadAdminSession, saveAdminSession } from '../lib/storage'
+import { clearAdminSession, loadAdminSession, saveAdminSession, adminSessionExpired, touchAdminSession } from '../lib/storage'
 import { getUserRole } from '../lib/adminData'
 
 const AdminContext = createContext(null)
 
 export function AdminProvider({ children }) {
+  const queryClient = useQueryClient()
   const [admin, setAdmin] = useState(null)
   const [token, setToken] = useState(null)
   const [hydrated, setHydrated] = useState(false)
@@ -106,8 +109,23 @@ export function AdminProvider({ children }) {
     setAdmin(null)
     setToken(null)
     clearAuthToken()
+    queryClient.clear()
     await clearAdminSession()
-  }, [])
+  }, [queryClient])
+
+  const touchSession = useCallback(async () => {
+    if (!token) return
+    if (await adminSessionExpired()) { await logout(); return }
+    await touchAdminSession()
+  }, [token, logout])
+
+  useEffect(() => {
+    if (!token) return undefined
+    const verify = async () => { if (await adminSessionExpired()) await logout() }
+    const timer = setInterval(verify, 1000)
+    const subscription = AppState.addEventListener('change', state => { if (state === 'active') verify() })
+    return () => { clearInterval(timer); subscription.remove() }
+  }, [token, logout])
 
   const sessionUsername = admin?.tenDangNhap || admin?.email || ''
   const sessionRole = admin?.vaiTro || admin?.role || 'STAFF'
@@ -122,11 +140,12 @@ export function AdminProvider({ children }) {
       login,
       updateSession,
       logout,
+      touchSession,
       sessionUsername,
       sessionRole,
       sessionBranchCode,
     }),
-    [admin, token, hydrated, loginStatus, login, updateSession, logout, sessionUsername, sessionRole, sessionBranchCode],
+    [admin, token, hydrated, loginStatus, login, updateSession, logout, touchSession, sessionUsername, sessionRole, sessionBranchCode],
   )
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>

@@ -1,3 +1,6 @@
+import { selectedAddress } from './address-selection';
+import type { AddressPayload } from './address-selection';
+import { validateAvatarUrl } from './avatar-upload';
 import { verifiedGoogleIdentity } from '../../auth/google-identity';
 import { assertLoginWorkspace } from '../../auth/workspace-policy';
 import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
@@ -168,7 +171,7 @@ export class UserService implements OnModuleInit {
     const config = await this.membershipConfigRepo.findOne({ where: { key } });
     if (config && config.value) {
       if (key === 'TIER_CONFIG' && Array.isArray(config.value)) {
-        const defaults: Record<string, number> = { SILVER: 100000, GOLD: 300000, DIAMOND: 500000 };
+        const defaults: Record<string, number> = { SILVER: 100000, GOLD: 300000, DIAMOND: 500000, PLATINUM: 2000000 };
         return config.value.map((t: any) => ({
           ...t,
           chi_tieu_toi_thieu_thang: Number((t.chi_tieu_toi_thieu_thang !== undefined && t.chi_tieu_toi_thieu_thang !== null && Number(t.chi_tieu_toi_thieu_thang) > 0) ? t.chi_tieu_toi_thieu_thang : (defaults[t.ma_hang] ?? 0)),
@@ -257,154 +260,8 @@ export class UserService implements OnModuleInit {
 
   private async guiMailDatLaiMatKhau(email: string, fullName: string, code: string) {
     const appName = String(process.env.APP_NAME || 'Avengers Coffee').trim();
-    const heroImage = 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&h=480&q=85';
-    const footerImage = 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1200&h=260&q=85';
-
-    const html = `
-      <!DOCTYPE html>
-      <html lang="vi">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mã Xác Thực Đặt Lại Mật Khẩu</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
-      </head>
-      <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 36px 0;">
-          <tr>
-            <td align="center">
-              
-              <!-- Main Email Shell (600px standard) -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.14); border: 1px solid #e2e8f0;">
-                
-                <!-- 1. TOP LUXURY BRAND HEADER -->
-                <tr>
-                  <td style="padding: 24px 32px; background-color: #170c08; text-align: center; border-bottom: 2px solid #d97706;">
-                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                      <tr>
-                        <td align="center">
-                          <table border="0" cellspacing="0" cellpadding="0">
-                            <tr>
-                              <td style="vertical-align: middle;">
-                                <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="46" height="46" alt="Avengers Coffee Logo" style="display: block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); object-fit: cover;" />
-                              </td>
-                              <td style="vertical-align: middle; padding-left: 14px; text-align: left;">
-                                <div style="font-size: 21px; font-weight: 900; color: #ffffff; letter-spacing: 2px; line-height: 1.1; text-transform: uppercase;">
-                                  ${appName.toUpperCase()}
-                                </div>
-                                <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 2.2px; text-transform: uppercase; margin-top: 3px;">
-                                  THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ
-                                </div>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-
-                <!-- 2. HIGH-RES HERO BANNER IMAGE -->
-                <tr>
-                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
-                    <img src="${heroImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Banner" />
-                  </td>
-                </tr>
-
-                <!-- 3. HERO TITLE & BADGE SECTION -->
-                <tr>
-                  <td style="padding: 0; background: linear-gradient(180deg, #7f1d1d 0%, #4c0519 100%); text-align: center;">
-                    <div style="padding: 32px 24px 30px 24px;">
-                      <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #fef08a; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(254, 240, 138, 0.4);">
-                        BẢO MẬT TÀI KHOẢN
-                      </div>
-                      <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.4);">
-                        MÃ XÁC THỰC ĐẶT LẠI MẬT KHẨU
-                      </h1>
-                      <p style="margin: 0 0 20px 0; font-size: 13px; color: #fef08a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                        HIỆU LỰC TRONG VÒNG ${RESET_CODE_EXPIRE_MINUTES} PHÚT
-                      </p>
-                    </p>
-
-                    <!-- Big OTP Code Box -->
-                    <div style="margin: 0 auto 24px auto; display: inline-block; background-color: #fff7ed; border: 2px dashed #f97316; border-radius: 18px; padding: 20px 44px; box-shadow: 0 8px 24px rgba(249, 115, 22, 0.15);">
-                      <div style="font-size: 12px; color: #9a3412; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1.5px;">MÃ XÁC THỰC OTP CỦA BẠN:</div>
-                      <div style="font-size: 38px; font-weight: 900; color: #c2410c; letter-spacing: 8px; font-family: 'Plus Jakarta Sans', monospace;">${code}</div>
-                    </div>
-
-                    <div style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 14px 18px; font-size: 13px; color: #475569; line-height: 1.6; max-width: 480px; margin: 0 auto;">
-                      <span style="font-weight: 700; color: #0f172a;">● Lưu ý hiệu lực:</span> Mã xác thực này có giá trị trong vòng <strong>${RESET_CODE_EXPIRE_MINUTES} phút</strong>.<br/>
-                      Nếu bạn không gửi yêu cầu này, vui lòng bỏ qua email để mật khẩu tiếp tục được giữ an toàn tuyệt đối.
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- 5. FOOTER ARTWORK BANNER -->
-                <tr>
-                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
-                    <img src="${footerImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Footer" />
-                  </td>
-                </tr>
-
-                <!-- 6. LUXURY FOOTER -->
-                <tr>
-                  <td style="background-color: #170c08; padding: 36px 28px; text-align: center; color: #ffffff; border-top: 2px solid #d97706;">
-                    
-                    <div style="margin-bottom: 14px;">
-                      <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="48" height="48" alt="Avengers Coffee" style="display: inline-block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 14px rgba(0,0,0,0.5); object-fit: cover;" />
-                    </div>
-
-                    <div style="font-size: 18px; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px; text-transform: uppercase; color: #ffffff;">
-                      ${appName} VIETNAM
-                    </div>
-                    <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 1.8px; text-transform: uppercase; margin-bottom: 20px;">
-                      THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ
-                    </div>
-
-                    <!-- Social Icons -->
-                    <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 20px auto;">
-                      <tr>
-                        <td style="padding: 0 8px;">
-                          <a href="https://facebook.com" target="_blank" style="text-decoration: none;">
-                            <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="30" height="30" alt="Facebook" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                          </a>
-                        </td>
-                        <td style="padding: 0 8px;">
-                          <a href="https://tiktok.com" target="_blank" style="text-decoration: none;">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" width="30" height="30" alt="TikTok" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                          </a>
-                        </td>
-                        <td style="padding: 0 8px;">
-                          <a href="https://instagram.com" target="_blank" style="text-decoration: none;">
-                            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="30" height="30" alt="Instagram" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                          </a>
-                        </td>
-                        <td style="padding: 0 8px;">
-                          <a href="https://youtube.com" target="_blank" style="text-decoration: none;">
-                            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="30" height="30" alt="YouTube" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <p style="margin: 0 0 6px 0; font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.5;">
-                      Hotline chăm sóc khách hàng: <strong style="color: #fef08a;">1800 6936</strong> • Email: <strong style="color: #ffffff;">support@avengers.coffee</strong>
-                    </p>
-                    <p style="margin: 0; font-size: 11.5px; color: rgba(255, 255, 255, 0.65);">
-                      Bản quyền © 2026 ${appName}. Tất cả quyền được bảo hộ.
-                    </p>
-                  </td>
-                </tr>
-
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
+    const safeName = String(fullName || 'bạn').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] || c);
+    const html = `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;background:#f5f4f1;font-family:Arial,Helvetica,sans-serif;color:#262321;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border:1px solid #e7e2dc;"><tr><td style="padding:26px 32px;border-bottom:1px solid #e7e2dc;color:#6f1825;font-size:16px;font-weight:700;letter-spacing:2px;">AVENGERS COFFEE</td></tr><tr><td style="padding:32px;"><h1 style="margin:0 0 12px;font-size:24px;font-weight:600;">Đặt lại mật khẩu</h1><p style="font-size:14px;line-height:1.7;color:#4d4843;">Xin chào ${safeName}, dùng mã bên dưới để tiếp tục. Mã có hiệu lực trong ${RESET_CODE_EXPIRE_MINUTES} phút.</p><div style="margin:24px 0;padding:16px 0;border-top:1px solid #e7e2dc;border-bottom:1px solid #e7e2dc;font-size:28px;letter-spacing:6px;color:#6f1825;font-weight:600;">${code}</div><p style="font-size:12px;color:#756e68;line-height:1.6;">Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này. Đừng chia sẻ mã với người khác.</p></td></tr><tr><td style="padding:20px 32px;border-top:1px solid #e7e2dc;color:#756e68;font-size:12px;">${appName}</td></tr></table></td></tr></table></body></html>`;
 
     try {
       await this.mailSender.sendMail({
@@ -423,94 +280,9 @@ export class UserService implements OnModuleInit {
   private async guiMailChaoMungHoiVien(email: string, fullName: string) {
     const appName = String(process.env.APP_NAME || 'Avengers Coffee').trim();
     const clientBaseUrl = process.env.CUSTOMER_WEB_URL || process.env.WEB_CUSTOMER_BASE_URL || 'http://localhost:5173';
-    const heroImage = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&h=480&q=85';
-
-    const html = `
-      <!DOCTYPE html>
-      <html lang="vi">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Chào Mừng Gia Nhập Avengers Coffee</title>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
-      </head>
-      <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 36px 0;">
-          <tr>
-            <td align="center">
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.14); border: 1px solid #e2e8f0;">
-                
-                <!-- HEADER -->
-                <tr>
-                  <td style="padding: 24px 32px; background-color: #170c08; text-align: center; border-bottom: 2px solid #d97706;">
-                    <div style="font-size: 21px; font-weight: 900; color: #ffffff; letter-spacing: 2px; text-transform: uppercase;">
-                      AVENGERS COFFEE
-                    </div>
-                    <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 2.2px; text-transform: uppercase; margin-top: 3px;">
-                      THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- HERO IMAGE -->
-                <tr>
-                  <td style="padding: 0; line-height: 0; background-color: #170c08;">
-                    <img src="${heroImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto;" alt="Banner" />
-                  </td>
-                </tr>
-
-                <!-- HERO BANNER -->
-                <tr>
-                  <td style="padding: 30px 24px; background: linear-gradient(180deg, #15803d 0%, #166534 100%); text-align: center;">
-                    <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.2); padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;">
-                      HỘI VIÊN CHÍNH THỨC
-                    </div>
-                    <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 900; color: #ffffff; text-transform: uppercase;">
-                      CHÀO MỪNG BẠN GIA NHẬP HỘI VIÊN!
-                    </h1>
-                    <p style="margin: 0; font-size: 13px; color: #bbf7d0; font-weight: 700; text-transform: uppercase;">
-                      HÀNG NGÀN ĐẶC QUYỀN & ƯU ĐÃI ĐANG CHỜ ĐÓN
-                    </p>
-                  </td>
-                </tr>
-
-                <!-- CONTENT -->
-                <tr>
-                  <td style="padding: 36px 36px 20px 36px; text-align: center;">
-                    <h2 style="margin: 0 0 14px 0; font-size: 19px; font-weight: 800; color: #0f172a;">
-                      Kính chào ${fullName || 'Quý khách'},
-                    </h2>
-                    <p style="font-size: 14.5px; color: #334155; line-height: 1.75; margin: 0 0 20px 0;">
-                      Cảm ơn bạn đã đăng ký tài khoản tại <strong>Avengers Coffee</strong>. Từ hôm nay, mỗi đơn hàng của bạn đều được tích lũy điểm thưởng để đổi sang các voucher đồ uống hấp dẫn cùng nhiều quà tặng sinh nhật đặc quyền!
-                    </p>
-
-                    <div style="margin: 24px 0;">
-                      <a href="${clientBaseUrl}" style="background: linear-gradient(135deg, #15803d 0%, #16a34a 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 14px; display: inline-block; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);">
-                        KHÁM PHÁ MENU & ĐẶT MÓN NGAY
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- FOOTER -->
-                <tr>
-                  <td style="padding: 24px 32px; background-color: #170c08; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <p style="margin: 0 0 6px 0; font-size: 12px; color: #94a3b8;">
-                      Hotline: <strong style="color: #fef08a;">1800 6936</strong> • Email: <strong style="color: #ffffff;">support@avengers.coffee</strong>
-                    </p>
-                    <p style="margin: 0; font-size: 11px; color: #64748b;">
-                      Bản quyền © 2026 ${appName}. Tất cả quyền được bảo hộ.
-                    </p>
-                  </td>
-                </tr>
-
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
+    const safeName = String(fullName || 'bạn').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] || c);
+    const safeUrl = /^https?:\/\//i.test(clientBaseUrl) ? clientBaseUrl : 'https://avengers.coffee';
+    const html = `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;background:#f5f4f1;font-family:Arial,Helvetica,sans-serif;color:#262321;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border:1px solid #e7e2dc;"><tr><td style="padding:26px 32px;border-bottom:1px solid #e7e2dc;color:#6f1825;font-size:16px;font-weight:700;letter-spacing:2px;">AVENGERS COFFEE</td></tr><tr><td style="padding:32px;"><h1 style="margin:0 0 12px;font-size:24px;font-weight:600;">Chào mừng bạn đến với Avengers Coffee</h1><p style="font-size:14px;line-height:1.7;color:#4d4843;">Xin chào ${safeName}, tài khoản hội viên của bạn đã sẵn sàng. Bạn có thể khám phá thực đơn, lưu địa chỉ và theo dõi đơn hàng.</p><p style="margin:26px 0 0;"><a href="${safeUrl.replace(/["<>]/g, '')}" style="display:inline-block;background:#6f1825;color:#fff;text-decoration:none;padding:12px 20px;font-size:13px;font-weight:600;">Khám phá thực đơn</a></p></td></tr><tr><td style="padding:20px 32px;border-top:1px solid #e7e2dc;color:#756e68;font-size:12px;">${appName}</td></tr></table></td></tr></table></body></html>`;
 
     try {
       await this.mailSender.sendMail({
@@ -902,6 +674,7 @@ export class UserService implements OnModuleInit {
         ten_dang_nhap: user.ten_dang_nhap,
         ho_ten: user.ho_ten,
         email: user.email,
+        avatar_url: user.avatar_url || null,
         vai_tro: user.vai_tro,
         trang_thai: user.trang_thai,
         co_so_ma: user.co_so_ma,
@@ -1535,7 +1308,7 @@ export class UserService implements OnModuleInit {
     }
 
     if (payload.avatarUrl !== undefined) {
-      user.avatar_url = avatarUrlMoi || null;
+      user.avatar_url = validateAvatarUrl(avatarUrlMoi || '') || null;
     }
 
     if (payload.email !== undefined) {
@@ -1653,7 +1426,7 @@ export class UserService implements OnModuleInit {
 
   async themDiaChi(
     maNguoiDung: string,
-    payload: { tenDiaChi?: string; diaChiDayDu?: string; ghiChu?: string; macDinh?: boolean },
+    payload: AddressPayload,
   ) {
     await this.kiemTraNguoiDungTonTai(maNguoiDung);
 
@@ -1674,12 +1447,14 @@ export class UserService implements OnModuleInit {
       await this.boMacDinhTatCaDiaChi(maNguoiDung);
     }
 
-    const { vi_do, kinh_do } = await this._geocodeAddress(diaChiDayDu);
+    const selection = selectedAddress(payload);
+    const { vi_do, kinh_do } = selection || await this._geocodeAddress(diaChiDayDu);
 
     const created = this.deliveryAddressRepo.create({
       ma_nguoi_dung: maNguoiDung,
       ten_dia_chi: tenDiaChi,
-      dia_chi_day_du: diaChiDayDu,
+      dia_chi_day_du: selection?.full || diaChiDayDu,
+      dia_chi_cau_truc: selection?.structured || null,
       ghi_chu: ghiChu || null,
       mac_dinh: shouldSetDefault,
       vi_do,
@@ -1696,9 +1471,10 @@ export class UserService implements OnModuleInit {
   async capNhatDiaChi(
     maNguoiDung: string,
     addressId: number,
-    payload: { tenDiaChi?: string; diaChiDayDu?: string; ghiChu?: string; macDinh?: boolean },
+    payload: AddressPayload,
   ) {
     const address = await this.timDiaChiTheoNguoiDung(maNguoiDung, addressId);
+    const selection = selectedAddress(payload);
 
     if (payload.tenDiaChi !== undefined) {
       const tenDiaChi = payload.tenDiaChi.trim();
@@ -1715,10 +1491,19 @@ export class UserService implements OnModuleInit {
       }
       if (address.dia_chi_day_du !== diaChiDayDu) {
         address.dia_chi_day_du = diaChiDayDu;
-        const { vi_do, kinh_do } = await this._geocodeAddress(diaChiDayDu);
-        address.vi_do = vi_do;
-        address.kinh_do = kinh_do;
+        if (!selection) {
+          const { vi_do, kinh_do } = await this._geocodeAddress(diaChiDayDu);
+          address.vi_do = vi_do;
+          address.kinh_do = kinh_do;
+          address.dia_chi_cau_truc = null;
+        }
       }
+    }
+    if (selection) {
+      address.dia_chi_day_du = selection.full;
+      address.vi_do = selection.vi_do;
+      address.kinh_do = selection.kinh_do;
+      address.dia_chi_cau_truc = selection.structured;
     }
 
     if (payload.ghiChu !== undefined) {
@@ -1882,7 +1667,7 @@ export class UserService implements OnModuleInit {
       voucher_sinh_nhat: bdayText,
       freeship: freeshipText || 'Không hỗ trợ',
       luot_quay_thang: Number(tier.luot_quay_thang || 1),
-      voucher_exclusive: tier.ma_hang === 'GOLD' || tier.ma_hang === 'DIAMOND',
+      voucher_exclusive: tier.ma_hang === 'GOLD' || tier.ma_hang === 'DIAMOND' || tier.ma_hang === 'PLATINUM',
       mau_sac: tier.mau_sac || '#9ca3af',
       gradient: tier.gradient || ['#9ca3af', '#6b7280'],
     };
@@ -1960,7 +1745,7 @@ export class UserService implements OnModuleInit {
       freeship_value: freeshipVal,
       freeship_min_order: freeshipMinOrder,
       luot_quay_thang: Number(tier.luot_quay_thang || 1),
-      voucher_exclusive: tier.ma_hang === 'GOLD' || tier.ma_hang === 'DIAMOND',
+      voucher_exclusive: tier.ma_hang === 'GOLD' || tier.ma_hang === 'DIAMOND' || tier.ma_hang === 'PLATINUM',
       mau_sac: tier.mau_sac || '#9ca3af',
       gradient: tier.gradient || ['#9ca3af', '#6b7280'],
       dac_quyen_khoa: false,
@@ -3012,7 +2797,7 @@ export class UserService implements OnModuleInit {
       .filter(p => p.loai_su_kien !== 'FREESHIP' && !p.ma_khuyen_mai?.startsWith('FS_'))
       .map(p => this.mapPromotionItem(p));
 
-    const TIER_ICONS: Record<string, string> = { MEMBER: '🎖️', SILVER: '🥈', GOLD: '🥇', DIAMOND: '💎' };
+    const TIER_ICONS: Record<string, string> = { MEMBER: '🎖️', SILVER: '🥈', GOLD: '🥇', DIAMOND: '💎', PLATINUM: '👑' };
 
     const tatCaHang = await Promise.all(
       tierConfigs.map(async (t) => {
@@ -3148,98 +2933,6 @@ export class UserService implements OnModuleInit {
     if (body.nguoi_quan_ly_ma !== undefined) kv.nguoi_quan_ly_ma = body.nguoi_quan_ly_ma?.trim() || null;
     if (body.trang_thai) kv.trang_thai = body.trang_thai as any;
     return this.khuVucRepo.save(kv);
-  }
-
-  async layDanhSachKioskVeTinh(filter?: { khu_vuc_id?: string; trang_thai?: string; thanh_pho?: string; chi_nhanh_me_ma?: string }) {
-    const query = this.branchRepo.createQueryBuilder('b')
-      .where("b.loai_diem_ban = 'KIOSK_VE_TINH'");
-    if (filter?.khu_vuc_id) query.andWhere('b.khu_vuc_id = :khu_vuc_id', { khu_vuc_id: filter.khu_vuc_id });
-    if (filter?.trang_thai) query.andWhere('b.trang_thai = :trang_thai', { trang_thai: filter.trang_thai });
-    if (filter?.thanh_pho) query.andWhere('LOWER(b.thanh_pho) LIKE :tp', { tp: `%${filter.thanh_pho.toLowerCase()}%` });
-    if (filter?.chi_nhanh_me_ma) query.andWhere('b.chi_nhanh_me_ma = :chi_nhanh_me_ma', { chi_nhanh_me_ma: filter.chi_nhanh_me_ma });
-    query.orderBy('b.ma_chi_nhanh', 'ASC');
-    const rows = await query.getMany();
-    const zoneIds = [...new Set(rows.map(r => r.khu_vuc_id).filter(Boolean))] as string[];
-    let zoneMap: Record<string, any> = {};
-    if (zoneIds.length > 0) {
-      const zones = await this.khuVucRepo.createQueryBuilder('kv').where('kv.id IN (:...ids)', { ids: zoneIds }).getMany();
-      zoneMap = Object.fromEntries(zones.map(z => [z.id, z]));
-    }
-    return rows.map(b => ({
-      ma_chi_nhanh: b.ma_chi_nhanh,
-      ten_chi_nhanh: b.ten_chi_nhanh,
-      dia_chi: b.dia_chi,
-      thanh_pho: b.thanh_pho,
-      loai_diem_ban: b.loai_diem_ban,
-      loai_vi_tri: b.loai_vi_tri,
-      vi_do: b.vi_do,
-      kinh_do: b.kinh_do,
-      gio_mo_cua: b.gio_mo_cua,
-      gio_dong_cua: b.gio_dong_cua,
-      chi_nhanh_me_ma: b.chi_nhanh_me_ma,
-      mo_ta: b.mo_ta,
-      trang_thai: b.trang_thai,
-      khu_vuc: b.khu_vuc_id && zoneMap[b.khu_vuc_id] ? {
-        id: zoneMap[b.khu_vuc_id].id,
-        ma_khu_vuc: zoneMap[b.khu_vuc_id].ma_khu_vuc,
-        ten_khu_vuc: zoneMap[b.khu_vuc_id].ten_khu_vuc,
-      } : null,
-    }));
-  }
-
-  async taoKioskVeTinh(body: {
-    ma_chi_nhanh: string; ten_chi_nhanh: string; dia_chi: string;
-    thanh_pho?: string; gio_mo_cua?: string; gio_dong_cua?: string;
-    loai_vi_tri?: string; vi_do?: number; kinh_do?: number;
-    khu_vuc_id?: string; chi_nhanh_me_ma?: string; mo_ta?: string;
-  }) {
-    const ma = body.ma_chi_nhanh.trim().toUpperCase();
-    const existed = await this.branchRepo.findOne({ where: { ma_chi_nhanh: ma } });
-    if (existed) throw new BadRequestException(`Mã '${ma}' đã tồn tại`);
-    const kiosk = this.branchRepo.create({
-      ma_chi_nhanh: ma,
-      ten_chi_nhanh: body.ten_chi_nhanh.trim(),
-      dia_chi: body.dia_chi.trim(),
-      thanh_pho: body.thanh_pho?.trim() || null,
-      gio_mo_cua: body.gio_mo_cua || null,
-      gio_dong_cua: body.gio_dong_cua || null,
-      trang_thai: 'ACTIVE',
-      loai_diem_ban: 'KIOSK_VE_TINH',
-      loai_vi_tri: (body.loai_vi_tri as any) || null,
-      vi_do: body.vi_do ?? null,
-      kinh_do: body.kinh_do ?? null,
-      khu_vuc_id: body.khu_vuc_id || null,
-      chi_nhanh_me_ma: body.chi_nhanh_me_ma?.trim().toUpperCase() || null,
-      mo_ta: body.mo_ta?.trim() || null,
-    });
-    return this.branchRepo.save(kiosk);
-  }
-
-  async capNhatKioskVeTinh(ma: string, body: any) {
-    const kiosk = await this.branchRepo.findOne({ where: { ma_chi_nhanh: ma.toUpperCase(), loai_diem_ban: 'KIOSK_VE_TINH' as any } });
-    if (!kiosk) throw new NotFoundException('Không tìm thấy Kiosk Vệ Tinh');
-    const fields = ['ten_chi_nhanh','dia_chi','thanh_pho','gio_mo_cua','gio_dong_cua','loai_vi_tri','vi_do','kinh_do','khu_vuc_id','chi_nhanh_me_ma','mo_ta','trang_thai'];
-    for (const f of fields) {
-      if (body[f] !== undefined) (kiosk as any)[f] = body[f];
-    }
-    return this.branchRepo.save(kiosk);
-  }
-
-  async thongKeKioskTheoCumKhuVuc(chi_nhanh_me_ma?: string) {
-    const kiosks = await this.layDanhSachKioskVeTinh({ chi_nhanh_me_ma });
-    const zones = await this.layDanhSachKhuVuc();
-    const grouped = zones.map(zone => {
-      const diem_ban = kiosks.filter(k => k.khu_vuc && k.khu_vuc.id === zone.id);
-      return {
-        zone,
-        tong_diem_ban: diem_ban.length,
-        dang_hoat_dong: diem_ban.filter(k => k.trang_thai === 'ACTIVE').length,
-        tam_dung: diem_ban.filter(k => k.trang_thai !== 'ACTIVE').length,
-        diem_ban,
-      };
-    });
-    const khong_zone = kiosks.filter(k => !k.khu_vuc);
-    return { theo_cum: grouped, chua_phan_khu_vuc: khong_zone, tong_tat_ca: kiosks.length };
   }
 
   // ==============================================================================================

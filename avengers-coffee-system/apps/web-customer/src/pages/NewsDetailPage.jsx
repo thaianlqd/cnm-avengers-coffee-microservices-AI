@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeftIcon, CalendarIcon, TagIcon, UserIcon, EyeIcon, ArrowRightIcon, NewspaperIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, CalendarIcon, TagIcon, UserIcon, EyeIcon, ArrowRightIcon, NewspaperIcon } from '../components/common/icons';
 import { apiClient } from '../lib/apiClient';
 import { normalizeNewsArticle } from '../lib/news';
+import { NewsArticleSkeleton } from '../components/common/Skeleton';
 
 function parseInlineFormatting(text) {
   if (!text) return '';
@@ -32,7 +33,7 @@ function renderFormattedContent(rawContent) {
           const headingText = line.replace(/^#+\s*/, '');
           return (
             <div key={index} className="pt-8 pb-3 mt-4 border-b border-gray-200">
-              <h3 className="text-xl md:text-2xl font-bold uppercase text-[#b22830] tracking-tight flex items-center gap-3">
+              <h3 className="text-xl md:text-2xl font-bold  text-[#b22830] tracking-tight flex items-center gap-3">
                 <span className="w-2 h-7 bg-[#b22830] rounded-full inline-block flex-shrink-0" />
                 {headingText}
               </h3>
@@ -103,14 +104,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
   if (!selectedArticleId) return null;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 mt-0 py-16 flex items-center justify-center">
-        <div className="animate-pulse space-y-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-red-200 mx-auto"></div>
-          <p className="text-sm font-bold text-gray-500">{copy('Đang tải bài viết…', 'Loading article…')}</p>
-        </div>
-      </div>
-    );
+    return <NewsArticleSkeleton />;
   }
 
   if (isError || !article) {
@@ -123,7 +117,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
           <button
             type="button"
             onClick={onBack}
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#b22830] text-white px-6 py-2.5 text-xs font-bold uppercase tracking-wider shadow-md hover:bg-red-800 transition-all"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#b22830] text-white px-6 py-2.5 text-xs font-bold  tracking-wider shadow-md hover:bg-red-800 transition-all"
           >
             <ChevronLeftIcon className="h-4 w-4" />
             {copy('Quay lại danh sách', 'Back to stories')}
@@ -142,7 +136,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-[#b22830] text-xs font-bold uppercase tracking-wider transition-colors bg-gray-100 hover:bg-red-50 px-4 py-2 rounded-full"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-[#b22830] text-xs font-bold  tracking-wider transition-colors bg-gray-100 hover:bg-red-50 px-4 py-2 rounded-full"
           >
             <ChevronLeftIcon className="h-4 w-4" />
             {copy('Quay lại Tin Tức', 'Back to stories')}
@@ -150,7 +144,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
 
           {/* Category Badge & Meta */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <span className="bg-[#b22830] text-white text-[11px] font-bold uppercase tracking-widest px-3.5 py-1 rounded-full shadow-sm flex items-center gap-1.5">
+            <span className="bg-[#b22830] text-white text-[11px] font-bold  tracking-widest px-3.5 py-1 rounded-full shadow-sm flex items-center gap-1.5">
               <TagIcon className="w-3.5 h-3.5" />
               {article.category}
             </span>
@@ -180,7 +174,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
           </div>
 
           {/* Main Title */}
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 uppercase leading-tight tracking-tight ">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900  leading-tight tracking-tight ">
             {article.title}
           </h1>
 
@@ -218,7 +212,7 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
           <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-4">
             <div className="flex items-center gap-2">
               <NewspaperIcon className="w-6 h-6 text-[#b22830]" />
-              <h2 className="text-xl md:text-2xl font-bold uppercase text-gray-900 tracking-tight">
+              <h2 className="text-xl md:text-2xl font-bold  text-gray-900 tracking-tight">
                 {copy('Đọc thêm', 'More stories')}
               </h2>
             </div>
@@ -242,12 +236,12 @@ export default function NewsDetailPage({ selectedArticleId, onBack, onSelectArti
                       alt={item.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <span className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md">
+                    <span className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold  tracking-widest px-2.5 py-1 rounded-md">
                       {item.category}
                     </span>
                   </div>
                   <div className="p-5 space-y-2">
-                    <h3 className="text-sm font-bold uppercase text-gray-900 leading-snug group-hover:text-[#b22830] transition-colors line-clamp-2">
+                    <h3 className="text-sm font-bold  text-gray-900 leading-snug group-hover:text-[#b22830] transition-colors line-clamp-2">
                       {item.title}
                     </h3>
                   </div>

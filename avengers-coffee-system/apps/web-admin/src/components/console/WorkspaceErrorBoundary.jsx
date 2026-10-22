@@ -1,5 +1,5 @@
 import { Component } from 'react'
-import { Coffee, RefreshCw, TriangleAlert } from 'lucide-react'
+import { Coffee, RefreshCw, TriangleAlert } from './WorkspaceIcons'
 
 export class WorkspaceErrorBoundary extends Component {
   state = { failed: false }

@@ -14,7 +14,7 @@ export class CustomerWalletTransaction {
   amount: number;
 
   @Column({ type: 'varchar', length: 50 })
-  type: 'TOP_UP' | 'PAYMENT' | 'REFUND';
+  type: 'TOP_UP' | 'PAYMENT' | 'REFUND' | 'GIFT_CARD';
 
   @Column({ type: 'varchar', length: 50, default: 'PENDING' })
   status: 'PENDING' | 'SUCCESS' | 'FAILED';

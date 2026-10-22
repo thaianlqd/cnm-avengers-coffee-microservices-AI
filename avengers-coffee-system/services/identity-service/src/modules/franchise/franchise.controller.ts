@@ -63,6 +63,32 @@ export class FranchiseController {
     return this.franchiseService.huyHoSoDangKy(id);
   }
 
+  @Public()
+  @Get('ho-so/:id/thanh-toan-coc-info')
+  async layThongTinThanhToanCoc(@Param('id') id: string) {
+    return this.franchiseService.layThongTinThanhToanCoc(id);
+  }
+
+  @Public()
+  @Post('ho-so/:id/xac-nhan-thanh-toan-coc')
+  async xacNhanThanhToanCoc(@Param('id') id: string, @Body() body: any) {
+    return this.franchiseService.xacNhanThanhToanCoc(id, body);
+  }
+
+  @Roles('FRANCHISEE', 'ADMIN', 'ACCOUNTANT')
+  @Get('kiosk/:id/thong-tin-tat-toan')
+  async layThongTinTatToanGoi(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    const isPartner = user.role === 'FRANCHISEE';
+    return this.franchiseService.layThongTinTatToanGoi(id, isPartner ? user.sub : undefined);
+  }
+
+  @Roles('FRANCHISEE', 'ADMIN', 'ACCOUNTANT')
+  @Post('kiosk/:id/tat-toan-goi')
+  async tatToanGoiNhuongQuyen(@Param('id') id: string, @Body() body: any, @CurrentUser() user: AuthUser) {
+    const isPartner = user.role === 'FRANCHISEE';
+    return this.franchiseService.tatToanGoiNhuongQuyen(id, isPartner ? user.sub : body?.franchisee_id || user.sub, body);
+  }
+
   // ─── UC-B02: Kiosk & Hợp đồng ─────────────────────
   @Public()
   @Get('kiosk/public')
@@ -91,7 +117,7 @@ export class FranchiseController {
   @Roles('ADMIN', 'FRANCHISEE')
   @Patch('kiosk/:id/khai-truong')
   async xacNhanKhaiTruong(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.franchiseService.xacNhanKhaiTruong(id, user.sub);
+    return this.franchiseService.xacNhanKhaiTruong(id, user.sub, user.role);
   }
 
   // ─── UC-B03: Đơn mua combo ─────────────────────────

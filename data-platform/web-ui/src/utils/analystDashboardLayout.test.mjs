@@ -51,6 +51,18 @@ test('main dashboard keeps every requested view ahead of optional views', () => 
   assert.ok(!primary.includes(charts[7]));
 });
 
+test('focused presentation keeps requested charts and limits optional detail', () => {
+  const charts = [
+    { id: 'requested', role: 'requested' },
+    ...Array.from({ length: 5 }, (_, index) => ({ id: `support-${index}`, role: 'supporting' })),
+  ];
+  assert.deepEqual(dashboardPrimaryCharts(charts, 3).map(chart => chart.id), ['requested', 'support-0', 'support-1']);
+  const evidence = Array.from({ length: 5 }, (_, index) => ({ id: `e${index}`, scope_ref: `q${index}`, feature: 'group_comparison', metric: 'revenue', unit: 'VND', values: { largest: `Nhóm ${index}`, largest_value: index + 1 } }));
+  const report = { evidence, key_findings: evidence.map(item => ({ evidence_id: item.id })) };
+  assert.equal(dashboardFindings(report, 3).length, 3);
+  assert.equal(dashboardFindings(report).length, 5);
+});
+
 test('refined report title follows current Top 2 meaning instead of original Top 5 prompt', () => {
   const report={analysis_spec:{},prompt:'Top 5 món',title:'Sản phẩm và thực đơn',semantic_intent:{requirements:[{ranking:{limit:2,direction:'top'}}]}};
   assert.equal(reportHeading(report),'Top 5 món');

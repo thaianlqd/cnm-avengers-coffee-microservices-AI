@@ -1,5 +1,5 @@
 import { selectChartPeriod, orderChartData } from '../../../components/console/chartPeriod';
-import { acceptsWorkspace, WORKSPACE_LABELS, readWorkspaceSession, saveWorkspaceSession, clearWorkspaceSession } from '../../../lib/workspaceAuth'
+import { acceptsWorkspace, WORKSPACE_LABELS, readWorkspaceSession, saveWorkspaceSession, clearWorkspaceSession, touchWorkspaceSession } from '../../../lib/workspaceAuth'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import { API_BASE_URL, ORDER_STATUSES, OVERVIEW_TIME_RANGES, PAYMENT_METHOD_LABEL } from '../constants'
@@ -1177,6 +1177,24 @@ export function useAdminDashboard() {
     setActiveTab('overview')
   }, [])
 
+  useEffect(() => {
+    if (!session) return undefined
+    const onActivity = () => {
+      if (!readWorkspaceSession()) { logout(); return }
+      touchWorkspaceSession()
+    }
+    const verify = () => { if (!readWorkspaceSession()) logout() }
+    const events = ['pointerdown', 'keydown', 'scroll', 'touchstart']
+    events.forEach(event => window.addEventListener(event, onActivity, { passive: true, capture: true }))
+    const timer = window.setInterval(verify, 1000)
+    window.addEventListener('focus', verify)
+    return () => {
+      events.forEach(event => window.removeEventListener(event, onActivity, true))
+      window.removeEventListener('focus', verify)
+      window.clearInterval(timer)
+    }
+  }, [session, logout])
+
   const confirmFirstLoginPasswordChange = async (newPassword) => {
     setLoginStatus({ loading: true, error: '' })
     try {
@@ -1691,8 +1709,10 @@ export function useAdminDashboard() {
       setWorkShiftForm((prev) => ({ ...prev, note: '' }))
       await Promise.all([taiLichLamViecManager(), taiLichLamViecCuaToi()])
       pushAdminNotification('Đã tạo lịch làm việc', `Đã tạo lịch cho ${workShiftForm.staff_username} ngày ${workShiftForm.shift_date}.`)
+      return { ok: true }
     } catch (error) {
       setWorkShiftState((prev) => ({ ...prev, error: error.message || 'Khong tao duoc lich lam viec' }))
+      return { ok: false, error: error.message || 'Không tạo được lịch làm việc.' }
     } finally {
       setCreatingWorkShift(false)
     }

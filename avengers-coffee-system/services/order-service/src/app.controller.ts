@@ -859,6 +859,7 @@ export class AppController {
     const rows = await this.entityManager.query(
       `SELECT g.ma_san_pham, g.gia_kiosk, sp.ten_san_pham
        FROM franchise.gia_san_pham_kiosk g
+       JOIN franchise.kiosk k ON k.ma_kiosk = g.ma_kiosk AND k.trang_thai = 'DANG_HOAT_DONG'
        JOIN menu.san_pham sp ON sp.ma_san_pham = g.ma_san_pham
        WHERE g.ma_kiosk = $1 AND sp.trang_thai = TRUE`,
       [maKiosk.trim()],

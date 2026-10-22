@@ -1,7 +1,24 @@
 import { PaginatedList } from '../../components/console/CompactPagination'
 import { getAdminAccessToken } from '../../lib/adminFetch'
-import { useState, useEffect, useCallback } from 'react'
+import CurrencyInput from '../../components/console/CurrencyInput'
+import WorkspaceDialog from '../../components/console/WorkspaceDialog'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { API_BASE_URL } from '../admin-dashboard/constants'
+import { 
+  ArrowRight, 
+  Calendar, 
+  Check, 
+  CreditCard, 
+  DollarSign, 
+  Download, 
+  FileText, 
+  Filter, 
+  Printer, 
+  RefreshCw, 
+  Search, 
+  Store, 
+  User 
+} from '../../components/console/WorkspaceIcons'
 
 const apiFetch = async (path, opts = {}) => {
   const t = getAdminAccessToken() || ''
@@ -17,34 +34,56 @@ const apiFetch = async (path, opts = {}) => {
 }
 
 const LOAI_PHIEU = {
-  THU: { label: 'Thu', color: '#2563eb', bg: '#eff6ff' },
-  CHI: { label: 'Chi', color: '#dc2626', bg: '#fef2f2' },
+  THU: { label: 'Phiếu Thu', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+  CHI: { label: 'Phiếu Chi', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 }
 
 const DANH_MUC = {
-  DAT_COC: 'Tiền cọc',
-  NHUONG_QUYEN: 'Phí nhượng quyền',
-  NGUYEN_LIEU: 'Công nợ nguyên liệu',
-  ROYALTY: 'Phí Royalty',
-  HOAN_COC: 'Hoàn cọc',
-  CHI_PHI_VAN_HANH: 'Chi phí vận hành',
-  TIEN_PHAT: 'Tiền phạt',
-  KHAC: 'Khác',
+  DAT_COC: 'Tiền cọc giữ chỗ',
+  NHUONG_QUYEN: 'Tất toán gói nhượng quyền',
+  NGUYEN_LIEU: 'Thanh toán combo nguyên liệu',
+  ROYALTY: 'Phí bản quyền (Royalty)',
+  HOAN_COC: 'Hoàn trả tiền cọc',
+  CHI_PHI_VAN_HANH: 'Hỗ trợ / Chi phí vận hành',
+  TIEN_PHAT: 'Tiền phạt vi phạm hợp đồng',
+  KHAC: 'Giao dịch khác',
 }
 
 const fmtMoney = (v) => Number(v || 0).toLocaleString('vi-VN') + 'đ'
 const fmtDate = (d) => {
-  if (!d) return ''
-  return new Date(d).toLocaleString('vi-VN')
+  if (!d) return '—'
+  const dt = new Date(d)
+  if (Number.isNaN(dt.getTime())) return '—'
+  const dd = String(dt.getDate()).padStart(2, '0')
+  const mm = String(dt.getMonth() + 1).padStart(2, '0')
+  const yyyy = dt.getFullYear()
+  const hh = String(dt.getHours()).padStart(2, '0')
+  const min = String(dt.getMinutes()).padStart(2, '0')
+  return `${hh}:${min} ${dd}/${mm}/${yyyy}`
 }
 
 export function DongTienTab() {
   const [data, setData] = useState({ danh_sach: [], thong_ke: { tong_thu: 0, tong_chi: 0, ton_quy: 0 } })
+  const [kiosks, setKiosks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState({ loai_phieu: '', danh_muc: '' })
+  const [filter, setFilter] = useState({ loai_phieu: '', danh_muc: '', kiosk_id: '', keyword: '' })
   const [msg, setMsg] = useState(null)
   
   const [form, setForm] = useState(null)
+  const [inPhieuModal, setInPhieuModal] = useState(null)
+
+  // Load danh sách Kiosk để gắn Kiosk vào phiếu
+  useEffect(() => {
+    apiFetch('/franchise/kiosk')
+      .then(res => setKiosks(Array.isArray(res) ? res : []))
+      .catch(console.error)
+  }, [])
+
+  const kioskMap = useMemo(() => {
+    const map = {}
+    kiosks.forEach(k => { map[k.id] = k })
+    return map
+  }, [kiosks])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -52,6 +91,7 @@ export function DongTienTab() {
       const q = new URLSearchParams()
       if (filter.loai_phieu) q.append('loai_phieu', filter.loai_phieu)
       if (filter.danh_muc) q.append('danh_muc', filter.danh_muc)
+      if (filter.kiosk_id) q.append('kiosk_id', filter.kiosk_id)
       
       const res = await apiFetch(`/franchise/thu-chi?${q.toString()}`)
       setData(res)
@@ -60,18 +100,26 @@ export function DongTienTab() {
     } finally {
       setLoading(false)
     }
-  }, [filter])
+  }, [filter.loai_phieu, filter.danh_muc, filter.kiosk_id])
 
   useEffect(() => { load() }, [load])
 
   const submitForm = async (e) => {
     e.preventDefault()
+    if (!form.so_tien || Number(form.so_tien) <= 0) {
+      setMsg({ type: 'error', text: 'Vui lòng nhập số tiền hợp lệ (> 0).' })
+      return
+    }
     try {
       await apiFetch('/franchise/thu-chi', {
         method: 'POST',
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          ...form,
+          so_tien: Number(form.so_tien),
+          kiosk_id: form.kiosk_id || null
+        })
       })
-      setMsg({ type: 'success', text: `Đã tạo phiếu ${form.loai_phieu} thành công!` })
+      setMsg({ type: 'success', text: `Đã tạo ${form.loai_phieu === 'THU' ? 'Phiếu Thu' : 'Phiếu Chi'} thành công!` })
       setForm(null)
       load()
     } catch (error) {
@@ -79,122 +127,401 @@ export function DongTienTab() {
     }
   }
 
+  const inPhieu = () => {
+    const content = document.getElementById('receipt-print-area')?.innerHTML
+    if (!content) return
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Phiếu ${inPhieuModal?.loai_phieu === 'THU' ? 'Thu' : 'Chi'} - Avengers Coffee</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 28px; color: #1e293b; max-width: 680px; margin: 0 auto; line-height: 1.5; }
+            h2 { margin: 0 0 4px 0; font-size: 20px; text-transform: uppercase; }
+            .header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+            .label { color: #64748b; font-weight: 500; }
+            .val { font-weight: 600; color: #0f172a; }
+            .amount { font-size: 20px; font-weight: 700; color: ${inPhieuModal?.loai_phieu === 'THU' ? '#16a34a' : '#dc2626'}; text-align: right; margin: 16px 0; padding: 12px; background: #f8fafc; border-radius: 8px; }
+            .signatures { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; }
+            .sig-box { flex: 1; font-size: 13px; }
+            .sig-space { height: 70px; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>${content}</body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.focus()
+    setTimeout(() => {
+      printWindow.print()
+      printWindow.close()
+    }, 400)
+  }
+
   const { tong_thu, tong_chi, ton_quy } = data?.thong_ke || { tong_thu: 0, tong_chi: 0, ton_quy: 0 }
-  const danh_sach = Array.isArray(data?.danh_sach) ? data.danh_sach : []
+  const rawList = Array.isArray(data?.danh_sach) ? data.danh_sach : []
+  
+  // Lọc thêm theo từ khóa nếu có
+  const filteredList = useMemo(() => {
+    if (!filter.keyword.trim()) return rawList
+    const kw = filter.keyword.toLowerCase().trim()
+    return rawList.filter(item => {
+      const k = kioskMap[item.kiosk_id]
+      const kioskText = k ? `${k.ten_kiosk} ${k.ma_kiosk}`.toLowerCase() : ''
+      const noteText = (item.ghi_chu || '').toLowerCase()
+      const catText = (DANH_MUC[item.danh_muc] || '').toLowerCase()
+      return kioskText.includes(kw) || noteText.includes(kw) || catText.includes(kw)
+    })
+  }, [rawList, filter.keyword, kioskMap])
 
   return (
-    <div className="workspace-cashflow">
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 200, padding: '16px 20px', borderRadius: 10, background: '#fff', border: '1px solid #e5e7eb' }}>
-          <div style={{ fontSize: 13, color: '#6b7280', fontWeight: 600 }}>TỔNG THU</div>
-          <div style={{ fontSize: 24, fontWeight: 600, color: '#2563eb', marginTop: 4 }}>{fmtMoney(tong_thu)}</div>
+    <div className="workspace-cashflow" style={{ animation: 'fadeIn 0.2s ease-in-out' }}>
+      {/* 3 Thẻ Chỉ số Dòng tiền */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
+        <div style={{ background: '#fff', padding: '18px 20px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tổng Thu Nhượng Quyền</div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: '#16a34a', marginTop: 6 }}>+{fmtMoney(tong_thu)}</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Cọc, Hợp đồng, Royalty, Combo</div>
         </div>
-        <div style={{ flex: 1, minWidth: 200, padding: '16px 20px', borderRadius: 10, background: '#fff', border: '1px solid #e5e7eb' }}>
-          <div style={{ fontSize: 13, color: '#6b7280', fontWeight: 600 }}>TỔNG CHI</div>
-          <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--text-main)', marginTop: 4 }}>{fmtMoney(tong_chi)}</div>
+
+        <div style={{ background: '#fff', padding: '18px 20px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tổng Chi Trả / Hoàn Kiosk</div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: '#dc2626', marginTop: 6 }}>-{fmtMoney(tong_chi)}</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Hoàn cọc, Hỗ trợ vận hành</div>
         </div>
-        <div style={{ flex: 1, minWidth: 200, padding: '16px 20px', borderRadius: 10, background: 'var(--primary-light)', border: '1px solid var(--primary-subtle)' }}>
-          <div style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 600 }}>TỒN QUỸ (THỰC TẾ)</div>
-          <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--primary)', marginTop: 4 }}>{fmtMoney(ton_quy)}</div>
+
+        <div style={{ background: '#fff', padding: '18px 20px', borderRadius: 12, border: '1px solid #cbd5e1', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: 12, color: '#475569', fontWeight: 500, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tồn Quỹ Dòng Tiền Ròng</div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: ton_quy >= 0 ? 'var(--primary, #0f172a)' : '#dc2626', marginTop: 6 }}>{fmtMoney(ton_quy)}</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Thu thực tế trừ các khoản hoàn chi</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center', background: '#fff', padding: '12px 16px', borderRadius: 10, border: '1px solid #e5e7eb' }}>
-        <h3 style={{ margin: 0, flex: 1, fontSize: 16, fontWeight: 700 }}>Danh sách Thu/Chi</h3>
-        
-        <select value={filter.loai_phieu} onChange={e => setFilter(f => ({ ...f, loai_phieu: e.target.value }))} style={{ padding: '8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }}>
-          <option value="">-- Tất cả loại phiếu --</option>
-          <option value="THU">Phiếu Thu</option>
-          <option value="CHI">Phiếu Chi</option>
-        </select>
-        
-        <select value={filter.danh_muc} onChange={e => setFilter(f => ({ ...f, danh_muc: e.target.value }))} style={{ padding: '8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }}>
-          <option value="">-- Tất cả danh mục --</option>
-          {Object.entries(DANH_MUC).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
+      {/* Toolbar & Filters */}
+      <div style={{ background: '#fff', padding: '16px 20px', borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
+          {/* Ô tìm kiếm */}
+          <div style={{ position: 'relative', minWidth: 200, flex: '1 1 200px' }}>
+            <Search size={15} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo Kiosk, diễn giải..."
+              value={filter.keyword}
+              onChange={e => setFilter(f => ({ ...f, keyword: e.target.value }))}
+              style={{ width: '100%', padding: '7px 10px 7px 32px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', background: '#f8fafc', boxSizing: 'border-box' }}
+            />
+          </div>
 
-        <button style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }} onClick={load}>Tải lại</button>
-        <button style={{ padding: '8px 12px', borderRadius: 6, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }} onClick={() => setForm({ loai_phieu: 'THU', danh_muc: 'KHAC', so_tien: '', ghi_chu: '' })}>+ Lập Phiếu</button>
+          {/* Lọc Kiosk */}
+          <select 
+            value={filter.kiosk_id} 
+            onChange={e => setFilter(f => ({ ...f, kiosk_id: e.target.value }))} 
+            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none', cursor: 'pointer' }}
+          >
+            <option value="">-- Mọi Kiosk / Toàn hệ thống --</option>
+            {kiosks.map(k => (
+              <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>
+            ))}
+          </select>
+
+          {/* Lọc Loại phiếu */}
+          <select 
+            value={filter.loai_phieu} 
+            onChange={e => setFilter(f => ({ ...f, loai_phieu: e.target.value }))} 
+            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none', cursor: 'pointer' }}
+          >
+            <option value="">-- Mọi Loại phiếu --</option>
+            <option value="THU">Phiếu Thu (+)</option>
+            <option value="CHI">Phiếu Chi (-)</option>
+          </select>
+
+          {/* Lọc Danh mục */}
+          <select 
+            value={filter.danh_muc} 
+            onChange={e => setFilter(f => ({ ...f, danh_muc: e.target.value }))} 
+            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none', cursor: 'pointer' }}
+          >
+            <option value="">-- Mọi Danh mục --</option>
+            {Object.entries(DANH_MUC).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
+          </select>
+
+          <button 
+            onClick={load} 
+            title="Tải lại danh sách"
+            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', fontWeight: 500 }}
+          >
+            <RefreshCw size={14} /> Làm mới
+          </button>
+        </div>
+
+        {/* Nút Lập phiếu */}
+        <button 
+          onClick={() => setForm({ loai_phieu: 'THU', danh_muc: 'DAT_COC', kiosk_id: kiosks[0]?.id || '', so_tien: '', ghi_chu: '' })}
+          style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--primary, #0f172a)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+        >
+          + Lập Phiếu Giao Dịch
+        </button>
       </div>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#eff6ff' : '#fef2f2', color: msg.type === 'success' ? '#2563eb' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
-
-      {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
-        <div className="console-table-scroll"><table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
-          <thead>
-            <tr style={{ fontSize: 12, color: '#6b7280', textAlign: 'left' }}>
-              <th style={{ padding: '0 12px' }}>Thời gian</th>
-              <th style={{ padding: '0 12px' }}>Loại</th>
-              <th style={{ padding: '0 12px' }}>Danh mục</th>
-              <th style={{ padding: '0 12px', textAlign: 'right' }}>Số tiền</th>
-              <th style={{ padding: '0 12px' }}>Ghi chú</th>
-            </tr>
-          </thead>
-          <tbody>
-            <PaginatedList items={danh_sach} resetKey={JSON.stringify(filter)} layout="table" columns={5}>{d => {
-              const lp = LOAI_PHIEU[d.loai_phieu] || { label: d.loai_phieu || '?', color: '#374151', bg: '#e5e7eb' }
-              return (
-                <tr key={d.id} style={{ background: '#fff', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                  <td style={{ padding: '12px', fontSize: 13, color: '#4b5563' }}>{fmtDate(d.ngay_tao)}</td>
-                  <td style={{ padding: '12px' }}>
-                    <span style={{ background: lp.bg, color: lp.color, padding: '4px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
-                      {lp.label}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px', fontSize: 13, fontWeight: 500 }}>{DANH_MUC[d.danh_muc] || d.danh_muc}</td>
-                  <td style={{ padding: '12px', fontSize: 14, fontWeight: 700, color: lp.color, textAlign: 'right' }}>
-                    {d.loai_phieu === 'THU' ? '+' : (d.loai_phieu === 'CHI' ? '-' : '')}{fmtMoney(d.so_tien)}
-                  </td>
-                  <td style={{ padding: '12px', fontSize: 13, color: '#6b7280' }}>{d.ghi_chu || '-'}</td>
-                </tr>
-              )
-            }}</PaginatedList>
-            {danh_sach.length === 0 && (
-              <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: 40, color: '#9ca3af', background: '#fff', borderRadius: 8 }}>Chưa có phiếu thu/chi nào.</td>
-              </tr>
-            )}
-          </tbody>
-        </table></div>
+      {msg && (
+        <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 14, background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2', border: `1px solid ${msg.type === 'success' ? '#bbf7d0' : '#fecaca'}`, color: msg.type === 'success' ? '#166534' : '#991b1b', fontSize: 13, fontWeight: 500, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{msg.text}</span>
+          <button onClick={() => setMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'inherit' }}>×</button>
+        </div>
       )}
 
-      {form && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div style={{ background: '#fff', padding: 24, borderRadius: 12, width: 'min(440px, calc(100vw - 32px))', minWidth: 0, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ marginTop: 0, marginBottom: 16, fontSize: 18, fontWeight: 700 }}>Lập Phiếu Thu / Chi</h2>
-            <form className="workspace-form" onSubmit={submitForm} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Loại phiếu</label>
-                <select value={form.loai_phieu} onChange={e => setForm(f => ({ ...f, loai_phieu: e.target.value }))} style={{ padding: '8px', borderRadius: 6, border: '1px solid #d1d5db', width: '100%' }}>
-                  <option value="THU">Phiếu Thu</option>
-                  <option value="CHI">Phiếu Chi</option>
-                </select>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Danh mục</label>
-                <select value={form.danh_muc} onChange={e => setForm(f => ({ ...f, danh_muc: e.target.value }))} style={{ padding: '8px', borderRadius: 6, border: '1px solid #d1d5db', width: '100%' }}>
-                  {Object.entries(DANH_MUC).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Số tiền (VNĐ)</label>
-                <input type="number" required min="1" value={form.so_tien} onChange={e => setForm(f => ({ ...f, so_tien: e.target.value }))} placeholder="VD: 5000000" style={{ padding: '8px', borderRadius: 6, border: '1px solid #d1d5db', width: '100%' }} />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Ghi chú</label>
-                <textarea value={form.ghi_chu} onChange={e => setForm(f => ({ ...f, ghi_chu: e.target.value }))} rows={3} style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid #d1d5db' }} placeholder="Diễn giải nội dung thu chi..." />
-              </div>
-
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-                <button type="button" onClick={() => setForm(null)} style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontWeight: 600 }}>Hủy</button>
-                <button type="submit" style={{ padding: '8px 16px', borderRadius: 6, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer', fontWeight: 600 }}>Lưu Phiếu</button>
-              </div>
-            </form>
+      {/* Bảng Dữ Liệu Giao Dịch Tài Chính */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 48, color: '#94a3b8', fontSize: 14 }}>Đang tải dữ liệu giao dịch tài chính...</div>
+      ) : (
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div className="console-table-scroll">
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: 12, fontWeight: 600 }}>
+                  <th style={{ padding: '12px 16px' }}>Thời gian</th>
+                  <th style={{ padding: '12px 16px' }}>Kiosk liên quan</th>
+                  <th style={{ padding: '12px 16px' }}>Loại & Danh mục</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Số tiền</th>
+                  <th style={{ padding: '12px 16px' }}>Diễn giải / Ghi chú</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Chứng từ</th>
+                </tr>
+              </thead>
+              <tbody style={{ divideY: '1px solid #f1f5f9' }}>
+                <PaginatedList items={filteredList} resetKey={JSON.stringify(filter)} layout="table" columns={6}>
+                  {d => {
+                    const lp = LOAI_PHIEU[d.loai_phieu] || { label: d.loai_phieu || '?', color: '#475569', bg: '#f1f5f9', border: '#e2e8f0' }
+                    const k = kioskMap[d.kiosk_id]
+                    return (
+                      <tr key={d.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background .15s' }}>
+                        <td style={{ padding: '12px 16px', color: '#475569', whiteSpace: 'nowrap' }}>
+                          {fmtDate(d.ngay_tao)}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {k ? (
+                            <div>
+                              <div style={{ fontWeight: 500, color: '#0f172a' }}>{k.ten_kiosk}</div>
+                              <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{k.ma_kiosk} · {k.thanh_pho}</div>
+                            </div>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chung hệ thống</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: lp.color }} />
+                            <span style={{ fontWeight: 500, color: '#0f172a' }}>{DANH_MUC[d.danh_muc] || d.danh_muc}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: lp.color, marginTop: 2, fontWeight: 500 }}>
+                            {lp.label}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: lp.color, fontSize: 14 }}>
+                          {d.loai_phieu === 'THU' ? '+' : '-'}{fmtMoney(d.so_tien)}
+                        </td>
+                        <td style={{ padding: '12px 16px', color: '#475569', maxWidth: 260 }}>
+                          {d.ghi_chu || <span style={{ color: '#cbd5e1' }}>—</span>}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <button
+                            onClick={() => setInPhieuModal(d)}
+                            title="In phiếu giao dịch"
+                            style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 12, color: '#475569', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                          >
+                            <Printer size={13} /> In phiếu
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  }}
+                </PaginatedList>
+                {filteredList.length === 0 && (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: 48, color: '#94a3b8' }}>
+                      Không có giao dịch tài chính nào phù hợp với bộ lọc.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
+      )}
+
+      {/* Modal Lập Phiếu Thu / Chi */}
+      {form && (
+        <WorkspaceDialog title={`Lập Phiếu Giao Dịch (${form.loai_phieu === 'THU' ? 'Thu Tiền' : 'Chi Tiền'})`} onClose={() => setForm(null)}>
+          <form onSubmit={submitForm} style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Loại giao dịch *</label>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, loai_phieu: 'THU' }))}
+                  style={{
+                    flex: 1, padding: '9px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                    border: form.loai_phieu === 'THU' ? '1.5px solid #16a34a' : '1px solid #cbd5e1',
+                    background: form.loai_phieu === 'THU' ? '#f0fdf4' : '#fff',
+                    color: form.loai_phieu === 'THU' ? '#166534' : '#475569'
+                  }}
+                >
+                  + Phiếu Thu (Nhận tiền)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, loai_phieu: 'CHI' }))}
+                  style={{
+                    flex: 1, padding: '9px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                    border: form.loai_phieu === 'CHI' ? '1.5px solid #dc2626' : '1px solid #cbd5e1',
+                    background: form.loai_phieu === 'CHI' ? '#fef2f2' : '#fff',
+                    color: form.loai_phieu === 'CHI' ? '#991b1b' : '#475569'
+                  }}
+                >
+                  - Phiếu Chi (Chi / Hoàn trả)
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Kiosk liên quan</label>
+              <select 
+                value={form.kiosk_id || ''} 
+                onChange={e => setForm(f => ({ ...f, kiosk_id: e.target.value }))}
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', background: '#fff' }}
+              >
+                <option value="">-- Toàn hệ thống (Chi phí chung) --</option>
+                {kiosks.map(k => (
+                  <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk}) - {k.dia_chi}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Danh mục giao dịch *</label>
+              <select 
+                value={form.danh_muc} 
+                onChange={e => setForm(f => ({ ...f, danh_muc: e.target.value }))}
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', background: '#fff' }}
+              >
+                {Object.entries(DANH_MUC).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Số tiền (VNĐ) *</label>
+              <CurrencyInput
+                required
+                value={form.so_tien}
+                onChange={e => setForm(f => ({ ...f, so_tien: e.target.value }))}
+                placeholder="VD: 5.000.000"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Diễn giải / Ghi chú chứng từ</label>
+              <textarea 
+                value={form.ghi_chu} 
+                onChange={e => setForm(f => ({ ...f, ghi_chu: e.target.value }))} 
+                rows={3} 
+                style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, resize: 'vertical', boxSizing: 'border-box', outline: 'none' }} 
+                placeholder="Mã giao dịch ngân hàng, số ủy nhiệm chi, lý do thu/chi..." 
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 10, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
+              <button 
+                type="button" 
+                onClick={() => setForm(null)} 
+                style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: '#475569' }}
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                type="submit" 
+                style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: form.loai_phieu === 'THU' ? '#16a34a' : '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}
+              >
+                Xác nhận tạo {form.loai_phieu === 'THU' ? 'Phiếu Thu' : 'Phiếu Chi'}
+              </button>
+            </div>
+          </form>
+        </WorkspaceDialog>
+      )}
+
+      {/* Modal Xem & In Phiếu Giao Dịch */}
+      {inPhieuModal && (
+        <WorkspaceDialog title={`Chứng Từ: PHIẾU ${inPhieuModal.loai_phieu === 'THU' ? 'THU' : 'CHI'}`} onClose={() => setInPhieuModal(null)}>
+          <div id="receipt-print-area" style={{ padding: '16px 20px', background: '#fff', color: '#0f172a' }}>
+            <div className="header" style={{ textAlign: 'center', borderBottom: '1px dashed #cbd5e1', paddingBottom: 14, marginBottom: 16 }}>
+              <h2 style={{ margin: '0 0 4px', fontSize: 18, color: '#0f172a' }}>CÔNG TY CỔ PHẦN AVENGERS COFFEE</h2>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Hệ Thống Chuỗi Nhượng Quyền Cà Phê Avengers</div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>MST: 0123456789 — Hotline: 1900 1234</div>
+              <div style={{ margin: '14px 0 4px', fontSize: 17, fontWeight: 700, color: inPhieuModal.loai_phieu === 'THU' ? '#16a34a' : '#dc2626' }}>
+                PHIẾU {inPhieuModal.loai_phieu === 'THU' ? 'THU TIỀN' : 'CHI TIỀN'}
+              </div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Mã chứng từ: {inPhieuModal.id}</div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Ngày lập: {fmtDate(inPhieuModal.ngay_tao)}</div>
+            </div>
+
+            <div style={{ display: 'grid', gap: 8, fontSize: 13, marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Đơn vị / Kiosk liên quan:</span>
+                <span style={{ fontWeight: 600 }}>{kioskMap[inPhieuModal.kiosk_id]?.ten_kiosk || 'Toàn hệ thống'} ({kioskMap[inPhieuModal.kiosk_id]?.ma_kiosk || 'SYSTEM'})</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Danh mục giao dịch:</span>
+                <span style={{ fontWeight: 600 }}>{DANH_MUC[inPhieuModal.danh_muc] || inPhieuModal.danh_muc}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Diễn giải:</span>
+                <span style={{ fontWeight: 500, textAlign: 'right', maxWidth: 300 }}>{inPhieuModal.ghi_chu || '—'}</span>
+              </div>
+            </div>
+
+            <div style={{ background: '#f8fafc', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 600, color: '#475569' }}>Tổng số tiền:</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: inPhieuModal.loai_phieu === 'THU' ? '#16a34a' : '#dc2626' }}>
+                {fmtMoney(inPhieuModal.so_tien)}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32, textAlign: 'center', fontSize: 12, color: '#475569' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600 }}>Người nộp / nhận tiền</div>
+                <div style={{ height: 50 }} />
+                <div style={{ color: '#94a3b8' }}>(Ký, ghi rõ họ tên)</div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600 }}>Thủ quỹ / Kế toán</div>
+                <div style={{ height: 50 }} />
+                <div style={{ color: '#94a3b8' }}>Đã xác nhận hệ thống</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16, paddingTop: 12, borderTop: '1px solid #e2e8f0' }}>
+            <button
+              onClick={() => setInPhieuModal(null)}
+              style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#475569' }}
+            >
+              Đóng
+            </button>
+            <button
+              onClick={inPhieu}
+              style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: 'var(--primary, #0f172a)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Printer size={14} /> In phiếu ra máy in / PDF
+            </button>
+          </div>
+        </WorkspaceDialog>
       )}
     </div>
   )

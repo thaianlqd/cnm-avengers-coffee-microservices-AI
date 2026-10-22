@@ -4,9 +4,16 @@ import { Platform, NativeModules } from 'react-native'
 
 import { resolveShipperEndpoint } from './endpointConfig.mjs'
 export function getApiBaseUrl() {
-  return resolveShipperEndpoint({ platform:Platform.OS, webUrl:process.env.EXPO_PUBLIC_API_URL_WEB,
-    apiUrl:process.env.EXPO_PUBLIC_API_URL, pageUrl:typeof window !== 'undefined' ? window.location.href : null,
-    scriptUrl:NativeModules?.SourceCode?.scriptURL })
+  const isWeb = Platform.OS === 'web'
+  const pageUrl = isWeb && typeof window !== 'undefined' && window?.location?.href ? window.location.href : null
+  const scriptUrl = NativeModules?.SourceCode?.scriptURL || (NativeModules?.SourceCode?.getConstants ? NativeModules.SourceCode.getConstants()?.scriptURL : null)
+  return resolveShipperEndpoint({
+    platform: Platform.OS,
+    webUrl: process.env.EXPO_PUBLIC_API_URL_WEB,
+    apiUrl: process.env.EXPO_PUBLIC_API_URL,
+    pageUrl,
+    scriptUrl,
+  })
 }
 
 export function getSocketUrl() {

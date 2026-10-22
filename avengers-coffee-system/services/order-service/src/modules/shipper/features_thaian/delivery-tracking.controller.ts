@@ -1,5 +1,8 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { DeliveryTrackingService } from './delivery-tracking.service';
+import { JwtAuthGuard } from '../../../auth/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/roles.guard';
+import { Roles } from '../../../auth/auth.decorators';
 
 /**
  * DeliveryTrackingController — API cho customer tracking.
@@ -13,6 +16,8 @@ export class DeliveryTrackingController {
    * POST /shippers/delivery/tracking/create
    * Tạo tracking record khi đặt hàng (gọi từ checkout flow).
    */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MANAGER', 'STAFF')
   @Post('create')
   async createTracking(
     @Body()
@@ -79,6 +84,8 @@ export class DeliveryTrackingController {
    * POST /shippers/delivery/tracking/:maDonHang/lalamove-info
    * Cập nhật thông tin Lalamove cho tracking record.
    */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MANAGER', 'STAFF')
   @Post(':maDonHang/lalamove-info')
   async updateLalamoveInfo(
     @Param('maDonHang') maDonHang: string,
@@ -92,6 +99,8 @@ export class DeliveryTrackingController {
    * POST /shippers/delivery/tracking/:maDonHang/shipper-delivery-id
    * Link tracking với shipper_delivery record.
    */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MANAGER', 'STAFF')
   @Post(':maDonHang/shipper-delivery-id')
   async updateShipperDeliveryId(
     @Param('maDonHang') maDonHang: string,

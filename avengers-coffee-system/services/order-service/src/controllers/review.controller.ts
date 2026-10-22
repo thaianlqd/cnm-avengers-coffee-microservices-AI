@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ReviewService } from '../services/review.service';
 import { CurrentUser, Roles } from '../auth/auth.decorators';
 import type { AuthUser } from '../auth/auth.types';
@@ -10,14 +10,16 @@ export class ReviewController {
   constructor(private reviewService: ReviewService) {}
 
   // POST /products/:productId/reviews
+  @UseGuards(JwtAuthGuard)
   @Post('products/:productId/reviews')
   async taoReview(
     @Param('productId') productId: string,
+    @CurrentUser() user: AuthUser,
     @Body() body: { maNguoiDung: string; soSao: number; binhLuan?: string; maDonHang?: string; maKiosk?: string },
   ) {
     return this.reviewService.taoReview({
       maSanPham: productId,
-      maNguoiDung: body.maNguoiDung,
+      maNguoiDung: user.sub,
       soSao: body.soSao,
       binhLuan: body.binhLuan,
       maDonHang: body.maDonHang,
@@ -36,37 +38,45 @@ export class ReviewController {
   }
 
   // GET /products/:productId/reviews/my-review/:userId
+  @UseGuards(JwtAuthGuard)
   @Get('products/:productId/reviews/my-review/:userId')
   async layReviewCuaUser(
     @Param('productId') productId: string,
     @Param('userId') userId: string,
+    @CurrentUser() user: AuthUser,
   ) {
+    if (user.sub !== userId) throw new ForbiddenException();
     const review = await this.reviewService.layReviewCuaUser(productId, userId);
     return { item: review };
   }
 
   // GET /customers/:userId/reviews
+  @UseGuards(JwtAuthGuard)
   @Get('customers/:userId/reviews')
-  async layLichSuReviewNguoiDung(@Param('userId') userId: string) {
+  async layLichSuReviewNguoiDung(@Param('userId') userId: string, @CurrentUser() user: AuthUser) {
+    if (user.sub !== userId) throw new ForbiddenException();
     return this.reviewService.layLichSuReviewNguoiDung(userId);
   }
 
   // PATCH /reviews/:reviewId
+  @UseGuards(JwtAuthGuard)
   @Patch('reviews/:reviewId')
   async capNhatReview(
     @Param('reviewId') reviewId: string,
+    @CurrentUser() user: AuthUser,
     @Body() body: { soSao?: number; binhLuan?: string },
   ) {
-    return this.reviewService.capNhatReview(Number(reviewId), {
+    return this.reviewService.capNhatReview(Number(reviewId), user.sub, {
       soSao: body.soSao,
       binhLuan: body.binhLuan,
     });
   }
 
   // DELETE /reviews/:reviewId
+  @UseGuards(JwtAuthGuard)
   @Delete('reviews/:reviewId')
-  async xoaReview(@Param('reviewId') reviewId: string) {
-    return this.reviewService.xoaReview(Number(reviewId));
+  async xoaReview(@Param('reviewId') reviewId: string, @CurrentUser() user: AuthUser) {
+    return this.reviewService.xoaReview(Number(reviewId), user.sub);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

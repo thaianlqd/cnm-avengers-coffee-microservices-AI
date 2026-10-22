@@ -2,12 +2,12 @@ import { useEffect, useId, useRef, useState } from "react";
 import { number, normalizeChartRows, donutSegments } from "./chartModel";
 
 const colors = [
-  "var(--primary)",
+  "var(--chart-primary, #4f86c6)",
   "#e6503c",
   "#e9a23b",
   "#65b4ec",
   "#f28b50",
-  "#64748b",
+  "#69736a",
 ];
 
 export function DashboardSkeleton() {
@@ -61,7 +61,8 @@ export function Chart({
   loading = false,
   error = "",
 }) {
-  const id = useId();
+  const reactId = useId();
+  const id = `chart-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const container = useRef(null);
   const [canvasWidth, setCanvasWidth] = useState(500);
   useEffect(() => {
@@ -99,7 +100,7 @@ export function Chart({
       {!empty && type === 'line' && data.length < 2 && <p className="workspace-chart-note">Mới có một kỳ dữ liệu; chưa đủ để xác định xu hướng.</p>}
       {empty ? (
         <div className="console-chart-empty" style={{background:'transparent',display:'flex',flexDirection:'column',gap:12}}>
-          {type === 'donut' ? <svg viewBox="0 0 220 160" role="img" aria-label={title + ' · chưa có số liệu'} style={{height:150}}><circle cx="110" cy="80" r="58" fill="none" stroke="#e9edf4" strokeWidth="18"/><text x="110" y="85" textAnchor="middle" fill="#94a3b8">—</text></svg> : <svg viewBox="0 0 500 160" role="img" aria-label={title + ' · chưa có số liệu'} style={{width:'100%',height:150}}>{[25,60,95,130].map(y=><line key={y} x1="30" x2="480" y1={y} y2={y} stroke="#e8edf4" strokeDasharray="3 4"/>)}<line x1="30" x2="30" y1="20" y2="130" stroke="#e8edf4"/><text x="250" y="83" textAnchor="middle" fill="#94a3b8">—</text></svg>}
+          {type === 'donut' ? <svg viewBox="0 0 220 160" role="img" aria-label={title + ' · chưa có số liệu'} style={{height:150}}><circle cx="110" cy="80" r="58" fill="none" stroke="#e9edf4" strokeWidth="18"/><text x="110" y="85" textAnchor="middle" fill="#85907d">—</text></svg> : <svg viewBox="0 0 500 160" role="img" aria-label={title + ' · chưa có số liệu'} style={{width:'100%',height:150}}>{[25,60,95,130].map(y=><line key={y} x1="30" x2="480" y1={y} y2={y} stroke="#e8edf4" strokeDasharray="3 4"/>)}<line x1="30" x2="30" y1="20" y2="130" stroke="#e8edf4"/><text x="250" y="83" textAnchor="middle" fill="#85907d">—</text></svg>}
           <span role={error ? 'alert' : 'status'}>{loading ? 'Đang tải số liệu…' : error ? `Không tải được số liệu: ${error}` : data.length ? 'Chưa có giá trị phát sinh trong kỳ này.' : 'Chưa ghi nhận dữ liệu trong tập đã tải.'}</span>
         </div>
       ) : type === "donut" ? (
@@ -172,7 +173,7 @@ export function Chart({
               <stop offset="0%" stopColor={colors[0]} stopOpacity="0.18" />
               <stop offset="100%" stopColor={colors[0]} stopOpacity="0.01" />
             </linearGradient></defs>
-            <polygon points={`${x(0)},${baseline} ${points} ${x(data.length - 1)},${baseline}`} fill={`url(#${id}-area)`} />
+            <polygon points={`${x(0)},${baseline} ${points} ${x(data.length - 1)},${baseline}`} fill={`url(#${id}-area)`} style={{ "--chart-area-fill": `url(#${id}-area)` }} />
           </>}
           {[0, 1, 2, 3, 4].map((i) => {
             const value = min + ((max - min) * i) / 4;

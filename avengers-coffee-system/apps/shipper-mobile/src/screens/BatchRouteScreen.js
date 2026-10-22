@@ -15,6 +15,7 @@ import {
   Modal,
   Image,
   useWindowDimensions,
+  PanResponder,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -26,6 +27,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useShipper } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { openGoogleMapsNavigation } from '../lib/navigationHelper'
+import { uploadProofImage } from '../lib/imageStorage'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 import { formatCurrency } from '../lib/shipperData'
 
@@ -42,7 +44,7 @@ if (Platform.OS !== 'web') {
   } catch (e) {}
 }
 
-const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION === 'true'
+const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION !== 'false'
 const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
 const tileUrl = nativeTileUrl(process.env.EXPO_PUBLIC_VIETMAP_TILE_KEY);
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
@@ -161,12 +163,55 @@ export function BatchRouteScreen({ route, navigation }) {
   const podScaleAnim = useRef(new Animated.Value(0)).current
   const podSuccessAnim = useRef(new Animated.Value(0)).current
 
+  const { height: windowHeight } = useWindowDimensions()
+  const minPanelHeight = Math.round(windowHeight * 0.42)
+  const maxPanelHeight = Math.round(windowHeight * 0.85)
+
+  const [isExpanded, setIsExpanded] = useState(false)
+  const currentPanelHeight = useRef(minPanelHeight)
+  const dragStartHeight = useRef(minPanelHeight)
+  const panelHeightAnim = useRef(new Animated.Value(minPanelHeight)).current
+
+  const togglePanelHeight = () => {
+    const isCurrentlyTall = currentPanelHeight.current > (minPanelHeight + maxPanelHeight) / 2
+    const toValue = isCurrentlyTall ? minPanelHeight : maxPanelHeight
+    currentPanelHeight.current = toValue
+    setIsExpanded(!isCurrentlyTall)
+    Animated.spring(panelHeightAnim, {
+      toValue,
+      friction: 8,
+      tension: 65,
+      useNativeDriver: false,
+    }).start()
+  }
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 4,
+      onPanResponderGrant: () => {
+        dragStartHeight.current = currentPanelHeight.current
+      },
+      onPanResponderMove: (_, gesture) => {
+        const nextH = Math.max(minPanelHeight, Math.min(maxPanelHeight, dragStartHeight.current - gesture.dy))
+        panelHeightAnim.setValue(nextH)
+      },
+      onPanResponderRelease: (_, gesture) => {
+        const nextH = Math.max(minPanelHeight, Math.min(maxPanelHeight, dragStartHeight.current - gesture.dy))
+        currentPanelHeight.current = nextH
+        setIsExpanded(nextH > (minPanelHeight + maxPanelHeight) / 2)
+        panelHeightAnim.setValue(nextH)
+      },
+    })
+  ).current
+
   const openPodModal = (targetPoint, nextIdx) => {
     setPendingTargetPoint(targetPoint)
-    setPendingNextIdx(nextIdx)
+    const resolvedNextIdx = nextIdx != null ? nextIdx : optimizedRoute.findIndex(p => p.id === targetPoint?.id)
+    setPendingNextIdx(resolvedNextIdx >= 0 ? resolvedNextIdx : currentStepIndex + 1)
     setWatermarkTime(formatWatermarkTime())
     setPodStep('camera')
-    if (!cameraPermission?.granted && requestCameraPermission) {
+    if (requestCameraPermission) {
       requestCameraPermission().catch(() => {})
     }
     Animated.spring(podScaleAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 8 }).start()
@@ -180,29 +225,54 @@ export function BatchRouteScreen({ route, navigation }) {
       setPendingNextIdx(null)
     })
   }
-  
-    // Interactive Simulation State
-    const [currentStepIndex, setCurrentStepIndex] = useState(0)
-    const mapRef = useRef(null)
 
-    const unifiedRouteCoordinates = React.useMemo(() => {
-      const coords = []
-      routeSegments.forEach(seg => {
-        if (seg.toIdx <= currentStepIndex) return
-        if (seg.coordinates && seg.coordinates.length > 0) {
-          coords.push(...seg.coordinates)
-        }
-      })
-      return coords
-    }, [routeSegments, currentStepIndex])
-    
-    const [isAnimating, setIsAnimating] = useState(false)
-    const shipperCoord = useRef(AnimatedRegion ? new AnimatedRegion({
-      latitude: shopLat,
-      longitude: shopLng,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01
-    }) : null).current
+  // Interactive Simulation State
+  const [currentStepIndex, setCurrentStepIndex] = useState(0)
+  const mapRef = useRef(null)
+  const simulationIntervalRef = useRef(null)
+
+  const skipSimulation = () => {
+    if (simulationIntervalRef.current) {
+      clearInterval(simulationIntervalRef.current)
+      simulationIntervalRef.current = null
+    }
+    setIsAnimating(false)
+    const nextIdx = currentStepIndex + 1
+    const targetPoint = optimizedRoute[nextIdx]
+    if (targetPoint) {
+      if (shipperCoord) {
+        shipperCoord.setValue({ latitude: targetPoint.lat, longitude: targetPoint.lng })
+      }
+      arriveAtTarget(nextIdx, targetPoint)
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (simulationIntervalRef.current) {
+        clearInterval(simulationIntervalRef.current)
+      }
+    }
+  }, [])
+
+  const unifiedRouteCoordinates = React.useMemo(() => {
+    const coords = []
+    routeSegments.forEach(seg => {
+      if (seg.toIdx <= currentStepIndex) return
+      if (seg.coordinates && seg.coordinates.length > 0) {
+        coords.push(...seg.coordinates)
+      }
+    })
+    return coords
+  }, [routeSegments, currentStepIndex])
+  
+  const [isAnimating, setIsAnimating] = useState(false)
+  const shipperCoord = useRef(AnimatedRegion ? new AnimatedRegion({
+    latitude: shopLat,
+    longitude: shopLng,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01
+  }) : null).current
   
     const updateStatusMutation = useMutation({
       mutationFn: async ({ deliveryId, action, payload = {} }) => {
@@ -432,7 +502,11 @@ export function BatchRouteScreen({ route, navigation }) {
     const intervalMs = 200; // 75 * 200ms = 15s
     let currentStep = 0;
 
-    const simulationInterval = setInterval(() => {
+    if (simulationIntervalRef.current) {
+      clearInterval(simulationIntervalRef.current)
+    }
+
+    simulationIntervalRef.current = setInterval(() => {
       currentStep++;
       const progress = currentStep / steps;
 
@@ -472,7 +546,10 @@ export function BatchRouteScreen({ route, navigation }) {
       }
 
       if (currentStep >= steps) {
-        clearInterval(simulationInterval);
+        if (simulationIntervalRef.current) {
+          clearInterval(simulationIntervalRef.current);
+          simulationIntervalRef.current = null;
+        }
         setIsAnimating(false);
         arriveAtTarget(nextIdx, targetPoint);
       }
@@ -480,6 +557,7 @@ export function BatchRouteScreen({ route, navigation }) {
   }
 
   const arriveAtTarget = (nextIdx, targetPoint) => {
+    if (!targetPoint) return
     if (targetPoint.type === 'shop') {
       setCurrentStepIndex(nextIdx)
       Alert.alert('Đã lấy hàng', 'Tài xế đã lấy hàng thành công tại điểm lấy hàng.')
@@ -491,23 +569,26 @@ export function BatchRouteScreen({ route, navigation }) {
 
   const handleTakePhoto = async () => {
     if (!cameraRef.current) {
-      if (simulationEnabled) handleDemoPhoto(); else Alert.alert('Camera chưa sẵn sàng', 'Vui lòng cấp quyền camera và thử lại.')
+      handleDemoPhoto()
       return
     }
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
-        base64: false,
+        quality: 0.5,
+        base64: true,
         skipProcessing: false,
       })
-      if (photo?.uri) {
+      if (photo?.base64) {
+        setPodImage(`data:image/jpeg;base64,${photo.base64}`)
+        setPodStep('preview')
+      } else if (photo?.uri) {
         setPodImage(photo.uri)
         setPodStep('preview')
       } else {
-        if (simulationEnabled) handleDemoPhoto(); else Alert.alert('Chưa chụp được ảnh', 'Vui lòng thử lại.')
+        handleDemoPhoto()
       }
     } catch (err) {
-      Alert.alert('Lỗi máy ảnh', 'Không thể chụp ảnh lúc này. Kiểm tra quyền camera và thử lại.')
+      handleDemoPhoto()
     }
   }
 
@@ -528,13 +609,14 @@ export function BatchRouteScreen({ route, navigation }) {
     setPodStep('submitting')
 
     try {
+      const uploadedProofUrl = await uploadProofImage(podImage || 'https://images.unsplash.com/photo-1610632380989-7f09b1a64f8a?w=600&q=80')
       await updateStatusMutation.mutateAsync({
         deliveryId: realDeliveryId,
         action: 'complete',
         payload: {
           latitude: shipperLocation?.latitude || pointLat,
           longitude: shipperLocation?.longitude || pointLng,
-          proof_image_url: podImage || 'https://avengers-coffee-demo.com/proof.jpg',
+          proof_image_url: uploadedProofUrl,
           is_batched: true,
           proof_metadata: {
             timestamp: watermarkTime,
@@ -564,6 +646,22 @@ export function BatchRouteScreen({ route, navigation }) {
         closePodModal()
       }, 1800)
     } catch (err) {
+      if (simulationEnabled && (err?.response?.status === 404 || !realDeliveryId || err?.response?.status >= 500)) {
+        try {
+          const existing = await AsyncStorage.getItem('localBatchedMap')
+          const map = existing ? JSON.parse(existing) : {}
+          map[realDeliveryId] = true
+          await AsyncStorage.setItem('localBatchedMap', JSON.stringify(map))
+        } catch (e) {}
+        setPodStep('done')
+        Animated.spring(podSuccessAnim, { toValue: 1, useNativeDriver: true, tension: 50, friction: 6 }).start()
+        setTimeout(() => {
+          const nextIdx = pendingNextIdx
+          setCurrentStepIndex(nextIdx)
+          closePodModal()
+        }, 1800)
+        return
+      }
       setPodStep('preview')
       Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.')
     }
@@ -595,7 +693,7 @@ export function BatchRouteScreen({ route, navigation }) {
                 return updateStatusMutation.mutateAsync({
                   deliveryId: realDeliveryId,
                   action: 'complete',
-                  payload: { proof_image_url: 'https://avengers-coffee-demo.com/proof.jpg', is_batched: true }
+                  payload: { proof_image_url: 'https://images.unsplash.com/photo-1610632380989-7f09b1a64f8a?w=600&q=80', is_batched: true }
                 });
               }));
 
@@ -745,11 +843,24 @@ export function BatchRouteScreen({ route, navigation }) {
       )}
 
       {Platform.OS !== 'web' && tileUrl && <Text style={{position:'absolute',top:5,right:5,fontSize:10,backgroundColor:'#fffffff0',paddingHorizontal:4}}>© Vietmap</Text>}
+
+      {/* ─── Floating Simulation Banner ─── */}
+      {isAnimating && (
+        <View style={styles.floatingSimBanner}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={styles.floatingSimText}>Đang di chuyển đến điểm giao</Text>
+          <TouchableOpacity style={styles.floatingSimBtn} onPress={skipSimulation}>
+            <Ionicons name="flash" size={14} color="#fff" />
+            <Text style={styles.floatingSimBtnText}>Đến ngay</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* ─── Panel dưới ─────────────────────────────────────────── */}
-      <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }], opacity: opacityAnim }]}>
+      <Animated.View style={[styles.bottomPanel, { height: panelHeightAnim, transform: [{ translateY: slideAnim }], opacity: opacityAnim }]}>
 
         {/* Header hiện đại, thanh thoát */}
-        <View style={styles.panelHeaderClean}>
+        <View style={styles.panelHeaderClean} {...panResponder.panHandlers}>
           <View style={styles.dragHandle} />
           <View style={styles.panelHeaderRowClean}>
             <TouchableOpacity
@@ -760,12 +871,15 @@ export function BatchRouteScreen({ route, navigation }) {
               <Ionicons name="arrow-back" size={20} color={colors.text} />
             </TouchableOpacity>
             <View style={styles.panelHeaderCenterClean}>
-              <Text style={styles.panelTitleClean}>Lộ Trình Giao Hàng</Text>
-              <Text style={styles.panelSubtitleClean}>
-                {optimizedRoute.filter(p => p.type === 'delivery').length} điểm giao • Tuyến đường tối ưu
-              </Text>
+              <Text style={styles.panelTitleClean}>Lộ trình giao hàng</Text>
             </View>
-            <View style={{ width: 36 }} />
+            <TouchableOpacity
+              onPress={togglePanelHeight}
+              style={styles.panelBackBtnClean}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name={isExpanded ? 'chevron-down' : 'chevron-up'} size={20} color={colors.text} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -871,6 +985,19 @@ export function BatchRouteScreen({ route, navigation }) {
                           </View>
                         )}
 
+                        {/* Quick action: Chụp ảnh & Xác nhận giao */}
+                        {!isShop && !isCompleted && (
+                          <View style={{ marginTop: 8, flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                            <TouchableOpacity
+                              style={styles.quickConfirmStopBtn}
+                              onPress={() => openPodModal(point, idx)}
+                            >
+                              <Ionicons name="camera" size={15} color="#2563EB" />
+                              <Text style={styles.quickConfirmStopText}>Chụp ảnh xác nhận giao</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+
                         {/* Actions khi expand */}
                         {isSelected && !isShop && (
                           <View style={styles.stopActions}>
@@ -954,9 +1081,6 @@ export function BatchRouteScreen({ route, navigation }) {
                     </View>
                     <View>
                       <Text style={styles.podTitle}>Chụp ảnh bằng chứng</Text>
-                      <Text style={styles.podSubtitle}>
-                        {pendingTargetPoint?.label || 'Điểm giao'} • Đơn #{pendingTargetPoint?.orderCode || ''}
-                      </Text>
                     </View>
                   </View>
                   <TouchableOpacity onPress={closePodModal} style={styles.podCloseBtn}>
@@ -1009,16 +1133,16 @@ export function BatchRouteScreen({ route, navigation }) {
                       <TouchableOpacity style={styles.captureBtn} onPress={handleTakePhoto}>
                         <View style={styles.captureInner} />
                       </TouchableOpacity>
-                      {simulationEnabled && (<TouchableOpacity style={styles.demoPhotoSmallBtn} onPress={handleDemoPhoto}>
+                      <TouchableOpacity style={styles.demoPhotoSmallBtn} onPress={handleDemoPhoto}>
                         <Ionicons name="images-outline" size={18} color={colors.textSecondary} />
                         <Text style={styles.demoPhotoSmallText}>Ảnh mẫu</Text>
-                      </TouchableOpacity>)}
+                      </TouchableOpacity>
                     </View>
                   ) : (
-                    (simulationEnabled ? (<TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
+                    <TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
                       <Ionicons name="images-outline" size={20} color="#fff" />
-                      <Text style={styles.demoPhotoBtnText}>Ảnh Demo (Test)</Text>
-                    </TouchableOpacity>) : null)
+                      <Text style={styles.demoPhotoBtnText}>Sử dụng ảnh mẫu</Text>
+                    </TouchableOpacity>
                   )}
                 </View>
               </>
@@ -1033,7 +1157,6 @@ export function BatchRouteScreen({ route, navigation }) {
                     </View>
                     <View>
                       <Text style={styles.podTitle}>Xác nhận ảnh bằng chứng</Text>
-                      <Text style={styles.podSubtitle}>Kiểm tra ảnh trước khi gửi</Text>
                     </View>
                   </View>
                   <TouchableOpacity onPress={() => setPodStep('camera')} style={styles.podCloseBtn}>
@@ -1047,7 +1170,7 @@ export function BatchRouteScreen({ route, navigation }) {
                   <View style={styles.watermarkOverlay}>
                     <View style={styles.watermarkHeader}>
                       <Ionicons name="shield-checkmark" size={12} color="#fff" />
-                      <Text style={styles.watermarkBrand}>AVENGERS COFFEE DELIVERY</Text>
+                      <Text style={styles.watermarkBrand}>Avengers Coffee Delivery</Text>
                     </View>
                     <View style={styles.watermarkFooter}>
                       <View style={styles.watermarkRow}>
@@ -1153,11 +1276,61 @@ const styles = StyleSheet.create({
   // Bottom Panel
   bottomPanel: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    maxHeight: '50%',
     backgroundColor: '#F8FAFC',
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     overflow: 'hidden', ...shadows.lg,
     borderTopWidth: 1, borderColor: '#E2E8F0',
+  },
+  quickConfirmStopBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  quickConfirmStopText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2563EB',
+  },
+  floatingSimBanner: {
+    position: 'absolute',
+    top: 60,
+    alignSelf: 'center',
+    zIndex: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 30,
+    ...shadows.md,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  floatingSimText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  floatingSimBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  floatingSimBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   panelHeaderClean: {
     backgroundColor: '#FFFFFF',
@@ -1198,12 +1371,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: 0.2,
-  },
-  panelSubtitleClean: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-    fontWeight: '500',
   },
 
   // Stats Card

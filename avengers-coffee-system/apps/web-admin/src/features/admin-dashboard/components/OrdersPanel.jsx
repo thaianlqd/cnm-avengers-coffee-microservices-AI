@@ -1,3 +1,5 @@
+import SearchableSelect from '../../../components/console/SearchableSelect'
+import CurrencyInput from '../../../components/console/CurrencyInput'
 import { useEffect, useMemo, useState } from 'react'
 import { ORDER_STATUSES, ORDER_STATUS_LABEL } from '../constants'
 import { fmtMoney, normalizeOrderStatus, normalizeViText, paymentTag } from '../utils'
@@ -31,7 +33,7 @@ import {
   LayoutGrid,
   Calendar,
   RotateCcw
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 
 const PAGE_SIZE = 10
 
@@ -407,12 +409,12 @@ export function OrdersPanel({
     <section className="panel system-admin-panel" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
       
       {/* HEADER TITLE */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e4df', paddingBottom: '0.85rem' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h1 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '700', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <ShoppingBag size={20} color="var(--primary)" /> Quản Lý Đơn Hàng
           </h1>
-          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78125rem', color: '#64748b' }}>
+          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78125rem', color: '#69736a' }}>
             Theo dõi, lọc đơn hàng real-time, xử lý trạng thái và quản lý doanh thu đối soát theo ca làm việc.
           </p>
         </div>
@@ -421,52 +423,52 @@ export function OrdersPanel({
       {/* KPI SUMMARY CARDS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.85rem' }}>
         
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: "#f4f5f2", color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <CheckCircle2 size={18} color="#2563eb" />
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Đơn hoàn thành</span>
-            <strong style={{ display: 'block', fontSize: '1.1rem', color: '#0f172a', marginTop: '0.05rem' }}>{financeSummary.completedCount}</strong>
+            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Đơn hoàn thành</span>
+            <strong style={{ display: 'block', fontSize: '1.1rem', color: '#252927', marginTop: '0.05rem' }}>{financeSummary.completedCount}</strong>
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
           <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <TrendingUp size={18} color="var(--primary)" />
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Doanh thu hoàn thành</span>
+            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Doanh thu hoàn thành</span>
             <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--primary)', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tongDoanhThu)}</strong>
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
           <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Coins size={18} color="var(--primary)" />
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền mặt thu vào</span>
+            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền mặt thu vào</span>
             <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--primary)', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienMatThuVao)}</strong>
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: "#f4f5f2", color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <ArrowRightLeft size={18} color="#d97706" />
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền thối khách</span>
+            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền thối khách</span>
             <strong style={{ display: 'block', fontSize: '1.05rem', color: '#d97706', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienThoi)}</strong>
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: "#f4f5f2", color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Wallet size={18} color="#2563eb" />
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền mặt thực thu</span>
+            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền mặt thực thu</span>
             <strong style={{ display: 'block', fontSize: '1.05rem', color: '#2563eb', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienMatThucThu)}</strong>
           </div>
         </div>
@@ -474,14 +476,14 @@ export function OrdersPanel({
       </div>
 
       {/* COMPACT & NEAT FILTER BAR CARD */}
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '14px', padding: '1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
         
         {/* Row 1: Search & Counter */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div className="console-search-field" style={{ display: 'flex', alignItems: 'center', height: '38px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.75rem', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
-            <Search size={15} color="#64748b" style={{ flexShrink: 0 }} />
+          <div className="console-search-field" style={{ display: 'flex', alignItems: 'center', height: '38px', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: '#f8f9f6', padding: '0 0.75rem', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
+            <Search size={15} color="#69736a" style={{ flexShrink: 0 }} />
             <input
-              style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.8125rem', color: '#0f172a' }}
+              style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.8125rem', color: '#252927' }}
               type="text"
               placeholder="Tìm kiếm mã đơn, tên khách, số điện thoại, thu ngân..."
               value={searchText}
@@ -489,21 +491,21 @@ export function OrdersPanel({
             />
             {searchText && (
               <button type="button" onClick={() => setSearchText('')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}>
-                <X size={14} color="#64748b" />
+                <X size={14} color="#69736a" />
               </button>
             )}
           </div>
 
-          <div style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600' }}>
+          <div style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600' }}>
             {hasActiveFilter ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>Khớp: <strong style={{ color: 'var(--primary)' }}>{filteredOrders.length}</strong> / {(ordersState?.items || []).length} đơn</span>
-                <button type="button" onClick={resetFilters} style={{ backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.72rem', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                <button type="button" onClick={resetFilters} style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.72rem', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                   <RotateCcw size={12} /> Xóa bộ lọc
                 </button>
               </div>
             ) : (
-              <span>Tổng số: <strong style={{ color: '#0f172a' }}>{(ordersState?.items || []).length}</strong> đơn</span>
+              <span>Tổng số: <strong style={{ color: '#252927' }}>{(ordersState?.items || []).length}</strong> đơn</span>
             )}
           </div>
         </div>
@@ -515,7 +517,7 @@ export function OrdersPanel({
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterStatus ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterStatus ? '700' : '500', color: filterStatus ? 'var(--primary-hover)' : '#334155', cursor: 'pointer' }}
+            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: filterStatus ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterStatus ? '700' : '500', color: filterStatus ? 'var(--primary-hover)' : '#414743', cursor: 'pointer' }}
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -526,7 +528,7 @@ export function OrdersPanel({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterType ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterType ? '700' : '500', color: filterType ? 'var(--primary-hover)' : '#334155', cursor: 'pointer' }}
+            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: filterType ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterType ? '700' : '500', color: filterType ? 'var(--primary-hover)' : '#414743', cursor: 'pointer' }}
           >
             {ORDER_TYPE_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -537,7 +539,7 @@ export function OrdersPanel({
           <select
             value={filterPayment}
             onChange={(e) => setFilterPayment(e.target.value)}
-            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterPayment ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterPayment ? '700' : '500', color: filterPayment ? 'var(--primary-hover)' : '#334155', cursor: 'pointer' }}
+            style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: filterPayment ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterPayment ? '700' : '500', color: filterPayment ? 'var(--primary-hover)' : '#414743', cursor: 'pointer' }}
           >
             {PAYMENT_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -553,7 +555,7 @@ export function OrdersPanel({
               setFilterDate(e.target.value)
               if (e.target.value) setFilterMonth('')
             }}
-            style={{ height: '36px', padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterDate ? 'var(--primary-light)' : '#ffffff', fontSize: '0.78125rem', color: '#0f172a' }}
+            style={{ height: '36px', padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: filterDate ? 'var(--primary-light)' : '#ffffff', fontSize: '0.78125rem', color: '#252927' }}
           />
 
           {/* Input: Tháng */}
@@ -565,7 +567,7 @@ export function OrdersPanel({
               setFilterMonth(e.target.value)
               if (e.target.value) setFilterDate('')
             }}
-            style={{ height: '36px', padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: filterMonth ? 'var(--primary-light)' : '#ffffff', fontSize: '0.78125rem', color: '#0f172a' }}
+            style={{ height: '36px', padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: filterMonth ? 'var(--primary-light)' : '#ffffff', fontSize: '0.78125rem', color: '#252927' }}
           />
 
         </div>
@@ -575,23 +577,23 @@ export function OrdersPanel({
       {/* ORDERS LIST */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
         {ordersState?.loading ? (
-          <div style={{ padding: '2.5rem', textAlign: 'center', color: '#64748b', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <div style={{ padding: '2.5rem', textAlign: 'center', color: '#69736a', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e4df' }}>
             Đang tải danh sách đơn hàng...
           </div>
         ) : null}
 
         {ordersState?.error ? (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: '#dc2626', backgroundColor: '#fef2f2', borderRadius: '12px', border: '1px solid #fecaca', fontWeight: '600', fontSize: '0.84rem' }}>
+          <div style={{ padding: '1.5rem', textAlign: 'center', color: '#dc2626', backgroundColor: "#f4f5f2", borderRadius: '12px', border: '1px solid #fecaca', fontWeight: '600', fontSize: '0.84rem' }}>
             {ordersState.error}
           </div>
         ) : null}
 
         {!ordersState?.loading && !ordersState?.error && filteredOrders.length === 0 ? (
-          <div style={{ padding: '2.5rem', textAlign: 'center', color: '#64748b', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-            <Search size={32} color="#94a3b8" />
+          <div style={{ padding: '2.5rem', textAlign: 'center', color: '#69736a', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e4df', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <Search size={32} color="#85907d" />
             <p style={{ margin: 0, fontWeight: '600', fontSize: '0.84rem' }}>{hasActiveFilter ? 'Không có đơn hàng nào khớp với bộ lọc.' : 'Chưa có đơn hàng để hiển thị.'}</p>
             {hasActiveFilter && (
-              <button type="button" onClick={resetFilters} style={{ backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.35rem 0.85rem', fontSize: '0.78125rem', fontWeight: '600', cursor: 'pointer' }}>
+              <button type="button" onClick={resetFilters} style={{ backgroundColor: '#f4f5f2', color: '#414743', border: '1px solid #ccd3c7', borderRadius: '6px', padding: '0.35rem 0.85rem', fontSize: '0.78125rem', fontWeight: '600', cursor: 'pointer' }}>
                 Xóa tất cả bộ lọc
               </button>
             )}
@@ -607,7 +609,7 @@ export function OrdersPanel({
               className="console-order-card"
               style={{
                 backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #e2e4df',
                 borderRadius: '14px',
                 padding: '1rem 1.25rem',
                 boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)',
@@ -618,44 +620,44 @@ export function OrdersPanel({
               }}
             >
               {/* Order Header Info */}
-              <div className="console-order-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.65rem' }}>
+              <div className="console-order-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid #f4f5f2', paddingBottom: '0.65rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <strong style={{ fontSize: '0.92rem', fontWeight: '600', color: '#0f172a', letterSpacing: '0.01em' }}>
+                    <strong style={{ fontSize: '0.92rem', fontWeight: '600', color: '#252927', letterSpacing: '0.01em' }}>
                       #{order.ma_don_hang.slice(0, 8).toUpperCase()}
                     </strong>
                     
-                    <span style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '600', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1' }}>
+                    <span className="workspace-inline-label" style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '600', backgroundColor: '#f4f5f2', color: '#414743', border: '1px solid #ccd3c7' }}>
                       {getOrderTypeLabel(order.loai_don_hang)}
                     </span>
 
                     {['DUNG_TAI_CHO', 'TAI_CHO'].includes(order.loai_don_hang) && order.ma_ban && (
-                      <span style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '700', backgroundColor: '#fffbe0', color: '#b45309', border: '1px solid #fef08a', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                      <span className="workspace-inline-label" style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '700', backgroundColor: "#f4f5f2", color: '#b45309', border: '1px solid #fef08a', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                         <MapPin size={11} color="#b45309" /> Bàn {order.ma_ban}
                       </span>
                     )}
 
                     {order.loai_don_hang === 'GIAO_TAN_NOI' && (
-                      <span style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '700', backgroundColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#fff7ed' : 'var(--primary-subtle)', color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#c2410c' : 'var(--primary-hover)', border: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '1px solid #ffedd5' : '1px solid #e8cdbb', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                      <span className="workspace-inline-label" style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '700', backgroundColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? "#f4f5f2" : 'var(--primary-subtle)', color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#c2410c' : 'var(--primary-hover)', border: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '1px solid #ffedd5' : '1px solid #e8cdbb', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                         <Truck size={11} /> {order.phuong_thuc_giao_hang === 'LALAMOVE' ? 'Lalamove' : 'Shipper Nội Bộ'}
                       </span>
                     )}
                   </div>
 
-                  <div style={{ fontSize: '0.78125rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
-                    <span>Khách: <strong style={{ color: '#334155', fontWeight: '600' }}>{normalizeViText(order.ten_khach_hang) || order.ma_nguoi_dung}</strong></span>
-                    <span>Địa chỉ: <strong style={{ color: '#334155', fontWeight: '500' }}>{normalizeViText(order.dia_chi_giao_hang) || 'Tại quán'}</strong></span>
-                    <span>Thu ngân: <strong style={{ color: '#334155', fontWeight: '500' }}>{normalizeViText(order.ten_thu_ngan) || 'N/A'}</strong></span>
+                  <div style={{ fontSize: '0.78125rem', color: '#69736a', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
+                    <span>Khách: <strong style={{ color: '#414743', fontWeight: '600' }}>{normalizeViText(order.ten_khach_hang) || order.ma_nguoi_dung}</strong></span>
+                    <span>Địa chỉ: <strong style={{ color: '#414743', fontWeight: '500' }}>{normalizeViText(order.dia_chi_giao_hang) || 'Tại quán'}</strong></span>
+                    <span>Thu ngân: <strong style={{ color: '#414743', fontWeight: '500' }}>{normalizeViText(order.ten_thu_ngan) || 'N/A'}</strong></span>
                   </div>
                 </div>
 
                 {/* Right side: Amount & Status Badge */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25rem' }}>
-                  <span style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500' }}>
+                  <span style={{ fontSize: '1rem', color: '#252927', fontWeight: '500' }}>
                     {fmtMoney(order.tong_tien)}
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: '700', padding: '0.1rem 0.45rem', borderRadius: '4px', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', color: '#475569' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: '700', padding: '0.1rem 0.45rem', borderRadius: '4px', backgroundColor: '#f8f9f6', border: '1px solid #ccd3c7', color: '#596255' }}>
                       {paymentTag(order.phuong_thuc_thanh_toan)}
                     </span>
                     <span className={`status-pill ${TONE_CLASS[status] || 'tone-new'}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.55rem' }}>
@@ -670,7 +672,7 @@ export function OrdersPanel({
                 
                 {/* Status Dropdown selector */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <label htmlFor={`status-${order.ma_don_hang}`} style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#475569' }}>
+                  <label htmlFor={`status-${order.ma_don_hang}`} style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#596255' }}>
                     Cập nhật trạng thái:
                   </label>
                   <select
@@ -678,7 +680,7 @@ export function OrdersPanel({
                     value={status}
                     onChange={(e) => onUpdateStatus(order.ma_don_hang, e.target.value)}
                     disabled={updatingOrderId === order.ma_don_hang}
-                    style={{ height: '32px', padding: '0 0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', fontSize: '0.78125rem', fontWeight: '700', color: '#0f172a', cursor: 'pointer' }}
+                    style={{ height: '32px', padding: '0 0.6rem', borderRadius: '6px', border: '1px solid #ccd3c7', backgroundColor: '#ffffff', fontSize: '0.78125rem', fontWeight: '700', color: '#252927', cursor: 'pointer' }}
                   >
                     {layDanhSachTrangThaiCoTheChon(status, order.loai_don_hang).map((st) => (
                       <option key={st} value={st}>
@@ -686,8 +688,8 @@ export function OrdersPanel({
                       </option>
                     ))}
                   </select>
-                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                    <Clock size={12} color="#94a3b8" />
+                  <span style={{ fontSize: '0.72rem', color: '#85907d', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                    <Clock size={12} color="#85907d" />
                     {new Date(order.ngay_tao).toLocaleString('vi-VN')}
                   </span>
                 </div>
@@ -734,7 +736,7 @@ export function OrdersPanel({
                       padding: '0 0.75rem',
                       borderRadius: '6px',
                       border: '1px solid #fecaca',
-                      backgroundColor: '#fef2f2',
+                      backgroundColor: "#f4f5f2",
                       color: '#dc2626',
                       fontSize: '0.76rem',
                       fontWeight: '600',
@@ -785,7 +787,7 @@ export function OrdersPanel({
                         padding: '0 0.85rem',
                         borderRadius: '6px',
                         border: 'none',
-                        backgroundColor: '#2563eb',
+                        backgroundColor: "var(--primary)",
                         color: '#ffffff',
                         fontSize: '0.76rem',
                         fontWeight: '700',
@@ -802,43 +804,43 @@ export function OrdersPanel({
 
               {/* Edit Form Draft (if active) */}
               {editingOrderId === order.ma_don_hang && editDraft ? (
-                <div style={{ marginTop: '0.5rem', borderTop: '1px dashed #cbd5e1', paddingTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div style={{ marginTop: '0.5rem', borderTop: '1px dashed #ccd3c7', paddingTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#334155' }}>Tên khách hàng</label>
+                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Tên khách hàng</label>
                       <input
                         type="text"
-                        style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', color: '#0f172a' }}
+                        style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927' }}
                         value={editDraft.ten_khach_hang}
                         onChange={(e) => setEditDraft((prev) => ({ ...prev, ten_khach_hang: e.target.value }))}
                       />
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#334155' }}>Mã bàn</label>
+                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Mã bàn</label>
                       <input
                         type="text"
-                        style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', color: '#0f172a' }}
+                        style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927' }}
                         value={editDraft.ma_ban}
                         onChange={(e) => setEditDraft((prev) => ({ ...prev, ma_ban: e.target.value }))}
                       />
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#334155' }}>Địa chỉ giao hàng</label>
+                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Địa chỉ giao hàng</label>
                       <input
                         type="text"
-                        style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', color: '#0f172a' }}
+                        style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927' }}
                         value={editDraft.dia_chi_giao_hang}
                         onChange={(e) => setEditDraft((prev) => ({ ...prev, dia_chi_giao_hang: e.target.value }))}
                       />
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#334155' }}>Ghi chú đơn</label>
+                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Ghi chú đơn</label>
                       <input
                         type="text"
-                        style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8125rem', color: '#0f172a' }}
+                        style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927' }}
                         value={editDraft.ghi_chu}
                         onChange={(e) => setEditDraft((prev) => ({ ...prev, ghi_chu: e.target.value }))}
                       />
@@ -850,80 +852,78 @@ export function OrdersPanel({
                     {editDraft.items.map((line, index) => {
                       const matchedMenu = (inventoryState?.items || []).find(m => m.ma_san_pham === line.ma_san_pham);
                       return (
-                        <div key={`${line.ma_san_pham}-${index}`} style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', padding: '0.75rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <div key={`${line.ma_san_pham}-${index}`} style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', padding: '0.75rem', backgroundColor: '#f8f9f6', borderRadius: '8px', border: '1px solid #e2e4df' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                            <select
+                            <SearchableSelect
                               value={line.ma_san_pham}
                               onChange={(e) => capNhatDongMon(index, 'ma_san_pham', e.target.value)}
-                              style={{ flex: 2, height: '34px', padding: '0 0.55rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.78125rem', fontWeight: '600' }}
+                              style={{ flex: 2, height: '34px', padding: '0 0.55rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.78125rem', fontWeight: '600' }}
                             >
                               {(inventoryState?.items || []).map((menuItem) => (
                                 <option key={menuItem.ma_san_pham} value={menuItem.ma_san_pham}>
                                   {normalizeViText(menuItem.name)}
                                 </option>
                               ))}
-                            </select>
+                            </SearchableSelect>
 
                             <input
                               type="number"
                               min="1"
                               value={line.so_luong}
                               onChange={(e) => capNhatDongMon(index, 'so_luong', e.target.value)}
-                              style={{ width: '65px', height: '34px', padding: '0 0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.78125rem', fontWeight: '600' }}
+                              style={{ width: '65px', height: '34px', padding: '0 0.45rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.78125rem', fontWeight: '600' }}
                               placeholder="SL"
                             />
 
-                            <input
-                              type="number"
-                              min="0"
+                            <CurrencyInput
                               value={line.gia_ban}
-                              onChange={(e) => capNhatDongMon(index, 'gia_ban', e.target.value)}
-                              style={{ width: '100px', height: '34px', padding: '0 0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.78125rem', fontWeight: '600' }}
+                              onChange={(e) => capNhatDongMon(index, 'gia_ban', Number(e.target.value))}
+                              style={{ width: '100px', height: '34px', padding: '0 0.45rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.78125rem', fontWeight: '600' }}
                               title="Giá bán"
                             />
 
                             <input
-                              type="number"
-                              value={Number(line.gia_ban || 0) * Number(line.so_luong || 0)}
+                              type="text"
+                              value={(Number(line.gia_ban || 0) * Number(line.so_luong || 0)).toLocaleString('vi-VN')}
                               readOnly
                               disabled
-                              style={{ width: '100px', height: '34px', padding: '0 0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#e2e8f0', fontSize: '0.78125rem', fontWeight: '700', color: '#0f172a' }}
+                              style={{ width: '100px', height: '34px', padding: '0 0.45rem', borderRadius: '6px', border: '1px solid #ccd3c7', backgroundColor: "#f4f5f2", fontSize: '0.78125rem', fontWeight: '700', color: '#252927' }}
                             />
 
-                            <button type="button" onClick={() => xoaDongMon(index)} style={{ backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', height: '34px', padding: '0 0.65rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.75rem' }}>
+                            <button type="button" onClick={() => xoaDongMon(index)} style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', height: '34px', padding: '0 0.65rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.75rem' }}>
                               Xóa
                             </button>
                           </div>
 
                           <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             {matchedMenu?.sizes && Object.keys(matchedMenu.sizes).length > 0 ? (
-                              <select value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.75rem' }}>
+                              <select value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }}>
                                 <option value="">Size...</option>
                                 {Object.keys(matchedMenu.sizes).map(s => <option key={s} value={s}>{s}</option>)}
                               </select>
                             ) : (
-                              <input type="text" placeholder="Size" value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ height: '30px', width: '65px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.75rem' }} />
+                              <input type="text" placeholder="Size" value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ height: '30px', width: '65px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
                             )}
                             
                             {matchedMenu?.luong_da && Object.keys(matchedMenu.luong_da).length > 0 ? (
-                              <select value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.75rem' }}>
+                              <select value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }}>
                                 <option value="">Đá...</option>
                                 {Object.keys(matchedMenu.luong_da).map(s => <option key={s} value={s}>{s}</option>)}
                               </select>
                             ) : (
-                              <input type="text" placeholder="Đá (50%)" value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ height: '30px', width: '75px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.75rem' }} />
+                              <input type="text" placeholder="Đá (50%)" value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ height: '30px', width: '75px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
                             )}
 
                             {matchedMenu?.do_ngot && Object.keys(matchedMenu.do_ngot).length > 0 ? (
-                              <select value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.75rem' }}>
+                              <select value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }}>
                                 <option value="">Ngọt...</option>
                                 {Object.keys(matchedMenu.do_ngot).map(s => <option key={s} value={s}>{s}</option>)}
                               </select>
                             ) : (
-                              <input type="text" placeholder="Ngọt (50%)" value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ height: '30px', width: '75px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.75rem' }} />
+                              <input type="text" placeholder="Ngọt (50%)" value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ height: '30px', width: '75px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
                             )}
 
-                            <input type="text" placeholder="Ghi chú món" value={line.ghi_chu || ''} onChange={(e) => capNhatDongMon(index, 'ghi_chu', e.target.value)} style={{ height: '30px', flex: 1, minWidth: '110px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.75rem' }} />
+                            <input type="text" placeholder="Ghi chú món" value={line.ghi_chu || ''} onChange={(e) => capNhatDongMon(index, 'ghi_chu', e.target.value)} style={{ height: '30px', flex: 1, minWidth: '110px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
                           </div>
                         </div>
                       )
@@ -931,20 +931,18 @@ export function OrdersPanel({
                   </div>
 
                   {/* Summary & Cash Input Row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
-                    <div style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '0.75rem', border: '1px solid #e2e8f0' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>TẠM TÍNH THEO MÓN</span>
-                      <strong style={{ display: 'block', fontSize: '1rem', color: '#0f172a', marginTop: '0.1rem' }}>{fmtMoney(editSubTotal)}</strong>
-                      <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>VAT 8% tham khảo: {fmtMoney(editVat)}</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', borderTop: '1px solid #e2e4df', paddingTop: '0.75rem' }}>
+                    <div style={{ backgroundColor: '#f8f9f6', borderRadius: '8px', padding: '0.75rem', border: '1px solid #e2e4df' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600' }}>TẠM TÍNH THEO MÓN</span>
+                      <strong style={{ display: 'block', fontSize: '1rem', color: '#252927', marginTop: '0.1rem' }}>{fmtMoney(editSubTotal)}</strong>
+                      <span style={{ fontSize: '0.68rem', color: '#85907d' }}>VAT 8% tham khảo: {fmtMoney(editVat)}</span>
                     </div>
 
-                    <div style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '0.75rem', border: '1px solid #e2e8f0' }}>
-                      <label htmlFor={`edit-cash-${order.ma_don_hang}`} style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600', display: 'block' }}>Tiền khách đưa (VNĐ)</label>
-                      <input
+                    <div style={{ backgroundColor: '#f8f9f6', borderRadius: '8px', padding: '0.75rem', border: '1px solid #e2e4df' }}>
+                      <label htmlFor={`edit-cash-${order.ma_don_hang}`} style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600', display: 'block' }}>Tiền khách đưa (VNĐ)</label>
+                      <CurrencyInput
                         id={`edit-cash-${order.ma_don_hang}`}
-                        type="number"
-                        min="0"
-                        style={{ height: '32px', width: '100%', padding: '0 0.55rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: '700', marginTop: '0.2rem' }}
+                        style={{ height: '32px', width: '100%', padding: '0 0.55rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.84rem', fontWeight: '700', marginTop: '0.2rem' }}
                         value={editCashInput === 0 || editCashInput === '0' ? '' : editCashInput}
                         onChange={(e) => {
                           const val = e.target.value
@@ -954,17 +952,17 @@ export function OrdersPanel({
                         placeholder="0"
                       />
                       <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.72rem', fontWeight: '700', color: editCashInsufficient ? '#dc2626' : '#2563eb' }}>
-                        {editCashInsufficient ? '⚠️ Tiền khách đưa chưa đủ' : `Tiền thối khách: ${fmtMoney(editChange)}`}
+                        {editCashInsufficient ? "Tiền khách đưa chưa đủ" : `Tiền thối khách: ${fmtMoney(editChange)}`}
                       </p>
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem' }}>
-                    <button type="button" onClick={themDongMon} disabled={!(inventoryState?.items || []).length} style={{ backgroundColor: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', height: '34px', padding: '0 0.85rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.78125rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <button type="button" onClick={themDongMon} disabled={!(inventoryState?.items || []).length} style={{ backgroundColor: '#f8f9f6', color: '#414743', border: '1px solid #ccd3c7', height: '34px', padding: '0 0.85rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.78125rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                       <Plus size={14} /> Thêm món
                     </button>
 
-                    <button type="button" onClick={huySuaDon} style={{ backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', height: '34px', padding: '0 0.85rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.78125rem' }}>
+                    <button type="button" onClick={huySuaDon} style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', height: '34px', padding: '0 0.85rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.78125rem' }}>
                       Hủy bỏ
                     </button>
 
@@ -989,7 +987,7 @@ export function OrdersPanel({
 
       {/* PAGINATION FOOTER */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.78125rem', color: '#64748b', paddingTop: '0.75rem', marginTop: '0.35rem', borderTop: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.78125rem', color: '#69736a', paddingTop: '0.75rem', marginTop: '0.35rem', borderTop: '1px solid #f4f5f2' }}>
           <span>Hiển thị <strong>{(safePage - 1) * PAGE_SIZE + 1} - {Math.min(safePage * PAGE_SIZE, filteredOrders.length)}</strong> trên tổng số <strong>{filteredOrders.length}</strong> đơn hàng</span>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -999,7 +997,7 @@ export function OrdersPanel({
             <button type="button" className="admin-pg-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1} title="Trang trước">
               <ChevronLeft size={16} />
             </button>
-            <span style={{ margin: '0 0.5rem', fontWeight: '700', color: '#334155', fontSize: '0.78125rem' }}>Trang {safePage} / {totalPages}</span>
+            <span style={{ margin: '0 0.5rem', fontWeight: '700', color: '#414743', fontSize: '0.78125rem' }}>Trang {safePage} / {totalPages}</span>
             <button type="button" className="admin-pg-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages} title="Trang sau">
               <ChevronRight size={16} />
             </button>

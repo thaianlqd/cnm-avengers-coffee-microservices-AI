@@ -20,8 +20,32 @@ export class AppService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     if (process.env.K8S_DEMO_READ_ONLY === 'true') return;
+    await this.ensureExpandedCategories();
     console.log('Bootstrapping AppService: running variants migration...');
     await this.migrateExistingVariants();
+  }
+
+  async ensureExpandedCategories() {
+    // Reuse existing child categories so the new groups contain real menu items.
+    // The advisory lock makes repeated or concurrent service starts idempotent.
+    await this.dmRepo.manager.transaction(async manager => {
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', ['avengers-menu-categories-20261019']);
+      const categories = manager.getRepository(DanhMuc);
+      for (const [parentName, childName] of [
+        ['Trà sữa & Macchiato', 'Trà Sữa'],
+        ['Bánh mặn & ăn nhẹ', 'Bánh Mặn'],
+      ]) {
+        let parent = await categories.findOne({ where: { ten_danh_muc: parentName, cap_bac: 1 } });
+        if (!parent) parent = await categories.save(categories.create({
+          ten_danh_muc: parentName, cap_bac: 1, ma_danh_muc_cha: null, hinh_anh_icon: null,
+        }));
+        const child = await categories.findOne({ where: { ten_danh_muc: childName, cap_bac: 2 } });
+        if (child && child.ma_danh_muc_cha !== parent.ma_danh_muc) {
+          child.ma_danh_muc_cha = parent.ma_danh_muc;
+          await categories.save(child);
+        }
+      }
+    });
   }
 
   async migrateExistingVariants() {
@@ -127,7 +151,15 @@ export class AppService implements OnApplicationBootstrap {
         .groupBy('product.ma_danh_muc').getRawMany(),
     ]);
     const byCategory = new Map(counts.map(row => [String(row.category_id), Number(row.product_count)]));
-    return categories.map(category => this.formatCategory(category, byCategory.get(String(category.ma_danh_muc)) || 0));
+    return categories.map(category => {
+      let count = byCategory.get(String(category.ma_danh_muc)) || 0;
+      if (Number(category.cap_bac) === 1) {
+        const children = categories.filter(c => Number(c.ma_danh_muc_cha) === Number(category.ma_danh_muc));
+        const childSum = children.reduce((sum, c) => sum + (byCategory.get(String(c.ma_danh_muc)) || 0), 0);
+        count += childSum;
+      }
+      return this.formatCategory(category, count);
+    });
   }
 
   async getAttributes() {
@@ -231,26 +263,42 @@ export class AppService implements OnApplicationBootstrap {
     return { message: 'Xoa danh muc thanh cong', id: categoryId };
   }
 
-  private formatMenuItem(item: SanPham) {
+  private formatMenuItem(
+    item: SanPham,
+    parentCategoryName?: string,
+    salesBadge?: { sold_count?: number; order_count?: number; la_hot?: boolean; bestseller_period?: string }
+  ) {
     const sellingPrice = Number(item.gia_ban || 0);
     const originalPrice = item.gia_niem_yet !== null && item.gia_niem_yet !== undefined
       ? Number(item.gia_niem_yet)
       : null;
     const hasDiscount = originalPrice !== null && originalPrice > sellingPrice;
 
+    const catName = item.danhMuc?.ten_danh_muc || null;
+    const catCode = item.danhMuc?.ma_danh_muc || item.ma_danh_muc || null;
+    const parentName = parentCategoryName || null;
+    const parentId = item.danhMuc?.ma_danh_muc_cha || null;
+
     return {
       id: item.ma_san_pham.toString(),
       name: item.ten_san_pham,
-      category: item.danhMuc?.ten_danh_muc,
-      category_code: item.danhMuc?.ma_danh_muc,
+      category: catName,
+      category_name: catName,
+      category_code: catCode,
+      danh_muc: catName,
+      ma_danh_muc: catCode,
+      parent_category: parentName,
+      parent_category_name: parentName,
+      parent_category_id: parentId,
+      ma_danh_muc_cha: parentId,
       price: sellingPrice,
       original_price: hasDiscount ? originalPrice : null,
       is_discounted: hasDiscount,
-      la_hot: Boolean(item.la_hot),
+      la_hot: salesBadge?.la_hot !== undefined ? Boolean(salesBadge.la_hot) : Boolean(item.la_hot),
       la_moi: Boolean(item.la_moi),
-      sold_count: Number((item as any).sold_count || 0),
-      order_count: Number((item as any).order_count || 0),
-      bestseller_period: (item as any).bestseller_period,
+      sold_count: Number(salesBadge?.sold_count || 0),
+      order_count: Number(salesBadge?.order_count || 0),
+      bestseller_period: salesBadge?.bestseller_period || 'month',
       image: item.hinh_anh_url,
       description: item.mo_ta,
       dang_ban: Boolean(item.trang_thai),
@@ -390,7 +438,12 @@ export class AppService implements OnApplicationBootstrap {
     }
 
     if (category && category !== 'all') {
-      queryBuilder.andWhere('danh_muc.ma_danh_muc = :category', { category });
+      const catNum = Number(category);
+      if (!isNaN(catNum) && catNum > 0) {
+        queryBuilder.andWhere('(danh_muc.ma_danh_muc = :catNum OR danh_muc.ma_danh_muc_cha = :catNum)', { catNum });
+      } else {
+        queryBuilder.andWhere('danh_muc.ten_danh_muc ILIKE :catStr', { catStr: category });
+      }
     }
 
     if (sort === 'price_asc') {
@@ -405,11 +458,20 @@ export class AppService implements OnApplicationBootstrap {
 
     const [items, total] = await queryBuilder.getManyAndCount();
 
+    // Map parent categories
+    const allCategories = await this.dmRepo.find();
+    const catMap = new Map(allCategories.map(c => [c.ma_danh_muc, c]));
+
     const all = await this.spRepo.find();
     const badges = new Map((await salesBadges(this.spRepo.manager, all)).map(item => [item.ma_san_pham, item]));
     return {
       total,
-      items: items.map(item => this.formatMenuItem({ ...item, ...badges.get(item.ma_san_pham) })),
+      items: items.map(item => {
+        const badge = badges.get(item.ma_san_pham);
+        const parentId = item.danhMuc?.ma_danh_muc_cha;
+        const parentCat = parentId ? catMap.get(parentId) : null;
+        return this.formatMenuItem(item, parentCat?.ten_danh_muc, badge);
+      }),
     };
   }
 

@@ -1,3 +1,5 @@
+import { checkoutDraft, savePendingCheckout, clearPendingCheckout } from '../../lib/pendingCheckout';
+import { coordinates } from '../../lib/locationModel';
 import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import {
   XMarkIcon,
@@ -14,27 +16,28 @@ import {
   UserIcon,
   ShieldCheckIcon,
   InformationCircleIcon
-} from '@heroicons/react/24/outline';
+} from '../../components/common/icons';
 import { useCart } from '../../context/CartContext';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
 import { buildAddressOptionsFromBranches, getAddressSelectionDefaults, normalizeAddressSelection } from '../../lib/addressOptions';
-import CartEditModal from '../../components/CartEditModal';
-import { PencilIcon, CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
-import DeliveryModeSelector from '../../components/features_thaian/DeliveryModeSelector';
-import DeliveryMethodPicker from '../../components/features_thaian/DeliveryMethodPicker';
-import BranchSelector from '../../components/features_thaian/BranchSelector';
-import AddressAutocompleteInput from '../../components/features_thaian/AddressAutocompleteInput';
-import NearbyBranchChecker from '../../components/features_thaian/NearbyBranchChecker';
+import CartEditModal from '../../components/modals/CartEditModal';
+import { PencilIcon, CheckCircleIcon, StarIcon } from '../../components/common/iconsSolid';
+import DeliveryModeSelector from '../../components/delivery/DeliveryModeSelector';
+import DeliveryMethodPicker from '../../components/delivery/DeliveryMethodPicker';
+import BranchSelector from '../../components/delivery/BranchSelector';
+import AddressAutocompleteInput from '../../components/delivery/AddressAutocompleteInput';
+import SmartCombobox from '../../components/common/SmartCombobox';
+import NearbyBranchChecker from '../../components/delivery/NearbyBranchChecker';
 import { evaluateBranchAvailability, inventoryRows } from '../../lib/branchAvailability';
-import { geocodeAddress } from '../../lib/geocodingService';
+import { deliveryRegionWarning, regionOf } from '../../lib/deliveryRegion';
 
 const AVAILABLE_SIZES = ['Nhỏ', 'Vừa'];
 
 function taoDiaChiDayDu(addressForm) {
-  const parts = [addressForm.street, addressForm.ward, addressForm.city]
+  const parts = [addressForm.street, addressForm.ward, addressForm.district, addressForm.city]
     .map((item) => String(item || '').trim())
     .filter(Boolean);
   return parts.join(', ');
@@ -78,12 +81,14 @@ export default function CartPage({
   const [editingItem, setEditingItem] = useState(null);
   const queryClient = useQueryClient();
 
+  const draft = typeof window !== 'undefined' ? checkoutDraft() : {};
   const [deliveryMode, setDeliveryMode] = useState(() => {
-    const storedTableId = sessionStorage.getItem('qr_tableId');
-    return storedTableId ? 'DUNG_TAI_CHO' : null;
+    const storedTableId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('qr_tableId') : null;
+    return storedTableId ? 'DUNG_TAI_CHO' : draft?.deliveryMode || null;
   });
   const [selectedBranch, setSelectedBranch] = useState(() => {
-    return sessionStorage.getItem('qr_storeId') || '';
+    const storedStoreId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('qr_storeId') : null;
+    return storedStoreId || draft?.selectedBranch || '';
   });
   const checkoutRequestRef = useRef(null);
   const checkoutBusyRef = useRef(false);
@@ -92,7 +97,7 @@ export default function CartPage({
     setDeliveryMode(mode);
   };
 
-  const { data: kioskPrices } = useQuery({
+  const { data: kioskPrices, isFetching: isLoadingKioskPrices, error: kioskPricesError } = useQuery({
     queryKey: ['kiosk-prices', selectedBranch],
     queryFn: async () => {
       const response = await apiClient.get(`/orders/kiosk-prices?ma_kiosk=${selectedBranch}`);
@@ -109,13 +114,18 @@ export default function CartPage({
     if (deliveryMode === 'KIOSK') {
       return cart.map(item => ({
         ...item,
-        gia_ban: kioskPrices?.[item.ma_san_pham] || Math.round(item.gia_ban * 0.9)
+        gia_ban: Number.isFinite(Number(kioskPrices?.[item.ma_san_pham]))
+          ? Number(kioskPrices[item.ma_san_pham]) : item.gia_ban
       }));
     }
     return cart;
   }, [cart, deliveryMode, kioskPrices]);
 
   const total = displayCart.reduce((sum, i) => sum + i.gia_ban * i.so_luong, 0);
+  const kioskPriceUnavailable = deliveryMode === 'KIOSK' && Boolean(selectedBranch) && (
+    isLoadingKioskPrices || Boolean(kioskPricesError) || !kioskPrices ||
+    cart.some(item => !Number.isFinite(Number(kioskPrices[item.ma_san_pham])))
+  );
 
   const [deliveryMethod, setDeliveryMethod] = useState('INTERNAL');
   const [tableNumber, setTableNumber] = useState(() => {
@@ -136,7 +146,7 @@ export default function CartPage({
   }, []);
 
   // 1: Cart Items, 2: Checkout Info Form
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(draft?.step === 2 ? 2 : 1);
 
   const { data: inventoryData } = useQuery({
     queryKey: ['inventory', selectedBranch],
@@ -217,9 +227,19 @@ export default function CartPage({
 
   const computedKhungGio = 'Giao ngay (15-30 phút)';
 
-  const [phuongThuc, setPhuongThuc] = useState(null);
-  const [addressForm, setAddressForm] = useState(() => ({ ...defaultAddressSelection, street: '' }));
-  const [userCoordinates, setUserCoordinates] = useState(null);
+  const [phuongThuc, setPhuongThuc] = useState(draft?.phuongThuc || null);
+  const [addressForm, setAddressForm] = useState(() => draft?.addressForm || { city: '', district: '', ward: '', street: '' });
+  const [userCoordinates, setUserCoordinates] = useState(() => coordinates(draft?.userCoordinates));
+  const selectedDeliveryBranch = useMemo(() => (publicBranchPayload?.items || []).find(branch =>
+    String(branch.ma_chi_nhanh || branch.co_so_ma || branch.branch_code) === String(selectedBranch)
+  ), [publicBranchPayload, selectedBranch]);
+  const deliveryWarning = deliveryMode === 'GIAO_TAN_NOI'
+    ? deliveryRegionWarning(addressForm.city, selectedDeliveryBranch, userCoordinates) : '';
+  const suggestedDeliveryBranch = useMemo(() => {
+    const city = regionOf(addressForm.city);
+    if (!city || !deliveryWarning) return null;
+    return (publicBranchPayload?.items || []).find(branch => regionOf(branch.thanh_pho || branch.dia_chi) === city) || null;
+  }, [addressForm.city, deliveryWarning, publicBranchPayload]);
   const [stockValidation, setStockValidation] = useState({
     canOrder: false,
     hasCoordinates: false,
@@ -228,7 +248,7 @@ export default function CartPage({
     message: '',
     missingItems: [],
   });
-  const [ghiChu, setGhiChu] = useState('');
+  const [ghiChu, setGhiChu] = useState(draft?.ghiChu || '');
   const [thongBao, setThongBao] = useState('');
   const runCartWrite = async action => {
     try { await action(); }
@@ -266,9 +286,7 @@ export default function CartPage({
     : (!isValidPhone(guestPhone) ? 'Số điện thoại cần 10 số (bắt đầu bằng 0)' : '');
 
   const handleAddressSelect = useCallback((item) => {
-    if (item.lat && item.lng) {
-      setUserCoordinates({ lat: Number(item.lat), lng: Number(item.lng) });
-    }
+    setUserCoordinates(coordinates(item));
 
     let resolvedCity = item.city || '';
     let resolvedWard = item.ward || '';
@@ -317,6 +335,7 @@ export default function CartPage({
     setAddressForm((prev) => ({
       ...prev,
       city: resolvedCity || prev.city,
+      district: item.district || '',
       ward: resolvedWard || prev.ward,
       street: resolvedStreet || prev.street,
     }));
@@ -326,7 +345,9 @@ export default function CartPage({
   const maNguoiDung = useMemo(() => activeUserId || 'anonymous', [activeUserId]);
   const isLoggedInUser = useMemo(() => {
     const value = String(maNguoiDung || '');
-    return Boolean(value && !value.startsWith('anon-') && value !== 'anonymous');
+    if (!value || value.startsWith('anon-') || value === 'anonymous') return false;
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return true;
+    return Boolean(localStorage.getItem('token') || value === 'user');
   }, [maNguoiDung]);
 
   useEffect(() => {
@@ -480,11 +501,6 @@ export default function CartPage({
       .filter((v) => v.co_the_dung !== false && (v.da_dung_boi_ban === undefined || v.da_dung_boi_ban < (v.gioi_han_moi_nguoi || 1)));
   }, [voucherItems, isPersonalVoucher]);
 
-  useEffect(() => {
-    if (!addressForm.city && defaultAddressSelection.city) {
-      setAddressForm((prev) => ({ ...prev, ...defaultAddressSelection }));
-    }
-  }, [addressForm.city, defaultAddressSelection]);
 
   useEffect(() => {
     if (voucherCode && cart && cart.length > 0) {
@@ -601,36 +617,11 @@ export default function CartPage({
 
 
   useEffect(() => {
-    if (!defaultAddress) {
-      return;
-    }
-
-    setAddressForm((current) => {
-      if (current.street?.trim()) {
-        return current;
-      }
-
-      let city = defaultAddress.thanh_pho || defaultAddress.city;
-      let district = defaultAddress.quan_huyen || defaultAddress.district;
-      let ward = defaultAddress.phuong_xa || defaultAddress.ward;
-      let street = defaultAddress.so_nha_ten_duong || defaultAddress.street;
-
-      if (!city || !district || !ward || !street) {
-        const parsed = tachDiaChiDayDu(defaultAddress.dia_chi_day_du);
-        city = city || parsed.city;
-        district = district || parsed.district;
-        ward = ward || parsed.ward;
-        street = street || parsed.street;
-      }
-
-      return {
-        city: city || 'Đà Nẵng',
-        district: district || 'Quận Hải Châu',
-        ward: ward || 'Phường Nam Dương',
-        street: street || defaultAddress.dia_chi_day_du || '',
-        savedAddressId: defaultAddress.id,
-      };
-    });
+    if (!defaultAddress || addressForm.street?.trim()) return;
+    const parts = defaultAddress.dia_chi_cau_truc || tachDiaChiDayDu(defaultAddress.dia_chi_day_du);
+    setAddressForm({ city: parts.city || defaultAddress.thanh_pho || '', district: parts.district || '',
+      ward: parts.ward || '', street: parts.street || defaultAddress.dia_chi_day_du || '', savedAddressId: defaultAddress.id });
+    setUserCoordinates(coordinates(defaultAddress));
   }, [defaultAddress]);
 
   useEffect(() => {
@@ -752,24 +743,6 @@ export default function CartPage({
     }
   }, [publicBranchPayload, selectedBranch, addressForm.city, deliveryMode, userCoordinates]);
 
-  // Tự động Geocode tọa độ GPS khi người dùng chỉnh sửa địa chỉ thủ công
-  useEffect(() => {
-    if (deliveryMode !== 'GIAO_TAN_NOI') return;
-    const full = taoDiaChiDayDu(addressForm);
-    if (!full || full.trim().length < 5) return;
-
-    const timer = setTimeout(async () => {
-      try {
-        const geo = await geocodeAddress(full);
-        if (geo && geo.lat && geo.lng) {
-          setUserCoordinates({ lat: geo.lat, lng: geo.lng });
-        }
-      } catch { /* Keep the entered address when geocoding is unavailable. */ }
-    }, 600);
-
-    return () => clearTimeout(timer);
-  }, [addressForm.street, addressForm.ward, addressForm.city, deliveryMode]);
-
   const khoiTaoThanhToanMutation = useMutation({
     mutationFn: async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -798,16 +771,15 @@ export default function CartPage({
       let targetLat = userCoordinates?.lat ? Number(userCoordinates.lat) : undefined;
       let targetLng = userCoordinates?.lng ? Number(userCoordinates.lng) : undefined;
 
-      // Nếu chưa có toạ độ GPS mà là giao tận nơi, thử geocode nhanh địa chỉ đầy đủ
-      if ((!targetLat || !targetLng) && deliveryMode === 'GIAO_TAN_NOI' && diaChiDayDu) {
-        try {
-          const geo = await geocodeAddress(diaChiDayDu);
-          if (geo?.lat && geo?.lng) {
-            targetLat = Number(geo.lat);
-            targetLng = Number(geo.lng);
-          }
-        } catch { /* Keep the entered address when geocoding is unavailable. */ }
+      // Nếu địa chỉ nhập tay chưa có tọa độ GPS, fallback về tọa độ chi nhánh được chọn để tính khoảng cách
+      if (deliveryMode === 'GIAO_TAN_NOI' && (!targetLat || !targetLng)) {
+        const branchMatch = (publicBranchPayload?.items || []).find(b => b.ma_chi_nhanh === selectedBranch);
+        if (branchMatch?.vi_do && branchMatch?.kinh_do) {
+          targetLat = Number(branchMatch.vi_do);
+          targetLng = Number(branchMatch.kinh_do);
+        }
       }
+
 
       const payload = {
         checkout_action_id: crypto.randomUUID(),
@@ -864,16 +836,23 @@ export default function CartPage({
       queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
       triggerAiRecommendationRefresh();
       refreshCart();
+      clearPendingCheckout();
       window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId: qrOrderId } }));
     }
   }, [qrOrderStatus, queryClient, refreshCart, triggerAiRecommendationRefresh, qrOrderId]);
 
   const isQrPaid = qrPaidSuccess || qrOrderStatus?.trang_thai_thanh_toan === 'DA_THANH_TOAN';
 
-  const requestLogin = () => {
-    sessionStorage.setItem('post_login_redirect', 'cart');
+  const requestLogin = (returnStep = step) => {
+    savePendingCheckout({ cart, guestId: activeUserId, draft: { step: returnStep, deliveryMode, selectedBranch, phuongThuc, addressForm, userCoordinates, ghiChu } });
     if (onLogin) onLogin();
-    else window.location.assign('/?tab=login');
+    else if (typeof window !== 'undefined' && window.location) {
+      if (typeof window.location.assign === 'function') {
+        window.location.assign('/?tab=login&redirect=cart');
+      } else {
+        window.location.href = '/?tab=login&redirect=cart';
+      }
+    }
   };
 
   const pendingCheckoutRetry = Boolean(checkoutRequestRef.current && !checkoutRequestRef.current.completed);
@@ -895,6 +874,16 @@ export default function CartPage({
     }
     if ((deliveryMode === 'LAY_TAI_QUAN' || deliveryMode === 'DUNG_TAI_CHO') && !selectedBranch) {
       setThongBao('Vui lòng chọn chi nhánh để nhận món trước khi thanh toán.');
+      return;
+    }
+    if (deliveryMode === 'KIOSK' && (!selectedBranch || kioskPriceUnavailable)) {
+      setThongBao(selectedBranch
+        ? 'Kiosk này chưa có giá cho tất cả món trong giỏ. Vui lòng chọn món khác hoặc liên hệ kiosk.'
+        : 'Vui lòng chọn kiosk trước khi thanh toán.');
+      return;
+    }
+    if (deliveryWarning) {
+      setThongBao(deliveryWarning);
       return;
     }
 
@@ -1014,7 +1003,8 @@ export default function CartPage({
               triggerAiRecommendationRefresh();
               refreshCart();
               const orderId = data?.order?.ma_don_hang || data?.payment_details?.ma_don_hang || '';
-              window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId } }));
+              clearPendingCheckout();
+      window.dispatchEvent(new CustomEvent('checkout-success', { detail: { orderId } }));
               setGhiChu('');
               xoaVoucher();
             }, 0);
@@ -1030,7 +1020,7 @@ export default function CartPage({
   };
 
   const handleCheckoutClick = () => {
-    if (!isLoggedInUser) { requestLogin(); return; }
+    if (!isLoggedInUser) { requestLogin(2); return; }
     if (!cart.length) {
       setThongBao('Giỏ hàng đang trống. Hãy thêm món ăn vào giỏ hàng trước.');
       return;
@@ -1044,7 +1034,7 @@ export default function CartPage({
     <div className="w-full bg-[#faf7f4] min-h-screen py-8 sm:py-12 px-4 md:px-8">
       <div className="max-w-[1240px] mx-auto">
         {/* Breadcrumb */}
-        <nav className="text-[13px] font-bold uppercase tracking-wider text-gray-400 mb-6 flex items-center gap-2">
+        <nav className="text-[13px] font-bold  tracking-wider text-gray-400 mb-6 flex items-center gap-2">
           <button
             onClick={() => onBackToHome?.()}
             className="hover:text-[#c41230] transition-colors"
@@ -1056,7 +1046,7 @@ export default function CartPage({
         {/* Header Title */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold uppercase text-[#1a1a1a] tracking-tight font-serif leading-none">
+            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-semibold  text-[#1a1a1a] tracking-tight font-serif leading-none">
               {step === 1 ? ui("Giỏ hàng của bạn") : ui("Thông tin thanh toán")}
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-2">
@@ -1084,12 +1074,12 @@ export default function CartPage({
               onClick={() => setStep(1)}
               className="flex flex-col items-center gap-2 relative z-10 group cursor-pointer"
             >
-              <div className={`w-11 h-11 rounded-full flex items-center justify-center font-extrabold text-sm transition-all duration-300 shadow-sm ${
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 shadow-sm ${
                 step >= 1 ? 'bg-[#c41230] text-white ring-4 ring-[#c41230]/15' : 'bg-gray-100 text-gray-400'
               }`}>
                 <ShoppingBagIcon className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${step >= 1 ? 'text-[#c41230]' : 'text-gray-400'}`}>{ui("1. Giỏ hàng ")}{cart.length > 0 && `(${cart.reduce((sum, i) => sum + i.so_luong, 0)})`}
+              <span className={`text-[11px] sm:text-xs font-semibold  tracking-wider ${step >= 1 ? 'text-[#c41230]' : 'text-gray-400'}`}>{ui("1. Giỏ hàng ")}{cart.length > 0 && `(${cart.reduce((sum, i) => sum + i.so_luong, 0)})`}
               </span>
             </button>
 
@@ -1100,20 +1090,20 @@ export default function CartPage({
               disabled={cart.length === 0}
               className="flex flex-col items-center gap-2 relative z-10 group cursor-pointer disabled:cursor-not-allowed"
             >
-              <div className={`w-11 h-11 rounded-full flex items-center justify-center font-extrabold text-sm transition-all duration-300 shadow-sm ${
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 shadow-sm ${
                 step >= 2 ? 'bg-[#c41230] text-white ring-4 ring-[#c41230]/15' : 'bg-gray-100 text-gray-400'
               }`}>
                 <CreditCardIcon className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${step >= 2 ? 'text-[#c41230]' : 'text-gray-400'}`}>{ui("2. Thanh toán")}</span>
+              <span className={`text-[11px] sm:text-xs font-semibold  tracking-wider ${step >= 2 ? 'text-[#c41230]' : 'text-gray-400'}`}>{ui("2. Thanh toán")}</span>
             </button>
 
             {/* Step 3 */}
             <div className="flex flex-col items-center gap-2 relative z-10">
-              <div className="w-11 h-11 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-extrabold text-sm shadow-sm">
+              <div className="w-11 h-11 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-semibold text-sm shadow-sm">
                 <SparklesIcon className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-400">{ui("3. Hoàn tất")}</span>
+              <span className="text-[11px] sm:text-xs font-semibold  tracking-wider text-gray-400">{ui("3. Hoàn tất")}</span>
             </div>
           </div>
         </div>
@@ -1123,20 +1113,20 @@ export default function CartPage({
           <div className="mb-8 bg-gradient-to-r from-red-50 via-white to-red-50 text-[#b22830] rounded-[24px] p-5 sm:p-6 shadow-xs border border-red-200/80 relative overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-red-100/60 text-[#b22830] flex items-center justify-center shrink-0 border border-red-200 text-xs font-black tracking-wider uppercase">
+                <div className="w-10 h-10 rounded-xl bg-red-100/60 text-[#b22830] flex items-center justify-center shrink-0 border border-red-200 text-xs font-semibold tracking-wider ">
                   FREE
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-red-950">{ui("Đặc quyền Freeship hạng ")}{memberTierName}
+                    <h4 className="text-xs sm:text-sm font-semibold  tracking-wide text-red-950">{ui("Đặc quyền Freeship hạng ")}{memberTierName}
                     </h4>
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-red-100 text-red-900 rounded-full border border-red-200/80">VIP</span>
+                    <span className="text-[10px] font-semibold  px-2 py-0.5 bg-red-100 text-red-900 rounded-full border border-red-200/80">VIP</span>
                   </div>
                   <p className="text-xs font-semibold text-red-900/90 mt-1">
                     {isFreeshipEligible ? (
                       <span className="text-emerald-700 font-bold">{ui("Đã đủ điều kiện Freeship! Giảm ngay ")}{giamPhiShipHanh.toLocaleString(uiLocale())}{ui("đ phí giao hàng")}</span>
                     ) : memberFreeshipMinOrder > total ? (
-                      <span>{ui("Mua thêm ")}<strong className="text-[#c41230] font-extrabold">{(memberFreeshipMinOrder - total).toLocaleString(uiLocale())}{ui("đ")}</strong>{ui(" để được giảm ngay ")}<strong className="text-emerald-700 font-extrabold">{memberFreeshipVal.toLocaleString(uiLocale())}{ui("đ")}</strong>{ui(" phí ship")}</span>
+                      <span>{ui("Mua thêm ")}<strong className="text-[#c41230] font-semibold">{(memberFreeshipMinOrder - total).toLocaleString(uiLocale())}{ui("đ")}</strong>{ui(" để được giảm ngay ")}<strong className="text-emerald-700 font-semibold">{memberFreeshipVal.toLocaleString(uiLocale())}{ui("đ")}</strong>{ui(" phí ship")}</span>
                     ) : (
                       <span>{ui("Đơn từ ")}{memberFreeshipMinOrder.toLocaleString(uiLocale())}{ui("đ sẽ nhận ưu đãi Freeship ")}{memberFreeshipVal.toLocaleString(uiLocale())}{ui("đ")}</span>
                     )}
@@ -1147,7 +1137,7 @@ export default function CartPage({
                 <div className="w-full sm:w-56 shrink-0 space-y-1.5 bg-white/80 p-3 rounded-2xl border border-amber-200/80 shadow-xs">
                   <div className="flex justify-between text-[11px] font-bold text-red-900">
                     <span>{ui("Tiến trình Freeship")}</span>
-                    <span className="text-emerald-700 font-black">{Math.min(100, Math.round((total / memberFreeshipMinOrder) * 100))}%</span>
+                    <span className="text-emerald-700 font-semibold">{Math.min(100, Math.round((total / memberFreeshipMinOrder) * 100))}%</span>
                   </div>
                   <div className="h-2.5 w-full bg-red-100 rounded-full overflow-hidden border border-red-200">
                     <div
@@ -1175,7 +1165,7 @@ export default function CartPage({
                     <p className="text-gray-500 text-sm max-w-sm mx-auto">{ui("Hãy khám phá thực đơn cà phê thơm nồng & bánh tươi ra lò để lấp đầy giỏ hàng nhé!")}</p>
                     <button
                       onClick={() => onBackToHome?.()}
-                      className="mt-2 px-8 py-3.5 bg-[#c41230] text-white font-extrabold text-xs uppercase tracking-widest rounded-full hover:bg-[#a30f28] transition-all shadow-md hover:shadow-lg"
+                      className="mt-2 px-8 py-3.5 bg-[#c41230] text-white font-semibold text-xs  tracking-widest rounded-full hover:bg-[#a30f28] transition-all shadow-md hover:shadow-lg"
                     >{ui("Khám phá Thực đơn")}</button>
                   </div>
                 ) : (
@@ -1202,7 +1192,7 @@ export default function CartPage({
                       {/* Chi tiết sản phẩm */}
                       <div className="flex-1 min-w-0 flex flex-col justify-between min-h-[6rem] sm:min-h-[7rem] pr-0 sm:pr-24">
                         <div className="space-y-1.5">
-                          <h4 className="font-extrabold text-base sm:text-lg text-[#1a1a1a] leading-tight truncate">
+                          <h4 className="font-semibold text-base sm:text-lg text-[#1a1a1a] leading-tight truncate">
                             {item.ten_san_pham}
                           </h4>
 
@@ -1247,14 +1237,14 @@ export default function CartPage({
                           <button
                             type="button"
                             onClick={() => setEditingItem(item)}
-                            className="mt-2 inline-flex items-center gap-1.5 text-[#b22830] font-extrabold text-xs hover:underline w-fit bg-[#b22830]/5 px-2.5 py-1 rounded-lg border border-[#b22830]/15"
+                            className="mt-2 inline-flex items-center gap-1.5 text-[#b22830] font-semibold text-xs hover:underline w-fit bg-[#b22830]/5 px-2.5 py-1 rounded-lg border border-[#b22830]/15"
                           >
                             <PencilIcon className="w-3.5 h-3.5" />{ui(" Chỉnh sửa tùy chọn")}</button>
                         </div>
 
                         {/* Giá tiền */}
                         <div className="mt-3">
-                          <p className="text-[#1a1a1a] font-black text-xl">
+                          <p className="text-[#1a1a1a] font-semibold text-xl">
                             {Number(item.gia_ban).toLocaleString(uiLocale())}{ui("đ")}</p>
                           {isOutOfStock && step === 2 && (
                             <div className="mt-1.5 text-[11px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 inline-block">{ui("Tạm hết hàng tại chi nhánh này")}</div>
@@ -1282,11 +1272,11 @@ export default function CartPage({
                             disabled={cartWritePending}
                             aria-label={ui("Giảm số lượng")}
                             onClick={() => runCartWrite(() => updateCartQuantity(item, -1))}
-                            className="w-7 h-7 rounded-full bg-white text-gray-600 hover:text-[#c41230] font-extrabold text-[15px] flex items-center justify-center shadow-xs transition-colors"
+                            className="w-7 h-7 rounded-full bg-white text-gray-600 hover:text-[#c41230] font-semibold text-[15px] flex items-center justify-center shadow-xs transition-colors"
                           >
                             -
                           </button>
-                          <span className="text-sm font-black text-gray-800">
+                          <span className="text-sm font-semibold text-gray-800">
                             {item.so_luong}
                           </span>
                           <button
@@ -1294,7 +1284,7 @@ export default function CartPage({
                             disabled={cartWritePending}
                             aria-label={ui("Tăng số lượng")}
                             onClick={() => runCartWrite(() => updateCartQuantity(item, 1))}
-                            className="w-7 h-7 rounded-full bg-white text-gray-600 hover:text-[#c41230] font-extrabold text-[15px] flex items-center justify-center shadow-xs transition-colors"
+                            className="w-7 h-7 rounded-full bg-white text-gray-600 hover:text-[#c41230] font-semibold text-[15px] flex items-center justify-center shadow-xs transition-colors"
                           >
                             +
                           </button>
@@ -1333,9 +1323,9 @@ export default function CartPage({
                             {p.ten_san_pham || p.name}
                           </h3>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs font-black text-[#c41230]">
+                            <span className="text-xs font-semibold text-[#c41230]">
                               {Number(p.gia_ban || p.price || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
-                            <span className="px-3 py-1 bg-[#c41230] text-white text-[11px] font-extrabold rounded-full flex items-center gap-1 hover:bg-[#a30f28] transition-colors shadow-xs">{ui("+ Thêm ❯")}</span>
+                            <span className="px-3 py-1 bg-[#c41230] text-white text-[11px] font-semibold rounded-full flex items-center gap-1 hover:bg-[#a30f28] transition-colors shadow-xs">{ui("+ Thêm ❯")}</span>
                           </div>
                         </div>
                       </div>
@@ -1358,7 +1348,7 @@ export default function CartPage({
                   <span>{ui("Quay lại sửa giỏ hàng")}</span>
                 </button>
 
-                <h2 className="text-xl font-black text-[#1a1a1a] uppercase tracking-wide pb-4 border-b border-gray-100 font-serif">{ui("Thông tin giao hàng & Thanh toán")}</h2>
+                <h2 className="text-xl font-semibold text-[#1a1a1a]  tracking-wide pb-4 border-b border-gray-100 font-serif">{ui("Thông tin giao hàng & Thanh toán")}</h2>
 
                 <div className="mb-6">
                   <DeliveryModeSelector selectedMode={deliveryMode} onChange={handleDeliveryModeChange} />
@@ -1376,7 +1366,7 @@ export default function CartPage({
 
                     {!deliveryMode ? null : deliveryMode === 'GIAO_TAN_NOI' ? (
                       <>
-                        <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">{ui("Địa chỉ giao hàng")}</h3>
+                        <h3 className="text-xs font-semibold  text-[#c41230] tracking-widest">{ui("Địa chỉ giao hàng")}</h3>
 
                         {isLoggedInUser && savedAddresses.length ? (
                           <div className="flex flex-col gap-1.5">
@@ -1387,9 +1377,9 @@ export default function CartPage({
                                 const selected = savedAddresses.find((item) => String(item.id) === e.target.value || item.dia_chi_day_du === e.target.value);
                                 if (!selected) return;
 
-                                let city = selected.thanh_pho || selected.city;
-                                let ward = selected.phuong_xa || selected.ward;
-                                let street = selected.so_nha_ten_duong || selected.street;
+                                let city = selected.dia_chi_cau_truc?.city || selected.thanh_pho || selected.city;
+                                let ward = selected.dia_chi_cau_truc?.ward || selected.phuong_xa || selected.ward;
+                                let street = selected.dia_chi_cau_truc?.street || selected.so_nha_ten_duong || selected.street;
 
                                 if (!city || !ward || !street) {
                                   const parsed = tachDiaChiDayDu(selected.dia_chi_day_du);
@@ -1404,9 +1394,7 @@ export default function CartPage({
                                   street,
                                   savedAddressId: selected.id,
                                 });
-                                if (selected.vi_do && selected.kinh_do) {
-                                  setUserCoordinates({ lat: Number(selected.vi_do), lng: Number(selected.kinh_do) });
-                                }
+                                setUserCoordinates(coordinates(selected));
                                 if (selected.ghi_chu && !ghiChu.trim()) {
                                   setGhiChu(selected.ghi_chu);
                                 }
@@ -1428,56 +1416,47 @@ export default function CartPage({
                           label={ui("Số nhà, tên đường / Địa chỉ nhận hàng")}
                           value={addressForm.street}
                           onChange={(street) => {
+                            setUserCoordinates(null);
                             setAddressForm((prev) => ({ ...prev, street }));
                             if (thongBao) setThongBao('');
                           }}
                           onSelectAddress={handleAddressSelect}
                         />
 
-                        {/* Chi tiết Tỉnh/Thành phố & Phường/Xã (Tự động điền khi chọn gợi ý hoặc chọn tay) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Chi tiết Tỉnh/Thành phố & Phường/Xã (Tự động điền khi chọn gợi ý hoặc gõ tìm kiếm) */}
+                        <div className="grid grid-cols-1 gap-3">
                           {/* Thành phố */}
                           <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-bold text-gray-500">{ui("Tỉnh / Thành phố")}</label>
-                            <select
+                            <SmartCombobox
+                              options={cityOptions}
                               value={addressForm.city}
-                              onChange={(e) => {
-                                const nextCity = e.target.value;
-                                const nextWard = (addressOptions[nextCity] || [])[0] || '';
-                                setAddressForm((prev) => ({ ...prev, city: nextCity, ward: nextWard }));
+                              onChange={(nextCity) => {
+                                setUserCoordinates(null);
+                                setAddressForm((prev) => ({ ...prev, city: nextCity, ward: '' }));
                                 if (thongBao) setThongBao('');
                               }}
-                              className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-800 outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all cursor-pointer truncate"
-                            >
-                              <option value="">{ui("-- Chọn Tỉnh / Thành phố --")}</option>
-                              {cityOptions.map((city) => (
-                                <option key={city} value={city}>
-                                  {city}
-                                </option>
-                              ))}
-                            </select>
+                              placeholder={ui("Nhập hoặc chọn Tỉnh / TP...")}
+                            />
                           </div>
 
                           {/* Phường / Xã */}
                           <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-bold text-gray-500">{ui("Phường / Xã")}</label>
-                            <select
+                            <SmartCombobox
+                              options={wardOptions}
                               value={addressForm.ward}
-                              onChange={(e) => {
-                                setAddressForm((prev) => ({ ...prev, ward: e.target.value }));
+                              onChange={(nextWard) => {
+                                setUserCoordinates(null);
+                                setAddressForm((prev) => ({ ...prev, ward: nextWard }));
                                 if (thongBao) setThongBao('');
                               }}
-                              className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-800 outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all cursor-pointer truncate"
-                            >
-                              <option value="">{ui("-- Chọn Phường / Xã --")}</option>
-                              {wardOptions.map((ward) => (
-                                <option key={ward} value={ward}>
-                                  {ward}
-                                </option>
-                              ))}
-                            </select>
+                              placeholder={addressForm.city ? ui("Nhập hoặc chọn Phường / Xã...") : ui("Chọn Tỉnh / TP trước")}
+                              disabled={!addressForm.city}
+                            />
                           </div>
                         </div>
+
 
                         {/* KIỂM TRA BÁN KÍNH 5KM VÀ TỒN KHO MÓN ĂN (CUỘN ĐỘC LẬP) */}
                         <NearbyBranchChecker
@@ -1492,7 +1471,7 @@ export default function CartPage({
                       </>
                     ) : (
                       <>
-                        <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">{ui("Chọn cửa hàng nhận đồ")}</h3>
+                        <h3 className="text-xs font-semibold  text-[#c41230] tracking-widest">{ui("Chọn cửa hàng nhận đồ")}</h3>
                         <BranchSelector
                           branches={availableLocations}
                           selectedBranch={selectedBranch}
@@ -1516,7 +1495,7 @@ export default function CartPage({
                           <div className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-emerald-900">
                             <span className="text-xl">📍</span>
                             <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">{ui("Đang phục vụ tại bàn")}</p>
+                              <p className="text-xs font-bold  tracking-wider text-emerald-700">{ui("Đang phục vụ tại bàn")}</p>
                               <p className="text-xs font-semibold">{ui("Bạn đang ngồi tại ")}<strong>{ui("Bàn ")}{tableNumber}</strong>{ui(". Nhân viên sẽ mang nước ra tận bàn!")}</p>
                             </div>
                           </div>
@@ -1528,81 +1507,32 @@ export default function CartPage({
                   {/* Cột phải form: Thông tin liên hệ & Phương thức thanh toán */}
                   <div className="space-y-4">
                     {!isLoggedInUser && (
-                      <div className="bg-[#faf7f4] border border-[#e8e2da] rounded-[20px] p-5 space-y-4 mb-2 shadow-2xs">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest flex items-center gap-1.5">
-                            <span>{ui("Thông tin khách hàng")}</span>
-                            <span className="text-red-600 font-bold">*</span>
-                          </h3>
-                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">{ui("Bắt buộc cả hai")}</span>
-                        </div>
-
-                        <div className="flex flex-col gap-3.5">
-                          {/* EMAIL NHẬN ĐƠN */}
-                          <div className="flex flex-col gap-1">
-                            <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
-                              <span className="flex items-center gap-1">
-                                <span>{ui("Email nhận đơn")}</span>
-                                <span className="text-red-600 font-bold">*</span>
-                              </span>
-                              {showEmailError && (
-                                <span className="text-[11px] font-bold text-red-600">
-                                  {emailErrorMessage}
-                                </span>
-                              )}
-                            </label>
-                            <input
-                              type="email"
-                              value={guestEmail}
-                              onBlur={() => setGuestEmailTouched(true)}
-                              onChange={(e) => {
-                                setGuestEmail(e.target.value);
-                                if (thongBao) setThongBao('');
-                              }}
-                              placeholder={ui("Ví dụ: nguyenvan@gmail.com")}
-                              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold outline-none transition-all ${
-                                showEmailError
-                                  ? 'border-red-500 bg-red-50/20 text-red-900 focus:ring-2 focus:ring-red-500/20'
-                                  : 'border-gray-200 focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20'
-                              }`}
-                            />
+                      <div className="bg-gradient-to-br from-red-50/70 via-stone-50 to-amber-50/50 border border-red-200/80 rounded-2xl p-5 space-y-3.5 mb-2 shadow-sm">
+                        <div className="flex items-start gap-3.5">
+                          <div className="w-10 h-10 rounded-xl bg-[#c41230] text-white flex items-center justify-center shrink-0 shadow-md shadow-red-950/15">
+                            <UserIcon className="w-5 h-5" />
                           </div>
-
-                          {/* SỐ ĐIỆN THOẠI */}
-                          <div className="flex flex-col gap-1">
-                            <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
-                              <span className="flex items-center gap-1">
-                                <span>{ui("Số điện thoại liên hệ")}</span>
-                                <span className="text-red-600 font-bold">*</span>
-                              </span>
-                              {showPhoneError && (
-                                <span className="text-[11px] font-bold text-red-600">
-                                  {phoneErrorMessage}
-                                </span>
-                              )}
-                            </label>
-                            <input
-                              type="tel"
-                              value={guestPhone}
-                              onBlur={() => setGuestPhoneTouched(true)}
-                              onChange={(e) => {
-                                setGuestPhone(e.target.value);
-                                if (thongBao) setThongBao('');
-                              }}
-                              placeholder={ui("Ví dụ: 0987654321")}
-                              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold outline-none transition-all ${
-                                showPhoneError
-                                  ? 'border-red-500 bg-red-50/20 text-red-900 focus:ring-2 focus:ring-red-500/20'
-                                  : 'border-gray-200 focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20'
-                              }`}
-                            />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-bold text-gray-900">{ui("Yêu cầu đăng nhập để đặt hàng")}</h3>
+                              <span className="text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">{ui("Bắt buộc")}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                              {ui("Hệ thống chỉ hỗ trợ đặt hàng khi quý khách đã đăng nhập tài khoản để đảm bảo tích lũy điểm thưởng thành viên, lưu lịch sử đơn hàng và theo dõi lộ trình shipper.")}
+                            </p>
                           </div>
                         </div>
 
-                        <p className="text-[11px] text-gray-500 font-medium leading-relaxed flex items-start gap-1">
-                          <span className="text-red-600 font-bold">*</span>
-                          <span>{ui("Bắt buộc nhập cả Email và Số điện thoại để hệ thống gửi thông báo đơn hàng và liên hệ giao hàng.")}</span>
-                        </p>
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => requestLogin()}
+                            className="w-full py-2.5 px-4 rounded-xl bg-[#c41230] hover:bg-[#a30f28] text-white text-xs font-bold tracking-wide shadow-md shadow-red-950/10 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+                          >
+                            <span>{ui("Đăng nhập hoặc Đăng ký tài khoản ngay")}</span>
+                            <ArrowLongRightIcon className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -1619,7 +1549,7 @@ export default function CartPage({
 
                     {/* PAYMENT METHOD SELECTION CARDS GRID */}
                     <div className="space-y-2 pt-2">
-                      <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">{ui("Phương thức thanh toán")}</h3>
+                      <h3 className="text-xs font-semibold  text-[#c41230] tracking-widest">{ui("Phương thức thanh toán")}</h3>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                         {/* VNPAY */}
@@ -1634,8 +1564,8 @@ export default function CartPage({
                         >
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-black text-[#1a1a1a]">VNPAY</span>
-                              <span className="text-[9px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">{ui("Thẻ / App")}</span>
+                              <span className="text-xs font-semibold text-[#1a1a1a]">VNPAY</span>
+                              <span className="text-[9px] font-semibold  tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">{ui("Thẻ / App")}</span>
                             </div>
                             <p className="text-[11px] font-semibold text-gray-500">{ui("ATM, Visa, QR Ngân Hàng")}</p>
                           </div>
@@ -1656,8 +1586,8 @@ export default function CartPage({
                         >
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-black text-[#1a1a1a]">{ui("Ngân Hàng QR")}</span>
-                              <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">VietQR</span>
+                              <span className="text-xs font-semibold text-[#1a1a1a]">{ui("Ngân Hàng QR")}</span>
+                              <span className="text-[9px] font-semibold  tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">VietQR</span>
                             </div>
                             <p className="text-[11px] font-semibold text-gray-500">{ui("Quét mã chuyển khoản tự động")}</p>
                           </div>
@@ -1680,8 +1610,8 @@ export default function CartPage({
                           >
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-black text-[#1a1a1a]">{ui("Ví Avengers")}</span>
-                                <span className="text-[9px] font-extrabold text-[#b22830] bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                                <span className="text-xs font-semibold text-[#1a1a1a]">{ui("Ví Avengers")}</span>
+                                <span className="text-[9px] font-semibold text-[#b22830] bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
                                   {Number(walletData?.wallet?.balance || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
                               </div>
                               <p className="text-[11px] font-semibold text-gray-500">{ui("Trừ trực tiếp số dư ví")}</p>
@@ -1703,7 +1633,7 @@ export default function CartPage({
                           }`}
                         >
                           <div className="space-y-1">
-                            <span className="text-xs font-black text-[#1a1a1a]">
+                            <span className="text-xs font-semibold text-[#1a1a1a]">
                               {deliveryMode === 'GIAO_TAN_NOI' ? ui("Tiền mặt COD") : ui("Thanh toán tại quầy")}
                             </span>
                             <p className="text-[11px] font-semibold text-gray-500">
@@ -1725,25 +1655,25 @@ export default function CartPage({
           {/* Cột phải: Order Summary Sticky Sidebar */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-24">
             <div className="bg-white rounded-[24px] p-6 md:p-8 border border-[#e8e2da] shadow-sm">
-              <h2 className="text-lg font-black text-[#1a1a1a] uppercase mb-6 tracking-wide pb-4 border-b border-gray-100 font-serif">{ui("Tóm tắt đơn hàng")}</h2>
+              <h2 className="text-lg font-semibold text-[#1a1a1a]  mb-6 tracking-wide pb-4 border-b border-gray-100 font-serif">{ui("Tóm tắt đơn hàng")}</h2>
 
               <div className="space-y-4">
                 {/* Tạm tính */}
                 <div className="flex justify-between items-center text-sm font-semibold text-gray-600">
                   <span>{ui("Tạm tính (")}{cart.reduce((s, i) => s + i.so_luong, 0)}{ui(" món)")}</span>
-                  <span className="text-[#1a1a1a] font-extrabold">{(cartQuote?.subtotal ?? total).toLocaleString(uiLocale())}{ui("đ")}</span>
+                  <span className="text-[#1a1a1a] font-semibold">{(cartQuote?.subtotal ?? total).toLocaleString(uiLocale())}{ui("đ")}</span>
                 </div>
 
                 {/* Giảm giá voucher */}
                 {discountAmount > 0 ? (
                   <div className="flex justify-between items-center text-sm font-semibold text-red-600">
                     <span>{ui("Voucher giảm giá")}</span>
-                    <span className="font-extrabold">-{discountAmount.toLocaleString(uiLocale())}{ui("đ")}</span>
+                    <span className="font-semibold">-{discountAmount.toLocaleString(uiLocale())}{ui("đ")}</span>
                   </div>
                 ) : (
                   <div className="flex justify-between items-center text-sm font-semibold text-gray-500">
                     <span>{ui("Voucher giảm giá")}</span>
-                    <span className="text-[#1a1a1a] font-extrabold">{ui("0đ")}</span>
+                    <span className="text-[#1a1a1a] font-semibold">{ui("0đ")}</span>
                   </div>
                 )}
 
@@ -1752,7 +1682,7 @@ export default function CartPage({
                   <div className="flex justify-between items-center text-sm font-semibold text-gray-600">
                     <span>{ui("Phí giao hàng")}</span>
                     {deliveryMode !== 'GIAO_TAN_NOI' ? (
-                      <span className="text-emerald-600 font-extrabold">{ui("Miễn phí")}</span>
+                      <span className="text-emerald-600 font-semibold">{ui("Miễn phí")}</span>
                     ) : (
                       <div className="text-right flex items-center gap-2">
                         {giamPhiShipHanh > 0 && (
@@ -1760,9 +1690,9 @@ export default function CartPage({
                             {phiGiaoHangGoc.toLocaleString(uiLocale())}{ui("đ")}</span>
                         )}
                         {phiGiaoHangThucTe === 0 ? (
-                          <span className="text-emerald-600 font-extrabold">{ui("Miễn phí")}</span>
+                          <span className="text-emerald-600 font-semibold">{ui("Miễn phí")}</span>
                         ) : (
-                          <span className="text-[#1a1a1a] font-extrabold">{phiGiaoHangThucTe.toLocaleString(uiLocale())}{ui("đ")}</span>
+                          <span className="text-[#1a1a1a] font-semibold">{phiGiaoHangThucTe.toLocaleString(uiLocale())}{ui("đ")}</span>
                         )}
                       </div>
                     )}
@@ -1789,7 +1719,7 @@ export default function CartPage({
                 {/* Tổng cộng */}
                 <div className="flex justify-between items-end">
                   <div>
-                    <span className="text-sm font-black text-[#1a1a1a] uppercase block">{ui("Tổng thanh toán")}</span>
+                    <span className="text-sm font-semibold text-[#1a1a1a]  block">{ui("Tổng thanh toán")}</span>
                     <span className="text-[11px] text-gray-400 font-semibold">{ui("(Đã bao gồm VAT & phí)")}</span>
                   </div>
                   <div className="text-right">
@@ -1797,7 +1727,7 @@ export default function CartPage({
                       <p className="text-xs font-semibold text-gray-400 line-through">
                         {total.toLocaleString(uiLocale())}{ui("đ")}</p>
                     )}
-                    <span className="text-2xl sm:text-3xl font-black text-[#c41230] tracking-tight">
+                    <span className="text-2xl sm:text-3xl font-semibold text-[#c41230] tracking-tight">
                       {tongTienSauGiam.toLocaleString(uiLocale())}{ui("đ")}</span>
                   </div>
                 </div>
@@ -1809,17 +1739,17 @@ export default function CartPage({
                   <div className="flex items-center justify-between gap-3 p-3.5 bg-emerald-50/80 rounded-2xl border border-emerald-200">
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-black text-emerald-800 uppercase tracking-wide truncate">
+                        <span className="text-xs font-semibold text-emerald-800  tracking-wide truncate">
                           {voucherResult.ma_voucher || voucherResult.ma_khuyen_mai}
                         </span>
-                        <span className="text-[9px] font-black uppercase text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">{ui("Đã áp dụng")}</span>
+                        <span className="text-[9px] font-semibold  text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">{ui("Đã áp dụng")}</span>
                       </div>
                       <p className="text-[11px] font-bold text-emerald-700 truncate mt-0.5">{ui("Tiết kiệm ")}{discountAmount.toLocaleString(uiLocale())}{ui("đ cho đơn hàng")}</p>
                     </div>
                     <button
                       type="button"
                       onClick={xoaVoucher}
-                      className="rounded-xl bg-white px-3 py-1.5 text-xs font-black text-red-500 border border-red-200 shadow-xs shrink-0 hover:bg-red-50 transition-colors"
+                      className="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-red-500 border border-red-200 shadow-xs shrink-0 hover:bg-red-50 transition-colors"
                     >{ui("Bỏ dùng")}</button>
                   </div>
                 ) : (
@@ -1829,14 +1759,14 @@ export default function CartPage({
                       value={voucherCode}
                       onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherError(''); }}
                       onKeyDown={(e) => e.key === 'Enter' && apDungVoucher()}
-                      className="flex-1 h-full bg-transparent border-none outline-none text-xs sm:text-sm font-semibold uppercase text-gray-800 placeholder-gray-400"
-                      placeholder={ui("MÃ GIẢM GIÁ")}
+                      className="flex-1 h-full bg-transparent border-none outline-none text-xs sm:text-sm font-semibold  text-gray-800 placeholder-gray-400"
+                      placeholder={ui("Mã giảm giá")}
                     />
                     <button
                       type="button"
                       onClick={apDungVoucher}
                       disabled={isCheckingVoucher}
-                      className="rounded-full bg-[#1a1a1a] hover:bg-[#c41230] text-white font-black text-xs uppercase px-5 h-[38px] flex items-center justify-center shrink-0 transition-colors disabled:opacity-60 cursor-pointer shadow-xs"
+                      className="rounded-full bg-[#1a1a1a] hover:bg-[#c41230] text-white font-semibold text-xs  px-5 h-[38px] flex items-center justify-center shrink-0 transition-colors disabled:opacity-60 cursor-pointer shadow-xs"
                     >
                       {isCheckingVoucher ? '...' : ui("Áp dụng")}
                     </button>
@@ -1850,7 +1780,7 @@ export default function CartPage({
               {/* MÃ GIẢM GIÁ KHẢ DỤNG - TICKET STUB CARDS DESIGN */}
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-3 px-1">
-                  <h2 className="text-xs font-black uppercase text-gray-700 tracking-wider">{ui("Mã giảm giá dành cho bạn")}</h2>
+                  <h2 className="text-xs font-semibold  text-gray-700 tracking-wider">{ui("Mã giảm giá dành cho bạn")}</h2>
                 </div>
 
                 {(!voucherItems || voucherItems.length === 0) ? (
@@ -1863,7 +1793,7 @@ export default function CartPage({
                     {personalVouchers.length > 0 && (
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 px-0.5">
-                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#b22830]">{ui("Dành riêng cho bạn")}</span>
+                          <span className="text-[11px] font-semibold  tracking-wider text-[#b22830]">{ui("Dành riêng cho bạn")}</span>
                         </div>
                         {personalVouchers.map((v) => {
                           const code = v.ma_khuyen_mai || v.ma_voucher || v.code;
@@ -1885,15 +1815,15 @@ export default function CartPage({
                             >
                               {/* Left Badge */}
                               <div className="w-18 bg-[#b22830] text-white p-2.5 flex flex-col items-center justify-center shrink-0 text-center relative border-r border-dashed border-red-300">
-                                <span className="text-[10px] font-black tracking-wider uppercase leading-tight">{badgeLabel}</span>
+                                <span className="text-[10px] font-semibold tracking-wider  leading-tight">{badgeLabel}</span>
                               </div>
 
                               {/* Content */}
                               <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5">
-                                  <span className="px-2 py-0.5 bg-red-100/80 text-[#b22830] text-[10px] font-black rounded uppercase tracking-wider">{code}</span>
+                                  <span className="px-2 py-0.5 bg-red-100/80 text-[#b22830] text-[10px] font-semibold rounded  tracking-wider">{code}</span>
                                 </div>
-                                <h5 className="text-xs font-extrabold text-gray-900 truncate leading-snug">{v.ten_khuyen_mai || v.mo_ta || ui("Voucher quà tặng", {})}</h5>
+                                <h5 className="text-xs font-semibold text-gray-900 truncate leading-snug">{v.ten_khuyen_mai || v.mo_ta || ui("Voucher quà tặng", {})}</h5>
                                 <p className="text-[10px] font-semibold text-[#b22830] mt-0.5">
                                   {v.ngay_ket_thuc || v.han_su_dung ? `HSD: ${new Date(v.ngay_ket_thuc || v.han_su_dung).toLocaleDateString(uiLocale())}` : ui("Hạn sử dụng dài")}
                                 </p>
@@ -1904,7 +1834,7 @@ export default function CartPage({
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setVoucherCode(code); apDungVoucher(code); }}
-                                  className="px-3 py-1 bg-[#b22830] hover:bg-[#8f1b23] text-white font-extrabold text-[11px] rounded-full shadow-xs transition-colors"
+                                  className="px-3 py-1 bg-[#b22830] hover:bg-[#8f1b23] text-white font-semibold text-[11px] rounded-full shadow-xs transition-colors"
                                 >{ui("Dùng")}</button>
                               </div>
                             </div>
@@ -1917,7 +1847,7 @@ export default function CartPage({
                     {publicVouchers.length > 0 && (
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 px-0.5">
-                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-700">{ui("Khuyến mãi hệ thống")}</span>
+                          <span className="text-[11px] font-semibold  tracking-wider text-gray-700">{ui("Khuyến mãi hệ thống")}</span>
                         </div>
                         {publicVouchers.map((v) => {
                           const code = v.ma_khuyen_mai || v.ma_voucher || v.code;
@@ -1939,15 +1869,15 @@ export default function CartPage({
                             >
                               {/* Left Badge */}
                               <div className="w-18 bg-[#fff6f0] text-[#e15923] p-2.5 flex flex-col items-center justify-center shrink-0 text-center relative border-r border-dashed border-[#fcdbc7]">
-                                <span className="text-[10px] font-black tracking-wider uppercase leading-tight">{badgeLabel}</span>
+                                <span className="text-[10px] font-semibold tracking-wider  leading-tight">{badgeLabel}</span>
                               </div>
 
                               {/* Content */}
                               <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5">
-                                  <span className="px-2 py-0.5 bg-[#feeee3] text-[#e15923] text-[10px] font-black rounded uppercase tracking-wider">{code}</span>
+                                  <span className="px-2 py-0.5 bg-[#feeee3] text-[#e15923] text-[10px] font-semibold rounded  tracking-wider">{code}</span>
                                 </div>
-                                <h5 className="text-xs font-extrabold text-[#282828] truncate leading-snug">{v.ten_khuyen_mai || v.mo_ta || ui("Giảm {{v0}}", {v0:valueText})}</h5>
+                                <h5 className="text-xs font-semibold text-[#282828] truncate leading-snug">{v.ten_khuyen_mai || v.mo_ta || ui("Giảm {{v0}}", {v0:valueText})}</h5>
                                 <p className="text-[10px] font-semibold text-gray-500 mt-0.5">
                                   {v.ngay_ket_thuc || v.han_su_dung ? `HSD: ${new Date(v.ngay_ket_thuc || v.han_su_dung).toLocaleDateString(uiLocale())}` : ui("Không giới hạn")}
                                 </p>
@@ -1958,7 +1888,7 @@ export default function CartPage({
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setVoucherCode(code); apDungVoucher(code); }}
-                                  className="px-3 py-1 bg-[#e15923] hover:bg-[#c44919] text-white font-extrabold text-[11px] rounded-full shadow-xs transition-colors"
+                                  className="px-3 py-1 bg-[#e15923] hover:bg-[#c44919] text-white font-semibold text-[11px] rounded-full shadow-xs transition-colors"
                                 >{ui("Dùng")}</button>
                               </div>
                             </div>
@@ -1976,7 +1906,7 @@ export default function CartPage({
                   type="button"
                   onClick={handleCheckoutClick}
                   disabled={cart.length === 0}
-                  className="w-full mt-6 py-4 bg-[#1a1a1a] hover:bg-[#c41230] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-6 py-4 bg-[#1a1a1a] hover:bg-[#c41230] text-white rounded-full font-semibold  text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span>{isLoggedInUser ? ui("Tiến hành thanh toán") : ui("Đăng nhập để thanh toán")}</span>
                   <ArrowLongRightIcon className="h-5 w-5 stroke-[2.5]" />
@@ -1994,6 +1924,11 @@ export default function CartPage({
                       </p>
                     </div>
                   )}
+                  {deliveryWarning && <div role="alert" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+                    <p>{deliveryWarning}</p>
+                    {suggestedDeliveryBranch && <button type="button" className="mt-2 underline underline-offset-4" onClick={() => setSelectedBranch(suggestedDeliveryBranch.ma_chi_nhanh || suggestedDeliveryBranch.co_so_ma || suggestedDeliveryBranch.branch_code)}>{ui(" Chọn ")}{suggestedDeliveryBranch.ten_chi_nhanh || suggestedDeliveryBranch.name}
+                    </button>}
+                  </div>}
 
                   {deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock && (
                     <p className="mt-4 text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100 text-center">{ui("Có món trong giỏ hàng đã hết hàng tại chi nhánh này. Vui lòng kiểm tra lại giỏ hàng!")}</p>
@@ -2001,8 +1936,8 @@ export default function CartPage({
 
                   <button
                     onClick={khoiTaoThanhToan}
-                    disabled={cartWritePending || !deliveryMode || !phuongThuc || ((deliveryMode === 'LAY_TAI_QUAN' || deliveryMode === 'DUNG_TAI_CHO') && !selectedBranch) || (!pendingCheckoutRetry && ((isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder))) || khoiTaoThanhToanMutation.isPending}
-                    className="w-full mt-6 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled={cartWritePending || Boolean(deliveryWarning) || !deliveryMode || !phuongThuc || ((deliveryMode === 'LAY_TAI_QUAN' || deliveryMode === 'DUNG_TAI_CHO') && !selectedBranch) || (deliveryMode === 'KIOSK' && (!selectedBranch || kioskPriceUnavailable)) || (!pendingCheckoutRetry && ((isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder))) || khoiTaoThanhToanMutation.isPending}
+                    className="w-full mt-6 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-semibold  text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {khoiTaoThanhToanMutation.isPending ? (
                       <>
@@ -2011,7 +1946,13 @@ export default function CartPage({
                       </>
                     ) : (
                       <>
-                        <span>{pendingCheckoutRetry ? ui("Thử lại đơn đã gửi") : ui("Xác nhận & Đặt hàng")}</span>
+                        <span>
+                          {!isLoggedInUser
+                            ? ui("Đăng nhập để đặt hàng")
+                            : pendingCheckoutRetry
+                            ? ui("Thử lại đơn đã gửi")
+                            : ui("Xác nhận & Đặt hàng")}
+                        </span>
                         <CheckIcon className="w-5 h-5 stroke-[3]" />
                       </>
                     )}
@@ -2040,19 +1981,19 @@ export default function CartPage({
                   </div>
 
                   <div className="space-y-1">
-                    <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-black tracking-wider uppercase rounded-full">{ui("Giao dịch hoàn tất")}</span>
-                    <h3 className="text-lg font-black text-emerald-900 tracking-tight">{ui("THANH TOÁN THÀNH CÔNG!")}</h3>
+                    <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-semibold tracking-wider  rounded-full">{ui("Giao dịch hoàn tất")}</span>
+                    <h3 className="text-lg font-semibold text-emerald-900 tracking-tight">{ui("Thanh toán thành công!")}</h3>
                     <p className="text-xs text-gray-500 font-medium">{ui("Hệ thống đã nhận được tiền chuyển khoản SePay và tự động xác nhận đơn.")}</p>
                   </div>
 
                   <div className="text-left space-y-2.5 text-xs bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
                     <p className="flex justify-between items-center py-1 border-b border-gray-100">
                       <span className="text-gray-500">{ui("Mã tham chiếu:")}</span>
-                      <span className="font-black text-gray-800 font-mono tracking-wide">{qrData.ma_tham_chieu}</span>
+                      <span className="font-semibold text-gray-800 font-mono tracking-wide">{qrData.ma_tham_chieu}</span>
                     </p>
                     <p className="flex justify-between items-center py-1 border-b border-gray-100">
                       <span className="text-gray-500">{ui("Số tiền đã nhận:")}</span>
-                      <span className="font-black text-emerald-600 text-base">{Number(qrData.so_tien).toLocaleString(uiLocale())}{ui("đ")}</span>
+                      <span className="font-semibold text-emerald-600 text-base">{Number(qrData.so_tien).toLocaleString(uiLocale())}{ui("đ")}</span>
                     </p>
                     <p className="flex justify-between items-center pt-1">
                       <span className="text-gray-500">{ui("Trạng thái đơn:")}</span>
@@ -2067,7 +2008,7 @@ export default function CartPage({
                       onClick={() => {
                         window.location.href = '/?tab=history';
                       }}
-                      className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs font-semibold  tracking-wider rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <span>{ui("Xem Lịch Sử Đơn Hàng")}</span>
                       <ArrowLongRightIcon className="w-4 h-4 stroke-[2.5]" />
@@ -2077,7 +2018,7 @@ export default function CartPage({
                 </div>
               ) : (
                 <div className="bg-white rounded-[24px] p-6 border border-[#e8e2da] shadow-md text-center animate-in fade-in duration-300 space-y-4">
-                  <h3 className="text-sm font-black text-[#1a1a1a] uppercase tracking-wide pb-2 border-b border-gray-100 font-serif">{ui("Quét mã QR để thanh toán đơn hàng")}</h3>
+                  <h3 className="text-sm font-semibold text-[#1a1a1a]  tracking-wide pb-2 border-b border-gray-100 font-serif">{ui("Quét mã QR để thanh toán đơn hàng")}</h3>
 
                   <div className="relative inline-block p-3 border border-gray-200 rounded-2xl bg-white shadow-inner">
                     <img
@@ -2095,11 +2036,11 @@ export default function CartPage({
                   <div className="text-left space-y-2 text-xs text-gray-600 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                     <p className="flex justify-between">
                       <span>{ui("Mã tham chiếu:")}</span>
-                      <span className="font-black text-gray-800">{qrData.ma_tham_chieu}</span>
+                      <span className="font-semibold text-gray-800">{qrData.ma_tham_chieu}</span>
                     </p>
                     <p className="flex justify-between">
                       <span>{ui("Số tiền cần chuyển:")}</span>
-                      <span className="font-black text-[#c41230] text-sm">{Number(qrData.so_tien).toLocaleString(uiLocale())}{ui("đ")}</span>
+                      <span className="font-semibold text-[#c41230] text-sm">{Number(qrData.so_tien).toLocaleString(uiLocale())}{ui("đ")}</span>
                     </p>
                   </div>
 

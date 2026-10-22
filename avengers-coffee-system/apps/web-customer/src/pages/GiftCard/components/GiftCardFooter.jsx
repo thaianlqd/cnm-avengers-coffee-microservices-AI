@@ -9,8 +9,9 @@ export const GiftCardFooter = ({ onNavigate }) => (
         {/* Col 1 */}
         <div className="flex flex-col gap-4 w-[320px] flex-shrink-0">
           <div className="mb-2">
-            <img src="/hc-assets/red_BG_logo800.png" alt="Avengers Coffee" className="w-[64px] h-[64px] object-contain" />
+            <img src="/images/brand/logo-white.png" alt="Avengers Coffee" className="h-[68px] w-auto object-contain" />
           </div>
+
           <p className="text-[14px] text-white/95 leading-[1.6]">
             <strong className="font-bold">{ui("Thẻ Avengers Coffee")}</strong>{ui(" với thiết kế tinh tế, sử dụng dễ dàng - là món quà nhỏ bé để bạn trao tay người thương thay vạn lời muốn nói.")}</p>
           <div className="flex items-center gap-4 mt-2">
@@ -55,8 +56,9 @@ export const GiftCardFooter = ({ onNavigate }) => (
 
       </div>
       <div className="py-6 text-center">
-        <p className="text-[14px] text-white font-medium">© 2024 Avengers Coffee All Rights Reserved.</p>
+        <p className="text-[14px] text-white font-medium">© 2026 Avengers Coffee All Rights Reserved.</p>
       </div>
+
     </div>
   </footer>
 );

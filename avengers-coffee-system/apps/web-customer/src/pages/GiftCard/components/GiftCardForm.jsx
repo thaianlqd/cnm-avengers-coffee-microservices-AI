@@ -1,73 +1,122 @@
 import { uiText as ui, useUiLanguage, uiLocale } from "../../../lib/uiText";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CARD_IMAGE } from '../constants';
 import { apiClient } from '../../../lib/apiClient';
 import Swal from 'sweetalert2';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  GiftIcon,
+  SparklesIcon,
+  CheckCircleIcon,
+  CreditCardIcon,
+  UserIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  ShieldCheckIcon,
+} from '../../../components/common/icons';
+import GiftCardRedeemModal from '../../../components/modals/GiftCardRedeemModal';
 
-const ULine = ({ id, label, value, onChange, type = 'text', required, hint, disabled = false }) => (
-  <div className="mb-6">
-    <div className="flex items-center gap-1 mb-2">
-      <label htmlFor={id} className="block text-[14px] text-[#444] font-medium">{label}</label>
-      {required && <span className="text-[#b22830] font-black text-[16px]">*</span>}
-    </div>
-    <input
-      id={id} type={type} value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
-      className={`w-full border-0 border-b border-gray-200 focus:border-[#b22830] outline-none py-2 text-[15px] bg-transparent transition-colors ${disabled ? 'text-gray-400' : 'text-[#222]'}`}
-    />
-    {hint && <p className="text-[11px] text-[#888] mt-2 leading-relaxed">{hint}</p>}
-  </div>
-);
+const SUGGESTED_MESSAGES = [
+  "☕ Mời bạn ly cà phê thật ngon, chúc bạn một ngày tràn đầy năng lượng!",
+  "🎉 Chúc mừng bạn nhé! Luôn vui vẻ, may mắn và gặt hái nhiều thành công!",
+  "💖 Món quà nhỏ thay lời cảm ơn chân thành từ mình vì đã luôn đồng hành!",
+  "✨ Một chút ngọt ngào cho ngày thêm tươi tắn!",
+];
 
 export const GiftCardForm = () => {
   useUiLanguage();
+  const purchaseBusy = useRef(false);
+  const queryClient = useQueryClient();
+
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      return null;
+    }
+  }, []);
+  const activeUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id;
+
   const [selectedAmount, setSelectedAmount] = useState('100000');
-  const [senderName, setSenderName] = useState('');
-  const [senderEmail, setSenderEmail] = useState('');
-  const [senderPhone, setSenderPhone] = useState('');
+  const [senderName, setSenderName] = useState(user?.ho_ten || user?.hoTen || '');
+  const [senderEmail, setSenderEmail] = useState(user?.email || '');
+  const [senderPhone, setSenderPhone] = useState(user?.so_dien_thoai || user?.soDienThoai || '');
   const [giveMyself, setGiveMyself] = useState(false);
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
   const [message, setMessage] = useState('');
   const [theme, setTheme] = useState('default');
+  const [selectedCollection, setSelectedCollection] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
 
   const amounts = [
-    { value: '100000', label: '100.000 VNĐ', hasIcon: true },
-    { value: '200000', label: '200,000 VNĐ' },
-    { value: '300000', label: '300,000 VNĐ' },
-    { value: '500000', label: '500,000 VNĐ' },
-    { value: '1000000', label: '1,000,000 VNĐ' },
+    { value: '100000', label: '100.000 VNĐ', tag: 'Phổ biến' },
+    { value: '200000', label: '200.000 VNĐ' },
+    { value: '300000', label: '300.000 VNĐ' },
+    { value: '500000', label: '500.000 VNĐ', tag: 'Tri ân' },
+    { value: '1000000', label: '1.000.000 VNĐ', tag: 'Cao cấp' },
   ];
 
-  const { data: dbThemes = [], isLoading: isFetchingThemes, isError, error } = useQuery({
+  // Fetch Wallet Balance
+  const { data: walletData, refetch: refetchWallet } = useQuery({
+    queryKey: ['userWallet', activeUserId],
+    queryFn: async () => {
+      if (!activeUserId) return null;
+      try {
+        const res = await apiClient.get(`/customers/${activeUserId}/wallet`);
+        return res.data?.data || res.data;
+      } catch {
+        return null;
+      }
+    },
+    enabled: Boolean(activeUserId),
+  });
+
+  const walletBalance = Number(walletData?.wallet?.balance ?? walletData?.balance ?? 0);
+
+  // Fetch Themes from API
+  const { data: dbThemes = [] } = useQuery({
     queryKey: ['giftCardThemes'],
     queryFn: async () => {
       try {
         const res = await apiClient.get('/gift-cards/themes?t=' + Date.now());
-        console.log("THEMES FETCHED:", res.data);
-        return res.data;
+        return res.data || [];
       } catch (err) {
         console.error("LỖI FETCH THEMES:", err);
-        throw err;
+        return [];
       }
     },
   });
 
   const themes = dbThemes.length > 0 ? dbThemes : [
-    { id: 'default', name: 'Mặc định (Đỏ Highlands)', color: '#b22830' }
+    { id: 'default', name: "Mặc định (Đỏ Avengers)", color: '#b22830', collection_name: 'Mặc định' },
+    { id: 'thankyou_1', name: 'Thank You Fan', color: '#795548', collection_name: 'Thank You 2026' },
+    { id: 'thankyou_2', name: 'Thank You Trắng', color: '#f5f5f5', collection_name: 'Thank You 2026' },
+    { id: 'thankyou_3', name: 'Thank You Nâu', color: '#5d4037', collection_name: 'Thank You 2026' },
   ];
+
+  // Collections list for tabs
+  const collections = useMemo(() => {
+    const list = Array.from(new Set(themes.map(t => t.collection_name).filter(Boolean)));
+    return ['all', ...list];
+  }, [themes]);
+
+  // Filtered themes
+  const filteredThemes = useMemo(() => {
+    if (selectedCollection === 'all') return themes;
+    return themes.filter(t => t.collection_name === selectedCollection);
+  }, [themes, selectedCollection]);
 
   // Auto-select first theme
   useEffect(() => {
-    if (dbThemes.length > 0 && theme === 'default') {
-      setTheme(dbThemes[0].id);
+    if (themes.length > 0 && theme === 'default') {
+      setTheme(themes[0].id);
     }
-  }, [dbThemes]);
+  }, [themes]);
 
   useEffect(() => {
-    // Tự động điền người nhận nếu chọn tự tặng mình
     if (giveMyself) {
       setRecipientName(senderName);
       setRecipientEmail(senderEmail);
@@ -79,17 +128,70 @@ export const GiftCardForm = () => {
     }
   }, [giveMyself, senderName, senderEmail, senderPhone]);
 
+  const currentThemeObj = themes.find(t => t.id === theme) || themes[0];
+
+  // Map theme to authentic high-res card artwork
+  const getCardArtwork = (th) => {
+    if (!th) return '/images/cards/festive_1.png';
+    const id = String(th.id || '').trim();
+    if (['chill_1', 'chill_2', 'chill_3', 'tet_2025', 'festive_1', 'festive_2', 'thankyou_1', 'thankyou_2', 'thankyou_3'].includes(id)) {
+      return `/images/cards/${id}.png`;
+    }
+    if (th.image_url) return th.image_url;
+    return '/images/cards/festive_1.png';
+  };
+
+
   const handlePurchase = async () => {
-    if (!senderName || !senderEmail || !recipientName || !recipientEmail) {
-      Swal.fire('Thiếu thông tin', 'Vui lòng điền đầy đủ các thông tin bắt buộc (*)', 'warning');
+    if (purchaseBusy.current) return;
+    if (!activeUserId || !localStorage.getItem('token')) {
+      await Swal.fire({
+        title: ui('Đăng nhập để mua thẻ quà tặng'),
+        text: ui('Thẻ quà tặng được thanh toán an toàn trực tiếp từ số dư ví Avengers của bạn.'),
+        icon: 'info',
+        confirmButtonColor: '#b22830',
+        confirmButtonText: ui('Đến trang đăng nhập'),
+      });
+      window.location.assign('/?tab=login');
       return;
     }
 
+    if (!senderName || !senderEmail || !recipientName || !recipientEmail) {
+      Swal.fire({
+        title: ui('Thiếu thông tin bắt buộc'),
+        text: ui('Vui lòng điền đầy đủ họ tên và email của người gửi cũng như người nhận.'),
+        icon: 'warning',
+        confirmButtonColor: '#b22830',
+      });
+      return;
+    }
+
+    const cost = Number(selectedAmount);
+    if (walletBalance < cost) {
+      Swal.fire({
+        title: ui('Số dư ví không đủ'),
+        text: ui('Số dư ví hiện tại ({{v0}}đ) không đủ để thanh toán thẻ {{v1}}đ. Vui lòng nạp thêm tiền vào ví.', {
+          v0: walletBalance.toLocaleString(uiLocale()),
+          v1: cost.toLocaleString(uiLocale()),
+        }),
+        icon: 'warning',
+        confirmButtonColor: '#b22830',
+        confirmButtonText: ui('Đến Ví của tôi'),
+        showCancelButton: true,
+        cancelButtonText: ui('Để sau'),
+      }).then((res) => {
+        if (res.isConfirmed) {
+          window.location.assign('/?tab=profile');
+        }
+      });
+      return;
+    }
+
+    purchaseBusy.current = true;
     setIsLoading(true);
     try {
-      const activeUserId = localStorage.getItem('avengers_active_user_id') || '00000000-0000-0000-0000-000000000000';
       const payload = {
-        value: Number(selectedAmount),
+        value: cost,
         sender_id: activeUserId,
         sender_name: senderName,
         receiver_email: recipientEmail,
@@ -102,137 +204,402 @@ export const GiftCardForm = () => {
       const res = await apiClient.post('/gift-cards/purchase', payload);
 
       if (res.data.success) {
-        if (typeof res.data.email_url === 'string' && (res.data.email_url.includes('Error') || res.data.email_url.includes('failed') || res.data.email_url.includes('Timeout'))) {
-            Swal.fire('Thẻ đã được tạo, NHƯNG Lỗi gửi mail!', `Chi tiết lỗi: ${res.data.email_url}`, 'warning');
-        } else {
-            Swal.fire({
-            title: '🎉 Mua thẻ thành công!',
-            html: `
-                <p>Thẻ quà tặng <b>${Number(selectedAmount).toLocaleString(uiLocale())}đ</b> đã được gửi tới <b>${recipientEmail}</b>.</p>
-                <p class="mt-2 text-sm text-gray-500">Người nhận có thể nạp mã này vào ví để mua hàng.</p>
-                ${typeof res.data.email_url === 'string' ? `<div class="mt-4"><a href="${res.data.email_url}" target="_blank" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-md inline-block font-medium">👀 Xem trước Email (Demo)</a></div>` : ''}
-            `,
-            icon: 'success',
-            confirmButtonColor: '#b22830',
-            });
-        }
+        refetchWallet();
+        queryClient.invalidateQueries({ queryKey: ['userWallet', activeUserId] });
+        queryClient.invalidateQueries({ queryKey: ['myGiftCards', activeUserId] });
 
-        // Reset form
-        setSenderName(''); setSenderEmail(''); setSenderPhone('');
-        setRecipientName(''); setRecipientEmail(''); setRecipientPhone('');
-        setMessage(''); setGiveMyself(false);
+        await Swal.fire({
+          title: ui('Mua thẻ quà tặng thành công!'),
+          html: `
+            <div style="text-align: left; font-size: 14px; line-height: 1.6; color: #334155;">
+              <p style="margin-bottom: 8px;">Đã thanh toán <strong>${cost.toLocaleString(uiLocale())} đ</strong> từ ví Avengers.</p>
+              <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; padding: 12px; border-radius: 12px; margin: 12px 0; text-align: center;">
+                <span style="font-size: 12px; color: #64748b; display: block;">MÃ THẺ QUÀ TẶNG</span>
+                <strong style="font-size: 20px; color: #b22830; letter-spacing: 1px;">${res.data.data.code}</strong>
+              </div>
+              <p style="font-size: 13px; color: #475569;">
+                ${res.data.email_status === 'SENT' ? '✉️ Thư chúc mừng và mã nạp thẻ đã được gửi tự động đến email người nhận.' : '⚠️ Email tạm thời chưa gửi được. Bạn có thể sao chép mã thẻ trên gửi trực tiếp cho người nhận.'}
+              </p>
+            </div>
+          `,
+          icon: 'success',
+          confirmButtonColor: '#b22830',
+          confirmButtonText: ui('Tuyệt vời'),
+        });
+
+        if (!giveMyself) {
+          setRecipientName('');
+          setRecipientEmail('');
+          setRecipientPhone('');
+        }
+        setMessage('');
       }
     } catch (err) {
-      Swal.fire('Lỗi', err.response?.data?.message || 'Không thể mua thẻ lúc này', 'error');
+      Swal.fire({
+        title: ui('Giao dịch chưa hoàn tất'),
+        text: ui(err.response?.data?.message || 'Không thể mua thẻ lúc này. Vui lòng thử lại!'),
+        icon: 'error',
+        confirmButtonColor: '#b22830',
+      });
     } finally {
+      purchaseBusy.current = false;
       setIsLoading(false);
     }
   };
 
   return (
-    <section className="bg-transparent py-10 px-6 font-sans">
-      <div className="max-w-[1024px] mx-auto bg-[#fbf8f1] rounded-[32px] pt-14 pb-12 shadow-[0_4px_25px_-5px_rgba(0,0,0,0.08)] border border-gray-100">
-
-        {/* === Chọn mẫu thẻ - Text === */}
-        <div className="px-8 max-w-[840px] mx-auto text-center mb-8">
-          <h2 className="text-[28px] font-black text-[#b22830] mb-4">{ui("Chọn mẫu thẻ")}</h2>
-          <p className="text-[15px] text-[#333] mb-6 max-w-[600px] mx-auto leading-relaxed">
-            <strong>Avengers Coffee Card</strong>{ui(" với thiết kế tinh tế, sử dụng dễ dàng - là món quà nhỏ bé để bạn trao tay người thương thay vạn lời muốn nói.")}</p>
-
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            {themes.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTheme(t.id)}
-                style={{ borderColor: theme === t.id ? t.color : 'transparent', backgroundColor: theme === t.id ? `${t.color}15` : '#fff' }}
-                className={`px-4 py-2 rounded-full border-2 text-[14px] font-bold shadow-sm transition-all`}
-              >
-                <span style={{ color: t.color || '#b22830' }}>{t.name || t.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Card image container */}
-          <div className="flex justify-center mb-2 transition-all duration-500 transform hover:scale-105">
-            <div className="p-3 rounded-[24px] shadow-lg max-w-[500px] w-full mx-auto" style={{ backgroundColor: themes.find(t=>t.id===theme)?.color || '#b22830' }}>
-              <img src={themes.find(t=>t.id===theme)?.image_url || CARD_IMAGE} alt="Avengers Coffee Card" className="w-full h-auto object-cover rounded-[18px] opacity-90" />
+    <section className="bg-[#fcfaf7] py-12 px-4 sm:px-6 font-sans">
+      <div className="max-w-[1080px] mx-auto">
+        {/* Top Banner: Nạp Thẻ Quà Tặng Shortcut */}
+        <div className="mb-8 p-4 sm:p-5 bg-gradient-to-r from-red-50 via-white to-amber-50 rounded-2xl border border-red-100 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#b22830] text-white flex items-center justify-center shadow-xs">
+              <GiftIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-stone-900">{ui("Bạn đã có mã thẻ quà tặng Avengers Coffee?")}</h4>
+              <p className="text-xs text-stone-500">{ui("Nạp tiền trực tiếp vào ví để thanh toán đồ uống tại quán hoặc đặt hàng online.")}</p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsRedeemModalOpen(true)}
+            className="px-5 py-2.5 bg-white text-[#b22830] hover:bg-[#b22830] hover:text-white border border-[#b22830] rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+          >
+            {ui("Nạp mã thẻ ngay")}
+          </button>
         </div>
 
-        {/* === White card form === */}
-        <div className="max-w-[840px] mx-auto bg-white rounded-[24px] shadow-sm overflow-hidden mb-4 border border-gray-50">
-          {/* Giá trị thẻ */}
-          <div className="p-10 border-b border-gray-100">
-            <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-2">{ui("Giá trị Thẻ Avengers Coffee")}</h3>
-            <p className="text-[14px] text-[#666] mb-6">{ui("Vui lòng chọn giá trị Thẻ Avengers Coffee")}</p>
-            <div className="flex flex-wrap gap-4">
-              {amounts.map(a => (
-                <label key={a.value} className={`flex items-center justify-center gap-1.5 px-6 py-2.5 border rounded-full cursor-pointer text-[14px] transition-all select-none ${
-                  selectedAmount === a.value ? 'border-[#1a1a1a] text-[#1a1a1a] shadow-sm font-bold' : 'border-gray-300 text-[#444] hover:border-gray-400 font-medium'
-                }`}>
-                  <input type="radio" name="amount" value={a.value} checked={selectedAmount === a.value} onChange={() => setSelectedAmount(a.value)} className="hidden" />
-                  {a.hasIcon && <span className="text-[#b22830] text-[16px]">🎁</span>}
-                  {ui(a.label)}
-                </label>
-              ))}
+        {/* ── KHỐI CHÍNH TẠO THẺ QUÀ TẶNG ── */}
+        <div className="bg-white rounded-[28px] shadow-sm border border-stone-200/80 overflow-hidden">
+          {/* Header */}
+          <div className="p-8 sm:p-10 text-center bg-gradient-to-b from-[#fffaf7] to-white border-b border-stone-100">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100/70 text-[#b22830] text-xs font-bold mb-3">
+              <SparklesIcon className="w-3.5 h-3.5" />
+              <span>{ui("Avengers E-Gift Card")}</span>
             </div>
-          </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 mb-3 tracking-tight">
+              {ui("Thiết Kế & Gửi Tặng Thẻ Quà Tặng")}
+            </h2>
+            <p className="text-stone-500 text-sm max-w-[620px] mx-auto leading-relaxed">
+              {ui("Món quà tinh tế trao trọn yêu thương. Thẻ quà tặng điện tử được nạp trực tiếp vào ví người nhận và áp dụng trên toàn bộ hệ thống Avengers Coffee.")}
+            </p>
 
-          {/* Thông tin người gửi */}
-          <div className="px-10 pt-10 pb-4">
-            <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-8">{ui("Thông tin người gửi")}</h3>
-            <ULine id="sname" label={ui("Tên người gửi")} value={senderName} onChange={setSenderName} required />
-            <ULine id="semail" label={ui("Email người gửi")} value={senderEmail} onChange={setSenderEmail} type="email" required />
-            <ULine id="sphone" label={ui("Số điện thoại người gửi")} value={senderPhone} onChange={setSenderPhone} type="tel"
-              hint="(*) Vui lòng điền số điện thoại bao gồm 10-11 kí tự chữ số 0-9, bắt đầu bằng kí tự 0, không chứa khoảng cách, chữ cái hoặc kí tự đặc biệt" />
-          </div>
+            {/* Collection Filter Tabs */}
+            {collections.length > 2 && (
+              <div className="flex flex-wrap justify-center gap-2 mt-6">
+                {collections.map((col) => (
+                  <button
+                    key={col}
+                    type="button"
+                    onClick={() => setSelectedCollection(col)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      selectedCollection === col
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    }`}
+                  >
+                    {col === 'all' ? ui('Tất cả bộ sưu tập') : col}
+                  </button>
+                ))}
+              </div>
+            )}
 
-          {/* Thông tin người nhận */}
-          <div className="px-10 pt-6 pb-4">
-            <div className="flex items-center gap-8 mb-10">
-              <h3 className="text-[18px] font-bold text-[#1a1a1a]">{ui("Thông tin người nhận")}</h3>
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <div onClick={() => setGiveMyself(!giveMyself)}
-                  className={`w-[24px] h-[24px] rounded-[6px] border-2 flex items-center justify-center transition-colors ${giveMyself ? 'bg-[#b22830] border-[#b22830]' : 'border-gray-300 bg-white'}`}>
-                  {giveMyself && <svg viewBox="0 0 12 9" fill="none" className="w-3.5 h-3.5"><path d="M1 4l3.5 3.5L11 1" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            {/* Theme Pills Selection with guaranteed high-contrast & color swatches */}
+            <div className="flex flex-wrap justify-center gap-2.5 mt-5">
+              {filteredThemes.map((t) => {
+                const isSelected = theme === t.id;
+                const isLight = t.color === '#f5f5f5' || t.color === '#ffffff' || t.color === '#ffd600';
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTheme(t.id)}
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-red-50 text-[#b22830] border-2 border-[#b22830] shadow-xs'
+                        : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400 hover:bg-stone-50'
+                    }`}
+                  >
+                    {/* Swatch indicator with border so white/cream is clearly defined */}
+                    <span
+                      className="w-3.5 h-3.5 rounded-full border border-black/20 flex-shrink-0 shadow-2xs"
+                      style={{ backgroundColor: t.color || '#b22830' }}
+                    />
+                    <span>{ui(t.name || t.label)}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ── CARD PREVIEW SHOWCASE ── */}
+            <div className="mt-8 flex justify-center">
+              <div className="relative aspect-[1.586/1] w-full max-w-[460px] rounded-2xl overflow-hidden shadow-xl border border-stone-200 transition-transform duration-300 hover:scale-[1.01]">
+                <img
+                  src={getCardArtwork(currentThemeObj)}
+                  alt="Avengers Coffee Card"
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Live Value Tag */}
+                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-md border border-white/80">
+                  <span className="text-xs font-bold text-[#b22830]">
+                    {Number(selectedAmount).toLocaleString(uiLocale())} VNĐ
+                  </span>
                 </div>
-                <span className="text-[15px] text-[#444] font-medium">{ui("Tôi muốn tặng chính mình")}</span>
-              </label>
+
+                {/* Live Recipient Tag */}
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs font-medium text-white drop-shadow">
+                  <span className="bg-black/45 backdrop-blur-sm px-3 py-1 rounded-lg max-w-[220px] truncate text-white">
+                    {recipientName ? `${ui('Gửi tặng:')} ${recipientName}` : ui('Dành tặng người thương')}
+                  </span>
+                  <span className="bg-black/45 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[10px] tracking-widest uppercase text-white/90">
+                    AVENGERS CARD
+                  </span>
+                </div>
+              </div>
             </div>
-            <ULine id="rname" label={ui("Tên người nhận")} value={recipientName} onChange={setRecipientName} required disabled={giveMyself} />
-            <ULine id="remail" label={ui("Email người nhận")} value={recipientEmail} onChange={setRecipientEmail} type="email" required disabled={giveMyself} />
-            <ULine id="rphone" label={ui("Số điện thoại người nhận")} value={recipientPhone} onChange={setRecipientPhone} type="tel" disabled={giveMyself}
-              hint="(*) Vui lòng điền số điện thoại bao gồm 10-11 kí tự chữ số 0-9, bắt đầu bằng kí tự 0, không chứa khoảng cách, chữ cái hoặc kí tự đặc biệt" />
           </div>
 
-          {/* Lời nhắn */}
-          <div className="px-10 pt-4 pb-12">
-            <h3 className="text-[16px] font-bold text-[#b22830] mb-4">{ui("Lời bạn muốn nhắn nhủ đến người nhận")}</h3>
-            <input
-              type="text"
-              value={message}
-              onChange={e => setMessage(e.target.value.slice(0, 255))}
-              placeholder={ui("Điền nội dung tại đây")}
-              className="w-full border-0 border-b border-gray-200 focus:border-[#b22830] outline-none py-2 text-[15px] bg-transparent transition-colors text-[#222]"
-              maxLength={255}
-            />
-            <p className="text-[13px] text-[#555] mt-3 font-medium">{255 - message.length}{ui(" ký tự còn lại")}</p>
-          </div>
+          {/* Form Content */}
+          <div className="p-8 sm:p-10 space-y-8">
+            {/* 1. Mệnh giá quà tặng */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <label className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                  <CreditCardIcon className="w-4 h-4 text-[#b22830]" />
+                  <span>{ui("1. Chọn mệnh giá thẻ")} *</span>
+                </label>
+                {activeUserId && (
+                  <span className="text-xs text-stone-500">
+                    {ui("Số dư ví của bạn:")}{' '}
+                    <strong className="text-stone-900 font-bold">
+                      {walletBalance.toLocaleString(uiLocale())} đ
+                    </strong>
+                  </span>
+                )}
+              </div>
 
-          {/* Actions */}
-          <div className="px-10 pb-12 flex items-center justify-between">
-            <button className="text-[15px] text-[#b22830]/50 font-bold hover:text-[#b22830] transition-colors" onClick={() => window.location.reload()}>{ui("Đặt Lại")}</button>
-            <button
-              onClick={handlePurchase}
-              disabled={isLoading}
-              className={`px-14 py-4 bg-[#b22830] text-white font-bold rounded-full text-[16px] transition-colors shadow-md ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#8c1f24]'}`}
-            >
-              {isLoading ? ui("Đang xử lý...") : ui("Xác Nhận Thanh Toán")}
-            </button>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                {amounts.map((a) => {
+                  const isSelected = selectedAmount === a.value;
+                  return (
+                    <button
+                      key={a.value}
+                      type="button"
+                      onClick={() => setSelectedAmount(a.value)}
+                      className={`relative p-3.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                        isSelected
+                          ? 'border-[#b22830] bg-red-50/70 text-[#b22830] font-bold shadow-xs'
+                          : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
+                      }`}
+                    >
+                      {a.tag && (
+                        <span className="absolute -top-2.5 right-2 px-1.5 py-0.5 rounded-md bg-[#b22830] text-white text-[10px] font-bold">
+                          {a.tag}
+                        </span>
+                      )}
+                      <span className="text-sm font-bold">{ui(a.label)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. Thông tin người gửi & người nhận (2 Cột đẹp mắt) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-stone-100">
+              {/* Cột người gửi */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                  <UserIcon className="w-4 h-4 text-stone-600" />
+                  <span>{ui("2. Thông tin người gửi")}</span>
+                </h3>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-600 mb-1.5">{ui("Họ và tên người gửi")} *</label>
+                  <input
+                    type="text"
+                    value={senderName}
+                    onChange={(e) => setSenderName(e.target.value)}
+                    placeholder={ui("Nguyễn Văn A")}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-sm focus:border-[#b22830] focus:ring-2 focus:ring-red-100 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-600 mb-1.5">{ui("Email người gửi")} *</label>
+                  <input
+                    type="email"
+                    value={senderEmail}
+                    onChange={(e) => setSenderEmail(e.target.value)}
+                    placeholder="nguoigui@example.com"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-sm focus:border-[#b22830] focus:ring-2 focus:ring-red-100 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-600 mb-1.5">{ui("Số điện thoại")}</label>
+                  <input
+                    type="tel"
+                    value={senderPhone}
+                    onChange={(e) => setSenderPhone(e.target.value)}
+                    placeholder="0912 345 678"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-sm focus:border-[#b22830] focus:ring-2 focus:ring-red-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Cột người nhận */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                    <EnvelopeIcon className="w-4 h-4 text-stone-600" />
+                    <span>{ui("3. Thông tin người nhận")}</span>
+                  </h3>
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-[#b22830]">
+                    <input
+                      type="checkbox"
+                      checked={giveMyself}
+                      onChange={(e) => setGiveMyself(e.target.checked)}
+                      className="rounded accent-[#b22830] w-4 h-4"
+                    />
+                    <span>{ui("Tự tặng chính mình")}</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-600 mb-1.5">{ui("Họ và tên người nhận")} *</label>
+                  <input
+                    type="text"
+                    value={recipientName}
+                    disabled={giveMyself}
+                    onChange={(e) => setRecipientName(e.target.value)}
+                    placeholder={ui("Trần Thị B")}
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm outline-none transition-all ${
+                      giveMyself ? 'bg-stone-100 text-stone-500 border-stone-200' : 'border-stone-200 focus:border-[#b22830] focus:ring-2 focus:ring-red-100'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-600 mb-1.5">{ui("Email nhận mã thẻ")} *</label>
+                  <input
+                    type="email"
+                    value={recipientEmail}
+                    disabled={giveMyself}
+                    onChange={(e) => setRecipientEmail(e.target.value)}
+                    placeholder="nguoinhan@example.com"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm outline-none transition-all ${
+                      giveMyself ? 'bg-stone-100 text-stone-500 border-stone-200' : 'border-stone-200 focus:border-[#b22830] focus:ring-2 focus:ring-red-100'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-600 mb-1.5">{ui("Số điện thoại người nhận")}</label>
+                  <input
+                    type="tel"
+                    value={recipientPhone}
+                    disabled={giveMyself}
+                    onChange={(e) => setRecipientPhone(e.target.value)}
+                    placeholder="0987 654 321"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm outline-none transition-all ${
+                      giveMyself ? 'bg-stone-100 text-stone-500 border-stone-200' : 'border-stone-200 focus:border-[#b22830] focus:ring-2 focus:ring-red-100'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Lời nhắn gửi */}
+            <div className="pt-4 border-t border-stone-100">
+              <label className="block text-sm font-bold text-stone-900 mb-2">
+                {ui("4. Lời nhắn nhủ gửi kèm thiệp")}
+              </label>
+
+              {/* Gợi ý câu chúc nhanh */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {SUGGESTED_MESSAGES.map((msg, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setMessage(msg)}
+                    className="text-xs px-3 py-1.5 rounded-lg bg-stone-100 text-stone-700 hover:bg-red-50 hover:text-[#b22830] transition-colors cursor-pointer"
+                  >
+                    {msg}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value.slice(0, 255))}
+                rows={3}
+                placeholder={ui("Nhập lời chúc hoặc tâm tư bạn muốn gửi tới người nhận...")}
+                className="w-full p-3.5 rounded-xl border border-stone-200 text-sm focus:border-[#b22830] focus:ring-2 focus:ring-red-100 outline-none transition-all resize-vertical"
+              />
+              <div className="text-right text-xs text-stone-400 mt-1">
+                {255 - message.length} {ui("ký tự còn lại")}
+              </div>
+            </div>
+
+            {/* Thanh toán & Submit button */}
+            <div className="pt-6 border-t border-stone-100 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span className="text-xs text-stone-500 block">{ui("Tổng thanh toán qua Ví:")}</span>
+                <strong className="text-2xl font-bold text-[#b22830]">
+                  {Number(selectedAmount).toLocaleString(uiLocale())} VNĐ
+                </strong>
+                {activeUserId && walletBalance < Number(selectedAmount) && (
+                  <span className="block text-xs font-semibold text-amber-600 mt-1">
+                    ⚠️ {ui("Số dư ví không đủ (hiện có: {{v0}}đ)", { v0: walletBalance.toLocaleString(uiLocale()) })}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessage('');
+                    if (!giveMyself) {
+                      setRecipientName('');
+                      setRecipientEmail('');
+                      setRecipientPhone('');
+                    }
+                  }}
+                  className="px-5 py-3 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-50 text-sm font-semibold transition-colors cursor-pointer"
+                >
+                  {ui("Làm lại")}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={handlePurchase}
+                  className={`px-8 py-3.5 bg-gradient-to-r from-[#b22830] to-[#8c1f24] text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer ${
+                    isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-95'
+                  }`}
+                >
+                  {isLoading ? ui("Đang tạo thẻ...") : ui("Xác Nhận Thanh Toán")}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Modal Nạp Tiền Bằng Thẻ Quà Tặng */}
+      <GiftCardRedeemModal
+        isOpen={isRedeemModalOpen}
+        onClose={() => setIsRedeemModalOpen(false)}
+        userId={activeUserId}
+        onSuccess={() => {
+          refetchWallet();
+          queryClient.invalidateQueries({ queryKey: ['userWallet', activeUserId] });
+          setIsRedeemModalOpen(false);
+        }}
+      />
     </section>
   );
 };

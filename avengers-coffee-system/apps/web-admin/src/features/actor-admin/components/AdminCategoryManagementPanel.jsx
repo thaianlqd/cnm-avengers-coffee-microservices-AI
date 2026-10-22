@@ -1,3 +1,5 @@
+import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
+import SearchableSelect from '../../../components/console/SearchableSelect'
 import React, { useState, useMemo, useEffect } from 'react'
 import {
   FolderTree,
@@ -25,7 +27,7 @@ import {
   Package,
   Heart,
   MoreVertical
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 
 // Preset icon options for quick selection
 const ICON_PRESETS = [
@@ -38,6 +40,89 @@ const ICON_PRESETS = [
   { name: 'Sparkles', icon: Sparkles, label: 'Đặc biệt' },
   { name: 'Heart', icon: Heart, label: 'Yêu thích' }
 ]
+
+// Icons exactly matched with Web Customer (/hc-assets/menu_icon_*.png)
+const CUSTOMER_CATEGORY_ICONS = {
+  coffee: '/hc-assets/menu_icon_1.png',
+  tea: '/hc-assets/menu_icon_2.png',
+  milktea: '/hc-assets/menu_icon_3.png',
+  freeze: '/hc-assets/menu_icon_4.png',
+  food: '/hc-assets/menu_icon_5.png',
+  snack: '/hc-assets/menu_icon_6.png',
+  gift: '/hc-assets/menu_icon_7.png',
+  other: '/hc-assets/menu_icon_8.png',
+}
+
+const CUSTOMER_ICON_PRESETS = [
+  { url: '/hc-assets/menu_icon_1.png', label: 'Cà Phê' },
+  { url: '/hc-assets/menu_icon_2.png', label: 'Trà' },
+  { url: '/hc-assets/menu_icon_3.png', label: 'Trà Sữa' },
+  { url: '/hc-assets/menu_icon_4.png', label: 'Đá Xay' },
+  { url: '/hc-assets/menu_icon_5.png', label: 'Bánh Ngọt' },
+  { url: '/hc-assets/menu_icon_6.png', label: 'Bánh Mặn' },
+  { url: '/hc-assets/menu_icon_7.png', label: 'Thẻ Quà' },
+  { url: '/hc-assets/menu_icon_8.png', label: 'Khác' },
+]
+
+function resolveCategoryImage(cat, menuItems = [], allCategories = []) {
+  if (!cat) return CUSTOMER_CATEGORY_ICONS.coffee
+
+  // 1. Direct explicit image or absolute/relative URL
+  const explicit = cat.icon || cat.image || cat.hinh_anh_url || cat.hinh_anh_icon
+  if (explicit && typeof explicit === 'string') {
+    if (explicit.startsWith('/hc-assets/') || explicit.startsWith('http://') || explicit.startsWith('https://')) {
+      return explicit
+    }
+  }
+
+  // 2. Exact match with customer web icons by category name
+  const name = (cat.label || cat.ten_danh_muc || '').toLowerCase().trim()
+  if (name.includes('cà phê') || name.includes('cafe') || name.includes('coffee') || cat.icon === 'Coffee') return CUSTOMER_CATEGORY_ICONS.coffee
+  if (name.includes('trà sữa') || name.includes('macchiato')) return CUSTOMER_CATEGORY_ICONS.milktea
+  if (name.includes('trà') || name.includes('tea') || cat.icon === 'CupSoda') return CUSTOMER_CATEGORY_ICONS.tea
+  if (name.includes('đá xay') || name.includes('freeze') || name.includes('sinh tố') || name.includes('frappe')) return CUSTOMER_CATEGORY_ICONS.freeze
+  if (name.includes('bánh mặn') || name.includes('ăn nhẹ') || cat.icon === 'Cake') return CUSTOMER_CATEGORY_ICONS.snack
+  if (name.includes('bánh') || name.includes('đồ ăn') || name.includes('trung thu') || name.includes('food') || cat.icon === 'Utensils') return CUSTOMER_CATEGORY_ICONS.food
+  if (name.includes('quà tặng') || name.includes('thẻ quà') || name.includes('gift') || cat.icon === 'Package') return CUSTOMER_CATEGORY_ICONS.gift
+  if (name.includes('ưu đãi') || name.includes('riêng') || cat.icon === 'Heart') return CUSTOMER_CATEGORY_ICONS.gift
+  if (name.includes('khác') || cat.icon === 'Sparkles') return CUSTOMER_CATEGORY_ICONS.other
+
+  // 3. Child category inherits parent icon
+  if (cat.ma_danh_muc_cha && Array.isArray(allCategories) && allCategories.length > 0) {
+    const parent = allCategories.find((c) => String(c.id || c.code || c.ma_danh_muc) === String(cat.ma_danh_muc_cha))
+    if (parent && parent !== cat) {
+      return resolveCategoryImage(parent, menuItems, [])
+    }
+  }
+
+  // 4. Lookup product under this category with image
+  if (Array.isArray(menuItems) && menuItems.length > 0) {
+    const matched = menuItems.find((p) => {
+      const matchCatId = String(p.danh_muc_id || p.category_code || '') === String(cat.code || cat.id || cat.ma_danh_muc)
+      const matchCatName = (p.danh_muc || p.category || '').toLowerCase() === name
+      return (matchCatId || matchCatName) && (p.image || p.hinh_anh_url)
+    })
+    if (matched && (matched.image || matched.hinh_anh_url)) {
+      return matched.image || matched.hinh_anh_url
+    }
+  }
+
+  return CUSTOMER_CATEGORY_ICONS.coffee
+}
+
+function getCategoryProductCount(cat, allCategories = []) {
+  if (!cat) return 0
+  let count = Number(cat.product_count || 0)
+  if (Number(cat.cap_bac) === 1) {
+    const parentId = String(cat.id || cat.code || cat.ma_danh_muc || '')
+    const children = (allCategories || []).filter(
+      (c) => String(c.ma_danh_muc_cha) === parentId && String(c.id || c.code || c.ma_danh_muc) !== parentId
+    )
+    const childSum = children.reduce((sum, c) => sum + Number(c.product_count || 0), 0)
+    count += childSum
+  }
+  return count
+}
 
 function CategoryPagination({ pageData, onPageChange }) {
   if (!pageData || pageData.total <= 10) return null
@@ -108,11 +193,13 @@ export function AdminCategoryManagementPanel({
   categoriesPage,
   setCategoriesPage,
   onRefresh,
+  menuItems = [],
 }) {
   // Level filter state: 'ALL', '1', '2'
   const [levelFilter, setLevelFilter] = useState('ALL')
   // Modal visibility state
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [formError, setFormError] = useState('')
   const [openCatActionId, setOpenCatActionId] = useState(null)
 
   // Close dropdown on outside click
@@ -125,7 +212,8 @@ export function AdminCategoryManagementPanel({
   // Open modal automatically if editingId changes
   useEffect(() => {
     if (editingCategoryId) {
-      setIsModalOpen(true)
+      setFormError('')
+    setIsModalOpen(true)
     }
   }, [editingCategoryId])
 
@@ -135,7 +223,7 @@ export function AdminCategoryManagementPanel({
     const total = items.length
     const level1Count = items.filter((c) => Number(c.cap_bac) === 1).length
     const level2Count = items.filter((c) => Number(c.cap_bac) === 2).length
-    const activeWithProducts = items.filter((c) => Number(c.product_count || 0) > 0).length
+    const activeWithProducts = items.filter((c) => getCategoryProductCount(c, items) > 0).length
 
     return { total, level1Count, level2Count, activeWithProducts }
   }, [categoriesState.items])
@@ -178,11 +266,14 @@ export function AdminCategoryManagementPanel({
   // Open modal for creating a new category
   const handleOpenAddModal = () => {
     cancelEditCategory()
+    setFormError('')
     setIsModalOpen(true)
   }
 
   // Close modal
   const handleCloseModal = () => {
+    if (savingCategory) return
+    setFormError('')
     cancelEditCategory()
     setIsModalOpen(false)
   }
@@ -190,11 +281,17 @@ export function AdminCategoryManagementPanel({
   // Submit form handler
   const handleFormSubmit = async (e) => {
     e.preventDefault()
+    if (savingCategory) return
+    setFormError('')
     try {
-      await saveCategory()
+      const result = await saveCategory?.()
+      if (result === false || result?.ok === false) {
+        setFormError(result?.error || 'Không lưu được dữ liệu. Vui lòng kiểm tra các trường và thử lại.')
+        return
+      }
       setIsModalOpen(false)
-    } catch {
-      // Keep modal open if error occurs
+    } catch (error) {
+      setFormError(error.message || 'Không thể lưu. Dữ liệu bạn nhập vẫn được giữ lại.')
     }
   }
 
@@ -212,10 +309,35 @@ export function AdminCategoryManagementPanel({
       {/* Category List & Data Table (FULL WIDTH 100%) */}
       <div className="cat-list-card cat-list-card--full">
         {/* List Toolbar & Filters */}
+        <div className="workspace-section-title"><div><h2>Danh sách danh mục</h2><p>Phân nhóm và quản lý danh mục sản phẩm.</p></div></div>
         <div className="cat-toolbar">
+          <div className="cat-filter-pills">
+              <button aria-pressed={levelFilter === 'ALL'}
+                type="button"
+                className={`cat-pill ${levelFilter === 'ALL' ? 'active' : ''}`}
+                onClick={() => handleLevelFilterChange('ALL')}
+              >
+                Tất cả ({stats.total})
+              </button>
+              <button aria-pressed={levelFilter === '1'}
+                type="button"
+                className={`cat-pill ${levelFilter === '1' ? 'active' : ''}`}
+                onClick={() => handleLevelFilterChange('1')}
+              >
+                Danh mục chính ({stats.level1Count})
+              </button>
+              <button aria-pressed={levelFilter === '2'}
+                type="button"
+                className={`cat-pill ${levelFilter === '2' ? 'active' : ''}`}
+                onClick={() => handleLevelFilterChange('2')}
+              >
+                Danh mục phụ ({stats.level2Count})
+              </button>
+            </div>
+          <div className="cat-filter-group">
           <div className="cat-search-box">
-            <Search size={16} className="cat-search-icon" />
-            <input
+
+            <input className="ui-input"
               type="text"
               value={categoryKeyword}
               onChange={(e) => {
@@ -227,7 +349,7 @@ export function AdminCategoryManagementPanel({
             {categoryKeyword && (
               <button
                 type="button"
-                className="cat-search-clear"
+                aria-label="Xóa tìm kiếm" className="cat-search-clear"
                 onClick={() => setCategoryKeyword('')}
               >
                 <X size={14} />
@@ -236,37 +358,15 @@ export function AdminCategoryManagementPanel({
           </div>
 
           {/* Level Filter Tabs & Actions */}
-          <div className="cat-toolbar-right">
-            <div className="cat-filter-pills">
-              <button
-                type="button"
-                className={`cat-pill ${levelFilter === 'ALL' ? 'active' : ''}`}
-                onClick={() => handleLevelFilterChange('ALL')}
-              >
-                Tất cả ({stats.total})
-              </button>
-              <button
-                type="button"
-                className={`cat-pill ${levelFilter === '1' ? 'active' : ''}`}
-                onClick={() => handleLevelFilterChange('1')}
-              >
-                Danh mục chính ({stats.level1Count})
-              </button>
-              <button
-                type="button"
-                className={`cat-pill ${levelFilter === '2' ? 'active' : ''}`}
-                onClick={() => handleLevelFilterChange('2')}
-              >
-                Danh mục phụ ({stats.level2Count})
-              </button>
-            </div>
+
+
             {onRefresh && (
               <button type="button" className="cat-refresh-btn" onClick={onRefresh} title="Tải lại dữ liệu">
                 <RefreshCw size={15} />
                 <span>Tải lại</span>
               </button>
             )}
-            <button type="button" className="cat-btn cat-btn--success cat-btn--sm" onClick={handleOpenAddModal}>
+            <button type="button" className="cat-btn cat-btn--success cat-btn--sm cat-create-btn" onClick={handleOpenAddModal}>
               <Plus size={16} />
               <span>Tạo danh mục</span>
             </button>
@@ -311,31 +411,51 @@ export function AdminCategoryManagementPanel({
                   </thead>
                   <tbody>
                     {pageData.rows.map((cat, index, array) => {
-                      const productCount = Number(cat.product_count || 0)
+                      const productCount = getCategoryProductCount(cat, categoriesState.items)
                       const isLevel1 = Number(cat.cap_bac) === 1
                       const isEditingThis = editingCategoryId === String(cat.id || cat.code)
 
-                      // Render icon if available
+                      // Render icon & category image
                       const presetObj = ICON_PRESETS.find((p) => p.name === cat.icon)
                       const PresetIconComponent = presetObj ? presetObj.icon : null
+                      const categoryImg = resolveCategoryImage(cat, menuItems, categoriesState.items)
 
                       return (
                         <tr key={cat.code || cat.id} className={isEditingThis ? 'is-editing-row' : ''}>
-                          {/* Category Name & Icon */}
+                          {/* Category Name & Thumbnail Image */}
                           <td>
                             <div className="cat-name-cell">
-                              <div className={`cat-item-icon ${isLevel1 ? 'is-level1' : 'is-level2'}`}>
-                                {PresetIconComponent ? (
-                                  <PresetIconComponent size={16} />
-                                ) : cat.icon && cat.icon.startsWith('http') ? (
-                                  <img src={cat.icon} alt="" className="cat-img-icon" />
-                                ) : isLevel1 ? (
-                                  <Layers size={16} />
-                                ) : (
-                                  <Tag size={16} />
-                                )}
+                              <div className="cat-thumb-box">
+                                {categoryImg ? (
+                                  <img
+                                    src={categoryImg}
+                                    alt={cat.label}
+                                    className="cat-thumb-img"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none'
+                                      if (e.currentTarget.nextElementSibling) {
+                                        e.currentTarget.nextElementSibling.style.display = 'flex'
+                                      }
+                                    }}
+                                  />
+                                ) : null}
+                                <div
+                                  className={`cat-thumb-fallback ${isLevel1 ? 'is-level1' : 'is-level2'}`}
+                                  style={{ display: categoryImg ? 'none' : 'flex' }}
+                                >
+                                  {PresetIconComponent ? (
+                                    <PresetIconComponent size={16} />
+                                  ) : isLevel1 ? (
+                                    <Layers size={16} />
+                                  ) : (
+                                    <Tag size={16} />
+                                  )}
+                                </div>
                               </div>
-                              <span className="cat-item-name">{cat.label}</span>
+                              <div className="cat-name-info">
+                                <span className="cat-item-name">{cat.label}</span>
+                                <span className="cat-item-sub">{isLevel1 ? 'Danh mục chính' : 'Danh mục phụ'}</span>
+                              </div>
                             </div>
                           </td>
 
@@ -385,14 +505,15 @@ export function AdminCategoryManagementPanel({
                                 className="admin-table-action-btn btn-edit"
                                 onClick={() => {
                                   startEditCategory(cat)
-                                  setIsModalOpen(true)
+                                  setFormError('')
+    setIsModalOpen(true)
                                 }}
                                 title="Chỉnh sửa danh mục"
                               >
                                 <Edit3 size={15} />
                               </button>
 
-                              <button
+                              <button aria-label={productCount > 0 ? `Không thể xóa vì danh mục đang chứa ${productCount} sản phẩm` : 'Xóa danh mục này'}
                                 type="button"
                                 className="admin-table-action-btn btn-delete"
                                 disabled={productCount > 0}
@@ -423,7 +544,7 @@ export function AdminCategoryManagementPanel({
 
       {/* MODAL DIALOG FOR CREATE / EDIT CATEGORY */}
       {isModalOpen && (
-        <div className="cat-modal-overlay" onClick={handleCloseModal}>
+        <WorkspaceDialog busy={savingCategory} label="Thêm hoặc chỉnh sửa danh mục" onClose={handleCloseModal} className="workspace-dialog--editor">
           <div className="cat-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="cat-modal-head">
               <div className="cat-modal-title">
@@ -445,111 +566,113 @@ export function AdminCategoryManagementPanel({
                   </>
                 )}
               </div>
-              <button type="button" className="cat-modal-close" onClick={handleCloseModal} title="Đóng">
+              <button type="button" disabled={savingCategory} aria-label="Đóng cửa sổ" className="cat-modal-close" onClick={handleCloseModal} title="Đóng">
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleFormSubmit} className="cat-modal-body">
+              {formError && <p className="workspace-form-error" role="alert">{formError}</p>}
               {/* Input: Category Label */}
               <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="cat-modal-label" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>
+                <label htmlFor="cat-modal-label" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
                   Tên danh mục <span className="cat-required" style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
-                  <FolderTree size={16} color="#64748b" style={{ flexShrink: 0 }} />
-                  <input
-                    id="cat-modal-label"
-                    type="text"
-                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none' }}
-                    value={categoryForm.label || ''}
-                    onChange={(e) => setCategoryForm((p) => ({ ...p, label: e.target.value }))}
-                    placeholder="Ví dụ: Cà phê phin, Trà trái cây, Bánh ngọt..."
-                    autoFocus
-                    required
-                  />
-                </div>
+                <input
+                  id="cat-modal-label"
+                  type="text"
+                  className="shadcn-input ui-input"
+                  value={categoryForm.label || ''}
+                  onChange={(e) => setCategoryForm((p) => ({ ...p, label: e.target.value }))}
+                  placeholder="Ví dụ: Cà phê phin, Trà trái cây, Bánh ngọt..."
+                  autoFocus
+                  required
+                />
               </div>
 
               {/* Input: Category Level */}
               <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="cat-modal-level" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>Cấp bậc danh mục</label>
-                <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
-                  <Layers size={16} color="#64748b" style={{ flexShrink: 0 }} />
-                  <select
-                    id="cat-modal-level"
-                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none', cursor: 'pointer' }}
-                    value={categoryForm.cap_bac}
-                    onChange={(e) =>
-                      setCategoryForm((p) => ({ ...p, cap_bac: Number(e.target.value) }))
-                    }
-                  >
-                    <option value={1}>Cấp 1 - Danh mục chính</option>
-                    <option value={2}>Cấp 2 - Danh mục phụ</option>
-                  </select>
-                </div>
+                <label htmlFor="cat-modal-level" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>Cấp bậc danh mục</label>
+                <SearchableSelect
+                  id="cat-modal-level"
+                  value={categoryForm.cap_bac}
+                  onChange={(e) =>
+                    setCategoryForm((p) => ({ ...p, cap_bac: Number(e?.target?.value ?? e) }))
+                  }
+                >
+                  <option value={1}>Cấp 1 - Danh mục chính</option>
+                  <option value={2}>Cấp 2 - Danh mục phụ</option>
+                </SearchableSelect>
               </div>
 
               {/* Input: Parent Category (Only if Level 2) */}
               {Number(categoryForm.cap_bac) === 2 && (
-                <div className="cat-form-group cat-form-group--highlight" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label htmlFor="cat-modal-parent" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>
+                <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label htmlFor="cat-modal-parent" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
                     Danh mục cha <span className="cat-required" style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
-                    <Tag size={16} color="#64748b" style={{ flexShrink: 0 }} />
-                    <select
-                      id="cat-modal-parent"
-                      style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none', cursor: 'pointer' }}
-                      value={categoryForm.ma_danh_muc_cha || ''}
-                      onChange={(e) =>
-                        setCategoryForm((p) => ({ ...p, ma_danh_muc_cha: e.target.value }))
-                      }
-                      required
-                    >
-                      <option value="">-- Chọn danh mục cha --</option>
-                      {categoriesState.items
-                        .filter((c) => Number(c.cap_bac) === 1)
-                        .map((c) => (
-                          <option key={c.code || c.id} value={c.code || c.id}>
-                            {c.label} (Mã: {c.code})
-                          </option>
-                        ))}
-                    </select>
-                  </div>
+                  <SearchableSelect
+                    id="cat-modal-parent"
+                    value={categoryForm.ma_danh_muc_cha || ''}
+                    placeholder="-- Chọn hoặc nhập tên danh mục cha --"
+                    onChange={(e) =>
+                      setCategoryForm((p) => ({ ...p, ma_danh_muc_cha: e?.target?.value ?? e }))
+                    }
+                    required
+                  >
+                    <option value="">-- Chọn danh mục cha --</option>
+                    {categoriesState.items
+                      .filter((c) => Number(c.cap_bac) === 1)
+                      .map((c) => (
+                        <option key={c.code || c.id} value={c.code || c.id}>
+                          {c.label} (Mã: {c.code})
+                        </option>
+                      ))}
+                  </SearchableSelect>
                 </div>
               )}
 
-              {/* Input: Icon Selection / URL */}
+              {/* Input: Category Image URL */}
               <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="cat-modal-icon" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>Biểu tượng (Icon)</label>
-                <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
-                  <Sparkles size={16} color="#64748b" style={{ flexShrink: 0 }} />
-                  <input
-                    id="cat-modal-icon"
-                    type="text"
-                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none' }}
-                    value={categoryForm.icon || ''}
-                    onChange={(e) => setCategoryForm((p) => ({ ...p, icon: e.target.value }))}
-                    placeholder="Chọn icon mẫu bên dưới hoặc nhập đường dẫn ảnh..."
-                  />
-                </div>
-                {/* Icon Presets */}
-                <div className="cat-icon-presets" style={{ marginTop: '0.5rem' }}>
-                  <span className="cat-presets-label">Gợi ý icon mẫu:</span>
-                  <div className="cat-presets-list">
-                    {ICON_PRESETS.map((preset) => {
-                      const PresetIcon = preset.icon
-                      const isSelected = categoryForm.icon === preset.name
+                <label htmlFor="cat-modal-icon" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
+                  Hình ảnh danh mục (URL)
+                </label>
+                <input
+                  id="cat-modal-icon"
+                  type="text"
+                  className="shadcn-input ui-input"
+                  value={categoryForm.icon || ''}
+                  onChange={(e) => setCategoryForm((p) => ({ ...p, icon: e.target.value }))}
+                  placeholder="https://... (Dán link ảnh hoặc chọn icon bên dưới)"
+                />
+                {/* Customer Icon Presets */}
+                <div className="cat-icon-presets" style={{ marginTop: '0.4rem' }}>
+                  <span className="cat-presets-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Biểu tượng danh mục:</span>
+                  <div className="cat-presets-list" style={{ marginTop: '0.35rem', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {CUSTOMER_ICON_PRESETS.map((preset) => {
+                      const isSelected = categoryForm.icon === preset.url
                       return (
-                        <button
-                          key={preset.name}
+                        <button aria-label={preset.label}
+                          key={preset.url}
                           type="button"
                           className={`cat-preset-chip ${isSelected ? 'is-selected' : ''}`}
-                          onClick={() => setCategoryForm((p) => ({ ...p, icon: preset.name }))}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            border: isSelected ? '1.5px solid #b22830' : '1px solid var(--border-light)',
+                            background: isSelected ? '#fef2f2' : '#ffffff',
+                            color: isSelected ? '#b22830' : '#27272a',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            fontWeight: isSelected ? '600' : '400'
+                          }}
+                          onClick={() => setCategoryForm((p) => ({ ...p, icon: preset.url }))}
                           title={preset.label}
                         >
-                          <PresetIcon size={14} />
+                          <img src={preset.url} alt={preset.label} style={{ width: 18, height: 18, objectFit: 'contain' }} />
                           <span>{preset.label}</span>
                         </button>
                       )
@@ -566,23 +689,23 @@ export function AdminCategoryManagementPanel({
                   onClick={handleCloseModal}
                   disabled={savingCategory}
                   style={{
-                    backgroundColor: '#fef2f2',
-                    background: '#fef2f2',
+                    backgroundColor: "#ffffff",
+                    background: "#ffffff",
                     color: '#dc2626',
-                    border: '1px solid #fecaca',
-                    height: '40px',
+                    border: '1px solid #fca5a5',
+                    height: '38px',
                     padding: '0 1.25rem',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
+                    borderRadius: '6px',
+                    fontSize: '0.8125rem',
+                    fontWeight: '500',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.4rem'
+                    gap: '0.4rem',
+                    transition: 'all 0.15s ease'
                   }}
                 >
-                  <X size={16} color="#dc2626" />
-                  <span style={{ color: '#dc2626' }}>Hủy bỏ</span>
+                  <X size={15} style={{ color: '#dc2626' }} /><span>Hủy bỏ</span>
                 </button>
 
                 <button
@@ -590,19 +713,19 @@ export function AdminCategoryManagementPanel({
                   className="cat-btn cat-btn--success btn-save"
                   disabled={savingCategory || !categoryForm.label.trim()}
                   style={{
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    background: "#18181b",
                     color: '#ffffff',
-                    border: 'none',
-                    height: '40px',
-                    padding: '0 1.5rem',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
+                    border: '1px solid #18181b',
+                    height: '38px',
+                    padding: '0 1.35rem',
+                    borderRadius: '6px',
+                    fontSize: '0.8125rem',
+                    fontWeight: '500',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                   }}
                 >
                   {savingCategory ? (
@@ -625,7 +748,7 @@ export function AdminCategoryManagementPanel({
               </div>
             </form>
           </div>
-        </div>
+        </WorkspaceDialog>
       )}
     </div>
   )

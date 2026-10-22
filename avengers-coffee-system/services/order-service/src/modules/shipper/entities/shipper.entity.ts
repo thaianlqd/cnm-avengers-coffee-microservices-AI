@@ -54,7 +54,7 @@ export class Shipper {
   @Column({ type: 'varchar', nullable: true })
   vehicle_plate: string | null;
 
-  @Column({ type: 'varchar', nullable: true, default: '123456' })
+  @Column({ type: 'varchar', nullable: true, default: null })
   password?: string | null;
 
   @CreateDateColumn()
@@ -65,4 +65,9 @@ export class Shipper {
 
   @OneToMany(() => ShipperDelivery, (delivery) => delivery.shipper)
   deliveries: ShipperDelivery[];
+
+  toJSON() {
+    const { password: _password, ...safe } = this;
+    return safe;
+  }
 }

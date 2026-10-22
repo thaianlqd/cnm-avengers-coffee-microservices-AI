@@ -1,6 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
+import { DonHang } from '../modules/thanh-toan/entities/don-hang.entity';
+import { BranchReview } from '../entities/branch-review.entity';
+import { assertRating, duplicateReview, isPublicReview, lockReviewOrder } from './review-policy';
 import { Review } from '../entities/review.entity';
 
 const identitySchema = process.env.IDENTITY_DB_SCHEMA || 'identity';
@@ -44,7 +47,7 @@ export class ReviewService {
     const userMap = new Map(
       users.map((user: { ma_nguoi_dung: string; ho_ten?: string; email?: string }) => [
         user.ma_nguoi_dung,
-        user.ho_ten || user.email || null,
+        user.ho_ten || null,
       ]),
     );
 
@@ -115,119 +118,60 @@ export class ReviewService {
     });
   }
 
-  private async kiemTraDieuKienDanhGia(maNguoiDung: string, maSanPham: string, maDonHang?: string) {
-    if (!maDonHang) {
-      throw new BadRequestException('Chi duoc danh gia san pham sau khi don hang da hoan thanh');
-    }
-
-    const ketQua = await this.reviewRepo.manager.query(
-      `SELECT dh.ma_don_hang, dh.trang_thai_don_hang
-       FROM "${orderSchema}"."don_hang" dh
-       INNER JOIN "${orderSchema}"."chi_tiet_don_hang" ct ON ct.ma_don_hang = dh.ma_don_hang
-       WHERE dh.ma_don_hang = $1
-         AND dh.ma_nguoi_dung = $2
-         AND CAST(ct.ma_san_pham AS text) = $3
-       LIMIT 1`,
-      [maDonHang, maNguoiDung, maSanPham],
-    );
-
-    const donHopLe = ketQua?.[0];
-    if (!donHopLe) {
-      throw new BadRequestException('Ban chi duoc danh gia san pham da mua trong don hang hop le');
-    }
-
-    if (String(donHopLe.trang_thai_don_hang || '').toUpperCase() !== 'HOAN_THANH') {
-      throw new BadRequestException('Chi duoc danh gia sau khi don hang da giao thanh cong');
-    }
-  }
-
-  // Tạo review mới
   async taoReview(payload: {
     maSanPham: string;
     maNguoiDung: string;
     soSao: number;
     binhLuan?: string;
     maDonHang?: string;
-    maKiosk?: string;  // Nhượng quyền kiosk
+    maKiosk?: string;
   }) {
-    const { maSanPham, maNguoiDung, soSao, binhLuan, maDonHang, maKiosk } = payload;
-
-    if (soSao < 1 || soSao > 5) {
-      throw new BadRequestException('soSao phai trong khoang 1 den 5');
-    }
-
-    // Với đơn kiosk: kiểm tra điều kiện đơn hoàn thành có thể linh hoạt hơn
-    // vì kiosk có thể đã giao hàng nhưng không có trạng thái HOAN_THANH
-    if (!maKiosk) {
-      await this.kiemTraDieuKienDanhGia(maNguoiDung, maSanPham, maDonHang);
-    } else if (maDonHang) {
-      // Kiểm tra đơn hàng có thuộc về kiosk này không
-      const ketQua = await this.reviewRepo.manager.query(
-        `SELECT dh.ma_don_hang, dh.trang_thai_don_hang
-         FROM "${orderSchema}"."don_hang" dh
-         WHERE dh.ma_don_hang = $1 AND dh.co_so_ma = $2
-         LIMIT 1`,
-        [maDonHang, maKiosk],
-      );
-      if (!ketQua?.[0]) {
-        throw new BadRequestException('Don hang nay khong thuoc kiosk nay hoac khong ton tai');
+    assertRating(payload.soSao);
+    return this.reviewRepo.manager.transaction(async (manager) => {
+      const order = await lockReviewOrder(manager, payload.maDonHang, payload.maNguoiDung);
+      if (payload.maKiosk && order.co_so_ma !== payload.maKiosk) {
+        throw new BadRequestException('Chi nhánh không khớp với đơn hàng');
       }
-    }
-
-    // Chi update review khi trung ca user + san pham + don hang.
-    // Neu user mua lai san pham o don khac, se tao review moi.
-    const existing = maDonHang
-      ? await this.reviewRepo.findOne({
-          where: {
-            ma_san_pham: maSanPham,
-            ma_nguoi_dung: maNguoiDung,
-            ma_don_hang: maDonHang,
-          },
-        })
-      : await this.reviewRepo.findOne({
-          where: {
-            ma_san_pham: maSanPham,
-            ma_nguoi_dung: maNguoiDung,
-            ma_don_hang: IsNull(),
-          },
-        });
-
-    if (existing) {
-      // Update nếu đã tồn tại
-      existing.so_sao = soSao;
-      existing.binh_luan = binhLuan || null;
-      existing.ma_don_hang = maDonHang || existing.ma_don_hang || null;
-      if (maKiosk) (existing as any).ma_kiosk = maKiosk;
-      const updated = await this.reviewRepo.save(existing);
-      return { message: 'Cap nhat danh gia thanh cong', item: updated };
-    }
-
-    // Tạo mới
-    const review = this.reviewRepo.create({
-      ma_san_pham: maSanPham,
-      ma_nguoi_dung: maNguoiDung,
-      so_sao: soSao,
-      binh_luan: binhLuan || null,
-      ma_don_hang: maDonHang || null,
+      const [purchased] = await manager.query(
+        `SELECT id FROM "${orderSchema}"."chi_tiet_don_hang"
+         WHERE ma_don_hang = $1 AND CAST(ma_san_pham AS text) = $2 LIMIT 1`,
+        [order.ma_don_hang, payload.maSanPham],
+      );
+      if (!purchased) throw new BadRequestException('Chỉ được đánh giá món đã mua trong đơn hàng');
+      const repo = manager.getRepository(Review);
+      if (await repo.findOne({ where: {
+        ma_san_pham: payload.maSanPham, ma_nguoi_dung: payload.maNguoiDung, ma_don_hang: order.ma_don_hang,
+      } }) || await manager.getRepository(BranchReview).findOne({ where: { ma_don_hang: order.ma_don_hang } })) {
+        throw duplicateReview();
+      }
+      const item = await repo.save(repo.create({
+        ma_san_pham: payload.maSanPham,
+        ma_nguoi_dung: payload.maNguoiDung,
+        so_sao: payload.soSao,
+        binh_luan: payload.binhLuan?.trim().slice(0, 2000) || null,
+        ma_don_hang: order.ma_don_hang,
+      }));
+      return { message: 'Gửi đánh giá thành công', item: { ...item, ma_chi_nhanh: order.co_so_ma } };
     });
-    if (maKiosk) (review as any).ma_kiosk = maKiosk;
-
-    const saved = await this.reviewRepo.save(review);
-    return { message: 'Tao danh gia thanh cong', item: saved };
   }
 
   // Lấy tất cả reviews của một sản phẩm, hỗ trợ lọc theo kiosk
   async layDanhGiaSanPham(maSanPham: string, maKiosk?: string) {
-    const where: any = { ma_san_pham: maSanPham };
-    if (maKiosk?.trim()) {
-      where.ma_kiosk = maKiosk.trim();
-    }
-    const reviews = await this.reviewRepo.find({
-      where,
-      order: { ngay_tao: 'DESC' },
-    });
-
-    const enrichedReviews = await this.ganTenNguoiDungChoReviews(reviews);
+    const query = this.reviewRepo.createQueryBuilder('review')
+      .innerJoin(DonHang, 'dh', 'dh.ma_don_hang = review.ma_don_hang AND dh.ma_nguoi_dung = review.ma_nguoi_dung::text')
+      .where('review.ma_san_pham = :product', { product: maSanPham })
+      .andWhere('dh.trang_thai_don_hang = :completed', { completed: 'HOAN_THANH' })
+      .orderBy('review.ngay_tao', 'DESC');
+    if (maKiosk?.trim()) query.andWhere('dh.co_so_ma = :branch', { branch: maKiosk.trim() });
+    const rows = await query.getMany();
+    const reviews = (await this.ganTenNguoiDungChoReviews(rows)).filter(isPublicReview);
+    const orderIds = [...new Set(reviews.map((review) => review.ma_don_hang).filter(Boolean))];
+    const branches = orderIds.length ? await this.reviewRepo.manager.query(
+      `SELECT ma_don_hang, co_so_ma FROM "${orderSchema}"."don_hang" WHERE ma_don_hang = ANY($1::uuid[])`, [orderIds],
+    ) : [];
+    const enrichedReviews = reviews.map((review) => ({
+      ...review, ma_chi_nhanh: branches.find((order) => order.ma_don_hang === review.ma_don_hang)?.co_so_ma || null,
+    }));
 
     const tongReview = reviews.length;
     const diemTrungBinh =
@@ -264,13 +208,13 @@ export class ReviewService {
       order: { ngay_cap_nhat: 'DESC' },
     });
 
-    const enrichedReviews = await this.ganTenNguoiDungChoReviews(reviews);
+    const enrichedReviews = (await this.ganTenNguoiDungChoReviews(reviews)).filter(isPublicReview);
 
-    const tongReview = reviews.length;
+    const tongReview = enrichedReviews.length;
     const diemTrungBinh =
       tongReview > 0
         ? Math.round(
-            (reviews.reduce((sum, r) => sum + r.so_sao, 0) / tongReview) * 10,
+            (enrichedReviews.reduce((sum, r) => sum + r.so_sao, 0) / tongReview) * 10,
           ) / 10
         : 0;
 
@@ -284,6 +228,7 @@ export class ReviewService {
   // Cập nhật review
   async capNhatReview(
     reviewId: number,
+    userId: string,
     payload: {
       soSao?: number;
       binhLuan?: string;
@@ -297,7 +242,9 @@ export class ReviewService {
       throw new NotFoundException('Review khong ton tai');
     }
 
+    if (review.ma_nguoi_dung !== userId) throw new ForbiddenException('Bạn chỉ được cập nhật đánh giá của mình');
     if (payload.soSao !== undefined) {
+      assertRating(payload.soSao);
       review.so_sao = payload.soSao;
     }
     if (payload.binhLuan !== undefined) {
@@ -378,7 +325,7 @@ export class ReviewService {
   }
 
   // Xóa review
-  async xoaReview(reviewId: number) {
+  async xoaReview(reviewId: number, userId: string) {
     const review = await this.reviewRepo.findOne({
       where: { id: reviewId },
     });
@@ -387,6 +334,7 @@ export class ReviewService {
       throw new NotFoundException('Review khong ton tai');
     }
 
+    if (review.ma_nguoi_dung !== userId) throw new ForbiddenException('Bạn chỉ được xóa đánh giá của mình');
     await this.reviewRepo.remove(review);
     return { message: 'Xoa danh gia thanh cong' };
   }

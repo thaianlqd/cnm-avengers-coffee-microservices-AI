@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react'
+import { AppState } from 'react-native'
+import { useQueryClient } from '@tanstack/react-query'
 import apiClient, { clearAuthToken, setAuthToken } from '../lib/apiClient'
-import { clearShipperSession, loadShipperSession, saveShipperSession } from '../lib/storage'
+import { clearShipperSession, loadShipperSession, saveShipperSession, touchShipperSession, shipperSessionExpired } from '../lib/storage'
 
 const ShipperContext = createContext(null)
 
@@ -9,10 +11,12 @@ export const globalState = {
 };
 
 export function ShipperProvider({ children }) {
+  const queryClient = useQueryClient()
   const [shipper, setShipper] = useState(null)
   const [token, setToken] = useState(null)
   const [hydrated, setHydrated] = useState(false)
   const profileVersion = useRef(0), statusPending = useRef(false)
+  const lastTouchWrite = useRef(0)
   const readProfile = useCallback(async (id, sessionToken) => {
     const version = profileVersion.current
     if (statusPending.current) return null
@@ -63,6 +67,7 @@ export function ShipperProvider({ children }) {
     setToken(nextToken)
     await setAuthToken(nextToken)
     await saveShipperSession(nextShipper, nextToken)
+    await touchShipperSession()
 
     return nextShipper
   }
@@ -89,9 +94,28 @@ export function ShipperProvider({ children }) {
     ++profileVersion.current
     setShipper(null)
     setToken(null)
+    queryClient.clear()
     await clearAuthToken()
     await clearShipperSession()
   }
+
+  const verifyIdle = async () => {
+    if (token && await shipperSessionExpired()) await logout()
+  }
+  const touchSession = async () => {
+    if (!token) return
+    if (await shipperSessionExpired()) { await logout(); return }
+    if (Date.now() - lastTouchWrite.current < 15000) return
+    lastTouchWrite.current = Date.now()
+    await touchShipperSession()
+  }
+
+  useEffect(() => {
+    if (!token) return undefined
+    const timer = setInterval(verifyIdle, 30000)
+    const subscription = AppState.addEventListener('change', state => { if (state === 'active') verifyIdle() })
+    return () => { clearInterval(timer); subscription.remove() }
+  }, [token])
 
   const value = useMemo(
     () => ({
@@ -102,6 +126,7 @@ export function ShipperProvider({ children }) {
       updateStatus,
       refreshProfile,
       logout,
+      touchSession,
     }),
     [hydrated, shipper, token],
   )

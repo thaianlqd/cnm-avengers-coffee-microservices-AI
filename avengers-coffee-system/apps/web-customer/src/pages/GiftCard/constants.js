@@ -8,24 +8,32 @@ export const NAV_ITEMS = [
 ];
 
 export const BANNER_SLIDES = [
-  'https://storage.googleapis.com/public-drupal-storage-bucket/styles/_lb_convert_to_webp/cloud-storage/2025-06/APP%20bANNER%20%281%29.png.webp?itok=fX74rdFE',
-  'https://storage.googleapis.com/public-drupal-storage-bucket/styles/_lb_convert_to_webp/cloud-storage/2025-06/APP%20bANNER.png.webp?itok=nkXZ22gW',
+  '/images/brand/coffee-moments-hero-v1.jpg',
+  '/campaigns/highlands-christmas-party.jpg',
+  '/images/brand/tea-and-croissant-v1.jpg',
 ];
 
 export const STEPS = [
   {
-    img: 'https://storage.googleapis.com/public-drupal-storage-bucket/styles/thumbnail/cloud-storage/2025-01/HCO%207771%20TET%20GIFTCARD%20WEBISTE%20BANNER%202_B1.png.webp?itok=A4hGc1F2',
-    desc: 'Chọn mẫu thẻ ưng ý và điền tâm thư bạn muốn nhắn nhủ tới người thương',
+    step: 1,
+    title: 'Chọn Mẫu & Lời Chúc',
+    desc: 'Chọn mẫu thẻ ưng ý trong các bộ sưu tập và gửi gắm tâm thư chân thành đến người thương.',
+    icon: 'card',
   },
   {
-    img: 'https://storage.googleapis.com/public-drupal-storage-bucket/styles/thumbnail/cloud-storage/2024-10/HC_GIFCARD%20WEBSITE%20BANNER-WOMENMONTH-_B2.png.webp?itok=BwKO2pXW',
-    desc: 'Thanh toán',
+    step: 2,
+    title: 'Thanh Toán Linh Hoạt',
+    desc: 'Thanh toán tức thì và bảo mật 100% qua Ví Avengers, thẻ ngân hàng hoặc cổng VNPAY.',
+    icon: 'payment',
   },
   {
-    img: 'https://storage.googleapis.com/public-drupal-storage-bucket/styles/thumbnail/cloud-storage/2025-01/HCO%207771%20TET%20GIFTCARD%20WEBISTE%20BANNER%202_B3.png.webp?itok=DGSzcYpu',
-    desc: 'Người nhận thẻ sẽ nhận được Mã Xác Nhận qua SMS từ Avengers Coffee',
+    step: 3,
+    title: 'Nhận Thẻ & Nạp Ví Tức Thì',
+    desc: 'Người nhận nhận mã thẻ 16 ký tự qua Email/SMS để nạp ngay vào ví và thưởng thức cà phê.',
+    icon: 'gift',
   },
 ];
 
-export const CARD_IMAGE = 'https://storage.googleapis.com/public-drupal-storage-bucket/styles/gift_card_thumbnail/cloud-storage/egift_card_banner/HCO%207771%20TET%202025%20GIFT%20CARD%20%281%29.pdf__0.png.webp?itok=DauOqyNV';
-export const B2B_BANNER = 'https://storage.googleapis.com/public-drupal-storage-bucket/styles/_lb_convert_to_webp/cloud-storage/2025-01/HCO%207771%20TET%20GIFTCARD%20WEBISTE%20BANNER_B2B%20BANNER.png.webp?itok=uCGjeqhP';
+export const CARD_IMAGE = '/images/cards/festive_1.png';
+export const B2B_BANNER = '/campaigns/highlands-christmas-office.jpg';
+

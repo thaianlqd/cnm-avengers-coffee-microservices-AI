@@ -41,6 +41,9 @@ export class DeliveryAddress {
   @Column({ type: 'float', nullable: true })
   kinh_do: number | null;
 
+  @Column({ type: 'jsonb', nullable: true })
+  dia_chi_cau_truc: Record<string, string> | null;
+
   @CreateDateColumn()
   ngay_tao: Date;
 

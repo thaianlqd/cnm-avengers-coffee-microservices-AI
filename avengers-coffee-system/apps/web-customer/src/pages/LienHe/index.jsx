@@ -34,7 +34,7 @@ export default function LienHePage() {
 
           {/* Left: Contact Info */}
           <div>
-            <h1 className="text-[22px] font-bold text-[#333] leading-tight mb-6">{ui("Highlands Coffee® Order thuộc CÔNG TY CỔ PHẦN DỊCH VỤ CÀ PHÊ CAO NGUYÊN")}</h1>
+            <h1 className="text-[22px] font-bold text-[#333] leading-tight mb-6">{ui("Liên hệ Avengers Coffee")}</h1>
 
             <div className="space-y-4 text-[14px] text-[#333]">
               <div className="flex items-start gap-3">
@@ -43,7 +43,7 @@ export default function LienHePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <div>
-                  <p>{ui("Địa chỉ: 125-127 Nguyễn Cơ Thạch, phường An Lợi Đông, Quận 2, TP Hồ Chí Minh. MSDN: 0309965814 do Sở Kế hoạch - Đầu tư Tp.HCM cấp lần đầu ngày 20/04/2010, sửa đổi lần thứ 30 ngày 30/08/2022.")}</p>
+                  <p>{ui("Xem địa chỉ và giờ mở cửa tại trang Cửa hàng.")}</p>
                 </div>
               </div>
 
@@ -58,12 +58,12 @@ export default function LienHePage() {
                 <svg className="w-5 h-5 text-[#b22830] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span>Email: <a href="mailto:customerservice@highlandscoffee.com.vn" className="text-[#2F80ED] hover:underline">customerservice@highlandscoffee.com.vn</a></span>
+                <span>Email: <a href="mailto:cskh@avengerscoffee.vn" className="text-[#2F80ED] hover:underline">cskh@avengerscoffee.vn</a></span>
               </div>
             </div>
 
             <div className="mt-8">
-              <h3 className="text-[13px] font-bold text-[#333] uppercase mb-3 tracking-wide">{ui("LIÊN HỆ VỚI CHÚNG TÔI")}</h3>
+              <h3 className="text-[13px] font-bold text-[#333]  mb-3 tracking-wide">{ui("Liên hệ với chúng tôi")}</h3>
 
               {submitted ? (
                 <div className="bg-green-50 border border-green-200 rounded p-4 text-green-700 text-[14px]">
@@ -103,7 +103,7 @@ export default function LienHePage() {
 
                   <button
                     type="submit"
-                    className="w-full bg-[#b22830] text-white py-3 text-[14px] font-semibold hover:bg-[#8a1e24] transition-colors uppercase tracking-wide"
+                    className="w-full bg-[#b22830] text-white py-3 text-[14px] font-semibold hover:bg-[#8a1e24] transition-colors  tracking-wide"
                   >{ui("Gửi tin nhắn")}</button>
                 </form>
               )}
@@ -114,7 +114,7 @@ export default function LienHePage() {
           <div>
             <div className="w-full h-[420px] border border-gray-200 overflow-hidden">
               <iframe
-                title="Highlands Coffee Location"
+                title="Avengers Coffee Location"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.0!2d106.7438!3d10.8041!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317528b84ea8bea9%3A0x21ca8d0b8bef8d01!2s123%20Nguy%E1%BB%85n%20C%C6%A1%20Th%E1%BA%A1ch%2C%20An%20Kh%C3%A1nh%2C%20Th%E1%BB%A7%20%C4%90%E1%BB%A9c%2C%20TP.HCM!5e0!3m2!1svi!2svn!4v1234567890"
                 width="100%"
                 height="100%"

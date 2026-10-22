@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Info,
   Sparkles
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 import { io } from 'socket.io-client'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 

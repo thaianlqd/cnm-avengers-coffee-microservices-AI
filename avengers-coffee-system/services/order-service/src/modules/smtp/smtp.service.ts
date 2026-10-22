@@ -36,284 +36,33 @@ export interface EmailTemplateOptions {
   hideCta?: boolean;
 }
 
+export function escapeEmailHtml(value: unknown): string {
+  const replacements: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(value ?? '').replace(/[&<>"']/g, character => replacements[character] || character);
+}
+
 export function buildBrandedEmailHtml(options: EmailTemplateOptions): string {
-  const ctaBg = options.ctaColor === 'blue' 
-    ? 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)' 
-    : options.ctaColor === 'red' 
-    ? 'linear-gradient(135deg, #991b1b 0%, #b91c1c 100%)' 
-    : 'linear-gradient(135deg, #15803d 0%, #16a34a 100%)';
-
-  const heroImage = options.heroImageUrl || 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&h=480&q=85';
-  const promoImage = options.promoImageUrl || 'https://images.unsplash.com/photo-1509785307050-d4066910ec1e?auto=format&fit=crop&w=1200&h=400&q=85';
-  const footerImage = 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1200&h=260&q=85';
-
-  return `
-    <!DOCTYPE html>
-    <html lang="vi">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${options.heroTitle}</title>
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;">
-      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 36px 0;">
-        <tr>
-          <td align="center">
-            
-            <!-- Main Email Shell (600px standard) -->
-            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.14); border: 1px solid #e2e8f0;">
-              
-              <!-- 1. TOP LUXURY BRAND HEADER -->
-              <tr>
-                <td style="padding: 22px 32px; background-color: #170c08; text-align: center; border-bottom: 2px solid #d97706;">
-                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                    <tr>
-                      <td align="center">
-                        <table border="0" cellspacing="0" cellpadding="0">
-                          <tr>
-                            <td style="vertical-align: middle;">
-                              <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="46" height="46" alt="Avengers Coffee Logo" style="display: block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); object-fit: cover;" />
-                            </td>
-                            <td style="vertical-align: middle; padding-left: 14px; text-align: left;">
-                              <div style="font-size: 21px; font-weight: 900; color: #ffffff; letter-spacing: 2px; line-height: 1.1; text-transform: uppercase;">
-                                AVENGERS COFFEE
-                              </div>
-                              <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 2.2px; text-transform: uppercase; margin-top: 3px;">
-                                ${options.headerTagline || 'THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ'}
-                              </div>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-
-              <!-- 2. HIGH-RES HERO BANNER IMAGE -->
-              <tr>
-                <td style="padding: 0; line-height: 0; background-color: #170c08;">
-                  <img src="${heroImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Banner" />
-                </td>
-              </tr>
-
-              <!-- 3. HERO TITLE & BADGE SECTION -->
-              <tr>
-                <td style="padding: 0; background: linear-gradient(180deg, #7f1d1d 0%, #4c0519 100%); text-align: center;">
-                  <div style="padding: 30px 24px 30px 24px;">
-                    <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #fef08a; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(254, 240, 138, 0.4);">
-                      AVENGERS COFFEE OFFICIAL
-                    </div>
-                    <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.4);">
-                      ${options.heroTitle}
-                    </h1>
-
-                    ${options.heroSubtitle ? `
-                      <p style="margin: 0 0 20px 0; font-size: 13px; color: #fef08a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                        ${options.heroSubtitle}
-                      </p>
-                    ` : ''}
-
-                    <!-- Highlight Badge Card -->
-                    ${options.heroBadgeValue ? `
-                      <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 2px solid #f59e0b; box-shadow: 0 12px 32px rgba(0,0,0,0.3); max-width: 480px; width: 92%;">
-                        <tr>
-                          <td style="padding: 18px 24px; text-align: center;">
-                            ${options.heroBadgeTitle ? `
-                              <div style="font-size: 11.5px; font-weight: 800; color: #991b1b; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px;">
-                                ${options.heroBadgeTitle}
-                              </div>
-                            ` : ''}
-                            <div style="font-size: 27px; font-weight: 900; color: #7f1d1d; letter-spacing: 1px; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;">
-                              ${options.heroBadgeValue}
-                            </div>
-                            ${options.heroBadgeSub ? `
-                              <div style="font-size: 12px; color: #475569; margin-top: 5px; font-weight: 600;">
-                                ${options.heroBadgeSub}
-                              </div>
-                            ` : ''}
-                          </td>
-                        </tr>
-                      </table>
-                    ` : ''}
-                  </div>
-                </td>
-              </tr>
-
-              <!-- 4. GREETING & WARM MESSAGE -->
-              <tr>
-                <td style="padding: 36px 36px 20px 36px; text-align: center;">
-                  <h2 style="margin: 0 0 14px 0; font-size: 19px; font-weight: 800; color: #0f172a; line-height: 1.4;">
-                    ${options.greetingTitle}
-                  </h2>
-                  <div style="font-size: 14.5px; color: #334155; line-height: 1.75; margin: 0 0 12px 0;">
-                    ${options.greetingBody}
-                  </div>
-                  ${options.greetingEn ? `
-                    <div style="font-size: 13px; color: #64748b; line-height: 1.6; font-style: italic; margin-bottom: 18px;">
-                      ${options.greetingEn}
-                    </div>
-                  ` : ''}
-
-                  <!-- Highlight Code Box -->
-                  ${options.highlightCode ? `
-                    <div style="margin: 20px auto 26px auto; display: block; max-width: 440px; padding: 18px 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 16px; box-shadow: 0 4px 16px rgba(22, 163, 74, 0.12); text-align: center;">
-                      <span style="font-size: 11.5px; color: #15803d; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 6px; letter-spacing: 1.2px;">
-                        ${options.highlightLabel || 'MÃ TRA CỨU ĐƠN HÀNG (THEO DÕI TRỰC TIẾP):'}
-                      </span>
-                      <div style="font-size: 28px; font-weight: 900; color: #166534; letter-spacing: 3.5px; font-family: 'Plus Jakarta Sans', monospace; margin: 4px 0 6px 0;">
-                        ${options.highlightCode}
-                      </div>
-                      <div style="font-size: 12px; color: #15803d; font-weight: 600; line-height: 1.5;">
-                        ${options.highlightSubText || 'Nhập mã này tại mục Tra cứu đơn trên website để theo dõi tiến độ đơn hàng mà không cần đăng nhập'}
-                      </div>
-                    </div>
-                  ` : ''}
-
-                  <!-- 5. CTA BUTTON -->
-                  ${!options.hideCta && options.ctaUrl ? `
-                    <div style="margin: 20px 0 14px 0; text-align: center;">
-                      <a href="${options.ctaUrl}" target="_blank" style="display: inline-block; background: ${ctaBg}; color: #ffffff; text-decoration: none; padding: 18px 44px; border-radius: 14px; font-weight: 900; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 8px 24px rgba(22, 163, 74, 0.35); line-height: 1.2;">
-                        <div style="color: #ffffff;">${options.ctaText}</div>
-                        ${options.ctaSubText ? `
-                          <div style="font-size: 11px; opacity: 0.92; font-weight: 700; margin-top: 4px; letter-spacing: 1.8px; color: #e2fbe8;">${options.ctaSubText}</div>
-                        ` : ''}
-                      </a>
-                    </div>
-                  ` : ''}
-                </td>
-              </tr>
-
-              <!-- 6. DETAILED RECEIPT & SPECIFICATIONS -->
-              ${options.detailsHtml ? `
-                <tr>
-                  <td style="padding: 10px 36px 24px 36px;">
-                    ${options.detailsTitle ? `
-                      <div style="font-size: 13px; font-weight: 800; color: #991b1b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
-                        ● ${options.detailsTitle}
-                      </div>
-                    ` : ''}
-                    ${options.detailsHtml}
-                  </td>
-                </tr>
-              ` : ''}
-
-              <!-- 7. TERMS & CONDITIONS -->
-              ${options.termsHtml ? `
-                <tr>
-                  <td style="padding: 0 36px 28px 36px;">
-                    <div style="background-color: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; padding: 18px 22px; font-size: 12.5px; color: #475569; line-height: 1.7;">
-                      ${options.termsTitle ? `
-                        <div style="font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">
-                          ● ${options.termsTitle}
-                        </div>
-                      ` : ''}
-                      ${options.termsHtml}
-                    </div>
-                  </td>
-                </tr>
-              ` : ''}
-
-              <!-- 8. PROMOTIONAL BANNER -->
-              <tr>
-                <td style="padding: 0 36px 32px 36px;">
-                  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fffbeb; border-radius: 18px; overflow: hidden; border: 1px solid #fde68a; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.1);">
-                    <tr>
-                      <td style="line-height: 0;">
-                        <img src="${promoImage}" width="528" style="display: block; width: 100%; height: auto; object-fit: cover;" alt="Thực đơn đặc sản Avengers Coffee" />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 18px 22px; text-align: center;">
-                        <div style="font-size: 14px; font-weight: 900; color: #92400e; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">
-                          ${options.promoTitle || 'THƯỞNG THỨC HƯƠNG VỊ CÀ PHÊ RANG MỘC THƯỢNG HẠNG'}
-                        </div>
-                        <div style="font-size: 12.5px; color: #b45309; line-height: 1.5; font-weight: 500;">
-                          ${options.promoSubtitle || '100% hạt Arabica Cầu Đất & Robusta Buôn Ma Thuột rang xay tươi mới • Trà trái cây tươi nhiệt đới • Bánh ngọt thủ công nướng nóng hổi.'}
-                        </div>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-
-              <!-- 9. FOOTER ARTWORK BANNER IMAGE -->
-              <tr>
-                <td style="padding: 0; line-height: 0; background-color: #170c08;">
-                  <img src="${footerImage}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0; outline: none; object-fit: cover;" alt="Avengers Coffee Footer Image" />
-                </td>
-              </tr>
-
-              <!-- 10. LUXURY BRAND FOOTER -->
-              <tr>
-                <td style="background-color: #170c08; padding: 36px 28px; text-align: center; color: #ffffff; border-top: 2px solid #d97706;">
-                  
-                  <!-- Circular Logo Image in Footer -->
-                  <div style="margin-bottom: 14px;">
-                    <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=120&h=120&q=80" width="48" height="48" alt="Avengers Coffee" style="display: inline-block; border-radius: 50%; border: 2px solid #f59e0b; box-shadow: 0 4px 14px rgba(0,0,0,0.5); object-fit: cover;" />
-                  </div>
-
-                  <div style="font-size: 18px; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px; text-transform: uppercase; color: #ffffff;">
-                    AVENGERS COFFEE VIETNAM
-                  </div>
-                  <div style="font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 1.8px; text-transform: uppercase; margin-bottom: 20px;">
-                    THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ
-                  </div>
-
-                  <!-- High-Res Real Social Icon Images -->
-                  <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 22px auto;">
-                    <tr>
-                      <td style="padding: 0 8px;">
-                        <a href="https://facebook.com" target="_blank" style="text-decoration: none;">
-                          <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="30" height="30" alt="Facebook" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                        </a>
-                      </td>
-                      <td style="padding: 0 8px;">
-                        <a href="https://tiktok.com" target="_blank" style="text-decoration: none;">
-                          <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" width="30" height="30" alt="TikTok" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                        </a>
-                      </td>
-                      <td style="padding: 0 8px;">
-                        <a href="https://instagram.com" target="_blank" style="text-decoration: none;">
-                          <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="30" height="30" alt="Instagram" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                        </a>
-                      </td>
-                      <td style="padding: 0 8px;">
-                        <a href="https://youtube.com" target="_blank" style="text-decoration: none;">
-                          <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="30" height="30" alt="YouTube" style="display: block; border-radius: 50%; background-color: #ffffff; padding: 4px; box-sizing: border-box;" />
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-
-                  <p style="margin: 0 0 6px 0; font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.5;">
-                    Hotline chăm sóc khách hàng: <strong style="color: #fef08a;">1800 6936</strong> • Email: <strong style="color: #ffffff;">support@avengers.coffee</strong>
-                  </p>
-                  <p style="margin: 0 0 18px 0; font-size: 11.5px; color: rgba(255, 255, 255, 0.65); line-height: 1.5;">
-                    Hệ thống chuỗi cửa hàng cà phê Avengers Coffee Vietnam. All rights reserved © 2026.
-                  </p>
-
-                  <!-- Bottom Legal Links -->
-                  <div style="border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 16px; font-size: 11.5px; color: rgba(255, 255, 255, 0.85);">
-                    <a href="http://localhost:5173" target="_blank" style="color: #fef08a; text-decoration: none; margin: 0 10px; font-weight: 600;">Trang chủ</a> |
-                    <a href="http://localhost:5173" target="_blank" style="color: #fef08a; text-decoration: none; margin: 0 10px; font-weight: 600;">Điều khoản dịch vụ</a> |
-                    <a href="http://localhost:5173" target="_blank" style="color: #fef08a; text-decoration: none; margin: 0 10px; font-weight: 600;">Tra cứu đơn hàng</a>
-                  </div>
-
-                </td>
-              </tr>
-
-            </table>
-
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
+  const brand = '#6f1825';
+  const trackingUrl = escapeEmailHtml(options.ctaUrl);
+  return `<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeEmailHtml(options.heroTitle)}</title></head>
+<body style="margin:0;background:#f5f4f1;color:#262321;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f4f1;"><tr><td align="center" style="padding:32px 14px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border:1px solid #e7e2dc;">
+<tr><td style="padding:26px 32px;border-bottom:1px solid #e7e2dc;font-size:16px;letter-spacing:2px;font-weight:700;color:${brand};">AVENGERS COFFEE</td></tr>
+<tr><td style="padding:36px 32px 14px;">
+<h1 style="margin:0 0 10px;font-size:25px;line-height:1.3;font-weight:600;color:#262321;">${escapeEmailHtml(options.heroTitle)}</h1>
+${options.heroSubtitle ? `<p style="margin:0;color:#756e68;font-size:13px;line-height:1.5;">${escapeEmailHtml(options.heroSubtitle)}</p>` : ''}
+${options.heroBadgeValue ? `<div style="margin:28px 0 0;padding:16px 0;border-top:1px solid #e7e2dc;border-bottom:1px solid #e7e2dc;"><div style="font-size:11px;color:#756e68;letter-spacing:1px;">${escapeEmailHtml(options.heroBadgeTitle || '')}</div><div style="margin-top:6px;font-size:22px;color:${brand};font-weight:600;">${escapeEmailHtml(options.heroBadgeValue)}</div>${options.heroBadgeSub ? `<div style="margin-top:5px;font-size:12px;color:#756e68;">${escapeEmailHtml(options.heroBadgeSub)}</div>` : ''}</div>` : ''}
+</td></tr>
+<tr><td style="padding:12px 32px 26px;"><h2 style="margin:0 0 10px;font-size:16px;font-weight:600;">${escapeEmailHtml(options.greetingTitle)}</h2><div style="font-size:14px;line-height:1.7;color:#4d4843;">${options.greetingBody}</div>
+${options.highlightCode ? `<p style="font-size:13px;color:#756e68;">${escapeEmailHtml(options.highlightLabel || 'Mã tra cứu')}: <strong style="color:${brand};">${escapeEmailHtml(options.highlightCode)}</strong></p>` : ''}
+${!options.hideCta && options.ctaUrl ? `<p style="margin:26px 0 0;"><a href="${trackingUrl}" style="display:inline-block;background:${brand};color:#fff;text-decoration:none;padding:12px 20px;font-size:13px;font-weight:600;">${escapeEmailHtml(options.ctaText)}</a></p>` : ''}
+</td></tr>
+${options.detailsHtml ? `<tr><td style="padding:0 32px 26px;"><h3 style="margin:0 0 14px;font-size:13px;font-weight:600;color:#625b55;">${escapeEmailHtml(options.detailsTitle || 'Chi tiết đơn hàng')}</h3>${options.detailsHtml}</td></tr>` : ''}
+${options.termsHtml ? `<tr><td style="padding:0 32px 28px;font-size:12px;line-height:1.6;color:#756e68;">${options.termsHtml}</td></tr>` : ''}
+<tr><td style="padding:22px 32px;border-top:1px solid #e7e2dc;font-size:12px;line-height:1.6;color:#756e68;">Email tự động từ Avengers Coffee. Bạn có thể theo dõi đơn qua liên kết ở trên.</td></tr>
+</table></td></tr></table></body></html>`;
 }
 
 @Injectable()
@@ -625,15 +374,15 @@ export class SmtpService {
       const itemsRowsHtml = (chiTiet || []).map((item, idx) => {
         const itemTotal = (Number(item.gia_ban || 0) * Number(item.so_luong || 1)).toLocaleString('vi-VN') + ' đ';
         const toppingsText = Array.isArray(item.toppings) && item.toppings.length
-          ? `<div style="font-size: 11.5px; color: #64748b; margin-top: 3px;">+ Topping: ${item.toppings.join(', ')}</div>`
+          ? `<div style="font-size: 11.5px; color: #756e68; margin-top: 3px;">Topping: ${escapeEmailHtml(item.toppings.join(', '))}</div>`
           : '';
-        const sizeText = item.kich_co ? `<span style="font-size: 11.5px; color: #64748b; font-weight: 600;">(Size: ${item.kich_co})</span>` : '';
-        const noteText = item.ghi_chu ? `<div style="font-size: 11px; color: #94a3b8; font-style: italic; margin-top: 2px;">Ghi chú: ${item.ghi_chu}</div>` : '';
+        const sizeText = item.kich_co ? `<span style="font-size: 11.5px; color: #756e68;">(${escapeEmailHtml(item.kich_co)})</span>` : '';
+        const noteText = item.ghi_chu ? `<div style="font-size: 11px; color: #756e68; margin-top: 2px;">Ghi chú: ${escapeEmailHtml(item.ghi_chu)}</div>` : '';
 
         return `
           <tr style="border-bottom: 1px solid #f1f5f9;">
             <td style="padding: 12px 10px; font-size: 13.5px; color: #1e293b; vertical-align: top;">
-              <strong style="color: #0f172a;">${idx + 1}. ${item.ten_san_pham}</strong> ${sizeText}
+              <strong style="color: #262321; font-weight: 600;">${idx + 1}. ${escapeEmailHtml(item.ten_san_pham)}</strong> ${sizeText}
               ${toppingsText}
               ${noteText}
             </td>
@@ -654,23 +403,23 @@ export class SmtpService {
       const deliveryModeMap: Record<string, string> = {
         GIAO_TAN_NOI: 'Giao hàng tận nơi',
         LAY_TAI_QUAN: 'Khách tự lấy tại quán',
-        DUNG_TAI_CHO: 'Dùng tại chỗ (Bàn ' + (donHang.ma_ban || '---') + ')',
+        DUNG_TAI_CHO: 'Dùng tại chỗ (Bàn ' + escapeEmailHtml(donHang.ma_ban || '---') + ')',
       };
       const deliveryModeName = deliveryModeMap[donHang.loai_don_hang || ''] || 'Giao hàng tận nơi';
 
       const orderDetailsHtml = `
         <!-- Order Summary Card -->
-        <div style="background-color: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; padding: 18px 20px; margin-bottom: 22px;">
+        <div style="border-top: 1px solid #e7e2dc; border-bottom: 1px solid #e7e2dc; padding: 14px 0; margin-bottom: 20px;">
           <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
             <tr>
               <td style="padding: 7px 0; color: #64748b; width: 40%;">Mã đơn hàng:</td>
-              <td style="padding: 7px 0; text-align: right; color: #b22830; font-family: 'Plus Jakarta Sans', monospace; font-weight: 800; font-size: 14.5px;">#${donHang.ma_don_hang}</td>
+              <td style="padding: 7px 0; text-align: right; color: #6f1825; font-weight: 600; font-size: 14px;">#${escapeEmailHtml(donHang.ma_don_hang)}</td>
             </tr>
             <tr>
               <td style="padding: 7px 0; color: #64748b; font-weight: 600;">Mã tra cứu đơn hàng:</td>
               <td style="padding: 7px 0; text-align: right;">
                 <span style="display: inline-block; background-color: #ecfdf5; color: #047857; font-family: 'Plus Jakarta Sans', monospace; font-weight: 900; font-size: 15px; padding: 4px 12px; border-radius: 8px; border: 1px solid #a7f3d0; letter-spacing: 1.2px;">
-                  ${resolvedTrackingCode}
+                  ${escapeEmailHtml(resolvedTrackingCode)}
                 </span>
               </td>
             </tr>
@@ -685,7 +434,7 @@ export class SmtpService {
             ${donHang.dia_chi_giao_hang && donHang.loai_don_hang === 'GIAO_TAN_NOI' ? `
             <tr>
               <td style="padding: 7px 0; color: #64748b; vertical-align: top;">Địa chỉ giao hàng:</td>
-              <td style="padding: 7px 0; text-align: right; color: #1e293b; font-weight: 600; max-width: 290px; line-height: 1.4;">${donHang.dia_chi_giao_hang}</td>
+              <td style="padding: 7px 0; text-align: right; color: #262321; max-width: 290px; line-height: 1.4;">${escapeEmailHtml(donHang.dia_chi_giao_hang)}</td>
             </tr>
             ` : ''}
             <tr>
@@ -696,9 +445,9 @@ export class SmtpService {
         </div>
 
         <!-- Product Table -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 22px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 22px; border: 1px solid #e7e2dc;">
           <thead>
-            <tr style="background-color: #f1f5f9; color: #475569; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.8px;">
+            <tr style="background-color: #faf9f6; color: #756e68; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.8px;">
               <th style="padding: 10px 10px; text-align: left;">Món</th>
               <th style="padding: 10px 10px; text-align: center; width: 50px;">SL</th>
               <th style="padding: 10px 10px; text-align: right; width: 105px;">Thành tiền</th>
@@ -714,7 +463,7 @@ export class SmtpService {
               <td style="padding: 10px; text-align: right; font-size: 12.5px; font-weight: 700; color: #16a34a; border-top: 1px solid #e2e8f0;">-${formattedDiscount}</td>
             </tr>
             ` : ''}
-            <tr style="background-color: #faf5f5;">
+            <tr style="background-color: #faf9f6;">
               <td colspan="2" style="padding: 12px 10px; text-align: right; font-size: 14.5px; font-weight: 800; color: #80071c; border-top: 2px solid #e2e8f0;">TỔNG THANH TOÁN:</td>
               <td style="padding: 12px 10px; text-align: right; font-size: 17px; font-weight: 900; color: #b22830; border-top: 2px solid #e2e8f0;">${formattedTotal}</td>
             </tr>
@@ -722,31 +471,20 @@ export class SmtpService {
         </table>
       `;
 
-      const termsHtml = `
-        - Đơn hàng được phục vụ và giao nhanh bởi đội ngũ barista & shipper Avengers Coffee.<br/>
-        - Khách hàng kiểm tra đồ uống và thanh toán đúng số tiền <strong>${formattedTotal}</strong> khi nhận hàng.<br/>
-        - Hotline hỗ trợ đơn hàng: <strong>1800 6936</strong> (hoạt động từ 7:00 đến 22:30 mỗi ngày).<br/>
-        - <em>*Terms & Conditions: Orders are handcrafted fresh. Please inspect upon delivery.*</em>
-      `;
+      const termsHtml = 'Vui lòng kiểm tra món và địa chỉ nhận hàng trong phần chi tiết đơn.';
 
       const htmlContent = buildBrandedEmailHtml({
-        headerTagline: 'THẾ MỚI ĐẬM VỊ • ĐẬM VỊ ĐAM MÊ',
-        heroImageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&h=440&q=85',
-        heroTitle: 'XÁC NHẬN ĐƠN HÀNG THÀNH CÔNG',
-        heroSubtitle: 'CẢM ƠN BẠN ĐÃ ĐẶT MÓN TẠI AVENGERS COFFEE',
-        heroBadgeTitle: 'MÃ ĐƠN HÀNG & TỔNG THANH TOÁN',
+        heroTitle: 'Đơn hàng đã được ghi nhận',
+        heroSubtitle: 'Cảm ơn bạn đã đặt món tại Avengers Coffee.',
+        heroBadgeTitle: 'Tổng thanh toán',
         heroBadgeValue: formattedTotal,
         heroBadgeSub: `Mã đơn: #${donHang.ma_don_hang} • Hình thức: ${deliveryModeName}`,
-        greetingTitle: `Kính chào ${donHang.ten_khach_hang || 'Quý khách'},`,
-        greetingBody: `Cảm ơn bạn đã tin tưởng và đặt món tại <strong>Avengers Coffee</strong>! Đơn hàng của bạn đã được ghi nhận vào hệ thống và đội ngũ barista đang khẩn trương chuẩn bị những món đồ uống tươi ngon nhất.`,
-        greetingEn: 'Thank you for ordering at Avengers Coffee! Your handcrafted drinks and freshly baked pastries are on the way.',
-        ctaText: 'THEO DÕI HÀNH TRÌNH ĐƠN HÀNG',
-        ctaSubText: 'LIVE ORDER TRACKING',
+        greetingTitle: `Xin chào ${donHang.ten_khach_hang || 'bạn'},`,
+        greetingBody: `Đơn hàng <strong>#${escapeEmailHtml(donHang.ma_don_hang)}</strong> đã được ghi nhận. Chúng tôi sẽ thông báo khi trạng thái thay đổi.`,
+        ctaText: 'Theo dõi đơn hàng',
         ctaUrl: trackingUrl,
-        ctaColor: 'green',
-        detailsTitle: 'THÔNG TIN CHI TIẾT ĐƠN HÀNG (ORDER DETAILS):',
+        detailsTitle: 'Chi tiết đơn hàng',
         detailsHtml: orderDetailsHtml,
-        termsTitle: 'ĐIỀU KIỆN & LƯU Ý GIAO NHẬN (TERMS & CONDITIONS):',
         termsHtml: termsHtml,
       });
 
@@ -851,50 +589,50 @@ export class SmtpService {
           heroSubtitle = 'BARISTA ĐANG BẮT ĐẦU CHUẨN BỊ MÓN';
           badgeValue = 'ĐÃ XÁC NHẬN';
           ctaColor = 'blue';
-          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> của bạn đã được hệ thống xác nhận thành công! Đội ngũ Barista Avengers Coffee đang khẩn trương chuẩn bị những nguyên liệu tươi ngon nhất.`;
+          greetingBody = `Đơn hàng <strong>#${escapeEmailHtml(donHang.ma_don_hang)}</strong> đã được xác nhận và sẽ sớm được chuẩn bị.`;
           break;
         case 'DANG_CHUAN_BI':
           heroTitle = 'ĐỒ UỐNG ĐANG ĐƯỢC PHA CHẾ';
           heroSubtitle = 'TỪNG LY CÀ PHÊ ĐẬM VỊ ĐANG DẦN HOÀN THIỆN';
           badgeValue = 'ĐANG PHA CHẾ';
           ctaColor = 'blue';
-          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> đang được các chuyên gia pha chế tại quầy chuẩn bị tỉ mỉ theo đúng chuẩn công thức của Avengers Coffee.`;
+          greetingBody = `Đơn hàng <strong>#${escapeEmailHtml(donHang.ma_don_hang)}</strong> đang được chuẩn bị.`;
           break;
         case 'DANG_GIAO':
           heroTitle = 'ĐƠN HÀNG ĐANG TRÊN ĐƯỜNG GIAO';
           heroSubtitle = 'SHIPPER ĐANG TỐC HÀNH MANG ĐỒ UỐNG ĐẾN BẠN';
           badgeValue = 'ĐANG GIAO HÀNG';
           ctaColor = 'blue';
-          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> đã sẵn sàng và đang được đối tác shipper giao đến bạn. Vui lòng giữ liên lạc điện thoại để nhận những ly đồ uống thơm ngon nhất nhé!`;
+          greetingBody = `Đơn hàng <strong>#${escapeEmailHtml(donHang.ma_don_hang)}</strong> đang trên đường giao đến bạn. Vui lòng giữ liên lạc để nhận hàng.`;
           break;
         case 'HOAN_THANH':
           heroTitle = 'ĐƠN HÀNG ĐÃ GIAO THÀNH CÔNG';
           heroSubtitle = 'CẢM ƠN BẠN ĐÃ LỰA CHỌN AVENGERS COFFEE';
           badgeValue = 'HOÀN TẤT GIAO HÀNG';
           ctaColor = 'green';
-          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> đã được giao thành công! Chúc bạn có những phút giây tràn đầy năng lượng và thưởng thức trọn vẹn hương vị tuyệt vời cùng Avengers Coffee.`;
+          greetingBody = `Đơn hàng <strong>#${escapeEmailHtml(donHang.ma_don_hang)}</strong> đã được giao thành công. Cảm ơn bạn.`;
           break;
         case 'DA_HUY':
           heroTitle = 'THÔNG BÁO HỦY ĐƠN HÀNG';
           heroSubtitle = 'ĐƠN HÀNG ĐÃ ĐƯỢC HỦY THEO YÊU CẦU';
           badgeValue = 'ĐÃ HỦY ĐƠN';
           ctaColor = 'red';
-          greetingBody = `Đơn hàng <strong>#${donHang.ma_don_hang}</strong> đã được hủy.${note ? ` Lý do: <strong>${note}</strong>.` : ''} Nếu bạn cần hỗ trợ thêm thông tin hoặc hỗ trợ hoàn tiền, vui lòng liên hệ tổng đài 1800 6936.`;
+          greetingBody = `Đơn hàng <strong>#${escapeEmailHtml(donHang.ma_don_hang)}</strong> đã được hủy.${note ? ` Lý do: <strong>${escapeEmailHtml(note)}</strong>.` : ''}`;
           break;
       }
 
       const statusDetailsHtml = `
-        <div style="background-color: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; padding: 18px 20px; margin-bottom: 22px;">
+        <div style="border-top: 1px solid #e7e2dc; border-bottom: 1px solid #e7e2dc; padding: 14px 0; margin-bottom: 20px;">
           <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
             <tr>
               <td style="padding: 7px 0; color: #64748b; width: 40%;">Mã đơn hàng:</td>
-              <td style="padding: 7px 0; text-align: right; color: #b22830; font-family: 'Plus Jakarta Sans', monospace; font-weight: 800; font-size: 14.5px;">#${donHang.ma_don_hang}</td>
+              <td style="padding: 7px 0; text-align: right; color: #6f1825; font-weight: 600; font-size: 14px;">#${escapeEmailHtml(donHang.ma_don_hang)}</td>
             </tr>
             <tr>
               <td style="padding: 7px 0; color: #64748b; font-weight: 600;">Mã tra cứu đơn hàng:</td>
               <td style="padding: 7px 0; text-align: right;">
                 <span style="display: inline-block; background-color: #ecfdf5; color: #047857; font-family: 'Plus Jakarta Sans', monospace; font-weight: 900; font-size: 15px; padding: 4px 12px; border-radius: 8px; border: 1px solid #a7f3d0; letter-spacing: 1.2px;">
-                  ${resolvedTrackingCode}
+                  ${escapeEmailHtml(resolvedTrackingCode)}
                 </span>
               </td>
             </tr>
@@ -909,13 +647,13 @@ export class SmtpService {
             ${donHang.dia_chi_giao_hang ? `
             <tr>
               <td style="padding: 7px 0; color: #64748b; vertical-align: top;">Địa chỉ giao:</td>
-              <td style="padding: 7px 0; text-align: right; color: #1e293b; font-weight: 600; line-height: 1.4;">${donHang.dia_chi_giao_hang}</td>
+              <td style="padding: 7px 0; text-align: right; color: #262321; line-height: 1.4;">${escapeEmailHtml(donHang.dia_chi_giao_hang)}</td>
             </tr>
             ` : ''}
             ${note ? `
             <tr>
               <td style="padding: 7px 0; color: #64748b; vertical-align: top;">Ghi chú:</td>
-              <td style="padding: 7px 0; text-align: right; color: #b91c1c; font-weight: 700;">${note}</td>
+              <td style="padding: 7px 0; text-align: right; color: #6f1825;">${escapeEmailHtml(note)}</td>
             </tr>
             ` : ''}
           </table>
