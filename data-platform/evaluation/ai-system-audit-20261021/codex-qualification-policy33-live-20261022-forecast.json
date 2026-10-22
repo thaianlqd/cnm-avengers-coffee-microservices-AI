@@ -1,0 +1,2788 @@
+[
+  {
+    "id": "forecast",
+    "payload": {
+      "question": "Dự báo doanh thu 3 tháng tới",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "auto"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "forecast",
+      "refresh": true
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "warning",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": {
+          "requested": true,
+          "horizon": 3,
+          "unit": "month",
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          }
+        },
+        "mission": {
+          "id": "forecast",
+          "label": "Dự báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "forecast",
+          "label": "Dự báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "warn",
+          "code": "forecast_data_stale",
+          "message": "Dữ liệu đơn hàng chi tiết và doanh thu mới đến 2026-10-18 (cập nhật theo đợt); dự báo bắt đầu từ kỳ hoàn tất gần nhất, các ngày chưa đồng bộ không được coi là doanh số bằng 0.",
+          "fixes": [],
+          "metric": "revenue",
+          "max_date": "2026-10-18"
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "forecast"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.5",
+        "policy_fingerprint": "5bc7d1784ef2b55287ac0d9a5a7727d1cbf9fe1fe52a64083483f869252c5e96",
+        "fingerprint": "ef5e5fce4f30c0b924da13c2c8ab337b107ef42628adf316ef6888830ae0a929",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 28,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "forecast",
+        "inferred_mission": "forecast",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": {
+          "requested": true,
+          "horizon": 3,
+          "unit": "month",
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          }
+        },
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "a7fed9b2a0dde9b01593f8aad690c30577b7cfde5ed293de28883ecebf7ab44d",
+      "elapsed_ms": 71.95
+    },
+    "job": {
+      "job_id": "aj_f2a813c5948547e4937bd9d43236fafa",
+      "state": "completed",
+      "provider_call_count": 1,
+      "physical_http": 1,
+      "stage_timings_ms": {
+        "queue": 52.87,
+        "accepted": 487.71,
+        "planning": 1291.63,
+        "validating": 783.33,
+        "executing": 474.09,
+        "verifying": 231.13
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "success",
+      "outcome": "SUCCESS",
+      "message": null,
+      "title": "Đơn hàng và doanh thu",
+      "session_id": "0b1c9ed6-be63-44ba-81f2-a5aaa0addd21",
+      "revision": 1,
+      "analysis_mission": "forecast",
+      "analysis_coverage": {
+        "version": "4.0.0",
+        "policy_version": "4.0.0",
+        "effective_depth": "deep",
+        "selection_origin": "explicit",
+        "family": "forecast",
+        "targets": {
+          "core": 4,
+          "diagnostic": 2,
+          "extended": 0
+        },
+        "target_total": 6,
+        "rendered": {
+          "core": 2,
+          "diagnostic": 1,
+          "extended": 0
+        },
+        "counted": {
+          "core": 2,
+          "diagnostic": 1,
+          "extended": 0
+        },
+        "rendered_total": 3,
+        "requested_views": 2,
+        "status": "limited",
+        "gap_kind": "LIMITED_BY_MISSION",
+        "shortfall": {
+          "core": 2,
+          "diagnostic": 1
+        },
+        "lenses": [
+          {
+            "id": "segmented_trend:store_type",
+            "role": "diagnostic",
+            "kind": "segmented_trend",
+            "question": "Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?",
+            "status": "rendered",
+            "reason": null,
+            "chart_id": "visual_2"
+          }
+        ],
+        "summary": "Số liệu đã kiểm chứng · 3/6 góc nhìn; còn thiếu 3 do nhiệm vụ đã chọn giới hạn loại góc nhìn và nguồn chưa có thông tin"
+      },
+      "analytical_queries": [
+        {
+          "id": "q_490363cd53014da1f1f16f68",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [],
+          "filters": [],
+          "project": [],
+          "time": {
+            "kind": "relative",
+            "mode": "all_time",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "order_by": [],
+          "limit": 100,
+          "role": "requested",
+          "parent_id": null,
+          "purpose": "answer",
+          "lens_id": "channel_mix",
+          "population_relation": "same",
+          "cohort_query_id": null,
+          "cohort_scope_query_id": null,
+          "replaces": null,
+          "changed_fields": [],
+          "subject": "orders",
+          "operation": "trend",
+          "ranking": null,
+          "granularity": "month"
+        },
+        {
+          "id": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [
+            "store_type"
+          ],
+          "filters": [],
+          "project": [],
+          "time": {
+            "kind": "relative",
+            "mode": "all_time",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "order_by": [],
+          "limit": 100,
+          "role": "supporting",
+          "parent_id": "q_490363cd53014da1f1f16f68",
+          "purpose": "context",
+          "lens_id": null,
+          "population_relation": "related",
+          "cohort_query_id": null,
+          "cohort_scope_query_id": null,
+          "replaces": null,
+          "changed_fields": [],
+          "subject": "orders",
+          "operation": "trend",
+          "ranking": null,
+          "granularity": "month"
+        }
+      ],
+      "sql_by_query": {
+        "q_490363cd53014da1f1f16f68": "SELECT DATE_TRUNC('month', t0.ngay_tao) AS period, SUM(t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS t0 WHERE (t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) GROUP BY DATE_TRUNC('month', t0.ngay_tao) ORDER BY period ASC LIMIT 50001",
+        "q_60ff47b5a4b0bd6c3574f6ea": "SELECT DATE_TRUNC('month', t0.ngay_tao) AS period, t1.loai_diem_ban AS \"store_type\", SUM(t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS t0 JOIN silver.chi_nhanh AS t1 ON t0.co_so_ma = t1.ma_chi_nhanh WHERE (t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) GROUP BY DATE_TRUNC('month', t0.ngay_tao), t1.loai_diem_ban ORDER BY period ASC, \"store_type\" ASC NULLS LAST LIMIT 50001"
+      },
+      "quality_limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_490363cd53014da1f1f16f68"
+        },
+        {
+          "id": "related:q_60ff47b5a4b0bd6c3574f6ea",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea"
+        }
+      ],
+      "failure": null,
+      "interaction_contract": {
+        "version": 1,
+        "session_id": "0b1c9ed6-be63-44ba-81f2-a5aaa0addd21",
+        "revision": 1,
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "snapshot_fingerprint": "37ed72daadb42d329153f6a5812f6e1da228fa3d85025f0bf581a1ba8210aac6",
+        "charts": []
+      },
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      }
+    },
+    "diagnostics": {
+      "request_id": "req_35c68015f6544a13923e86de55d5b47f",
+      "input_policy_version": "1.2.5",
+      "terminal_error": null,
+      "error_category": null,
+      "failure_code": null,
+      "failure_stage": null,
+      "contract_issues": [],
+      "provider_call_count": 1,
+      "provider_physical_attempts": 0,
+      "input_tokens": 3133,
+      "output_tokens": 80,
+      "db_query_count": 2,
+      "execution_status": "passed",
+      "result_status": "passed",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI",
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 633,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 627,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          }
+        ],
+        "fingerprint": "32f55d80d282c9d0f54a1a3c46a97b202e5035527fb54a975073e460eb8f9ba8",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "interpreted_shapes": [
+        {
+          "requirement_id": "req_1",
+          "analysis_kind": "trend",
+          "dimension_count": 0,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": []
+        }
+      ],
+      "draft_shapes": [
+        {
+          "phase": "primary",
+          "requirements": [
+            {
+              "requirement_id": "req_1",
+              "supporting_for": null,
+              "availability": "requested",
+              "ranking": null,
+              "analysis_kind": "trend",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [],
+              "derived_features": [],
+              "filters": []
+            }
+          ]
+        }
+      ],
+      "root_contract_issues": null,
+      "semantic_issue_history": null,
+      "guided_source": null
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": null,
+        "latency_ms": 1278.41,
+        "tokens": {
+          "input": 3133,
+          "output": 80
+        }
+      }
+    ],
+    "charts": [
+      {
+        "id": "visual_1",
+        "title": "Doanh thu theo tháng — Đơn hàng và doanh thu",
+        "query_id": "q_490363cd53014da1f1f16f68",
+        "metrics": [
+          "revenue"
+        ],
+        "x_field": "period",
+        "selection": "complete",
+        "analysis_lens_role": null,
+        "ranking_direction": null,
+        "displayed_rows": 10
+      },
+      {
+        "id": "visual_2",
+        "title": "Doanh thu theo tháng, chia theo loại điểm bán — Đơn hàng và doanh thu",
+        "query_id": "q_60ff47b5a4b0bd6c3574f6ea",
+        "metrics": [
+          "revenue"
+        ],
+        "x_field": "period",
+        "selection": "complete",
+        "analysis_lens_role": "diagnostic",
+        "ranking_direction": null,
+        "displayed_rows": 10
+      }
+    ],
+    "result_summary": {
+      "q_490363cd53014da1f1f16f68": {
+        "rows": 10,
+        "metric_totals": {},
+        "not_summed_metrics": []
+      },
+      "q_60ff47b5a4b0bd6c3574f6ea": {
+        "rows": 30,
+        "metric_totals": {},
+        "not_summed_metrics": []
+      }
+    },
+    "semantic_evidence": {
+      "query_plans": [
+        {
+          "id": "q_490363cd53014da1f1f16f68",
+          "kind": "trend",
+          "subject": "orders",
+          "source": "silver.don_hang",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_expressions": {
+            "revenue": "SUM(silver.don_hang.tong_tien)"
+          },
+          "group_by": [
+            "period"
+          ],
+          "output_columns": [
+            "period",
+            "revenue"
+          ],
+          "order_by": [
+            {
+              "field": "period",
+              "direction": "ASC"
+            }
+          ],
+          "ctes": [],
+          "scope_ref": "q_490363cd53014da1f1f16f68",
+          "joins": [],
+          "time_column": "silver.don_hang.ngay_tao",
+          "period": {
+            "mode": "all_time",
+            "start": null,
+            "end": null,
+            "end_exclusive": null,
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "granularity": "month",
+          "ranking": null,
+          "row_limit": 50000,
+          "group": null,
+          "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+          "explicit_limit": false
+        },
+        {
+          "id": "q_60ff47b5a4b0bd6c3574f6ea",
+          "kind": "trend",
+          "subject": "orders",
+          "source": "silver.don_hang",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store_type"
+          ],
+          "filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_expressions": {
+            "revenue": "SUM(silver.don_hang.tong_tien)"
+          },
+          "group_by": [
+            "period",
+            "store_type"
+          ],
+          "output_columns": [
+            "period",
+            "store_type",
+            "revenue"
+          ],
+          "order_by": [
+            {
+              "field": "period",
+              "direction": "ASC"
+            },
+            {
+              "field": "store_type",
+              "direction": "ASC"
+            }
+          ],
+          "ctes": [],
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "joins": [
+            {
+              "from_table": "silver.don_hang",
+              "to_table": "silver.chi_nhanh",
+              "on": "silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh",
+              "cardinality": "many_to_one",
+              "provenance": "curated_view_relationship"
+            }
+          ],
+          "time_column": "silver.don_hang.ngay_tao",
+          "period": {
+            "mode": "all_time",
+            "start": null,
+            "end": null,
+            "end_exclusive": null,
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "granularity": "month",
+          "ranking": null,
+          "row_limit": 50000,
+          "group": null,
+          "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+          "explicit_limit": false
+        }
+      ],
+      "result_sets": {
+        "q_490363cd53014da1f1f16f68": {
+          "columns": [
+            "period",
+            "revenue"
+          ],
+          "rows": [
+            {
+              "period": "2026-01-01T00:00:00",
+              "revenue": 559624000.0
+            },
+            {
+              "period": "2026-02-01T00:00:00",
+              "revenue": 429346000.0
+            },
+            {
+              "period": "2026-03-01T00:00:00",
+              "revenue": 449688000.0
+            },
+            {
+              "period": "2026-04-01T00:00:00",
+              "revenue": 443188000.0
+            },
+            {
+              "period": "2026-05-01T00:00:00",
+              "revenue": 535051000.0
+            },
+            {
+              "period": "2026-06-01T00:00:00",
+              "revenue": 499114000.0
+            },
+            {
+              "period": "2026-07-01T00:00:00",
+              "revenue": 540465000.0
+            },
+            {
+              "period": "2026-08-01T00:00:00",
+              "revenue": 458156000.0
+            },
+            {
+              "period": "2026-09-01T00:00:00",
+              "revenue": 440072000.0
+            },
+            {
+              "period": "2026-10-01T00:00:00",
+              "revenue": 19099500.0
+            }
+          ],
+          "count": 10,
+          "truncated": false,
+          "duration_ms": 36.58,
+          "total_rows": 10,
+          "displayed_count": 10,
+          "artifact_ref": {
+            "artifact_id": "ra_740c7ad294914ac8ad15d78290ded72f",
+            "query_fingerprint": "b30a6b507501057d1aa917970897f0ecb8405d4540e1b5d4764270a30019c4a4",
+            "plan_fingerprint": "f488419835c06aea150f7af54c29ba4717d27bf10ceff6de2fc77bb2984a44c2",
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "created_at": "2026-10-22T03:50:54.255372+00:00",
+            "expires_at": "2026-10-22T05:50:54.255372+00:00",
+            "columns": [
+              "period",
+              "revenue"
+            ],
+            "row_count": 10,
+            "byte_size": 639,
+            "content_hash": "25ce85a27a9e3e4533044845f9213820ef6b82063780da26eab4489c7e950f71",
+            "storage_backend": "redis",
+            "provenance": {
+              "dimensions": [],
+              "subject": "orders",
+              "time": {
+                "mode": "all_time",
+                "start": null,
+                "end": null,
+                "end_exclusive": null,
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "observed_at": "2026-10-22T03:50:54.255291+00:00",
+              "data_snapshot": "920049e4a0514980a4b5f2cd96e6721c"
+            }
+          },
+          "computation_scope": "FULL_QUERY_POPULATION",
+          "presentation_scope": "BOUNDED_PREVIEW",
+          "column_labels": {
+            "period": "Thời gian",
+            "revenue": "Doanh thu"
+          },
+          "role": "requested",
+          "as_of": "2026-10-22T03:50:54.255291+00:00"
+        },
+        "q_60ff47b5a4b0bd6c3574f6ea": {
+          "columns": [
+            "period",
+            "store_type",
+            "revenue"
+          ],
+          "rows": [
+            {
+              "period": "2026-01-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 534509000.0
+            },
+            {
+              "period": "2026-01-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 20629000.0
+            },
+            {
+              "period": "2026-01-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 4486000.0
+            },
+            {
+              "period": "2026-02-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 409223000.0
+            },
+            {
+              "period": "2026-02-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 16224000.0
+            },
+            {
+              "period": "2026-02-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 3899000.0
+            },
+            {
+              "period": "2026-03-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 430760000.0
+            },
+            {
+              "period": "2026-03-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 16230000.0
+            },
+            {
+              "period": "2026-03-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 2698000.0
+            },
+            {
+              "period": "2026-04-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 419569000.0
+            },
+            {
+              "period": "2026-04-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 20345000.0
+            },
+            {
+              "period": "2026-04-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 3274000.0
+            },
+            {
+              "period": "2026-05-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 507945000.0
+            },
+            {
+              "period": "2026-05-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 22597000.0
+            },
+            {
+              "period": "2026-05-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 4509000.0
+            },
+            {
+              "period": "2026-06-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 472970000.0
+            },
+            {
+              "period": "2026-06-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 20882000.0
+            },
+            {
+              "period": "2026-06-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 5262000.0
+            },
+            {
+              "period": "2026-07-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 511134000.0
+            },
+            {
+              "period": "2026-07-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 24742000.0
+            },
+            {
+              "period": "2026-07-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 4589000.0
+            },
+            {
+              "period": "2026-08-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 434411000.0
+            },
+            {
+              "period": "2026-08-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 19196000.0
+            },
+            {
+              "period": "2026-08-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 4549000.0
+            },
+            {
+              "period": "2026-09-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 420639000.0
+            },
+            {
+              "period": "2026-09-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 16309000.0
+            },
+            {
+              "period": "2026-09-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 3124000.0
+            },
+            {
+              "period": "2026-10-01T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 18529500.0
+            },
+            {
+              "period": "2026-10-01T00:00:00",
+              "store_type": "KIOSK_NHUONG_QUYEN",
+              "revenue": 320000.0
+            },
+            {
+              "period": "2026-10-01T00:00:00",
+              "store_type": "KIOSK_VE_TINH",
+              "revenue": 250000.0
+            }
+          ],
+          "count": 30,
+          "truncated": false,
+          "duration_ms": 43.23,
+          "total_rows": 30,
+          "displayed_count": 30,
+          "artifact_ref": {
+            "artifact_id": "ra_fe8f53a4ccab4d36a2bf8e4512e4fe29",
+            "query_fingerprint": "f8074038824233396089b80629f43fe2d27974dfdd9e53f551ea572f62c08e08",
+            "plan_fingerprint": "a1b160591c803e68ff49018e7e162c321dcef93a5ccf8f256f785d8cb00c8243",
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "created_at": "2026-10-22T03:50:54.274623+00:00",
+            "expires_at": "2026-10-22T05:50:54.274623+00:00",
+            "columns": [
+              "period",
+              "store_type",
+              "revenue"
+            ],
+            "row_count": 30,
+            "byte_size": 2659,
+            "content_hash": "32f89b9cb162429f6ec07d5bc3c7528e002d31b0e15903e528774007359c767a",
+            "storage_backend": "redis",
+            "provenance": {
+              "dimensions": [
+                "store_type"
+              ],
+              "subject": "orders",
+              "time": {
+                "mode": "all_time",
+                "start": null,
+                "end": null,
+                "end_exclusive": null,
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "observed_at": "2026-10-22T03:50:54.274482+00:00",
+              "data_snapshot": "920049e4a0514980a4b5f2cd96e6721c"
+            }
+          },
+          "computation_scope": "FULL_QUERY_POPULATION",
+          "presentation_scope": "BOUNDED_PREVIEW",
+          "column_labels": {
+            "period": "Thời gian",
+            "store_type": "Loại điểm bán",
+            "revenue": "Doanh thu"
+          },
+          "role": "supporting",
+          "as_of": "2026-10-22T03:50:54.274482+00:00"
+        }
+      },
+      "result_contracts": {
+        "q_490363cd53014da1f1f16f68": {
+          "valid": true,
+          "category": "result_contract",
+          "errors": []
+        },
+        "q_60ff47b5a4b0bd6c3574f6ea": {
+          "valid": true,
+          "category": "result_contract",
+          "errors": []
+        }
+      },
+      "evidence": [
+        {
+          "id": "q_490363cd53014da1f1f16f68:revenue:change:6230060e3b",
+          "scope_ref": "q_490363cd53014da1f1f16f68",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "change",
+          "values": {
+            "first": 559624000.0,
+            "last": 440072000.0,
+            "change": -119552000.0,
+            "change_pct": -21.362915100138665,
+            "direction": "down",
+            "first_period": "2026-01-01T00:00:00",
+            "last_period": "2026-09-01T00:00:00",
+            "comparison_basis": "complete_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 1,
+            "complete_buckets": 9,
+            "peak_period": "2026-01-01T00:00:00",
+            "peak": 559624000.0,
+            "trough_period": "2026-02-01T00:00:00",
+            "trough": 429346000.0,
+            "slope_per_day": -86216.86080208654,
+            "volatility": 47339565.90187301,
+            "observed_buckets": 10,
+            "null_buckets": 0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Doanh thu thay đổi từ 559,624,000 thành 440,072,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-21.36%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ."
+        },
+        {
+          "id": "q_490363cd53014da1f1f16f68:revenue:extrema:6230060e3b",
+          "scope_ref": "q_490363cd53014da1f1f16f68",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "extrema",
+          "values": {
+            "peak": 559624000.0,
+            "trough": 429346000.0,
+            "volatility": 47339565.90187301,
+            "excluded_partial_buckets": 1
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Doanh thu đạt đỉnh 559,624,000 VND ở 2026-01-01T00:00:00; thấp nhất 429,346,000 VND ở 2026-02-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi."
+        },
+        {
+          "id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:fe21c339fa",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "change",
+          "values": {
+            "first": 534509000.0,
+            "last": 420639000.0,
+            "change": -113870000.0,
+            "change_pct": -21.3036637362514,
+            "direction": "down",
+            "first_period": "2026-01-01T00:00:00",
+            "last_period": "2026-09-01T00:00:00",
+            "comparison_basis": "complete_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 1,
+            "complete_buckets": 9,
+            "peak_period": "2026-01-01T00:00:00",
+            "peak": 534509000.0,
+            "trough_period": "2026-02-01T00:00:00",
+            "trough": 409223000.0,
+            "slope_per_day": -92382.94720911888,
+            "volatility": 44603317.99178782,
+            "observed_buckets": 10,
+            "null_buckets": 0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {
+              "store_type": "CHI_NHANH_CHINH"
+            },
+            "selection": "complete"
+          },
+          "statement": "Doanh thu (CHI_NHANH_CHINH) thay đổi từ 534,509,000 thành 420,639,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-21.3%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ."
+        },
+        {
+          "id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:fe21c339fa",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "extrema",
+          "values": {
+            "peak": 534509000.0,
+            "trough": 409223000.0,
+            "volatility": 44603317.99178782,
+            "excluded_partial_buckets": 1
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {
+              "store_type": "CHI_NHANH_CHINH"
+            },
+            "selection": "complete"
+          },
+          "statement": "Doanh thu (CHI_NHANH_CHINH) đạt đỉnh 534,509,000 VND ở 2026-01-01T00:00:00; thấp nhất 409,223,000 VND ở 2026-02-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi."
+        },
+        {
+          "id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:f0edeeaf83",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "change",
+          "values": {
+            "first": 20629000.0,
+            "last": 16309000.0,
+            "change": -4320000.0,
+            "change_pct": -20.941393184352126,
+            "direction": "down",
+            "first_period": "2026-01-01T00:00:00",
+            "last_period": "2026-09-01T00:00:00",
+            "comparison_basis": "complete_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 1,
+            "complete_buckets": 9,
+            "peak_period": "2026-07-01T00:00:00",
+            "peak": 24742000.0,
+            "trough_period": "2026-02-01T00:00:00",
+            "trough": 16224000.0,
+            "slope_per_day": 4909.489559351503,
+            "volatility": 2835578.866152878,
+            "observed_buckets": 10,
+            "null_buckets": 0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {
+              "store_type": "KIOSK_NHUONG_QUYEN"
+            },
+            "selection": "complete"
+          },
+          "statement": "Doanh thu (KIOSK_NHUONG_QUYEN) thay đổi từ 20,629,000 thành 16,309,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-20.94%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ."
+        },
+        {
+          "id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:f0edeeaf83",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "extrema",
+          "values": {
+            "peak": 24742000.0,
+            "trough": 16224000.0,
+            "volatility": 2835578.866152878,
+            "excluded_partial_buckets": 1
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {
+              "store_type": "KIOSK_NHUONG_QUYEN"
+            },
+            "selection": "complete"
+          },
+          "statement": "Doanh thu (KIOSK_NHUONG_QUYEN) đạt đỉnh 24,742,000 VND ở 2026-07-01T00:00:00; thấp nhất 16,224,000 VND ở 2026-02-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi."
+        },
+        {
+          "id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:aa76e5338a",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "change",
+          "values": {
+            "first": 4486000.0,
+            "last": 3124000.0,
+            "change": -1362000.0,
+            "change_pct": -30.361123495318772,
+            "direction": "down",
+            "first_period": "2026-01-01T00:00:00",
+            "last_period": "2026-09-01T00:00:00",
+            "comparison_basis": "complete_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 1,
+            "complete_buckets": 9,
+            "peak_period": "2026-06-01T00:00:00",
+            "peak": 5262000.0,
+            "trough_period": "2026-03-01T00:00:00",
+            "trough": 2698000.0,
+            "slope_per_day": 1256.5968476808396,
+            "volatility": 797161.6314566743,
+            "observed_buckets": 10,
+            "null_buckets": 0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {
+              "store_type": "KIOSK_VE_TINH"
+            },
+            "selection": "complete"
+          },
+          "statement": "Doanh thu (KIOSK_VE_TINH) thay đổi từ 4,486,000 thành 3,124,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-30.36%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ."
+        },
+        {
+          "id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:aa76e5338a",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "extrema",
+          "values": {
+            "peak": 5262000.0,
+            "trough": 2698000.0,
+            "volatility": 797161.6314566743,
+            "excluded_partial_buckets": 1
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {
+              "store_type": "KIOSK_VE_TINH"
+            },
+            "selection": "complete"
+          },
+          "statement": "Doanh thu (KIOSK_VE_TINH) đạt đỉnh 5,262,000 VND ở 2026-06-01T00:00:00; thấp nhất 2,698,000 VND ở 2026-03-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi."
+        }
+      ],
+      "kpi_cards": [
+        {
+          "label": "Thay đổi giữa hai kỳ quan sát",
+          "value": -119552000.0,
+          "unit": "VND",
+          "metric": "revenue",
+          "scope_ref": "q_490363cd53014da1f1f16f68",
+          "evidence_id": "q_490363cd53014da1f1f16f68:revenue:change:6230060e3b"
+        }
+      ],
+      "key_findings": [
+        {
+          "finding": "Doanh thu thay đổi từ 559,624,000 thành 440,072,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-21.36%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": -119552000.0,
+          "value_details": {
+            "first": 559624000.0,
+            "last": 440072000.0,
+            "change": -119552000.0,
+            "change_pct": -21.362915100138665,
+            "direction": "down",
+            "first_period": "2026-01-01T00:00:00",
+            "last_period": "2026-09-01T00:00:00",
+            "comparison_basis": "complete_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 1,
+            "complete_buckets": 9,
+            "peak_period": "2026-01-01T00:00:00",
+            "peak": 559624000.0,
+            "trough_period": "2026-02-01T00:00:00",
+            "trough": 429346000.0,
+            "slope_per_day": -86216.86080208654,
+            "volatility": 47339565.90187301,
+            "observed_buckets": 10,
+            "null_buckets": 0
+          },
+          "evidence_id": "q_490363cd53014da1f1f16f68:revenue:change:6230060e3b",
+          "scope_ref": "q_490363cd53014da1f1f16f68",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu (CHI_NHANH_CHINH) thay đổi từ 534,509,000 thành 420,639,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-21.3%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": -113870000.0,
+          "value_details": {
+            "first": 534509000.0,
+            "last": 420639000.0,
+            "change": -113870000.0,
+            "change_pct": -21.3036637362514,
+            "direction": "down",
+            "first_period": "2026-01-01T00:00:00",
+            "last_period": "2026-09-01T00:00:00",
+            "comparison_basis": "complete_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 1,
+            "complete_buckets": 9,
+            "peak_period": "2026-01-01T00:00:00",
+            "peak": 534509000.0,
+            "trough_period": "2026-02-01T00:00:00",
+            "trough": 409223000.0,
+            "slope_per_day": -92382.94720911888,
+            "volatility": 44603317.99178782,
+            "observed_buckets": 10,
+            "null_buckets": 0
+          },
+          "evidence_id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:fe21c339fa",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu đạt đỉnh 559,624,000 VND ở 2026-01-01T00:00:00; thấp nhất 429,346,000 VND ở 2026-02-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": null,
+          "value_details": {
+            "peak": 559624000.0,
+            "trough": 429346000.0,
+            "volatility": 47339565.90187301,
+            "excluded_partial_buckets": 1
+          },
+          "evidence_id": "q_490363cd53014da1f1f16f68:revenue:extrema:6230060e3b",
+          "scope_ref": "q_490363cd53014da1f1f16f68",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu (KIOSK_NHUONG_QUYEN) thay đổi từ 20,629,000 thành 16,309,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-20.94%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": -4320000.0,
+          "value_details": {
+            "first": 20629000.0,
+            "last": 16309000.0,
+            "change": -4320000.0,
+            "change_pct": -20.941393184352126,
+            "direction": "down",
+            "first_period": "2026-01-01T00:00:00",
+            "last_period": "2026-09-01T00:00:00",
+            "comparison_basis": "complete_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 1,
+            "complete_buckets": 9,
+            "peak_period": "2026-07-01T00:00:00",
+            "peak": 24742000.0,
+            "trough_period": "2026-02-01T00:00:00",
+            "trough": 16224000.0,
+            "slope_per_day": 4909.489559351503,
+            "volatility": 2835578.866152878,
+            "observed_buckets": 10,
+            "null_buckets": 0
+          },
+          "evidence_id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:f0edeeaf83",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu (KIOSK_VE_TINH) thay đổi từ 4,486,000 thành 3,124,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-30.36%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": -1362000.0,
+          "value_details": {
+            "first": 4486000.0,
+            "last": 3124000.0,
+            "change": -1362000.0,
+            "change_pct": -30.361123495318772,
+            "direction": "down",
+            "first_period": "2026-01-01T00:00:00",
+            "last_period": "2026-09-01T00:00:00",
+            "comparison_basis": "complete_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 1,
+            "complete_buckets": 9,
+            "peak_period": "2026-06-01T00:00:00",
+            "peak": 5262000.0,
+            "trough_period": "2026-03-01T00:00:00",
+            "trough": 2698000.0,
+            "slope_per_day": 1256.5968476808396,
+            "volatility": 797161.6314566743,
+            "observed_buckets": 10,
+            "null_buckets": 0
+          },
+          "evidence_id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:aa76e5338a",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu (CHI_NHANH_CHINH) đạt đỉnh 534,509,000 VND ở 2026-01-01T00:00:00; thấp nhất 409,223,000 VND ở 2026-02-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": null,
+          "value_details": {
+            "peak": 534509000.0,
+            "trough": 409223000.0,
+            "volatility": 44603317.99178782,
+            "excluded_partial_buckets": 1
+          },
+          "evidence_id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:fe21c339fa",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu (KIOSK_NHUONG_QUYEN) đạt đỉnh 24,742,000 VND ở 2026-07-01T00:00:00; thấp nhất 16,224,000 VND ở 2026-02-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": null,
+          "value_details": {
+            "peak": 24742000.0,
+            "trough": 16224000.0,
+            "volatility": 2835578.866152878,
+            "excluded_partial_buckets": 1
+          },
+          "evidence_id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:f0edeeaf83",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu (KIOSK_VE_TINH) đạt đỉnh 5,262,000 VND ở 2026-06-01T00:00:00; thấp nhất 2,698,000 VND ở 2026-03-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": null,
+          "value_details": {
+            "peak": 5262000.0,
+            "trough": 2698000.0,
+            "volatility": 797161.6314566743,
+            "excluded_partial_buckets": 1
+          },
+          "evidence_id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:aa76e5338a",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "metric": "revenue",
+          "unit": "VND"
+        }
+      ],
+      "short_answer": [
+        "Dự báo doanh thu 3 tháng tới: kỳ cuối 421,7 triệu VND (khoảng 80%: 365,3 triệu VND – 478,2 triệu VND); tổng các kỳ dự báo 1,3 tỷ VND."
+      ],
+      "executive_summary": "Doanh thu thay đổi từ 559,624,000 thành 440,072,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-21.36%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ. Doanh thu (CHI_NHANH_CHINH) thay đổi từ 534,509,000 thành 420,639,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-21.3%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ. Doanh thu đạt đỉnh 559,624,000 VND ở 2026-01-01T00:00:00; thấp nhất 429,346,000 VND ở 2026-02-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi. Doanh thu (KIOSK_NHUONG_QUYEN) thay đổi từ 20,629,000 thành 16,309,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-20.94%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ. Doanh thu (KIOSK_VE_TINH) thay đổi từ 4,486,000 thành 3,124,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-30.36%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+      "conclusion": {
+        "version": "3.4",
+        "answer": "Dự báo doanh thu 3 tháng tới: kỳ cuối 421,7 triệu VND (khoảng 80%: 365,3 triệu VND – 478,2 triệu VND); tổng các kỳ dự báo 1,3 tỷ VND.",
+        "answers": [
+          "Dự báo doanh thu 3 tháng tới: kỳ cuối 421,7 triệu VND (khoảng 80%: 365,3 triệu VND – 478,2 triệu VND); tổng các kỳ dự báo 1,3 tỷ VND."
+        ],
+        "findings": [
+          {
+            "statement": "Doanh thu thay đổi từ 559,624,000 thành 440,072,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-21.36%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+            "evidence_id": "q_490363cd53014da1f1f16f68:revenue:change:6230060e3b",
+            "scope_ref": "q_490363cd53014da1f1f16f68",
+            "metric": "revenue",
+            "unit": "VND"
+          },
+          {
+            "statement": "Doanh thu (CHI_NHANH_CHINH) thay đổi từ 534,509,000 thành 420,639,000 VND giữa kỳ 2026-01-01 và 2026-09-01 (-21.3%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+            "evidence_id": "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:fe21c339fa",
+            "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+            "metric": "revenue",
+            "unit": "VND"
+          },
+          {
+            "statement": "Doanh thu đạt đỉnh 559,624,000 VND ở 2026-01-01T00:00:00; thấp nhất 429,346,000 VND ở 2026-02-01T00:00:00. Chỉ tính các kỳ đầy đủ trong phạm vi.",
+            "evidence_id": "q_490363cd53014da1f1f16f68:revenue:extrema:6230060e3b",
+            "scope_ref": "q_490363cd53014da1f1f16f68",
+            "metric": "revenue",
+            "unit": "VND"
+          },
+          {
+            "statement": "Dự báo doanh thu 3 tháng tới: kỳ cuối 421,7 triệu VND (khoảng 80%: 365,3 triệu VND – 478,2 triệu VND); tổng các kỳ dự báo 1,3 tỷ VND.",
+            "forecast_ref": "req_1",
+            "evidence_id": null
+          },
+          {
+            "statement": "Kiểm tra lùi 1 lần trên 2 điểm: sMAPE 5%, tốt hơn đường cơ sở naive 74,8%; đây là sai số đã quan sát, không phải bảo đảm cho tương lai.",
+            "forecast_ref": "req_1",
+            "evidence_id": null
+          }
+        ],
+        "synthesis": [
+          "Dự báo doanh thu 3 tháng tới: kỳ cuối 421,7 triệu VND (khoảng 80%: 365,3 triệu VND – 478,2 triệu VND); tổng các kỳ dự báo 1,3 tỷ VND.",
+          "Từ kỳ 2026-01-01 đến kỳ đầy đủ gần nhất 2026-09-01: giảm 113,9 triệu VND (-21,3%)"
+        ],
+        "view_findings": [
+          {
+            "statement": "Từ kỳ 2026-01-01 đến kỳ đầy đủ gần nhất 2026-09-01: giảm 113,9 triệu VND (-21,3%)",
+            "evidence_id": null,
+            "chart_id": "visual_2",
+            "lens_id": "segmented_trend:store_type",
+            "lens_role": "diagnostic",
+            "question": "Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?"
+          }
+        ],
+        "caveats": [
+          "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "1 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ.",
+          "Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+          "Khoảng 80% ước lượng từ sai số backtest; không phải xác suất được bảo đảm.",
+          "Dự báo thống kê từ lịch sử đã kiểm chứng; không tính sự kiện, khuyến mãi hay thay đổi vận hành chưa có trong dữ liệu."
+        ],
+        "actions": [
+          "Chỉ số có sự biến động qua các kỳ: Cần tiếp tục theo dõi các kỳ tương đương để dự báo chu kỳ nhu cầu và chủ động phân bổ nguồn lực."
+        ],
+        "evidence_ids": [
+          "q_490363cd53014da1f1f16f68:revenue:change:6230060e3b",
+          "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:fe21c339fa",
+          "q_490363cd53014da1f1f16f68:revenue:extrema:6230060e3b"
+        ],
+        "unanswered": []
+      },
+      "quality_assessment": {
+        "publication_checks": [
+          {
+            "id": "chart_contract",
+            "label": "Phạm vi và dữ liệu biểu đồ",
+            "passed": 2,
+            "total": 2,
+            "status": "passed",
+            "summary": "Binding và biểu diễn của từng biểu đồ thực tế; độ bao phủ được công bố riêng."
+          }
+        ],
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "req_1",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_490363cd53014da1f1f16f68:revenue:change:6230060e3b",
+              "q_490363cd53014da1f1f16f68:revenue:extrema:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "causes",
+            "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+            "evidence_refs": []
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "source_coverage:silver.don_hang",
+            "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+            "evidence_refs": []
+          },
+          {
+            "id": "metric_population:revenue",
+            "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+            "evidence_refs": [
+              "q_490363cd53014da1f1f16f68:revenue:change:6230060e3b",
+              "q_490363cd53014da1f1f16f68:revenue:extrema:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_60ff47b5a4b0bd6c3574f6ea",
+            "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+            "evidence_refs": [
+              "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:fe21c339fa",
+              "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:fe21c339fa",
+              "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:f0edeeaf83"
+            ]
+          }
+        ],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 1,
+          "completed_count": 1,
+          "supporting_count": 1,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.8",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "1/1 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 2,
+            "total": 2,
+            "status": "passed",
+            "summary": "2 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 40,
+            "total": 40,
+            "status": "passed",
+            "summary": "40/40 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 0,
+            "total": 0,
+            "status": "not_applicable",
+            "summary": "0/0 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 52,
+            "total": 52,
+            "status": "passed",
+            "summary": "52/52 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "1/1 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 giới hạn dữ liệu được công bố."
+          },
+          {
+            "id": "population_correctness",
+            "label": "Quần thể và mẫu số",
+            "passed": 2,
+            "total": 2,
+            "status": "passed",
+            "summary": "Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm. Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ."
+          },
+          {
+            "id": "provenance_completeness",
+            "label": "Nguồn gốc kết quả",
+            "passed": 2,
+            "total": 2,
+            "status": "passed",
+            "summary": "Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v2",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 11.25,
+            "possible_points": 11.25,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 16.875,
+            "possible_points": 16.875,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 16.875,
+            "possible_points": 16.875,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 11.25,
+            "possible_points": 11.25,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 0.0,
+            "possible_points": 0.0,
+            "status": "not_applicable"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 11.25,
+            "possible_points": 11.25,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 5.625,
+            "possible_points": 5.625,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.625,
+            "possible_points": 5.625,
+            "status": "passed"
+          },
+          {
+            "id": "population_correctness",
+            "label": "Quần thể và mẫu số",
+            "earned_points": 5.625,
+            "possible_points": 5.625,
+            "status": "passed"
+          },
+          {
+            "id": "provenance_completeness",
+            "label": "Nguồn gốc kết quả",
+            "earned_points": 5.625,
+            "possible_points": 5.625,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "trust_dimensions": [
+          {
+            "id": "reliability",
+            "label": "Độ tin cậy của kết quả",
+            "status": "passed",
+            "passed": 96,
+            "total": 96
+          },
+          {
+            "id": "reconciliation",
+            "label": "Đối soát quần thể và nguồn gốc",
+            "status": "passed",
+            "passed": 4,
+            "total": 4
+          },
+          {
+            "id": "presentation",
+            "label": "Trình bày và giới hạn",
+            "status": "passed",
+            "passed": 6,
+            "total": 6
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Đối chứng độc lập",
+            "status": "not_measured",
+            "passed": 0,
+            "total": 0
+          }
+        ],
+        "analysis_breadth": {
+          "id": "analysis_breadth_coverage",
+          "label": "Độ bao phủ góc nhìn",
+          "passed": 3,
+          "total": 6,
+          "summary": "Số liệu đã kiểm chứng · 3/6 góc nhìn; còn thiếu 3 do nhiệm vụ đã chọn giới hạn loại góc nhìn và nguồn chưa có thông tin.",
+          "status": "not_applicable"
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      },
+      "answer_requirements": [
+        {
+          "requirement_id": "req_1",
+          "role": "forecast",
+          "forecast_ref": "req_1",
+          "metric": "revenue",
+          "unit": "VND",
+          "cadence": "month",
+          "query_id": "q_490363cd53014da1f1f16f68"
+        }
+      ],
+      "resolved_requirement_coverage": [
+        {
+          "requirement_id": "req_1",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_490363cd53014da1f1f16f68"
+          ],
+          "derived_features": [],
+          "goal": "Phân tích yêu cầu",
+          "supporting_for": null,
+          "forecast": {
+            "horizon": 3,
+            "unit": "month"
+          }
+        },
+        {
+          "requirement_id": "support_67ece643987bf0e41dce0564",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_60ff47b5a4b0bd6c3574f6ea"
+          ],
+          "derived_features": [],
+          "goal": "Diễn biến trong phạm vi đã chọn",
+          "supporting_for": "req_1",
+          "views": [
+            {
+              "kind": "time_series",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "store_type"
+              ],
+              "required": false,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ],
+          "lenses": [
+            {
+              "id": "segmented_trend:store_type",
+              "kind": "segmented_trend",
+              "shape": "support_67ece643987bf0e41dce0564",
+              "shape_key": [
+                "trend",
+                [
+                  "store_type"
+                ]
+              ],
+              "metrics": [
+                "revenue"
+              ],
+              "axes": [
+                "store_type"
+              ],
+              "granularity": "month",
+              "question": "Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?",
+              "show": [
+                {
+                  "form": "multi_line",
+                  "metrics": [
+                    "revenue"
+                  ]
+                }
+              ],
+              "base_id": "segmented_trend:store_type",
+              "role": "diagnostic",
+              "position": 1,
+              "rank": [
+                1,
+                1
+              ],
+              "requirement_id": "req_1"
+            }
+          ]
+        }
+      ],
+      "semantic_intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "req_1",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": null,
+            "lens_hint": null,
+            "supporting_for": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "filters": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": null,
+            "granularity": "month",
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": {
+              "horizon": 3,
+              "unit": "month"
+            },
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_67ece643987bf0e41dce0564",
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "supporting_for": "req_1",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store_type"
+            ],
+            "analysis_kind": "trend",
+            "filters": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": null,
+            "granularity": "month",
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          }
+        ],
+        "clarification": null
+      },
+      "provenance": {
+        "user_request": "Dự báo doanh thu 3 tháng tới",
+        "semantic_intent_fingerprint": "857fcc0e3da13fe6d21f5c8b77f1e0371c4fd18d4e121bc49ffd737fe73d826a",
+        "resolved_plan_fingerprint": "d1b854c16cf0d149f938e859865d7bf253adb870da9231cf2329263f423f9634",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "registry_fingerprint": "a7fed9b2a0dde9b01593f8aad690c30577b7cfde5ed293de28883ecebf7ab44d",
+        "resolver_version": "2.8.0",
+        "quality_verifier_version": "2.8.8",
+        "result_set_fingerprint": "ba998a9dc99e7a7172cef9cfe068c2f34ab217534e0e8e8c137edfe2c025eb54",
+        "query_plans": [
+          {
+            "id": "q_490363cd53014da1f1f16f68",
+            "kind": "trend",
+            "subject": "orders",
+            "source": "silver.don_hang",
+            "metrics": [
+              "revenue"
+            ],
+            "dimensions": [],
+            "filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_expressions": {
+              "revenue": "SUM(silver.don_hang.tong_tien)"
+            },
+            "group_by": [
+              "period"
+            ],
+            "output_columns": [
+              "period",
+              "revenue"
+            ],
+            "order_by": [
+              {
+                "field": "period",
+                "direction": "ASC"
+              }
+            ],
+            "ctes": [],
+            "scope_ref": "q_490363cd53014da1f1f16f68",
+            "joins": [],
+            "time_column": "silver.don_hang.ngay_tao",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "granularity": "month",
+            "ranking": null,
+            "row_limit": 50000,
+            "group": null,
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "explicit_limit": false
+          },
+          {
+            "id": "q_60ff47b5a4b0bd6c3574f6ea",
+            "kind": "trend",
+            "subject": "orders",
+            "source": "silver.don_hang",
+            "metrics": [
+              "revenue"
+            ],
+            "dimensions": [
+              "store_type"
+            ],
+            "filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_expressions": {
+              "revenue": "SUM(silver.don_hang.tong_tien)"
+            },
+            "group_by": [
+              "period",
+              "store_type"
+            ],
+            "output_columns": [
+              "period",
+              "store_type",
+              "revenue"
+            ],
+            "order_by": [
+              {
+                "field": "period",
+                "direction": "ASC"
+              },
+              {
+                "field": "store_type",
+                "direction": "ASC"
+              }
+            ],
+            "ctes": [],
+            "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+            "joins": [
+              {
+                "from_table": "silver.don_hang",
+                "to_table": "silver.chi_nhanh",
+                "on": "silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh",
+                "cardinality": "many_to_one",
+                "provenance": "curated_view_relationship"
+              }
+            ],
+            "time_column": "silver.don_hang.ngay_tao",
+            "period": {
+              "mode": "all_time",
+              "start": null,
+              "end": null,
+              "end_exclusive": null,
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "granularity": "month",
+            "ranking": null,
+            "row_limit": 50000,
+            "group": null,
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "explicit_limit": false
+          }
+        ],
+        "initial_semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "req_1",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "comparison_time": null,
+              "ranking": null,
+              "granularity": "month",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": {
+                "horizon": 3,
+                "unit": "month"
+              },
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_67ece643987bf0e41dce0564",
+              "goal": "Diễn biến trong phạm vi đã chọn",
+              "domain_id": "orders",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "store_type"
+              ],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "comparison_time": null,
+              "ranking": null,
+              "granularity": "month",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "semantic_history": [],
+        "data_epoch": {
+          "status": "observed",
+          "sources": [
+            {
+              "dataset_id": "replica.identity.chi_nhanh",
+              "generation": 633,
+              "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+            },
+            {
+              "dataset_id": "replica.orders.don_hang",
+              "generation": 627,
+              "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+            }
+          ],
+          "fingerprint": "32f55d80d282c9d0f54a1a3c46a97b202e5035527fb54a975073e460eb8f9ba8",
+          "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+        }
+      },
+      "goal_provenance": {
+        "version": "1.0.0",
+        "goals": [
+          {
+            "requirement_id": "req_1",
+            "availability": "requested",
+            "semantics": {
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [],
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "comparison_time": null,
+              "analysis_kind": "trend",
+              "ranking": null,
+              "granularity": "month",
+              "forecast": {
+                "horizon": 3,
+                "unit": "month"
+              },
+              "derived_features": [],
+              "feature_metrics": {}
+            },
+            "semantics_digest": "df6d29b2023fd744e042e0dac8030b50c4ff5e95c13cb12ef32b7a40740e32fe",
+            "input_refs": [
+              {
+                "kind": "input_clause",
+                "clause_id": "input.c1",
+                "source": "input",
+                "start": 0,
+                "end": 28,
+                "text_digest": "2149a478efdb1eb8504f9b67f5ab63a4510a384704471315f4153880daf2c1cf",
+                "explicit_metrics": [
+                  "revenue"
+                ],
+                "explicit_axes": []
+              }
+            ],
+            "operation_ids": [
+              "q_490363cd53014da1f1f16f68"
+            ],
+            "cohort_query_refs": [],
+            "parent_requirement_id": null,
+            "resolution_state": "RESOLVED"
+          },
+          {
+            "requirement_id": "support_67ece643987bf0e41dce0564",
+            "availability": "requested",
+            "semantics": {
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "store_type"
+              ],
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "comparison_time": null,
+              "analysis_kind": "trend",
+              "ranking": null,
+              "granularity": "month",
+              "forecast": null,
+              "derived_features": [],
+              "feature_metrics": {}
+            },
+            "semantics_digest": "2444253ec9db49a1365320ad20288b32a58ae790729d8553aa5c1ca21aaac172",
+            "input_refs": [
+              {
+                "kind": "input_clause",
+                "clause_id": "input.c1",
+                "source": "input",
+                "start": 0,
+                "end": 28,
+                "text_digest": "2149a478efdb1eb8504f9b67f5ab63a4510a384704471315f4153880daf2c1cf",
+                "explicit_metrics": [
+                  "revenue"
+                ],
+                "explicit_axes": []
+              },
+              {
+                "kind": "governed_supporting_view",
+                "parent_requirement_id": "req_1",
+                "policy_version": "2.8.0"
+              }
+            ],
+            "operation_ids": [
+              "q_60ff47b5a4b0bd6c3574f6ea"
+            ],
+            "cohort_query_refs": [],
+            "parent_requirement_id": "req_1",
+            "resolution_state": "RESOLVED"
+          }
+        ]
+      },
+      "charts": [
+        {
+          "id": "visual_1",
+          "title": "Doanh thu theo tháng — Đơn hàng và doanh thu",
+          "query_id": "q_490363cd53014da1f1f16f68",
+          "scope_ref": "q_490363cd53014da1f1f16f68",
+          "scope_refs": null,
+          "metrics": [
+            "revenue"
+          ],
+          "selection": "complete",
+          "population_scope": null,
+          "scope_note": null,
+          "insight": {
+            "chart_id": "visual_1",
+            "why_relevant": "Trả lời trực tiếp yêu cầu: Doanh thu theo tháng — Đơn hàng và doanh thu.",
+            "what_it_shows": "Diễn biến doanh thu qua 10 kỳ.",
+            "key_facts": [
+              {
+                "text": "Từ kỳ 2026-01-01 đến kỳ đầy đủ gần nhất 2026-09-01: giảm 119,6 triệu VND (-21,4%)",
+                "value": -119552000.0,
+                "unit": "VND",
+                "evidence_ref": "q_490363cd53014da1f1f16f68:revenue:all@2026-09-01",
+                "calc": {
+                  "kind": "change",
+                  "query_id": "q_490363cd53014da1f1f16f68",
+                  "metric": "revenue",
+                  "group_key": "all",
+                  "dims": [],
+                  "first_bucket": "2026-01-01",
+                  "last_bucket": "2026-09-01",
+                  "direction": "giảm",
+                  "pct": -21.362915
+                }
+              },
+              {
+                "text": "Kỳ cao nhất: 2026-01-01 với 559,6 triệu VND.",
+                "value": 559624000.0,
+                "unit": "VND",
+                "evidence_ref": "q_490363cd53014da1f1f16f68:revenue:all@2026-01-01"
+              }
+            ],
+            "interpretation": "Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.",
+            "caveats": [
+              "1 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ."
+            ],
+            "next_checks": [],
+            "how_to_read": "Trục ngang là thời gian; điểm mờ/dấu * là kỳ chưa đủ ngày.",
+            "definition": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+            "source": {
+              "query_id": "q_490363cd53014da1f1f16f68",
+              "metric": "revenue",
+              "rows": 10
+            },
+            "verification_context": {
+              "chart": {
+                "id": "visual_1",
+                "chart_type": "area",
+                "scope_ref": "q_490363cd53014da1f1f16f68",
+                "query_id": "q_490363cd53014da1f1f16f68",
+                "metric": "revenue",
+                "metrics": [
+                  "revenue"
+                ],
+                "unit": "VND",
+                "x_field": "period",
+                "series_field": null,
+                "title": "Doanh thu theo tháng — Đơn hàng và doanh thu",
+                "purpose": "Cơ cấu kênh bán trong phạm vi đã chọn?",
+                "role": "requested",
+                "priority": 80,
+                "cardinality": 10,
+                "chart_type_label": "Xu hướng",
+                "x_label": "Thời gian",
+                "semantic_view_key": "59170d6d2de00e5e11a3ecfd5ac8f46600d80e87256d8efe7f491e176958bef5",
+                "series_label": "",
+                "selection": "complete",
+                "layout": "wide",
+                "granularity": "month",
+                "period": {
+                  "mode": "all_time",
+                  "start": null,
+                  "end": null,
+                  "end_exclusive": null,
+                  "timezone": "Asia/Ho_Chi_Minh"
+                },
+                "data": [
+                  {
+                    "label": "2026-01-01T00:00:00",
+                    "value": 559624000.0,
+                    "color": "#6366f1"
+                  },
+                  {
+                    "label": "2026-02-01T00:00:00",
+                    "value": 429346000.0,
+                    "color": "#10b981"
+                  },
+                  {
+                    "label": "2026-03-01T00:00:00",
+                    "value": 449688000.0,
+                    "color": "#f59e0b"
+                  },
+                  {
+                    "label": "2026-04-01T00:00:00",
+                    "value": 443188000.0,
+                    "color": "#ec4899"
+                  },
+                  {
+                    "label": "2026-05-01T00:00:00",
+                    "value": 535051000.0,
+                    "color": "#06b6d4"
+                  },
+                  {
+                    "label": "2026-06-01T00:00:00",
+                    "value": 499114000.0,
+                    "color": "#8b5cf6"
+                  },
+                  {
+                    "label": "2026-07-01T00:00:00",
+                    "value": 540465000.0,
+                    "color": "#ef4444"
+                  },
+                  {
+                    "label": "2026-08-01T00:00:00",
+                    "value": 458156000.0,
+                    "color": "#64748b"
+                  },
+                  {
+                    "label": "2026-09-01T00:00:00",
+                    "value": 440072000.0,
+                    "color": "#6366f1"
+                  },
+                  {
+                    "label": "2026-10-01T00:00:00",
+                    "value": 19099500.0,
+                    "color": "#10b981"
+                  }
+                ],
+                "domain_id": "orders",
+                "domain_label": "Đơn hàng và doanh thu",
+                "lens_id": "channel_mix",
+                "lens_label": "Cơ cấu kênh bán",
+                "story_section": "Diễn biến theo thời gian",
+                "requirement_id": "req_1",
+                "mission": "forecast",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "relevance_role": "primary",
+                "requirement_goal": "Doanh thu theo tháng — Đơn hàng và doanh thu",
+                "evidence_refs": [
+                  "q_490363cd53014da1f1f16f68:revenue:change:6230060e3b",
+                  "q_490363cd53014da1f1f16f68:revenue:extrema:6230060e3b"
+                ]
+              },
+              "reference": "2026-10-21",
+              "mission_id": "forecast"
+            }
+          },
+          "analysis_lens_role": null,
+          "ranking_direction": null
+        },
+        {
+          "id": "visual_2",
+          "title": "Doanh thu theo tháng, chia theo loại điểm bán — Đơn hàng và doanh thu",
+          "query_id": "q_60ff47b5a4b0bd6c3574f6ea",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+          "scope_refs": null,
+          "metrics": [
+            "revenue"
+          ],
+          "selection": "complete",
+          "population_scope": null,
+          "scope_note": null,
+          "insight": {
+            "chart_id": "visual_2",
+            "why_relevant": "Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?.",
+            "what_it_shows": "Diễn biến doanh thu qua 10 kỳ, chia theo 3 nhóm.",
+            "key_facts": [
+              {
+                "text": "Từ kỳ 2026-01-01 đến kỳ đầy đủ gần nhất 2026-09-01: giảm 113,9 triệu VND (-21,3%)",
+                "value": -113870000.0,
+                "unit": "VND",
+                "evidence_ref": "q_60ff47b5a4b0bd6c3574f6ea:revenue:CHI_NHANH_CHINH@2026-09-01",
+                "calc": {
+                  "kind": "change",
+                  "query_id": "q_60ff47b5a4b0bd6c3574f6ea",
+                  "metric": "revenue",
+                  "group_key": "CHI_NHANH_CHINH",
+                  "dims": [
+                    "store_type"
+                  ],
+                  "first_bucket": "2026-01-01",
+                  "last_bucket": "2026-09-01",
+                  "direction": "giảm",
+                  "pct": -21.303664
+                }
+              },
+              {
+                "text": "Kỳ cao nhất: 2026-01-01 với 534,5 triệu VND.",
+                "value": 534509000.0,
+                "unit": "VND",
+                "evidence_ref": "q_60ff47b5a4b0bd6c3574f6ea:revenue:CHI_NHANH_CHINH@2026-01-01"
+              }
+            ],
+            "interpretation": "Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.",
+            "caveats": [
+              "1 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ.",
+              "Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ."
+            ],
+            "next_checks": [],
+            "how_to_read": "Thanh dài hơn là giá trị lớn hơn; nhãn hiển thị đơn vị của chỉ số.",
+            "definition": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+            "source": {
+              "query_id": "q_60ff47b5a4b0bd6c3574f6ea",
+              "metric": "revenue",
+              "rows": 30
+            },
+            "verification_context": {
+              "chart": {
+                "id": "visual_2",
+                "chart_type": "multi_line",
+                "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea",
+                "query_id": "q_60ff47b5a4b0bd6c3574f6ea",
+                "metric": "revenue",
+                "metrics": [
+                  "revenue"
+                ],
+                "unit": "VND",
+                "x_field": "period",
+                "series_field": "store_type",
+                "title": "Doanh thu theo tháng, chia theo loại điểm bán — Đơn hàng và doanh thu",
+                "purpose": "Diễn biến theo kỳ quan sát",
+                "role": "supporting",
+                "priority": 80,
+                "cardinality": 30,
+                "chart_type_label": "Đa đường",
+                "x_label": "Thời gian",
+                "semantic_view_key": "1219e0f6d5c0f926a55893c658a7017efa389707be55ab11c5f59fa9960e155c",
+                "series_label": "Loại điểm bán",
+                "selection": "complete",
+                "layout": "wide",
+                "granularity": "month",
+                "period": {
+                  "mode": "all_time",
+                  "start": null,
+                  "end": null,
+                  "end_exclusive": null,
+                  "timezone": "Asia/Ho_Chi_Minh"
+                },
+                "data": [
+                  {
+                    "label": "2026-01-01T00:00:00",
+                    "series_1": 534509000.0,
+                    "series_2": 20629000.0,
+                    "series_3": 4486000.0
+                  },
+                  {
+                    "label": "2026-02-01T00:00:00",
+                    "series_1": 409223000.0,
+                    "series_2": 16224000.0,
+                    "series_3": 3899000.0
+                  },
+                  {
+                    "label": "2026-03-01T00:00:00",
+                    "series_1": 430760000.0,
+                    "series_2": 16230000.0,
+                    "series_3": 2698000.0
+                  },
+                  {
+                    "label": "2026-04-01T00:00:00",
+                    "series_1": 419569000.0,
+                    "series_2": 20345000.0,
+                    "series_3": 3274000.0
+                  },
+                  {
+                    "label": "2026-05-01T00:00:00",
+                    "series_1": 507945000.0,
+                    "series_2": 22597000.0,
+                    "series_3": 4509000.0
+                  },
+                  {
+                    "label": "2026-06-01T00:00:00",
+                    "series_1": 472970000.0,
+                    "series_2": 20882000.0,
+                    "series_3": 5262000.0
+                  },
+                  {
+                    "label": "2026-07-01T00:00:00",
+                    "series_1": 511134000.0,
+                    "series_2": 24742000.0,
+                    "series_3": 4589000.0
+                  },
+                  {
+                    "label": "2026-08-01T00:00:00",
+                    "series_1": 434411000.0,
+                    "series_2": 19196000.0,
+                    "series_3": 4549000.0
+                  },
+                  {
+                    "label": "2026-09-01T00:00:00",
+                    "series_1": 420639000.0,
+                    "series_2": 16309000.0,
+                    "series_3": 3124000.0
+                  },
+                  {
+                    "label": "2026-10-01T00:00:00",
+                    "series_1": 18529500.0,
+                    "series_2": 320000.0,
+                    "series_3": 250000.0
+                  }
+                ],
+                "series": [
+                  {
+                    "key": "series_1",
+                    "label": "Chi nhánh chính",
+                    "color": "#6366f1"
+                  },
+                  {
+                    "key": "series_2",
+                    "label": "Kiosk nhượng quyền",
+                    "color": "#10b981"
+                  },
+                  {
+                    "key": "series_3",
+                    "label": "Kiosk vệ tinh",
+                    "color": "#f59e0b"
+                  }
+                ],
+                "series_keys": [
+                  "series_1",
+                  "series_2",
+                  "series_3"
+                ],
+                "analysis_lens_id": "segmented_trend:store_type",
+                "analysis_lens_role": "diagnostic",
+                "analysis_lens_kind": "segmented_trend",
+                "analysis_lens_question": "Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?",
+                "domain_id": "orders",
+                "domain_label": "Đơn hàng và doanh thu",
+                "lens_id": null,
+                "lens_label": null,
+                "story_section": "Diễn biến theo thời gian",
+                "requirement_id": "support_67ece643987bf0e41dce0564",
+                "mission": "forecast",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store_type"
+                ],
+                "relevance_role": "supporting",
+                "requirement_goal": "Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?",
+                "evidence_refs": [
+                  "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:fe21c339fa",
+                  "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:fe21c339fa",
+                  "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:f0edeeaf83",
+                  "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:f0edeeaf83",
+                  "q_60ff47b5a4b0bd6c3574f6ea:revenue:change:aa76e5338a",
+                  "q_60ff47b5a4b0bd6c3574f6ea:revenue:extrema:aa76e5338a"
+                ]
+              },
+              "reference": "2026-10-21",
+              "mission_id": "forecast"
+            }
+          },
+          "analysis_lens_role": "diagnostic",
+          "ranking_direction": null
+        }
+      ]
+    },
+    "elapsed_seconds": 3.523
+  }
+]

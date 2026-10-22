@@ -200,6 +200,38 @@ class HybridTests(unittest.TestCase):
         self.assertEqual(refined['quality_assessment']['status'],'verified')
         self.assertEqual(refined['quality_assessment'],verify_saved_report(refined,self.catalog))
 
+    def test_natural_refinement_does_not_replay_initial_guided_envelope(self):
+        from services.session_service import get_session
+        warehouse=FixtureWarehouse(self.catalog.overlay);self.addCleanup(warehouse.close)
+        p=self.pipeline(executor=warehouse);req=self.request();approve(req,p.propose(req));report=p.generate(req)
+        session=get_session(req.session_id)
+        session.ui_constraints['guided_intent']=session.semantic_intent
+        original=__import__("copy").deepcopy(session.ui_constraints['guided_intent'])
+        p.provider=ScriptedProvider([call('submit_analysis_delta',{'changes':[{'action':'update','requirement_id':'r1','changes':{'ranking':{'limit':2,'metric_id':'product_revenue'}}}]})])
+        refined=p.refine(AiReportRefineRequest(session_id=req.session_id,current_report={'revision':report['revision']},feedback='Top 2'))
+        self.assertEqual(p.provider.call_count,1)
+        self.assertEqual(refined['revision'],report['revision']+1)
+        self.assertEqual(refined['semantic_intent']['requirements'][0]['ranking']['limit'],2)
+        self.assertEqual(refined['quality_assessment']['status'],'verified')
+        self.assertEqual(original['requirements'][0]['ranking']['limit'],5)
+
+    def test_scope_feedback_remains_authoritative_after_noop_primary_delta(self):
+        self.enterContext(patch.dict(os.environ,{"DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"48000"}))
+        warehouse=FixtureWarehouse(self.catalog.overlay);self.addCleanup(warehouse.close)
+        p=self.pipeline(executor=warehouse);req=self.request();approve(req,p.propose(req));report=p.generate(req)
+        p.provider=ScriptedProvider([
+            call('submit_analysis_delta',{'changes':[]})], [
+            call('submit_analysis_delta',{'changes':[{'action':'update','requirement_id':'r1','changes':{
+                'filters':[{'dimension':'city','operator':'eq','value':'Hà Nội'}]}}]})])
+        refined=p.refine(AiReportRefineRequest(session_id=req.session_id,current_report={'revision':report['revision']},feedback='Chỉ lọc Hà Nội'))
+        self.assertEqual(refined['revision'],report['revision']+1)
+        self.assertEqual(refined['quality_assessment'],verify_saved_report(refined,self.catalog))
+        self.assertEqual(refined['quality_assessment']['coverage']['completed_count'],1)
+        self.assertTrue(all(any(f['dimension']=='city' and f['value']=='Hà Nội' for f in q['filters']) for q in refined['analytical_queries']))
+        self.assertEqual(refined['semantic_intent']['requirements'][0]['time']['amount'],30)
+        self.assertTrue(any(f['dimension']=='city' and f['value']=='Hà Nội' for f in refined['semantic_intent']['requirements'][0]['filters']))
+        self.assertEqual(p.provider.call_count,2)
+
     def test_partial_scope_requires_current_explicit_approval(self):
         missing=requirement(id='r2',goal='ROI marketing',metric_ids=[],dimension_ids=[],ranking=None,derived_features=[],analysis_kind=None,time=None,availability='unsupported',reason='definition_unavailable')
         p=self.pipeline(scripted(envelope(requirement(),missing)))
@@ -209,9 +241,11 @@ class HybridTests(unittest.TestCase):
 
     def test_catalog_index_property_every_metric_dimension_lens(self):
         index=compatibility_index(self.catalog)
-        public=[m for m in index.metrics if not self.catalog.registry['metrics'][m].get('component_only')]
+        public=[m for m in index.metrics if not self.catalog.registry['metrics'][m].get('component_only')
+                and self.catalog.registry['metrics'][m].get('lifecycle',{}).get('status')!='deprecated']
         # FINAL 2026-10-19: +9 component_only metrics (ratio/average parts) are compiler-only, never public vocabulary.
-        self.assertEqual(len(public),43);self.assertEqual(len(index.metrics),52);self.assertEqual(len(index.lenses),44)  # V3.0: +5 delivery metrics, +2 lenses; V3.1: +5 metrics, +4 lenses
+        self.assertEqual(len(public),98);self.assertEqual(len(index.metrics),109);  # PLAN 20/10: +2 availability (2 stock retired, compile-only) +53 business-coverage metrics
+        self.assertEqual(len(index.lenses),68)  # PLAN 20/10: +topping_mix; V3.0: +5 delivery metrics, +2 lenses; V3.1: +5 metrics, +4 lenses
         for metric,definition in index.metrics.items():
             if metric not in public:
                 continue  # component_only: compiled only inside server lens shapes

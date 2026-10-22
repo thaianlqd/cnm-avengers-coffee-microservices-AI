@@ -62,11 +62,38 @@ class QueryBudget:
     EXPLAIN consumes a separate physical attempt. Instrumented reader cursors
     include metadata and direct BI queries, excluding transaction controls.
     The existing operation/row/artifact contracts own these derived limits.
+    Catalog introspection and warehouse statistics are shared, cached support
+    reads: they have their own bounded allowance, so a cold metadata cache can
+    never consume the analytical attempts of the request it serves.
     """
+    SUPPORT_KINDS={'metadata','direct_reader'}
+    SUPPORT_ATTEMPTS=16
     def __init__(self,contract=None):
         self.contract=contract
         self.limit=2*contract.operations+3 if contract is not None else None
         self.lock=Lock();self.records={};self.rows=0;self.bytes=0;self.limited=False
+        self.mission_binding = None
+
+    def admit_governed_mission(self, mission_id, catalog_fingerprint, operation_ceiling):
+        """Bind the existing server mission's ceiling before analytical execution.
+
+        Only validated mission admission calls this method. The generic model
+        contract and every row/byte/fetch allowance remain unchanged.
+        """
+        from services.analysis_catalog import AnalysisError
+        if not 1 <= operation_ceiling <= 16 or not mission_id or not catalog_fingerprint:
+            raise AnalysisError('capacity_configuration', 'Invalid governed mission ceiling')
+        binding = (mission_id, catalog_fingerprint, operation_ceiling)
+        with self.lock:
+            if self.mission_binding == binding:
+                return
+            if self.mission_binding or self.limited or any(r['kind'] == 'execute' for r in self.records.values()):
+                raise AnalysisError('capacity_requires_choice', 'Mission budget cannot change during execution')
+            if self.contract is None:
+                self.contract = AnalyticalCapacityContract.from_env()
+                self.limit = 2 * self.contract.operations + 3
+            self.limit = max(self.limit, 2 * operation_ceiling + 3)
+            self.mission_binding = binding
 
     def reserve(self,kind):
         if kind not in {'execute','dry_run','metadata','direct_reader'}:raise ValueError('Unknown SQL attempt kind')
@@ -77,7 +104,9 @@ class QueryBudget:
                 # configuration is invalid, while SQL still fails before I/O.
                 self.contract=AnalyticalCapacityContract.from_env()
                 self.limit=2*self.contract.operations+3
-            if self.limited or len(self.records)>=self.limit:
+            support=kind in self.SUPPORT_KINDS
+            used=sum((r['kind'] in self.SUPPORT_KINDS)==support for r in self.records.values())
+            if self.limited or used>=(self.SUPPORT_ATTEMPTS if support else self.limit):
                 self.limited=True
                 raise AnalysisError('capacity_requires_choice','Physical SQL attempt allowance exhausted')
             identity=len(self.records)+1
@@ -123,6 +152,9 @@ class QueryBudget:
                 'direct_reader_attempts':sum(r['kind']=='direct_reader' for r in records),
                 'successful':sum(r['status']=='successful' for r in records),'failed':sum(r['status']=='failed' for r in records),
                 'reserved':sum(r['status']=='reserved' for r in records),'limit_attempts':self.limit,
+                'limit_support_attempts':self.SUPPORT_ATTEMPTS,
+                **({'governed_mission_operation_ceiling': self.mission_binding[2],
+                    'budget_authority': 'catalog:' + self.mission_binding[0]} if self.mission_binding else {}),
                 'fetched_rows':self.rows,'fetched_bytes':self.bytes,'limited':self.limited,
                 'coverage':'Validated executor plus instrumented API reader/source-metadata cursors; transaction controls and writer/pipeline connections excluded'}
 

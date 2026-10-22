@@ -98,6 +98,7 @@ def on_startup():
     # (capabilities, typing-time preflight) only read this snapshot.
     from services.data_coverage_service import start_background_refresh
     start_background_refresh()
+    threading.Thread(target=_keep_analysis_caches_warm, name='analysis-cache-warmup', daemon=True).start()
     if os.getenv("ANALYTICS_INITIALIZE_WAREHOUSE_ON_STARTUP", "false").lower() != "true":
         logger.info("Warehouse bootstrap disabled; serving existing schemas without startup DDL.")
         return
@@ -105,6 +106,22 @@ def on_startup():
     if not ready:
         logger.info("Warehouse views pending source data sync. Starting background initialization watcher.")
         threading.Thread(target=_background_init_warehouse_views, daemon=True).start()
+
+
+def _keep_analysis_caches_warm():
+    """Dashboards and preflight never pay a cold metadata/catalog load: refresh before the TTL lapses."""
+    import time
+    from services.metadata_service import get_local_metadata, LOCAL_TTL_SECONDS
+    interval = max(60, LOCAL_TTL_SECONDS // 2)
+    while True:
+        try:
+            from services.analysis_catalog import AnalysisCatalog
+            from services.preflight_service import preflight_catalog
+            AnalysisCatalog(get_local_metadata(force=True))
+            preflight_catalog()
+        except Exception:
+            logger.warning("Analysis cache warmup skipped; requests load on demand.")
+        time.sleep(interval)
 
 
 # ─── Register Routers ───

@@ -367,9 +367,9 @@ def lookup_dimension_values(table, column, search, limit=8):
         conn.set_session(readonly=True, autocommit=False)
         with conn.cursor() as cur:
             cur.execute("SET LOCAL statement_timeout = 1500")
-            cur.execute(sql.SQL("SELECT DISTINCT {column} AS value FROM {table} WHERE {column}::text ILIKE %s ORDER BY {column} LIMIT %s").format(
+            cur.execute(sql.SQL("SELECT {column} AS value FROM {table} WHERE {column}::text ILIKE %s GROUP BY {column} ORDER BY (LOWER({column}::text) = LOWER(%s)) DESC, {column} LIMIT %s").format(
                 column=sql.Identifier(column), table=sql.Identifier(*table.split("."))),
-                ("%" + needle + "%", min(max(int(limit), 1), 8)))
+                ("%" + needle + "%", search.strip(), min(max(int(limit), 1), 8)))
             return [row["value"] for row in cur.fetchall() if row["value"] is not None]
     finally:
         conn.rollback()

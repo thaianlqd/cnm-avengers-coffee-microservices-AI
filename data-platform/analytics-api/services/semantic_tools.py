@@ -261,7 +261,7 @@ class SemanticTools:
             ),
         }
 
-    def resolve(self, arguments, *, allow_lookup=True):
+    def resolve(self, arguments, *, allow_lookup=True, allow_fallback=False):
         arg = ValueReference.model_validate(arguments)
         d = self.catalog.registry["dimensions"].get(arg.dimension)
         if not d:
@@ -270,6 +270,23 @@ class SemanticTools:
         values = dimension_values(self.catalog, arg.dimension)
         aliases = aliases_for(self.catalog, arg.dimension, values)
         canonical = aliases.get(value_text(arg.reference))
+        grounding = d.get("value_grounding", {})
+        # A curated enum that declares lookup_fallback is an alias list, not the
+        # whole value universe: an exact read-only lookup grounds other members
+        # before any fuzzy match can map them onto a curated neighbour.
+        if (
+            canonical is None
+            and values
+            and grounding.get("lookup_fallback")
+            and allow_fallback  # only user-selected/server-grounded scope, never model-proposed values
+            and self.lookup
+            and allow_lookup
+        ):
+            self.lookup_count += 1
+            found = list(self.lookup(d["table"], d["column"], arg.reference, limit=8))[:8]
+            exact = list(dict.fromkeys(v for v in found if value_text(v) == value_text(arg.reference)))
+            if len(exact) == 1:
+                canonical = exact[0]
         if canonical is None and values:
             near = [
                 (SequenceMatcher(None, value_text(arg.reference), k).ratio(), v)

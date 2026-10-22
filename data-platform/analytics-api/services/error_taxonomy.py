@@ -71,6 +71,7 @@ _TYPES = {
     "plan": ("QUERY_COMPILATION_FAILED", "EXECUTION_FAILURE", False),
     "execution": ("QUERY_EXECUTION_FAILED", "EXECUTION_FAILURE", False),
     "query_timeout": ("QUERY_TIMEOUT", "EXECUTION_FAILURE", False),
+    "data_health": ("SOURCE_UNAVAILABLE", "EXECUTION_FAILURE", False),
     "result_contract": ("RESULT_VALIDATION_FAILED", "EXECUTION_FAILURE", False),
     "quality_verification": ("RESULT_VALIDATION_FAILED", "EXECUTION_FAILURE", False),
     "job_busy": ("CAPACITY_BUSY", "SYSTEM_FAILURE", True),
@@ -89,6 +90,7 @@ _AMBIGUOUS = {
 _REVIEW = {"schema_changed", "stale_approval", "module_needs_review", "session", "approval_required", "patch"}
 
 GUIDANCE = {
+    'SOURCE_UNAVAILABLE': ('Nguồn dữ liệu chưa sẵn sàng', 'Nguồn bắt buộc đang thiếu hoặc bị chặn; chưa chạy truy vấn.', 'check_source'),
     "UNSUPPORTED_CAPABILITY": ("Chỉ số hoặc phép phân tích chưa được hỗ trợ",
         "Hiện dữ liệu phân tích chưa hỗ trợ yêu cầu này.", "choose_supported_capability"),
     "OUT_OF_SCOPE": ("Ngoài phạm vi phân tích dữ liệu",
@@ -134,6 +136,7 @@ GUIDANCE = {
 
 # V3.2 user-facing failure stage: the UI text must match where it failed.
 _STAGES = {
+    'SOURCE_UNAVAILABLE': 'PRECHECK_FAILURE',
     "UNRECOGNIZED_QUESTION": "PRECHECK_FAILURE", "MISSION_MISMATCH": "PRECHECK_FAILURE",
     "RESTRICTED_REQUEST": "PRECHECK_FAILURE", "GUIDED_CONTRACT_INVALID": "SEMANTIC_CONTRACT_FAILURE",
     "PROVIDER_RATE_LIMITED": "PROVIDER_QUOTA_FAILURE",

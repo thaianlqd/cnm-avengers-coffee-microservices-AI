@@ -2,6 +2,7 @@
 
 from datetime import date
 import math
+import json
 from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -110,6 +111,15 @@ class Filter(Contract):
         if (self.operator == "in") != isinstance(self.value, list):
             raise ValueError("only IN accepts a list")
         return self
+
+
+def equivalent_filter(left, right):
+    """IN is a set of typed members; its order is not a scope change."""
+    if left.get('dimension')!=right.get('dimension') or left.get('operator')!=right.get('operator'):return False
+    if left.get('operator')=='in' and isinstance(left.get('value'),list) and isinstance(right.get('value'),list):
+        key=lambda v:json.dumps(v,ensure_ascii=False,sort_keys=True)
+        return {key(v) for v in left['value']}=={key(v) for v in right['value']}
+    return left==right
 
 
 class Ranking(Contract):

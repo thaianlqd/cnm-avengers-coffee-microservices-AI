@@ -1,0 +1,592 @@
+{
+  "version": "1.0.0",
+  "status": "PROPOSED_ACCEPTANCE_CONTRACT_NOT_BASELINE_RESULTS",
+  "holdout_policy": "Freeze before implementation; do not tune rules to these texts. Add separately authored unseen cases for final evaluation.",
+  "oracle_fixture": "cohort-oracle-fixture.json",
+  "cases": [
+    {
+      "id": "M01",
+      "goal": "G01",
+      "category": "roundtrip",
+      "scenario": "Every guided template and chip across all declared missions",
+      "required_assertions": [
+        "Builder echo round-trips to exact canonical contract",
+        "No connector token consumed as entity",
+        "Structured payload controls execution and echoed text agrees"
+      ],
+      "method": "offline_contract_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M02",
+      "goal": "G01",
+      "category": "scope_vs_axis",
+      "scenario": "Tại/của HCM versus theo tỉnh/thành",
+      "required_assertions": [
+        "Scope mention does not add an unrequested group axis",
+        "Every dependent goal carries the same city filter"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M03",
+      "goal": "G01",
+      "category": "compare",
+      "scenario": "Theo tỉnh/thành giữa HCM và HN",
+      "required_assertions": [
+        "Members exactly HCM and HN",
+        "No entity named giữa HCM",
+        "Metric/period preserved"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M04",
+      "goal": "G01",
+      "category": "invalid",
+      "scenario": "Unknown city, malformed number/calendar, gibberish",
+      "required_assertions": [
+        "No analytical execution",
+        "Typed missing slot and actionable error",
+        "Zero provider calls when invalidity is deterministic"
+      ],
+      "method": "offline_contract_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M05",
+      "goal": "G01",
+      "category": "secondary",
+      "scenario": "Unknown scope in context/expectation/refinement",
+      "required_assertions": [
+        "All semantic fields pass same gate",
+        "No silent discard of unresolved secondary constraint"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M06",
+      "goal": "G01",
+      "category": "unsupported_write",
+      "scenario": "Request to delete/update analytical data",
+      "required_assertions": [
+        "Unsupported action before provider",
+        "Zero analytical SQL writes",
+        "No recast to unrelated analysis"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M07",
+      "goal": "G01",
+      "category": "time_conflict",
+      "scenario": "Text month differs from explicit UI period",
+      "required_assertions": [
+        "Explicit conflict policy surfaced",
+        "Requested and effective period recorded",
+        "No silent overwrite"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M08",
+      "goal": "G02",
+      "category": "rare_values",
+      "scenario": "Select all observed rare province values from picker",
+      "required_assertions": [
+        "Advertised completeness matches authoritative allowed source",
+        "Preflight and execution agree on every member"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M09",
+      "goal": "G02",
+      "category": "multi_select",
+      "scenario": "IN with rare cities; reorder same members",
+      "required_assertions": [
+        "No meaning change for reordering",
+        "Real added member changes meaning",
+        "Empty IN does not widen to all"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M10",
+      "goal": "G02",
+      "category": "identity",
+      "scenario": "Duplicate store labels in different cities",
+      "required_assertions": [
+        "Resolve and filter by store_id",
+        "No group merging by label",
+        "Access applies before lookup"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M11",
+      "goal": "G03",
+      "category": "risk_parity",
+      "scenario": "Risk scoped HCM typed check and AI deep analysis",
+      "required_assertions": [
+        "Same signal IDs, scope, clocks and thresholds",
+        "No arbitrary products routing",
+        "Deep failure keeps deterministic risk table"
+      ],
+      "method": "live_provider_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": false
+    },
+    {
+      "id": "M12",
+      "goal": "G03",
+      "category": "risk_groups",
+      "scenario": "Aggregate healthy but child groups breach",
+      "required_assertions": [
+        "Overall and subgroup status both preserved",
+        "Counts label distinguishes signals from entities",
+        "Group exposure and key available"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M13",
+      "goal": "G03",
+      "category": "snapshot",
+      "scenario": "Historical risk request with snapshot inventory signal",
+      "required_assertions": [
+        "Current state labeled separately or not_applicable",
+        "No snapshot attached to historical period"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M14",
+      "goal": "G03",
+      "category": "pair_clock",
+      "scenario": "Relationship pair of incompatible event/snapshot clocks",
+      "required_assertions": [
+        "Capability rejects or requests explicit snapshot interpretation before READY_GUIDED",
+        "No history fabrication"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M15",
+      "goal": "G04",
+      "category": "cohort",
+      "scenario": "Bottom 5 synthetic provinces A–E among A–F",
+      "required_assertions": [
+        "Ranked keys exactly A–E",
+        "Selected revenue 1520 versus universe 101520",
+        "G is no-observation, not fabricated revenue zero",
+        "Canonical revenue does not spawn an unrequested specialized store_revenue ranking",
+        "Every requested goal traces to an input clause or explicit structured selection; derived goals carry a verified dependency"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M16",
+      "goal": "G04",
+      "category": "dependent_views",
+      "scenario": "Store/payment/trend/KPI/map for selected cohort",
+      "required_assertions": [
+        "Every full artifact row key belongs to selected cohort",
+        "Selected payments COD100 QR700 WALLET320 VNPAY400",
+        "Selected daily 700,300,520",
+        "Exact query plan relationship to primary selection"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M17",
+      "goal": "G04",
+      "category": "metamorphic_outside",
+      "scenario": "Change F data without changing selected A–E",
+      "required_assertions": [
+        "Dependent selected views unchanged",
+        "Universe benchmark may change and is labeled separately"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M18",
+      "goal": "G04",
+      "category": "metamorphic_membership",
+      "scenario": "Change data enough to alter primary Bottom 5 membership",
+      "required_assertions": [
+        "All dependent outputs use identical new cohort version",
+        "No old map/narrative/evidence reused"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M19",
+      "goal": "G04",
+      "category": "rank_edges",
+      "scenario": "Top/Bottom ties partitions actual<N empty result",
+      "required_assertions": [
+        "Stable tie ordering and partition keys",
+        "Direction and actual count correct everywhere",
+        "Zero groups is honest no_data"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M20",
+      "goal": "G04",
+      "category": "independent_goals",
+      "scenario": "National overview and separate Top5 as two requested goals",
+      "required_assertions": [
+        "Do not force national goal into selected cohort",
+        "Each dependent chart binds to its actual parent goal"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M21",
+      "goal": "G05",
+      "category": "metric_population",
+      "scenario": "Revenue+all orders+AOV within cohort",
+      "required_assertions": [
+        "Selected all orders8 valid orders6",
+        "AOV uses exact1520/6",
+        "Business status filters kept per metric"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M22",
+      "goal": "G05",
+      "category": "depth",
+      "scenario": "Same task at all three depths",
+      "required_assertions": [
+        "Primary key set and values identical",
+        "Additional lenses retain cohort and clock",
+        "No duplicate query rendered as filler"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M23",
+      "goal": "G05",
+      "category": "thin_data",
+      "scenario": "One store/payment/order_type in last7d",
+      "required_assertions": [
+        "No manufactured groups or historical values",
+        "Correct singleton/data reason instead of generic mission limit"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M24",
+      "goal": "G06",
+      "category": "mutation",
+      "scenario": "Remove child cohort predicate or map scope",
+      "required_assertions": [
+        "Verification fails before publication even if SQL and rendering succeed",
+        "Failure points to goal/cohort mismatch"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M25",
+      "goal": "G06",
+      "category": "mutation_numeric",
+      "scenario": "Fanout join, sum averages, or ratio partition filter",
+      "required_assertions": [
+        "Independent numerical oracle catches wrong denominator or multiplicity",
+        "No general verified badge"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M26",
+      "goal": "G06",
+      "category": "narrative",
+      "scenario": "Claim references national or unrelated evidence",
+      "required_assertions": [
+        "Reject unmatched fact ID or scope",
+        "No causal claim from descriptive association"
+      ],
+      "method": "live_provider_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": false
+    },
+    {
+      "id": "M27",
+      "goal": "G07",
+      "category": "fresh_refinement",
+      "scenario": "Create report then immediately validate refinement",
+      "required_assertions": [
+        "No schema409 without actual schema/permission change",
+        "Invalid feedback classified by its true reason"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M28",
+      "goal": "G07",
+      "category": "access_cache",
+      "scenario": "Warm catalog before principal then switch principal",
+      "required_assertions": [
+        "Catalog cache identity includes effective access projection",
+        "No cross-owner sensitive metadata",
+        "Fingerprints compare like authority with like"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M29",
+      "goal": "G07",
+      "category": "epoch",
+      "scenario": "Source generation changes between report and oracle",
+      "required_assertions": [
+        "Do not claim numeric verification if oracle runs0 queries",
+        "Refresh action creates new coherent snapshot/cohort"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M30",
+      "goal": "G07",
+      "category": "lifecycle",
+      "scenario": "Cancel duplicate idempotency/reload/stale revision",
+      "required_assertions": [
+        "No duplicate paid send or stale publication",
+        "Existing report remains on failed revision"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M31",
+      "goal": "G08",
+      "category": "browser",
+      "scenario": "IME typing, draft/applied config, capability refetch",
+      "required_assertions": [
+        "Caret/composition preserved",
+        "No provider per keystroke",
+        "Applied config not silently reset",
+        "No stale preflight replacing latest input"
+      ],
+      "method": "browser",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "M32",
+      "goal": "G08",
+      "category": "browser",
+      "scenario": "Large and narrow chart/map/catalog layouts",
+      "required_assertions": [
+        "Axis/titles readable without SVG font scaling",
+        "Refinement does not cover KPI/chart",
+        "Drawer/collapsible details aligned",
+        "Result pins/search/KPI use same cohort"
+      ],
+      "method": "browser",
+      "holdout": false,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "H01",
+      "goal": "G04",
+      "category": "holdout",
+      "scenario": "Rank product keys then explain only their order-line contributions",
+      "required_assertions": [
+        "Cross-grain propagation uses declared relationship",
+        "No order revenue allocated to product without definition"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "H02",
+      "goal": "G04",
+      "category": "holdout",
+      "scenario": "Voucher ranking then purchaser distinct count",
+      "required_assertions": [
+        "Same voucher cohort, separate purchaser population definition",
+        "No sum of distinct customers across vouchers"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "H03",
+      "goal": "G02",
+      "category": "holdout",
+      "scenario": "NFC/NFD alias with a real store ID absent from suggestions",
+      "required_assertions": [
+        "Ground by authoritative lookup",
+        "Bounded search and exact key proof",
+        "No unchecked text fallback"
+      ],
+      "method": "offline_contract_and_API",
+      "holdout": true,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "H04",
+      "goal": "G03",
+      "category": "holdout",
+      "scenario": "Delivery success low overall versus high subgroup with sparse exposure",
+      "required_assertions": [
+        "Bad direction lt correctly ranks worst low first",
+        "Exposure qualification independent of display percentage"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "H05",
+      "goal": "G05",
+      "category": "holdout",
+      "scenario": "Staff late-shift ratio scoped to a region across depths",
+      "required_assertions": [
+        "Recompute weighted raw numerator/denominator",
+        "No revenue/payment charts added to a staff goal"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "H06",
+      "goal": "G06",
+      "category": "holdout",
+      "scenario": "Export after pagination hides most entities",
+      "required_assertions": [
+        "Export definition full artifact versus visible page explicit",
+        "No preview subset called complete"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "H07",
+      "goal": "G07",
+      "category": "holdout",
+      "scenario": "Reopen saved comparison after permission narrowing",
+      "required_assertions": [
+        "Reject/refresh with access-specific reason",
+        "No reuse of wider owner/entity cohort"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    },
+    {
+      "id": "H08",
+      "goal": "G01",
+      "category": "holdout",
+      "scenario": "Multi-clause reference chỉ trong các tỉnh này with negation",
+      "required_assertions": [
+        "Anaphora binds to correct prior rank goal",
+        "Exclusion changes allowed candidate set before ranking",
+        "No city literally named này"
+      ],
+      "method": "offline_contract_and_API",
+      "holdout": true,
+      "implementation_status": "PLANNED_NOT_RUN",
+      "must_not_call_provider": true
+    }
+  ]
+}

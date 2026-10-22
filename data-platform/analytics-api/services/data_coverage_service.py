@@ -90,11 +90,13 @@ def build_snapshot(rows, sync, overlay, now=None):
             source = data_health['views'].get(table, {})
             fact.update(health_status=source.get('status', 'unknown'),
                         health_reasons=source.get('reasons', []), source_generations=source.get('generations', {}),
-                        completeness='unknown')
+                        # Only the projected per-view certificate (worker parity proof) may claim completeness.
+                        completeness=source.get('completeness', 'unknown') if source.get('status') == 'healthy' else 'unknown')
     return {"status": "ready" if known else "unavailable", "overall": overall, "facts": facts,
             'data_health': data_health,
             "freshness": {"mode": "batch", "label": "Cập nhật theo đợt", "last_sync": _stamp(last_sync),
-                          "last_sync_status": (sync or {}).get("status"), "max_data_timestamp": max_data,
+                          "last_sync_status": (sync or {}).get("status"), "history_reader": (sync or {}).get("history_reader", "not_queried"),
+                          "max_data_timestamp": max_data,
                           "sync_lag_hours": lag_hours, "data_lag_hours": data_lag_hours,
                           "stale_after_hours": stale_hours, "stale": stale},
             "observed_at": now.isoformat()}
@@ -119,9 +121,14 @@ def _query(connection, overlay):
             cur.execute("SELECT finished_at, status FROM public.sync_history WHERE status = 'success' "
                         "AND finished_at IS NOT NULL ORDER BY finished_at DESC LIMIT 1")
             found = cur.fetchone()
-            sync = dict(found) if found else None
-        except Exception:
+            sync = dict(found, history_reader="ok") if found else {"history_reader": "empty"}
+        except Exception as error:
             connection.rollback()
+            # A denied reader is not "unknown freshness": report it as such
+            # instead of swallowing it into an empty, healthy-looking answer.
+            denied = getattr(error, "pgcode", None) == "42501" or type(error).__name__ == "InsufficientPrivilege"
+            sync = {"history_reader": "denied" if denied else "unavailable"}
+            logger.warning("[DataCoverage] load history reader=%s", sync["history_reader"])
     sync = sync or {}
     sync['data_health'] = _query_dataset_health(connection, overlay)
     return rows, sync
@@ -150,7 +157,8 @@ def dataset_health(contracts, views, checkpoints, physical, keys, *, quality=Non
         if actual is not None:
             # Replica varchar is deliberately stored as text. Narrowings and
             # missing/changed keys/columns remain incompatible.
-            equivalent = lambda t: 'text' if t == 'character varying' else t
+            # Source enums are replicated as text too (data-sync map_postgres_type).
+            equivalent = lambda t: 'text' if t in {'character varying', 'USER-DEFINED'} else t
             mismatch = [column for column, definition in contract['columns'].items()
                 if column not in actual or equivalent(actual[column]) != equivalent(definition['data_type'])]
             schema_status = 'drift' if mismatch or keys.get(contract['target_table']) != contract['primary_key'] else 'consistent'
@@ -179,6 +187,13 @@ def dataset_health(contracts, views, checkpoints, physical, keys, *, quality=Non
         if quality_observation and quality_observation.get('status') == 'failed': reasons.append('critical_quality_failed')
         if contract.get('quality_tier') == 'critical' and not quality_observation:
             reasons.append('critical_quality_not_measured')
+        completeness = certificate['completeness'] if certificate else 'unknown'
+        full_at = _moment(checkpoint.get('last_full_reconcile_at'))
+        if (certificate and completeness in {'unknown', 'partial'} and full_at is not None
+                and (now-full_at).total_seconds() <= 2*contract.get('full_reconcile_seconds', 3600)):
+            # Parity was proven by the last full reconcile (which fails on any
+            # mismatch); later changes arrived incrementally. Not "complete".
+            completeness = 'reconciled'
         status = ('blocked' if schema_status == 'drift' or failed or 'critical_quality_failed' in reasons else
                   'unknown' if not success or not generation or schema_status == 'unknown' or 'critical_quality_not_measured' in reasons else
                   'degraded' if stale else 'healthy')
@@ -195,7 +210,8 @@ def dataset_health(contracts, views, checkpoints, physical, keys, *, quality=Non
             'expected_load_interval_seconds':contract['expected_load_interval_seconds'],
             'maximum_acceptable_load_lag_seconds':maximum_lag,
             'source_business_owner':contract.get('source_business_owner'),
-            'completeness':certificate['completeness'] if certificate else 'unknown',
+            'completeness':completeness,
+            'last_parity_at':_stamp(full_at) if completeness=='reconciled' else None,
             'certificate':certificate,'certificate_basis':'Fenced worker evidence' if certificate else 'No certified extraction completeness proof',
             'quality':quality_observation or {'status':'not_measured','checks':[]},
             'status':status,'reasons':reasons,'observed_at':now.isoformat(),
@@ -211,6 +227,7 @@ def dataset_health(contracts, views, checkpoints, physical, keys, *, quality=Non
             'generations':{state['dataset_id']:state['generation'] for state in states},
             'source_dependencies':deps,'completeness':
                 'complete' if status=='healthy' and states and all(x['completeness']=='complete' for x in states) else
+                'reconciled' if status=='healthy' and states and all(x['completeness'] in {'complete','reconciled'} for x in states) else
                 'partial' if status=='healthy' and any(x['completeness']=='partial' for x in states) else 'unknown'}
     vector = {d['dataset_id']:{k:d[k] for k in ('generation','schema_fingerprint','last_success_at','status')}
               for d in datasets.values()}
@@ -258,6 +275,7 @@ def _query_dataset_health(connection, overlay):
     contracts=json.loads((_METADATA/'data_health_contracts.json').read_text())['datasets']
     views=json.loads((_METADATA/'warehouse_views.json').read_text())['views']
     checkpoints,physical,keys={}, {}, {}
+    schemas=sorted({c['target_table'].split('.',1)[0] for c in contracts.values()})  # every replica schema with a contract
     try:
         with connection.cursor() as cursor:
             cursor.execute('SELECT dataset_id,cursor_time,source_upper_bound,generation,schema_fingerprint,'
@@ -277,16 +295,16 @@ def _query_dataset_health(connection, overlay):
                 "ELSE t.typname END AS data_type "
                 "FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid "
                 "JOIN pg_namespace n ON n.oid=c.relnamespace JOIN pg_type t ON t.oid=a.atttypid "
-                "WHERE n.nspname IN ('orders','identity','menu','inventory') AND a.attnum>0 AND NOT a.attisdropped "
-                "ORDER BY n.nspname,c.relname,a.attnum LIMIT 2000")
+                "WHERE n.nspname = ANY(%s) AND a.attnum>0 AND NOT a.attisdropped "
+                "ORDER BY n.nspname,c.relname,a.attnum LIMIT 4000",(schemas,))
             for row in cursor.fetchall():
                 physical.setdefault(row['table_schema']+'.'+row['table_name'],{})[row['column_name']]=row['data_type']
             cursor.execute("SELECT n.nspname AS schema_name,c.relname AS table_name,a.attname AS column_name "
                 "FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace "
                 "JOIN LATERAL unnest(k.conkey) WITH ORDINALITY u(attnum,seq) ON true "
                 "JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum=u.attnum "
-                "WHERE k.contype='p' AND n.nspname IN ('orders','identity','menu','inventory') "
-                "ORDER BY n.nspname,c.relname,u.seq LIMIT 1000")
+                "WHERE k.contype='p' AND n.nspname = ANY(%s) "
+                "ORDER BY n.nspname,c.relname,u.seq LIMIT 2000",(schemas,))
             for row in cursor.fetchall(): keys.setdefault(row['schema_name']+'.'+row['table_name'],[]).append(row['column_name'])
     except Exception:
         connection.rollback()

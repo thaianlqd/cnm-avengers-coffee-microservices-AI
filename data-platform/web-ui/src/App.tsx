@@ -18,7 +18,7 @@ import { DataExplorerView } from './views/DataExplorerView';
 import { SystemAdminView } from './views/SystemAdminView';
 
 const EMPTY_PERMISSIONS: string[] = [];
-const PlatformApp: React.FC<{permissions?: string[]}> = ({permissions = EMPTY_PERMISSIONS}) => {
+const PlatformApp: React.FC<{permissions?: string[]; onLogout: () => void; logoutBusy: boolean}> = ({permissions = EMPTY_PERMISSIONS, onLogout, logoutBusy}) => {
   const { 
     activeTab,
     analyticsSubTab,
@@ -68,7 +68,7 @@ const PlatformApp: React.FC<{permissions?: string[]}> = ({permissions = EMPTY_PE
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
-        <Header />
+        <Header onLogout={onLogout} logoutBusy={logoutBusy} />
 
         {/* Scrollable Main Viewport */}
         <main className="flex-1 overflow-y-auto px-3 py-3 sm:px-6 sm:py-5 bg-[#f8fafc]">
@@ -107,7 +107,7 @@ export const App: React.FC = () => {
     setAccountIdentity(next?.identity);
     // Remounting the workspace aborts its prior requests. Clear shared BI data
     // before a different account can render. Pending jobs use account keys.
-    usePlatformStore.setState({dataErrors:{},overview:null,pipelines:null,tables:[],marts:null,storesData:null,
+    usePlatformStore.setState({dashboardSearch:null,dataErrors:{},overview:null,pipelines:null,tables:[],marts:null,storesData:null,
       customersData:null,productsData:null,users:[],roles:[],systemLogs:[],realtimeEvents:[],queryResult:null});
     window.dispatchEvent(new CustomEvent('analytics-account',{detail:next?.identity || null}));
     setSession(next);
@@ -149,7 +149,7 @@ export const App: React.FC = () => {
   if(loading)return <main className="min-h-screen grid place-items-center" role="status">Đang kiểm tra phiên đăng nhập…</main>;
   if(!session)return <LoginView username={username} password={password} busy={busy} message={message}
     onUsername={setUsername} onPassword={setPassword} onSubmit={login} />;
-  return <><PlatformApp key={session.identity} permissions={session.permissions}/>{message&&<p role="alert" className="fixed bottom-16 right-6 rounded bg-white p-3 text-red-700">{message}</p>}<button onClick={logout} disabled={busy} className="fixed right-6 bottom-4 rounded border bg-white px-3 py-2 text-xs shadow" aria-label="Đăng xuất tài khoản phân tích">Đăng xuất</button></>;
+  return <><PlatformApp key={session.identity} permissions={session.permissions} onLogout={logout} logoutBusy={busy}/>{message&&<p role="alert" className="fixed right-4 top-32 z-50 max-w-sm md:top-20 rounded-xl border border-red-100 bg-white p-3 text-sm text-red-700 shadow-lg">{message}</p>}</>;
 };
 
 export default App;

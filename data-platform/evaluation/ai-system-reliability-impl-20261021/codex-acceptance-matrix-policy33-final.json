@@ -1,0 +1,1733 @@
+{
+  "status": "PASS_FINITE_MATRIX",
+  "counts": {
+    "PASS_FINITE_ASSERTIONS": 54
+  },
+  "cases": [
+    {
+      "id": "M01",
+      "goal": "G01",
+      "category": "roundtrip",
+      "scenario": "Every guided template and chip across all declared missions",
+      "required_assertions": [
+        "Builder echo round-trips to exact canonical contract",
+        "No connector token consumed as entity",
+        "Structured payload controls execution and echoed text agrees"
+      ],
+      "method": "offline_contract_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_completion_20261022.AdvertisedEchoTests.test_composition_rejects_axes_without_governed_additivity_before_ready",
+        "tests.test_completion_20261022.AdvertisedEchoTests.test_metric_names_cannot_supply_mission_operators_or_entity_filters",
+        "tests.test_v32_mission_reliability.SuggestionTests.test_mission_examples_preflight_cleanly_and_guided_ones_compile",
+        "tests.test_v32_mission_reliability.SuggestionTests.test_template_questions_for_every_eligible_metric_preflight"
+      ],
+      "test_ids_passed": [
+        "tests.test_completion_20261022.AdvertisedEchoTests.test_composition_rejects_axes_without_governed_additivity_before_ready",
+        "tests.test_completion_20261022.AdvertisedEchoTests.test_metric_names_cannot_supply_mission_operators_or_entity_filters",
+        "tests.test_v32_mission_reliability.SuggestionTests.test_mission_examples_preflight_cleanly_and_guided_ones_compile",
+        "tests.test_v32_mission_reliability.SuggestionTests.test_template_questions_for_every_eligible_metric_preflight"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/advertised-roundtrip.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Frozen448 advertised mission/metric template cases through HTTP:429compile0AI,19correct missing-comparison-input cases. Representative eligible axes plus separate dimension/grammar controls; no Cartesian-universe claim."
+    },
+    {
+      "id": "M02",
+      "goal": "G01",
+      "category": "scope_vs_axis",
+      "scenario": "Tại/của HCM versus theo tỉnh/thành",
+      "required_assertions": [
+        "Scope mention does not add an unrequested group axis",
+        "Every dependent goal carries the same city filter"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_reliability_20261021.RareScopeExecutionTests.test_dependent_goals_run_inside_the_ranked_cohort",
+        "tests.test_semantic_normalization_v293.NormalizationTests.test_scope_qualifiers_are_generic_catalog_roles_not_grouping"
+      ],
+      "test_ids_passed": [
+        "tests.test_reliability_20261021.RareScopeExecutionTests.test_dependent_goals_run_inside_the_ranked_cohort",
+        "tests.test_semantic_normalization_v293.NormalizationTests.test_scope_qualifiers_are_generic_catalog_roles_not_grouping"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M03",
+      "goal": "G01",
+      "category": "compare",
+      "scenario": "Theo tỉnh/thành giữa HCM và HN",
+      "required_assertions": [
+        "Members exactly HCM and HN",
+        "No entity named giữa HCM",
+        "Metric/period preserved"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_reliability_20261021.ReliabilityIncidentTests.test_I07_comparison_template_round_trips_both_members",
+        "tests.test_v32_mission_reliability.MissionGrammarTests.test_compare_reports_both_groups_gap_and_percentage_gap"
+      ],
+      "test_ids_passed": [
+        "tests.test_reliability_20261021.ReliabilityIncidentTests.test_I07_comparison_template_round_trips_both_members",
+        "tests.test_v32_mission_reliability.MissionGrammarTests.test_compare_reports_both_groups_gap_and_percentage_gap"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M04",
+      "goal": "G01",
+      "category": "invalid",
+      "scenario": "Unknown city, malformed number/calendar, gibberish",
+      "required_assertions": [
+        "No analytical execution",
+        "Typed missing slot and actionable error",
+        "Zero provider calls when invalidity is deterministic"
+      ],
+      "method": "offline_contract_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_input_integrity.InputIntegrityHttpTests.test_real_routes_stop_unknown_input_before_provider_sql_and_job_cache",
+        "tests.test_input_integrity.InputIntegrityTests.test_raw_sign_calendar_and_top_limits"
+      ],
+      "test_ids_passed": [
+        "tests.test_input_integrity.InputIntegrityHttpTests.test_real_routes_stop_unknown_input_before_provider_sql_and_job_cache",
+        "tests.test_input_integrity.InputIntegrityTests.test_raw_sign_calendar_and_top_limits"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M05",
+      "goal": "G01",
+      "category": "secondary",
+      "scenario": "Unknown scope in context/expectation/refinement",
+      "required_assertions": [
+        "All semantic fields pass same gate",
+        "No silent discard of unresolved secondary constraint"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_input_integrity.InputIntegrityTests.test_secondary_semantic_fields_cannot_hide_unknown_scope"
+      ],
+      "test_ids_passed": [
+        "tests.test_input_integrity.InputIntegrityTests.test_secondary_semantic_fields_cannot_hide_unknown_scope"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M06",
+      "goal": "G01",
+      "category": "unsupported_write",
+      "scenario": "Request to delete/update analytical data",
+      "required_assertions": [
+        "Unsupported action before provider",
+        "Zero analytical SQL writes",
+        "No recast to unrelated analysis"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_reliability_20261021.ReliabilityIncidentTests.test_I11_write_requests_are_blocked_before_any_job"
+      ],
+      "test_ids_passed": [
+        "tests.test_reliability_20261021.ReliabilityIncidentTests.test_I11_write_requests_are_blocked_before_any_job"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M07",
+      "goal": "G01",
+      "category": "time_conflict",
+      "scenario": "Text month differs from explicit UI period",
+      "required_assertions": [
+        "Explicit conflict policy surfaced",
+        "Requested and effective period recorded",
+        "No silent overwrite"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_analysis_contract.OfflineTests.test_ui_time_cannot_silently_replace_explicit_prompt_period"
+      ],
+      "test_ids_passed": [
+        "tests.test_analysis_contract.OfflineTests.test_ui_time_cannot_silently_replace_explicit_prompt_period"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M08",
+      "goal": "G02",
+      "category": "rare_values",
+      "scenario": "Select all observed rare province values from picker",
+      "required_assertions": [
+        "Advertised completeness matches authoritative allowed source",
+        "Preflight and execution agree on every member"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_reliability_20261021.ReliabilityIncidentTests.test_I03_rare_member_outside_curated_enum_is_grounded_by_exact_lookup",
+        "tests.test_structured_scope_20261021.StructuredScopeTests.test_five_rare_selected_members_share_the_execution_lookup_allowance"
+      ],
+      "test_ids_passed": [
+        "tests.test_reliability_20261021.ReliabilityIncidentTests.test_I03_rare_member_outside_curated_enum_is_grounded_by_exact_lookup",
+        "tests.test_structured_scope_20261021.StructuredScopeTests.test_five_rare_selected_members_share_the_execution_lookup_allowance"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/city-inventory.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M09",
+      "goal": "G02",
+      "category": "multi_select",
+      "scenario": "IN with rare cities; reorder same members",
+      "required_assertions": [
+        "No meaning change for reordering",
+        "Real added member changes meaning",
+        "Empty IN does not widen to all"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_input_integrity.InputIntegrityTests.test_bound_scope_membership_ignores_order_but_not_different_members",
+        "tests.test_input_integrity.InputIntegrityTests.test_union_exclusion_and_unknown_sibling_never_partial_success"
+      ],
+      "test_ids_passed": [
+        "tests.test_input_integrity.InputIntegrityTests.test_bound_scope_membership_ignores_order_but_not_different_members",
+        "tests.test_input_integrity.InputIntegrityTests.test_union_exclusion_and_unknown_sibling_never_partial_success"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M10",
+      "goal": "G02",
+      "category": "identity",
+      "scenario": "Duplicate store labels in different cities",
+      "required_assertions": [
+        "Resolve and filter by store_id",
+        "No group merging by label",
+        "Access applies before lookup"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_input_integrity.InputIntegrityTests.test_resolution_cache_never_crosses_owner_access_or_catalog",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_identity_filter_pins_label_axis_without_hiding_the_exact_answer"
+      ],
+      "test_ids_passed": [
+        "tests.test_input_integrity.InputIntegrityTests.test_resolution_cache_never_crosses_owner_access_or_catalog",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_identity_filter_pins_label_axis_without_hiding_the_exact_answer"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/rechecks/codex_identity_holdouts.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M11",
+      "goal": "G03",
+      "category": "risk_parity",
+      "scenario": "Risk scoped HCM typed check and AI deep analysis",
+      "required_assertions": [
+        "Same signal IDs, scope, clocks and thresholds",
+        "No arbitrary products routing",
+        "Deep failure keeps deterministic risk table"
+      ],
+      "method": "live_provider_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": false,
+      "test_ids": [
+        "tests.test_reliability_20261021.RiskOneContractTests.test_I04_scoped_free_text_risk_stays_on_risk_contract",
+        "tests.test_reliability_codex_20261021.RiskSnapshotClockTests.test_bounded_risk_includes_labeled_current_snapshot_without_partial_approval"
+      ],
+      "test_ids_passed": [
+        "tests.test_reliability_20261021.RiskOneContractTests.test_I04_scoped_free_text_risk_stays_on_risk_contract",
+        "tests.test_reliability_codex_20261021.RiskSnapshotClockTests.test_bounded_risk_includes_labeled_current_snapshot_without_partial_approval"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/codex_risk_equivalence.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M12",
+      "goal": "G03",
+      "category": "risk_groups",
+      "scenario": "Aggregate healthy but child groups breach",
+      "required_assertions": [
+        "Overall and subgroup status both preserved",
+        "Counts label distinguishes signals from entities",
+        "Group exposure and key available"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_workspace_v31.RiskWatchTests.test_classification_is_server_side_and_has_no_composite_score",
+        "tests.test_workspace_v31.RiskWatchTests.test_healthy_total_does_not_hide_breaching_groups"
+      ],
+      "test_ids_passed": [
+        "tests.test_workspace_v31.RiskWatchTests.test_classification_is_server_side_and_has_no_composite_score",
+        "tests.test_workspace_v31.RiskWatchTests.test_healthy_total_does_not_hide_breaching_groups"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M13",
+      "goal": "G03",
+      "category": "snapshot",
+      "scenario": "Historical risk request with snapshot inventory signal",
+      "required_assertions": [
+        "Current state labeled separately or not_applicable",
+        "No snapshot attached to historical period"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_reliability_20261021.MetricClockTests.test_I10_snapshot_metric_with_bounded_period_is_not_ready",
+        "tests.test_reliability_codex_20261021.RiskSnapshotClockTests.test_snapshot_exception_requires_server_mission_and_declared_clock"
+      ],
+      "test_ids_passed": [
+        "tests.test_reliability_20261021.MetricClockTests.test_I10_snapshot_metric_with_bounded_period_is_not_ready",
+        "tests.test_reliability_codex_20261021.RiskSnapshotClockTests.test_snapshot_exception_requires_server_mission_and_declared_clock"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M14",
+      "goal": "G03",
+      "category": "pair_clock",
+      "scenario": "Relationship pair of incompatible event/snapshot clocks",
+      "required_assertions": [
+        "Capability rejects or requests explicit snapshot interpretation before READY_GUIDED",
+        "No history fabrication"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_v32_mission_reliability.GuidedExecutionTests.test_relationship_guided_contract_uses_governed_grain"
+      ],
+      "test_ids_passed": [
+        "tests.test_v32_mission_reliability.GuidedExecutionTests.test_relationship_guided_contract_uses_governed_grain"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M15",
+      "goal": "G04",
+      "category": "cohort",
+      "scenario": "Bottom 5 synthetic provinces A–E among A–F",
+      "required_assertions": [
+        "Ranked keys exactly A–E",
+        "Selected revenue 1520 versus universe 101520",
+        "G is no-observation, not fabricated revenue zero",
+        "Canonical revenue does not spawn an unrequested specialized store_revenue ranking",
+        "Every requested goal traces to an input clause or explicit structured selection; derived goals carry a verified dependency"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_completion_20261022.GoalProvenanceTests.test_each_goal_traces_input_clause_and_verified_cohort_dependency",
+        "tests.test_completion_20261022.GoalProvenanceTests.test_guided_selection_is_server_origin_and_model_cannot_supply_provenance",
+        "tests.test_reliability_20261021.RequestedGoalTests.test_I16_model_added_specialized_ranking_goal_is_dropped",
+        "tests.test_reliability_codex_20261021.CohortSelectionIdentityTests.test_unasked_scalar_in_cohort_request_cannot_become_a_national_total"
+      ],
+      "test_ids_passed": [
+        "tests.test_completion_20261022.GoalProvenanceTests.test_each_goal_traces_input_clause_and_verified_cohort_dependency",
+        "tests.test_completion_20261022.GoalProvenanceTests.test_guided_selection_is_server_origin_and_model_cannot_supply_provenance",
+        "tests.test_reliability_20261021.RequestedGoalTests.test_I16_model_added_specialized_ranking_goal_is_dropped",
+        "tests.test_reliability_codex_20261021.CohortSelectionIdentityTests.test_unasked_scalar_in_cohort_request_cannot_become_a_national_total"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/rechecks/codex_acceptance_properties.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Every generated requirement has server clause/structured/dependency receipts; semantic/cohort/receipt mutations fail replay. Broad interpreted clauses are labeled as interpretation, not explicit wording."
+    },
+    {
+      "id": "M16",
+      "goal": "G04",
+      "category": "dependent_views",
+      "scenario": "Store/payment/trend/KPI/map for selected cohort",
+      "required_assertions": [
+        "Every full artifact row key belongs to selected cohort",
+        "Selected payments COD100 QR700 WALLET320 VNPAY400",
+        "Selected daily 700,300,520",
+        "Exact query plan relationship to primary selection"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_reliability_20261021.RareScopeExecutionTests.test_I01_cohort_scoped_views_reconcile_with_ranked_total",
+        "tests.test_reliability_20261021.RareScopeExecutionTests.test_dependent_goal_read_as_multi_axis_ranking_is_rebound"
+      ],
+      "test_ids_passed": [
+        "tests.test_reliability_20261021.RareScopeExecutionTests.test_I01_cohort_scoped_views_reconcile_with_ranked_total",
+        "tests.test_reliability_20261021.RareScopeExecutionTests.test_dependent_goal_read_as_multi_axis_ranking_is_rebound"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/rechecks/codex_acceptance_properties.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M17",
+      "goal": "G04",
+      "category": "metamorphic_outside",
+      "scenario": "Change F data without changing selected A–E",
+      "required_assertions": [
+        "Dependent selected views unchanged",
+        "Universe benchmark may change and is labeled separately"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [],
+      "test_ids_passed": [],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/rechecks/codex_acceptance_properties.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M18",
+      "goal": "G04",
+      "category": "metamorphic_membership",
+      "scenario": "Change data enough to alter primary Bottom 5 membership",
+      "required_assertions": [
+        "All dependent outputs use identical new cohort version",
+        "No old map/narrative/evidence reused"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [],
+      "test_ids_passed": [],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/codex_holdout_cohorts.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M19",
+      "goal": "G04",
+      "category": "rank_edges",
+      "scenario": "Top/Bottom ties partitions actual<N empty result",
+      "required_assertions": [
+        "Stable tie ordering and partition keys",
+        "Direction and actual count correct everywhere",
+        "Zero groups is honest no_data"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_completion_20261022.RankingMatrixTests.test_ties_actual_n_and_full_fact_universe_at_every_depth",
+        "tests.test_ranking_dashboard_recovery.RankingDashboardRecovery.test_per_group_ranking_keeps_partition_and_rank_order",
+        "tests.test_reliability_20261021.RankingLabelTests.test_I08_bottom_ranking_is_never_named_top"
+      ],
+      "test_ids_passed": [
+        "tests.test_completion_20261022.RankingMatrixTests.test_ties_actual_n_and_full_fact_universe_at_every_depth",
+        "tests.test_ranking_dashboard_recovery.RankingDashboardRecovery.test_per_group_ranking_keeps_partition_and_rank_order",
+        "tests.test_reliability_20261021.RankingLabelTests.test_I08_bottom_ranking_is_never_named_top"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/rechecks/codex_acceptance_properties.log",
+        "codex-consolidated-web-policy33-final.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "18raw tie/direction/N cases and18real-pipeline UI artifacts with55cities, N5/20/100, all depths; map pagination/search preserves values and claims. Empty population covered independently by AF oracle."
+    },
+    {
+      "id": "M20",
+      "goal": "G04",
+      "category": "independent_goals",
+      "scenario": "National overview and separate Top5 as two requested goals",
+      "required_assertions": [
+        "Do not force national goal into selected cohort",
+        "Each dependent chart binds to its actual parent goal"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_reliability_codex_20261021.CohortSelectionIdentityTests.test_explicit_independent_scalar_remains_national"
+      ],
+      "test_ids_passed": [
+        "tests.test_reliability_codex_20261021.CohortSelectionIdentityTests.test_explicit_independent_scalar_remains_national"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/rechecks/codex_acceptance_properties.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M21",
+      "goal": "G05",
+      "category": "metric_population",
+      "scenario": "Revenue+all orders+AOV within cohort",
+      "required_assertions": [
+        "Selected all orders8 valid orders6",
+        "AOV uses exact1520/6",
+        "Business status filters kept per metric"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_average_order_value_uses_cohort_sum_and_exposure",
+        "tests.test_v34_ranked_companion.RankedCompanionTests.test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts"
+      ],
+      "test_ids_passed": [
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_average_order_value_uses_cohort_sum_and_exposure",
+        "tests.test_v34_ranked_companion.RankedCompanionTests.test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M22",
+      "goal": "G05",
+      "category": "depth",
+      "scenario": "Same task at all three depths",
+      "required_assertions": [
+        "Primary key set and values identical",
+        "Additional lenses retain cohort and clock",
+        "No duplicate query rendered as filler"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_ai_final_depth_contract.CancellationDepthTests.test_depths_are_monotonic_and_keep_the_same_meaning_and_numbers"
+      ],
+      "test_ids_passed": [
+        "tests.test_ai_final_depth_contract.CancellationDepthTests.test_depths_are_monotonic_and_keep_the_same_meaning_and_numbers"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/family-matrix.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M23",
+      "goal": "G05",
+      "category": "thin_data",
+      "scenario": "One store/payment/order_type in last7d",
+      "required_assertions": [
+        "No manufactured groups or historical values",
+        "Correct singleton/data reason instead of generic mission limit"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_ai_final_depth_contract.CancellationDepthTests.test_one_day_scope_discloses_missing_time_view_instead_of_drawing_one_point",
+        "tests.test_reliability_20261021.CoverageWordingTests.test_I12_single_group_is_reported_as_a_data_limit"
+      ],
+      "test_ids_passed": [
+        "tests.test_ai_final_depth_contract.CancellationDepthTests.test_one_day_scope_discloses_missing_time_view_instead_of_drawing_one_point",
+        "tests.test_reliability_20261021.CoverageWordingTests.test_I12_single_group_is_reported_as_a_data_limit"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M24",
+      "goal": "G06",
+      "category": "mutation",
+      "scenario": "Remove child cohort predicate or map scope",
+      "required_assertions": [
+        "Verification fails before publication even if SQL and rendering succeed",
+        "Failure points to goal/cohort mismatch"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_chart_scope_and_unit_mutations_cannot_be_exported",
+        "tests.test_v34_ranked_companion.RankedCompanionTests.test_full_artifact_membership_guard_rejects_a_different_top_n",
+        "tests.test_v34_ranked_companion.RankedCompanionTests.test_tampered_membership_population_sql_and_parent_cannot_verify"
+      ],
+      "test_ids_passed": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_chart_scope_and_unit_mutations_cannot_be_exported",
+        "tests.test_v34_ranked_companion.RankedCompanionTests.test_full_artifact_membership_guard_rejects_a_different_top_n",
+        "tests.test_v34_ranked_companion.RankedCompanionTests.test_tampered_membership_population_sql_and_parent_cannot_verify"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M25",
+      "goal": "G06",
+      "category": "mutation_numeric",
+      "scenario": "Fanout join, sum averages, or ratio partition filter",
+      "required_assertions": [
+        "Independent numerical oracle catches wrong denominator or multiplicity",
+        "No general verified badge"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_cancellation_ratio_uses_cohort_numerator_and_denominator",
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_rollup_requires_matching_population_clock_and_complete_formula"
+      ],
+      "test_ids_passed": [
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_cancellation_ratio_uses_cohort_numerator_and_denominator",
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_rollup_requires_matching_population_clock_and_complete_formula"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M26",
+      "goal": "G06",
+      "category": "narrative",
+      "scenario": "Claim references national or unrelated evidence",
+      "required_assertions": [
+        "Reject unmatched fact ID or scope",
+        "No causal claim from descriptive association"
+      ],
+      "method": "live_provider_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": false,
+      "test_ids": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_fact_refs_and_conclusion_replay_detect_scope_unit_period_and_prose_mutations",
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_wrong_finding_scope_is_rejected"
+      ],
+      "test_ids_passed": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_fact_refs_and_conclusion_replay_detect_scope_unit_period_and_prose_mutations",
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_wrong_finding_scope_is_rejected"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M27",
+      "goal": "G07",
+      "category": "fresh_refinement",
+      "scenario": "Create report then immediately validate refinement",
+      "required_assertions": [
+        "No schema409 without actual schema/permission change",
+        "Invalid feedback classified by its true reason"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_refinement_quality_v281.RefinementQualityTests.test_reported_feedback_accepts_multiple_patches_with_no_repair",
+        "tests.test_reliability_20261021.CatalogAuthorityTests.test_I06_preflight_catalog_cache_is_keyed_by_access_projection"
+      ],
+      "test_ids_passed": [
+        "tests.test_refinement_quality_v281.RefinementQualityTests.test_reported_feedback_accepts_multiple_patches_with_no_repair",
+        "tests.test_reliability_20261021.CatalogAuthorityTests.test_I06_preflight_catalog_cache_is_keyed_by_access_projection"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-refinement-http-policy33-final.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M28",
+      "goal": "G07",
+      "category": "access_cache",
+      "scenario": "Warm catalog before principal then switch principal",
+      "required_assertions": [
+        "Catalog cache identity includes effective access projection",
+        "No cross-owner sensitive metadata",
+        "Fingerprints compare like authority with like"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_input_integrity.InputIntegrityTests.test_resolution_cache_never_crosses_owner_access_or_catalog",
+        "tests.test_reliability_20261021.CatalogAuthorityTests.test_I06_preflight_catalog_cache_is_keyed_by_access_projection"
+      ],
+      "test_ids_passed": [
+        "tests.test_input_integrity.InputIntegrityTests.test_resolution_cache_never_crosses_owner_access_or_catalog",
+        "tests.test_reliability_20261021.CatalogAuthorityTests.test_I06_preflight_catalog_cache_is_keyed_by_access_projection"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M29",
+      "goal": "G07",
+      "category": "epoch",
+      "scenario": "Source generation changes between report and oracle",
+      "required_assertions": [
+        "Do not claim numeric verification if oracle runs0 queries",
+        "Refresh action creates new coherent snapshot/cohort"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_v34_oracle_consistency.OracleBudgetTests.test_changed_generation_is_incomparable_and_missing_epoch_is_unmeasured",
+        "tests.test_v34_oracle_consistency.OracleBudgetTests.test_no_runner_or_zero_allowance_does_not_claim_measurement",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_save_reopen_refresh_preserve_snapshot_and_reject_revision_substitution"
+      ],
+      "test_ids_passed": [
+        "tests.test_v34_oracle_consistency.OracleBudgetTests.test_changed_generation_is_incomparable_and_missing_epoch_is_unmeasured",
+        "tests.test_v34_oracle_consistency.OracleBudgetTests.test_no_runner_or_zero_allowance_does_not_claim_measurement",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_save_reopen_refresh_preserve_snapshot_and_reject_revision_substitution"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M30",
+      "goal": "G07",
+      "category": "lifecycle",
+      "scenario": "Cancel duplicate idempotency/reload/stale revision",
+      "required_assertions": [
+        "No duplicate paid send or stale publication",
+        "Existing report remains on failed revision"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_analysis_jobs.AnalysisJobTests.test_cancel_cannot_publish_late_result_or_execute_sql",
+        "tests.test_analysis_jobs.AnalysisJobTests.test_one_submit_produces_verified_report_and_duplicate_is_free",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_failed_execution_does_not_publish_or_mutate_source_session"
+      ],
+      "test_ids_passed": [
+        "tests.test_analysis_jobs.AnalysisJobTests.test_cancel_cannot_publish_late_result_or_execute_sql",
+        "tests.test_analysis_jobs.AnalysisJobTests.test_one_submit_produces_verified_report_and_duplicate_is_free",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_failed_execution_does_not_publish_or_mutate_source_session"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M31",
+      "goal": "G08",
+      "category": "browser",
+      "scenario": "IME typing, draft/applied config, capability refetch",
+      "required_assertions": [
+        "Caret/composition preserved",
+        "No provider per keystroke",
+        "Applied config not silently reset",
+        "No stale preflight replacing latest input"
+      ],
+      "method": "browser",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_input_integrity.InputIntegrityTests.test_refinement_does_not_require_repeating_metric"
+      ],
+      "test_ids_passed": [
+        "tests.test_input_integrity.InputIntegrityTests.test_refinement_does_not_require_repeating_metric"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-consolidated-web-policy33-final.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "M32",
+      "goal": "G08",
+      "category": "browser",
+      "scenario": "Large and narrow chart/map/catalog layouts",
+      "required_assertions": [
+        "Axis/titles readable without SVG font scaling",
+        "Refinement does not cover KPI/chart",
+        "Drawer/collapsible details aligned",
+        "Result pins/search/KPI use same cohort"
+      ],
+      "method": "browser",
+      "holdout": false,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [],
+      "test_ids_passed": [],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-browser-policy33-final-v2/receipt.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Served1440 journeys plus1280/1920/390 expanded insight, composer bounds, capability drawer and scope controls."
+    },
+    {
+      "id": "H01",
+      "goal": "G04",
+      "category": "holdout",
+      "scenario": "Rank product keys then explain only their order-line contributions",
+      "required_assertions": [
+        "Cross-grain propagation uses declared relationship",
+        "No order revenue allocated to product without definition"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [],
+      "test_ids_passed": [],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/codex_holdout_cohorts.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "H02",
+      "goal": "G04",
+      "category": "holdout",
+      "scenario": "Voucher ranking then purchaser distinct count",
+      "required_assertions": [
+        "Same voucher cohort, separate purchaser population definition",
+        "No sum of distinct customers across vouchers"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [],
+      "test_ids_passed": [],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/codex_holdout_cohorts.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "H03",
+      "goal": "G02",
+      "category": "holdout",
+      "scenario": "NFC/NFD alias with a real store ID absent from suggestions",
+      "required_assertions": [
+        "Ground by authoritative lookup",
+        "Bounded search and exact key proof",
+        "No unchecked text fallback"
+      ],
+      "method": "offline_contract_and_API",
+      "holdout": true,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_input_integrity.InputIntegrityTests.test_explicit_lookup_requires_exact_unique_match_and_retains_constraint",
+        "tests.test_input_integrity.InputIntegrityTests.test_unicode_equivalence_and_hidden_controls"
+      ],
+      "test_ids_passed": [
+        "tests.test_input_integrity.InputIntegrityTests.test_explicit_lookup_requires_exact_unique_match_and_retains_constraint",
+        "tests.test_input_integrity.InputIntegrityTests.test_unicode_equivalence_and_hidden_controls"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/rechecks/codex_identity_holdouts.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "H04",
+      "goal": "G03",
+      "category": "holdout",
+      "scenario": "Delivery success low overall versus high subgroup with sparse exposure",
+      "required_assertions": [
+        "Bad direction lt correctly ranks worst low first",
+        "Exposure qualification independent of display percentage"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_completion_20261022.RiskExposureTests.test_same_delivery_percentage_requires_independent_minimum_exposure"
+      ],
+      "test_ids_passed": [
+        "tests.test_completion_20261022.RiskExposureTests.test_same_delivery_percentage_requires_independent_minimum_exposure"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/codex_remaining_holdouts.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Same50percent with2/4/0observations and governed fixture minimum3; raw counts independently varied. No production business minimum invented."
+    },
+    {
+      "id": "H05",
+      "goal": "G05",
+      "category": "holdout",
+      "scenario": "Staff late-shift ratio scoped to a region across depths",
+      "required_assertions": [
+        "Recompute weighted raw numerator/denominator",
+        "No revenue/payment charts added to a staff goal"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [],
+      "test_ids_passed": [],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/codex_remaining_holdouts.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "H06",
+      "goal": "G06",
+      "category": "holdout",
+      "scenario": "Export after pagination hides most entities",
+      "required_assertions": [
+        "Export definition full artifact versus visible page explicit",
+        "No preview subset called complete"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_ai_final_depth_contract.CancellationDepthTests.test_many_group_contribution_is_a_full_population_pareto",
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_word_table_discloses_full_result_count_and_displayed_preview"
+      ],
+      "test_ids_passed": [
+        "tests.test_ai_final_depth_contract.CancellationDepthTests.test_many_group_contribution_is_a_full_population_pareto",
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_word_table_discloses_full_result_count_and_displayed_preview"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-word-policy33-final-native/visual-review.json",
+        "codex-docx-export-policy33-content-final.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Native Word rendered and inspected all10cohort+2preview pages; XML/HTTP separately assert displayed/full counts."
+    },
+    {
+      "id": "H07",
+      "goal": "G07",
+      "category": "holdout",
+      "scenario": "Reopen saved comparison after permission narrowing",
+      "required_assertions": [
+        "Reject/refresh with access-specific reason",
+        "No reuse of wider owner/entity cohort"
+      ],
+      "method": "offline_fixture_and_API",
+      "holdout": true,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [
+        "tests.test_completion_20261022.SavedAccessTests.test_saved_comparison_cannot_reopen_after_same_owner_permission_narrows",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_permission_denied_cannot_fallback_to_global_report",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_revoke_during_revision_prevents_atomic_publication",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_save_reopen_refresh_preserve_snapshot_and_reject_revision_substitution"
+      ],
+      "test_ids_passed": [
+        "tests.test_completion_20261022.SavedAccessTests.test_saved_comparison_cannot_reopen_after_same_owner_permission_narrows",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_permission_denied_cannot_fallback_to_global_report",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_revoke_during_revision_prevents_atomic_publication",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_save_reopen_refresh_preserve_snapshot_and_reject_revision_substitution"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Same owner wide access can reopen; old principal after policy change403, narrowed principal get/download404; exact saved comparison cannot leak wider cohort."
+    },
+    {
+      "id": "H08",
+      "goal": "G01",
+      "category": "holdout",
+      "scenario": "Multi-clause reference chỉ trong các tỉnh này with negation",
+      "required_assertions": [
+        "Anaphora binds to correct prior rank goal",
+        "Exclusion changes allowed candidate set before ranking",
+        "No city literally named này"
+      ],
+      "method": "offline_contract_and_API",
+      "holdout": true,
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "must_not_call_provider": true,
+      "test_ids": [],
+      "test_ids_passed": [],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/codex_remaining_holdouts.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "A01",
+      "goal": "G01",
+      "category": "Meaning preservation",
+      "scenario": "Text, guided, preset and follow-up express the same scoped task",
+      "required_assertions": [
+        "Exact metric/scope/period/task preserved",
+        "Unresolved constraints produce targeted clarification",
+        "Every requested goal has input provenance"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_completion_20261022.EntryModeParityTests.test_text_builder_preset_and_owned_followup_share_scoped_primary_and_provenance",
+        "tests.test_reliability_20261021.ReliabilityIncidentTests.test_I07_comparison_template_round_trips_both_members",
+        "tests.test_v32_mission_reliability.GuidedExecutionTests.test_guided_contract_is_validated_server_side"
+      ],
+      "test_ids_passed": [
+        "tests.test_completion_20261022.EntryModeParityTests.test_text_builder_preset_and_owned_followup_share_scoped_primary_and_provenance",
+        "tests.test_reliability_20261021.ReliabilityIncidentTests.test_I07_comparison_template_round_trips_both_members",
+        "tests.test_v32_mission_reliability.GuidedExecutionTests.test_guided_contract_is_validated_server_side"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Four canonically equivalent adapters on same raw350VND snapshot ×3depths, verified goal receipts. Equivalent preset fixture is not a claim that production D01 broader bundle equals a single-metric task; real53presets qualified separately."
+    },
+    {
+      "id": "A02",
+      "goal": "G05",
+      "category": "Depth relevance",
+      "scenario": "Same task across all three depths",
+      "required_assertions": [
+        "Primary keys and values identical on fixed snapshot",
+        "Every added view answers an explicit useful subquestion",
+        "No quota filler or specialized metric substituted"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_ai_final_depth_contract.CancellationDepthTests.test_depths_are_monotonic_and_keep_the_same_meaning_and_numbers",
+        "tests.test_v32_mission_reliability.DepthAndRelevanceTests.test_risk_mission_supporting_views_use_risk_metrics_only"
+      ],
+      "test_ids_passed": [
+        "tests.test_ai_final_depth_contract.CancellationDepthTests.test_depths_are_monotonic_and_keep_the_same_meaning_and_numbers",
+        "tests.test_v32_mission_reliability.DepthAndRelevanceTests.test_risk_mission_supporting_views_use_risk_metrics_only"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/family-matrix.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "A03",
+      "goal": "G06",
+      "category": "Claim provenance",
+      "scenario": "Expand every generated chart explanation",
+      "required_assertions": [
+        "Each number and entity binds to verified fact IDs",
+        "Facts match goal/cohort/period/clock/revision",
+        "Unsupported claims removed or deterministic fallback used"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_chart_scope_and_unit_mutations_cannot_be_exported",
+        "tests.test_v32_mission_reliability.RelevanceInsightTests.test_every_chart_maps_to_a_requirement_and_explains_itself"
+      ],
+      "test_ids_passed": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_chart_scope_and_unit_mutations_cannot_be_exported",
+        "tests.test_v32_mission_reliability.RelevanceInsightTests.test_every_chart_maps_to_a_requirement_and_explains_itself"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-browser-policy33-final-v2/receipt.json",
+        "codex-browser-policy33-artifact-review.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "A04",
+      "goal": "G06",
+      "category": "Ranking language",
+      "scenario": "Bottom N, Top N, ties, actual<N and pagination",
+      "required_assertions": [
+        "Claim universe and direction correct",
+        "No global highest claim from a Bottom N subset",
+        "Pagination does not change ranking conclusions"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_completion_20261022.RankingDirectionTests.test_all_bottom_facts_and_word_keep_direction",
+        "tests.test_completion_20261022.RankingMatrixTests.test_ties_actual_n_and_full_fact_universe_at_every_depth",
+        "tests.test_reliability_20261021.RankingLabelTests.test_I08_bottom_ranking_is_never_named_top",
+        "tests.test_v32_mission_reliability.VerificationTests.test_ranking_agreement_detects_order_and_set_errors"
+      ],
+      "test_ids_passed": [
+        "tests.test_completion_20261022.RankingDirectionTests.test_all_bottom_facts_and_word_keep_direction",
+        "tests.test_completion_20261022.RankingMatrixTests.test_ties_actual_n_and_full_fact_universe_at_every_depth",
+        "tests.test_reliability_20261021.RankingLabelTests.test_I08_bottom_ranking_is_never_named_top",
+        "tests.test_v32_mission_reliability.VerificationTests.test_ranking_agreement_detects_order_and_set_errors"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/rechecks/codex_acceptance_properties.log",
+        "codex-consolidated-web-policy33-final.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Top/Bottom raw membership/values/ties and actual<N plus18UI page/search/accordion invariance cases; map list explicitly uses its own displayed metric sort."
+    },
+    {
+      "id": "A05",
+      "goal": "G06",
+      "category": "Shares and denominators",
+      "scenario": "Revenue, all orders, valid orders, AOV and payment shares",
+      "required_assertions": [
+        "Raw numerator and denominator match metric definitions",
+        "Share base explicit and not current page by default",
+        "No averaging rates or summing distinct counts across overlaps"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_average_order_value_uses_cohort_sum_and_exposure",
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_cancellation_ratio_uses_cohort_numerator_and_denominator"
+      ],
+      "test_ids_passed": [
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_average_order_value_uses_cohort_sum_and_exposure",
+        "tests.test_cohort_rollups_20261021.CohortRollupTests.test_cancellation_ratio_uses_cohort_numerator_and_denominator"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "A06",
+      "goal": "G06",
+      "category": "Change and uncertainty",
+      "scenario": "Zero/negative/missing baseline, incomplete periods and forecast",
+      "required_assertions": [
+        "Metric-specific change policy followed",
+        "Percentage points differ from relative change",
+        "No factual future claims or invented confidence",
+        "Incomplete coverage limits the associated claim"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_completion_20261022.BaselineBoundaryTests.test_zero_negative_and_missing_revenue_baselines_at_all_depths",
+        "tests.test_forecast_v30.ForecastEngineTests.test_incomplete_current_period_is_excluded_and_trailing_zeros_filled",
+        "tests.test_forecast_v30.ForecastEngineTests.test_smape_skips_zero_actual_and_forecast",
+        "tests.test_v32_mission_reliability.RelevanceInsightTests.test_trend_partial_period_and_ranking_top_n_caveats",
+        "tests.test_workspace_v31.OracleTests.test_current_incomplete_month_is_not_compared_as_complete"
+      ],
+      "test_ids_passed": [
+        "tests.test_completion_20261022.BaselineBoundaryTests.test_zero_negative_and_missing_revenue_baselines_at_all_depths",
+        "tests.test_forecast_v30.ForecastEngineTests.test_incomplete_current_period_is_excluded_and_trailing_zeros_filled",
+        "tests.test_forecast_v30.ForecastEngineTests.test_smape_skips_zero_actual_and_forecast",
+        "tests.test_v32_mission_reliability.RelevanceInsightTests.test_trend_partial_period_and_ranking_top_n_caveats",
+        "tests.test_workspace_v31.OracleTests.test_current_incomplete_month_is_not_compared_as_complete"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Zero/negative/missing revenue baselines ×3depths; zero baseline has no relative percent, negative nonnegative-metric observations reject, missing remains partial. Forecast zero-SMAPE/current-incomplete/short-history controls attributed separately."
+    },
+    {
+      "id": "A07",
+      "goal": "G06",
+      "category": "Causal restraint",
+      "scenario": "Correlation and operational risk breakdown",
+      "required_assertions": [
+        "Paired data grain proven",
+        "No causal statement from observational breakdown alone",
+        "Hypotheses and actions labeled and linked to signals"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_completion_20261022.CausalPairTests.test_governed_operational_pair_keeps_grain_and_causal_guard_at_all_depths",
+        "tests.test_v32_mission_reliability.RelevanceInsightTests.test_relationship_scatter_discloses_no_causality",
+        "tests.test_workspace_v31.RiskWatchTests.test_healthy_total_does_not_hide_breaching_groups"
+      ],
+      "test_ids_passed": [
+        "tests.test_completion_20261022.CausalPairTests.test_governed_operational_pair_keeps_grain_and_causal_guard_at_all_depths",
+        "tests.test_v32_mission_reliability.RelevanceInsightTests.test_relationship_scatter_discloses_no_causality",
+        "tests.test_workspace_v31.RiskWatchTests.test_healthy_total_does_not_hide_breaching_groups"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "All advertised governed operational pairs inventory asserted: one revenue/cancellation pair, n5/r=-1 at3depths, causal mutation rejected; generic driver snapshot pair governed separately and blocked when invalid for time grain."
+    },
+    {
+      "id": "A08",
+      "goal": "G08",
+      "category": "Explanation lifecycle",
+      "scenario": "Open/close, switch selection, paginate, resize and change layout",
+      "required_assertions": [
+        "Opening explanation triggers no new provider call by default",
+        "Selection keys and base are explicit",
+        "Layout changes do not change facts or conclusions"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_analysis_contract.OfflineTests.test_approval_reuses_spec_no_reinterpretation_chart_no_queries",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_non_ai_filter_drill_depth_refresh_visual_save_reopen_send_zero_provider_requests"
+      ],
+      "test_ids_passed": [
+        "tests.test_analysis_contract.OfflineTests.test_approval_reuses_spec_no_reinterpretation_chart_no_queries",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_non_ai_filter_drill_depth_refresh_visual_save_reopen_send_zero_provider_requests"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-browser-policy33-final-v2/receipt.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "A09",
+      "goal": "G07",
+      "category": "Stale and concurrent responses",
+      "scenario": "Refine/filter/depth changes while explanation A is loading",
+      "required_assertions": [
+        "A cannot overwrite explanation B",
+        "Cache binds report/chart/revision/selection signatures",
+        "No previous-report narrative fallback"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_v34_entity_inspect.EntityInspectTests.test_old_revision_and_cross_owner_cannot_open_current_artifact",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_failed_execution_does_not_publish_or_mutate_source_session"
+      ],
+      "test_ids_passed": [
+        "tests.test_v34_entity_inspect.EntityInspectTests.test_old_revision_and_cross_owner_cannot_open_current_artifact",
+        "tests.test_workspace_revision.WorkspaceRevisionTests.test_failed_execution_does_not_publish_or_mutate_source_session"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-consolidated-web-policy33-final.json",
+        "codex-browser-policy33-artifact-review.json"
+      ],
+      "unverified_assertions": [],
+      "applicability_note": "Chart explanations are precomputed in the bound report, no separate async explanation response exists; report/revision races are exercised by UI tests.",
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "A10",
+      "goal": "G06",
+      "category": "Metamorphic locality",
+      "scenario": "Modify outside-cohort data then modify inside-cohort data",
+      "required_assertions": [
+        "Outside data preserves dependent values and explanations when membership fixed",
+        "Inside changes update values and claims atomically",
+        "Independent requested national goal may legitimately change"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_reliability_codex_20261021.CohortSelectionIdentityTests.test_explicit_independent_scalar_remains_national"
+      ],
+      "test_ids_passed": [
+        "tests.test_reliability_codex_20261021.CohortSelectionIdentityTests.test_explicit_independent_scalar_remains_national"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/rechecks/codex_acceptance_properties.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "A11",
+      "goal": "G06",
+      "category": "Mutation rejection",
+      "scenario": "Inject wrong fact, period, base, unit, direction, chart ID or causal claim",
+      "required_assertions": [
+        "Each incompatible mutation rejected before publication/export",
+        "Correct numeric results do not hide irrelevant scope",
+        "Removal of required coverage caveat fails validation"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_chart_scope_and_unit_mutations_cannot_be_exported",
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_fact_refs_and_conclusion_replay_detect_scope_unit_period_and_prose_mutations",
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_guided_compare_cards_have_verified_fact_ids_and_mutations_fail"
+      ],
+      "test_ids_passed": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_chart_scope_and_unit_mutations_cannot_be_exported",
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_fact_refs_and_conclusion_replay_detect_scope_unit_period_and_prose_mutations",
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_guided_compare_cards_have_verified_fact_ids_and_mutations_fail"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": null
+    },
+    {
+      "id": "A12",
+      "goal": "G05",
+      "category": "Chart semantics",
+      "scenario": "Time gaps, singleton, nonadditive shares, long labels, multiple series",
+      "required_assertions": [
+        "Plot encoding preserves ordering/time distance/unit/values",
+        "Smoothing cannot invent extrema",
+        "Invalid representation falls back to valid chart/table with reason",
+        "Chart-type change cannot silently change aggregation"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_ai_final_depth_contract.GenericFamilyTests.test_distinct_count_is_never_a_composition",
+        "tests.test_analysis_contract.OfflineTests.test_charts_reuse_rows_and_reject_ranking_donut_or_wrong_scope",
+        "tests.test_word_render_20261022.WordNarrativeTests.test_unplottable_chart_has_explicit_table_without_fabricated_zero",
+        "tests.test_word_render_20261022.WordPlotTests.test_invalid_or_reversed_time_uses_table_and_zero_is_real",
+        "tests.test_word_render_20261022.WordPlotTests.test_missing_buckets_break_line_without_changing_observations",
+        "tests.test_word_render_20261022.WordPlotTests.test_multiline_missing_values_are_not_zero_and_names_are_semantic",
+        "tests.test_word_render_20261022.WordPlotTests.test_negative_bar_is_not_clipped",
+        "tests.test_word_render_20261022.WordPlotTests.test_time_distance_is_not_array_index"
+      ],
+      "test_ids_passed": [
+        "tests.test_ai_final_depth_contract.GenericFamilyTests.test_distinct_count_is_never_a_composition",
+        "tests.test_analysis_contract.OfflineTests.test_charts_reuse_rows_and_reject_ranking_donut_or_wrong_scope",
+        "tests.test_word_render_20261022.WordNarrativeTests.test_unplottable_chart_has_explicit_table_without_fabricated_zero",
+        "tests.test_word_render_20261022.WordPlotTests.test_invalid_or_reversed_time_uses_table_and_zero_is_real",
+        "tests.test_word_render_20261022.WordPlotTests.test_missing_buckets_break_line_without_changing_observations",
+        "tests.test_word_render_20261022.WordPlotTests.test_multiline_missing_values_are_not_zero_and_names_are_semantic",
+        "tests.test_word_render_20261022.WordPlotTests.test_negative_bar_is_not_clipped",
+        "tests.test_word_render_20261022.WordPlotTests.test_time_distance_is_not_array_index"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-consolidated-web-policy33-final.json",
+        "web-utils33-final.log"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Elapsed date distance, missing calendar bucket gaps, singleton, invalid/reversed dates, missing-series values, nonadditive shares, negative values and long/multiple-series layouts; valid table fallback preserves observations with reason."
+    },
+    {
+      "id": "A13",
+      "goal": "G08",
+      "category": "Report consistency",
+      "scenario": "Chart accordion, short answer, map, export and reopened report",
+      "required_assertions": [
+        "All surfaces share selected report revision and approved goal references",
+        "Full artifact rather than preview supplies claims",
+        "Missing core answer yields partial/unavailable status rather than full success"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_word_table_discloses_full_result_count_and_displayed_preview",
+        "tests.test_refinement_quality_v281.RefinementQualityTests.test_saved_then_reopened_report_exports_the_same_conclusion_caveats_and_verification",
+        "tests.test_word_render_20261022.WordNarrativeTests.test_bottom_chart_metadata_and_conclusion_are_factual"
+      ],
+      "test_ids_passed": [
+        "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_word_table_discloses_full_result_count_and_displayed_preview",
+        "tests.test_refinement_quality_v281.RefinementQualityTests.test_saved_then_reopened_report_exports_the_same_conclusion_caveats_and_verification",
+        "tests.test_word_render_20261022.WordNarrativeTests.test_bottom_chart_metadata_and_conclusion_are_factual"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-word-policy33-final-native/visual-review.json",
+        "codex-browser-policy33-final-v2/receipt.json",
+        "codex-docx-export-policy33-content-final.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "Served revision binds all chart insights, short answer, map, saved reopen and server-owned Word export; native Word rendering qualified on same frozen exporter, exact HTTP content checked separately."
+    },
+    {
+      "id": "A14",
+      "goal": "G09",
+      "category": "Coverage and replay",
+      "scenario": "Advertised missions and metric families with rich/sparse/empty cases",
+      "required_assertions": [
+        "Run all three depths on chosen critical fixtures",
+        "Include structured and free-text paths, multiple scopes and independent goals",
+        "Offline and live outcomes recorded separately",
+        "After changes replay failure, same family variant and regression; retain all attempts"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "EXECUTED_RELATED_ASSERTIONS",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits",
+      "test_ids": [
+        "tests.test_v32_mission_reliability.SuggestionTests.test_template_questions_for_every_eligible_metric_preflight"
+      ],
+      "test_ids_passed": [
+        "tests.test_v32_mission_reliability.SuggestionTests.test_template_questions_for_every_eligible_metric_preflight"
+      ],
+      "pending_or_failed_test_ids": [],
+      "external_receipts": [
+        "codex-offline-policy33-final/family-matrix.json",
+        "codex-offline-policy33-final/advertised-roundtrip.json",
+        "codex-domain-matrix33/result.json"
+      ],
+      "unverified_assertions": [],
+      "receipt_failures": [],
+      "status": "PASS_FINITE_ASSERTIONS",
+      "prior_gap_resolution": "26advertised domains ×3densities ×3depths234;7metric-family63;448mission/metric template cases;53presets in full suite; live outcomes separate. Finite pairwise coverage per PLAN19.7, not every metric Cartesian product."
+    }
+  ],
+  "limits": "Frozen54scenario assertions with actual method/receipt attribution; finite pairwise coverage. Historical failures retained; no universal or blind-holdout language accuracy claim."
+}

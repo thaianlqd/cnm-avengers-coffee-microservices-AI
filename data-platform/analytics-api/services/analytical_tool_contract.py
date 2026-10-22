@@ -99,10 +99,10 @@ def canonicalize(arguments, previous=None, parent_replacements=None):
         ):
             if field not in boundary.changed_fields:
                 data[field] = stored[field]
-        for field in ("role", "parent_id", "purpose", "population_relation", "lens_id", 'cohort_query_id'):
+        for field in ("role", "parent_id", "purpose", "population_relation", "lens_id", 'cohort_query_id', 'cohort_scope_query_id'):
             if field not in boundary.model_fields_set:
-                data[field] = stored[field]
-            elif field in ("role", "parent_id", "population_relation", 'cohort_query_id') and data[field] != stored[field]:
+                data[field] = stored.get(field)
+            elif field in ("role", "parent_id", "population_relation", 'cohort_query_id', 'cohort_scope_query_id') and data[field] != stored.get(field):
                 raise ToolContractError([issue(field, "scope_conflict")])
     data, rules = structural_payload(data)
     time = data.get("time")

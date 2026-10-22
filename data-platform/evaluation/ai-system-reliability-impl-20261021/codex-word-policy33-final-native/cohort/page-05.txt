@@ -1,0 +1,16 @@
+AVENGERS COFFEE SUPPLY CHAIN & BI PLATFORM DỮ LIỆU TẦNG SILVER LAKE
+Biểu đồ 1: Bottom 2 — Doanh thu theo tỉnh/thành trong dữ liệu — Đơn hàng và doanh thu — Bảng xếp hạng cột
+ngang
+• Trả lời trực tiếp yêu cầu: Bottom 2 — Doanh thu theo tỉnh/thành trong dữ liệu — Đơn hàng và doanh thu.
+• Cao nhất: Hà Nội với 400 VND (57,1% tổng).
+• Hà Nội cao hơn Hồ Chí Minh 100 VND (+33,3%) trong phạm vi đã chọn.
+• Chênh lệch giữa nhóm cao nhất và thấp nhất là 100 VND.
+• Lưu ý: Biểu đồ chỉ gồm tập Bottom N được chọn (Bottom 2); không đại diện cơ cấu toàn bộ phạm vi.
+Biểu đồ 2: Doanh thu theo ngày — Đơn hàng và doanh thu · trong Bottom 2 — Diễn biến theo thời gian
+• Góc nhìn hỗ trợ cho yêu cầu: Chỉ số biến động thế nào theo thời gian?.
+• Từ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-29: tăng 300 VND (+300%)
+• Kỳ cao nhất: 2026-09-29 với 400 VND.
+• Doanh thu tăng giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.
+Tài liệu nội bộ bảo mật • Bản quyền thuộc Avengers Coffee Data
+Platform
+Định dạng chuẩn Microsoft Word (.docx)

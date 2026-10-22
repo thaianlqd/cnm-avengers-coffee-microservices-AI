@@ -1,0 +1,33 @@
+[
+  {
+    "module": "tests.test_completion_20261022",
+    "returncode": 0,
+    "seconds": 38.112,
+    "tests": 18,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "passed_ids": [
+      "tests.test_completion_20261022.AdvertisedEchoTests.test_axis_label_containing_another_metric_is_not_a_second_goal",
+      "tests.test_completion_20261022.AdvertisedEchoTests.test_composition_rejects_axes_without_governed_additivity_before_ready",
+      "tests.test_completion_20261022.AdvertisedEchoTests.test_metric_names_cannot_supply_mission_operators_or_entity_filters",
+      "tests.test_completion_20261022.AdvertisedEchoTests.test_real_unknown_scope_and_conflicting_mission_still_block",
+      "tests.test_completion_20261022.BaselineBoundaryTests.test_zero_negative_and_missing_revenue_baselines_at_all_depths",
+      "tests.test_completion_20261022.CausalPairTests.test_governed_operational_pair_keeps_grain_and_causal_guard_at_all_depths",
+      "tests.test_completion_20261022.EntryModeParityTests.test_text_builder_preset_and_owned_followup_share_scoped_primary_and_provenance",
+      "tests.test_completion_20261022.ExportValueTests.test_negative_values_are_preserved_and_missing_values_never_fabricated",
+      "tests.test_completion_20261022.ExportValueTests.test_structured_conclusions_render_as_text_without_python_objects",
+      "tests.test_completion_20261022.FeatureNoiseTests.test_explicit_rank_gap_cannot_be_removed_as_noise",
+      "tests.test_completion_20261022.FeatureNoiseTests.test_unasked_rank_gap_on_comparison_does_not_consume_repair",
+      "tests.test_completion_20261022.FeatureNoiseTests.test_valid_ranking_features_are_preserved",
+      "tests.test_completion_20261022.GoalProvenanceTests.test_each_goal_traces_input_clause_and_verified_cohort_dependency",
+      "tests.test_completion_20261022.GoalProvenanceTests.test_guided_selection_is_server_origin_and_model_cannot_supply_provenance",
+      "tests.test_completion_20261022.RankingDirectionTests.test_all_bottom_facts_and_word_keep_direction",
+      "tests.test_completion_20261022.RankingMatrixTests.test_ties_actual_n_and_full_fact_universe_at_every_depth",
+      "tests.test_completion_20261022.RiskExposureTests.test_same_delivery_percentage_requires_independent_minimum_exposure",
+      "tests.test_completion_20261022.SavedAccessTests.test_saved_comparison_cannot_reopen_after_same_owner_permission_narrows"
+    ]
+  }
+]

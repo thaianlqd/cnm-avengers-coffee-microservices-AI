@@ -38,7 +38,28 @@ def _reference(manifest):
     return {key:manifest[key] for key in ('run_id','manifest_fingerprint','requested_as_of','publication_quality')}
 
 
+def _skip_superseded_schedule(context):
+    """A late scheduled interval must never replace a newer manual publication."""
+    if str(context['dag_run'].run_type) != 'scheduled':
+        return
+    sys.path.insert(0, JOBS_DIR)
+    import bronze_ingestion
+    from sqlalchemy import text
+    from airflow.exceptions import AirflowSkipException
+    engine = bronze_ingestion.get_engine()
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                connection.execute(text('SET TRANSACTION READ ONLY'))
+                published = connection.execute(text("SELECT requested_as_of FROM analytics.pipeline_publications WHERE pipeline='daily_medallion'")).scalar()
+        if published and published > context['logical_date']:
+            raise AirflowSkipException('Newer publication already exists; obsolete scheduled interval skipped')
+    finally:
+        engine.dispose()
+
+
 def run_bronze(**context):
+    _skip_superseded_schedule(context)
     sys.path.insert(0, JOBS_DIR)
     import bronze_ingestion
     run_id, as_of = _identity(context)
@@ -55,6 +76,7 @@ def run_silver(**context):
 
 
 def run_gold(**context):
+    _skip_superseded_schedule(context)
     sys.path.insert(0, JOBS_DIR)
     import gold_aggregation
     upstream = context['ti'].xcom_pull(task_ids='transform_silver')

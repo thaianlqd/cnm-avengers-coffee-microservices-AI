@@ -213,6 +213,7 @@ test.describe('Refinement and reset on a finished report', () => {
     const box = page.locator(`input[placeholder^="${REFINE}"]:visible`).first();
     await expect(box).toBeEnabled();
     await box.fill('Đổi sang biểu đồ tròn');
+    await expect(page.locator('[data-refinement-composer]').getByRole('button',{name:/Áp dụng điều chỉnh/})).toBeEnabled();
     await box.press('Enter');
     await expect.poll(() => (api.calls['/api/ai/refine-report'] || []).length).toBe(1);
     await page.getByRole('button', { name: 'Hỏi câu mới' }).first().click();

@@ -96,7 +96,7 @@ def _request_parent(scope):
 
 def failure_diagnostic(error, *, action):
     """Server-only stack locations, never exception messages or local values."""
-    if action not in {'propose','generate','refine','feedback','job'}:
+    if action not in {'propose','generate','refine','workspace_revision','feedback','job'}:
         raise ValueError('Unbounded failure action')
     from pathlib import Path
     import traceback

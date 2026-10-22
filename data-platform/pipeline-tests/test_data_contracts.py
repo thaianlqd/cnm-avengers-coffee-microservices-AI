@@ -18,13 +18,16 @@ class DataContractTests(TestCase):
                 for name, definition in contract['columns'].items()}
 
     def test_all23_contracts_match_recorded_readonly_source_metadata(self):
-        observed = json.loads((ROOT / 'evaluation/v34/implementation-20261018/source-schema-readonly.json').read_text())
         schemas, keys = {}, {}
-        for schema, table, name, kind, udt, nullable in observed['columns']:
-            schemas.setdefault(schema+'.'+table, {})[name] = {'data_type': kind, 'udt_name': udt, 'nullable': nullable == 'YES'}
-        for schema, table, name in observed['primary_keys']:
-            keys.setdefault(schema+'.'+table, []).append(name)
-        self.assertEqual(len(CONTRACTS), 23)
+        # v34: 23 legacy sources; round 3 (PLAN 20/10, user-approved): 26 business-coverage sources.
+        for evidence in ('evaluation/v34/implementation-20261018/source-schema-readonly.json',
+                         'evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json'):
+            observed = json.loads((ROOT / evidence).read_text())
+            for schema, table, name, kind, udt, nullable in observed['columns']:
+                schemas.setdefault(schema+'.'+table, {})[name] = {'data_type': kind, 'udt_name': udt, 'nullable': nullable == 'YES'}
+            for schema, table, name in observed['primary_keys']:
+                keys.setdefault(schema+'.'+table, []).append(name)
+        self.assertEqual(len(CONTRACTS), 49)
         for name, contract in CONTRACTS.items():
             with self.subTest(dataset=name):
                 result = runtime.validate_data_contract(contract, schemas[name], keys[name])

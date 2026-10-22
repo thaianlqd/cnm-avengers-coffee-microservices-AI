@@ -19,6 +19,7 @@ case "${1:-unit}" in
       -v "$ROOT/data-platform/metadata:/workspace/metadata:ro" \
       -v "$ROOT/data-platform/analytics-api/metadata/warehouse_views.json:/workspace/analytics-api/metadata/warehouse_views.json:ro" \
       -v "$ROOT/data-platform/evaluation/v34/implementation-20261018:/workspace/evaluation/v34/implementation-20261018:ro" \
+      -v "$ROOT/data-platform/evaluation/business-coverage-20261020/round3:/workspace/evaluation/business-coverage-20261020/round3:ro" \
       avengers-v34-pipeline-tests >"$LOG_DIR/unit.log" 2>&1 || { tail -35 "$LOG_DIR/unit.log"; exit 1; }
     tail -5 "$LOG_DIR/unit.log"
     ;;

@@ -1,0 +1,755 @@
+[
+  {
+    "id": "unknown",
+    "response": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "input_lookup_required",
+            "stage": "static",
+            "blocking": true,
+            "subject": "city",
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Phạm vi Tỉnh/thành trong dữ liệu: “Tỉnh qzxn không tồn tại” chưa được xác minh trong dữ liệu được cấp quyền."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "interpretation_required": false,
+        "reason": "input_lookup_required",
+        "message": "Phạm vi Tỉnh/thành trong dữ liệu: “Tỉnh qzxn không tồn tại” chưa được xác minh trong dữ liệu được cấp quyền.",
+        "actions": [
+          {
+            "kind": "advice",
+            "label": "Kiểm tra tên hoặc chọn lại phạm vi trong danh mục.",
+            "constraint_code": "input_lookup_required",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Tỉnh qzxn không tồn tại"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Tỉnh qzxn không tồn tại"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "96ce39d0465151aead28d0068148b02c5d4bdf5de8e0d75efb98ae287abc7c28",
+        "requested_phrase": "Bottom 5 tỉnh theo doanh thu tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Tỉnh qzxn không tồn tại",
+            "display": "Tỉnh qzxn không tồn tại"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_lookup_required",
+          "dimension": "city",
+          "slot_id": "scope_1",
+          "message": "Phạm vi Tỉnh/thành trong dữ liệu: “Tỉnh qzxn không tồn tại” chưa được xác minh trong dữ liệu được cấp quyền.",
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Kiểm tra tên hoặc chọn lại phạm vi trong danh mục."
+            }
+          ]
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "complete"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.5",
+        "policy_fingerprint": "5bc7d1784ef2b55287ac0d9a5a7727d1cbf9fe1fe52a64083483f869252c5e96",
+        "fingerprint": "18ca564ffe7ebd7ac11cbf936f579dbea7e32f5abf4e88a219134c6e73b45b6d",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 45,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [
+          {
+            "id": "scope_1",
+            "kind": "structured_scope",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "raw": "Tỉnh qzxn không tồn tại",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_lookup_required",
+            "lookup_allowed": true,
+            "candidates": [],
+            "start": 0,
+            "end": 0
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_lookup_required",
+            "dimension": "city",
+            "slot_id": "scope_1",
+            "message": "Phạm vi Tỉnh/thành trong dữ liệu: “Tỉnh qzxn không tồn tại” chưa được xác minh trong dữ liệu được cấp quyền.",
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Kiểm tra tên hoặc chọn lại phạm vi trong danh mục."
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Tỉnh qzxn không tồn tại",
+            "display": "Tỉnh qzxn không tồn tại"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "a7fed9b2a0dde9b01593f8aad690c30577b7cfde5ed293de28883ecebf7ab44d",
+      "elapsed_ms": 127.47
+    }
+  },
+  {
+    "id": "rare-five",
+    "response": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Ninh Thuận",
+              "Sóc Trăng",
+              "Bạc Liêu",
+              "Trà Vinh",
+              "Quảng Trị"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Bạc Liêu",
+              "Ninh Thuận",
+              "Quảng Trị",
+              "Sóc Trăng",
+              "Trà Vinh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "d7e182c96cd1cc5df3da67f2bbbd643ae7f4b05d6f6685a5d54bd348546d1eba",
+        "requested_phrase": "Bottom 5 tỉnh theo doanh thu tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Bạc Liêu",
+            "display": "Bạc Liêu"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Ninh Thuận",
+            "display": "Ninh Thuận"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Quảng Trị",
+            "display": "Quảng Trị"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Sóc Trăng",
+            "display": "Sóc Trăng"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Trà Vinh",
+            "display": "Trà Vinh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "complete"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.5",
+        "policy_fingerprint": "5bc7d1784ef2b55287ac0d9a5a7727d1cbf9fe1fe52a64083483f869252c5e96",
+        "fingerprint": "2a91ed7899bf75a2783d937e0efe72530b6b744176120c58bd167f496aed9209",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 45,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 5
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Bạc Liêu",
+            "display": "Bạc Liêu"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Ninh Thuận",
+            "display": "Ninh Thuận"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Quảng Trị",
+            "display": "Quảng Trị"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Sóc Trăng",
+            "display": "Sóc Trăng"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Trà Vinh",
+            "display": "Trà Vinh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 5,
+      "coverage_status": "ready",
+      "registry_fingerprint": "a7fed9b2a0dde9b01593f8aad690c30577b7cfde5ed293de28883ecebf7ab44d",
+      "elapsed_ms": 632.08
+    }
+  },
+  {
+    "id": "rare-five-cached",
+    "response": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Ninh Thuận",
+              "Sóc Trăng",
+              "Bạc Liêu",
+              "Trà Vinh",
+              "Quảng Trị"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Bạc Liêu",
+              "Ninh Thuận",
+              "Quảng Trị",
+              "Sóc Trăng",
+              "Trà Vinh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "d7e182c96cd1cc5df3da67f2bbbd643ae7f4b05d6f6685a5d54bd348546d1eba",
+        "requested_phrase": "Bottom 5 tỉnh theo doanh thu tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Bạc Liêu",
+            "display": "Bạc Liêu"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Ninh Thuận",
+            "display": "Ninh Thuận"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Quảng Trị",
+            "display": "Quảng Trị"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Sóc Trăng",
+            "display": "Sóc Trăng"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Trà Vinh",
+            "display": "Trà Vinh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "complete"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.5",
+        "policy_fingerprint": "5bc7d1784ef2b55287ac0d9a5a7727d1cbf9fe1fe52a64083483f869252c5e96",
+        "fingerprint": "2a91ed7899bf75a2783d937e0efe72530b6b744176120c58bd167f496aed9209",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 45,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Bạc Liêu",
+            "display": "Bạc Liêu"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Ninh Thuận",
+            "display": "Ninh Thuận"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Quảng Trị",
+            "display": "Quảng Trị"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Sóc Trăng",
+            "display": "Sóc Trăng"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Trà Vinh",
+            "display": "Trà Vinh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "a7fed9b2a0dde9b01593f8aad690c30577b7cfde5ed293de28883ecebf7ab44d",
+      "elapsed_ms": 44.08
+    }
+  }
+]

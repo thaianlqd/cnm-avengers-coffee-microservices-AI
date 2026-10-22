@@ -1,0 +1,20 @@
+{
+  "checked_at_utc": "2026-10-21T09:23:57.862932+00:00",
+  "scope": "Documentation and acceptance specification validation only",
+  "checks": {
+    "markdown_links": "PASS",
+    "section_19_subsections": 7,
+    "new_case_count": 14,
+    "all_three_depths_required": true,
+    "cases_marked_unexecuted": true,
+    "baseline_audit_files_unchanged": true
+  },
+  "files_sha256": {
+    "data-platform/AI_DATA_ANALYST_SYSTEM_RELIABILITY_PLAN_20261021.md": "efaa62de28816625310173c8f546f7976396e3d1976cf7a746a0e25ad2a55aaa",
+    "data-platform/AI_DATA_ANALYST_SYSTEM_RELIABILITY_GOALS_20261021.md": "e7f970271ed5fce67a31444e9cb13c04c39b26fb4928eb12d5b64a57ea806444",
+    "data-platform/evaluation/ai-system-reliability-plan-addendum-20261021/acceptance-addendum.json": "93de84f28fcda75b93a842b374b1406992b5eb729af9d58a96ab7a8fb57c5764"
+  },
+  "product_code_changed": false,
+  "product_tests_run": false,
+  "note": "Current PLAN/GOALS hashes supersede their historical source-baseline snapshot for documentation only; baseline receipts were preserved."
+}

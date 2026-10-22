@@ -1,0 +1,20 @@
+{
+  "status": "PASS_CONTENT_ONLY",
+  "http_status": 200,
+  "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "sha256": "dd9aa5973d59453b8b4a1245a6eeb45d870730648bebaf4c768dca532f84df1f",
+  "bytes": 221281,
+  "session_id": "0ea8235f-5da0-4344-8190-6b20a859fdfe",
+  "revision": 1,
+  "checks": {
+    "summary_present": true,
+    "conclusion_present": true,
+    "findings_present": true,
+    "cohort_label_present": true,
+    "geography_warning_present": true,
+    "table_preview_disclosed": true
+  },
+  "visual_render": "NOT_RUN_NO_BUNDLED_RENDER_RUNTIME",
+  "save_to_db": false,
+  "source_policy": "2026-10-22.cohort-scope.29"
+}

@@ -2,6 +2,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dashboardCharts, dashboardPrimaryCharts, dashboardHighlights, initialChartType, chartAccent, compositionData, trendComparison, dashboardFindings, chartExplanation, reportHeading } from './analystDashboardLayout.mjs';
 
+test('certified whole-scope composition diversifies payment dashboards without changing groups, values or selection references',()=>{
+  const data=[{label:'QR',value:30,entity_ref:{filters:{method:'qr'}}},{label:'Cash',value:70,entity_ref:{filters:{method:'cash'}}}];
+  const chart={id:'methods',metric:'payments',scope_ref:'q',chart_type:'bar',selection:'complete',purpose:'Cơ cấu giao dịch',data};
+  const report={charts:[chart],evidence:[{scope_ref:'q',metric:'payments',feature:'scope_total',scope:{selection:'complete',partition:{}},values:{total:100}}]};
+  const output=dashboardCharts([chart],report).charts[0];assert.equal(output.chart_type,'donut');assert.deepEqual(output.data.map(r=>[r.label,r.value,r.entity_ref]),[...data].reverse().map(r=>[r.label,r.value,r.entity_ref]));
+  for(const changed of [{...chart,selection:'Top N'},{...chart,risk_threshold:{value:10}},{...chart,data:[{label:'A',value:-1},{label:'B',value:101}]}])assert.notEqual(dashboardCharts([changed],report).charts[0].chart_type,'donut');
+  assert.notEqual(dashboardCharts([chart],{...report,evidence:[]}).charts[0].chart_type,'donut');
+  assert.notEqual(dashboardCharts([chart],{...report,evidence:[{...report.evidence[0],values:{total:101}}]}).charts[0].chart_type,'donut');
+});
+
 test('multi-axis ranking preserves both metric views, tuple labels and partition meaning', () => {
   const data = [{ label: 'Trạng thái đơn: Hoàn thành · Sản phẩm: A', value: 85, rank_position: 1 },
     { label: 'Trạng thái đơn: Đang giao · Sản phẩm: A', value: 90, rank_position: 1 }];

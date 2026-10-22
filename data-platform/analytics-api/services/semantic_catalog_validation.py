@@ -151,6 +151,11 @@ def validate_catalog(overlay, strict=False):
                 if expression and any(t not in tables for t,c in referenced_columns(expression)):
                     raise ValueError('Unapproved expression source')
         for dim in dims.values():
+            for path in dim.get('hierarchies', []):
+                if (not isinstance(path,list) or not 2 <= len(path) <= 8
+                    or any(not isinstance(d,str) or d not in dims for d in path)
+                    or len(set(path)) != len(path)):
+                    raise ValueError('Invalid governed dimension hierarchy')
             phrases = dim.get('non_filter_phrases', [])
             if not isinstance(phrases, list) or len(phrases)>64 or any(not isinstance(p,str) or not 3<=len(p)<=200 for p in phrases):
                 raise ValueError('Invalid descriptive value phrases')

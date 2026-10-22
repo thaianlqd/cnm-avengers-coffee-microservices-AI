@@ -1,0 +1,148 @@
+{
+  "status": "LOCAL_ACCEPTED_REMOTE_PENDING",
+  "marker": "LOCAL_READY_FOR_USER_PUSH",
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00",
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "branch": "branch_thaian",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "working_tree": "Uncommitted changes; no commit/push/fetch/remote trigger in this hardening run",
+  "acceptance": {
+    "domain": [
+      32,
+      32
+    ],
+    "family": [
+      18,
+      18
+    ],
+    "edge": [
+      28,
+      28
+    ],
+    "total": [
+      78,
+      78
+    ],
+    "depth_runs": 193,
+    "complete": 155,
+    "honest_limited": 34,
+    "expected_typed_errors": 4
+  },
+  "backend": {
+    "passed": 1367,
+    "failed": 0
+  },
+  "web": {
+    "passed": 191,
+    "failed": 0,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "browser": {
+    "mocked": [
+      40,
+      40
+    ],
+    "real_http": [
+      5,
+      5
+    ]
+  },
+  "semantic": {
+    "offline": 146,
+    "failures": 0,
+    "v33": [
+      33,
+      33
+    ],
+    "v34": [
+      120,
+      120
+    ],
+    "authored_reference": [
+      120,
+      120
+    ]
+  },
+  "pipeline": {
+    "unit": [
+      65,
+      65
+    ],
+    "integration": [
+      41,
+      41
+    ],
+    "api_postgres_redis": [
+      33,
+      33
+    ]
+  },
+  "two_process": {
+    "workspace_cas": "passed",
+    "ownership": "passed",
+    "load_profiles": [
+      15,
+      15
+    ],
+    "completed": 111,
+    "expected_429": 24,
+    "soak_seconds": 900.105,
+    "soak_operations": [
+      1541,
+      1541
+    ],
+    "soak_jobs": [
+      60,
+      60
+    ],
+    "fault_matrix": "passed",
+    "crash_windows": 5
+  },
+  "gitleaks": {
+    "normal_exit": 0,
+    "normal_findings": 0,
+    "positive_exit": 42,
+    "positive_findings": 2
+  },
+  "metadata_parity": "passed",
+  "diff_check": "passed",
+  "production_demo_branch_findings": 0,
+  "served_bundle": "passed exact bytes on8501; only web-ui recreated",
+  "external_paid_provider_sends": 0,
+  "production_db_schema_grant_changes": 0,
+  "live_history": {
+    "first_attempt": [
+      10,
+      12
+    ],
+    "eventual_after_bounded_retry": [
+      12,
+      12
+    ],
+    "retry_order": [
+      "L12",
+      "L05"
+    ],
+    "new_live_calls": 0
+  },
+  "remote": {
+    "state": "pending user push and exact new SHA Data Platform CI",
+    "checked_out_baseline": "790eae42026441bb74bc6a53dc29e08934846944",
+    "commit_push_trigger_performed": false
+  },
+  "recommended_commit_message": "feat(data-platform): hoan thien P6 va hardening acceptance",
+  "receipts": [
+    "source-manifest.json",
+    "acceptance.json",
+    "backend-semantic.json",
+    "web-browser.json",
+    "pipeline.json",
+    "two-api-load.json",
+    "soak.json",
+    "faults.json",
+    "served-bundle.json",
+    "gitleaks.json",
+    "diff-review.json"
+  ]
+}

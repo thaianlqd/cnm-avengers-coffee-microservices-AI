@@ -498,7 +498,12 @@ def _measure_projection(connection, contract, *, upper, source_timezone, deadlin
         reference_observations(connection, contract, table=table, where_sql=predicate, parameters=bounds))
 
 
-def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
+PARITY_SECONDS = 20  # per-table bound for the optional incremental parity proof
+PARITY_RESERVE_SECONDS = 120  # cycle time kept for the remaining loads
+PARITY_MAX_ROWS = 20000  # larger replicas are proven by the periodic full reconcile instead
+
+
+def sync_table_governed(source_conn, target_conn, contract, *, deadline=None, force_full=False):
     """Bounded replica update with real update clocks, overlap and periodic repair.
 
     Created-only tables use full snapshots. Data, legacy observation metadata and
@@ -547,7 +552,7 @@ def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
             cursor.execute("SELECT clock_timestamp(), current_setting('TimeZone')")
             upper, source_timezone = cursor.fetchone()
         full_at = checkpoint.get('last_full_reconcile_at')
-        full = (contract['mode'] == 'full_snapshot' or checkpoint['cursor_time'] is None or not full_at
+        full = (force_full or contract['mode'] == 'full_snapshot' or checkpoint['cursor_time'] is None or not full_at
                 or (datetime.now(timezone.utc)-full_at).total_seconds() >= contract['full_reconcile_seconds'])
         clock = contract.get('update_clock')
         source_zone = ZoneInfo(source_timezone)
@@ -622,8 +627,10 @@ def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
                     publish += ' ON CONFLICT ('+', '.join(quote_identifier(k) for k in keys)+') '
                     if updates:
                         publish += 'DO UPDATE SET '+', '.join(quote_identifier(n)+'=EXCLUDED.'+quote_identifier(n) for n in updates)
-                        publish += ' WHERE ('+', '.join('replica.'+quote_identifier(n) for n in updates)+') IS DISTINCT FROM ('
-                        publish += ', '.join('EXCLUDED.'+quote_identifier(n) for n in updates)+')'
+                        # json has no equality operator (42883); compare its exact text instead.
+                        cast = lambda n: '::text' if contract['columns'][n]['data_type'] == 'json' else ''
+                        publish += ' WHERE ('+', '.join('replica.'+quote_identifier(n)+cast(n) for n in updates)+') IS DISTINCT FROM ('
+                        publish += ', '.join('EXCLUDED.'+quote_identifier(n)+cast(n) for n in updates)+')'
                     else:
                         publish += 'DO NOTHING'
                 cursor.execute(publish)
@@ -639,6 +646,19 @@ def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
             if observed != target_evidence:
                 raise PipelineContractError('Source and target projection parity failed')
             if target_evidence['quality']['status'] in {'passed', 'empty_measured'}:
+                snapshot = snapshot_certificate(contract, observed, target_evidence, **arguments)
+        elif (contract.get('incremental_parity_proof', True) and target_evidence.get('rows', 0) <= PARITY_MAX_ROWS
+              and deadline-monotonic_clock.monotonic() > PARITY_RESERVE_SECONDS):
+            # Completeness is never inferred from the cursor: the whole source
+            # projection is measured in the same source snapshot and must equal
+            # the published target. A missed delete or late row leaves it unknown.
+            # The proof is optional and bounded: it never fails or starves the load.
+            try:
+                observed = _measure_projection(source_conn, contract, upper=upper, source_timezone=source_timezone,
+                    deadline=min(deadline, monotonic_clock.monotonic()+PARITY_SECONDS), source=True)
+            except TimeoutError:
+                observed = None
+            if observed == target_evidence and target_evidence['quality']['status'] in {'passed', 'empty_measured'}:
                 snapshot = snapshot_certificate(contract, observed, target_evidence, **arguments)
         for period in contract.get('closed_periods', []):
             if not period.get('enabled'):
@@ -672,7 +692,7 @@ def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
                 pass  # Preserve the original error/rollback classification.
 
 
-def run_sync_cycle(source_conn, target_conn):
+def run_sync_cycle(source_conn, target_conn, *, force_reconcile=False, progress=None):
     """Chạy 1 vòng sync toàn bộ bảng."""
     governed = governed_ingestion_enabled()
     cycle_start = time.time()
@@ -694,12 +714,13 @@ def run_sync_cycle(source_conn, target_conn):
         # Missing required sources become explicit failures, never silent skips.
         from pipeline_runtime import extraction_order
         tables = [tuple(name.split('.')) for name in extraction_order(contracts)]
-    cycle_deadline = time.monotonic() + 180
+    cycle_deadline = time.monotonic() + 240  # of a 300s cadence; optional parity proofs stop 120s before it
     total_rows = 0
     synced_tables = 0
     errors = []
 
-    for schema, table in tables:
+    for index, (schema, table) in enumerate(tables):
+        if progress: progress(index, len(tables))
         try:
             if governed:
                 with target_conn.cursor() as cursor:
@@ -707,7 +728,7 @@ def run_sync_cycle(source_conn, target_conn):
                         'VALUES (%s,clock_timestamp()) ON CONFLICT(dataset_id) DO UPDATE SET last_attempt_at=clock_timestamp()',
                         (contracts[schema+'.'+table]['dataset_id'],))
                 target_conn.commit()
-                rows = sync_table_governed(source_conn, target_conn, contracts[schema+'.'+table], deadline=cycle_deadline)
+                rows = sync_table_governed(source_conn, target_conn, contracts[schema+'.'+table], deadline=cycle_deadline, force_full=force_reconcile)
                 total_rows += rows
                 synced_tables += 1
                 continue
@@ -783,6 +804,9 @@ def run_sync_cycle(source_conn, target_conn):
     # Their least-privilege login never evolves tables/views at cycle end.
     if not governed:
         create_warehouse_views(target_conn)
+    return {'total_tables':len(tables),'synced_tables':synced_tables,'failed_tables':len(errors),
+            'rows_written':total_rows,'duration_seconds':round(duration,1),
+            'failures':[{'source':e.rsplit(': ',1)[0],'code':e.rsplit(': ',1)[-1]} for e in errors[:50]]}
 
 
 def _load_warehouse_views():
@@ -890,28 +914,52 @@ def main():
         logger.error("Khong the ket noi Supabase. Thoat.")
         sys.exit(1)
 
-    # Fixed start slots; a slow cycle skips missed slots without overlapping.
+    # One worker owns scheduled and manual cycles; they never overlap.
+    from uuid import uuid4
+    import threading
+    from sync_control import write as control_write, claim, finish
+    control_enabled=bool(os.getenv('DATA_PLATFORM_SYNC_CONTROL_DIR'))
+    worker_id=uuid4().hex
+    observation={'worker_id':worker_id,'phase':'idle','completed_tables':0,'total_tables':0}
+    def heartbeat():
+        while True:
+            try:control_write('worker',{**observation,'heartbeat':time.time()})
+            except Exception:logger.warning('Sync control heartbeat unavailable')
+            time.sleep(5)
+    if control_enabled:
+        control_write('worker',{**observation,'heartbeat':time.time()})
+        threading.Thread(target=heartbeat,daemon=True,name='sync-control-heartbeat').start()
+    def progress(done,total):observation.update(completed_tables=done,total_tables=total)
     slot = time.monotonic()
     while True:
+        operation=None
+        if control_enabled:
+            try:operation=claim(worker_id)
+            except Exception:logger.warning('Sync control mailbox unavailable; scheduled ingestion remains active')
+        if operation is None and time.monotonic()<slot:
+            time.sleep(min(2,slot-time.monotonic()))
+            continue
         source_conn = target_conn = None
+        observation.update(phase='manual' if operation else 'scheduled',completed_tables=0)
         try:
             source_conn = get_source_conn()
             target_conn = get_target_conn()
-            run_sync_cycle(source_conn, target_conn)
+            result=run_sync_cycle(source_conn,target_conn,force_reconcile=bool(operation),progress=progress)
+            observation.update(completed_tables=result['total_tables'])
+            if operation:finish(operation,result)
         except Exception as error:
-            logger.error("Loi vong sync: %s", getattr(error, 'pgcode', None) or type(error).__name__)
+            code=getattr(error,'pgcode',None) or type(error).__name__
+            logger.error('Loi vong sync: %s',code)
+            if operation:
+                try:finish(operation,error_code=code)
+                except Exception:logger.warning('Sync operation result could not be persisted')
         finally:
-            for connection in (source_conn, target_conn):
+            observation.update(phase='idle')
+            for connection in (source_conn,target_conn):
                 if connection is not None:
-                    try:
-                        connection.close()
-                    except Exception:
-                        pass
-        now = time.monotonic()
-        slot = next_sync_slot(slot, now, SYNC_INTERVAL)
-        delay = max(0, slot-now)
-        logger.info("Vong sync tiep theo sau %.1fs", delay)
-        time.sleep(delay)
+                    try:connection.close()
+                    except Exception:pass
+        slot=next_sync_slot(slot,time.monotonic(),SYNC_INTERVAL)
 
 
 if __name__ == "__main__":

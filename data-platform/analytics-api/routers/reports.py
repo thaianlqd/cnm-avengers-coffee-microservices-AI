@@ -12,6 +12,7 @@ from db import get_report_writer_conn as get_db_conn
 from common import SavedReportCreate, ReportExportLogCreate
 from services.sql_service import SqlSafetyError, QueryExecutionError, execute_read_only
 from services.docx_service import generate_report_docx
+from services.analysis_catalog import AnalysisError
 
 router = APIRouter(prefix="/api/reports", tags=["Reports Management"])
 
@@ -46,6 +47,8 @@ def _authoritative_report(data,permission='reports.export'):
     session=get_session(data.get('session_id',''))
     if not session or session.owner_id!=principal.bound_owner or not session.report_response:
         raise HTTPException(404,'Không tìm thấy báo cáo thuộc phiên phân tích được cấp quyền.')
+    if data.get('revision') is not None and data['revision'] != session.revision:
+        raise HTTPException(409,'Bản báo cáo đã thay đổi; không thể thay bản lưu bằng revision mới hơn.')
     # Always export server-owned results. Client numbers and verification claims
     # cannot become a new trusted report through this endpoint.
     # Redis sessions deliberately omit rows/chart data to bound refinement state.
@@ -275,6 +278,67 @@ def delete_saved_report(report_id: str):
         raise HTTPException(status_code=500, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
 
 
+class HubProblemCreate(BaseModel):
+    title: str = Field(min_length=3, max_length=120)
+    category: str = Field(min_length=2, max_length=40)
+    description: str = Field(default='', max_length=300)
+
+
+def _owned_report_config(report_id):
+    owner_clause, owner_params = _owned_where(allow_legacy=False)
+    with get_db_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT id, title, module_config FROM analytics.saved_reports WHERE id = %s AND {owner_clause};",
+                        (report_id, *owner_params))
+            row = cur.fetchone()
+    if not row:
+        raise HTTPException(404, "Không tìm thấy báo cáo yêu cầu")
+    return dict(row)
+
+
+@router.get("/saved/{report_id}/hub-suggestion")
+def hub_problem_suggestion(report_id: str):
+    """Suggest how a verified saved report becomes a hub problem (title, feature group, similar views)."""
+    from services.preflight_service import preflight_catalog
+    from services.hub_problem_service import suggest
+    row = _owned_report_config(report_id)
+    try:
+        return suggest(preflight_catalog(), row.get('module_config') or {}, row.get('title') or '')
+    except AnalysisError:
+        return {'eligible': False, 'reason': 'Báo cáo này chưa có ý nghĩa phân tích đã kiểm chứng để chạy lại không cần AI. Hãy lưu báo cáo từ Trợ lý AI.'}
+
+
+@router.post("/saved/{report_id}/hub")
+def publish_hub_problem(report_id: str, payload: HubProblemCreate):
+    """Publish a verified saved report as a deterministic problem on the Báo cáo & Phân tích hub."""
+    from services.preflight_service import preflight_catalog
+    from services.hub_problem_service import template, CATEGORY
+    from services.workspace_service import dashboard_intent
+    row = _owned_report_config(report_id)
+    catalog = preflight_catalog()
+    try:
+        value = template(catalog, report_id, row.get('module_config') or {}, payload.title, payload.category, payload.description)
+        from services.analysis_intent import AnalysisIntentEnvelope
+        AnalysisIntentEnvelope.model_validate({'decision': 'analyze', 'requirements': value['requirements']})
+        for req in value['requirements']:
+            for metric in req['metric_ids']:
+                if not set(req.get('dimension_ids', [])) <= set(catalog.compatible_dimensions(metric)):
+                    raise AnalysisError('dashboard_unavailable', 'Incompatible grouping')
+    except (AnalysisError, ValueError):
+        raise HTTPException(400, 'Báo cáo này chưa thể thành bài toán dựng sẵn (thiếu góc nhìn hợp lệ).') from None
+    hub_id = f"hub_{uuid.uuid4().hex[:12]}"
+    value['id'] = 'U_' + hub_id
+    try:
+        _insert_saved(SavedReportCreate(title=value['title'], description=value['description'], category=CATEGORY,
+            query_type='hub', sql_query='', visualization_type='dashboard', created_by='Báo cáo & Phân tích',
+            module_config={'hub_template': value, 'source_report_id': report_id}), hub_id)
+    except HTTPException: raise
+    except Exception:
+        raise HTTPException(503, 'Kho lưu trữ báo cáo chưa sẵn sàng.') from None
+    return {'status': 'success', 'dashboard': {k: value[k] for k in ('id', 'version', 'title', 'category', 'description', 'default_time')},
+            'panel_count': len(value['requirements']), 'provider_calls': 0}
+
+
 @router.get("/saved/{report_id}/execute")
 @router.post("/saved/{report_id}/execute")
 @router.get("/saved/{report_id}/run")
@@ -470,4 +534,7 @@ def _verified_export(report_data):
         data['quality_assessment'] = verify_saved_report(data, AnalysisCatalog(get_local_metadata()))
     except Exception:
         data['quality_assessment'] = not_scored('Danh mục chưa sẵn sàng để kiểm chứng lại báo cáo.')
+    from services.analysis_quality_service import publication_issues
+    if (data.get('analytical_queries') or data.get('quality_context')) and publication_issues(data['quality_assessment']):
+        raise HTTPException(status_code=409, detail='Nhận định hoặc phạm vi báo cáo chưa vượt qua kiểm chứng; hãy chạy lại phân tích trước khi xuất.')
     return data

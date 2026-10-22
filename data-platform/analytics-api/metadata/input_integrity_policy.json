@@ -1,0 +1,261 @@
+{
+  "version": "1.2.5",
+  "heads": {
+    "city": [
+      "tỉnh",
+      "tỉnh thành",
+      "tỉnh/thành",
+      "thành phố",
+      "địa bàn"
+    ],
+    "store": [
+      "cửa hàng",
+      "chi nhánh",
+      "điểm bán"
+    ],
+    "order_status": [
+      "trạng thái"
+    ],
+    "payment_method": [
+      "thanh toán bằng"
+    ],
+    "order_type": [
+      "giao bằng"
+    ]
+  },
+  "grouping": [
+    "theo",
+    "mỗi",
+    "từng",
+    "các",
+    "mọi",
+    "tất cả",
+    "giữa các",
+    "bao nhiêu",
+    "số",
+    "top",
+    "bottom"
+  ],
+  "scope_introducers": [
+    "tại",
+    "ở",
+    "lọc",
+    "chỉ",
+    "trừ",
+    "ngoại trừ",
+    "không gồm",
+    "loại trừ",
+    "với",
+    "bằng",
+    "là",
+    "="
+  ],
+  "value_connectors": [
+    "và",
+    "hoặc",
+    "với",
+    "trừ",
+    "ngoại trừ",
+    "không gồm",
+    "loại trừ",
+    "so với"
+  ],
+  "anaphora_terms": [
+    "này",
+    "trên",
+    "đó",
+    "ấy",
+    "kể trên",
+    "nói trên",
+    "vừa nêu",
+    "đã nêu",
+    "đã chọn",
+    "vừa chọn"
+  ],
+  "value_assignment_terms": [
+    "giữa",
+    "là",
+    "bằng",
+    "có giá trị"
+  ],
+  "data_mutation_verbs": [
+    "xóa",
+    "xoá",
+    "sửa dữ liệu",
+    "chỉnh sửa dữ liệu",
+    "ghi đè",
+    "thêm mới dữ liệu",
+    "cập nhật dữ liệu",
+    "delete",
+    "drop",
+    "truncate",
+    "insert",
+    "update",
+    "alter"
+  ],
+  "aggregate_prefixes": [
+    "tổng",
+    "tổng số",
+    "số",
+    "tỷ lệ"
+  ],
+  "refinement_presentation_terms": [
+    "donut",
+    "thanh ngang",
+    "biểu đồ cột",
+    "biểu đồ đường",
+    "biểu đồ tròn",
+    "heatmap",
+    "scatter",
+    "bảng",
+    "area",
+    "stacked",
+    "giải thích kỹ hơn",
+    "khuyến nghị chi tiết",
+    "cột dọc",
+    "giữ các phạm vi",
+    "giữ phạm vi",
+    "keep this period",
+    "reconsider the same scope",
+    "thành top",
+    "thành bottom"
+  ],
+  "non_location_phrases": [
+    "hiện tại",
+    "tồn tại",
+    "ở mức"
+  ],
+  "postposed_head_qualifiers": [
+    "loại",
+    "trạng thái"
+  ],
+  "numeric_relations": [
+    "lớn hơn",
+    "nhỏ hơn",
+    "tối thiểu",
+    "tối đa",
+    "trên",
+    "dưới",
+    "bằng",
+    "khác",
+    "ít nhất",
+    "nhiều nhất",
+    "âm",
+    "dương"
+  ],
+  "numeric_comparisons": {
+    "lớn hơn": "gt",
+    "nhỏ hơn": "lt",
+    "tối thiểu": "gte",
+    "tối đa": "lte",
+    "trên": "gt",
+    "dưới": "lt",
+    "bằng": "eq",
+    "ít nhất": "gte",
+    "nhiều nhất": "lte"
+  },
+  "change_thresholds": [
+    "tăng hơn",
+    "giảm hơn"
+  ],
+  "clause_boundaries": [
+    "tháng",
+    "năm",
+    "quý",
+    "tuần",
+    "ngày",
+    "hôm",
+    "từ",
+    "đến",
+    "trong",
+    "theo",
+    "nhóm",
+    "sắp xếp",
+    "top",
+    "bottom",
+    "biểu đồ",
+    "giữ nguyên",
+    "giúp",
+    "nhé",
+    "đi",
+    "thôi",
+    "bao nhiêu",
+    "thế nào",
+    "ra sao",
+    "có doanh thu",
+    "có số đơn",
+    "vào",
+    "đồng thời",
+    "chỉ trong",
+    "chỉ xét",
+    "chỉ tính"
+  ],
+  "non_entity_dimensions": [
+    "order_created",
+    "hour",
+    "weekday",
+    "loyalty_points",
+    "lifetime_spend",
+    "order_amount",
+    "stock_quantity_detail",
+    "warning_threshold"
+  ],
+  "max_lookup_slots": 4,
+  "max_lookup_queries_per_minute": 24,
+  "max_top_n": 100,
+  "max_numeric_digits": 18,
+  "lookup_ttl_seconds": 120,
+  "clause_predicates": [
+    "nêu rõ",
+    "làm rõ",
+    "chỉ ra",
+    "hiển thị",
+    "trình bày",
+    "tính",
+    "dùng",
+    "được dùng",
+    "dùng để",
+    "cho tôi",
+    "thay đổi",
+    "dẫn đầu",
+    "nhiều nhất",
+    "ít nhất",
+    "đồng thời",
+    "phân biệt",
+    "giải thích",
+    "công bố",
+    "cơ cấu",
+    "kèm",
+    "ngày ghi nhận",
+    "để phân biệt",
+    "để tính",
+    "để tham khảo",
+    "xu hướng",
+    "so sánh"
+  ],
+  "population_terms": [
+    "toàn hệ thống",
+    "toàn bộ",
+    "tất cả",
+    "các",
+    "mọi",
+    "lịch sử",
+    "hiện có",
+    "trong hệ thống",
+    "trong dữ liệu",
+    "hệ thống kiosk"
+  ],
+  "non_calendar_phrases": [
+    "quy mô",
+    "quy kết",
+    "quy định",
+    "quy trình"
+  ],
+  "selection_qualifiers": [
+    "dẫn đầu",
+    "nhiều nhất",
+    "ít nhất",
+    "cao nhất",
+    "thấp nhất"
+  ]
+}

@@ -18,6 +18,7 @@ from services.analytical_capacity_planner import AnalyticalCapacityContract  # n
 
 ROLES = ('core', 'diagnostic', 'extended')
 ROLE_RANK = {role: index for index, role in enumerate(ROLES)}
+FIXED_GROUPING_POLICY = 'cohort-pinning-v1'
 
 
 # --------------------------------------------------------------------------------------------- policy
@@ -74,17 +75,19 @@ def component_metrics(definition):
     return {components[k] for k in ('numerator_metric', 'denominator_metric', 'exposure_metric') if components.get(k)}
 
 
-def estimated_views(operations, catalog):
+def estimated_views(operations, catalog, fixed_grouping_policy=None):
     """Conservative planning estimate; actual distinct charts are verified later."""
     total = 0
     for op in operations:
         metrics = op.get('metrics', []); dims = op.get('group_by', [])
         identities = {catalog.registry['dimensions'][d].get('identity') for d in dims}
         visible = [d for d in dims if d not in identities]
-        kpi = any(not o.get('group_by') and o['operation'] == 'aggregate' and o.get('filters') == op.get('filters')
-                  and o.get('time') == op.get('time') and set(metrics) <= set(o.get('metrics', [])) for o in operations if o is not op)
-        if visible and kpi and all(_pinned_raw(catalog.registry, op.get('filters', []), d) for d in visible):
-            continue  # a scope-fixed grouping already reported as a KPI draws no chart (dashboard_planner.pinned_by_scope)
+        kpi = any(not o.get('group_by') and o['operation']=='aggregate' and o.get('filters')==op.get('filters')
+                  and o.get('time')==op.get('time') and set(metrics)<=set(o.get('metrics',[])) for o in operations if o is not op)
+        fixed = fixed_grouping(catalog.registry,metrics,op.get('filters',[]),visible) if fixed_grouping_policy==FIXED_GROUPING_POLICY else (
+            visible and kpi and all(_pinned_raw(catalog.registry,op.get('filters',[]),d) for d in visible))
+        if fixed:
+            continue  # the validated result table preserves a fixed cohort; no fake comparison chart
         if op['operation'] == 'detail' or not metrics or not visible and op['operation'] != 'trend':
             continue
         same_unit = len(metrics) > 1 and len({catalog.registry['metrics'][m]['unit'] for m in metrics}) == 1 and len({catalog.registry['metrics'][m].get('aggregation_semantics') in NON_ADDITIVE_SEMANTICS for m in metrics}) == 1
@@ -165,7 +168,7 @@ def _column_ref(descriptor):
     return descriptor.get('table', '') + '.' + descriptor.get('column', '')
 
 
-def _pinned(registry, filters, dimension):
+def _pinned(registry, filters, dimension, *, include_identity=False):
     """A dimension is pinned when a single-valued scope filter already fixes it, either directly, through the same
     physical column, or because it is derived from the filtered column (e.g. a region derived from the filtered city)."""
     dims = registry['dimensions']; target = dims[dimension]
@@ -174,7 +177,7 @@ def _pinned(registry, filters, dimension):
         if f.operator not in {'eq', 'in'} or len(set(map(str, values))) != 1 or f.dimension not in dims:
             continue
         source = dims[f.dimension]
-        if f.dimension == dimension or (not source.get('expression') and not target.get('expression')
+        if f.dimension == dimension or include_identity and target.get('identity') == f.dimension or (not source.get('expression') and not target.get('expression')
                                         and _column_ref(source) == _column_ref(target)):
             return True
         if not source.get('expression') and target.get('expression') and _column_ref(source) in target['expression']:
@@ -182,12 +185,19 @@ def _pinned(registry, filters, dimension):
     return False
 
 
-def _pinned_raw(registry, filters, dimension):
+def _pinned_raw(registry, filters, dimension, *, include_identity=False):
     from services.analysis_contract import Filter
     try:
-        return _pinned(registry, [f if isinstance(f, Filter) else Filter.model_validate(f) for f in filters], dimension)
+        return _pinned(registry, [f if isinstance(f, Filter) else Filter.model_validate(f) for f in filters], dimension, include_identity=include_identity)
     except (ValueError, TypeError, KeyError):
         return False
+
+
+def fixed_grouping(registry, metrics, filters, dimensions):
+    """Every grouping axis is constant under every measure's governed cohort."""
+    return bool(metrics and dimensions) and all(_pinned_raw(registry,
+        [*filters, *registry['metrics'][m].get('business_filters', [])], d, include_identity=True)
+        for m in metrics for d in dimensions)
 
 
 def _cardinality(descriptor):
@@ -281,7 +291,7 @@ class _Planner:
             reason = None
             if descriptor is None or dim not in allowed:
                 reason = 'incompatible_dimension'
-            elif _pinned(self.registry, self.req.filters, dim):
+            elif _pinned(self.registry, self.req.filters, dim, include_identity=self.r.ui.get('fixed_grouping_policy')==FIXED_GROUPING_POLICY):
                 reason = 'pinned_axis'
             elif dim in single or (self.cls == 'ratio' and (dim in business or dim in needed)):
                 reason = 'pinned_axis'
@@ -369,7 +379,7 @@ class _Planner:
             part, den = self.components.get('partition_dimension'), self.components.get('denominator_metric')
             if not part or not den or part not in self.index.metrics.get(den, {}).get('dimensions', []):
                 return self._reject('composition', role, 'missing_metric_component')
-            if _pinned(self.registry, self.req.filters, part):
+            if _pinned(self.registry, self.req.filters, part, include_identity=self.r.ui.get('fixed_grouping_policy')==FIXED_GROUPING_POLICY):
                 return self._reject('composition', role, 'pinned_axis', axis=part)
             if 'composition:' + part in self.covered or part in self.req.dimension_ids:
                 return self._reject('composition', role, 'duplicate_meaning')
@@ -600,7 +610,8 @@ def plan_lenses(resolver, requested, depth, baseline_views=0, mission_id=None):
         """The question a lens plan answers (metrics · scope · time · free axes · time-series or not). Grouping axes
         pinned to one value by the scope add no variation, so "rate by city WHERE city = X" and "rate WHERE city = X"
         are ONE question for planning; derived-feature wording and ids are labels, not a different population."""
-        free = sorted(d for d in r.dimension_ids if d in registry['dimensions'] and not _pinned(registry, r.filters, d))
+        free = sorted(d for d in r.dimension_ids if d in registry['dimensions'] and not _pinned(registry, r.filters, d,
+            include_identity=resolver.ui.get('fixed_grouping_policy')==FIXED_GROUPING_POLICY))
         return digest([sorted(r.metric_ids), sorted(digest(f.model_dump(mode='json')) for f in r.filters),
                        r.time.model_dump(mode='json', exclude_none=True) if r.time else None, free,
                        r.analysis_kind == 'trend' or bool(r.forecast), r.ranking.model_dump(mode='json') if r.ranking and free else None])

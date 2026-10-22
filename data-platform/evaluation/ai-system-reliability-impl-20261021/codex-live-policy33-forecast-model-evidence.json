@@ -1,0 +1,217 @@
+{
+  "session_id": "0b1c9ed6-be63-44ba-81f2-a5aaa0addd21",
+  "revision": 1,
+  "forecasts": [
+    {
+      "requirement_id": "req_1",
+      "query_id": "q_490363cd53014da1f1f16f68",
+      "metric_id": "revenue",
+      "metric_label": "Doanh thu",
+      "metric_unit": "VND",
+      "unit": "month",
+      "horizon": 3,
+      "status": "ok",
+      "version": "3.4.0",
+      "method": "holt_0.5_0.3",
+      "history": {
+        "start": "2026-01-01",
+        "end": "2026-09-01",
+        "periods": 9,
+        "missing_data_policy": "zero_fill"
+      },
+      "forecast": [
+        {
+          "period": "2026-10-01",
+          "value": 443536632.81,
+          "lower_80": 424467147.91,
+          "upper_80": 462606117.7,
+          "kind": "in_progress"
+        },
+        {
+          "period": "2026-11-01",
+          "value": 436264839.43,
+          "lower_80": 396350066.65,
+          "upper_80": 476179612.2,
+          "kind": "future"
+        },
+        {
+          "period": "2026-12-01",
+          "value": 428993046.05,
+          "lower_80": 380107632.8,
+          "upper_80": 477878459.3,
+          "kind": "future"
+        },
+        {
+          "period": "2027-01-01",
+          "value": 421721252.67,
+          "lower_80": 365273239.67,
+          "upper_80": 478169265.67,
+          "kind": "future"
+        }
+      ],
+      "backtest": {
+        "mae": 23011960.7031,
+        "rmse": 24406726.4705,
+        "smape_pct": 5.02,
+        "evaluated_points": 2,
+        "test_horizon": 2,
+        "folds": 1,
+        "naive_baseline": {
+          "mae": 91351000.0,
+          "rmse": 91797401.7334,
+          "smape_pct": 18.48,
+          "evaluated_points": 2
+        },
+        "improvement_vs_naive_pct": 74.81
+      },
+      "diagnostics": {
+        "selection": {
+          "criterion": "common_origin_mae",
+          "common_origins": [
+            7
+          ],
+          "methods": {
+            "naive": {
+              "mae": 91351000.0,
+              "rmse": 91797401.7334,
+              "smape_pct": 18.48,
+              "evaluated_points": 2
+            },
+            "moving_average_3": {
+              "mae": 75762666.6667,
+              "rmse": 76300323.8816,
+              "smape_pct": 15.58,
+              "evaluated_points": 2
+            },
+            "moving_average_7": {
+              "mae": 44668285.7143,
+              "rmse": 45574263.7094,
+              "smape_pct": 9.49,
+              "evaluated_points": 2
+            },
+            "ses_0.1": {
+              "mae": 77763916.018,
+              "rmse": 78287830.462,
+              "smape_pct": 15.95,
+              "evaluated_points": 2
+            },
+            "ses_0.3": {
+              "mae": 61974267.482,
+              "rmse": 62630404.7083,
+              "smape_pct": 12.93,
+              "evaluated_points": 2
+            },
+            "ses_0.5": {
+              "mae": 69983031.25,
+              "rmse": 70564739.2608,
+              "smape_pct": 14.47,
+              "evaluated_points": 2
+            },
+            "ses_0.7": {
+              "mae": 79797920.602,
+              "rmse": 80308566.7685,
+              "smape_pct": 16.34,
+              "evaluated_points": 2
+            },
+            "ses_0.9": {
+              "mae": 87483983.858,
+              "rmse": 87950015.325,
+              "smape_pct": 17.77,
+              "evaluated_points": 2
+            },
+            "holt_0.3_0.1": {
+              "mae": 298290394.0058,
+              "rmse": 300272525.7059,
+              "smape_pct": 101.22,
+              "evaluated_points": 2
+            },
+            "holt_0.3_0.3": {
+              "mae": 126116018.3894,
+              "rmse": 126116022.6241,
+              "smape_pct": 32.69,
+              "evaluated_points": 2
+            },
+            "holt_0.5_0.1": {
+              "mae": 139835158.2531,
+              "rmse": 142775923.1279,
+              "smape_pct": 37.49,
+              "evaluated_points": 2
+            },
+            "holt_0.5_0.3": {
+              "mae": 23011960.7031,
+              "rmse": 24406726.4705,
+              "smape_pct": 5.02,
+              "evaluated_points": 2
+            },
+            "holt_0.8_0.1": {
+              "mae": 41279706.175,
+              "rmse": 48632432.8971,
+              "smape_pct": 9.97,
+              "evaluated_points": 2
+            },
+            "holt_0.8_0.3": {
+              "mae": 76023476.204,
+              "rmse": 76455869.5491,
+              "smape_pct": 15.63,
+              "evaluated_points": 2
+            }
+          },
+          "excluded_methods": {}
+        },
+        "interval_calibration": {
+          "status": "not_measured",
+          "coverage_80_pct": null,
+          "evaluated_points": 0,
+          "reason": "insufficient_independent_history"
+        },
+        "method_parameters": {
+          "alpha": 0.5,
+          "beta": 0.3
+        },
+        "history_hash": "9df9bae6da2e4ac1d807ed9b53b9587355da0282a8724ae71fd182c73bdd040a"
+      },
+      "interval": "Khoảng 80% ước lượng từ sai số backtest; không phải xác suất được bảo đảm.",
+      "limitations": [
+        "Dự báo thống kê từ lịch sử đã kiểm chứng; không tính sự kiện, khuyến mãi hay thay đổi vận hành chưa có trong dữ liệu."
+      ],
+      "history_points": [
+        {
+          "period": "2026-01-01",
+          "value": 559624000.0
+        },
+        {
+          "period": "2026-02-01",
+          "value": 429346000.0
+        },
+        {
+          "period": "2026-03-01",
+          "value": 449688000.0
+        },
+        {
+          "period": "2026-04-01",
+          "value": 443188000.0
+        },
+        {
+          "period": "2026-05-01",
+          "value": 535051000.0
+        },
+        {
+          "period": "2026-06-01",
+          "value": 499114000.0
+        },
+        {
+          "period": "2026-07-01",
+          "value": 540465000.0
+        },
+        {
+          "period": "2026-08-01",
+          "value": 458156000.0
+        },
+        {
+          "period": "2026-09-01",
+          "value": 440072000.0
+        }
+      ]
+    }
+  ]
+}

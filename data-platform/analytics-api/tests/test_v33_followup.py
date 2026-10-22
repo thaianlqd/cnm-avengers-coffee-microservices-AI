@@ -234,6 +234,18 @@ class EvidenceRegressionTests(f.unittest.TestCase):
         self.assertTrue(snapshot['freshness']['stale'])
         self.assertEqual(snapshot['facts'][clocks[0]['table']]['completeness'],'unknown')
 
+    def test_report_completeness_comes_only_from_a_healthy_certified_view(self):
+        from datetime import datetime,timezone
+        from services.data_coverage_service import build_snapshot,fact_clocks
+        from tests.test_v33_verification import catalog
+        c=catalog(); clocks=fact_clocks(c.registry,c.overlay['silver_tables'])
+        rows={x['table']+'.'+x['column']:{'min':'2026-01-01','max':'2026-10-16'} for x in clocks}
+        a,b,d=(x['table'] for x in clocks[:3])
+        health={'views':{a:{'status':'healthy','completeness':'complete'},b:{'status':'degraded','completeness':'complete'},
+                         d:{'status':'healthy','completeness':'unknown'}}}
+        facts=build_snapshot(rows,{'data_health':health},c.overlay,datetime(2026,10,17,tzinfo=timezone.utc))['facts']
+        self.assertEqual([facts[t]['completeness'] for t in (a,b,d)],['complete','unknown','unknown'])
+
     def test_forecast_never_zero_fills_unproven_stale_tail(self):
         from services.forecast_service import complete_series
         series=complete_series([{'period':'2026-07-01','revenue':100.}], 'revenue','month',reference=date(2026,10,16),

@@ -528,7 +528,7 @@ class AnalysisCatalog:
             },
         }
 
-    def ground(self, spec: AnalysisSpec, today=None):
+    def ground(self, spec: AnalysisSpec, today=None, grounded_values=None):
         r = self.registry
         if spec.ambiguities:
             choices = (
@@ -631,9 +631,12 @@ class AnalysisCatalog:
             dimensions[dim] = d
         for f in filters:
             d = dimensions[f.dimension]
+            # A curated alias enum with lookup_fallback is not the value universe: members outside it
+            # pass only when the caller already grounded them by exact lookup (grounded_values).
+            looked_up = set((grounded_values or {}).get(f.dimension, ())) if d.get("value_grounding", {}).get("lookup_fallback") else set()
             if d.get("enum"):
                 values = f.value if isinstance(f.value, list) else [f.value]
-                if any(v not in d["enum"] for v in values):
+                if any(v not in d["enum"] and v not in looked_up for v in values):
                     raise AnalysisError(
                         "clarification", f"Unknown value for {f.dimension}", d["enum"]
                     )

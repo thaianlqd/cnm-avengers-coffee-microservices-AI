@@ -1,0 +1,170 @@
+[
+  {
+    "module": "tests.test_agent_v22",
+    "returncode": 0,
+    "seconds": 498.487,
+    "tests": 405,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_agent_v23",
+    "returncode": 0,
+    "seconds": 24.485,
+    "tests": 24,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_ai_final_alias_views",
+    "returncode": 0,
+    "seconds": 4.989,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_ai_final_depth_contract",
+    "returncode": 0,
+    "seconds": 46.449,
+    "tests": 15,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_ai_final_edges",
+    "returncode": 0,
+    "seconds": 33.383,
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_ai_services",
+    "returncode": 0,
+    "seconds": 2.592,
+    "tests": 37,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_analysis_contract",
+    "returncode": 0,
+    "seconds": 24.573,
+    "tests": 55,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_analysis_jobs",
+    "returncode": 1,
+    "seconds": 76.145,
+    "tests": 12,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [
+      "tests.test_analysis_jobs.AnalysisJobTests.test_load_one_five_ten_jobs_without_provider_network (count=5)",
+      "tests.test_analysis_jobs.AnalysisJobTests.test_load_one_five_ten_jobs_without_provider_network (count=10)"
+    ],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_bounded_planning_repair_v26",
+    "returncode": 0,
+    "seconds": 19.891,
+    "tests": 15,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_business_coverage_availability",
+    "returncode": 0,
+    "seconds": 4.562,
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_business_coverage_corpus",
+    "returncode": 0,
+    "seconds": 44.203,
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_business_coverage_oracles",
+    "returncode": 0,
+    "seconds": 1.412,
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_business_coverage_retrieval",
+    "returncode": 0,
+    "seconds": 8.802,
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_business_coverage_rollout",
+    "returncode": 0,
+    "seconds": 1.395,
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_business_registry",
+    "returncode": 0,
+    "seconds": 1.28,
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  }
+]

@@ -1,0 +1,140 @@
+{
+  "session_id": "50ed1fe9-35a9-4cf0-964d-ee5b9578e363",
+  "revision": 1,
+  "numeric_passed": true,
+  "comparison_acceptance": "NOT_ACCEPTED_AS_COMPLETE_COMPARATIVE_REPORT",
+  "findings": [
+    {
+      "id": "K01",
+      "severity": "major",
+      "layer": "comparison_contract",
+      "observation": "Primary chart splits three valid store types but answer compares extrema, omitting the union of both kiosk types against main.",
+      "required_behavior": "Expected two comparison members: kiosk union 64,910,000 vs main 1,490,749,500; optional subtype breakdown.",
+      "charts": [
+        "visual_1"
+      ],
+      "status": "OPEN"
+    },
+    {
+      "id": "K02",
+      "severity": "major",
+      "layer": "transformed_view_claims",
+      "observation": "stacked_100 unit % and correct normalized marks retain source-VND change/peak claims.",
+      "required_behavior": "Main share Jan 95.5628% to Sep 95.9360%, up 0.3732 percentage points while its revenue declines 21.7263%.",
+      "charts": [
+        "visual_7"
+      ],
+      "status": "OPEN"
+    },
+    {
+      "id": "K03",
+      "severity": "major",
+      "layer": "kpi_grain_and_partition",
+      "observation": "Four strip cards mix type maximum, main-only trend, individual-store maximum and cross-tab-cell maximum under generic labels.",
+      "required_behavior": "Label member, grain, interval and baseline; prefer primary comparison members and gap over unrelated maxima.",
+      "charts": [
+        "visual_1",
+        "visual_4",
+        "visual_5",
+        "visual_6"
+      ],
+      "status": "OPEN"
+    },
+    {
+      "id": "K04",
+      "severity": "moderate",
+      "layer": "supporting_comparison_axis",
+      "observation": "Whole-HCM monthly and receiving-channel views combine comparison members.",
+      "required_behavior": "Default comparison views should preserve members, with explicit total/single-member alternatives.",
+      "charts": [
+        "visual_2",
+        "visual_3",
+        "visual_8"
+      ],
+      "status": "OPEN"
+    },
+    {
+      "id": "K05",
+      "severity": "moderate",
+      "layer": "exposure_normalization",
+      "observation": "Aggregate 22.9664-fold main revenue gap is confounded by 410 main stores versus 19 kiosks.",
+      "required_behavior": "Descriptive revenue/current-store is 3,635,974 vs 3,416,316 (+6.4297%); not adjusted for operating days/capacity/cost and not profitability.",
+      "charts": [
+        "visual_1",
+        "visual_6"
+      ],
+      "status": "OPEN"
+    },
+    {
+      "id": "K06",
+      "severity": "moderate",
+      "layer": "display_population_claim",
+      "observation": "Top20 store chart insight names minimum of all429, absent from displayed20.",
+      "required_behavior": "Label fact population explicitly or calculate displayed-subset claim; preserve full result separately.",
+      "charts": [
+        "visual_4"
+      ],
+      "status": "OPEN"
+    },
+    {
+      "id": "K07",
+      "severity": "moderate",
+      "layer": "presentation_readability",
+      "observation": "Large absolute main values flatten kiosk lines and heatmap contrasts; truncated type labels, overlapping ISO dates and raw k-unit cells reduce readability.",
+      "required_behavior": "Grouped members, index/percent views or facets with explicit units and formatted dates.",
+      "charts": [
+        "visual_1",
+        "visual_5",
+        "visual_6",
+        "visual_7"
+      ],
+      "status": "OPEN"
+    },
+    {
+      "id": "K08",
+      "severity": "minor",
+      "layer": "template_accuracy",
+      "observation": "Sort-desc descriptions do not match categorical order; heatmap/multiline help uses bar wording; 3/3 groups account for100% is tautological.",
+      "required_behavior": "Build explanations from actual active renderer/order/selection and focus on comparison.",
+      "charts": [
+        "visual_1",
+        "visual_3",
+        "visual_5",
+        "visual_6",
+        "visual_7",
+        "visual_8"
+      ],
+      "status": "OPEN"
+    },
+    {
+      "id": "K09",
+      "severity": "unverified_source_quality",
+      "layer": "geography",
+      "observation": "HCM-filtered source labels contain pins far north/central in screenshots; numeric-range valid coordinates do not establish real location.",
+      "required_behavior": "Keep source-city label semantics; reconcile source city/address/GPS with owner before physical-location claims. No source changes.",
+      "charts": [
+        "map"
+      ],
+      "status": "OPEN"
+    }
+  ],
+  "provider_attribution": {
+    "captured_response_provider_call_count": 0,
+    "limitation": "Stored report diagnostics are not raw model drafts and do not establish model internal understanding; attribution supported here concerns compiled contract and deterministic presentation."
+  },
+  "source_paths": [
+    "analytics-api/services/chart_insight_service.py:71",
+    "analytics-api/services/chart_insight_service.py:136",
+    "analytics-api/services/chart_insight_service.py:384",
+    "analytics-api/services/derived_chart_service.py:64",
+    "web-ui/src/utils/analystDashboardLayout.mjs:143"
+  ],
+  "actions_this_review": [
+    "Read existing report and immutable result artifacts",
+    "Read-only independent warehouse snapshot queries",
+    "Offline raw-record reconciliation",
+    "Write audit evidence and consolidated documentation"
+  ],
+  "product_edits": false,
+  "new_provider_calls": 0
+}

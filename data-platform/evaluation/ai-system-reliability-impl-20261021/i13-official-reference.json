@@ -1,0 +1,39 @@
+{
+  "status": "REFERENCE_ONLY_NOT_A_DATA_MIGRATION",
+  "checked_local_date": "2026-10-21",
+  "authority": "Nghị quyết 202/2025/QH15",
+  "source_url": "https://baochinhphu.vn/nghi-quyet-cua-quoc-hoi-ve-sap-xep-don-vi-hanh-chinh-cap-tinh-102250612191145158.htm",
+  "resolution_effective_date": "2025-06-12",
+  "new_local_governments_operational_date": "2025-07-01",
+  "coverage": "Partial reference: only province names relevant to the existing I13 sample. Not a complete geography dictionary.",
+  "old_to_new": {
+    "Bắc Giang": "Bắc Ninh",
+    "Bình Phước": "Đồng Nai",
+    "Bình Dương": "Hồ Chí Minh",
+    "Hà Nam": "Ninh Bình",
+    "Long An": "Tây Ninh",
+    "Nam Định": "Ninh Bình",
+    "Vĩnh Phúc": "Phú Thọ",
+    "Hòa Bình": "Phú Thọ",
+    "Bạc Liêu": "Cà Mau",
+    "Đà Nẵng": "Đà Nẵng",
+    "Gia Lai": "Gia Lai",
+    "Hải Dương": "Hải Phòng"
+  },
+  "interpretation": {
+    "matching_pair": "Consistent with the merger, but does not verify the physical store location.",
+    "non_matching_pair": "Not explained by this resolution; requires source-owner verification, not an automatic correction.",
+    "store_name": "A store or brand name is not authoritative location evidence.",
+    "quality_score": "Do not include name-suffix heuristics in report quality scores."
+  },
+  "needs_source_owner_verification": [
+    {"store": "Highlands Coffee Ga Da Nang", "stored_city": "Hải Phòng", "name_hint": "Đà Nẵng"},
+    {"store": "Highlands Coffee Hoàng Anh Gia Lai", "stored_city": "Đà Nẵng", "name_hint": "Gia Lai", "caveat": "May be a business name rather than an address."},
+    {"store": "Highlands Coffee Hòa Bình - Bạc Liêu", "stored_city": "Hòa Bình", "name_hint": "Bạc Liêu"}
+  ],
+  "limitations": [
+    "Existing text receipt reports 19 but contains only 14 displayed detail rows. Do not claim all 19 were classified.",
+    "No source data, SQL semantics, cache keys, map boundaries, schema or metric scope changed.",
+    "User has no source-owner-approved mapping yet; the official reference establishes mergers, not this warehouse's intended geography version."
+  ]
+}

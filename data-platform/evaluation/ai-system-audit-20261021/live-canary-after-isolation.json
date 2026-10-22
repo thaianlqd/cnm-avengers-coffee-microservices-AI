@@ -1,0 +1,272 @@
+[
+  {
+    "id": "risk-edited",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "risk_watch"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "eq",
+            "value": "Hồ Chí Minh"
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh"
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "subject:stores",
+          "vận hành"
+        ],
+        "analytical": [
+          "risk_watch",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "a5b190825db12a238f4f95f709237fefba226dd9d8a8dea0f652f9eb3251d5f9",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 67,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "risk_watch",
+        "inferred_mission": "risk_watch",
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 177.48
+    },
+    "job": {
+      "job_id": "aj_63ba8341afea478d946d00219b4d607c",
+      "state": "failed",
+      "provider_call_count": 2,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 4.36,
+        "accepted": 511.8,
+        "planning": 1959.04
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Hệ thống đã dừng diễn giải vì lượt sửa không tiến triển; chưa chạy truy vấn nào. Hãy diễn đạt lại chỉ số, phạm vi hoặc thời gian, hoặc chọn một phân tích được hỗ trợ.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "SEMANTIC_INTENT",
+        "code": "semantic_resolution_failed",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "semantic_resolution_failed",
+        "retry_helps": false,
+        "error_type": "SEMANTIC_RESOLUTION_FAILED",
+        "analysis_state": "UNDERSTANDING_FAILURE",
+        "analysis_stage": "SEMANTIC_INTERPRETATION_FAILURE",
+        "guidance": {
+          "title": "Chưa ánh xạ được yêu cầu vào danh mục dữ liệu",
+          "description": "Hệ thống đã dừng vì các lượt diễn giải không tiến triển; gửi lại nguyên câu sẽ không giúp ích.",
+          "next_action": "edit_question"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_bee008f7e551421d96f75279468dda15",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "semantic_resolution_failed",
+      "error_category": "semantic_resolution_failed",
+      "failure_code": "clarification_required",
+      "failure_stage": "SEMANTIC_INTENT",
+      "contract_issues": [
+        {
+          "requirement_id": null,
+          "field": "clarification",
+          "code": "clarification_required"
+        }
+      ],
+      "provider_call_count": 2,
+      "provider_physical_attempts": 2,
+      "input_tokens": 7387,
+      "output_tokens": 47,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": null,
+        "latency_ms": 1457.5,
+        "tokens": {
+          "input": 3394,
+          "output": 25
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": null,
+        "latency_ms": 1278.1,
+        "tokens": {
+          "input": 3993,
+          "output": 22
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 4.718
+  }
+]

@@ -32,6 +32,9 @@ interface PlatformState {
   activeTab: ViewTab;
   setActiveTab: (tab: ViewTab) => void;
   
+  dashboardSearch: { text: string; request: number } | null;
+  searchDashboards: (text: string) => void;
+
   analyticsSubTab: AnalyticsSubTab;
   setAnalyticsSubTab: (subTab: AnalyticsSubTab) => void;
   
@@ -134,6 +137,9 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
   activeTab: 'overview',
   setActiveTab: (tab) => set({ activeTab: tab }),
   
+  dashboardSearch: null,
+  searchDashboards: text => set(state => ({ activeTab: 'analytics', analyticsSubTab: 'hub', dashboardSearch: { text, request: (state.dashboardSearch?.request || 0) + 1 } })),
+
   analyticsSubTab: 'hub',
   setAnalyticsSubTab: (subTab) => set({ analyticsSubTab: subTab }),
   

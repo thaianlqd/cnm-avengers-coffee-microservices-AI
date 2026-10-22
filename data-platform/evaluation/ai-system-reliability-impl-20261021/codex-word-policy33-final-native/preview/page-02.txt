@@ -1,0 +1,19 @@
+AVENGERS COFFEE SUPPLY CHAIN & BI PLATFORM DỮ LIỆU TẦNG SILVER LAKE
+Tỉnh thử nghiệm 6 6,000
+Tỉnh thử nghiệm 7 7,000
+Tỉnh thử nghiệm 8 8,000
+Tỉnh thử nghiệm 9 9,000
+Tỉnh thử nghiệm 10 10,000
+Tỉnh thử nghiệm 11 11,000
+Tỉnh thử nghiệm 12 12,000
+Tỉnh thử nghiệm 13 13,000
+Tỉnh thử nghiệm 14 14,000
+* Bản trích xuất hiển thị các dòng dữ liệu tiêu biểu từ kho lưu trữ Delta Lake Silver.
+VII. KẾT LUẬN & KHUYẾN NGHỊ HÀNH ĐỘNG
+KẾT LUẬN TỰ ĐỘNG
+KHUYẾN NGHỊ CHO DATA PLATFORM
+Chưa có kết luận được kiểm chứng cho phạm vi này.
+Chưa có khuyến nghị có bằng chứng cho phạm vi này.
+Tài liệu nội bộ bảo mật • Bản quyền thuộc Avengers Coffee Data
+Platform
+Định dạng chuẩn Microsoft Word (.docx)

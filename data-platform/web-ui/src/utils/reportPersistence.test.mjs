@@ -21,6 +21,17 @@ test('a legacy saved report without V3.3 fields reopens without inventing a conc
   assert.ok(V33_SAVED_FIELDS.includes('conclusion'));
 });
 
+test('P6 save/reopen retains depth, filters, drill and immutable policy/catalog/snapshot identity', () => {
+  const report={analysis_breadth:'comprehensive',revision:4,session_id:'s',
+    interaction_state:{filters:[{dimension_id:'entity_id',operator:'eq',values:[{type:'string',value:'id-1'}]}],
+      drill_path:[{selection:{dimension_id:'parent'},target_dimension_id:'child'}]},
+    interaction_contract:{revision:4,catalog_fingerprint:'catalog-old',access_fingerprint:'scope-old',snapshot_fingerprint:'snapshot-old'},
+    provenance:{registry_fingerprint:'registry-old',data_epoch:{fingerprint:'epoch-old'}},
+    verification:{snapshot:{reference_date:'2026-08-15',metric_definitions:{weighted:'old definition'}}}};
+  const restored=reopenSavedReport(JSON.parse(JSON.stringify(savedV33Fields(report))));
+  for(const key of Object.keys(report))assert.deepEqual(restored[key],report[key]);
+});
+
 
 test('legacy ownership is disclosed without publishing raw actor IDs or unverified claims', () => {
   assert.deepEqual(savedReportOwnership({ created_by: 'account:' + 'a'.repeat(64) }), { owned: true, label: 'Báo cáo cá nhân' });

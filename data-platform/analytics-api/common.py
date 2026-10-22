@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any, Literal
+from typing import Optional, List, Dict, Any, Literal, Union
 from datetime import date, datetime, timedelta
 from pydantic import BaseModel, ConfigDict, Field, model_validator, AliasChoices
 from services.analysis_contract import Filter
@@ -105,7 +105,7 @@ class AiTextToReportRequest(BaseModel):
     plan_fingerprint: Optional[str] = None
     catalog_fingerprint: Optional[str] = None
     prompt: str = Field(default="", validation_alias=AliasChoices("question", "prompt"), max_length=8000)
-    dashboard_id: Optional[str] = Field(default=None, pattern=r"^D[0-9]{2}$")
+    dashboard_id: Optional[str] = Field(default=None, pattern=r"^(D[0-9]{2}|U_[a-z0-9_]{6,40})$")  # curated or user-added hub problem
     dashboard_version: Optional[str] = Field(default=None, pattern=r"^\d+\.\d+\.\d+$")
     analysis_context: str = Field(default="", max_length=2000)
     analysis_expectation: str = Field(default="", max_length=1500)
@@ -117,7 +117,7 @@ class AiTextToReportRequest(BaseModel):
     analysis_scope: Optional[AiAnalysisScope] = None
     source_analysis: Optional[AiSourceAnalysis] = None
     reference_date: Optional[date] = None
-    context: Optional[str] = ""
+    context: Optional[str] = Field(default="", max_length=1500)
     time_range: Optional[AiTimeRange] = Field(default=None, validation_alias=AliasChoices("time", "time_range"))
     domain: Optional[str] = Field(default="auto", pattern=r"^[a-z][a-z0-9_]{0,63}$")
     # V3.1 optional UX hint (dashboard organization); never semantic authority.
@@ -183,12 +183,16 @@ class AiPreflightRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     # Bounded above the analysis limit so an over-long draft is reported, not rejected.
     question: str = Field(default="", max_length=20000)
+    analysis_context: str = Field(default="", max_length=2000)
+    analysis_expectation: str = Field(default="", max_length=1500)
+    context: Optional[str] = Field(default="", max_length=1500)
     time: Optional[AiPreflightTime] = None
     analysis_scope: Optional[AiPreflightScope] = None
     analysis_mission: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z_]{0,31}$")
     reference_date: Optional[date] = None
     input_mode: Optional[Literal["free_text", "guided"]] = None
     guided_contract: Optional[AiGuidedContract] = None
+    analysis_depth: Optional[Literal['focused', 'deep', 'comprehensive']] = None
 
 
 class AiRiskWatchRequest(BaseModel):
@@ -215,12 +219,46 @@ class AiVisualChange(BaseModel):
 
 class AiReportRefineRequest(BaseModel):
     current_report: Dict[str, Any]
-    feedback: str = ""
+    feedback: str = Field(default="", max_length=1000)
     visual_changes: List[AiVisualChange] = Field(default_factory=list, max_length=8)
     conversation_history: Optional[List[Dict[str, str]]] = []
     domain: Optional[str] = "auto"
     # Session ID to retrieve server-side conversation memory.
     session_id: Optional[str] = None
+
+
+class WorkspaceValue(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    type: Literal['string', 'number', 'boolean', 'date']
+    value: Union[str, int, float, bool]
+
+
+class WorkspaceSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    chart_id: str = Field(min_length=1, max_length=128)
+    query_id: str = Field(min_length=1, max_length=128)
+    lens_id: Optional[str] = Field(default=None, max_length=128)
+    dimension_id: str = Field(min_length=1, max_length=64)
+    operator: Literal['eq', 'in'] = 'eq'
+    values: List[WorkspaceValue] = Field(min_length=1, max_length=32)
+
+
+class WorkspaceDrill(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    selection: WorkspaceSelection
+    target_dimension_id: str = Field(min_length=1, max_length=64)
+
+
+class AiWorkspaceRevisionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    session_id: str = Field(min_length=1, max_length=128)
+    revision: int = Field(ge=1)
+    catalog_fingerprint: str = Field(min_length=1, max_length=128)
+    access_fingerprint: Optional[str] = Field(default=None, max_length=128)
+    filters: List[WorkspaceSelection] = Field(default_factory=list, max_length=12)
+    drill_path: List[WorkspaceDrill] = Field(default_factory=list, max_length=8)
+    analysis_depth: Literal['focused', 'deep', 'comprehensive']
+    refresh: bool = False
 
 
 class AiFeedbackRequest(BaseModel):

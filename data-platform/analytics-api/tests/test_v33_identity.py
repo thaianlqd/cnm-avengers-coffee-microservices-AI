@@ -46,8 +46,9 @@ class CapabilityProjectionTests(unittest.TestCase):
 
     def test_all_metrics_classified(self):
         # 43 public metrics + 9 compiler-only components (FINAL 2026-10-19); every one is classified.
-        self.assertEqual(len(self.caps), 52)
-        self.assertEqual(sum(not v.get("component_only") for v in self.reg["metrics"].values()), 43)
+        # PLAN 20/10: +2 availability metrics; stock_quantity/low_stock_count retired but kept for saved reports.
+        self.assertEqual(len(self.caps), 109)  # +55 business-coverage (PLAN 20/10)
+        self.assertEqual(sum(not v.get("component_only") for v in self.reg["metrics"].values()), 100)
         self.assertTrue(all(c["semantics"] for c in self.caps.values()))
         for owner, definition in self.reg["metrics"].items():
             for part in (definition.get("components") or {}).values():

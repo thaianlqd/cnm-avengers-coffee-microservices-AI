@@ -11,8 +11,8 @@ Evidence: `evaluation/ai-data-final-20261019/`. Không ghi đè receipt V3.4/V3.
 | P3 Eligibility sau thực thi + coverage độc lập | PASS | `analysis_coverage` + verifier tính lại từ artifact (chống xóa chart/đổi nhãn) |
 | P4 Đa dạng chart + kết luận | PASS | exposure scatter, heatmap, stacked_100 mix-shift, Pareto (mới), kết luận tổng hợp `view_findings`; histogram NOT_DONE (cần op binning trong compiler) |
 | P5 UI compact + so sánh mức | PASS | chip bao phủ, nhãn lens, đủ view không “Xem thêm”, mô tả mức từ server; e2e + ảnh 1440/768/390 |
-| P6 Tương tác + tương thích | PARTIAL | giữ inspect/save/reopen/refine hiện có (test xanh); cross-filter typed + drilldown breadcrumb mới CHƯA làm |
-| P7 Regression + hiệu năng + runtime | PASS (local) | backend 1344/1344, eval 146, web 187, e2e 37, ma trận 67/67, live 12/12 |
+| P6 Tương tác + tương thích | PASS (local hardening) | typed cross-filter, pending/Apply, race suppression, governed drill/back/reset, atomic revision, save/reopen/refresh; backend + browser HTTP thực + Redis CAS |
+| P7 Regression + hiệu năng + runtime | PASS (local hardening) | backend1367, eval146 + authored120, web191, browser45, acceptance78/78, pipeline65+41+33, two-process/load/fault +900.105s soak PASS |
 | P8 Review + bàn giao | PASS (local) | audit chống hardcode sạch; xem mục P7–P8 dưới; không commit/push |
 
 ## P0 — Baseline (HEAD e7da8e18, branch_thaian = origin/branch_thaian, working tree: 2 file PLAN chưa track)
@@ -60,7 +60,7 @@ Evidence: `evaluation/ai-data-final-20261019/`. Không ghi đè receipt V3.4/V3.
 
 **Thêm/sửa sau P3:** reserve lens 0-chi-phí (tối đa 2/vai trò); ước lượng cardinality từ value profile + hint (thứ=7, giờ=24) để heatmap/scatter tránh trục hàng nghìn nhóm; trục yêu cầu được dùng cho câu hỏi khác nghĩa (diễn biến theo nhóm/tương tác/exposure/đóng góp); họ relationship lập lens cho từng biến; mission grammar áp dụng trước SQL (`LIMITED_BY_MISSION`); lens id gắn requirement khi nhiều câu hỏi; trục bị ghim + có KPI cùng phạm vi → không vẽ cột 1 nhóm; hai yêu cầu alias cùng biểu thức vật lý (store_revenue/revenue) không còn bị coi là thiếu view; Pareto cho đóng góp >8 nhóm; nhãn nghiệp vụ còn thiếu (Đã hủy, Tiền mặt, Đi trễ…).
 
-**Gate local (cùng source hiện tại):**
+**Gate local tại checkpoint trước vòng hardening (source lịch sử, không thay receipt mới):**
 
 | Gate | Kết quả |
 |---|---|
@@ -80,6 +80,12 @@ Evidence: `evaluation/ai-data-final-20261019/`. Không ghi đè receipt V3.4/V3.
 
 **Anti-hardcode:** grep diff production (services/routers/web) không có “hủy/cancel/Hồ Chí Minh/2026-09/DA_HUY/test id/fixture”. Hành vi theo lớp metric + metadata; tên metric chỉ xuất hiện trong catalog.
 
-**Còn mở (trung thực):** P6 cross-filter typed/drilldown breadcrumb/batch Apply chưa làm; histogram chưa làm; customers/inventory/shipper/wishlist giới hạn bởi nguồn; remote CI chưa chạy; semantic live (diễn giải model) chỉ đo 12 câu.
+**Còn mở tại checkpoint trước hardening:** P6 cross-filter typed/drilldown breadcrumb/batch Apply chưa làm; histogram chưa làm; customers/inventory/shipper/wishlist giới hạn bởi nguồn; remote CI chưa chạy; semantic live (diễn giải model) chỉ đo 12 câu.
 
-**Trạng thái:** LOCAL IMPLEMENTATION COMPLETE / REMOTE CI PENDING — chưa FINAL_VERIFIED.
+**Trạng thái checkpoint trước hardening:** LOCAL IMPLEMENTATION COMPLETE / REMOTE CI PENDING — chưa FINAL_VERIFIED.
+
+## Hardening 2026-10-20 — checkpoint mới
+
+Báo cáo hiện hành: `AI_DATA_HARDENING_ACCEPTANCE_20261020.md`; receipt: `evaluation/ai-data-hardening-20261020/`. P6 đã đóng bằng production owners hiện có; acceptance 78/78 (32 domain + 18 family + 28 edge), không tạo engine/provider flow song song. Live cũ phải đọc đúng: FIRST_ATTEMPT10/12, retry L12 rồi L05 → EVENTUAL12/12; không có live send mới.
+
+Trạng thái hiện tại **LOCAL_ACCEPTED_REMOTE_PENDING**, marker **LOCAL_READY_FOR_USER_PUSH**: local gates xanh, bundle8501 đã cập nhật, source/evidence Gitleaks0 và synthetic control exit42. Không commit/push/trigger CI; remote exact-SHA pending.

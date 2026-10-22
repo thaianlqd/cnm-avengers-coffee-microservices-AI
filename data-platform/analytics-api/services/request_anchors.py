@@ -1,5 +1,6 @@
 """Exact metadata and numeric/UI coverage guards; never an analytical router."""
 import re
+from copy import deepcopy
 from functools import lru_cache
 from services.value_grounding_service import value_text, aliases_for, dimension_values
 
@@ -58,6 +59,14 @@ def exact_mentions(text, vocabulary):
             if not any(a <= start and end <= b and b-a > end-start for a,b,_,_ in matches)]
 
 
+def metric_mentions(text, vocabulary):
+    """A longer qualified metric phrase owns an overlapping generic alias too."""
+    mentions = exact_mentions(text, vocabulary)
+    return [m for m in mentions if not any(
+        max(m['start'], other['start']) < min(m['end'], other['end'])
+        and other['end']-other['start'] > m['end']-m['start'] for other in mentions)]
+
+
 def request_anchors(question, catalog, ui):
     text, r = value_text(question), catalog.registry
     output = {}
@@ -65,13 +74,24 @@ def request_anchors(question, catalog, ui):
     for kind in ("metrics", "dimensions"):
         vocabulary = {}
         for id, definition in r[kind].items():
+            # Retired definitions stay compilable for saved reports but are no
+            # longer a meaning a new question can anchor to.
+            if definition.get("lifecycle", {}).get("status") == "deprecated":
+                continue
             broad = {value_text(a) for a in definition.get("non_anchor_aliases", [])}
             for alias in [id, definition["business_name"], *definition.get("aliases", [])]:
                 if value_text(alias) in broad:
                     continue
                 vocabulary.setdefault(value_text(alias), set()).add(id)
-        output[kind] = exact_mentions(text, vocabulary)
+        output[kind] = metric_mentions(text, vocabulary) if kind == 'metrics' else exact_mentions(text, vocabulary)
         vocabularies[kind] = vocabulary
+    # A named grouping axis can contain a shorter metric alias (for example
+    # application status contains application count's noun phrase). It names
+    # the axis here, not a second requested measure. Longer qualified metric
+    # phrases elsewhere in the clause remain intact.
+    output['metrics'] = [m for m in output['metrics'] if not any(
+        d['start'] <= m['start'] and m['end'] <= d['end']
+        and d['end']-d['start'] > m['end']-m['start'] for d in output['dimensions'])]
     if ':' in question:
         heading=value_text(question.split(':',1)[0])
         if any(re.search(r'\b'+re.escape(value_text(q))+r'\b',heading) for q in r.get('topic_heading_qualifiers',[])) and not any(
@@ -142,6 +162,10 @@ def request_anchors(question, catalog, ui):
                 target.append({"dimension": dimension, "value": value})
         for group in r['dimensions'][dimension].get('value_groups',[]):
             for mention in exact_mentions(text,{value_text(a):set(group['values']) for a in group['aliases']}):
+                if any(a['start']<=mention['start'] and mention['end']<=a['end']
+                       and a['end']-a['start']>mention['end']-mention['start']
+                       for a in output['metrics']):
+                    continue
                 target = excluded_values if excluded(mention) else values
                 # A qualified alias (e.g. one subtype) outranks the generic group.
                 if any(m['start']<=mention['start'] and mention['end']<=m['end'] and
@@ -185,7 +209,7 @@ def request_anchors(question, catalog, ui):
             re.search(r'(?<!\w)'+re.escape(value_text(alias))+r'(?!\w)',clause) for alias in aliases)}
         if rank['direction']=='top' and directions=={'bottom'}:
             rank['direction']='bottom'
-        eligible=sorted(exact_mentions(clause,vocabularies['metrics']),key=lambda a:a['start'])
+        eligible=sorted(metric_mentions(clause,vocabularies['metrics']),key=lambda a:a['start'])
         rank['metric_candidates']=sorted({m for a in eligible for m in a['candidate_ids']})
         if eligible and len(eligible[0]['candidate_ids'])==1:
             rank['metric_id']=eligible[0]['candidate_ids'][0]
@@ -224,7 +248,7 @@ def request_anchors(question, catalog, ui):
     bindings, time_bindings, trend_bindings = [], [], []
     for clause in re.split(r'[.;:\n]+', question):
         normalized = value_text(clause)
-        metrics = exact_mentions(normalized, vocabularies['metrics'])
+        metrics = metric_mentions(normalized, vocabularies['metrics'])
         clause_time = parse_time(clause, r['interpretation'], r['timezone'])['recognized_time_parts']
         unique_times = list({str(sorted(t.items())):t for t in clause_time}.values())
         if len(unique_times) == 1:
@@ -236,6 +260,7 @@ def request_anchors(question, catalog, ui):
             m['start'] <= a['start'] and a['end'] <= m['end'] for m in metrics)]
         cadences = exact_mentions(normalized, {value_text(a): {g}
             for g, aliases in r.get('granularity_aliases', {}).items() for a in aliases})
+        cadences = [a for a in cadences if not any(m['start'] < a['end'] and a['start'] < m['end'] for m in metrics)]
         gs = {g for a in cadences for g in a['candidate_ids']}
         if (len(gs)==1 and metrics and len(re.findall(r'\btheo\b',normalized))==1 and
                 any(m['end']<=min(a['start'] for a in cadences) for m in metrics)):
@@ -260,14 +285,153 @@ def request_anchors(question, catalog, ui):
     output['trend_bindings'] = trend_bindings
     output['granularities'] = exact_mentions(text, {value_text(a): {g}
         for g, aliases in r.get('granularity_aliases', {}).items() for a in aliases})
+    # A cadence cannot borrow a word from an already recognized metric noun
+    # phrase ("mua hàng" + "tháng 9" is not a recurring monthly task).
+    output['granularities'] = [a for a in output['granularities'] if not any(
+        m['start'] < a['end'] and a['start'] < m['end'] for m in output['metrics'])]
     output["ui"] = {k: v for k,v in ui.items() if k in {"required_period", "required_filters", "required_filter", "required_domain", "scope_mode"}}
+    if ui.get('risk_snapshot_metrics'):
+        output['ui'].update({k: deepcopy(ui.get(k)) for k in
+            ('analysis_mission', 'risk_snapshot_metrics', 'guided_intent')})
     from services.scope_resolution_service import resolve_scope
     output["scope_resolution"] = resolve_scope(question, catalog, output["ui"])
     for b in output['scope_resolution'].get('bindings',[]):
         if not b.get('comparison'):
             output['values']=[v for v in output['values'] if v['dimension']!=b['dimension']]+[
                 dict(dimension=b['dimension'],value=v) for v in b['members']]
+    # "… chỉ trong 5 tỉnh này": a dimension head followed by a demonstrative refers to
+    # the entity set selected earlier in the request (dependent goals, PLAN §3/I16).
+    from services.input_integrity_service import policy as integrity_policy, _pattern
+    anaphora=re.compile(r'\s*'+_pattern(integrity_policy().get('anaphora_terms',[]))+r'\s*(?:$|[,.;:!?)])')
+    heads={value_text(h):{d} for d,hs in integrity_policy().get('heads',{}).items() for h in hs}
+    for a in output['dimensions']:
+        if len(a['candidate_ids'])==1:heads.setdefault(value_text(a['phrase']),set(a['candidate_ids']))
+    output['cohort_references']=[]
+    ref_cursor=0
+    # value_text folds punctuation to spaces. Match a reference within its raw
+    # clause so "này; <next goal>" retains the same boundary as final "này".
+    for segment in re.finditer(r'[^,.;:\n!?()]+',question):
+        normalized=value_text(segment.group())
+        offset=text.find(normalized,ref_cursor) if normalized else -1
+        if offset<0:continue
+        ref_cursor=offset+len(normalized)
+        output['cohort_references'].extend(dict(dimension=next(iter(a['candidate_ids'])),
+            start=offset+a['start'],end=offset+a['end']) for a in exact_mentions(normalized,heads)
+            if len(a['candidate_ids'])==1 and anaphora.match(normalized,a['end']))
+    # A back-reference belongs to its own requested clause. Its presence cannot
+    # narrow a separate national scalar just because both use the same metric.
+    cursor = 0
+    independent_scalar_metrics = set()
+    for clause in re.finditer(r'[^.;:\n]+', question):
+        normalized = value_text(clause.group())
+        start = text.find(normalized, cursor) if normalized else -1
+        if start < 0:continue
+        end = start + len(normalized); cursor = end
+        clause_refs = [ref for ref in output['cohort_references'] if start <= ref['start'] < end]
+        clause_dimensions = {d for a in output['dimensions'] if start <= a['start'] < end for d in a['candidate_ids']}
+        clause_metrics = {m for a in metric_mentions(normalized, vocabularies['metrics']) for m in a['candidate_ids']}
+        has_ranking = any(re.search(r'(?<!\w)'+re.escape(word)+r'\s+\d{1,3}\b', normalized) for word in ranking_words)
+        if not clause_refs and not clause_dimensions and not has_ranking:
+            independent_scalar_metrics.update(clause_metrics)
+        for ref in clause_refs:
+            if start <= ref['start'] < end:
+                ref['goal_dimensions'] = sorted({d for a in output['dimensions'] if start <= a['start'] < end
+                                                for d in a['candidate_ids'] if d != ref['dimension']})
+                ref['goal_metrics'] = sorted({m for a in metric_mentions(normalized, vocabularies['metrics'])
+                                             for m in a['candidate_ids']})
+    for ref in output['cohort_references']:
+        ref['independent_scalar_metrics'] = sorted(independent_scalar_metrics)
+    # "chi nhánh và phương thức thanh toán": directly coordinated axes are parallel breakdowns.
+    dims=sorted((a for a in output['dimensions'] if len(a['candidate_ids'])==1),key=lambda a:a['start'])
+    output['coordinated_dimensions']=[[a['candidate_ids'][0],b['candidate_ids'][0]] for a,b in zip(dims,dims[1:])
+        if re.fullmatch(r'\s*(?:,|va|và|cung|cùng)\s*',text[a['end']:b['start']])]
     return output
+
+
+def normalize_cohort_cross_tabs(intent, anchors):
+    """"chi nhánh … trong 5 tỉnh này" read as a cross-tab [tỉnh, chi nhánh] means the
+    branches OF the ranked provinces: one axis inside the cohort, not a full grid."""
+    refs={r['dimension'] for r in anchors.get('cohort_references',[])}
+    result,changes=intent.model_copy(deep=True),[]
+    # The cohort is the ranking over exactly the referenced axis; it is never rewritten.
+    primaries=[r for r in result.requirements if r.availability=='requested' and not r.supporting_for and r.ranking
+               and len(r.dimension_ids)==1 and r.dimension_ids[0] in refs]
+    # Duplicate requirements can request different facts about the same selected
+    # keys. Optional features/labels do not create a second cohort.
+    def selection(req):
+        return (req.dimension_ids, req.ranking.model_dump(mode='json'),
+                req.time.model_dump(mode='json') if req.time else None,
+                [f.model_dump(mode='json') for f in req.filters], req.domain_id)
+    if not primaries or any(selection(req) != selection(primaries[0]) for req in primaries[1:]):
+        return result,changes
+    primary=primaries[0];ranked=set(primary.dimension_ids)
+    explicit_axes={d for ref in anchors.get('cohort_references',[]) for d in ref.get('goal_dimensions',[])}
+    for req in result.requirements:
+        if (req.availability=='requested' and req.supporting_for in {p.id for p in primaries}
+                and explicit_axes.intersection(req.dimension_ids)
+                and set(req.metric_ids)<=set(primary.metric_ids)
+                and req.time==primary.time and req.filters==primary.filters):
+            # The input explicitly requests these axes. A model's optional-role
+            # hint cannot demote them and make their coverage disappear.
+            req.supporting_for=None
+            changes.append(dict(requirement_id=req.id,field='supporting_for',rule='explicit_cohort_goal'))
+    coordinated={frozenset(p) for p in anchors.get('coordinated_dimensions',[])}
+    added=[]
+    for req in result.requirements:
+        if (any(req is p for p in primaries) or req.availability!='requested' or req.supporting_for
+                or req.analysis_kind not in {'cross_tab','ranking','aggregate'} or len(req.dimension_ids)<2):continue
+        cohort=[d for d in req.dimension_ids if d in ranked]
+        # Directly coordinated axes also denote parallel breakdowns inside
+        # the referenced cohort when the draft already omitted the rank axis.
+        if len(cohort)==1:
+            rest=[d for d in req.dimension_ids if d!=cohort[0]]
+        elif not cohort and req.analysis_kind=='cross_tab':
+            rest=list(req.dimension_ids)
+        else:continue
+        # Several remaining axes are parallel breakdowns only when the user coordinated them.
+        if len(rest)>1 and not all(frozenset(p) in coordinated for p in zip(rest,rest[1:])):continue
+        previous=list(req.dimension_ids)
+        req.analysis_kind='aggregate';req.dimension_ids=[rest[0]];req.ranking=None
+        req.derived_features=[f for f in req.derived_features if f not in {'leader','top_gap','selected_total'}]
+        for f in ('leader','top_gap','selected_total'):req.feature_metrics.pop(f,None)
+        for d in rest[1:]:
+            added.append(req.model_copy(deep=True,update={'id':(req.id+'_'+d)[:40],'dimension_ids':[d]}))
+        changes.append(dict(requirement_id=req.id,field='dimension_ids',rule='cohort_reference_axis',
+                            previous=previous,value=rest))
+    result.requirements.extend(added)
+    # A dependent goal's own filter on the cohort axis ("city = các tỉnh này") is the model's
+    # rendering of the back-reference; the ranked keys replace it (scope shared with the ranking stays).
+    if True:
+        rank=primary
+        for req in result.requirements:
+            if req is rank or req.availability!='requested' or req.supporting_for or req.ranking:continue
+            kept=[f for f in req.filters if f.dimension not in refs or f in rank.filters]
+            if len(kept)!=len(req.filters):
+                changes.append(dict(requirement_id=req.id,field='filters',rule='cohort_reference_filter',
+                                    previous=[f.dimension for f in req.filters if f not in kept],value=[]))
+                req.filters=kept
+    return result,changes
+
+
+def complete_coordinated_axes(intent, anchors, index):
+    """Add the parallel breakdown the interpretation dropped for a coordinated axis pair.
+
+    Only a requested single-axis aggregate whose axis is coordinated with an unrepresented
+    explicit axis is copied; the metric, time, filters and features stay identical."""
+    requested=[r for r in intent.requirements if r.availability=='requested' and not r.supporting_for]
+    represented={d for r in requested for d in r.dimension_ids}|{f.dimension for r in requested for f in r.filters}
+    result,changes=intent.model_copy(deep=True),[]
+    for x,y in anchors.get('coordinated_dimensions',[]):
+        for have,missing in ((x,y),(y,x)):
+            if missing in represented or have not in represented:continue
+            sources=[r for r in requested if r.dimension_ids==[have] and r.analysis_kind=='aggregate' and not r.ranking]
+            if len(sources)!=1 or any(missing not in index.metrics.get(m,{}).get('dimensions',[]) for m in sources[0].metric_ids):
+                continue
+            copy=sources[0].model_copy(deep=True,update={'id':(sources[0].id+'_'+missing)[:40],'dimension_ids':[missing]})
+            result.requirements.append(copy);represented.add(missing)
+            changes.append(dict(requirement_id=copy.id,field='requirements',rule='coordinated_axis_breakdown',
+                                source=sources[0].id,dimension_ids=[missing]))
+    return result,changes
 
 
 def population_filters(anchors, catalog):
@@ -620,7 +784,12 @@ def normalize_explicit_metrics(intent, anchors, catalog):
     for lock in metric_locks(anchors,catalog.registry):
         for m in lock['siblings']:
             if m not in named:siblings_of.setdefault(m,set()).add(lock['metric_id'])
-    shape=lambda r:r.model_dump(exclude={'id','goal','metric_ids','feature_metrics','derived_features','domain_id','lens_hint'})
+    def shape(r):
+        # The ranking criterion is the duplicated metric itself (I16: Bottom 5 by store_revenue
+        # beside Bottom 5 by revenue), so it is compared without its metric id.
+        data=r.model_dump(exclude={'id','goal','metric_ids','feature_metrics','derived_features','domain_id','lens_hint'})
+        if data.get('ranking'):data['ranking']={k:v for k,v in data['ranking'].items() if k!='metric_id'}
+        return data
     drop=set()
     for req in result.requirements:
         if req.availability!='requested' or req.supporting_for or req.id in drop or not req.metric_ids:continue
@@ -650,6 +819,10 @@ def verify_anchors(anchors, requirements, reference, catalog):
                 issues.append(dict(requirement_id=req.id,field='filters',code='population_filter_mismatch',expected=expected))
     requirements = [r for r in requirements if not r.supporting_for]
     requested = [r for r in requirements if r.availability == "requested"]
+    from services.mission_contract_service import allows_current_risk_snapshot
+    def current_snapshot(req):
+        return (req.time is not None and req.time.kind == 'relative' and req.time.mode == 'all_time'
+                and allows_current_risk_snapshot(anchors.get('ui') or {}, catalog.registry['metrics'], req.metric_ids))
     excluded = disclosure_only_dimensions(anchors)
     for req in requested:
         extra = excluded & set(req.dimension_ids)
@@ -725,7 +898,8 @@ def verify_anchors(anchors, requirements, reference, catalog):
     if not anchors['ui'].get('required_period'):
         for binding in anchors.get('time_bindings', []):
             period = resolve_time(binding['time'], reference, catalog.registry['timezone'])[2]
-            eligible = [req for req in requested if any(covers(req,m) for m in binding['metric_candidates'])]
+            eligible = [req for req in requested if not current_snapshot(req)
+                        and any(covers(req,m) for m in binding['metric_candidates'])]
             if eligible and not any(req.time and resolve_time(req.time.model_dump(mode='json'),reference,
                     catalog.registry['timezone'])[2] == period for req in eligible):
                 issues.append(dict(requirement_id=eligible[0].id,field='time',code='explicit_metric_time_mismatch',expected=binding['time']))
@@ -835,7 +1009,7 @@ def verify_anchors(anchors, requirements, reference, catalog):
         for time in anchors["times"]:
             expected = resolve_time(time, reference, catalog.registry["timezone"])[2]
             # A repair cannot turn an explicit time window into all_time.
-            scoped = requested if len(anchors["times"]) == 1 else []
+            scoped = [r for r in requested if not current_snapshot(r)] if len(anchors["times"]) == 1 else []
             if len(anchors["times"]) > 1 and not any(
                     part and resolve_time(part.model_dump(mode='json'),reference,catalog.registry['timezone'])[2] == expected
                     for r in requested for part in (r.time,r.comparison_time)):
@@ -879,7 +1053,34 @@ def refinement_anchors(original, initial_intent, history, catalog, ui, reference
     fields = {'metric_ids':'metrics', 'dimension_ids':'dimensions','forecast':'forecasts',
               'derived_features':'features', 'ranking':'rankings', 'time':'times', 'comparison_time':'times', 'filters':'values',
               'granularity':'granularities'}
+    workspace_root = None
+    workspace_anchors = None
     for entry in history:
+        if 'interaction' in entry:
+            from services.workspace_service import workspace_base, workspace_intent
+            if workspace_root is None:
+                workspace_root = workspace_base(intent.model_dump(mode='json'))
+                workspace_anchors = deepcopy(anchors)
+            anchors = deepcopy(workspace_anchors)
+            after = workspace_intent(workspace_root, entry['interaction'], catalog, reference)
+            filters = [f.model_dump(mode='json') for r in after.requirements for f in r.filters]
+            anchors['ui']['required_filters'] = filters
+            from services.scope_resolution_service import resolve_scope
+            anchors['scope_resolution'] = resolve_scope('', catalog, anchors['ui'])
+            selected_dims = {s['dimension_id'] for s in entry['interaction'].get('filters', [])} | {
+                d['selection']['dimension_id'] for d in entry['interaction'].get('drill_path', [])}
+            anchors['values'] = [a for a in anchors['values'] if a['dimension'] not in selected_dims]
+            # The typed action may change grouping along a governed hierarchy.
+            # Preserve all metric/time/population facts and original filters.
+            if entry['interaction'].get('drill_path'):
+                old_axes = {d for r in workspace_root['requirements'] for d in r['dimension_ids']}
+                anchors['dimensions'] = [a for a in anchors['dimensions'] if not set(a['candidate_ids']) & old_axes]
+                anchors['clause_bindings'] = [b for b in anchors.get('clause_bindings', []) if b['dimension_id'] not in old_axes]
+            intent = after
+            issues = verify_anchors(anchors, intent.requirements, reference, catalog)
+            if issues: raise ResolutionIssues(issues)
+            continue
+        workspace_root = None
         feedback = request_anchors(entry['feedback'], catalog, ui)
         delta = AnalysisIntentDelta.model_validate(entry['delta'])
         prior = {r.id:r for r in intent.requirements}
@@ -934,8 +1135,10 @@ def refinement_anchors(original, initial_intent, history, catalog, ui, reference
             for anchor in feedback[kind]:
                 if anchor not in anchors[kind]:
                     anchors[kind].append(deepcopy(anchor))
-        if feedback.get('scope_resolution',{}).get('bindings') and any(
-                c.action=='update' and 'filters' in c.changes for c in delta.changes):
+        # Explicit user scope is a verification constraint even when a model
+        # returns a no-op. Otherwise missing geography becomes a global value
+        # error with no repair target, freezing every legitimate filter field.
+        if feedback.get('scope_resolution',{}).get('bindings'):
             anchors['scope_resolution']=deepcopy(feedback['scope_resolution'])
         if feedback.get('analysis_breadth'):
             anchors['analysis_breadth']=feedback['analysis_breadth']
@@ -948,22 +1151,25 @@ def refinement_anchors(original, initial_intent, history, catalog, ui, reference
 
 def enforce_ui(artifacts, context):
     from services.analysis_catalog import AnalysisError
+    from services.analysis_contract import equivalent_filter
     for a in artifacts.values():
         period = context.get("required_period")
+        from services.mission_contract_service import allows_current_risk_snapshot
+        current_snapshot = bool(context.get('risk_snapshot_metrics')) and a.grounded.period['start'] is None and a.grounded.period['end'] is None and allows_current_risk_snapshot(
+            context, getattr(a.grounded, 'metrics', {}), getattr(a.query, 'metrics', []))
         if period and any(
             a.grounded.period[k] != period[k] for k in ("start", "end")
-        ):
+        ) and not current_snapshot:
             raise AnalysisError(
                 "time_range_ambiguous", "Analysis conflicts with selected UI period"
             )
         required = context.get("required_filter")
-        if required and required not in [
-            f.model_dump(mode="json") for f in a.query.filters
-        ]:
+        actual=[f.model_dump(mode='json') for f in a.query.filters]
+        if required and not any(equivalent_filter(required,f) for f in actual):
             raise AnalysisError(
                 "clarification", "Analysis omitted selected UI population"
             )
-        if any(f not in [v.model_dump(mode="json") for v in a.query.filters] for f in context.get("required_filters", [])):
+        if any(not any(equivalent_filter(f,v) for v in actual) for f in context.get("required_filters", [])):
             raise AnalysisError("query_scope", "Analysis conflicts with selected UI population")
         if context.get("scope_mode") == "all" and a.query.filters:
             raise AnalysisError("query_scope", "Analysis narrowed the selected entire-system population")

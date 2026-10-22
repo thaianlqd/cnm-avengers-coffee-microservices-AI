@@ -5,10 +5,21 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { switchMissionDraft, missionControls, buildGuided, guidedActive, workspaceRequestFields, detectedScope,
-  depthOptions, defaultSlots, periodOptions, dimensionValues, inspectedGroupDraft, sourceAnalysisPayload } from './missionWorkspace.mjs';
+  depthOptions, defaultSlots, periodOptions, dimensionValues, missionDimensions, inspectedGroupDraft, sourceAnalysisPayload } from './missionWorkspace.mjs';
 import { preflightView, applyFix } from './preflightPresentation.mjs';
 
 const caps = JSON.parse(readFileSync(new URL('../../../analytics-api/tests/fixtures/capabilities_v31.json', import.meta.url), 'utf8'));
+
+test('builder uses server mission axes and cannot submit a stale incompatible composition',()=>{
+  const fixture=structuredClone(caps), metric=fixture.metrics.find(m=>m.id==='sale_positions');
+  const mission=fixture.missions.find(m=>m.id==='composition');
+  mission.dimensions_by_metric={sale_positions:['product','category','store']};
+  const axes=missionDimensions(fixture,'composition',metric).map(d=>d.id);
+  assert(!axes.includes('city'));
+  assert(axes.includes('product'));
+  const invalid=buildGuided(fixture,'composition',{metric:'sale_positions',dimension:'city',period:'all_time'});
+  assert.equal(invalid.ready,false); assert(invalid.missing.includes('dimension'));
+});
 
 test('A · gibberish is shown as blocked/unrecognized, never "valid"', () => {
   const v = preflightView({ status: 'blocked', state: 'BLOCKED', state_label: 'Chưa nhận ra bài toán phân tích', can_submit: false,
@@ -85,7 +96,7 @@ test('compare cannot submit until A and B are valid and different', () => {
 });
 
 test('scope is recognized from the question; depth options explain their budget', () => {
-  assert.equal(detectedScope(null).summary, 'Toàn hệ thống (chưa nêu phạm vi trong câu hỏi)');
+  assert.equal(detectedScope(null).summary, 'Chờ kiểm tra câu hỏi hiện tại');
   const d = detectedScope({ understood: { filters: [{ label: 'Loại điểm bán', display: 'Kiosk vệ tinh' }], dimensions: [] } });
   assert.equal(d.summary, 'Loại điểm bán: Kiosk vệ tinh');
   const depths = depthOptions(caps);

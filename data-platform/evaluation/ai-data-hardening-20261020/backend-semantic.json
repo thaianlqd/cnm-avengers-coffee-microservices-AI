@@ -1,0 +1,60 @@
+{
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "backend": {
+    "command": "python -m tools.run_tests_v29 (fail-fast wrapper; standard isolated result)",
+    "tests": 1367,
+    "failed": 0,
+    "elapsed_s": 560.56,
+    "network": "none",
+    "cpus": 1,
+    "memory": "1g"
+  },
+  "semantic": {
+    "mode": "offline",
+    "measures_natural_language_understanding": false,
+    "case_count": 146,
+    "failures": [],
+    "dataset_errors": [],
+    "v33_cases": {
+      "passed": 33,
+      "total": 33,
+      "rate": 1.0
+    },
+    "v34_cases": {
+      "passed": 120,
+      "total": 120,
+      "rate": 1.0
+    },
+    "compile_level2": {
+      "passed": 108,
+      "total": 108,
+      "rate": 1.0
+    }
+  },
+  "authored_reference": {
+    "mode": "offline_authored_reference",
+    "case_count": 120,
+    "compiled_intents": 83,
+    "passed": 120,
+    "failed": 0,
+    "reference_sha256": "8b6f9164fde3a3dad0b43c27c6da75c2d8e137b561abefd975afbc55605aaefa",
+    "claim": "Authored expected meanings compiled through production resolver/validators; not LLM understanding accuracy"
+  },
+  "logs": [
+    {
+      "name": "backend-full.log",
+      "sha256": "d6f486c5bf4a2af0d13b8e48773c240ea386c579684287abd313ea9917efbb04"
+    },
+    {
+      "name": "semantic.json",
+      "sha256": "35757c58c3be9cd213dc4a207e54ba6b853d8a02197a436173826e7b4e8e111c"
+    },
+    {
+      "name": "semantic-reference.json",
+      "sha256": "eb384fcb1d9efcba55fd77ce2c1ce691bf57f7f78c7af65bba7540b70173bb10"
+    }
+  ],
+  "external_provider_sends": 0,
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

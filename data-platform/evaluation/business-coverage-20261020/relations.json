@@ -1,0 +1,836 @@
+{
+  "keys": {
+    "columns": [
+      "schema",
+      "table_name",
+      "kind",
+      "definition"
+    ],
+    "rows": [
+      [
+        "context",
+        "thoi_tiet_ngay",
+        "p",
+        "PRIMARY KEY (ngay, cum_vung)"
+      ],
+      [
+        "finance",
+        "chi_phi_van_hanh",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "finance",
+        "hop_dong_nq",
+        "p",
+        "PRIMARY KEY (ma_hop_dong)"
+      ],
+      [
+        "franchise",
+        "audit_log",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "bien_ban_vi_pham",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "combo_nguyen_lieu",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "cong_no",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "don_mua_combo",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "gia_san_pham_kiosk",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "gia_san_pham_kiosk",
+        "u",
+        "UNIQUE (ma_kiosk, ma_san_pham)"
+      ],
+      [
+        "franchise",
+        "ho_so_dang_ky",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "hop_dong_nhuong_quyen",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "ket_qua_doi_soat",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "kiosk",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "kiosk",
+        "u",
+        "UNIQUE (ma_kiosk)"
+      ],
+      [
+        "franchise",
+        "royalty_hang_thang",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "franchise",
+        "thu_chi",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "identity",
+        "chi_nhanh",
+        "p",
+        "PRIMARY KEY (ma_chi_nhanh)"
+      ],
+      [
+        "identity",
+        "chi_nhanh",
+        "u",
+        "UNIQUE (ten_chi_nhanh)"
+      ],
+      [
+        "identity",
+        "dia_chi_giao_hang",
+        "f",
+        "FOREIGN KEY (ma_nguoi_dung) REFERENCES identity.nguoi_dung(ma_nguoi_dung) ON DELETE CASCADE"
+      ],
+      [
+        "identity",
+        "dia_chi_giao_hang",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "identity",
+        "external_voucher_usage",
+        "p",
+        "PRIMARY KEY (voucher_code, user_id, order_id)"
+      ],
+      [
+        "identity",
+        "khu_vuc",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "identity",
+        "khu_vuc",
+        "u",
+        "UNIQUE (ma_khu_vuc)"
+      ],
+      [
+        "identity",
+        "khuyen_mai",
+        "p",
+        "PRIMARY KEY (ma_khuyen_mai)"
+      ],
+      [
+        "identity",
+        "khuyen_mai_su_dung",
+        "f",
+        "FOREIGN KEY (ma_khuyen_mai) REFERENCES identity.khuyen_mai(ma_khuyen_mai) ON DELETE CASCADE"
+      ],
+      [
+        "identity",
+        "khuyen_mai_su_dung",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "identity",
+        "loyalty_order_award",
+        "p",
+        "PRIMARY KEY (order_id)"
+      ],
+      [
+        "identity",
+        "membership_config",
+        "p",
+        "PRIMARY KEY (key)"
+      ],
+      [
+        "identity",
+        "nguoi_dung",
+        "p",
+        "PRIMARY KEY (ma_nguoi_dung)"
+      ],
+      [
+        "identity",
+        "nguoi_dung",
+        "u",
+        "UNIQUE (email)"
+      ],
+      [
+        "identity",
+        "nguoi_dung",
+        "u",
+        "UNIQUE (so_dien_thoai)"
+      ],
+      [
+        "identity",
+        "nguoi_dung",
+        "u",
+        "UNIQUE (ten_dang_nhap)"
+      ],
+      [
+        "identity",
+        "order_voucher_claim",
+        "p",
+        "PRIMARY KEY (ma_don_hang)"
+      ],
+      [
+        "identity",
+        "vi_giao_dich",
+        "f",
+        "FOREIGN KEY (ma_nguoi_dung) REFERENCES identity.nguoi_dung(ma_nguoi_dung)"
+      ],
+      [
+        "identity",
+        "vi_giao_dich",
+        "p",
+        "PRIMARY KEY (ma_giao_dich)"
+      ],
+      [
+        "inventory",
+        "ton_kho_san_pham",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "inventory",
+        "ton_kho_san_pham",
+        "u",
+        "UNIQUE (co_so_ma, ma_san_pham)"
+      ],
+      [
+        "master_data",
+        "co_so",
+        "p",
+        "PRIMARY KEY (co_so_ma)"
+      ],
+      [
+        "menu",
+        "bien_the_san_pham",
+        "f",
+        "FOREIGN KEY (ma_thuoc_tinh) REFERENCES menu.thuoc_tinh(ma_thuoc_tinh) ON DELETE CASCADE"
+      ],
+      [
+        "menu",
+        "bien_the_san_pham",
+        "f",
+        "FOREIGN KEY (ma_san_pham) REFERENCES menu.san_pham(ma_san_pham) ON DELETE CASCADE"
+      ],
+      [
+        "menu",
+        "bien_the_san_pham",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "menu",
+        "danh_muc",
+        "p",
+        "PRIMARY KEY (ma_danh_muc)"
+      ],
+      [
+        "menu",
+        "san_pham",
+        "f",
+        "FOREIGN KEY (ma_danh_muc) REFERENCES menu.danh_muc(ma_danh_muc)"
+      ],
+      [
+        "menu",
+        "san_pham",
+        "p",
+        "PRIMARY KEY (ma_san_pham)"
+      ],
+      [
+        "menu",
+        "thuoc_tinh",
+        "p",
+        "PRIMARY KEY (ma_thuoc_tinh)"
+      ],
+      [
+        "menu",
+        "thuoc_tinh",
+        "u",
+        "UNIQUE (ten_thuoc_tinh)"
+      ],
+      [
+        "news",
+        "articles",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "ca_doi_soat",
+        "p",
+        "PRIMARY KEY (ma_ca)"
+      ],
+      [
+        "orders",
+        "ca_lam_viec_nhan_vien",
+        "p",
+        "PRIMARY KEY (ma_ca_lam_viec)"
+      ],
+      [
+        "orders",
+        "cart_metadata",
+        "p",
+        "PRIMARY KEY (user_id)"
+      ],
+      [
+        "orders",
+        "cart_metadata",
+        "u",
+        "UNIQUE (cart_id)"
+      ],
+      [
+        "orders",
+        "cart_mutation_operation",
+        "p",
+        "PRIMARY KEY (operation_id)"
+      ],
+      [
+        "orders",
+        "chat_conversation",
+        "p",
+        "PRIMARY KEY (ma_hoi_thoai)"
+      ],
+      [
+        "orders",
+        "chat_message",
+        "f",
+        "FOREIGN KEY (ma_hoi_thoai) REFERENCES orders.chat_conversation(ma_hoi_thoai) ON DELETE CASCADE"
+      ],
+      [
+        "orders",
+        "chat_message",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "checkout_operation",
+        "p",
+        "PRIMARY KEY (operation_id)"
+      ],
+      [
+        "orders",
+        "checkout_outbox",
+        "p",
+        "PRIMARY KEY (event_id)"
+      ],
+      [
+        "orders",
+        "checkout_outbox",
+        "u",
+        "UNIQUE (event_key)"
+      ],
+      [
+        "orders",
+        "checkout_quote",
+        "p",
+        "PRIMARY KEY (quote_id)"
+      ],
+      [
+        "orders",
+        "checkout_quote",
+        "u",
+        "UNIQUE (action_id)"
+      ],
+      [
+        "orders",
+        "checkout_voucher_claim",
+        "p",
+        "PRIMARY KEY (order_id, user_id, voucher_code)"
+      ],
+      [
+        "orders",
+        "chi_tiet_don_hang",
+        "f",
+        "FOREIGN KEY (ma_don_hang) REFERENCES orders.don_hang(ma_don_hang) ON DELETE CASCADE"
+      ],
+      [
+        "orders",
+        "chi_tiet_don_hang",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "customer_wallet",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "customer_wallet",
+        "u",
+        "UNIQUE (customer_id)"
+      ],
+      [
+        "orders",
+        "customer_wallet_transaction",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "danh_gia_chi_nhanh",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "danh_gia_san_pham",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "delivery_tracking",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "delivery_tracking",
+        "u",
+        "UNIQUE (tracking_code)"
+      ],
+      [
+        "orders",
+        "don_hang",
+        "p",
+        "PRIMARY KEY (ma_don_hang)"
+      ],
+      [
+        "orders",
+        "giao_dich_thanh_toan",
+        "f",
+        "FOREIGN KEY (ma_don_hang) REFERENCES orders.don_hang(ma_don_hang) ON DELETE CASCADE"
+      ],
+      [
+        "orders",
+        "giao_dich_thanh_toan",
+        "p",
+        "PRIMARY KEY (ma_giao_dich)"
+      ],
+      [
+        "orders",
+        "giao_dich_thanh_toan",
+        "u",
+        "UNIQUE (ma_tham_chieu)"
+      ],
+      [
+        "orders",
+        "gift_card_theme",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "gift_cards",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "gift_cards",
+        "u",
+        "UNIQUE (code)"
+      ],
+      [
+        "orders",
+        "gio_hang",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "khao_sat_bieu_mau",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "khao_sat_phan_hoi",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "kiosk_shift_session",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "shipper",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "shipper",
+        "u",
+        "UNIQUE (username)"
+      ],
+      [
+        "orders",
+        "shipper_cod_remit",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "shipper_delivery",
+        "f",
+        "FOREIGN KEY (\"shipperId\") REFERENCES orders.shipper(id) ON DELETE SET NULL"
+      ],
+      [
+        "orders",
+        "shipper_delivery",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "shipper_exception",
+        "f",
+        "FOREIGN KEY (\"shipperId\") REFERENCES orders.shipper(id)"
+      ],
+      [
+        "orders",
+        "shipper_exception",
+        "f",
+        "FOREIGN KEY (\"deliveryId\") REFERENCES orders.shipper_delivery(id)"
+      ],
+      [
+        "orders",
+        "shipper_exception",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "shipper_schedule",
+        "f",
+        "FOREIGN KEY (\"shipperId\") REFERENCES orders.shipper(id)"
+      ],
+      [
+        "orders",
+        "shipper_schedule",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "shipper_wallet",
+        "f",
+        "FOREIGN KEY (\"shipperId\") REFERENCES orders.shipper(id)"
+      ],
+      [
+        "orders",
+        "shipper_wallet",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "shipper_wallet",
+        "u",
+        "UNIQUE (\"shipperId\")"
+      ],
+      [
+        "orders",
+        "smtp_config",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "thong_bao",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "voucher",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "voucher",
+        "u",
+        "UNIQUE (ma_voucher)"
+      ],
+      [
+        "orders",
+        "wallet_voucher_claim_outbox",
+        "p",
+        "PRIMARY KEY (order_id)"
+      ],
+      [
+        "orders",
+        "yeu_thich_san_pham",
+        "p",
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "orders",
+        "yeu_thich_san_pham",
+        "u",
+        "UNIQUE (ma_nguoi_dung, ma_san_pham)"
+      ]
+    ]
+  },
+  "roles": {
+    "columns": [
+      "vai_tro",
+      "count"
+    ],
+    "rows": [
+      [
+        "FRANCHISEE",
+        2
+      ],
+      [
+        "STAFF",
+        10
+      ],
+      [
+        "ACCOUNTANT",
+        1
+      ],
+      [
+        "CUSTOMER",
+        318
+      ],
+      [
+        "FRANCHISE_STAFF",
+        3
+      ],
+      [
+        "ADMIN",
+        1
+      ],
+      [
+        "MANAGER",
+        6
+      ],
+      [
+        "KIOSK_STAFF",
+        1
+      ]
+    ]
+  },
+  "wallet_types": {
+    "columns": [
+      "type",
+      "status",
+      "count"
+    ],
+    "rows": [
+      [
+        "TOP_UP",
+        "PENDING",
+        4
+      ],
+      [
+        "PAYMENT",
+        "SUCCESS",
+        72
+      ],
+      [
+        "TOP_UP",
+        "SUCCESS",
+        34
+      ],
+      [
+        "REFUND",
+        "SUCCESS",
+        2
+      ]
+    ]
+  },
+  "gift_statuses": {
+    "columns": [
+      "status",
+      "count"
+    ],
+    "rows": [
+      [
+        "REDEEMED",
+        2
+      ],
+      [
+        "ACTIVE",
+        10
+      ],
+      [
+        "CLAIMED",
+        1
+      ]
+    ]
+  },
+  "branch_types": {
+    "columns": [
+      "loai_diem_ban",
+      "count"
+    ],
+    "rows": [
+      [
+        "KIOSK_NHUONG_QUYEN",
+        50
+      ],
+      [
+        "KIOSK_VE_TINH",
+        10
+      ],
+      [
+        "CHI_NHANH_CHINH",
+        1155
+      ]
+    ]
+  },
+  "order_types": {
+    "columns": [
+      "loai_don_hang",
+      "trang_thai_don_hang",
+      "count"
+    ],
+    "rows": [
+      [
+        "GIAO_TAN_NOI",
+        "DA_HUY",
+        337
+      ],
+      [
+        "DUNG_TAI_CHO",
+        "DA_HUY",
+        721
+      ],
+      [
+        "MANG_DI",
+        "DA_HUY",
+        560
+      ],
+      [
+        "DUNG_TAI_CHO",
+        "DA_XAC_NHAN",
+        1
+      ],
+      [
+        "MANG_DI",
+        "HOAN_THANH",
+        13645
+      ],
+      [
+        "GIAO_TAN_NOI",
+        "HOAN_THANH",
+        7519
+      ],
+      [
+        "DUNG_TAI_CHO",
+        "HOAN_THANH",
+        17658
+      ],
+      [
+        "GIAO_TAN_NOI",
+        "DA_XAC_NHAN",
+        3
+      ],
+      [
+        "GIAO_TAN_NOI",
+        "DANG_GIAO",
+        2
+      ],
+      [
+        "DUNG_TAI_CHO",
+        "DANG_GIAO",
+        1
+      ],
+      [
+        "LAY_TAI_QUAN",
+        "DA_XAC_NHAN",
+        1
+      ],
+      [
+        "GIAO_TAN_NOI",
+        "MOI_TAO",
+        7
+      ],
+      [
+        "LAY_TAI_QUAN",
+        "MOI_TAO",
+        3
+      ],
+      [
+        "DUNG_TAI_CHO",
+        "MOI_TAO",
+        2
+      ]
+    ]
+  },
+  "missing_table": {
+    "columns": [
+      "satellite_combo_table_exists"
+    ],
+    "rows": [
+      [
+        false
+      ]
+    ]
+  },
+  "review_join_quality": {
+    "columns": [
+      "missing_product",
+      "missing_order",
+      "missing_user"
+    ],
+    "rows": [
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  }
+}

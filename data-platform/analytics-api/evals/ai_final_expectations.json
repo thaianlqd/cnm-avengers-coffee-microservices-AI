@@ -1,0 +1,2268 @@
+{
+  "basis": "Frozen passing pre-hardening corpus at 790eae4; view floors and honest limitations are not recomputed from the planner under test.",
+  "cases": {
+    "D01": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "D02": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "trend"
+        ]
+      }
+    },
+    "D03": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      }
+    },
+    "D04": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:product",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:product",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:product",
+          "trend"
+        ]
+      }
+    },
+    "D05": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      }
+    },
+    "D06": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "segment:store"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "segment:store"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "segment:store"
+        ]
+      }
+    },
+    "D07": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:order_type",
+          "trend"
+        ]
+      }
+    },
+    "D08": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "segment:order_type",
+          "segment:store",
+          "segment:store_type",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "segment:order_type",
+          "segment:store",
+          "segment:store_type",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "segment:order_type",
+          "segment:store",
+          "segment:store_type",
+          "trend"
+        ]
+      }
+    },
+    "D09": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 1,
+        "core_lenses": []
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 1,
+        "core_lenses": []
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 1,
+        "core_lenses": []
+      }
+    },
+    "D10": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 0,
+        "core_lenses": [],
+        "max_views": 0
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 0,
+        "core_lenses": [],
+        "max_views": 0
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 0,
+        "core_lenses": [],
+        "max_views": 0
+      }
+    },
+    "D11": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "D12": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:promotion",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:promotion",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:promotion",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "D13": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:payment_transaction_status",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:payment_transaction_status",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:payment_transaction_status",
+          "trend"
+        ]
+      }
+    },
+    "D14": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:payment_gateway",
+          "segment:payment_transaction_status"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:payment_gateway",
+          "segment:payment_transaction_status"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:payment_gateway",
+          "segment:payment_transaction_status"
+        ]
+      }
+    },
+    "D15": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:delivery_status",
+          "segment:driver_id",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:delivery_status",
+          "segment:driver_id",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_DATA",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:delivery_status",
+          "segment:driver_id",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "D16": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_DATA",
+        "min_views": 3,
+        "core_lenses": [
+          "segment:driver_id",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_DATA",
+        "min_views": 3,
+        "core_lenses": [
+          "segment:driver_id",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 4,
+        "core_lenses": [
+          "segment:driver_id",
+          "trend"
+        ]
+      }
+    },
+    "D17": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:store",
+          "segment:product",
+          "segment:store_type"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:store",
+          "segment:product",
+          "segment:store_type"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:store",
+          "segment:product",
+          "segment:store_type"
+        ]
+      }
+    },
+    "D18": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:category",
+          "segment:product",
+          "segment:store_type"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:category",
+          "segment:product",
+          "segment:store_type"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:category",
+          "segment:product",
+          "segment:store_type"
+        ]
+      }
+    },
+    "D19": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "segment:category",
+          "segment:store",
+          "segment:weekday",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "segment:category",
+          "segment:store",
+          "segment:weekday",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "segment:category",
+          "segment:store",
+          "segment:weekday",
+          "trend"
+        ]
+      }
+    },
+    "D20": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "D21": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "segment:city",
+          "segment:store_type",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "segment:city",
+          "segment:store_type",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "segment:city",
+          "segment:store_type",
+          "trend"
+        ]
+      }
+    },
+    "D22": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store"
+        ]
+      }
+    },
+    "D23": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:attendance_status",
+          "segment:shift_name",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:attendance_status",
+          "segment:shift_name",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:attendance_status",
+          "segment:shift_name",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "D24": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "D25": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "segment:city",
+          "segment:store_type",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "segment:city",
+          "segment:store_type",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 7,
+        "core_lenses": [
+          "segment:city",
+          "segment:store_type",
+          "trend"
+        ]
+      }
+    },
+    "D26": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "D27": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "D28": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "trend"
+        ]
+      }
+    },
+    "D29": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 3,
+        "core_lenses": [
+          "composition:category",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 4,
+        "core_lenses": [
+          "composition:category",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 6,
+        "core_lenses": [
+          "composition:category",
+          "trend"
+        ]
+      }
+    },
+    "D30": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 3,
+        "core_lenses": [
+          "composition:product",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 4,
+        "core_lenses": [
+          "composition:product",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 6,
+        "core_lenses": [
+          "composition:product",
+          "trend"
+        ]
+      }
+    },
+    "D31": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:weekday",
+          "segment:order_type",
+          "trend"
+        ]
+      }
+    },
+    "D32": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:hour",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:hour",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:hour",
+          "trend"
+        ]
+      }
+    },
+    "F01": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "F02": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "segment:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "segment:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "segment:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "F03": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "F04": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "F05": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:order_type",
+          "trend"
+        ]
+      }
+    },
+    "F06": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      }
+    },
+    "F07": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      }
+    },
+    "F08": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store"
+        ]
+      }
+    },
+    "F09": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "F10": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "F11": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "F12": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:product",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:product",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:product",
+          "trend"
+        ]
+      }
+    },
+    "F13": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      }
+    },
+    "F14": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      }
+    },
+    "F15": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "trend"
+        ]
+      }
+    },
+    "F16": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_DATA",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:store_type",
+          "segment:city",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "F17": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 1,
+        "core_lenses": []
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 1,
+        "core_lenses": []
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "LIMITED_BY_SOURCE_CAPABILITY",
+        "min_views": 1,
+        "core_lenses": []
+      }
+    },
+    "F18": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "trend@order_cancellation_rate",
+          "trend@revenue"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "trend@order_cancellation_rate",
+          "trend@revenue"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "trend@order_cancellation_rate",
+          "trend@revenue"
+        ]
+      }
+    },
+    "E01": {
+      "deep": {
+        "expected_error": "insufficient_data",
+        "expected_status": null,
+        "expected_gap": null,
+        "min_views": 0,
+        "core_lenses": []
+      }
+    },
+    "E02": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:payment_method",
+          "segment:store"
+        ]
+      }
+    },
+    "E03": {
+      "deep": {
+        "expected_error": "historical_metric_unavailable",
+        "expected_status": null,
+        "expected_gap": null,
+        "min_views": 0,
+        "core_lenses": []
+      }
+    },
+    "E04": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:payment_method",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:payment_method",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:payment_method",
+          "trend"
+        ]
+      }
+    },
+    "E05": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "trend@r1",
+          "trend@r2"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "trend@r1",
+          "trend@r2"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "trend@r1",
+          "trend@r2"
+        ]
+      }
+    },
+    "E06": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "E07": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:delivery_status",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:delivery_status",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:delivery_status",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "E08": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      }
+    },
+    "E09": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "E11": {
+      "deep": {
+        "expected_error": "clarification",
+        "expected_status": null,
+        "expected_gap": null,
+        "min_views": 0,
+        "core_lenses": []
+      }
+    },
+    "E12": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:payment_method",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "E13": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 7,
+        "core_lenses": [
+          "composition:order_type",
+          "segment:category",
+          "trend"
+        ]
+      }
+    },
+    "E14": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_type@r1",
+          "composition:weekday@r2",
+          "trend@r1",
+          "trend@r2"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type@r1",
+          "composition:weekday@r2",
+          "trend@r1",
+          "trend@r2"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "limited",
+        "expected_gap": "CAPACITY_LIMITED",
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_type@r1",
+          "composition:weekday@r2",
+          "trend@r1",
+          "trend@r2"
+        ]
+      }
+    },
+    "E15": {
+      "deep": {
+        "expected_error": "insufficient_data",
+        "expected_status": null,
+        "expected_gap": null,
+        "min_views": 0,
+        "core_lenses": []
+      }
+    },
+    "E16": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "E17": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "composition:order_status",
+          "segment:order_type",
+          "segment:store",
+          "trend"
+        ]
+      }
+    },
+    "E10": {
+      "focused": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 4,
+        "core_lenses": [
+          "segment:order_type",
+          "segment:payment_method",
+          "trend"
+        ]
+      },
+      "deep": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 6,
+        "core_lenses": [
+          "segment:order_type",
+          "segment:payment_method",
+          "trend"
+        ]
+      },
+      "comprehensive": {
+        "expected_error": null,
+        "expected_status": "complete",
+        "expected_gap": null,
+        "min_views": 8,
+        "core_lenses": [
+          "segment:order_type",
+          "segment:payment_method",
+          "trend"
+        ]
+      }
+    }
+  },
+  "amendments": [
+    {
+      "case_id": "D10",
+      "reason": "Independent metadata oracle: the only grouping axis is fixed by the metric-owned cohort and the metric has no history. Require zero comparison charts, the exact requested aggregate in a validated table, and honest source-capability limitation. Rich 4/6/8 floors are unchanged.",
+      "regression": "tests.test_ai_final_edges.FinalEdgeTests.test_metric_owned_fixed_axis_preserves_answer_in_table_without_fake_chart"
+    }
+  ]
+}

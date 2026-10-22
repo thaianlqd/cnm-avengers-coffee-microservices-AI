@@ -1,3 +1,9 @@
+import { Pagination, usePagination } from '../components/Pagination';
+import { HubPublishDialog } from '../components/report/HubPublishDialog';
+import { GeographicReportPanel } from '../components/report/GeographicReportPanel';
+import { RefinementComposer } from '../components/report/RefinementComposer';
+import { geographicCharts, hasGeographicContext } from '../utils/reportGeography.mjs';
+import { canPublishToHub, isHubProblem } from '../utils/hubProblems.mjs';
 import { getAccountIdentity, readAnalysisDraft, rememberAnalysisDraft } from '../utils/authSession.mjs';
 import { AnalystDashboard, AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
 import { AnalysisQualityScore } from '../components/AnalysisQualityScore';
@@ -149,6 +155,8 @@ export const AnalyticsView: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<Array<{ prompt: string; report: any; time: string }>>([]);
   const [followUpPrompt, setFollowUpPrompt] = useState('');
   const [isRefining, setIsRefining] = useState(false);
+  const [refinementNotice,setRefinementNotice]=useState<{tone:string;text:string}|null>(null);
+  useEffect(()=>setRefinementNotice(null),[generatedReport?.session_id]);
   const [reportVersions, setReportVersions] = useState<Array<{ version: number; label: string; report: any; time: string }>>([]);
   const [activeVersionIndex, setActiveVersionIndex] = useState<number>(0);
   const [refinementChat, setRefinementChat] = useState<Array<{ id: string; sender: 'user' | 'assistant'; text: string; time: string }>>([]);
@@ -161,6 +169,7 @@ export const AnalyticsView: React.FC = () => {
   const [savedReportsError, setSavedReportsError] = useState('');
   const [savedReportsSearch, setSavedReportsSearch] = useState('');
   const [savedReportsCategory, setSavedReportsCategory] = useState('all');
+  const savedReportPage = usePagination(savedReports,10,savedReportsSearch+'|'+savedReportsCategory);
   const [viewingSavedReport, setViewingSavedReport] = useState<any | null>(null);
   reportIdentityRef.current = (generatedReport || viewingSavedReport)?.session_id || null;
 
@@ -394,7 +403,7 @@ export const AnalyticsView: React.FC = () => {
           {
             id: 'init-msg',
             sender: 'assistant',
-            text: `Em đã khởi tạo xong báo cáo "${data.title || 'Phân tích dữ liệu'}". Nếu bạn muốn tinh chỉnh bất kỳ chi tiết nào (đổi loại biểu đồ, lọc theo chi nhánh/khu vực, thêm chỉ số cần theo dõi, viết lại khuyến nghị sắc bén hơn...), hãy nhập góp ý ngay bên dưới nhé!`,
+            text: `Em đã khởi tạo xong báo cáo "${data.title || 'Phân tích dữ liệu'}". Nếu bạn muốn tinh chỉnh bất kỳ chi tiết nào (đổi loại biểu đồ, lọc theo chi nhánh/khu vực, thêm chỉ số cần theo dõi, viết lại khuyến nghị sắc bén hơn...), hãy dùng ô Điều chỉnh phân tích ở đầu báo cáo nhé!`,
             time: timeStr
           }
         ]);
@@ -437,6 +446,9 @@ export const AnalyticsView: React.FC = () => {
       showToast('Chưa có báo cáo nào để tinh chỉnh', 'info');
       return;
     }
+    if(!repToRefine.session_id||!repToRefine.revision){
+      setRefinementNotice({tone:'error',text:'Bản lưu này chưa có phiên phân tích để điều chỉnh. Hãy tạo phân tích mới từ câu hỏi gốc.'});return;
+    }
 
     // Semantic changes are offered only in the AI assistant. Merely opening or
     // exporting a saved report must never spend a provider call.
@@ -456,6 +468,7 @@ export const AnalyticsView: React.FC = () => {
     const ticket = beginRequest();
     const refinedIdentity = repToRefine?.session_id || null;
     setIsRefining(true);
+    setRefinementNotice(null);
 
     try {
       const response = await fetch('/api/ai/refine-report', {
@@ -470,16 +483,15 @@ export const AnalyticsView: React.FC = () => {
           session_id: repToRefine?.session_id || null,
         }),
       });
-      if (!response.ok) {
-        throw new Error('Lỗi khi tinh chỉnh báo cáo từ máy chủ AI');
-      }
-      const data = await response.json();
+      const data = await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(typeof data.detail==='string'?data.detail:'Chưa áp dụng được điều chỉnh. Báo cáo đang xem được giữ nguyên.');
       // The user may have reset, edited or opened another report while this was running.
       if (!ticket.current() || refinedIdentity !== (reportIdentityRef.current || null)) return;
       if (!['success', 'needs_clarification', 'error'].includes(data.status)) throw new Error(data.message || 'Bản sửa chưa vượt qua kiểm chứng');
       if (['needs_clarification', 'error'].includes(data.status)) {
         setPendingClarification({ ...data, feedback: text });
         const replyText = data.assistant_reply || data.message || 'Trợ lý cần bạn làm rõ thêm yêu cầu tinh chỉnh.';
+        setRefinementNotice({tone:'error',text:replyText+' Yêu cầu chưa được áp dụng; báo cáo cũ được giữ nguyên.'});
         setRefinementChat(prev => [...prev, {
           id: `ai-${Date.now()}`,
           sender: 'assistant',
@@ -488,6 +500,7 @@ export const AnalyticsView: React.FC = () => {
         }]);
         showToast(replyText, 'info');
       } else if (data.status === 'success') {
+        setRefinementNotice({tone:'success',text:`Đã áp dụng điều chỉnh · bản báo cáo ${data.revision}. Số liệu và biểu đồ bên dưới đã cập nhật.`});
         setPendingClarification(null);
         setGeneratedReport(data);
         if (viewingSavedReport) {
@@ -517,6 +530,8 @@ export const AnalyticsView: React.FC = () => {
       if (!ticket.current()) return;
       console.error('Lỗi tinh chỉnh báo cáo:', err);
       showToast(err.message || 'Không thể tinh chỉnh báo cáo', 'error');
+      setRefinementNotice({tone:'error',text:(err.message||'Chưa áp dụng được điều chỉnh.')+' Báo cáo cũ được giữ nguyên.'});
+      setFollowUpPrompt(text);
       setRefinementChat(prev => [...prev, {
         id: `ai-err-${Date.now()}`,
         sender: 'assistant',
@@ -708,6 +723,7 @@ export const AnalyticsView: React.FC = () => {
     showToast(`Đang hiển thị bản trực quan: ${report.title}`, 'info');
   };
 
+  const [hubTarget, setHubTarget] = useState<{ id: string; title: string } | null>(null);
   const handleDeleteSavedReport = async (reportId: string, title: string) => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa báo cáo "${title}" khỏi kho lưu trữ?`)) {
       return;
@@ -1250,11 +1266,14 @@ export const AnalyticsView: React.FC = () => {
           </div>
         </div>
 
+        {activeTab==='ai_assistant'&&<RefinementComposer sessionId={rep.session_id} revision={rep.revision} supported={Boolean(rep.session_id&&rep.revision)} value={followUpPrompt} busy={isRefining} disabled={isRefining||isGeneratingAi} onSubmit={text=>void handleFollowUpRefine(text,rep)} onCancel={()=>{cancelActiveRequests();setRefinementNotice({tone:'info',text:'Đã dừng chờ kết quả. Báo cáo đang xem được giữ nguyên.'});}} onRestart={()=>{setAiPrompt(rep.prompt||'');backToQuestion();}} notice={refinementNotice} history={refinementChat}/>}
         {rep.analysis_spec ? <>
           {rep.prompt && reportHeading(rep) !== rep.prompt && <details className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Câu hỏi phân tích đầy đủ</summary><p className="mt-3 leading-relaxed">{rep.prompt}</p></details>}
           <AnalysisMeaning interpretation={rep.interpretation} compact />
           {showSqlCode && (rep.sql || rep.sql_query) && <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl text-xs overflow-auto">{rep.sql ? Object.entries(rep.sql).map(([name, sql]) => `-- ${name}\n${sql}`).join('\n\n') : rep.sql_query}</pre>}
           <AnalystDashboard report={rep} capabilities={aiCapabilities} onGroupAnalysis={isFromSavedList ? undefined : handleGroupAnalysis} editing={isRefining} onFollowUp={isFromSavedList ? undefined : q => { setAiPrompt(q); setAiGuided(null); backToQuestion(); }} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined}
+            geographicView={hasGeographicContext(rep)?<GeographicReportPanel key={`${rep.session_id}:${rep.revision}`} report={rep} preferReportMetric explorationEnabled={!isFromSavedList&&Boolean(rep.session_id&&rep.revision)}/>:undefined}
+            onReportChange={data => { cancelActiveRequests(); if (isFromSavedList) setViewingSavedReport(data); else setGeneratedReport(data); }}
             onSave={isFromSavedList ? undefined : handleSaveAiReport} onExport={() => handleOpenDocxPreview(rep)} />
         </> : <>
         {/* SECTION: Data Warnings / Sanity Alerts (Phase 3.3) */}
@@ -1403,7 +1422,8 @@ export const AnalyticsView: React.FC = () => {
             </div>
           )}
 
-          <AnalystViews charts={rep.charts || []} editing={isRefining} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
+          {geographicCharts(rep).length>0&&<GeographicReportPanel report={rep} preferReportMetric explorationEnabled={false}/>}
+          <AnalystViews charts={rep.charts || []} compact editing={isRefining} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
         </div>
 
         <AnalysisQualityScore assessment={rep.quality_assessment} />
@@ -1627,84 +1647,7 @@ export const AnalyticsView: React.FC = () => {
 
         </>}
 
-        {/* Góp ý chỉnh sửa báo cáo */}
-        {activeTab === 'ai_assistant' ? <details className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
-          <summary className="cursor-pointer text-sm font-semibold text-slate-700">Điều chỉnh phân tích</summary>
-          <div className="mb-3">
-            <p className="text-xs text-slate-500 mt-0.5">
-              Nhập yêu cầu để đổi phạm vi, cách nhóm hoặc cách trình bày.
-            </p>
-          </div>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleFollowUpRefine(undefined, rep);
-            }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
-          >
-            <input
-              type="text"
-              placeholder="VD: Đổi biểu đồ sang tròn donut, chỉ lọc chi nhánh TP.HCM, viết khuyến nghị chi tiết hơn..."
-              value={followUpPrompt}
-              onChange={(e) => setFollowUpPrompt(e.target.value)}
-              disabled={isRefining || isGeneratingAi}
-              className="flex-1 text-xs px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-slate-400 outline-none text-slate-800 placeholder:text-slate-400 transition-colors"
-            />
-            <button
-              type="submit"
-              disabled={isRefining || isGeneratingAi || !followUpPrompt.trim()}
-              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-            >
-              {isRefining ? (
-                <>
-                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Đang sửa báo cáo...</span>
-                </>
-              ) : (
-                <>
-                  <span>Gửi góp ý</span>
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Lịch sử trao đổi tinh chỉnh (Phase 4.1: Rich Conversation Panel) */}
-          {refinementChat.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-slate-100 space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              <div className="text-[11px] font-semibold text-slate-500">
-                Lịch sử trao đổi & Tinh chỉnh:
-              </div>
-              {refinementChat.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col text-xs rounded-xl p-3 ${
-                    msg.sender === 'user'
-                      ? 'bg-slate-100 text-slate-800 ml-4'
-                      : 'bg-emerald-50/80 border border-emerald-100 text-emerald-950 mr-4'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
-                    <span className="font-semibold text-slate-600">
-                      {msg.sender === 'user' ? '👤 Góp ý của bạn' : '🤖 Trợ lý AI'}
-                    </span>
-                    <span>{msg.time}</span>
-                  </div>
-                  <p className="leading-relaxed whitespace-pre-line">{msg.text}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </details> : <button className="rounded-xl border bg-white px-4 py-3 text-sm text-emerald-800" onClick={() => {
-          setGeneratedReport(rep); setViewingSavedReport(null); setAiStep(3);
-          setStoreActiveTab('ai_assistant'); setActiveTab('ai_assistant'); setAnalyticsSubTab('ai_assistant');
-        }}>Mở trong Trợ lý AI để điều chỉnh</button>}
+        {activeTab !== 'ai_assistant'&&<button className="rounded-xl border bg-white px-4 py-3 text-sm text-blue-800" onClick={()=>{setGeneratedReport(rep);setViewingSavedReport(null);setAiStep(3);setStoreActiveTab('ai_assistant');setActiveTab('ai_assistant');setAnalyticsSubTab('ai_assistant');}}>Mở trong Trợ lý AI để điều chỉnh</button>}
 
         {/* Footnote */}
         <div className="text-[11px] text-slate-400 text-center py-2 border-t border-slate-100">
@@ -2567,7 +2510,7 @@ export const AnalyticsView: React.FC = () => {
           <AnalysisModules active={activeModule} report={generatedReport} disabled={isProposingPlan || isGeneratingAi || isRefining} rerunTime={aiTimeRange === 'custom' ? (aiStart && aiEnd && aiStart <= aiEnd ? { mode: 'custom', start: aiStart, end: aiEnd } : null) : { mode: aiTimeRange }} onSelect={setActiveModule} onUpdate={inputs => { setAiPrompt(inputs.original_question || ''); }} onEdit={() => backToQuestion()} onReport={data => { setGeneratedReport(data); setAiStep(3); if (data.status === 'success') { setReportVersions([{ version: data.revision || 1, label: 'Chạy lại bài toán', report: data, time: new Date().toLocaleTimeString('vi-VN') }]); setActiveVersionIndex(0); setRefinementChat([]); } }} />
           {aiStep === 1 && (
             <div className="space-y-6">
-              <AnalystWorkspace capabilities={aiCapabilities} status={aiStatus} disabled={isProposingPlan || isGeneratingAi}
+              <AnalystWorkspace onCoverage={coverage=>setAiCapabilities((current:any)=>({...current,data_coverage:coverage}))} capabilities={aiCapabilities} status={aiStatus} disabled={isProposingPlan || isGeneratingAi}
                 value={{ prompt: aiPrompt, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission, guided: aiGuided }}
                 onChange={patch => {
                   // V3.3: any meaning-changing edit drops the stale plan/clarification/report and late responses.
@@ -2886,6 +2829,10 @@ export const AnalyticsView: React.FC = () => {
       {/* ──────────────────────────────────────────────────────────── */}
       {/* 6. QUẢN LÝ BÁO CÁO & LƯU TRỮ TÀI LIỆU (DOCX ARCHIVE) */}
       {/* ──────────────────────────────────────────────────────────── */}
+      {activeTab === 'saved_reports' && hubTarget && (
+        <HubPublishDialog report={hubTarget} onClose={() => setHubTarget(null)}
+          onPublished={title => { setHubTarget(null); showToast(`Đã thêm “${title}” vào Báo cáo & Phân tích`, 'success'); fetchSavedReports(); }} />
+      )}
       {activeTab === 'saved_reports' && (
         <div className="space-y-6">
           {viewingSavedReport ? (
@@ -2946,6 +2893,7 @@ export const AnalyticsView: React.FC = () => {
                       <option value="all">Tất cả danh mục</option>
                       <option value="ai_report">Báo cáo Word (.docx)</option>
                       <option value="ai_module">Module phân tích</option>
+                      <option value="hub_problem">Bài toán trên Báo cáo & Phân tích</option>
                       <option value="sales">Doanh thu & Bán hàng</option>
                       <option value="stores">Chi nhánh cửa hàng</option>
                     </select>
@@ -2960,6 +2908,10 @@ export const AnalyticsView: React.FC = () => {
                 </div>
               </div>
 
+              <div data-hub-publish-help className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/40 px-4 py-3">
+                <p className="max-w-3xl text-xs leading-5 text-slate-600"><strong className="font-medium text-slate-800">Thêm bài toán vào Báo cáo & Phân tích:</strong> chọn “+ Thêm bài toán” ở báo cáo cá nhân đã có định nghĩa phân tích. Bản lưu cũ chỉ đọc cần được phân tích và lưu lại trước khi thêm.</p>
+                <button type="button" onClick={() => setActiveTab('hub')} className="shrink-0 text-xs font-medium text-blue-700">Mở danh mục bài toán ↗</button>
+              </div>
               {/* Reports Table */}
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
                 {isLoadingSavedReports ? (
@@ -2986,7 +2938,7 @@ export const AnalyticsView: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-slate-700">
-                        {savedReports.map((report: any) => (
+                        {savedReportPage.items.map((report: any) => (
                           <tr key={report.id} className="hover:bg-slate-50/70 transition-colors">
                             <td className="px-5 py-3.5">
                               <div className="font-semibold text-slate-900 text-xs sm:text-sm">
@@ -3019,6 +2971,7 @@ export const AnalyticsView: React.FC = () => {
                             <td className="px-5 py-3.5 text-right whitespace-nowrap">
                               <div className="inline-flex items-center justify-end gap-2 whitespace-nowrap">
                                 <button
+                                  disabled={isHubProblem(report)}
                                   onClick={() => handleOpenDocxPreview(report.module_config || report)}
                                   title="Xem trước nội dung văn bản Word"
                                   className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-1.5 whitespace-nowrap"
@@ -3030,7 +2983,7 @@ export const AnalyticsView: React.FC = () => {
                                   Xem trước
                                 </button>
 
-                                {report.module_config && (
+                                {report.module_config && !isHubProblem(report) && (
                                   <button
                                     onClick={() => handleLoadSavedReportToView(report)}
                                     title="Mở bản phân tích trực quan toàn diện"
@@ -3044,7 +2997,7 @@ export const AnalyticsView: React.FC = () => {
                                 )}
 
                                 <button
-                                  disabled={!savedReportOwnership(report).owned}
+                                  disabled={!savedReportOwnership(report).owned || isHubProblem(report)}
                                   onClick={() => handleDownloadSavedDocx(report.id, report.title)}
                                   title="Tải tệp Word (.docx) về máy"
                                   className="px-3 py-1.5 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-1.5 whitespace-nowrap"
@@ -3055,6 +3008,26 @@ export const AnalyticsView: React.FC = () => {
                                   Tải Word
                                 </button>
 
+                                {!isHubProblem(report) && (
+                                  <button
+                                    data-hub-publish-button
+                                    disabled={!canPublishToHub(report) || !savedReportOwnership(report).owned}
+                                    onClick={() => setHubTarget({ id: report.id, title: report.title })}
+                                    title={!savedReportOwnership(report).owned ? 'Bản lưu cũ chỉ đọc. Tạo và lưu lại báo cáo cá nhân để thêm bài toán.' : !canPublishToHub(report) ? 'Báo cáo chưa có định nghĩa phân tích để chạy lại. Tạo báo cáo từ Trợ lý AI rồi lưu lại.' : 'Thêm báo cáo này thành bài toán dựng sẵn ở tab Báo cáo & Phân tích'}
+                                    className="px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl shadow-2xs transition-colors cursor-pointer whitespace-nowrap disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
+                                  >
+                                    + Thêm bài toán
+                                  </button>
+                                )}
+                                {isHubProblem(report) && (
+                                  <button
+                                    onClick={() => setActiveTab('hub')}
+                                    title="Mở bài toán trong tab Báo cáo & Phân tích"
+                                    className="px-2.5 py-1.5 text-xs font-medium text-emerald-800 bg-white hover:bg-emerald-50 border border-emerald-200 rounded-xl shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
+                                  >
+                                    Đang ở Báo cáo & Phân tích ↗
+                                  </button>
+                                )}
                                 <button
                                   disabled={!savedReportOwnership(report).owned}
                                   onClick={() => handleDeleteSavedReport(report.id, report.title)}
@@ -3071,6 +3044,7 @@ export const AnalyticsView: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
+                    <Pagination {...savedReportPage} label="Báo cáo đã lưu" noun="báo cáo đã tải" />
                   </div>
                 )}
               </div>

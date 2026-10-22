@@ -1,0 +1,73 @@
+{
+  "passed": true,
+  "harnesses": [
+    {
+      "harness": "codex_acceptance_properties",
+      "returncode": 0,
+      "seconds": 16.51,
+      "reason": "Required tmp fixture absent in fresh container; frozen fixture reseeded, no product change",
+      "evidence": "rechecks/codex_acceptance_properties.log"
+    },
+    {
+      "harness": "codex_holdout_cohorts",
+      "returncode": 0,
+      "seconds": 5.4
+    },
+    {
+      "harness": "codex_remaining_holdouts",
+      "returncode": 0,
+      "seconds": 7.94
+    },
+    {
+      "harness": "codex_identity_holdouts",
+      "returncode": 0,
+      "seconds": 4.09,
+      "reason": "Required tmp fixture absent in fresh container; frozen fixture reseeded, no product change",
+      "evidence": "rechecks/codex_identity_holdouts.log"
+    },
+    {
+      "harness": "codex_risk_equivalence",
+      "returncode": 0,
+      "seconds": 3.49
+    },
+    {
+      "harness": "codex_family_matrix",
+      "returncode": 0,
+      "seconds": 61.13
+    },
+    {
+      "harness": "codex_city_inventory_check",
+      "returncode": 0,
+      "seconds": 44.06
+    },
+    {
+      "harness": "codex_advertised_roundtrip",
+      "returncode": 0,
+      "seconds": 152.33
+    },
+    {
+      "harness": "semantic_eval_v30",
+      "returncode": 0,
+      "assertions_passed": true
+    },
+    {
+      "harness": "semantic_reference_eval_v34",
+      "returncode": 0,
+      "assertions_passed": true
+    },
+    {
+      "harness": "semantic_eval_v34",
+      "returncode": 0,
+      "assertions_passed": true
+    },
+    {
+      "harness": "domain-matrix234",
+      "returncode": 0
+    }
+  ],
+  "initial_setup_failures": [
+    "codex_acceptance_properties:missing/tmp/frozen fixture",
+    "codex_identity_holdouts:missing/tmp/observed IDs"
+  ],
+  "note": "Initial missing-fixture attempts preserved; both rerun unchanged assertions after seeding immutable AF fixture and observed business IDs. Product source unchanged."
+}

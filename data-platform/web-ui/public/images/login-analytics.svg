@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200" viewBox="0 0 1920 1200" fill="none">
+  <defs>
+    <linearGradient id="base" x1="140" y1="0" x2="1780" y2="1200" gradientUnits="userSpaceOnUse"><stop stop-color="#080c15"/><stop offset=".55" stop-color="#0b1425"/><stop offset="1" stop-color="#0b1a35"/></linearGradient>
+    <radialGradient id="light" cx="0" cy="0" r="1" gradientTransform="translate(930 855) rotate(90) scale(680 940)" gradientUnits="userSpaceOnUse"><stop stop-color="#1d4ed8" stop-opacity=".24"/><stop offset="1" stop-color="#1d4ed8" stop-opacity="0"/></radialGradient>
+    <linearGradient id="plane" x1="600" y1="650" x2="600" y2="1200" gradientUnits="userSpaceOnUse"><stop stop-color="#60a5fa" stop-opacity="0"/><stop offset=".5" stop-color="#60a5fa" stop-opacity=".13"/><stop offset="1" stop-color="#60a5fa" stop-opacity=".03"/></linearGradient>
+    <linearGradient id="line" x1="60" y1="1000" x2="1250" y2="680" gradientUnits="userSpaceOnUse"><stop stop-color="#1d4ed8" stop-opacity=".08"/><stop offset=".45" stop-color="#3b82f6"/><stop offset="1" stop-color="#bfdbfe"/></linearGradient>
+    <linearGradient id="area" x1="700" y1="730" x2="700" y2="1100" gradientUnits="userSpaceOnUse"><stop stop-color="#2563eb" stop-opacity=".3"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></linearGradient>
+    <linearGradient id="panel" x1="700" y1="680" x2="1150" y2="1000" gradientUnits="userSpaceOnUse"><stop stop-color="#1c3359" stop-opacity=".5"/><stop offset="1" stop-color="#0b1526" stop-opacity=".6"/></linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#60a5fa" stop-opacity=".9"/><stop offset="1" stop-color="#2563eb" stop-opacity=".08"/></linearGradient>
+    <pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#93c5fd" fill-opacity=".12"/></pattern>
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5"/></filter>
+  </defs>
+  <path fill="url(#base)" d="M0 0h1920v1200H0z"/>
+  <path fill="url(#dots)" d="M0 0h1920v1200H0z"/>
+  <path fill="url(#light)" d="M0 0h1920v1200H0z"/>
+
+  <!-- A perspective data plane. Decorative only: no business metrics or labels. -->
+  <g stroke="url(#plane)" stroke-width="1">
+    <path d="M-350 1200 520 650M-150 1200 565 650M50 1200 610 650M250 1200 655 650M450 1200 700 650M650 1200 745 650M850 1200 790 650M1050 1200 835 650M1250 1200 880 650M1450 1200 925 650M1650 1200 970 650M1850 1200 1015 650M2050 1200 1060 650M2250 1200 1105 650"/>
+    <path d="M0 705h1920M0 750h1920M0 810h1920M0 890h1920M0 990h1920M0 1120h1920"/>
+  </g>
+
+  <g opacity=".55" stroke="#3b82f6" stroke-width="1">
+    <path d="M1270 140h180l70 90h200M1370 140v170l80 70h280M1450 140v-70h310" stroke-opacity=".2"/>
+    <circle cx="1270" cy="140" r="4" fill="#93c5fd"/><circle cx="1520" cy="230" r="4" fill="#60a5fa"/><circle cx="1450" cy="380" r="4" fill="#93c5fd"/>
+  </g>
+
+  <!-- Quiet glass chart surfaces behind the main scene. -->
+  <g transform="translate(735 650) rotate(-9)">
+    <rect width="416" height="250" rx="16" fill="url(#panel)" stroke="#93c5fd" stroke-opacity=".16"/>
+    <rect x="23" y="23" width="56" height="5" rx="2.5" fill="#93c5fd" fill-opacity=".45"/>
+    <rect x="23" y="37" width="90" height="3" rx="1.5" fill="#93c5fd" fill-opacity=".15"/>
+    <circle cx="380" cy="28" r="3" fill="#60a5fa"/>
+    <g stroke="#bfdbfe" stroke-opacity=".08"><path d="M24 85h368M24 130h368M24 175h368M24 220h368"/></g>
+    <g fill="url(#bar)"><rect x="37" y="169" width="23" height="51" rx="3"/><rect x="81" y="143" width="23" height="77" rx="3"/><rect x="125" y="156" width="23" height="64" rx="3"/><rect x="169" y="114" width="23" height="106" rx="3"/><rect x="213" y="124" width="23" height="96" rx="3"/><rect x="257" y="91" width="23" height="129" rx="3"/><rect x="301" y="102" width="23" height="118" rx="3"/><rect x="345" y="65" width="23" height="155" rx="3"/></g>
+    <path d="m48 153 44-18 44 8 44-48 44 17 44-38 44 11 44-40" stroke="#93c5fd" stroke-opacity=".7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g transform="translate(430 840) rotate(-9)">
+    <rect width="229" height="154" rx="14" fill="url(#panel)" stroke="#93c5fd" stroke-opacity=".15"/>
+    <circle cx="74" cy="77" r="39" stroke="#60a5fa" stroke-opacity=".1" stroke-width="10"/>
+    <path d="M74 38a39 39 0 1 1-36 54" stroke="#3b82f6" stroke-width="10" stroke-linecap="round"/>
+    <path d="M137 57h62M137 75h43M137 94h53" stroke="#93c5fd" stroke-opacity=".25" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Layered trajectories give the scene depth without imitating a real report. -->
+  <path d="M-80 1045c140 6 215-82 317-58s145-115 253-96 133-88 235-69 124-93 220-69 133-85 211-140v487H-80Z" fill="url(#area)"/>
+  <path d="M-80 1045c140 6 215-82 317-58s145-115 253-96 133-88 235-69 124-93 220-69 133-85 211-140" stroke="url(#line)" stroke-width="3"/>
+  <path d="M-80 1095c180 8 210-40 331-19s136-83 260-63 145-113 253-91 141-73 243-62 157-100 220-142" stroke="#3b82f6" stroke-opacity=".3" stroke-width="1.5"/>
+  <g fill="#bfdbfe">
+    <circle cx="237" cy="987" r="4"/><circle cx="490" cy="891" r="4"/><circle cx="725" cy="822" r="4"/><circle cx="945" cy="753" r="4"/><circle cx="1156" cy="613" r="5"/>
+  </g>
+  <g fill="#60a5fa" opacity=".45" filter="url(#glow)"><circle cx="490" cy="891" r="8"/><circle cx="725" cy="822" r="8"/><circle cx="945" cy="753" r="8"/></g>
+  <g stroke="#93c5fd" stroke-opacity=".16" stroke-dasharray="3 7"><path d="M490 891v210M725 822v279M945 753v348M1156 613v488"/></g>
+  <g fill="#60a5fa" fill-opacity=".5"><circle cx="110" cy="800" r="2"/><circle cx="348" cy="735" r="2"/><circle cx="638" cy="1033" r="2"/><circle cx="1200" cy="1020" r="2"/><circle cx="1320" cy="560" r="2"/><circle cx="1780" cy="910" r="2"/></g>
+</svg>

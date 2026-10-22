@@ -49,6 +49,18 @@ class CertifiedHealthTests(TestCase):
         self.assertNotEqual(health.certified_period_health(projected, ['silver.fixture'],
             '2026-08-31', '2026-09-30', now=self.now).get('completeness'), 'complete')
 
+    def test_recent_full_reconcile_is_reconciled_never_complete_and_expires(self):
+        self.contract['full_reconcile_seconds'] = 3600
+        self.project()
+        self.checkpoint['last_full_reconcile_at'] = self.now-timedelta(minutes=10)
+        projected = self.reproject()
+        self.assertEqual(projected['datasets']['orders.fixture']['completeness'], 'reconciled')
+        self.assertEqual(projected['views']['silver.fixture']['completeness'], 'reconciled')
+        self.assertNotEqual(health.certified_period_health(projected, ['silver.fixture'],
+            '2026-09-02', '2026-09-30', now=self.now).get('completeness'), 'complete')  # never authorizes history
+        self.checkpoint['last_full_reconcile_at'] = self.now-timedelta(hours=3)
+        self.assertEqual(self.reproject()['datasets']['orders.fixture']['completeness'], 'unknown')
+
     def test_physical_snapshot_never_enables_closed_history(self):
         projected = self.project(snapshot=True)
         self.assertEqual(projected['datasets']['orders.fixture']['completeness'], 'complete')

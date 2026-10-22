@@ -1,0 +1,514 @@
+{
+  "status": "PASS_WITH_DOCUMENTED_STARTUP_RECHECK",
+  "unique_cases": 97,
+  "passed": 95,
+  "optional_skipped": 2,
+  "attempts": [
+    {
+      "receipt": "codex-web-e2e-policy33-all-final.log",
+      "passed": 76,
+      "failed": 1,
+      "skipped": 2
+    },
+    {
+      "receipt": "codex-web-map-policy33-recheck.log",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 1
+    },
+    {
+      "receipt": "codex-web-ranking-policy33-v2.log",
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "limits": "Initial full UI attempt:76pass1WebGL startup timeout2optional skip. Unchanged renderer module rechecked idle:2pass1optionalskip; all assertions retained. Additional18real-pipeline ranking-artifact UI cases pass. This is consolidation with explicit history, not a claim that initial full attempt had no failures.",
+  "cases": [
+    {
+      "id": "tests/e2e/ai-final-depth.spec.ts:25:1 › comprehensive report shows all 8 relevant views, coverage chip and collapsed narrative without \"Xem thêm\"",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/ai-final-depth.spec.ts:58:1 › focused report shows exactly its 4 core views",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:8:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › shows exactly seven modes and keeps hidden legacy missions out of the picker",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:19:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › \"Phân tích\" runs one job through /analysis-jobs without opening the plan step; double click = one submission",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:37:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › \"Xem kế hoạch\" keeps the optional preview/approve flow on its own endpoint",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:49:3 › State isolation - stale responses never come back › propose is slow, the user goes back to edit, the old plan arrives later: no plan appears",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:64:3 › State isolation - stale responses never come back › generate is slow, the user stops: the late report is dropped and the workspace is reset",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:80:3 › State isolation - stale responses never come back › lost POST response: reconnect resumes the SAME idempotency key and never starts a new interpretation",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:103:3 › State isolation - stale responses never come back › changing the period after a plan was proposed drops that plan",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:117:3 › Risk scan, redirect and typed actions › a slow Risk scan is dropped when the mission changes (no scan published into another mission)",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:134:3 › Risk scan, redirect and typed actions › a REDIRECT fix switches the mission but keeps the deliberate question",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:167:3 › Guided input and typed clarification › untouched guided builder sends a guided contract; editing the text sends free text only (no stale guided intent)",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:203:3 › Refinement and reset on a finished report › a slow refinement that finishes after \"Hỏi câu mới\" does not resurrect the old report",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/analyst-workspace.spec.ts:227:3 › Refinement and reset on a finished report › cancelling while the job HTTP is still running cancels the owned task and publishes nothing late",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/assistant-geography-layout.spec.ts:20:1 › AI uses proportional rows, layout controls and the requested map metric without a new AI job",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/assistant-geography-layout.spec.ts:41:1 › whole-chain map drills through actual loaded stores, preserves zero provinces and makes no AI or geography request",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/assistant-geography-layout.spec.ts:58:1 › legacy AI results share one grid rather than isolated role sections",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/assistant-geography-layout.spec.ts:65:1 › six dense AI views use 40/60 then 30/30/40 and an unclipped full-width heatmap",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/assistant-geography-layout.spec.ts:87:1 › overview franchise and satellite maps isolate province revenue, AOV and branch drilldown without AI",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/capability-catalog.spec.ts:3:1 › catalog keeps stable panes, filters, closes with Escape and fits mobile",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/catalog-layout-audit.spec.ts:8:1 › every live catalog dashboard renders readable rows on desktop, laptop and mobile",
+      "status": "OPTIONAL_SKIPPED",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/chart-ux-regression.spec.ts:12:1 › forecast keeps fixed plot height, readable axes and a 70/30 summary across viewport sizes",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/chart-ux-regression.spec.ts:18:1 › typing into refinement does not mutate or rerender the heavy chart subtree or submit any request",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/chart-ux-regression.spec.ts:25:1 › AI store and kiosk questions have a separately labelled map, native store pins and no extra AI job",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-layout.spec.ts:24:1 › kiosk gives dense rankings more width than a sparse trend and compact comparison",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-layout.spec.ts:38:1 › reports mix two and three charts, retain controls on resize and keep expanded details local",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-layout.spec.ts:68:1 › overview uses a leading trend, three complementary panels and a full-width transaction table",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-v35.spec.ts:10:1 › hub loads metadata only, searches sixteen domains and runs only selected preset",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-v35.spec.ts:34:1 › switching dashboard cancels its owned task and late response cannot replace current report",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-v35.spec.ts:55:1 › login right card has local background, password toggle and mobile layout without data requests",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-v35.spec.ts:74:1 › other tabs never resume an AI job; entering the assistant is required",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-v35.spec.ts:94:1 › leaving the AI assistant cancels owned work before another tab can continue it",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-v35.spec.ts:115:1 › BI and AI share clean chart cards, collapsed explanations and responsive asymmetric rows",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/dashboard-v35.spec.ts:184:1 › architecture is interactive, honest about unmeasured runtime and never starts AI or services",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/executive-overview.spec.ts:28:1 › executive overview exposes distinct business dimensions, local text discovery and full searchable store ranking",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/executive-overview.spec.ts:49:1 › source warning explains a failing payment load while decline labels remain ordinary KPI comparisons",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/executive-overview.spec.ts:57:1 › typing an unmatched province never applies a filter and keyboard selection restores the chosen label",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/executive-overview.spec.ts:64:1 › a failed optional customer source leaves sales visible and cannot reuse customer counts as zero",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/executive-overview.spec.ts:70:1 › a typed reporting period loads the four sources for the same period without starting AI",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/geography-exploration.spec.ts:26:1 › province revenue and branch presence lead to a complete searchable, comparable store ranking and store analysis",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/geography-exploration.spec.ts:59:1 › a delayed province response cannot replace a newly selected province or trigger an analysis job",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/geography-exploration.spec.ts:69:1 › recorded store coordinates zoom to street level and a native point opens the owned store analysis",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/hub-discovery-map.spec.ts:28:1 › hub searches the full preset catalog without accents, discovers feature types and connects header search",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/hub-discovery-map.spec.ts:59:1 › map keeps unknown/missing and zero distinct, handles metric series, exports and stages governed scopes",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/hub-discovery-map.spec.ts:99:1 › saved reports expose publishing, explain legacy restrictions, prevent duplicate posts and refresh the hub",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/hub-discovery-map.spec.ts:131:1 › large geographic results page the detail list while retaining every map observation",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/input-integrity.spec.ts:8:1 › fresh payload, pending, stale response, network error and IME cannot submit; correcting name enables exactly one job",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/input-integrity.spec.ts:33:1 › invalid refinement keeps draft and report, checks locally while typing, then applies only current validated text",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/interface-cleanup.spec.ts:7:1 › architecture filters, zooms, exports and exits fullscreen without starting runtime work",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/interface-cleanup.spec.ts:42:1 › admin pages loaded logs and resets search without refetching",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/interface-cleanup.spec.ts:63:1 › explorer pages results and exports every loaded row",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/interface-cleanup.spec.ts:84:1 › saved report pagination preserves ownership and server loading",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:30:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › anonymous login gate makes no protected platform requests",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:38:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › identity login returns account state and never stores a token in browser storage",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:53:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › expired protected session returns to sign in before a report can appear",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:65:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › permission denial keeps the signed-in workspace and the draft",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:77:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › logout removes the report before a different account can sign in",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:86:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › keyboard group inspect uses the exact composite artifact key and makes no new AI request",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:110:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › group analysis prepares a new governed request and waits for explicit submission",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:136:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › mobile group inspect shows revoked access without a generic AI retry",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:150:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › saved report reopens current server presentation with real donut rows and quarantines legacy claims",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:173:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › blocked and unknown sources disclose measured health and unknown completeness",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:187:3 › V3.4 BI data errors and measured values › marts503 is a visible error without zero KPI and retry recovers real data",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:207:3 › V3.4 BI data errors and measured values › valid zero data is separate from a network error and never fabricates business rows",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:220:1 › same-account reauthentication restores the draft without resubmitting paid work",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:237:1 › disabled SQL metadata is loaded only on Explorer and cannot show as a dashboard data failure",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:255:1 › BI export fails visibly on denial and only reports success after receiving an actual CSV download",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/platform-v34.spec.ts:280:1 › city share keeps the full population denominator and displays unscaled money",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/profile-logout.spec.ts:4:1 › header logout works on mobile, blocks duplicate clicks and retains session on failure",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/province-map.spec.ts:20:1 › real WebGL renderer retains all province data through style, palette, camera and fullscreen changes",
+      "status": "PASS",
+      "receipt": "codex-web-map-policy33-recheck.log"
+    },
+    {
+      "id": "tests/e2e/province-map.spec.ts:46:1 › detailed offline SVG fallback supports keyboard selection and distinguishes missing values from zero",
+      "status": "PASS",
+      "receipt": "codex-web-map-policy33-recheck.log"
+    },
+    {
+      "id": "tests/e2e/province-map.spec.ts:58:1 › live OpenFreeMap street tiles and province labels render together",
+      "status": "OPTIONAL_SKIPPED",
+      "receipt": "codex-web-map-policy33-recheck.log"
+    },
+    {
+      "id": "tests/e2e/refinement-composer.spec.ts:11:1 › top composer fills examples without running, applies one revision and preserves the report on HTTP failure",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/source-operations.spec.ts:12:1 › checking source health refreshes the banner without creating a sync or AI job",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/source-operations.spec.ts:19:1 › authorized click creates one sync and polls a partial result without marking affected sources healthy",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/source-operations.spec.ts:33:1 › read-only accounts can check but do not see a sync action",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/workspace-interaction.spec.ts:19:1 › pending selections batch into one semantic revision; old snapshot stays visible until atomic publish",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/workspace-interaction.spec.ts:53:1 › governed drill breadcrumb, back/reset and pending chips are keyboard usable without auto submission",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/workspace-interaction.spec.ts:74:1 › failed revision keeps the approved snapshot and typed filter state",
+      "status": "PASS",
+      "receipt": "codex-web-e2e-policy33-all-final.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination top-5-focused",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination top-5-deep",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination top-5-comprehensive",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination top-20-focused",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination top-20-deep",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination top-20-comprehensive",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination top-100-focused",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination top-100-deep",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination top-100-comprehensive",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination bottom-5-focused",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination bottom-5-deep",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination bottom-5-comprehensive",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination bottom-20-focused",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination bottom-20-deep",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination bottom-20-comprehensive",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination bottom-100-focused",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination bottom-100-deep",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    },
+    {
+      "id": "tests/e2e/ranking-pagination-acceptance.spec.ts:9:28 › ranking claims and map pagination bottom-100-comprehensive",
+      "status": "PASS",
+      "receipt": "codex-web-ranking-policy33-v2.log"
+    }
+  ]
+}

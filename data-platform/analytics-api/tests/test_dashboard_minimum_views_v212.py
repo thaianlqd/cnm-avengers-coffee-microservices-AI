@@ -51,7 +51,7 @@ class DashboardMinimumTests(f.unittest.TestCase):
     def test_all_sixteen_domain_default_lenses_have_four_verified_views(self):
         from services.domain_intelligence_service import DomainIntelligence
         profiles=DomainIntelligence(self.catalog).available()
-        self.assertEqual(len(profiles),16)
+        self.assertEqual(len(profiles),26)  # PLAN 20/10: +10 business-coverage domains
         for domain,profile in profiles.items():
             with self.subTest(domain=domain):
                 b=profile['analytical_lenses'][0]['blueprint']

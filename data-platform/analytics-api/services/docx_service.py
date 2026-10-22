@@ -131,39 +131,15 @@ def _clean_val(val: Any, fallback: Any = None, card: Any = None) -> str:
     if val is None:
         return "—"
     s = str(val).strip()
-    if s.startswith("(") and s.endswith(")"):
-        s = s[1:-1].strip()
-    is_sql = bool(re.match(r"^\(?\s*SELECT\b", s, re.IGNORECASE)) or "FROM SILVER." in s.upper() or len(s) > 60
-    placeholder_phrases = [
-        "xem kết quả", "xem ket qua", "kết quả", "ket qua",
-        "chờ kết quả", "cho ket qua", "đang tính", "tự động tính",
-        "chưa có", "chua co", "xem chi tiết", "chờ phân tích",
-        "placeholder", "tbd", "undefined", "n/a", "none", "null", "—", "-"
-    ]
-    s_lower = s.lower()
-    is_placeholder = s.startswith("<") or any(p in s_lower for p in placeholder_phrases)
-    if is_sql or is_placeholder:
-        if fallback and not any(p in str(fallback).lower() for p in placeholder_phrases):
-            try:
-                f_num = float(str(fallback).replace(",", ""))
-                if f_num.is_integer() and abs(f_num) >= 100:
-                    return f"{int(f_num):,}"
-            except Exception:
-                pass
-            return str(fallback)
-        lbl = (card.get("label") or "").lower() if isinstance(card, dict) else ""
-        unit = (card.get("unit") or "").lower().strip() if isinstance(card, dict) else ""
-        if "aov" in lbl or "giá trị đơn" in lbl:
-            return "247,056"
-        if "khách" in lbl or "khách" in unit or "lưu lượng" in lbl:
-            return "8.7"
-        if "đơn" in lbl or unit in ("đơn", "ly", "order", "orders") or "sản lượng" in lbl:
-            return "2,325"
-        if "doanh thu" in lbl or "tiền" in lbl or unit in ("vnđ", "vnd", "đ", "đồng") or "tổng thu" in lbl:
-            return "574,404,750"
-        if "tỷ lệ" in lbl or "%" in unit or "hoàn thành" in lbl:
-            return "98.5%"
-        return "Dẫn đầu"
+    # Missing values remain missing. Formatting must never manufacture a
+    # plausible KPI or treat the minus sign of a genuine number as a placeholder.
+    is_sql = bool(re.match(r"^\(?\s*SELECT\b", s, re.IGNORECASE)) or "FROM SILVER." in s.upper()
+    missing = {"xem kết quả", "xem ket qua", "kết quả", "ket qua", "chờ kết quả",
+               "cho ket qua", "đang tính", "tự động tính", "chưa có", "chua co",
+               "xem chi tiết", "chờ phân tích", "placeholder", "tbd", "undefined",
+               "n/a", "none", "null", "—", "-"}
+    if is_sql or s.lower() in missing or s.startswith("<"):
+        return _clean_val(fallback) if fallback is not None else "—"
     try:
         f = float(s.replace(",", ""))
         if f.is_integer() and abs(f) >= 100:
@@ -214,6 +190,13 @@ def _render_text_block(
 ):
     if not text:
         return
+    if isinstance(text, (list, tuple)):
+        for item in text:
+            _render_text_block(container, item, font_name=font_name, font_size=font_size,
+                default_color=default_color, default_bold=default_bold, space_after=space_after)
+        return
+    if isinstance(text, dict):
+        text = next((text[k] for k in ('text', 'finding', 'statement', 'answer') if isinstance(text.get(k), str)), '')
     raw_lines = str(text).strip().split("\n")
     for raw_line in raw_lines:
         line = raw_line.strip()
@@ -240,295 +223,155 @@ def _render_text_block(
 
 
 def _generate_chart_image(chart: Dict[str, Any]) -> Optional[io.BytesIO]:
+    """Render the supplied view without resampling, zero filling or tail removal.
+
+    Dense/unsupported/invalid encodings use the explicit table fallback below.
+    Missing time buckets break lines; elapsed days determine x positions.
     """
-    Renders high-resolution, modern corporate charts using matplotlib
-    to replace table mockups with genuine executive visual charts.
-    """
-    c_type = str(chart.get("chart_type") or "").lower()
-    raw_data = chart.get("data") or []
-    if not raw_data:
+    import math
+    import textwrap
+    from services.forecast_service import _next
+    kind = str(chart.get('chart_type') or '').lower()
+    rows = chart.get('data') or []
+    temporal = kind in {'line', 'area', 'multi_line', 'multiline'}
+    if not rows or len(rows) > (80 if temporal else 20) or kind not in {
+            'line', 'area', 'multi_line', 'multiline', 'bar', 'horizontal_bar', 'donut'}:
         return None
-
-    palette = [
-        "#1E3A8A", "#2563EB", "#0284C7", "#059669", 
-        "#10B981", "#D97706", "#F59E0B", "#7C3AED", "#6366F1"
-    ]
-    unit = str(chart.get("unit") or "").strip()
-
-    try:
-        if c_type == "horizontal_bar":
-            items = raw_data[:8]
-            labels = [str(d.get("label") or d.get("name") or "") for d in items][::-1]
-            vals = [float(d.get("value") or 0) for d in items][::-1]
-
-            fig, ax = plt.subplots(figsize=(6.5, max(2.6, len(items) * 0.44)), dpi=200)
-            fig.patch.set_facecolor("#FFFFFF")
-            ax.set_facecolor("#FFFFFF")
-
-            colors = [palette[i % len(palette)] for i in range(len(items))][::-1]
-            bars = ax.barh(range(len(items)), vals, color=colors, height=0.55, edgecolor="none")
-
-            ax.set_yticks(range(len(items)))
-            short_labels = [l if len(l) <= 24 else l[:22] + "..." for l in labels]
-            ax.set_yticklabels(short_labels, fontsize=8.5, fontweight="normal", color="#1E293B")
-
-            max_val = max(vals) if vals else 1
-            ax.set_xlim(0, max_val * 1.30)
-
-            for bar, val in zip(bars, vals):
-                w = bar.get_width()
-                val_str = _format_axis_value(val, unit)
-                ax.text(
-                    w + max_val * 0.02,
-                    bar.get_y() + bar.get_height() / 2,
-                    val_str,
-                    va="center",
-                    ha="left",
-                    fontsize=8.5,
-                    fontweight="bold",
-                    color="#1E293B",
-                )
-
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            ax.spines["bottom"].set_visible(False)
-            ax.spines["left"].set_color("#CBD5E1")
-            ax.xaxis.set_visible(False)  # Clean aesthetic: labels are already direct on bars
-            ax.tick_params(left=False)
-
-            plt.tight_layout()
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", dpi=200, bbox_inches="tight")
-            plt.close(fig)
-            buf.seek(0)
-            return buf
-
-        elif c_type == "donut":
-            items = raw_data[:6]
-            labels = [str(d.get("label") or d.get("name") or "") for d in items]
-            vals = [float(d.get("value") or 0) for d in items]
-            if sum(vals) == 0:
+    if any(not isinstance(row, dict) for row in rows):
+        return None
+    def number(value):
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    labels = [str(row.get('label') or row.get('name') or '') for row in rows]
+    palette = ['#1E3A8A', '#2563EB', '#0284C7', '#059669', '#D97706', '#7C3AED']
+    unit = str(chart.get('unit') or '')
+    dates, x = [], list(range(len(rows)))
+    series = []
+    if temporal:
+        try:
+            dates = [datetime.fromisoformat(label.replace('Z', '+00:00')) for label in labels]
+            x = [(dt - dates[0]).total_seconds() / 86400 for dt in dates]
+            if any(right <= left for left, right in zip(x, x[1:])):
                 return None
-
-            fig, ax = plt.subplots(figsize=(6.5, 3.2), dpi=200)
-            fig.patch.set_facecolor("#FFFFFF")
-            ax.set_facecolor("#FFFFFF")
-
-            colors = [palette[i % len(palette)] for i in range(len(items))]
-            wedges, texts, autotexts = ax.pie(
-                vals,
-                labels=labels,
-                autopct="%1.1f%%",
-                startangle=90,
-                colors=colors,
-                pctdistance=0.76,
-                wedgeprops=dict(width=0.45, edgecolor="white", linewidth=2.5),
-                textprops=dict(color="#1E293B", fontsize=8.5, fontweight="bold"),
-            )
-            for at in autotexts:
-                at.set_color("#FFFFFF")
-                at.set_fontsize(8.5)
-                at.set_fontweight("bold")
-
-            ax.text(
-                0,
-                0,
-                "Tỷ Trọng\nCơ Cấu",
-                ha="center",
-                va="center",
-                fontsize=9.5,
-                fontweight="bold",
-                color="#1E3A8A",
-            )
-
-            plt.tight_layout()
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", dpi=200, bbox_inches="tight")
-            plt.close(fig)
-            buf.seek(0)
-            return buf
-
-        elif c_type in ("area", "line"):
-            items = raw_data[:24]
-            labels = [str(d.get("label") or d.get("name") or "") for d in items]
-            vals = [float(d.get("value") or 0) for d in items]
-
-            fig, ax = plt.subplots(figsize=(6.5, 2.8), dpi=200)
-            fig.patch.set_facecolor("#FFFFFF")
-            ax.set_facecolor("#FFFFFF")
-
-            x_idx = range(len(items))
-            ax.plot(
-                x_idx,
-                vals,
-                color="#1E3A8A",
-                linewidth=2.5,
-                marker="o",
-                markersize=4.5,
-                markerfacecolor="#059669",
-                markeredgecolor="#FFFFFF",
-                markeredgewidth=1.2,
-            )
-            ax.fill_between(x_idx, vals, color="#3B82F6", alpha=0.15)
-
-            ax.set_xticks(list(x_idx))
-            step = max(1, len(items) // 7)
-            clean_labels = [l if i % step == 0 else "" for i, l in enumerate(labels)]
-            ax.set_xticklabels(
-                clean_labels,
-                fontsize=8,
-                color="#64748B",
-                rotation=15 if len(items) > 10 else 0,
-            )
-
-            ax.yaxis.set_major_formatter(
-                ticker.FuncFormatter(lambda y, _: _format_axis_value(y))
-            )
-            max_v = max(vals) if vals else 1
-            ax.set_ylim(0, max_v * 1.15)
-
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            ax.spines["left"].set_color("#CBD5E1")
-            ax.spines["bottom"].set_color("#CBD5E1")
-            ax.grid(True, linestyle="--", alpha=0.35, color="#E2E8F0")
-            ax.tick_params(colors="#64748B", labelsize=8)
-
-            plt.tight_layout()
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", dpi=200, bbox_inches="tight")
-            plt.close(fig)
-            buf.seek(0)
-            return buf
-
-        elif c_type == "heatmap":
-            days_order = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
-            hours_set = set()
-            for d in raw_data:
-                if d.get("x"):
-                    hours_set.add(str(d["x"]))
-            hours_order = sorted(list(hours_set)) if hours_set else ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"]
-            
-            matrix = np.zeros((len(days_order), len(hours_order)))
-            val_map = {(str(d.get("y")), str(d.get("x"))): float(d.get("value") or 0) for d in raw_data}
-            for r_i, day in enumerate(days_order):
-                for c_i, hr in enumerate(hours_order):
-                    matrix[r_i, c_i] = val_map.get((day, hr), 0)
-
-            fig, ax = plt.subplots(figsize=(6.5, 3.2), dpi=200)
-            fig.patch.set_facecolor("#FFFFFF")
-            ax.set_facecolor("#FFFFFF")
-            
-            cax = ax.imshow(matrix, cmap="Blues", aspect="auto")
-            ax.set_xticks(range(len(hours_order)))
-            ax.set_xticklabels([h.split(":")[0] + "h" for h in hours_order], fontsize=7.5, color="#1E293B")
-            ax.set_yticks(range(len(days_order)))
-            ax.set_yticklabels(days_order, fontsize=8, color="#1E293B")
-            
-            plt.colorbar(cax, ax=ax, orientation="vertical", pad=0.02, shrink=0.85)
-            plt.tight_layout()
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", dpi=200, bbox_inches="tight")
-            plt.close(fig)
-            buf.seek(0)
-            return buf
-
-        elif c_type in ("multi_line", "multiline"):
-            series_keys = chart.get("series_keys") or []
-            if not series_keys and raw_data and isinstance(raw_data[0], dict):
-                series_keys = [k for k in raw_data[0].keys() if k not in ("label", "name", "date", "ngay", "time")]
-
-            fig, ax = plt.subplots(figsize=(6.5, 3.0), dpi=200)
-            fig.patch.set_facecolor("#FFFFFF")
-            ax.set_facecolor("#FFFFFF")
-
-            labels = [str(d.get("label") or d.get("name") or "") for d in raw_data[:14]]
-            x_idx = range(len(labels))
-
-            for s_idx, s_key in enumerate(series_keys[:5]):
-                s_vals = [float(d.get(s_key) or 0) for d in raw_data[:14]]
-                color = palette[s_idx % len(palette)]
-                ax.plot(x_idx, s_vals, label=s_key, color=color, linewidth=2.0, marker="o", markersize=4)
-
-            ax.set_xticks(list(x_idx))
-            step = max(1, len(labels) // 7)
-            clean_labels = [l if i % step == 0 else "" for i, l in enumerate(labels)]
-            ax.set_xticklabels(clean_labels, fontsize=8, color="#64748B", rotation=15 if len(labels) > 8 else 0)
-            ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: _format_axis_value(y)))
-            ax.legend(loc="upper right", fontsize=7.5, frameon=True, facecolor="#F8FAFC", edgecolor="#CBD5E1")
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            ax.spines["left"].set_color("#CBD5E1")
-            ax.spines["bottom"].set_color("#CBD5E1")
-            ax.grid(True, linestyle="--", alpha=0.35, color="#E2E8F0")
-
-            plt.tight_layout()
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", dpi=200, bbox_inches="tight")
-            plt.close(fig)
-            buf.seek(0)
-            return buf
-
+        except (ValueError, TypeError):
+            return None
+        keys = chart.get('series_keys') or [s['key'] for s in chart.get('series', [])]
+        if kind in {'line', 'area'}:
+            keys = ['value']
+        if not keys or len(keys) > 8:
+            return None
+        names = {s['key']: s.get('label', s['key']) for s in chart.get('series', [])}
+        for key in keys:
+            values = [row.get(key) for row in rows]
+            if any(value is not None and not number(value) for value in values):
+                return None
+            if not any(number(value) for value in values):
+                continue
+            series.append((names.get(key, key), values))
+        if not series:
+            return None
+    else:
+        values = [row.get('value') for row in rows]
+        if any(not number(value) for value in values):
+            return None
+        if kind == 'donut' and (len(rows) > 8 or any(v < 0 for v in values) or sum(values) <= 0):
+            return None
+    fig = None
+    try:
+        fig, ax = plt.subplots(figsize=(6.5, max(2.8, len(rows) * .36) if kind == 'horizontal_bar' else 3.4), dpi=200)
+        fig.patch.set_facecolor('white')
+        ax.set_facecolor('white')
+        if temporal:
+            granularity = chart.get('granularity')
+            gaps = {i for i in range(1, len(rows)) if granularity in {'day','week','month','quarter','year'}
+                    and dates[i].date() != _next(dates[i-1].date(), granularity)}
+            for index, (name, values) in enumerate(series):
+                px, py = [], []
+                for i, value in enumerate(values):
+                    if i in gaps:
+                        px.append(float('nan')); py.append(float('nan'))
+                    px.append(x[i]); py.append(float(value) if value is not None else float('nan'))
+                ax.plot(px, py, label=name, color=palette[index % len(palette)], linewidth=2,
+                        marker='o', markersize=4)
+                if kind == 'area':
+                    ax.fill_between(px, py, color=palette[index % len(palette)], alpha=.12)
+            ticks = list(range(0, len(rows), max(1, (len(rows) + 5) // 6)))
+            if ticks[-1] != len(rows)-1:
+                ticks.append(len(rows)-1)
+            ax.set_xticks([x[i] for i in ticks])
+            ax.set_xticklabels([labels[i][:10] for i in ticks], rotation=20, ha='right', fontsize=8)
+            ax.margins(y=.15)
+            if kind in {'multi_line', 'multiline'}:
+                ax.legend(fontsize=8, loc='best')
+        elif kind == 'donut':
+            _, _, percentages = ax.pie(values, labels=['\n'.join(textwrap.wrap(s, 20)) for s in labels],
+                   colors=[palette[i % len(palette)] for i in x], autopct='%1.1f%%',
+                   startangle=90, pctdistance=.76, wedgeprops=dict(width=.45, edgecolor='white'),
+                   textprops=dict(fontsize=8))
+            for percentage in percentages:
+                percentage.set_color('white')
+                percentage.set_fontweight('bold')
         else:
-            items = raw_data[:8]
-            labels = [str(d.get("label") or d.get("name") or "") for d in items]
-            vals = [float(d.get("value") or 0) for d in items]
-
-            fig, ax = plt.subplots(figsize=(6.5, 3.0), dpi=200)
-            fig.patch.set_facecolor("#FFFFFF")
-            ax.set_facecolor("#FFFFFF")
-
-            colors = [palette[i % len(palette)] for i in range(len(items))]
-            bars = ax.bar(
-                range(len(items)), vals, color=colors, width=0.55, edgecolor="none"
-            )
-
-            ax.set_xticks(range(len(items)))
-            short_labels = [l if len(l) <= 14 else l[:12] + ".." for l in labels]
-            ax.set_xticklabels(
-                short_labels,
-                fontsize=8,
-                color="#1E293B",
-                rotation=15 if len(items) > 5 else 0,
-            )
-
-            ax.yaxis.set_major_formatter(
-                ticker.FuncFormatter(lambda y, _: _format_axis_value(y))
-            )
-            max_val = max(vals) if vals else 1
-            ax.set_ylim(0, max_val * 1.25)
-
-            for bar, val in zip(bars, vals):
-                h = bar.get_height()
-                val_str = _format_axis_value(val, unit)
-                ax.text(
-                    bar.get_x() + bar.get_width() / 2,
-                    h + max_val * 0.02,
-                    val_str,
-                    va="bottom",
-                    ha="center",
-                    fontsize=8,
-                    fontweight="bold",
-                    color="#1E293B",
-                )
-
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            ax.spines["left"].set_color("#CBD5E1")
-            ax.spines["bottom"].set_color("#CBD5E1")
-            ax.grid(axis="y", linestyle="--", alpha=0.35, color="#E2E8F0")
-            ax.tick_params(colors="#64748B", labelsize=8)
-
-            plt.tight_layout()
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", dpi=200, bbox_inches="tight")
-            plt.close(fig)
-            buf.seek(0)
-            return buf
-
-    except Exception as e:
-        logger.warning("Failed to generate matplotlib chart: %s", e)
+            horizontal = kind == 'horizontal_bar'
+            wrapped = ['\n'.join(textwrap.wrap(s, 26 if horizontal else 16)) for s in labels]
+            colors = [palette[i % len(palette)] for i in x]
+            if horizontal:
+                ax.barh(x, values, color=colors)
+                ax.set_yticks(x, wrapped, fontsize=8)
+                ax.invert_yaxis()  # Preserve the supplied ranking direction/order.
+                ax.margins(x=.25)
+            else:
+                ax.bar(x, values, color=colors)
+                ax.set_xticks(x, wrapped, fontsize=8)
+                ax.margins(y=.25)
+            for i, value in enumerate(values):
+                options = dict(fontsize=8, color='#1E293B', xytext=(3 if value >= 0 else -3, 0),
+                               textcoords='offset points', va='center', ha='left' if value >= 0 else 'right') if horizontal else dict(
+                                   fontsize=8, color='#1E293B', xytext=(0, 3 if value >= 0 else -3),
+                                   textcoords='offset points', ha='center', va='bottom' if value >= 0 else 'top')
+                ax.annotate(_format_axis_value(value, unit), (value, i) if horizontal else (i, value), **options)
+        if kind != 'donut':
+            if kind == 'horizontal_bar':
+                ax.set_xlabel(unit, fontsize=8)
+            else:
+                ax.set_ylabel(unit, fontsize=8)
+            ax.grid(axis='x' if kind == 'horizontal_bar' else 'y', linestyle='--', alpha=.25)
+            ax.spines[['top', 'right']].set_visible(False)
+            ax.tick_params(labelsize=8)
+        fig.tight_layout()
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=200, bbox_inches='tight')
+        buf.seek(0)
+        return buf
+    except (ValueError, TypeError, KeyError) as error:
+        logger.warning('Word chart uses table fallback: %s', error)
         return None
+    finally:
+        if fig is not None:
+            plt.close(fig)
+
+
+def _render_chart_table(doc, chart):
+    rows = chart.get('data') or []
+    doc.add_paragraph('Dùng bảng vì biểu diễn đồ thị chưa bảo toàn được các quan sát hoặc có quá nhiều nhãn. '
+                      f'Hiển thị {min(15, len(rows))} trên {len(rows)} dòng của dữ liệu biểu đồ; ô thiếu là —.')
+    if not rows:
+        return
+    series = chart.get('series_keys') or [s['key'] for s in chart.get('series', [])]
+    if not series:
+        series = list(dict.fromkeys(k for row in rows for k, value in row.items()
+            if k not in {'label', 'name', 'color', 'entity_ref'} and not isinstance(value, (dict, list)))) or ['value']
+    names = {s['key']: s.get('label', s['key']) for s in chart.get('series', [])}
+    # Wide views stay readable as long-form observations, without dropping series.
+    table = doc.add_table(rows=1, cols=3)
+    for cell, label in zip(table.rows[0].cells, ['Nhóm / thời gian', 'Chỉ số / chuỗi', 'Giá trị']):
+        cell.text = label
+    for row in rows[:15]:
+        for key in series:
+            cells = table.add_row().cells
+            cells[0].text = str(row.get('label') or row.get('name') or '')
+            cells[1].text = str(names.get(key, key))
+            value = row.get(key)
+            cells[2].text = '—' if value is None else str(value)
 
 
 def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
@@ -537,6 +380,10 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
     that mirrors the Web Preview modal 1:1 in structure, typography, and styling.
     """
     doc = Document()
+    for name in ('Normal', 'List Bullet'):
+        doc.styles[name].font.name = 'Calibri'
+        doc.styles[name].font.size = Pt(10)
+
 
     # 1. Standard Corporate Page Margins (1 inch all sides)
     for section in doc.sections:
@@ -631,7 +478,8 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
         ("NGÀY LẬP BÁO CÁO", current_date_str, "1E293B"),
         ("NGUỒN DỮ LIỆU", "Delta Lake Silver", "047857"),
         ("ĐƠN VỊ PHỤ TRÁCH", "AI Intelligence Center", "1E293B"),
-        ("TRẠNG THÁI", "Đã khớp lệnh & Duyệt", "047857"),
+        ("TRẠNG THÁI", "Đã kiểm chứng nội bộ" if (report_data.get('quality_assessment') or {}).get('status') == 'verified'
+         else "Có giới hạn cần đối chiếu", "047857"),
     ]
 
     for idx, (m_lbl, m_val, m_color) in enumerate(meta_items):
@@ -841,18 +689,7 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
 
     findings_data = report_data.get("key_findings") or []
     if not findings_data:
-        findings_data = [
-            {
-                "finding": "Quy mô doanh thu",
-                "value": "Đạt chuẩn",
-                "comment": "Dòng tiền giao dịch duy trì tính ổn định giữa các chuỗi chi nhánh.",
-            },
-            {
-                "finding": "Tỷ lệ hoàn thành đơn",
-                "value": "98.5%",
-                "comment": "Quy trình xử lý đơn hàng và giao vận đáp ứng chỉ tiêu SLA cam kết.",
-            },
-        ]
+        doc.add_paragraph("Chưa có phát hiện định lượng được kiểm chứng cho phạm vi này.")
 
     if findings_data:
         t_find = doc.add_table(rows=len(findings_data) + 1, cols=3)
@@ -928,6 +765,7 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
             p_ch = doc.add_paragraph()
             p_ch.paragraph_format.space_before = Pt(8)
             p_ch.paragraph_format.space_after = Pt(3)
+            p_ch.paragraph_format.keep_with_next = True
 
             c_type_label = {
                 "horizontal_bar": "Bảng xếp hạng cột ngang",
@@ -953,6 +791,8 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
                 p_img.paragraph_format.space_before = Pt(2)
                 p_img.paragraph_format.space_after = Pt(4)
                 p_img.add_run().add_picture(chart_img_buf, width=Inches(6.2))
+            else:
+                _render_chart_table(doc, chart)
             insight = chart.get("insight") or {}
             if insight:
                 # V3.2 "Nhận định từ biểu đồ" (deterministic, evidence-backed).
@@ -963,16 +803,6 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
                     p_insight.paragraph_format.space_after = Pt(1)
                     run = p_insight.add_run(str(line))
                     run.font.size = Pt(9)
-            else:
-                # Text summary fallback
-                cdata = chart.get("data", [])
-                if cdata:
-                    for d in cdata[:5]:
-                        pd = doc.add_paragraph(style="List Bullet")
-                        pd.paragraph_format.space_after = Pt(1)
-                        pd.add_run(f"{d.get('label') or d.get('name')}: ").font.bold = True
-                        val_num = d.get('value') or 0
-                        pd.add_run(f"{_format_axis_value(val_num, chart.get('unit') or '')}")
 
         doc.add_paragraph().paragraph_format.space_after = Pt(10)
 
@@ -980,6 +810,10 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
     table_data = report_data.get("table_data", {})
     t_cols = table_data.get("columns", [])
     t_rows = table_data.get("rows", [])
+    full_count = table_data.get('total_rows')
+    if type(full_count) is not int or full_count < len(t_rows):
+        full_count = len(t_rows)  # Legacy tables without an artifact count.
+    displayed_count = min(15, len(t_rows))
 
     if t_cols:
         h_sec5 = doc.add_paragraph()
@@ -994,7 +828,8 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
         p_s5_sub = doc.add_paragraph()
         p_s5_sub.paragraph_format.space_after = Pt(6)
         r_s5_sub = p_s5_sub.add_run(
-            f"Tổng cộng {len(t_rows)} bản ghi hợp lệ từ kho dữ liệu Delta Lake Silver."
+            f"Hiển thị {displayed_count} trên tổng số {full_count} dòng kết quả truy vấn. "
+            + ("Đây là bảng trích, không phải toàn bộ kết quả." if displayed_count < full_count else "Bảng hiển thị toàn bộ kết quả.")
         )
         r_s5_sub.font.name = "Calibri"
         r_s5_sub.font.size = Pt(8.5)
@@ -1088,7 +923,7 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
                 if isinstance(ins, str)
                 else (ins.get("insight") or ins.get("text") or str(ins))
             )
-            ins_title = f"Nhận định chiến lược 0{idx}"
+            ins_title = f"Nhận định chiến lược {idx:02d}"
             ins_body = ins_text
             if ":" in ins_text:
                 parts = ins_text.split(":", 1)
@@ -1108,7 +943,7 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
             _set_cell_margins(c_badge, top=80, bottom=80, left=60, right=60)
             pb = c_badge.paragraphs[0]
             pb.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            rb = pb.add_run(f"0{idx}")
+            rb = pb.add_run(f"{idx:02d}")
             rb.font.name = "Calibri"
             rb.font.bold = True
             rb.font.size = Pt(11)
@@ -1160,11 +995,11 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
     conclusions = (
         report_data.get("conclusions")
         or report_data.get("executive_summary")
-        or "Hệ thống đã khớp lệnh truy vấn thành công. Các chỉ số ghi nhận xu hướng ổn định và phản ánh trung thực thực trạng vận hành chuỗi."
+        or "Chưa có kết luận được kiểm chứng cho phạm vi này."
     )
     recommendations = (
         report_data.get("recommendations")
-        or "Tiếp tục tối ưu hóa index trên các trường mã sản phẩm và thời gian tại tầng Silver để gia tăng tốc độ phản hồi truy vấn phân tích."
+        or "Chưa có khuyến nghị có bằng chứng cho phạm vi này."
     )
 
     t_concl = doc.add_table(rows=1, cols=2)
@@ -1201,6 +1036,13 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
     r_cr_h.font.color.rgb = RGBColor(2, 132, 199)
     _render_text_block(c_right, recommendations, font_size=Pt(8.5), default_color=RGBColor(51, 65, 85))
 
+    for paragraph in doc.paragraphs:
+        if re.match(r'^(?:[IVX]+\.|Biểu đồ \d)', paragraph.text):
+            paragraph.paragraph_format.keep_with_next = True
+    # Keep short finding/insight rows together across Word pages.
+    for table in doc.tables:
+        for row in table.rows:
+            row._tr.get_or_add_trPr().append(parse_xml(f'<w:cantSplit {nsdecls("w")}/>'))
     # Output to in-memory bytes
     buf = io.BytesIO()
     doc.save(buf)

@@ -1,0 +1,23 @@
+{
+  "observed_at": "2026-10-20T03:20:15.109292+00:00",
+  "mode": "READ_ONLY_AGGREGATES",
+  "sql": "SELECT count(*) total,\ncount(*) FILTER(WHERE d.shipper_id IS NULL) missing_shipper_id,\ncount(*) FILTER(WHERE d.\"shipperId\" IS NULL) missing_orm_shipperId,\ncount(*) FILTER(WHERE d.shipper_id IS NOT NULL AND d.\"shipperId\" IS NOT NULL AND d.shipper_id<>d.\"shipperId\") both_present_conflict,\ncount(*) FILTER(WHERE d.shipper_id IS NOT NULL AND s.id IS NULL) shipper_id_orphan,\ncount(*) FILTER(WHERE d.\"shipperId\" IS NOT NULL AND s2.id IS NULL) orm_shipperId_orphan\nFROM orders.shipper_delivery d\nLEFT JOIN orders.shipper s ON d.shipper_id=s.id\nLEFT JOIN orders.shipper s2 ON d.\"shipperId\"=s2.id",
+  "columns": [
+    "total",
+    "missing_shipper_id",
+    "missing_orm_shipperid",
+    "both_present_conflict",
+    "shipper_id_orphan",
+    "orm_shipperid_orphan"
+  ],
+  "rows": [
+    [
+      7857,
+      0,
+      335,
+      7472,
+      0,
+      0
+    ]
+  ]
+}

@@ -1,0 +1,1692 @@
+{
+  "decision": "READY",
+  "capability": {
+    "decision": "READY",
+    "policy_version": "3.3.1",
+    "constraints": [],
+    "views": [],
+    "stage": "input",
+    "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+    "interpretation_required": false,
+    "reason": null,
+    "message": "",
+    "actions": []
+  },
+  "actions": [],
+  "outcome": "SYSTEM_ERROR",
+  "analysis_stage": "RESULT_VALIDATION_FAILURE",
+  "error_type": "RESULT_VALIDATION_FAILED",
+  "analysis_state": "EXECUTION_FAILURE",
+  "retryable": false,
+  "quality_assessment": {
+    "score": null,
+    "grade": "needs_attention",
+    "status": "not_scored",
+    "components": [],
+    "completed": [],
+    "missing": [],
+    "unverified": [],
+    "limitations": [],
+    "suggested_next_actions": [],
+    "coverage": {
+      "requested_count": 0,
+      "completed_count": 0,
+      "supporting_count": 0,
+      "omitted_count": 0
+    },
+    "generated_by": "deterministic_verifier",
+    "version": "2.8.5",
+    "reason": "Nguồn gốc hoặc phạm vi báo cáo chưa vượt qua kiểm chứng độc lập. Hệ thống chưa tạo báo cáo hoàn chỉnh.",
+    "measurement_mode": "legacy_weighted_checks",
+    "verification_checks": [],
+    "score_method": null,
+    "score_breakdown": [],
+    "accuracy_assessment": {
+      "status": "not_measured",
+      "matched_count": null,
+      "reference_count": 0,
+      "accuracy_pct": null,
+      "reference_source": null,
+      "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+    },
+    "trust_dimensions": [],
+    "analysis_breadth": null,
+    "confidence_probability": null,
+    "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+  },
+  "issue": {
+    "category": "SYSTEM_UNAVAILABLE",
+    "title": "Chưa thể hoàn tất phân tích",
+    "what_is_known": [
+      "Doanh thu",
+      "Tỉnh/thành trong dữ liệu"
+    ],
+    "error_type": "RESULT_VALIDATION_FAILED",
+    "retryable": false,
+    "what_is_missing": [
+      "Nguồn gốc hoặc phạm vi báo cáo chưa vượt qua kiểm chứng độc lập. Hệ thống chưa tạo báo cáo hoàn chỉnh."
+    ],
+    "suggested_actions": [],
+    "next_action": "report_reference"
+  },
+  "status": "error",
+  "question": "Nguồn gốc hoặc phạm vi báo cáo chưa vượt qua kiểm chứng độc lập. Hệ thống chưa tạo báo cáo hoàn chỉnh.",
+  "message": "Nguồn gốc hoặc phạm vi báo cáo chưa vượt qua kiểm chứng độc lập. Hệ thống chưa tạo báo cáo hoàn chỉnh.",
+  "assistant_reply": "Nguồn gốc hoặc phạm vi báo cáo chưa vượt qua kiểm chứng độc lập. Hệ thống chưa tạo báo cáo hoàn chỉnh.",
+  "options": [],
+  "clarification": null,
+  "interpretation": null,
+  "diagnostics": {
+    "provider_status": "not_started",
+    "provider_error_category": null,
+    "agent_contract_status": "valid",
+    "agent_contract_error": null,
+    "semantic_status": "grounded",
+    "execution_status": "passed",
+    "result_status": "passed",
+    "request_id": "req_8c3ec9e71d484708851f1a171ac48677",
+    "provider_primary_ms": 0,
+    "provider_repair_ms": 0,
+    "local_grounding_ms": 9.2,
+    "metadata_retrieval_ms": 102.19,
+    "resolver_ms": 9.86,
+    "proposal_persistence_ms": 86.15,
+    "analysis_mission": "compare",
+    "input_validation_fingerprint": "3350f351e2221ff985cc96c41dc3612938cf0321e35f54c840bcf1e4e3566365",
+    "input_policy_version": "1.2.1",
+    "lookup_queries": 0,
+    "input_mode": "guided",
+    "guided_contract_used": true,
+    "capability": {
+      "decision": "READY",
+      "policy_version": "3.3.1",
+      "constraints": [],
+      "views": [],
+      "stage": "input",
+      "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+      "interpretation_required": false,
+      "reason": null,
+      "message": "",
+      "actions": []
+    },
+    "preflight_state": "READY_GUIDED",
+    "guided_source": "builder",
+    "guided_slots": {
+      "mission": "compare",
+      "metric": "revenue",
+      "dimension": "city",
+      "group_a": "Hồ Chí Minh",
+      "group_b": "Hà Nội"
+    },
+    "local_metadata_ms": 1118.31,
+    "catalog_fingerprint_prefix": "c1bbdae32110",
+    "planning_mode": "hybrid_verifiable",
+    "pipeline_version": "2.8",
+    "provider_calls": [],
+    "terminal_error": "quality_verification",
+    "db_query_count": 4,
+    "value_lookup_count": 0,
+    "contract_repair_count": 0,
+    "contract_rejection_count": 0,
+    "contract_normalization_count": 0,
+    "contract_normalizations": [],
+    "model_escalation_count": 0,
+    "provider_fallback_count": 0,
+    "post_result_provider_call_count": 0,
+    "semantic_tool_calls": 0,
+    "analytical_tool_calls": 0,
+    "analytical_cache_hits": 0,
+    "agent_rounds": 0,
+    "cost_rounds": [],
+    "tool_trace": [],
+    "limitations": [],
+    "omitted_supporting_operations": [],
+    "omitted_supporting_operation_count": 0,
+    "requested_operation_count": 1,
+    "supporting_operation_count": 3,
+    "input_tokens": null,
+    "output_tokens": null,
+    "cumulative_planning_input_tokens": null,
+    "cumulative_planning_output_tokens": null,
+    "provider_call_budget": 3,
+    "provider_call_count": 0,
+    "provider_attempt_count": 0,
+    "provider_call_budget_block_count": 0,
+    "provider_physical_attempts": 0,
+    "provider_physical_ceiling": 3,
+    "reliability_version": "2.13.0",
+    "primary_call_count": 0,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "failure_stage": "QUALITY_VERIFICATION",
+    "failure_requirement_id": null,
+    "failure_field": null,
+    "failure_code": null,
+    "fixed_grouping_policy": "cohort-pinning-v1",
+    "planning_budget_ms": 40000,
+    "provider_attempt_timeout_ms": 12000,
+    "provider_recovery_timeout_ms": 12000,
+    "provider_total_ms": 30000,
+    "semantic_metric_locks": [],
+    "request_anchors": {
+      "metrics": [
+        {
+          "phrase": "doanh thu",
+          "candidate_ids": [
+            "item_revenue",
+            "payment_revenue",
+            "product_revenue",
+            "revenue",
+            "store_revenue",
+            "voucher_revenue"
+          ],
+          "start": 8,
+          "end": 17
+        }
+      ],
+      "dimensions": [
+        {
+          "phrase": "tinh thanh trong du lieu",
+          "candidate_ids": [
+            "city"
+          ],
+          "start": 23,
+          "end": 47
+        }
+      ],
+      "metric_constraints": [],
+      "population_scopes": [],
+      "features": [],
+      "capability_constraints": [],
+      "capabilities": [],
+      "values": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        },
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "excluded_values": [],
+      "analysis_breadth": null,
+      "rankings": [],
+      "forecasts": [],
+      "times": [
+        {
+          "kind": "month",
+          "year": 2026,
+          "month": 9
+        }
+      ],
+      "clause_bindings": [
+        {
+          "metric_candidates": [
+            "item_revenue",
+            "payment_revenue",
+            "product_revenue",
+            "revenue",
+            "store_revenue",
+            "voucher_revenue"
+          ],
+          "dimension_id": "city"
+        }
+      ],
+      "period_comparisons": [],
+      "time_bindings": [
+        {
+          "metric_candidates": [
+            "item_revenue",
+            "payment_revenue",
+            "product_revenue",
+            "revenue",
+            "store_revenue",
+            "voucher_revenue"
+          ],
+          "time": {
+            "kind": "month",
+            "year": 2026,
+            "month": 9
+          }
+        }
+      ],
+      "trend_bindings": [],
+      "granularities": [],
+      "ui": {
+        "required_domain": null,
+        "required_period": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "required_filters": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hà Nội",
+              "Hồ Chí Minh"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hà Nội",
+              "Hồ Chí Minh"
+            ],
+            "comparison": true,
+            "cohorts": [
+              {
+                "phrase": "ho chi minh",
+                "members": [
+                  "Hồ Chí Minh"
+                ]
+              },
+              {
+                "phrase": "ha noi",
+                "members": [
+                  "Hà Nội"
+                ]
+              }
+            ],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "e11a97c58b08eeaaa7b9fd703c9454c3eaa843539fe80de376f6d50b7ebcb427",
+        "requested_phrase": "So sánh doanh thu theo tỉnh/thành trong dữ liệu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026"
+      },
+      "cohort_references": [],
+      "coordinated_dimensions": []
+    },
+    "candidate_packet_chars": 3722,
+    "required_domain_pack_ids": [
+      "orders"
+    ],
+    "supporting_domain_pack_ids": [
+      "stores"
+    ],
+    "detailed_domain_ids": [
+      "orders",
+      "stores"
+    ],
+    "pruned_optional_domain_ids": [],
+    "retrieval_confidence": "high",
+    "retrieval_candidate_count": 1,
+    "global_domain_count": 16,
+    "context_char_budget": 24000,
+    "pruned_optional_context_fields": [],
+    "total_context_chars": 13538,
+    "primary_context_chars": 13538,
+    "provider_body_chars": {
+      "native": 13399,
+      "compat": 13538
+    },
+    "decision_schema_chars": 5059,
+    "schema_chars": 4909,
+    "provider_body_headroom_chars": 10462,
+    "provider_schema_chars": 4909,
+    "system_chars": 2731,
+    "coverage_contract_chars": 0,
+    "provider_output_digests": [
+      "f7850048252305de3e071215d7f5e410fa63e57d15444c2996ede7683f4ca784"
+    ],
+    "interpreted_shapes": [
+      {
+        "requirement_id": "r1",
+        "analysis_kind": "comparison",
+        "dimension_count": 1,
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "city"
+        ]
+      }
+    ],
+    "semantic_normalizations": [
+      {
+        "requirement_id": "r1",
+        "field": "analysis_kind",
+        "rule": "catalog_semantic_normalization",
+        "value": "aggregate"
+      }
+    ],
+    "resolver_latency_ms": 9.86,
+    "planning_remaining_ms": 38986.93,
+    "analysis_components": [
+      {
+        "id": "r1",
+        "business_goal": "So sánh doanh thu giữa Hồ Chí Minh và Hà Nội",
+        "domain_id": "orders",
+        "lens_id": null,
+        "requested_or_supporting": "requested",
+        "operation_ids": [
+          "q_bbbfd263f60514cc928b35c9"
+        ],
+        "status": "planned",
+        "reason": null
+      },
+      {
+        "id": "support_4718d59fcb98527c54321f11",
+        "business_goal": "Đối chiếu theo nhóm",
+        "domain_id": "orders",
+        "lens_id": null,
+        "requested_or_supporting": "supporting",
+        "operation_ids": [
+          "q_19ebc234d64fc0d206657eaa"
+        ],
+        "status": "planned",
+        "reason": null
+      },
+      {
+        "id": "support_d59c614d05924f0ee358dd35",
+        "business_goal": "Diễn biến trong phạm vi đã chọn",
+        "domain_id": "orders",
+        "lens_id": null,
+        "requested_or_supporting": "supporting",
+        "operation_ids": [
+          "q_6e362c664accfd403be2d145"
+        ],
+        "status": "planned",
+        "reason": null
+      },
+      {
+        "id": "support_f6cd787e60fedeb9c568846d",
+        "business_goal": "Đối chiếu theo nhóm",
+        "domain_id": "orders",
+        "lens_id": null,
+        "requested_or_supporting": "supporting",
+        "operation_ids": [
+          "q_89335348366836ec08dc7e3e"
+        ],
+        "status": "planned",
+        "reason": null
+      }
+    ],
+    "coverage_origin": "server_resolved",
+    "resolved_requirement_coverage": [
+      {
+        "requirement_id": "r1",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_bbbfd263f60514cc928b35c9"
+        ],
+        "derived_features": [
+          "group_gap"
+        ],
+        "goal": "So sánh doanh thu giữa Hồ Chí Minh và Hà Nội",
+        "supporting_for": null,
+        "views": [
+          {
+            "kind": "grouped",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "required": true,
+            "id": null,
+            "operation_ids": [],
+            "transform": null
+          }
+        ]
+      },
+      {
+        "requirement_id": "support_4718d59fcb98527c54321f11",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_19ebc234d64fc0d206657eaa"
+        ],
+        "derived_features": [],
+        "goal": "Đối chiếu theo nhóm",
+        "supporting_for": "r1",
+        "views": [
+          {
+            "kind": "grouped",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "required": false,
+            "id": null,
+            "operation_ids": [],
+            "transform": null
+          }
+        ],
+        "lenses": [
+          {
+            "id": "segment:store",
+            "kind": "segment",
+            "shape": "support_4718d59fcb98527c54321f11",
+            "shape_key": [
+              "aggregate",
+              [
+                "store"
+              ]
+            ],
+            "metrics": [
+              "revenue"
+            ],
+            "axes": [
+              "store"
+            ],
+            "question": "Doanh thu khác nhau thế nào giữa các chi nhánh?",
+            "show": [
+              {
+                "form": "bars",
+                "metrics": [
+                  "revenue"
+                ]
+              }
+            ],
+            "base_id": "segment:store",
+            "role": "core",
+            "position": 2,
+            "rank": [
+              0,
+              2
+            ],
+            "requirement_id": "r1"
+          }
+        ]
+      },
+      {
+        "requirement_id": "support_d59c614d05924f0ee358dd35",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_6e362c664accfd403be2d145"
+        ],
+        "derived_features": [],
+        "goal": "Diễn biến trong phạm vi đã chọn",
+        "supporting_for": "r1",
+        "views": [
+          {
+            "kind": "time_series",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "required": false,
+            "id": null,
+            "operation_ids": [],
+            "transform": null
+          }
+        ],
+        "lenses": [
+          {
+            "id": "trend",
+            "kind": "trend",
+            "shape": "support_d59c614d05924f0ee358dd35",
+            "shape_key": [
+              "trend",
+              []
+            ],
+            "metrics": [
+              "revenue"
+            ],
+            "granularity": "day",
+            "question": "Chỉ số biến động thế nào theo thời gian?",
+            "show": [
+              {
+                "form": "line",
+                "metrics": [
+                  "revenue"
+                ]
+              }
+            ],
+            "base_id": "trend",
+            "role": "core",
+            "position": 0,
+            "rank": [
+              0,
+              0
+            ],
+            "requirement_id": "r1"
+          }
+        ]
+      },
+      {
+        "requirement_id": "support_f6cd787e60fedeb9c568846d",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_89335348366836ec08dc7e3e"
+        ],
+        "derived_features": [],
+        "goal": "Đối chiếu theo nhóm",
+        "supporting_for": "r1",
+        "views": [
+          {
+            "kind": "grouped",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "order_type"
+            ],
+            "required": false,
+            "id": null,
+            "operation_ids": [],
+            "transform": null
+          }
+        ],
+        "lenses": [
+          {
+            "id": "segment:order_type",
+            "kind": "segment",
+            "shape": "support_f6cd787e60fedeb9c568846d",
+            "shape_key": [
+              "aggregate",
+              [
+                "order_type"
+              ]
+            ],
+            "metrics": [
+              "revenue"
+            ],
+            "axes": [
+              "order_type"
+            ],
+            "question": "Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?",
+            "show": [
+              {
+                "form": "bars",
+                "metrics": [
+                  "revenue"
+                ]
+              }
+            ],
+            "base_id": "segment:order_type",
+            "role": "core",
+            "position": 3,
+            "rank": [
+              0,
+              3
+            ],
+            "requirement_id": "r1"
+          }
+        ]
+      }
+    ],
+    "request_anchor_verification": "passed",
+    "requested_component_count": 1,
+    "mapped_component_count": 1,
+    "unmapped_component_ids": [],
+    "requested_domain_ids": [
+      "orders"
+    ],
+    "requested_lens_ids": [],
+    "materialized_operation_count": 4,
+    "dry_plan": {
+      "plan_fingerprint": "a361227d5b46d351588e8caf6e653e9493868a6c1f24df8ba91e0d5758b449fe",
+      "query_count": 4,
+      "requirement_ids": [
+        "r1",
+        "support_4718d59fcb98527c54321f11",
+        "support_d59c614d05924f0ee358dd35",
+        "support_f6cd787e60fedeb9c568846d"
+      ],
+      "expected_derived_features": [
+        {
+          "requirement_id": "r1",
+          "feature": "group_gap",
+          "query_id": "q_bbbfd263f60514cc928b35c9",
+          "metric_ids": [
+            "revenue"
+          ]
+        }
+      ],
+      "operations": [
+        {
+          "operation_id": "q_bbbfd263f60514cc928b35c9",
+          "subject": "orders",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "time": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            },
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "ranking": null,
+          "capacity": {
+            "estimated_groups": 2,
+            "estimated_periods": 1,
+            "estimated_dimensions": 1,
+            "estimated_series": 2,
+            "estimated_rows": 2,
+            "estimated_chart_points": 2,
+            "estimated_persisted_bytes": 256,
+            "estimated_queries": 1,
+            "execution_strategy": "FULL_RESULT",
+            "presentation_strategy": "FULL_RESULT",
+            "artifact_strategy": "IMMUTABLE_RESULT",
+            "computation_scope": "FULL_QUERY_POPULATION",
+            "presentation_scope": "FULL_RESULT",
+            "warnings": []
+          }
+        },
+        {
+          "operation_id": "q_19ebc234d64fc0d206657eaa",
+          "subject": "orders",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store",
+            "store_id"
+          ],
+          "time": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            },
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "ranking": null,
+          "capacity": {
+            "estimated_groups": null,
+            "estimated_periods": 1,
+            "estimated_dimensions": 1,
+            "estimated_series": null,
+            "estimated_rows": null,
+            "estimated_chart_points": null,
+            "estimated_persisted_bytes": null,
+            "estimated_queries": 1,
+            "execution_strategy": "FULL_RESULT",
+            "presentation_strategy": "SUMMARY_PLUS_DRILLDOWN",
+            "artifact_strategy": "IMMUTABLE_RESULT",
+            "computation_scope": "FULL_QUERY_POPULATION",
+            "presentation_scope": "BOUNDED_SUBSET",
+            "warnings": [
+              "CARDINALITY_UNKNOWN"
+            ]
+          }
+        },
+        {
+          "operation_id": "q_6e362c664accfd403be2d145",
+          "subject": "orders",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "time": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            },
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "ranking": null,
+          "capacity": {
+            "estimated_groups": 1,
+            "estimated_periods": 30,
+            "estimated_dimensions": 0,
+            "estimated_series": 1,
+            "estimated_rows": 30,
+            "estimated_chart_points": 30,
+            "estimated_persisted_bytes": 3840,
+            "estimated_queries": 1,
+            "execution_strategy": "FULL_RESULT",
+            "presentation_strategy": "FULL_RESULT",
+            "artifact_strategy": "IMMUTABLE_RESULT",
+            "computation_scope": "FULL_QUERY_POPULATION",
+            "presentation_scope": "FULL_RESULT",
+            "warnings": []
+          }
+        },
+        {
+          "operation_id": "q_89335348366836ec08dc7e3e",
+          "subject": "orders",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "order_type"
+          ],
+          "time": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            },
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "ranking": null,
+          "capacity": {
+            "estimated_groups": 5,
+            "estimated_periods": 1,
+            "estimated_dimensions": 1,
+            "estimated_series": 5,
+            "estimated_rows": 5,
+            "estimated_chart_points": 5,
+            "estimated_persisted_bytes": 640,
+            "estimated_queries": 1,
+            "execution_strategy": "FULL_RESULT",
+            "presentation_strategy": "FULL_RESULT",
+            "artifact_strategy": "IMMUTABLE_RESULT",
+            "computation_scope": "FULL_QUERY_POPULATION",
+            "presentation_scope": "FULL_RESULT",
+            "warnings": []
+          }
+        }
+      ]
+    },
+    "compiler_latency_ms": 299.43,
+    "initial_semantic_intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "r1",
+          "goal": "So sánh doanh thu giữa Hồ Chí Minh và Hà Nội",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "comparison_time": null,
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "group_gap"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "support_f6cd787e60fedeb9c568846d",
+          "goal": "Đối chiếu theo nhóm",
+          "domain_id": "orders",
+          "lens_hint": null,
+          "supporting_for": "r1",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "order_type"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "comparison_time": null,
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "support_4718d59fcb98527c54321f11",
+          "goal": "Đối chiếu theo nhóm",
+          "domain_id": "orders",
+          "lens_hint": null,
+          "supporting_for": "r1",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "comparison_time": null,
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "support_d59c614d05924f0ee358dd35",
+          "goal": "Diễn biến trong phạm vi đã chọn",
+          "domain_id": "orders",
+          "lens_hint": null,
+          "supporting_for": "r1",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "trend",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "comparison_time": null,
+          "ranking": null,
+          "granularity": "day",
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "semantic_history": [],
+    "semantic_intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "r1",
+          "goal": "So sánh doanh thu giữa Hồ Chí Minh và Hà Nội",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "comparison_time": null,
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "group_gap"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "support_f6cd787e60fedeb9c568846d",
+          "goal": "Đối chiếu theo nhóm",
+          "domain_id": "orders",
+          "lens_hint": null,
+          "supporting_for": "r1",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "order_type"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "comparison_time": null,
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "support_4718d59fcb98527c54321f11",
+          "goal": "Đối chiếu theo nhóm",
+          "domain_id": "orders",
+          "lens_hint": null,
+          "supporting_for": "r1",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "comparison_time": null,
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "support_d59c614d05924f0ee358dd35",
+          "goal": "Diễn biến trong phạm vi đã chọn",
+          "domain_id": "orders",
+          "lens_hint": null,
+          "supporting_for": "r1",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "trend",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "comparison_time": null,
+          "ranking": null,
+          "granularity": "day",
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "semantic_intent_fingerprint": "79182c42ffe4283ad487e9d4ba2dd4c398b1c54d0be401c8507781c0d61b7468",
+    "resolved_plan_fingerprint": "a361227d5b46d351588e8caf6e653e9493868a6c1f24df8ba91e0d5758b449fe",
+    "resolved_operations": [
+      {
+        "id": "q_bbbfd263f60514cc928b35c9",
+        "subject": "orders",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "city"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh",
+              "Hà Nội"
+            ]
+          }
+        ],
+        "time": {
+          "kind": "range",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "role": "requested",
+        "lens_id": "sales_overview"
+      },
+      {
+        "id": "q_19ebc234d64fc0d206657eaa",
+        "subject": "orders",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh",
+              "Hà Nội"
+            ]
+          }
+        ],
+        "time": {
+          "kind": "range",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "role": "supporting",
+        "lens_id": "sales_overview",
+        "parent_id": "q_bbbfd263f60514cc928b35c9",
+        "purpose": "context",
+        "population_relation": "related"
+      },
+      {
+        "id": "q_6e362c664accfd403be2d145",
+        "subject": "orders",
+        "operation": "trend",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh",
+              "Hà Nội"
+            ]
+          }
+        ],
+        "time": {
+          "kind": "range",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "role": "supporting",
+        "lens_id": "channel_mix",
+        "granularity": "day",
+        "parent_id": "q_bbbfd263f60514cc928b35c9",
+        "purpose": "context",
+        "population_relation": "related"
+      },
+      {
+        "id": "q_89335348366836ec08dc7e3e",
+        "subject": "orders",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "order_type"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh",
+              "Hà Nội"
+            ]
+          }
+        ],
+        "time": {
+          "kind": "range",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "role": "supporting",
+        "lens_id": "channel_mix",
+        "parent_id": "q_bbbfd263f60514cc928b35c9",
+        "purpose": "context",
+        "population_relation": "related"
+      }
+    ],
+    "resolver_version": "2.8.0",
+    "derived_feature_bindings": [
+      {
+        "requirement_id": "r1",
+        "feature": "group_gap",
+        "query_id": "q_bbbfd263f60514cc928b35c9",
+        "metric_ids": [
+          "revenue"
+        ]
+      }
+    ],
+    "analysis_depth": "focused",
+    "analysis_breadth": "focused",
+    "target_visual_count": 4,
+    "target_visual_range": [
+      4,
+      4
+    ],
+    "registered_requested_operations": 1,
+    "server_supporting_expansion": "focused",
+    "minimum_visuals": 0,
+    "omitted_supporting_ids": [],
+    "requested_depth": "focused",
+    "effective_depth": "focused",
+    "depth_selection_origin": "explicit",
+    "lens_plan": {
+      "version": "4.0.0",
+      "depth": "focused",
+      "targets": {
+        "core": 4,
+        "diagnostic": 0,
+        "extended": 0
+      },
+      "lenses": [
+        {
+          "id": "trend",
+          "kind": "trend",
+          "shape": "support_d59c614d05924f0ee358dd35",
+          "shape_key": [
+            "trend",
+            []
+          ],
+          "metrics": [
+            "revenue"
+          ],
+          "granularity": "day",
+          "question": "Chỉ số biến động thế nào theo thời gian?",
+          "show": [
+            {
+              "form": "line",
+              "metrics": [
+                "revenue"
+              ]
+            }
+          ],
+          "base_id": "trend",
+          "role": "core",
+          "position": 0,
+          "rank": [
+            0,
+            0
+          ],
+          "requirement_id": "r1"
+        },
+        {
+          "id": "segment:store",
+          "kind": "segment",
+          "shape": "support_4718d59fcb98527c54321f11",
+          "shape_key": [
+            "aggregate",
+            [
+              "store"
+            ]
+          ],
+          "metrics": [
+            "revenue"
+          ],
+          "axes": [
+            "store"
+          ],
+          "question": "Doanh thu khác nhau thế nào giữa các chi nhánh?",
+          "show": [
+            {
+              "form": "bars",
+              "metrics": [
+                "revenue"
+              ]
+            }
+          ],
+          "base_id": "segment:store",
+          "role": "core",
+          "position": 2,
+          "rank": [
+            0,
+            2
+          ],
+          "requirement_id": "r1"
+        },
+        {
+          "id": "segment:order_type",
+          "kind": "segment",
+          "shape": "support_f6cd787e60fedeb9c568846d",
+          "shape_key": [
+            "aggregate",
+            [
+              "order_type"
+            ]
+          ],
+          "metrics": [
+            "revenue"
+          ],
+          "axes": [
+            "order_type"
+          ],
+          "question": "Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?",
+          "show": [
+            {
+              "form": "bars",
+              "metrics": [
+                "revenue"
+              ]
+            }
+          ],
+          "base_id": "segment:order_type",
+          "role": "core",
+          "position": 3,
+          "rank": [
+            0,
+            3
+          ],
+          "requirement_id": "r1"
+        }
+      ],
+      "decisions": [
+        {
+          "kind": "axis",
+          "axis": "city",
+          "status": "rejected",
+          "reason": "requested_axis",
+          "requirement_id": "r1"
+        },
+        {
+          "kind": "composition",
+          "role": "core",
+          "status": "rejected",
+          "reason": "mission_grammar",
+          "requirement_id": "r1"
+        },
+        {
+          "kind": "quota",
+          "role": "core",
+          "status": "planned",
+          "planned": 3,
+          "target": 3,
+          "reserves": 0,
+          "requirement_id": "r1"
+        }
+      ],
+      "family": "comparison",
+      "selected": [
+        "segment:order_type",
+        "segment:store",
+        "trend"
+      ]
+    },
+    "contract_issues": [],
+    "planning_latency_ms": 613.55,
+    "provider_attempt_latencies": [],
+    "provider_attempt_categories": [],
+    "provider_ms": 0,
+    "session_ms": 86.15,
+    "total_ms": 1904.57,
+    "remaining_budget_ms": 38795.81,
+    "force_refresh": false,
+    "proposal_diagnostics": {
+      "provider_call_budget": 3,
+      "provider_call_count": 0,
+      "provider_attempt_count": 0,
+      "semantic_manifest_chars": null,
+      "decision_schema_chars": 5059,
+      "total_context_chars": 13538,
+      "analysis_depth": "focused",
+      "supporting_operation_limit": null,
+      "target_visual_count": 4,
+      "input_tokens": null,
+      "output_tokens": null,
+      "omitted_supporting_operation_count": 0,
+      "contract_repair_count": 0,
+      "contract_rejection_count": 0,
+      "planning_retry_reason": null,
+      "repair_context_chars": null,
+      "transport_retry_count": 0
+    },
+    "snapshot_cache_hit": false,
+    "data_snapshot": "575270e20d7b4535ad610da9436d191f",
+    "data_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 571,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 564,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "192cc6c7dc25c84ed886088d84a39bc8af40f990994a1f419e4e46ae664e5633",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "dry_run_count": 4,
+    "sql_batch_ms": 714.1,
+    "query_concurrency": 2,
+    "dropped_irrelevant_charts": 1,
+    "dropped_budget_charts": 0,
+    "analysis_coverage": {
+      "version": "4.0.0",
+      "policy_version": "4.0.0",
+      "effective_depth": "focused",
+      "selection_origin": "explicit",
+      "family": "comparison",
+      "targets": {
+        "core": 4,
+        "diagnostic": 0,
+        "extended": 0
+      },
+      "target_total": 4,
+      "rendered": {
+        "core": 3,
+        "diagnostic": 0,
+        "extended": 0
+      },
+      "counted": {
+        "core": 3,
+        "diagnostic": 0,
+        "extended": 0
+      },
+      "rendered_total": 3,
+      "requested_views": 1,
+      "status": "partial",
+      "gap_kind": "PLANNING_GAP",
+      "shortfall": {
+        "core": 1
+      },
+      "lenses": [
+        {
+          "id": "trend",
+          "role": "core",
+          "kind": "trend",
+          "question": "Chỉ số biến động thế nào theo thời gian?",
+          "status": "rendered",
+          "reason": null,
+          "chart_id": "visual_2"
+        },
+        {
+          "id": "segment:store",
+          "role": "core",
+          "kind": "segment",
+          "question": "Doanh thu khác nhau thế nào giữa các chi nhánh?",
+          "status": "rejected",
+          "reason": "renderer_unsupported",
+          "chart_id": null
+        },
+        {
+          "id": "segment:order_type",
+          "role": "core",
+          "kind": "segment",
+          "question": "Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?",
+          "status": "rendered",
+          "reason": null,
+          "chart_id": "visual_4"
+        }
+      ],
+      "summary": "Số liệu đã kiểm chứng · 3/4 góc nhìn; còn thiếu 1 do hệ thống chưa lập được góc nhìn và nhiệm vụ đã chọn giới hạn loại góc nhìn"
+    },
+    "depth_coverage": {
+      "target_views": [
+        4,
+        4
+      ],
+      "validated_views": 3,
+      "status": "partial",
+      "planned_operations": 4
+    },
+    "reference_date": "2026-10-22",
+    "chart_count": 3,
+    "chart_types": [
+      "bar",
+      "area",
+      "bar"
+    ],
+    "analytical_feature_count": 673,
+    "requested_chart_count": 1,
+    "supporting_chart_count": 2,
+    "result_reuse": false,
+    "synthesis_source": "validated_features_and_claims",
+    "query_plan_count": 4,
+    "result_row_count": 700,
+    "evidence_count": 673,
+    "omitted_chart_count": 1,
+    "registered_supporting_operations": 3,
+    "verification_status": "verified",
+    "quality_not_scored_reason": null,
+    "agent_round_count": 0,
+    "repair_round_count": 0,
+    "error_category": "quality_verification",
+    "missing_fields": [],
+    "ambiguity_count": 0
+  },
+  "charts": [],
+  "failure": {
+    "stage": "QUALITY_VERIFICATION",
+    "code": "quality_verification",
+    "user_impact": "SYSTEM_ERROR",
+    "what_is_known": {
+      "semantic_status": "grounded",
+      "execution_status": "passed",
+      "result_status": "passed",
+      "request_anchor_verification": "passed",
+      "provider_attempt_count": 0
+    },
+    "what_failed": "quality_verification",
+    "retry_helps": false,
+    "error_type": "RESULT_VALIDATION_FAILED",
+    "analysis_state": "EXECUTION_FAILURE",
+    "analysis_stage": "RESULT_VALIDATION_FAILURE",
+    "guidance": {
+      "title": "Kết quả chưa vượt qua kiểm chứng",
+      "description": "Kết quả dữ liệu chưa vượt qua kiểm chứng nên không được công bố.",
+      "next_action": "report_reference"
+    },
+    "needs_user_input": false,
+    "recommended_server_action": "inspect_failed_stage"
+  }
+}

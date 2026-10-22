@@ -34,6 +34,8 @@ class AnalyticalFields(Contract):
     lens_id: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]{0,63}$")
     population_relation: Literal["same", "related"] = "same"
     cohort_query_id: Optional[str] = None
+    # Supporting view restricted to the keys selected by its parent Top/Bottom N.
+    cohort_scope_query_id: Optional[str] = None
     # Refinement inherits scope from this server operation unless explicitly changed.
     replaces: Optional[str] = None
     changed_fields: List[
@@ -90,7 +92,8 @@ class AnalyticalQuery(AnalyticalFields):
         if self.ranking:
             ids += [(self.ranking.metric, "ranking.metric"), *[(v, "ranking.per_group") for v in self.ranking.per_group]]
         ids += [(v, path) for v, path in ((self.parent_id, "parent_id"), (self.replaces, "replaces"),
-                                       (self.cohort_query_id, 'cohort_query_id')) if v is not None]
+                                       (self.cohort_query_id, 'cohort_query_id'),
+                                       (self.cohort_scope_query_id, 'cohort_scope_query_id')) if v is not None]
         for value, path in ids:
             if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", value):
                 fail("invalid_identifier", path)
@@ -123,6 +126,10 @@ class AnalyticalQuery(AnalyticalFields):
         if self.cohort_query_id and (self.operation != 'aggregate' or self.role != 'requested'
                 or self.ranking or not self.group_by or self.cohort_query_id == self.id):
             fail('scope_conflict','cohort_query_id')
+        if self.cohort_scope_query_id and (self.ranking or self.cohort_query_id or self.cohort_scope_query_id == self.id
+                or (self.role == 'supporting' and not self.parent_id)
+                or self.operation not in ('aggregate', 'trend', 'distribution', 'cross_tab')):
+            fail('scope_conflict','cohort_scope_query_id')
         if self.changed_fields and not self.replaces:
             fail("replacement_reference_required", "replaces")
         return self
@@ -225,19 +232,19 @@ class Recommendation(Contract):
 
 
 class DashboardPlan(Contract):
-    active_query_ids: List[str] = Field(min_length=1, max_length=8)
+    active_query_ids: List[str] = Field(min_length=1, max_length=16)  # model plans are capped at 8 by the resolver
     visuals: List[DashboardVisual] = Field(default_factory=list, max_length=24)
     kpi_evidence_ids: List[str] = Field(default_factory=list, max_length=12)
     claims: List[InsightClaim] = Field(default_factory=list, max_length=12)
     recommendations: List[Recommendation] = Field(default_factory=list, max_length=6)
-    removed_query_ids: List[str] = Field(default_factory=list, max_length=8)
+    removed_query_ids: List[str] = Field(default_factory=list, max_length=16)
 
 
 class AgentState(Contract):
     goal: str = Field(max_length=8000)
     resolved_concepts: List[str] = Field(default_factory=list)
     unresolved_fields: List[str] = Field(default_factory=list, max_length=12)
-    operation_refs: List[str] = Field(default_factory=list, max_length=8)
-    result_refs: List[str] = Field(default_factory=list, max_length=8)
+    operation_refs: List[str] = Field(default_factory=list, max_length=16)
+    result_refs: List[str] = Field(default_factory=list, max_length=16)
     evidence_refs: List[str] = Field(default_factory=list)
     dashboard: Optional[DashboardPlan] = None

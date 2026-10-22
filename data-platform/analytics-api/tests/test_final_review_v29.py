@@ -184,7 +184,9 @@ class FinalReviewTests(unittest.TestCase):
         raw=malformed_overview()
         raw['requirements'][0]['derived_features']=['leader']
         raw['requirements'][0]['feature_metrics']={'leader':['revenue']}
-        question=OVERVIEW_45D+' Thống kê số đơn theo trạng thái đơn.'
+        # Keep leader explicitly requested: unasked incompatible features are
+        # now removed before repair and no longer exercise this repair guard.
+        question=OVERVIEW_45D+' Thống kê số đơn theo trạng thái đơn; chỉ ra nhóm dẫn đầu theo doanh thu.'
         for changed in ({'dimension_ids':['order_status']},{'time':{'kind':'relative','mode':'all_time'}}):
             with self.subTest(changed=changed):
                 attack=f.envelope({'id':'req_1','derived_features':[],'feature_metrics':{},**changed})

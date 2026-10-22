@@ -18,8 +18,38 @@ function compile(relative) {
     return createRequire(import.meta.url)(artifact);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
-const { AnalystChart, SeriesLineChart, HeatmapChart } = compile('../components/Charts.tsx');
+const { AnalystChart, SeriesLineChart, HeatmapChart, ForecastChart } = compile('../components/Charts.tsx');
 const { AnalystDashboard, AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystViews, AnalystResultTable, AnalystPlanningSummary } = compile('../components/AnalystDashboardSummary.tsx');
+
+test('temporal points preserve real date distance and split unobserved daily gaps',()=>{
+  const data=[{label:'2026-09-01',v:10},{label:'2026-09-02',v:20},{label:'2026-09-11',v:15}];
+  const html=renderToStaticMarkup(React.createElement(SeriesLineChart,{data,series:[{key:'v',label:'Doanh thu'}],unit:'VND',granularity:'day'}));
+  const xs=[...html.matchAll(/<circle[^>]*cx="([\d.]+)"/g)].map(m=>Number(m[1]));
+  assert.equal(xs.length,3);
+  assert(Math.abs((xs[2]-xs[1])/(xs[1]-xs[0])-9)<1e-6);
+  assert.equal((html.match(/data-series-line/g)||[]).length,2);
+  for(const row of data)assert(html.includes(row.label));
+  assert(!html.includes('NaN'));
+});
+
+test('forecast preserves elapsed time and distinguishes model interval from observed facts',()=>{
+  const html=renderToStaticMarkup(React.createElement(ForecastChart,{unit:'VND',
+    history:[{period:'2026-09-01',value:10},{period:'2026-09-02',value:12}],
+    forecast:[{period:'2026-09-11',value:20,lower_80:15,upper_80:25}]}));
+  const xs=[...html.matchAll(/<circle[^>]*cx="([\d.]+)"/g)].map(m=>Number(m[1]));
+  assert.equal(xs.length,3); assert(Math.abs((xs[2]-xs[1])/(xs[1]-xs[0])-9)<1e-6);
+  assert(html.includes('data-forecast-band'));assert(html.includes('data-history-line'));
+  assert(html.includes('dự báo; 80%'));assert(html.includes('lịch sử'));
+});
+
+test('invalid temporal order falls back to the same observed table with a reason',()=>{
+ const data=[{label:'2026-09-02',v:20},{label:'2026-09-01',v:10}];
+ const before=JSON.stringify(data);
+ const html=renderToStaticMarkup(React.createElement(SeriesLineChart,{data,series:[{key:'v',label:'Doanh thu'}],unit:'VND'}));
+ assert(html.includes('<table>'));assert(html.includes('Thời gian chưa theo thứ tự'));
+ assert(html.includes('2026-09-02'));assert(html.includes('20 VND'));assert(!html.includes('data-series-line'));
+ assert.equal(JSON.stringify(data),before);
+});
 
 test('ranked metric companions render two plot cards with full category names', () => {
   const observed = JSON.parse(readFileSync(new URL('../../../analytics-api/tests/fixtures/ranking_dashboard_observed.json', import.meta.url), 'utf8'));
@@ -188,8 +218,8 @@ test('area adds real observed segments while gaps remain separate', () => {
   const chart = { chart_type: 'area', unit: 'VND', data: [{ label: '1', value: 10 }, { label: '2', value: 20 }, { label: '3' }, { label: '4', value: 30 }] };
   const area = render(AnalystChart, { chart });
   const line = render(AnalystChart, { chart: { ...chart, chart_type: 'line' } });
-  assert.equal((area.match(/opacity=".12"/g) || []).length, 2);
-  assert.ok(!line.includes('opacity=".12"'));
+  assert.equal((area.match(/data-series-area/g) || []).length, 2);
+  assert.ok(!line.includes('data-series-area'));
   assert.equal((area.match(/<circle/g) || []).length, 3);
 });
 
@@ -311,16 +341,21 @@ test('clipped weekly buckets are marked and disclose the actual selected dates',
 });
 
 for (const count of [1, 3, 4, 5, 6]) {
-  test(`${count} primary chart cards use paired desktop widths and one mobile column`, () => {
+  test(`${count} primary chart cards fill complete content-aware rows`, () => {
     const charts=Array.from({length:count}, (_,i)=>({id:'balanced'+i,chart_type:['line','donut','bar','heatmap'][i%4],title:'View '+i,data:[]}));
     const html=render(AnalystViews,{charts,compact:true});
     assert.equal((html.match(/<article/g)||[]).length,count);
     assert.match(html,/grid-cols-1 xl:grid-cols-12/);
     assert.doesNotMatch(html,/lg:col-span-|lg:grid-cols-6/);
-    const spans=[...html.matchAll(/<article[^>]*class="col-span-1 xl:col-span-(\d+)/g)].map(match=>Number(match[1]));
-    assert.equal(spans.length,count);
-    for(let index=0;index<spans.length;index+=2) assert.equal(spans[index]+(spans[index+1] || 0),12);
-    assert.equal((html.match(/class="col-span-1 /g)||[]).length,count);
+    const placements=[...html.matchAll(/data-chart-row="(\d+)" data-chart-span="([\d.]+)"/g)].map(match=>({row:Number(match[1]),span:Number(match[2])}));
+    assert.equal(placements.length,count);
+    for(const row of new Set(placements.map(p=>p.row))) {
+      const cards=placements.filter(p=>p.row===row);
+      assert.ok(cards.length<=3);
+      assert.equal(cards.reduce((sum,p)=>sum+p.span,0),12);
+    }
+    assert.ok(html.includes('dashboard-chart-card'));
+
   });
 }
 

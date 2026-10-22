@@ -1,3 +1,4 @@
+import { dashboardGridLayout } from './dashboardGrid.mjs';
 const palette = ['#2563eb', '#0d9488', '#7c3aed', '#d97706', '#db2777', '#0891b2'];
 export function reportHeading(report = {}) {
   if (report.provenance?.semantic_history?.length) {
@@ -48,11 +49,14 @@ export function presentationChart(chart, report = {}) {
   const asOf = report.quality_context?.reference_date;
   const period = basePeriod && !basePeriod.end && asOf ? { ...basePeriod, end: asOf } : basePeriod;
   let out = { ...chart, granularity: chart.granularity || op?.granularity, period };
-  const e = (report.evidence || []).find(e => e.scope_ref === chart.scope_ref && e.metric === chart.metric && e.feature === 'concentration' && e.scope?.selection === 'complete' && !Object.keys(e.scope?.partition || {}).length);
+  const e = (report.evidence || []).find(e => e.scope_ref === chart.scope_ref && e.metric === chart.metric && ['concentration','scope_total'].includes(e.feature) && e.scope?.selection === 'complete' && !Object.keys(e.scope?.partition || {}).length);
   // Older reports may contain a bar for a complete composition. Evidence must
   // certify the full total; never reinterpret a Top N or a display subset.
   const rows = chart.data || [], total = rows.reduce((sum, r) => sum + r.value, 0);
-  if (['bar', 'horizontal_bar'].includes(chart.chart_type) && (!chart.purpose || chart.purpose === 'distribution') && chart.selection === 'complete' && e && rows.length >= 2 && rows.every(r => Number.isFinite(r.value) && r.value >= 0) && Math.abs(total - e.values.total) < 1e-6) {
+  const siblings=(report.charts||[]).filter(c=>c.x_field===chart.x_field&&c.scope_ref===chart.scope_ref&&!c.series?.length);
+  const compositionRequested=!chart.purpose||chart.purpose==='distribution'||/cơ cấu/i.test(chart.purpose+' '+chart.lens_label)
+    ||(siblings.length>1&&siblings[0].metric!==chart.metric);
+  if (['bar', 'horizontal_bar'].includes(chart.chart_type) && !chart.series?.length && !chart.risk_threshold && compositionRequested && chart.selection === 'complete' && e && total>0 && rows.length >= 2 && rows.every(r => Number.isFinite(r.value) && r.value >= 0) && Math.abs(total - e.values.total) < Math.max(1e-6,Math.abs(total)*1e-10)) {
     out = { ...out, chart_type: 'donut', ...compositionData(rows, chart.x_field === 'category' ? 'danh mục' : 'nhóm'), purpose: 'Cơ cấu trong phạm vi đã chọn' };
   }
   if (['line', 'area', 'multi_line'].includes(chart.chart_type) && rows.some(r => bucketCoverage(r.label, out.granularity, out.period)?.partial)) {
@@ -217,20 +221,18 @@ export function initialChartType(chart = {}) {
     ? 'horizontal_bar' : chart.chart_type;
 }
 
-/** Pair adjacent views without changing their mission order or data. */
-export function chartGridSpans(charts = []) {
-  const density = chart => ['line', 'area', 'multi_line', 'heatmap', 'scatter'].includes(chart.chart_type) ? 2
-    : ['grouped_bar', 'stacked_bar'].includes(chart.chart_type) || (chart.data || []).length > 8
-      || (chart.data || []).some(row => String(row.label).length > 24) ? 1 : 0;
-  const classes = { 4: 'col-span-1 xl:col-span-4', 6: 'col-span-1 xl:col-span-6',
-    8: 'col-span-1 xl:col-span-8', 12: 'col-span-1 xl:col-span-12' };
-  return charts.map((chart, index) => {
-    const start = index - index % 2, pair = charts.slice(start, start + 2);
-    if (pair.length === 1) return classes[12];
-    const first = density(pair[0]), second = density(pair[1]);
-    if (first === second) return classes[6];
-    return classes[density(chart) === Math.max(first, second) ? 8 : 4];
-  });
+/** Responsive content-aware widths, shared by BI and AI reports. */
+export function chartGridSpans(charts = [], maxColumns = 3) {
+  // Legacy twelve-column consumers receive integral, row-conserving spans.
+  const layout=dashboardGridLayout(charts,maxColumns), integral=layout.map(p=>Math.floor(p.span));
+  for(const row of new Set(layout.map(p=>p.row))){
+    const indexes=layout.flatMap((p,i)=>p.row===row?[i]:[]);
+    let remaining=12-indexes.reduce((sum,i)=>sum+integral[i],0);
+    const ranked=[...indexes].sort((a,b)=>(layout[b].span-integral[b])-(layout[a].span-integral[a]));
+    for(let i=0;i<remaining;i++)integral[ranked[i%ranked.length]]++;
+  }
+  const classes=['','col-span-1 xl:col-span-1','col-span-1 xl:col-span-2','col-span-1 xl:col-span-3','col-span-1 xl:col-span-4','col-span-1 xl:col-span-5','col-span-1 xl:col-span-6','col-span-1 xl:col-span-7','col-span-1 xl:col-span-8','col-span-1 xl:col-span-9','col-span-1 xl:col-span-10','col-span-1 xl:col-span-11','col-span-1 xl:col-span-12'];
+  return integral.map(span=>classes[span]);
 }
 export function businessCategory(value) {
   const labels = { HOAN_THANH: 'Hoàn thành', DA_HUY: 'Đã hủy', DANG_GIAO: 'Đang giao', DANG_XU_LY: 'Đang xử lý', CHO_XAC_NHAN: 'Chờ xác nhận', DUNG_TAI_CHO: 'Dùng tại chỗ', LAY_TAI_QUAN: 'Lấy tại quán', MANG_DI: 'Mang đi', GIAO_HANG: 'Giao hàng', THANH_CONG: 'Thành công', THAT_BAI: 'Thất bại', CHO_THANH_TOAN: 'Chờ thanh toán' };
@@ -243,13 +245,14 @@ export function chartExplanation(chart = {}) {
   const title = conciseChartTitle(chart).replace(/^Top \d+ · /, '').replace(/ trong tập xếp hạng theo .*/i, '').toLowerCase();
   const dimension = (chart.x_label || 'nhóm').toLowerCase();
   const type = chart.chart_type;
-  if (chart.selection === 'Top N') {
+  if (chart.selection === 'Top N' || chart.selection === 'Bottom N') {
+    const rank = chart.ranking_direction === 'ASC' || chart.selection === 'Bottom N' ? 'Bottom' : 'Top';
     const ranking = (chart.ranking_metric_label || '').toLowerCase();
     const partition = chart.ranking_per_group?.length ? `${chart.ranking_note || 'Xếp hạng riêng trong từng nhóm.'} ` : '';
     if (ranking && chart.ranking_metric !== chart.metric && !(chart.metrics || []).includes(chart.ranking_metric)) {
-      return partition + `Hiển thị ${title} của tập Top ${chart.ranking_limit || chart.data?.length || ''} được chọn theo ${ranking}; giữ nguyên thứ tự theo ${ranking}, không xếp hạng lại theo chỉ số đang hiển thị.`;
+      return partition + `Hiển thị ${title} của tập ${rank} ${chart.ranking_limit || chart.data?.length || ''} được chọn theo ${ranking}; giữ nguyên thứ tự theo ${ranking}, không xếp hạng lại theo chỉ số đang hiển thị.`;
     }
-    return partition + `Thứ tự theo ${ranking || title}; chiều dài thanh thể hiện giá trị của từng ${dimension} trong tập Top N.`;
+    return partition + `Thứ tự theo ${ranking || title}; chiều dài thanh thể hiện giá trị của từng ${dimension} trong tập ${rank} N.`;
   }
   if (type === 'donut') return `Cơ cấu ${title} theo ${dimension}; tỷ trọng tính trên toàn bộ ${chart.population_count || chart.data?.length || ''} nhóm trong phạm vi đã chọn.`;
   if (['line', 'area', 'multi_line'].includes(type)) {
@@ -263,4 +266,12 @@ export function chartExplanation(chart = {}) {
   if (type === 'stacked_bar') return `Các phần màu thể hiện đóng góp của từng nhóm vào ${title} theo ${dimension}.`;
   if (type === 'grouped_bar') return `Đối chiếu các chỉ số cùng đơn vị theo ${dimension}; mỗi màu tương ứng một chỉ số hoặc nhóm trong chú giải.`;
   return `So sánh ${title} theo ${dimension}${chart.selection === 'display_subset' ? `, hiển thị ${chart.displayed_count}/${chart.population_count} nhóm có giá trị cao nhất` : ''}; ${type === 'bar' ? 'cột cao' : 'thanh dài'} hơn thể hiện giá trị lớn hơn.`;
+}
+
+/** I01: which population a chart describes relative to a Top/Bottom N cohort (null = no cohort). */
+export function scopeChip(chart = {}) {
+  const cohort = chart.cohort_label || 'tập xếp hạng';
+  if (chart.population_scope === 'ranked_cohort') return { tone: 'cohort', text: `Trong ${cohort}` };
+  if (chart.population_scope === 'scope_benchmark') return { tone: 'benchmark', text: `Toàn phạm vi · không riêng ${cohort}` };
+  return null;
 }

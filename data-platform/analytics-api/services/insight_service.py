@@ -9,6 +9,56 @@ from datetime import date, timedelta
 from services.business_labels import dimension_labeler
 
 
+
+def ranking_label(ranking):
+    """ASC ranking is a Bottom N everywhere it is named (title, selection, notes)."""
+    return f"{'Bottom' if ranking.direction == 'ASC' else 'Top'} {ranking.top_n}"
+
+
+def population_scope(a, artifacts):
+    """(scope, ranking label) of a view relative to a Top/Bottom N cohort, or (None, None).
+
+    ranked_cohort: computed on the ranked keys; scope_benchmark: whole scope beside a cohort."""
+    ref = getattr(a.query, 'cohort_scope_query_id', None)
+    if ref and artifacts.get(ref) is not None and artifacts[ref].plan.ranking:
+        return 'ranked_cohort', ranking_label(artifacts[ref].plan.ranking)
+    parent = artifacts.get(getattr(a.query, 'parent_id', None))
+    if parent is not None and not parent.plan.ranking and getattr(parent.query, 'cohort_scope_query_id', None):
+        parent = artifacts.get(parent.query.cohort_scope_query_id)
+    if (parent is not None and parent.plan.ranking and not getattr(a.query, 'cohort_query_id', None)
+            and not a.plan.ranking):
+        return 'scope_benchmark', ranking_label(parent.plan.ranking)
+    return None, None
+
+
+SELECTION_TEXT = {'Top N': 'tập Top N', 'Bottom N': 'tập Bottom N', 'ranked_cohort': 'các đối tượng của xếp hạng chính',
+                  'limited': 'giới hạn số dòng', 'complete': 'toàn bộ nhóm trong phạm vi'}
+
+
+def selection_code(a):
+    """Which rows an evidence describes; Bottom N is never called Top N (I08)."""
+    if a.plan.ranking:
+        return 'Bottom N' if a.plan.ranking.direction == 'ASC' else 'Top N'
+    if getattr(a.query, 'cohort_query_id', None):
+        return 'Top N'
+    if getattr(a.query, 'cohort_scope_query_id', None):
+        return 'ranked_cohort'
+    return 'limited' if a.plan.explicit_limit else 'complete'
+
+
+def evidence_comment(e):
+    selection = SELECTION_TEXT.get(e['scope']['selection'], e['scope']['selection'])
+    return f"Căn cứ {e['scope'].get('label', 'phần phân tích đã chọn')}; phạm vi: {selection}. Xem bằng chứng và phép tính kèm theo."
+
+
+def selected_total_label(e):
+    return 'Tổng của tập Bottom N' if (e.get('scope') or {}).get('selection') == 'Bottom N' else 'Tổng của tập Top N'
+
+
+def fact_reference(e):
+    """A visible fact binds to one immutable query population, metric and unit."""
+    return {k: e[k] for k in ('scope_ref', 'metric', 'unit') if e.get(k) is not None}
+
 def trend_bucket_coverage(value, granularity, period):
     """Calendar coverage of a bucket, clipped only by the approved time scope."""
     start = date.fromisoformat(str(value)[:10])
@@ -46,6 +96,11 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
     evidence = []
 
     def add(a, metric, kind, feature, values, statement, partition=None):
+        population, cohort = population_scope(a, artifacts)
+        if population == 'ranked_cohort':
+            statement += f' Phạm vi: trong {cohort} của xếp hạng chính.'
+        elif population == 'scope_benchmark':
+            statement += f' Phạm vi đối chiếu: toàn bộ tập đã lọc (bên cạnh {cohort}).'
         suffix = hashlib.sha256(
             json.dumps(
                 [partition or {}, values.get("comparison_scope")],
@@ -70,11 +125,10 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                     "metric_required_non_null": a.grounded.metrics.get(metric, {}).get("required_non_null", []),
                     "filters": [f.model_dump(mode="json") for f in a.query.filters],
                     "partition": partition or {},
-                    "selection": (
-                        "Top N"
-                        if a.plan.ranking or getattr(a.query,'cohort_query_id',None)
-                        else "limited" if a.plan.explicit_limit else "complete"
-                    ),
+                    "selection": selection_code(a),
+                    **({'population_scope': population} if population else {}),
+                    **({'cohort_scope_query_id': a.query.cohort_scope_query_id}
+                       if getattr(a.query, 'cohort_scope_query_id', None) else {}),
                     **({'cohort_query_id':a.query.cohort_query_id} if getattr(a.query,'cohort_query_id',None) else {}),
                 },
                 "statement": statement,
@@ -166,7 +220,9 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                         "ranking",
                         "leader",
                         {"value": v, "entity": entity},
-                        f"{entity} đứng đầu xếp hạng{suffix}: {fmt(v)} {unit} theo {label.lower()}.",
+                        (f"{entity} thấp nhất trong {ranking_label(a.plan.ranking)}{suffix}: {fmt(v)} {unit} theo {label.lower()}."
+                         if a.plan.ranking and a.plan.ranking.direction == 'ASC' else
+                         f"{entity} đứng đầu xếp hạng{suffix}: {fmt(v)} {unit} theo {label.lower()}."),
                         partition,
                     )
                     if len(values) >= 2:
@@ -198,7 +254,7 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                         "ranking",
                         "selected_total",
                         {"total": total, "spread": max(values) - min(values)},
-                        f"Tổng {label.lower()} của {len(values)} mục trong xếp hạng{suffix}: {fmt(total)} {unit}; đây là tổng của tập Top N đã trả về.",
+                        f"Tổng {label.lower()} của {len(values)} mục trong xếp hạng{suffix}: {fmt(total)} {unit}; đây là tổng của tập {'Bottom N' if a.plan.ranking.direction == 'ASC' else 'Top N'} đã trả về.",
                         partition,
                     )
                 if a.plan.kind == "trend" and len(pairs) >= 2:
@@ -777,11 +833,12 @@ def grounded_narrative(plan, evidence):
         )
     return {
         "executive_summary": summary,
+        "executive_summary_facts": [{"evidence_id": e['id'], **fact_reference(e)} for e in selected[:5]],
         "ai_insights": [e["statement"] for e in selected],
         "key_findings": [
             {
                 "finding": e["statement"],
-                "comment": f"Căn cứ {e['scope'].get('label', 'phần phân tích đã chọn')}; phạm vi {e['scope']['selection']}. Xem bằng chứng và phép tính kèm theo.",
+                "comment": evidence_comment(e),
                 "value": e["values"].get(
                     {
                         "population_gap": "gap",
@@ -798,19 +855,14 @@ def grounded_narrative(plan, evidence):
                 ),
                 "value_details": e["values"],
                 "evidence_id": e["id"],
+                **fact_reference(e),
             }
             for e in selected
         ],
-        "conclusions": list(dict.fromkeys(
-            {
-                "ranking": "Nhóm dẫn đầu tạo động lực chính trong phạm vi xếp hạng; các nhóm còn lại có tiềm năng tối ưu quy mô và hiệu suất.",
-                "trend": "Chỉ số phản ánh nhịp độ vận hành thực tế qua các mốc thời gian; là căn cứ quan trọng để dự báo biến động kế tiếp.",
-                "distribution": "Cơ cấu tỷ trọng phản ánh rõ mức độ đóng góp của từng cấu phần trong toàn bộ phạm vi dữ liệu đã kiểm chứng.",
-                "relationship": "Mức độ tương quan giữa các thước đo hỗ trợ so sánh xu hướng vận hành của các nhóm.",
-                "comparison": "Chênh lệch giữa các nhóm chỉ ra cơ hội tối ưu hóa vận hành và tái phân bổ nguồn lực hiệu quả hơn.",
-            }.get(e["claim_type"], "Kết quả phân tích đã được kiểm chứng theo danh mục số liệu chuẩn.")
-            for e in selected if e["claim_type"] in {"ranking", "trend", "distribution", "relationship", "comparison"}
-        ))[:3],
+        # Conclusions reuse scoped evidence statements instead of generic
+        # business/causal claims that the observations cannot establish.
+        "conclusions": list(dict.fromkeys(e["statement"] for e in selected
+            if e["claim_type"] in {"ranking", "trend", "distribution", "relationship", "comparison"}))[:3],
         "recommendations": recommendations,
         "rejected_narrative": rejected,
     }

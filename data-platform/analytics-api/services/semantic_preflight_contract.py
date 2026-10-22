@@ -86,6 +86,7 @@ def metric_locks(anchors, registry):
         qualified = {m for m in siblings if m in explicit or
                      context & set(registry["metrics"][m].get("qualifier_dimensions", []))}
         locks.append({"phrase": a["phrase"], "metric_id": owner, "siblings": siblings,
+                      "explicitly_named": sorted(set(siblings) & set(explicit)),
                       "explicitly_qualified": sorted(qualified)})
     return locks
 
@@ -129,7 +130,9 @@ def enforce_metric_locks(intent, locks, catalog):
         for req in result.requirements:
             if req.availability != "requested" or req.supporting_for:
                 continue
-            drifted = [m for m in req.metric_ids if m in siblings and not _qualified(m, req, registry, explicit)]
+            named = set(lock.get('explicitly_named', lock['explicitly_qualified']))
+            drifted = [m for m in req.metric_ids if m in siblings and
+                       (not _qualified(m, req, registry, explicit) or owner in req.metric_ids and m not in named)]
             if not drifted:
                 continue
             if not _canonical_fits(catalog, owner, req):
@@ -243,7 +246,8 @@ class CapabilityDecision(Contract):
 
 CLARIFY_CODES = {'unrecognized_question', 'no_metric_detected', 'metric_needed', 'analysis_target_missing',
     'trend_range_too_short', 'compare_mixed_units', 'cohort_criterion_needed', 'association_category_variable',
-    'scope_unresolved', 'scope_conflict'}
+    'scope_unresolved', 'scope_conflict', 'input_number_invalid', 'input_time_invalid', 'input_time_conflict',
+    'input_entity_unresolved', 'input_entity_ambiguous', 'input_value_missing', 'input_lookup_required', 'input_lookup_unavailable', 'input_residual_unresolved', 'input_exclusion_unresolved', 'input_scope_forbidden', 'input_control_invalid', 'input_time_unresolved', 'input_condition_unsupported', 'input_number_ambiguous'}
 REDIRECT_CODES = {'composition_non_additive', 'risk_signal_required', 'risk_mixed_roles', 'mission_mismatch', 'non_additive_total'}
 
 

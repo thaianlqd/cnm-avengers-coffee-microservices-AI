@@ -1,0 +1,129 @@
+{
+  "reports": 12,
+  "charts": 59,
+  "chart_key_facts": 136,
+  "cases": [
+    {
+      "case": "compare-comprehensive-report",
+      "session_id": "dd5c4c10-12e8-4d91-a876-49be9aebf5f5",
+      "revision": 1,
+      "queries": 8,
+      "charts": 6,
+      "facts": 12,
+      "critical_failures": [],
+      "quality": "partially_verified"
+    },
+    {
+      "case": "compare-deep-report",
+      "session_id": "d26d3646-5ec4-4658-88df-a8186df42c15",
+      "revision": 1,
+      "queries": 6,
+      "charts": 4,
+      "facts": 8,
+      "critical_failures": [],
+      "quality": "partially_verified"
+    },
+    {
+      "case": "compare-focused-report",
+      "session_id": "06d5446e-f83d-469d-b247-d677caa4c398",
+      "revision": 1,
+      "queries": 4,
+      "charts": 3,
+      "facts": 6,
+      "critical_failures": [],
+      "quality": "partially_verified"
+    },
+    {
+      "case": "ranking-comprehensive-report",
+      "session_id": "40662216-bf46-4846-bf85-ef19c6b63c4f",
+      "revision": 1,
+      "queries": 8,
+      "charts": 7,
+      "facts": 14,
+      "critical_failures": [],
+      "quality": "verified"
+    },
+    {
+      "case": "ranking-deep-report",
+      "session_id": "c8b8e536-bfbc-47e9-a6c1-462ecb03a585",
+      "revision": 1,
+      "queries": 6,
+      "charts": 5,
+      "facts": 10,
+      "critical_failures": [],
+      "quality": "verified"
+    },
+    {
+      "case": "ranking-focused-report",
+      "session_id": "0ea8235f-5da0-4344-8190-6b20a859fdfe",
+      "revision": 1,
+      "queries": 4,
+      "charts": 4,
+      "facts": 8,
+      "critical_failures": [],
+      "quality": "verified"
+    },
+    {
+      "case": "risk_watch-comprehensive-report",
+      "session_id": "bf8b4374-faa9-4594-80f8-050806b048af",
+      "revision": 1,
+      "queries": 10,
+      "charts": 6,
+      "facts": 18,
+      "critical_failures": [],
+      "quality": "verified"
+    },
+    {
+      "case": "risk_watch-deep-report",
+      "session_id": "bad4629f-6b29-4a86-b869-35392c5a7402",
+      "revision": 1,
+      "queries": 10,
+      "charts": 6,
+      "facts": 18,
+      "critical_failures": [],
+      "quality": "verified"
+    },
+    {
+      "case": "risk_watch-focused-report",
+      "session_id": "51aa56c9-985d-4025-a401-dc57821a3d1d",
+      "revision": 1,
+      "queries": 10,
+      "charts": 6,
+      "facts": 18,
+      "critical_failures": [],
+      "quality": "verified"
+    },
+    {
+      "case": "trend-comprehensive-report",
+      "session_id": "9fba08ff-48ee-42da-b9c0-a59023f94bcf",
+      "revision": 1,
+      "queries": 8,
+      "charts": 6,
+      "facts": 12,
+      "critical_failures": [],
+      "quality": "partially_verified"
+    },
+    {
+      "case": "trend-deep-report",
+      "session_id": "e4058aa0-ab76-4543-a166-c9afa652b0ba",
+      "revision": 1,
+      "queries": 6,
+      "charts": 4,
+      "facts": 8,
+      "critical_failures": [],
+      "quality": "partially_verified"
+    },
+    {
+      "case": "trend-focused-report",
+      "session_id": "63ec1985-4db2-45c0-8294-379a4f5aadb1",
+      "revision": 1,
+      "queries": 4,
+      "charts": 2,
+      "facts": 4,
+      "critical_failures": [],
+      "quality": "partially_verified"
+    }
+  ],
+  "passed": true,
+  "scope": "Inspect captured current reports and their independently replayed critical checks; mutation tests and raw oracle receipts supply separate numerical evidence."
+}

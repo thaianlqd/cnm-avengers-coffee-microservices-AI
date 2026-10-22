@@ -1,0 +1,382 @@
+{
+  "version": "1",
+  "freeze_before_evaluation": {
+    "services/input_integrity_service.py": "45a52f32708169e6660421fbdf37f3dafa3b61d07bf59c35d2a66e4d893f81a8",
+    "metadata/input_integrity_policy.json": "3e3b3dc12d99f462fa80a532424b8bbb9691b840608c4855e68edd6517d1e8b8",
+    "services/preflight_service.py": "fbe5ba924770726e4af8d27ffb153e6715f0f490baeadd5f757ab19d651a7038",
+    "services/agent_pipeline.py": "d3b7d66455cb4c87fe6e06b3380a03c69ba06234b5c2a9183601f33d2c3c8dff"
+  },
+  "scope": "Separately authored contexts after implementation freeze; input-gate decisions only, not numerical/LLM accuracy.",
+  "cases": [
+    {
+      "id": "HV01",
+      "question": "Báo cáo doanh thu tỉnh Hải Phòng trong quý 3 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "HV02",
+      "question": "Cho tôi so sánh số đơn Hà Nội và Đà Nẵng tháng 8 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "HV03",
+      "question": "Xem doanh thu miền Trung theo chi nhánh",
+      "can_submit": true
+    },
+    {
+      "id": "HV04",
+      "question": "Doanh thu tỉnh Bình Dương",
+      "can_submit": true
+    },
+    {
+      "id": "HV05",
+      "question": "Doanh thu tại tphcm theo tuần",
+      "can_submit": true
+    },
+    {
+      "id": "HV06",
+      "question": "Doanh thu Hồ Chí Minh hoặc Hà Nội",
+      "can_submit": true
+    },
+    {
+      "id": "HV07",
+      "question": "Doanh thu hôm qua",
+      "can_submit": true
+    },
+    {
+      "id": "HV08",
+      "question": "Doanh thu năm ngoái",
+      "can_submit": true
+    },
+    {
+      "id": "HV09",
+      "question": "Doanh thu this month",
+      "can_submit": true
+    },
+    {
+      "id": "HV10",
+      "question": "Doanh thu ngày 30/04/2026",
+      "can_submit": true
+    },
+    {
+      "id": "HV11",
+      "question": "Doanh thu ngày 29/02/2028",
+      "can_submit": true
+    },
+    {
+      "id": "HV12",
+      "question": "Doanh thu từ 01/08/2026 đến 31/08/2026",
+      "can_submit": true
+    },
+    {
+      "id": "HV13",
+      "question": "Top +5 chi nhánh theo doanh thu",
+      "can_submit": true
+    },
+    {
+      "id": "HV14",
+      "question": "Bottom 25 điểm bán theo doanh thu",
+      "can_submit": true
+    },
+    {
+      "id": "HV15",
+      "question": "Doanh thu >= -250000",
+      "can_submit": true
+    },
+    {
+      "id": "HV16",
+      "question": "Số đơn trạng thái đơn DA_XAC_NHAN",
+      "can_submit": true
+    },
+    {
+      "id": "HV17",
+      "question": "Doanh thu phương thức thanh toán VI_DIEN_TU",
+      "can_submit": true
+    },
+    {
+      "id": "HV18",
+      "question": "Doanh thu loại điểm bán KIOSK_VE_TINH",
+      "can_submit": true
+    },
+    {
+      "id": "HV19",
+      "question": "Thể hiện doanh thu bằng biểu đồ đường",
+      "can_submit": true
+    },
+    {
+      "id": "HV20",
+      "question": "Doanh thu các cửa hàng tại Cần Thơ",
+      "can_submit": true
+    },
+    {
+      "id": "HV21",
+      "question": "Số đơn có voucher theo tỉnh",
+      "can_submit": true
+    },
+    {
+      "id": "HV22",
+      "question": "Số giao dịch ví theo tháng",
+      "can_submit": true
+    },
+    {
+      "id": "HV23",
+      "question": "Doanh thu theo mã người giao",
+      "can_submit": true
+    },
+    {
+      "id": "HV24",
+      "question": "Số đơn theo lựa chọn trả lời khảo sát",
+      "can_submit": true
+    },
+    {
+      "id": "HV25",
+      "question": "Doanh thu theo hiển thị công khai",
+      "can_submit": true
+    },
+    {
+      "id": "HV26",
+      "question": "Chỉ lọc Đà Nẵng",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    },
+    {
+      "id": "HV27",
+      "question": "Nhóm theo trạng thái đơn",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    },
+    {
+      "id": "HV28",
+      "question": "Đổi biểu đồ đường sang bảng",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    },
+    {
+      "id": "HV29",
+      "question": "Chỉ xem quý 2 năm 2026",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    },
+    {
+      "id": "HV30",
+      "question": "Giữ nguyên phạm vi, xem doanh thu theo tháng",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    },
+    {
+      "id": "HN01",
+      "question": "Doanh thu tỉnh Zyxv tháng 8 năm 2026",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN02",
+      "question": "So sánh doanh thu tỉnh Hải Phòng với Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN03",
+      "question": "Doanh thu Đà Nẵng hoặc Zyxv tháng 8 năm 2026",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN04",
+      "question": "Doanh thu miền Bắc trừ tỉnh Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN05",
+      "question": "Doanh thu ở Zyxv trong tháng 8 năm 2026",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN06",
+      "question": "Doanh thu tháng 14 năm 2026",
+      "can_submit": false,
+      "reason": "input_time_invalid"
+    },
+    {
+      "id": "HN07",
+      "question": "Doanh thu quý 6 năm 2026",
+      "can_submit": false,
+      "reason": "input_time_invalid"
+    },
+    {
+      "id": "HN08",
+      "question": "Doanh thu ngày 31/04/2026",
+      "can_submit": false,
+      "reason": "input_time_invalid"
+    },
+    {
+      "id": "HN09",
+      "question": "Doanh thu ngày 2027-02-29",
+      "can_submit": false,
+      "reason": "input_time_invalid"
+    },
+    {
+      "id": "HN10",
+      "question": "Doanh thu từ 30/09/2026 đến 01/09/2026",
+      "can_submit": false,
+      "reason": "input_time_invalid"
+    },
+    {
+      "id": "HN11",
+      "question": "Top −20 chi nhánh theo doanh thu",
+      "can_submit": false,
+      "reason": "input_number_invalid"
+    },
+    {
+      "id": "HN12",
+      "question": "Bottom 500 sản phẩm theo số lượng",
+      "can_submit": false,
+      "reason": "input_number_invalid"
+    },
+    {
+      "id": "HN13",
+      "question": "Top 0,5 chi nhánh",
+      "can_submit": false,
+      "reason": "input_number_invalid"
+    },
+    {
+      "id": "HN14",
+      "question": "Doanh thu loại điểm bán Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN15",
+      "question": "Số đơn trạng thái đơn Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN16",
+      "question": "Số giao dịch trạng thái giao dịch Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN17",
+      "question": "Doanh thu hình thức nhận hàng Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN18",
+      "question": "Doanh thu thanh toán bằng Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN19",
+      "question": "Doanh thu sản phẩm Quả Sao Xanh",
+      "can_submit": false,
+      "reason": "input_lookup_required"
+    },
+    {
+      "id": "HN20",
+      "question": "Doanh thu cửa hàng Nhà Sao Xanh",
+      "can_submit": false,
+      "reason": "input_lookup_required"
+    },
+    {
+      "id": "HN21",
+      "question": "Doanh thu gói kiosk Gói Sao Xanh",
+      "can_submit": false,
+      "reason": "input_lookup_required"
+    },
+    {
+      "id": "HN22",
+      "question": "Doanh thu chủ đề thẻ quà Sao Xanh",
+      "can_submit": false,
+      "reason": "input_lookup_required"
+    },
+    {
+      "id": "HN23",
+      "question": "Doanh thu trạng thái nộp COD Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved"
+    },
+    {
+      "id": "HN24",
+      "question": "Doanh thu > Zyxv quý 3 năm 2026",
+      "can_submit": false,
+      "reason": "input_number_invalid"
+    },
+    {
+      "id": "HN25",
+      "question": "Doanh thu Zyxv tháng 8 năm 2026",
+      "can_submit": false,
+      "reason": "input_residual_unresolved"
+    },
+    {
+      "id": "HN26",
+      "question": "Chỉ lọc tỉnh Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved",
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    },
+    {
+      "id": "HN27",
+      "question": "Nhóm theo Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved",
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    },
+    {
+      "id": "HN28",
+      "question": "Chỉ lọc Zyxv tháng 8 năm 2026",
+      "can_submit": false,
+      "reason": "input_entity_unresolved",
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    },
+    {
+      "id": "HN29",
+      "question": "Chỉ xem tháng 0 năm 2026",
+      "can_submit": false,
+      "reason": "input_time_invalid",
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    },
+    {
+      "id": "HN30",
+      "question": "Chỉ lọc Đà Nẵng và Zyxv",
+      "can_submit": false,
+      "reason": "input_entity_unresolved",
+      "context": {
+        "mode": "refinement",
+        "revision": 2
+      }
+    }
+  ]
+}

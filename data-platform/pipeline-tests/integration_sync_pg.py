@@ -116,7 +116,7 @@ class GovernedSyncPostgresTests(TestCase):
             cursor.execute('SELECT id,amount,sensitive_hash FROM orders.demo ORDER BY id')
             return cursor.fetchall()
 
-    def test_full_load_has_atomic_verified_parity_but_incremental_is_not_global_complete(self):
+    def test_full_load_and_parity_verified_incremental_are_complete_but_unproven_incremental_is_not(self):
         self.seed(7)
         self.poll()
         checkpoint = self.checkpoint()
@@ -126,9 +126,23 @@ class GovernedSyncPostgresTests(TestCase):
         self.assertEqual(proof['snapshot']['source']['rows'], 7)
         self.assertEqual(proof['snapshot']['source'], proof['snapshot']['target'])
         self.assertEqual(proof['snapshot']['closed_through'], None)
+        self.poll()  # incremental: whole source projection measured again and equal -> complete
+        self.assertEqual(self.checkpoint()['completeness'], 'complete')
+        self.assertEqual(self.checkpoint()['certificate']['snapshot']['source']['rows'], 7)
+        with self.source_admin.cursor() as cursor:
+            cursor.execute('DELETE FROM orders.demo WHERE id=3')  # incremental never repairs deletes
         self.poll()
         self.assertEqual(self.checkpoint()['completeness'], 'unknown')
         self.assertIsNone(self.checkpoint()['certificate']['snapshot'])
+
+    def test_incremental_parity_proof_is_optional_and_never_fails_the_load(self):
+        self.seed(3)
+        self.poll()
+        self.seed(1, start=4)
+        with patch.object(sync, 'PARITY_SECONDS', 0):  # proof budget exhausted at once
+            self.assertEqual(self.poll(), 4)
+        self.assertEqual(len(self.target_rows()), 4)
+        self.assertEqual(self.checkpoint()['completeness'], 'unknown')
 
     def test_closed_period_is_rechecked_even_when_source_delete_is_outside_overlap(self):
         contract = deepcopy(self.contract)
@@ -166,7 +180,7 @@ class GovernedSyncPostgresTests(TestCase):
         self.seed(1, start=2, stamp=stamp-timedelta(seconds=30))
         self.poll()
         self.assertEqual([r[0] for r in self.target_rows()], [1, 2])
-        self.assertEqual(self.checkpoint()['completeness'], 'unknown')
+        self.assertEqual(self.checkpoint()['completeness'], 'complete')  # late row captured, parity re-measured
 
     def test_data_and_checkpoint_rollback_together_after_insert_failure(self):
         self.seed(4)

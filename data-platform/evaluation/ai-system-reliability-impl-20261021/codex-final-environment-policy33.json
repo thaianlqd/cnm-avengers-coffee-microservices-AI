@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "owned_test_container_stopped": true,
+  "serving_services_preserved": true,
+  "containers": [
+    {
+      "container": "avengers_reliability_policy33_final_codex",
+      "status": "exited",
+      "oom_killed": false,
+      "health": ""
+    },
+    {
+      "container": "avengers_analytics_api",
+      "status": "running",
+      "oom_killed": false,
+      "health": "healthy"
+    },
+    {
+      "container": "avengers_analytics_web",
+      "status": "running",
+      "oom_killed": false,
+      "health": "healthy"
+    }
+  ]
+}

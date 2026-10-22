@@ -1,0 +1,344 @@
+[
+  {
+    "case": "compare-comprehensive-report",
+    "status": "INCOMPARABLE",
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 592,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "a3625c5ebb850396de0bdf4809a4064811eb309a46a352a02e514229dcd6e4b5",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 593,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    }
+  },
+  {
+    "case": "compare-deep-report",
+    "status": "INCOMPARABLE",
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 592,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "a3625c5ebb850396de0bdf4809a4064811eb309a46a352a02e514229dcd6e4b5",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 593,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    }
+  },
+  {
+    "case": "compare-focused-report",
+    "status": "INCOMPARABLE",
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 592,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 584,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "3811a312729a41c5d14fda392ed3b4cbcd97a6fe9393010672c210f18ade4877",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 593,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    }
+  },
+  {
+    "case": "ranking-comprehensive-report",
+    "status": "INCOMPARABLE",
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 592,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "a3625c5ebb850396de0bdf4809a4064811eb309a46a352a02e514229dcd6e4b5",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 593,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    }
+  },
+  {
+    "case": "ranking-deep-report",
+    "status": "INCOMPARABLE",
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 592,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "a3625c5ebb850396de0bdf4809a4064811eb309a46a352a02e514229dcd6e4b5",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 593,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    }
+  },
+  {
+    "case": "ranking-focused-report",
+    "status": "INCOMPARABLE",
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 592,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 584,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "3811a312729a41c5d14fda392ed3b4cbcd97a6fe9393010672c210f18ade4877",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 593,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    }
+  },
+  {
+    "case": "trend-comprehensive-report",
+    "status": "INCOMPARABLE",
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 592,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "a3625c5ebb850396de0bdf4809a4064811eb309a46a352a02e514229dcd6e4b5",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 593,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    }
+  },
+  {
+    "case": "trend-deep-report",
+    "status": "INCOMPARABLE",
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 592,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "a3625c5ebb850396de0bdf4809a4064811eb309a46a352a02e514229dcd6e4b5",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 593,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    }
+  },
+  {
+    "case": "trend-focused-report",
+    "status": "INCOMPARABLE",
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 592,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "a3625c5ebb850396de0bdf4809a4064811eb309a46a352a02e514229dcd6e4b5",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 593,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 585,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    }
+  }
+]

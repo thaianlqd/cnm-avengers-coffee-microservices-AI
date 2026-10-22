@@ -4,6 +4,13 @@ from services.agent_pipeline import AnalysisPipeline
 
 
 def safe_failure(error, provider_calls=None, layer_diagnostics=None):
+    validation = getattr(error, 'input_validation', None)
+    if validation:
+        from services.semantic_preflight_contract import decision_from_findings
+        layer_diagnostics = dict(layer_diagnostics or {}, failure_stage='INPUT_INTEGRITY',
+            capability=decision_from_findings(validation['findings']).model_dump(mode='json'),
+            input_validation_fingerprint=validation['fingerprint'], input_policy_version=validation['version'],
+            input_reason_codes=[f['code'] for f in validation['findings']], lookup_queries=validation['lookup_queries'])
     category = getattr(error, "category", "internal")
     structured = getattr(error, "clarification", None)
     clarification_categories = {

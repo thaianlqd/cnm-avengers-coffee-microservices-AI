@@ -14,7 +14,11 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4173',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
+    launchOptions: {
+      ...(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}),
+      // Headless hosts without a GPU still exercise the real WebGL renderer.
+      ...(process.env.PW_SOFTWARE_WEBGL === '1' ? { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] } : {}),
+    },
   },
   webServer: {
     command: 'npx vite --host 127.0.0.1 --port 4173 --strictPort',

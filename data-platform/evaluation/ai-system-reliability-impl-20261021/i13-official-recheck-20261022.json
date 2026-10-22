@@ -1,0 +1,35 @@
+{
+  "status": "OFFICIAL_REFERENCE_ONLY",
+  "checked_date": "2026-10-22",
+  "resolution": "202/2025/QH15",
+  "official_document": "https://congbao.chinhphu.vn/van-ban/nghi-quyet-so-202-2025-qh15-45050.htm",
+  "official_mapping_summary": "https://vasi.mae.gov.vn/tuyen-truyen-bien-dao/dien-tich-dan-so-cac-tinh-co-bien-sau-sap-nhap-nam-2025-1925.htm",
+  "pairs": [
+    {
+      "before": [
+        "Hồ Chí Minh",
+        "Bình Dương",
+        "Bà Rịa - Vũng Tàu"
+      ],
+      "after": "Hồ Chí Minh"
+    },
+    {
+      "before": [
+        "Đà Nẵng",
+        "Quảng Nam"
+      ],
+      "after": "Đà Nẵng"
+    },
+    {
+      "before": [
+        "Hải Phòng",
+        "Hải Dương"
+      ],
+      "after": "Hải Phòng"
+    }
+  ],
+  "inference": "Đà Nẵng → Hải Phòng is not explained by these provincial mergers; a commercial store name alone still cannot establish physical location.",
+  "source_owner_verified": false,
+  "source_mutations": 0,
+  "software_acceptance": "Software preserves warehouse labels and discloses unverified geography. Store-source correction is outside this functional acceptance, awaiting authoritative store/address records."
+}

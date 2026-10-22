@@ -8,21 +8,24 @@ from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from services.analysis_catalog import AnalysisError
-from services.analysis_contract import AnalysisSpec, Component, Filter
+from services.analysis_contract import AnalysisSpec, Component, Filter, equivalent_filter
 from services.analyst_contract import AnalyticalQuery
 from services.analytical_tool_contract import canonicalize, ToolContractError, issue
 from services.analysis_query import (
     build_plans,
     compile_sql,
     compile_ranked_companion,
+    compile_cohort_scoped,
     validate_plan,
     validate_sql,
     validate_results,
     validate_ranked_cohorts,
+    validate_cohort_scoped,
 )
 from services.analysis_presentation import safe_rows
 from services.time_resolution_service import resolve_time
 from services.value_grounding_service import dimension_values
+from services.cohort_rollup_service import cohort_rollup
 
 
 RESULT_RULES = {
@@ -61,12 +64,15 @@ class AnalysisArtifact:
     observed_at: str = ""
     result_ref: dict = None
     capacity: dict = None
+    fixed_grouping_policy: str = None
 
 
 def signature(query, period, fingerprint):
     data = query.model_dump(mode="json")
     if not query.cohort_query_id:
         data.pop('cohort_query_id',None)  # Preserve signatures of pre-extension reports.
+    if not query.cohort_scope_query_id:
+        data.pop('cohort_scope_query_id',None)
     for key in ("id", "role", "parent_id", "purpose", "lens_id", "population_relation", "replaces", "changed_fields"):
         data.pop(key, None)
     data["time"] = period
@@ -155,6 +161,12 @@ class AnalyticalQueries:
                     "query", "An operation id cannot change within a turn"
                 )
         r = self.catalog.registry
+        scope_parent=None
+        if q.cohort_scope_query_id:
+            scope_parent=self.pending.get(q.cohort_scope_query_id) or self.artifacts.get(q.cohort_scope_query_id)
+            if (not scope_parent or not scope_parent.query.ranking or scope_parent.query.ranking.per_group
+                    or scope_parent.query.filters != q.filters or scope_parent.query.time != q.time):
+                raise AnalysisError('query_scope','Unknown or incompatible ranked cohort for a supporting view')
         cohort_parent=None
         if q.cohort_query_id:
             cohort_parent=self.pending.get(q.cohort_query_id) or self.artifacts.get(q.cohort_query_id)
@@ -228,21 +240,22 @@ class AnalyticalQueries:
         if required_subject and q.role == "requested" and q.subject != required_subject:
             raise ToolContractError([issue("subject", "scope_conflict")])
         required_period = self.ui_context.get("required_period")
+        from services.mission_contract_service import allows_current_risk_snapshot
+        current_snapshot = period['start'] is None and period['end'] is None and allows_current_risk_snapshot(
+            self.ui_context, r['metrics'], q.metrics)
         if required_period and any(
             period[k] != required_period[k] for k in ("start", "end")
-        ):
+        ) and not current_snapshot:
             raise AnalysisError(
                 "time_range_ambiguous", "Analysis conflicts with the selected UI period"
             )
         required_filter = self.ui_context.get("required_filter")
-        if required_filter and required_filter not in [
-            f.model_dump(mode="json") for f in q.filters
-        ]:
+        if required_filter and not any(equivalent_filter(required_filter,f.model_dump(mode='json')) for f in q.filters):
             raise AnalysisError(
                 "query_scope", "Analysis omitted the selected UI population"
             )
         query_filters = [f.model_dump(mode="json") for f in q.filters]
-        if any(f not in query_filters for f in self.ui_context.get("required_filters", [])):
+        if any(not any(equivalent_filter(f,actual) for actual in query_filters) for f in self.ui_context.get("required_filters", [])):
             raise AnalysisError("query_scope", "Analysis conflicts with selected UI population")
         if self.ui_context.get("scope_mode") == "all" and query_filters:
             raise AnalysisError("query_scope", "Analysis narrowed the selected entire-system population")
@@ -296,7 +309,7 @@ class AnalyticalQueries:
             granularity=q.granularity,
             assumptions=assumptions,
         )
-        ground = self.catalog.ground(spec, self.reference)
+        ground = self.catalog.ground(spec, self.reference, grounded_values=self.semantic.resolved)
         plan = build_plans(ground, self.catalog)[0]
         verdict = validate_plan(plan, ground, self.catalog)
         if not verdict.valid:
@@ -310,14 +323,40 @@ class AnalyticalQueries:
                 raise AnalysisError(verdict.category, "Analytical contract rejected")
         if cohort_parent:
             sql=compile_ranked_companion(plan,ground,cohort_parent,self.catalog)
+        if q.cohort_scope_query_id:
+            sql=self.cohort_scoped_sql(q, plan, spec, scope_parent)
         from services.access_policy import cache_identity, active_principal, authorize_sql
         identity=cache_identity() if active_principal.get() is not None else None
         if identity is not None: authorize_sql(sql)  # Fail before cache/provider execution.
         schema_identity=self.catalog.fingerprint if identity is None else self.catalog.fingerprint+':'+identity
-        artifact = AnalysisArtifact(q, ground, plan, sql, signature(q, period, schema_identity), capacity=capacity)
+        from services.analysis_expansion_service import FIXED_GROUPING_POLICY
+        fixed_policy=self.ui_context.get('fixed_grouping_policy')
+        if fixed_policy not in {None,FIXED_GROUPING_POLICY}:
+            raise AnalysisError('schema_changed','Unknown saved grouping policy')
+        if fixed_policy: schema_identity+=':fixed-grouping='+fixed_policy
+        artifact = AnalysisArtifact(q, ground, plan, sql, signature(q, period, schema_identity), capacity=capacity,
+                                    fixed_grouping_policy=fixed_policy)
         self.pending[q.id] = artifact
         self.stage(None)
         return artifact
+
+    def cohort_scoped_sql(self, q, plan, spec, parent):
+        # Same view, grouped additionally by the ranked keys, then joined to the cohort.
+        extra = [d for d in parent.plan.dimensions if d not in q.group_by]
+        rollups = [cohort_rollup(self.catalog, m) for m in plan.metrics]
+        if not all(rollups):
+            raise AnalysisError('query_scope', 'Metric has no safe cohort re-aggregation')
+        metrics = (list(plan.metrics) if any(r.get('raw_population') for r in rollups) else
+                   list(dict.fromkeys(m for r in rollups for m in r['metrics'])))
+        comp = spec.components[0].model_copy(update={'metrics': metrics,
+            'dimensions': list(q.group_by) + extra, 'order_by': [], 'row_limit': None})
+        inner_spec = spec.model_copy(update={'components': [comp]})
+        inner_ground = self.catalog.ground(inner_spec, self.reference, grounded_values=self.semantic.resolved)
+        inner_plan = build_plans(inner_ground, self.catalog)[0]
+        inner_sql = compile_sql(inner_plan, inner_ground, self.catalog)
+        if not validate_sql(inner_sql, inner_plan, inner_ground, self.catalog).valid:
+            raise AnalysisError('query_scope', 'Cohort-scoped supporting view rejected')
+        return compile_cohort_scoped(plan, inner_plan, inner_sql, parent, self.catalog)
 
     def check_result(self, result, artifact, source):
         self.stage("RESULT_VALIDATION")
@@ -462,7 +501,7 @@ class AnalyticalQueries:
                     if not allow_supporting_failure or artifact.query.role == 'requested':
                         raise
                     errors[id] = error
-            if not self.proposal:validate_ranked_cohorts(result)
+            if not self.proposal:validate_ranked_cohorts(result);validate_cohort_scoped(result)
             return result, errors
         freshness = AnalyticalCapacityContract.from_env().cache_freshness
         refs = []
@@ -536,6 +575,7 @@ class AnalyticalQueries:
         check_request_deadline()
         self.artifacts.update(result)
         validate_ranked_cohorts(result)
+        validate_cohort_scoped(result)
         return result, errors
 
     def restore(self, id):

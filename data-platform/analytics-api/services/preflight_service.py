@@ -43,7 +43,11 @@ def preflight_catalog():
     from services.metadata_service import peek_local_metadata
     stamp = CATALOG_PATH.stat().st_mtime_ns
     physical = peek_local_metadata()
-    key = (stamp, id(physical) if physical else None)
+    # AnalysisCatalog projects tables by the active principal: the cache must
+    # not hand a projection built for one access fingerprint to another (I06).
+    from services.access_policy import active_principal
+    principal = active_principal.get()
+    key = (stamp, id(physical) if physical else None, principal.access_fingerprint if principal else None)
     with _lock:
         if _catalog["key"] == key:
             return _catalog["value"]
@@ -61,7 +65,9 @@ def mapped_text(text):
     out, index = [], []
     for i, ch in enumerate(text):
         piece = normalize(ch).replace("_", " ") if ch.strip() else " "
-        for c in piece or " ":
+        # Decomposed Vietnamese marks normalize to an empty string. They must
+        # not split a word (NFD "tỉnh" and NFC "tỉnh" are the same input).
+        for c in piece:
             c = c if re.match(r"\w", c) else " "
             if c == " " and (not out or out[-1] == " "):
                 continue
@@ -96,11 +102,12 @@ def _replace(question, span, value):
 
 
 def _mentions(text, phrases):
+    from services.request_anchors import _phrase_pattern
     found = []
     for phrase in sorted({value_text(p) for p in phrases if p}, key=len, reverse=True):
         if len(phrase) < 2:
             continue
-        for m in re.finditer(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)", text):
+        for m in _phrase_pattern(phrase).finditer(text):
             if not any(a <= m.start() and m.end() <= b for a, b, _ in found):
                 found.append((m.start(), m.end(), phrase))
     return found
@@ -161,8 +168,52 @@ def _vocabulary_hits(text, phrases):
     return [p for p in phrases if p and re.search(r"(?<!\w)" + re.escape(value_text(p)) + r"(?!\w)", text)]
 
 
+def _subject_hits(text, registry):
+    """A governed subject named in the question ("tin tức", "gift card") is business
+    evidence for the interpreter, exactly like a metric or dimension anchor."""
+    from services.request_anchors import exact_mentions
+    key = tuple((id, subject["business_name"], tuple(subject.get("aliases", [])), subject.get("lifecycle", {}).get("status"))
+                for id, subject in sorted(registry["subjects"].items()))
+    vocabularies = _SUBJECT_VOCABULARY.get(key)
+    if vocabularies is None:
+        vocabularies = _SUBJECT_VOCABULARY[key] = (_subject_vocabulary(registry), _subject_vocabulary(registry, accented=True))
+        while len(_SUBJECT_VOCABULARY) > 8:
+            _SUBJECT_VOCABULARY.pop(next(iter(_SUBJECT_VOCABULARY)))
+    folded = value_text(text)
+    # A question typed with diacritics is matched with diacritics: the unaccented alias
+    # "tra" (for "trà") must not fire on "kiểm tra".
+    exact = _accent_text(text)
+    hits = exact_mentions(exact, vocabularies[1]) if exact != folded else exact_mentions(folded, vocabularies[0])
+    return ["subject:" + a["candidate_ids"][0] for a in hits if len(a["candidate_ids"]) == 1]
+
+
+_SUBJECT_VOCABULARY = {}
+
+
+def _accent_text(value):
+    import unicodedata
+    return re.sub(r"[^\w]+", " ", unicodedata.normalize("NFC", str(value)).casefold().replace("_", " ")).strip()
+
+
+def _subject_vocabulary(registry, accented=False):
+    vocabulary = {}
+    for id, subject in registry["subjects"].items():
+        if subject.get("lifecycle", {}).get("status") == "deprecated":
+            continue
+        aliases = [subject["business_name"], *subject.get("aliases", [])]
+        spelled = {value_text(a) for a in aliases if _accent_text(a) != value_text(a)}
+        for alias in aliases:
+            phrase = _accent_text(alias) if accented else value_text(alias)
+            if accented and phrase in spelled:
+                continue  # unaccented typing convenience of an accented alias
+            if len(phrase) >= 3:
+                vocabulary.setdefault(phrase, set()).add(id)
+    return vocabulary
+
+
 def run(question, time_range=None, analysis_scope=None, analysis_mission=None, reference=None, catalog=None, coverage=None,
-        input_mode=None, guided_contract=None):
+        input_mode=None, guided_contract=None, input_lookup=None, integrity_text=None, analysis_depth=None,
+        grounded_scope_filters=()):
     from services.request_anchors import request_anchors
     from services.time_resolution_service import parse_time, resolve_time
     from services import data_coverage_service
@@ -417,6 +468,28 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                 findings.append(finding("warn", "snapshot_metric_trend",
                     f"{metrics[m]['business_name']} là chỉ số hiện trạng (ảnh chụp), không có lịch sử theo thời gian; "
                     "hệ thống chỉ trả giá trị hiện tại.", [{"label": "Bỏ mốc thời gian / xu hướng", "kind": "advice"}], metric=m))
+        if periods and metric_ids and not any(metrics[m].get("time_column") for m in metric_ids):
+            # I10: every requested metric is a snapshot, so the explicit period cannot be
+            # honoured; execution would stop with historical_metric_unavailable after an AI call.
+            findings.append(finding("block", "snapshot_metric_period",
+                "Các chỉ số được hỏi là dữ liệu hiện trạng, không có lịch sử theo kỳ. Bỏ mốc thời gian (Toàn bộ thời gian) "
+                "hoặc chọn chỉ số có lịch sử.", [{"label": "Bỏ mốc thời gian", "kind": "advice"}]))
+        if wants_history and not metric_ids:
+            # A subject named without a metric ("tồn kho theo tháng") whose
+            # active metrics are all snapshots has no history either.
+            from services.request_anchors import exact_mentions
+            vocabulary = {}
+            for s, d in r["subjects"].items():
+                active = [m for m in d.get("metrics", []) if m in metrics and not metrics[m].get("component_only")
+                          and metrics[m].get("lifecycle", {}).get("status") != "deprecated"]
+                if active and not any(metrics[m].get("time_column") for m in active):
+                    for a in [d["business_name"], *d.get("aliases", [])]:
+                        vocabulary.setdefault(value_text(a), set()).add(s)
+            for s in dict.fromkeys(next(iter(a["candidate_ids"])) for a in exact_mentions(value_text(question), vocabulary)
+                                   if len(a["candidate_ids"]) == 1):
+                findings.append(finding("warn", "snapshot_metric_trend",
+                    f"{r['subjects'][s]['business_name']} chỉ có số liệu hiện trạng (ảnh chụp), không có lịch sử theo thời gian; "
+                    "hệ thống chỉ trả giá trị hiện tại.", [{"label": "Bỏ mốc thời gian / xu hướng", "kind": "advice"}], subject=s))
 
         # --- A cadence needs at least two full buckets inside the requested window ---
         cadence_days = {"week": 7, "month": 28, "quarter": 90, "year": 365}
@@ -460,6 +533,7 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                     *(f["dimension"] for f in understood["filters"]), *(u["id"] for u in understood["unsupported"]),
                     *(f["concept"] for f in findings if f["code"] == "privacy_blocked"),
                     *_vocabulary_hits(text, ws.get("business_signal_vocabulary", [])),
+                    *_subject_hits(question, r),
                     *(["overview"] if "overview" in signals else [])]
         analytical = [*(["time"] if periods else []), *(["granularity"] if anchors.get("granularities") else []),
                       *(["ranking"] if anchors.get("rankings") else []), *(["forecast"] if forecast_requested else []),
@@ -598,12 +672,25 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
         try:
             slots = missions.validate_guided(catalog, (mission or {}).get("id"), guided_contract,
                                              scope_filters=(analysis_scope or {}).get("filters") or [])
+            missions.check_metric_clocks(catalog, slots, time_range)
             guided = {"source": "builder", "slots": slots}
             findings=[f for f in findings if f['code'] not in {'unrecognized_question','no_metric_detected','analysis_target_missing','metric_needed'}]
         except missions.GuidedContractError as error:
             findings=[f for f in findings if f['code'] not in {'unrecognized_question','no_metric_detected'}]
             findings.append(finding("block", "guided_contract_invalid", str(error),
                                     field=error.field))
+    from services.input_integrity_service import validate as validate_input, validate_structured_scope
+    input_validation = validate_input(question if integrity_text is None else integrity_text, catalog,
+        anchors=anchors if integrity_text is None else None, lookup=input_lookup,
+        context={'time':time_range, 'scope':analysis_scope, 'mission':analysis_mission,
+                 'input_mode':input_mode, 'guided_contract':guided_contract, 'analysis_depth':analysis_depth,
+                 'mode':'refinement' if integrity_text is not None else 'question'}) if not blocked_length else None
+    if input_validation:
+        validate_structured_scope(analysis_scope, catalog, input_validation, lookup=input_lookup,
+                                  grounded_filters=grounded_scope_filters)
+    if input_validation and not input_validation['can_submit']:
+        findings.extend(input_validation['findings'])
+        state = state or 'NEEDS_INPUT'
     unique = {}
     for f in findings:
         unique.setdefault((f["code"], f["message"]), f)
@@ -630,8 +717,10 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                 interpretation_required=state == "READY_FOR_AI").model_dump(mode="json"),
             "scope_resolution": anchors.get("scope_resolution", {"state":"unspecified","filters":[]}),
             "understood": understood, "findings": findings, "recognition": recognition,
+            "input_validation": input_validation,
             "guided_contract": guided, "semantic_contract": contract,
             "provider_calls": 0, "warehouse_queries": 0,
+            "lookup_queries": (input_validation or {}).get('lookup_queries', 0),
             "coverage_status": (coverage or {}).get("status", "not_loaded"),
             "registry_fingerprint": catalog.registry_fingerprint,
             "elapsed_ms": round((time.perf_counter() - started) * 1000, 2)}
@@ -650,7 +739,9 @@ def auto_guided(understood, anchors, findings, mission, inferred, registry):
     if target == "risk_watch" and (mission or {}).get("id") == "risk_watch":
         # Default Risk Watch = every governed signal, deterministic (0 AI calls).
         risk_metrics = {s["metric"] for s in registry.get("risk_signals", [])}
-        if all(m["id"] in risk_metrics for m in ms) and not understood["dimensions"]:
+        # "của thành phố Hồ Chí Minh" names a scope, not a grouping axis.
+        scoped = {f["dimension"] for f in understood["filters"]}
+        if all(m["id"] in risk_metrics for m in ms) and all(d["id"] in scoped for d in understood["dimensions"]):
             return {"source": "auto_upgrade", "slots": {"mission": "risk_watch",
                     "signals": [s["id"] for s in registry.get("risk_signals", [])
                                 if not ms or s["metric"] in {m["id"] for m in ms}]},

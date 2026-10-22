@@ -13,6 +13,7 @@ from services.analysis_contract import TimeSpec
 from services.domain_intelligence_service import DomainIntelligence
 from services.semantic_manifest_service import build_manifest, manifest_references
 from services.time_resolution_service import resolve_time
+from services.cohort_rollup_service import cohort_rollup
 
 VERSION = "2.8.0"
 logger = logging.getLogger("ai-analytics")
@@ -64,7 +65,11 @@ def plan_fingerprint(operations, coverage, catalog_fingerprint, policy_version=N
     # represented by operation content plus availability/features, not labels.
     by_id = {op["id"]: op for op in operations}
     def meaning(op):
-        return {k:v for k,v in op.items() if k not in {"id", "parent_id", "replaces", "changed_fields"}}
+        out = {k:v for k,v in op.items() if k not in {"id", "parent_id", "replaces", "changed_fields"}}
+        if op.get("cohort_scope_query_id") in by_id:
+            # The cohort is identified by the ranked query's meaning, not its label-derived id.
+            out["cohort_scope_query_id"] = digest(meaning(by_id[op["cohort_scope_query_id"]]))
+        return out
     requirements = [{"state": c["state"], "reason": c.get("reason"),
                      "features": c["derived_features"], **({"forecast": c["forecast"]} if c.get("forecast") else {}),
                      **({"lenses": sorted(l["id"] for l in c["lenses"])} if c.get("lenses") else {}),
@@ -132,11 +137,44 @@ def compatibility_index(catalog):
 from services.error_taxonomy import ResolutionIssues
 
 
+# Bump whenever resolution/binding rules change: cached plans from an older rule set
+# must be re-planned, not replayed into a verifier that rebuilds them differently (G07).
+PLAN_POLICY_VERSION = "2026-10-22.cohort-scope.33"
+
+FEATURE_SHAPES = {"scalar":{"aggregate"}, "leader":{"ranking"}, "top_gap":{"ranking"}, "selected_total":{"ranking"},
+    "change":{"trend"}, "change_pct":{"trend"}, "concentration":{"distribution"},
+    "group_gap":{"aggregate","cross_tab"}, "relationship_strength":{"relationship"}, "driver_delta":{"aggregate"},
+    "contribution_share":{"aggregate","ranking","distribution","cross_tab"}}
+
+DROPPABLE_FEATURES = {'concentration', 'relationship_strength', 'leader', 'top_gap'}
+
+
+def drop_unrequested_feature_conflicts(intent, anchors):
+    """A derived feature the user never asked for, attached to the wrong shape, is
+    model noise: remove it instead of failing the whole turn (live multi-clause)."""
+    named = {f for a in (anchors or {}).get('features', []) for f in a['candidate_ids']}
+    result, changes = intent.model_copy(deep=True), []
+    for req in result.requirements:
+        # Only features no later deterministic rule can reshape (scalar/change/selected_total are rewritten
+        # downstream; binding noise must still surface as a repair issue).
+        bad = [f for f in req.derived_features if f not in named and f in DROPPABLE_FEATURES
+               and req.analysis_kind not in FEATURE_SHAPES[f]]
+        if bad:
+            req.derived_features = [f for f in req.derived_features if f not in bad]
+            for f in bad:
+                req.feature_metrics.pop(f, None)
+            changes.append(dict(requirement_id=req.id, field='derived_features',
+                                rule='unrequested_feature_shape_conflict', previous=bad, value=[]))
+    return result, changes
+
+
 class AnalyticalResolver:
     def __init__(self, catalog, reference, ui=None):
         self.catalog, self.reference, self.ui = catalog, reference, ui or {}
         self.index = compatibility_index(catalog)
         self.lens_plan, self.lens_selected = None, {}  # FINAL P2: server lens plan of the last expansion
+        self.capacity = self.operation_capacity()  # fixed at planning start; context keys may be consumed later
+        self.cohort_benchmarks = []  # supporting views of a ranked goal that describe the whole scope
 
     def evaluate_capability(self, req):
         from services.semantic_preflight_contract import evaluate_capability
@@ -221,15 +259,18 @@ class AnalyticalResolver:
             for feature in ('change','change_pct'):req.feature_metrics.pop(feature,None)
         # UI time outranks question time, by the documented precedence rule.
         period = self.ui.get("required_period")
-        if period:
+        from services.mission_contract_service import allows_current_risk_snapshot
+        if allows_current_risk_snapshot(self.ui, self.catalog.registry['metrics'], req.metric_ids):
+            req.time = TimeSpec.model_validate({'kind': 'relative', 'mode': 'all_time'})
+        elif period:
             req.time = TimeSpec.model_validate(
                 {"kind":"range", **period} if period.get("start") else {"kind":"relative", "mode":"all_time"})
         required = [*self.ui.get("required_filters", []), *([self.ui["required_filter"]] if self.ui.get("required_filter") else [])]
-        from services.analysis_contract import Filter
+        from services.analysis_contract import Filter, equivalent_filter
         for f in required:
-            if any(old.dimension == f["dimension"] and old.model_dump(mode="json") != f for old in req.filters):
+            if any(old.dimension == f["dimension"] and not equivalent_filter(old.model_dump(mode="json"),f) for old in req.filters):
                 raise ResolutionIssues([self.issue(req, "filters", "scope_conflict")])
-            if not any(old.model_dump(mode="json") == f for old in req.filters):
+            if not any(equivalent_filter(old.model_dump(mode="json"),f) for old in req.filters):
                 req.filters.append(Filter.model_validate(f))
         if self.ui.get("scope_mode") == "all" and req.filters:
             raise ResolutionIssues([self.issue(req, "filters", "scope_conflict")])
@@ -390,10 +431,7 @@ class AnalyticalResolver:
                 raise ResolutionIssues([self.issue(req,'comparison_time','distinct_disjoint_periods_required')])
         if (period["start"] or req.analysis_kind == "trend") and any(not self.index.metrics[m]["historical"] for m in req.metric_ids):
             return req, [], "INSUFFICIENT_DATA", "historical_data_unavailable", []
-        required_shapes = {"scalar":{"aggregate"}, "leader":{"ranking"}, "top_gap":{"ranking"}, "selected_total":{"ranking"},
-            "change":{"trend"}, "change_pct":{"trend"}, "concentration":{"distribution"},
-            "group_gap":{"aggregate","cross_tab"}, "relationship_strength":{"relationship"}, "driver_delta":{"aggregate"},
-            "contribution_share":{"aggregate","ranking","distribution","cross_tab"}}
+        required_shapes = FEATURE_SHAPES
         additive_features={'contribution_share','concentration','selected_total','driver_delta'}
         ranked_features={'leader','top_gap','selected_total'}
         targets={}; feature_issues=[]; invalid_bindings=set()
@@ -657,7 +695,76 @@ class AnalyticalResolver:
               "role":"requested","limit":100}
         return req,[op],"RESOLVED",None,[]
 
+    def cohort_scopable(self, op, rank):
+        """A supporting view can be restricted to a Top/Bottom N cohort by keys."""
+        metrics = self.catalog.registry['metrics']
+        dims = rank.get('group_by') or []
+        return (op['operation'] in ('aggregate', 'trend', 'distribution', 'cross_tab') and not op.get('ranking') and not op.get('cohort_query_id')
+                and dims and op['filters'] == rank['filters'] and op['time'] == rank['time']
+                and all(cohort_rollup(self.catalog, m) and set(dims) <= set(self.catalog.compatible_dimensions(m))
+                        and all(set(dims) <= set(self.catalog.compatible_dimensions(c))
+                                for c in cohort_rollup(self.catalog, m)['metrics'])
+                        for m in op['metrics']))
+
+    def bind_dependent_goals(self, operations, requested_ops):
+        """"… chi nhánh và thanh toán chỉ trong 5 tỉnh này": requested goals that refer back
+        to a ranked set run on that cohort's keys, never on the whole scope (G04)."""
+        refs = {r['dimension'] for r in self.ui.get('cohort_references') or []}
+        if not refs:
+            return
+        ranks = [o for ops in requested_ops.values() for o in ops if o['operation'] == 'ranking'
+                 and set(o.get('group_by') or []) & refs and not (o.get('ranking') or {}).get('per_group')]
+        # A selection's membership is independent of requirement labels and
+        # optional derived facts. Deduplicate equivalent selections before SQL
+        # deduplication below, while rejecting genuinely ambiguous references.
+        selections = {digest({k:o.get(k) for k in ('subject','group_by','ranking','filters','time')}):o for o in ranks}
+        if len(selections) != 1:
+            raise AnalysisError('ranking_scope_ambiguous', 'Cần chỉ rõ tập xếp hạng cho phạm vi tham chiếu.')
+        rank = next(iter(selections.values()))
+        scoped = set()
+        bindings = [r for r in self.ui.get('cohort_references') or [] if 'goal_dimensions' in r]
+        def dependent_goal(op):
+            if not bindings:return True  # Compatibility for explicitly bound archived contexts.
+            if op.get('operation') == 'aggregate' and not op.get('group_by'):
+                independent = {m for b in bindings for m in b.get('independent_scalar_metrics', [])}
+                # A model-added scalar cannot introduce a national population.
+                # A separate explicit scalar clause retains its own population.
+                return not set(op['metrics']) <= independent
+            for binding in bindings:
+                dimensions, metrics = set(binding['goal_dimensions']), set(binding['goal_metrics'])
+                if dimensions and not dimensions.intersection(op.get('group_by') or []):continue
+                if metrics and not set(op['metrics']) <= metrics:continue
+                if dimensions or metrics:return True
+            return False
+        for ops in requested_ops.values():
+            for op in ops:
+                if op is rank or op.get('role') != 'requested' or op.get('cohort_query_id'):
+                    continue
+                if not dependent_goal(op):
+                    continue
+                if self.cohort_scopable(op, rank):
+                    op['cohort_scope_query_id'] = rank['id']
+                    scoped.add(op['id'])
+                else:
+                    self.cohort_benchmarks.append({'requirement_id': None, 'operation_ids': [op['id']],
+                                                   'reason': 'dependent_goal_not_scopable'})
+        # Supporting views of a dependent goal describe the same cohort when they can.
+        for op in operations:
+            if op.get('role') == 'supporting' and op.get('parent_id') in scoped and not op.get('cohort_scope_query_id'):
+                if self.cohort_scopable(op, rank):
+                    op['cohort_scope_query_id'] = rank['id']  # parent stays the dependent goal (idempotent replay)
+                else:
+                    self.cohort_benchmarks.append({'requirement_id': None, 'operation_ids': [op['id']],
+                                                   'reason': 'supporting_view_not_scopable'})
+
+    def operation_capacity(self):
+        # A server-generated mission contract (zero AI) may declare its own fixed
+        # size, e.g. every Risk Watch signal with totals; model plans keep 8.
+        from services.mission_contract_service import guided_operation_capacity
+        return guided_operation_capacity(self.catalog.registry, self.ui)
+
     def resolve(self, intent):
+        op_cap = self.capacity
         if self.ui.get('server_supporting_expansion'):
             # Reproduce the same metadata policy during approval verification.
             # Model suggestions have no authority to add optional analytical work.
@@ -685,7 +792,7 @@ class AnalyticalResolver:
             mission_id=self.ui.get('analysis_mission')
             capacity=min(8,AnalyticalCapacityContract.from_env().operations)
             self.pending_lens_plan=None
-            shapes=expansion.supporting_candidates(self,baseline['intent'].requirements,estimated_views(baseline['operations'],self.catalog))
+            shapes=expansion.supporting_candidates(self,baseline['intent'].requirements,estimated_views(baseline['operations'],self.catalog,self.ui.get('fixed_grouping_policy')))
             plan=self.pending_lens_plan or dict(version=None,depth=depth,targets={},shapes=list(shapes),lenses=[],decisions=[],family=None)
             by_shape={}
             for lens in plan['lenses']:
@@ -767,6 +874,19 @@ class AnalyticalResolver:
                     shared = {op['id']: existing[ident(op)[0]] for op in ops if ident(op)[0] in existing}
                     fresh_ops = [op for op in ops if op['id'] not in shared]
                     identities = {ident(op)[0] for op in [*operations, *fresh_ops]}
+                    # A ranked requirement answers about its selected entity cohort. A
+                    # view not bound to those keys describes the whole scope (I01/I09):
+                    # it may stay only as a labelled benchmark, never as cohort context.
+                    rank = next((p for p in requested_ops.get(raw.supporting_for, []) if p['operation'] == 'ranking'
+                                 and not (p.get('ranking') or {}).get('per_group')), None)
+                    if rank and state == 'RESOLVED':
+                        if parent and all(self.cohort_scopable(o, rank) for o in ops):
+                            for o in ops:
+                                o.update(parent_id=rank['id'], cohort_scope_query_id=rank['id'])
+                            parent = rank
+                        elif any(not o.get('cohort_query_id') for o in ops):
+                            self.cohort_benchmarks.append({'requirement_id': raw.id, 'supporting_for': raw.supporting_for,
+                                                           'operation_ids': [o['id'] for o in ops]})
                     if state != 'RESOLVED' or not parent or not ops or support_count + len(fresh_ops) > support_limit or len(identities) > 8:
                         req = req.model_copy(update={'availability':'unsupported','reason':'definition_unavailable'})
                         ops, features, state, reason = [], [], 'UNSUPPORTED', 'definition_unavailable'
@@ -813,6 +933,7 @@ class AnalyticalResolver:
             error = ResolutionIssues(issues)
             error.accepted_requirements = normalized
             raise error
+        self.bind_dependent_goals(operations, requested_ops)
         # Requirements/features may share exactly the same executable query.
         # Use the existing result-reuse identity (including all population,
         # time, grain and metric fields), not their semantic display labels.
@@ -834,6 +955,8 @@ class AnalyticalResolver:
                 op['parent_id'] = aliases[op['parent_id']]
             if op.get('cohort_query_id'):
                 op['cohort_query_id'] = aliases[op['cohort_query_id']]
+            if op.get('cohort_scope_query_id'):
+                op['cohort_scope_query_id'] = aliases[op['cohort_scope_query_id']]
         for c in coverage:
             c['operation_ids'] = sorted({aliases[id] for id in c['operation_ids']})
         for binding in bindings:
@@ -842,10 +965,10 @@ class AnalyticalResolver:
                 binding['query_ids'] = [aliases[i] for i in binding['query_ids']]
             if 'denominator_query_id' in binding:
                 binding['denominator_query_id'] = aliases[binding['denominator_query_id']]
-        if len(operations)>8:
+        if len(operations)>op_cap:
             sup_ops = [op for op in operations if op.get('role') == 'supporting']
-            if sup_ops and (len(operations) - len(sup_ops) <= 8):
-                keep_count = 8 - (len(operations) - len(sup_ops))
+            if sup_ops and (len(operations) - len(sup_ops) <= op_cap):
+                keep_count = op_cap - (len(operations) - len(sup_ops))
                 dropped_sup = set(op['id'] for op in sup_ops[keep_count:])
                 operations = [op for op in operations if op['id'] not in dropped_sup]
                 for c in coverage:
@@ -857,7 +980,7 @@ class AnalyticalResolver:
                     if r.supporting_for and not any(r.id == c['requirement_id'] and c['operation_ids'] for c in coverage):
                         r.availability = 'unsupported'
                         r.reason = 'definition_unavailable'
-        if len(operations)>8:
+        if len(operations)>op_cap:
             raise AnalysisError("requested_scope_too_large","Legal plan exceeds bounded operation capacity")
         normalized.sort(key=lambda r:(bool(r.supporting_for),digest(requirement_meaning(r,self.reference,self.catalog))))
         coverage.sort(key=lambda c:c['requirement_id'])

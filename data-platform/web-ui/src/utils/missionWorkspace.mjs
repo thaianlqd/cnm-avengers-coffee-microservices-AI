@@ -22,6 +22,13 @@ export function missionContract(capabilities, missionId) {
   return mission?.input_contract || null;
 }
 
+/** Projection of the server's mission-specific allowed axes. */
+export function missionDimensions(capabilities, missionId, metric) {
+  const mission = (capabilities?.missions || []).find(m => m.id === missionId);
+  const allowed = mission?.dimensions_by_metric?.[metric?.id];
+  return (metric?.dimensions || []).filter(d => !allowed || allowed.includes(d.id));
+}
+
 /** Ordered controls a mission shows; only slots its contract declares. */
 export function missionControls(capabilities, missionId) {
   const contract = missionContract(capabilities, missionId);
@@ -76,6 +83,7 @@ export function buildGuided(capabilities, missionId, slots = {}) {
   const metrics = Object.fromEntries((capabilities?.metrics || []).map(m => [m.id, m]));
   const required = (contract.required || []).filter(s => s !== 'time' && s !== 'scope');
   const missing = required.filter(s => slots[s] === undefined || slots[s] === '' || slots[s] === null || (Array.isArray(slots[s]) && !slots[s].length));
+  if (slots.dimension && !missionDimensions(capabilities, missionId, metrics[slots.metric]).some(d => d.id === slots.dimension)) missing.push('dimension');
   if (missionId === 'compare' && slots.group_a && slots.group_a === slots.group_b) missing.push('group_b');
   if (missing.length) return { ready: false, missing };
   const period = periodOptions(capabilities).find(p => p.id === slots.period) || periodOptions(capabilities).at(-1);
@@ -120,6 +128,9 @@ export function workspaceRequestFields(guided, prompt) {
 /** Scope recognized from the question (server preflight), shown instead of a default picker. */
 export function detectedScope(preflight) {
   const u = preflight?.understood || {};
+  const unresolved=(preflight?.input_validation?.slots||[]).filter(s=>s.state!=='BOUND'&&s.kind==='entity');
+  if(unresolved.length)return {filters:[],axes:[],summary:`Phạm vi/đối tượng chưa xác minh: ${unresolved.map(s=>`“${s.raw}”`).join(' · ')}`};
+  if(!preflight)return {filters:[],axes:[],summary:'Chờ kiểm tra câu hỏi hiện tại'};
   const resolution = preflight?.scope_resolution;
   if (resolution?.state === 'resolved') {
     const bindings = resolution.bindings || [];
@@ -131,7 +142,7 @@ export function detectedScope(preflight) {
     return {filters:[],axes:[],summary:`Phạm vi đang cần xác minh: ${resolution.requested_phrase || resolution.message || ''}`};
   const filters = (u.filters || []).map(f => ({ kind: 'filter', label: `${f.label}: ${f.display}` }));
   const axes = (u.dimensions || []).map(d => ({ kind: 'axis', label: `Theo ${String(d.label).toLowerCase()}` }));
-  return { filters, axes, summary: filters.length ? filters.map(f => f.label).join(' · ') : 'Toàn hệ thống (chưa nêu phạm vi trong câu hỏi)' };
+  return { filters, axes, summary: filters.length ? filters.map(f => f.label).join(' · ') : 'Toàn phạm vi được cấp quyền (chưa nêu phạm vi trong câu hỏi)' };
 }
 
 export function depthOptions(capabilities) {

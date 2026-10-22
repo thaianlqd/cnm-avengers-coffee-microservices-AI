@@ -79,7 +79,7 @@ class ReplicaRolloutPostgresTests(TestCase):
                           "has_table_privilege(current_user, table_name, 'TRUNCATE') "
                           "FROM unnest(%s::text[]) AS table_name", (value['target_tables'],))
                 privileges = q.fetchall()
-                self.assertEqual(len(privileges), 23)
+                self.assertEqual(len(privileges), len(contracts))
                 self.assertTrue(all(can_delete and not can_truncate for can_delete, can_truncate in privileges))
             replica.rollback()
             for statement in ('INSERT INTO analytics.stream_checkpoints VALUES (\'forbidden\',1,\'x\',\'{}\',now())',
@@ -117,18 +117,27 @@ class ReplicaRolloutPostgresTests(TestCase):
                 for contract in contracts.values():
                     schema,table=contract['source_table'].split('.')
                     q.execute(sql.SQL('CREATE SCHEMA IF NOT EXISTS {}').format(sql.Identifier(schema)))
-                    fields=[sql.SQL('{} {} {}').format(sql.Identifier(n),sql.SQL(d['data_type']),
+                    for n,d in contract['columns'].items():  # source enums stay enums (USER-DEFINED), like production
+                        if d['data_type']=='USER-DEFINED':
+                            q.execute(sql.SQL("DO $$ BEGIN CREATE TYPE {} AS ENUM ('FIXTURE'); EXCEPTION WHEN duplicate_object THEN NULL; END $$").format(
+                                sql.Identifier(schema,table+'_'+n+'_enum')))
+                    fields=[sql.SQL('{} {} {}').format(sql.Identifier(n),sql.Identifier(schema,table+'_'+n+'_enum') if d['data_type']=='USER-DEFINED' else sql.SQL(d['data_type']),
                         sql.SQL('' if d['nullable'] else 'NOT NULL')) for n,d in contract['columns'].items()]
                     if contract['primary_key']:fields.append(sql.SQL('PRIMARY KEY({})').format(
                         sql.SQL(',').join(map(sql.Identifier,contract['primary_key']))))
                     q.execute(sql.SQL('CREATE TABLE IF NOT EXISTS {} ({})').format(sql.Identifier(schema,table),sql.SQL(',').join(fields)))
+                    for n,d in contract['columns'].items():  # the fixture source persists between runs
+                        if d['data_type']=='USER-DEFINED':
+                            enum=sql.Identifier(schema,table+'_'+n+'_enum')
+                            q.execute(sql.SQL('ALTER TABLE {} ALTER COLUMN {} TYPE {} USING {}::text::{}').format(
+                                sql.Identifier(schema,table),sql.Identifier(n),enum,sql.Identifier(n),enum))
             source_setup.commit()
             with patch.dict(os.environ,{'DATA_ANALYST_ENV':'test','DATA_PLATFORM_GOVERNED_INGESTION':'1'}), \
                     patch.object(sync,'create_warehouse_views',side_effect=AssertionError('No governed view DDL')):
                 sync.run_sync_cycle(source_admin,replica)
             with target.cursor() as q:
                 q.execute('SELECT total_tables,total_rows,status FROM public.sync_history ORDER BY id DESC LIMIT 1')
-                self.assertEqual(q.fetchone(),(23,1,'success'))
+                self.assertEqual(q.fetchone(),(len(contracts),1,'success'))
                 q.execute('SELECT dataset_id,generation,schema_fingerprint,completeness,certificate FROM analytics.ingestion_checkpoints')
                 checkpoints=q.fetchall()
                 self.assertEqual({row[0] for row in checkpoints},{contract['dataset_id'] for contract in contracts.values()})

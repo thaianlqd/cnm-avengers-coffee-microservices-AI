@@ -48,6 +48,7 @@ export async function mockApi(page: Page): Promise<Api> {
     if (path==='/api/auth/session') return route.fulfill({json:{authenticated:false,mode:'explicit_development_browser',identity:'development-browser'}});
     if (path.endsWith('/ai/capabilities')) return route.fulfill({ json: CAPABILITIES });
     if (path.endsWith('/ai/preflight')) return route.fulfill({ json: READY_PREFLIGHT });
+    if (path.endsWith('/ai/refinement-preflight')) return route.fulfill({ json: {can_submit:true,findings:[],input_validation:{slots:[]}} });
     if (path.includes('/ai/status')) return route.fulfill({ json: { one_click: { enabled: true }, provider_status: { state: 'available' }, system_readiness: { warehouse_available: true, catalog_ready: true } } });
     return route.fulfill({ json: path.includes('list') || path.endsWith('s') ? [] : {} });
   });

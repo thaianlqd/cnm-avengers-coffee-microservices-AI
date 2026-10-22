@@ -90,3 +90,38 @@ test('one-click API job retains same identity on reconnect and guided work uses 
   expect(result.physical_http).toBe(0);expect(result.result.conclusion.answer.toLowerCase()).toContain('doanh thu');
   const after=await (await request.get('/api/test/metrics')).json();expect(after.logical_calls).toBe(before.logical_calls);
 });
+
+test('P6 real HTTP: chart filter, atomic Apply, save/reopen and refresh keep semantics with zero interpretation sends',async({page})=>{
+  await page.goto('/');await page.getByText('Trợ lý AI',{exact:true}).first().click();
+  await page.locator('textarea').first().fill('Doanh thu');
+  await page.getByRole('button',{name:'Phân tích',exact:true}).click();
+  await expect(page.locator('[data-workspace-filters]')).toBeVisible();
+  const before=await (await page.request.get('/api/test/metrics')).json();
+  await page.locator('[data-dashboard-chart] select[aria-label^="Lọc nhóm từ"]:enabled').first().selectOption('0');
+  await expect(page.locator('[data-pending-filters]')).toContainText('Bộ lọc chờ áp dụng');
+  const response=page.waitForResponse(r=>r.url().endsWith('/ai/workspace-revision'));
+  await page.getByRole('button',{name:'Áp dụng bộ lọc',exact:true}).click();
+  const applied=await (await response).json();
+  expect(applied.status,JSON.stringify(applied)).toBe('success');
+  expect(applied.interaction_state.filters).toHaveLength(1);
+  expect(applied.interaction_contract.revision).toBe(applied.revision);
+  expect(applied.quality_assessment.status).toBe('verified');
+  await expect(page.locator('[data-applied-filters]')).toContainText(`revision ${applied.revision}`);
+  const saved=await page.request.post('/api/reports/saved',{data:{title:'P6 fixture snapshot',
+    sql_query:applied.sql_query,module_config:applied,category:'ai_report'}});
+  expect(saved.ok(),await saved.text()).toBeTruthy();
+  const id=(await saved.json()).report.id;
+  const reopened=await (await page.request.get(`/api/reports/saved/${id}`)).json();
+  expect(reopened.module_config.interaction_state).toEqual(applied.interaction_state);
+  expect(reopened.module_config.provenance).toEqual(applied.provenance);
+  const refresh=page.waitForResponse(r=>r.url().endsWith('/ai/workspace-revision'));
+  await page.getByRole('button',{name:'Làm mới dữ liệu',exact:true}).click();
+  const fresh=await (await refresh).json();expect(fresh.status,JSON.stringify(fresh)).toBe('success');
+  expect(fresh.revision).toBe(applied.revision+1);
+  const old=await (await page.request.get(`/api/reports/saved/${id}`)).json();
+  expect(old.module_config.revision).toBe(applied.revision);
+  expect(old.module_config.provenance).toEqual(applied.provenance);
+  const after=await (await page.request.get('/api/test/metrics')).json();
+  expect(after.logical_calls).toBe(before.logical_calls);expect(after.external_http).toBe(0);
+  expect(after.sql_queries).toBeGreaterThan(before.sql_queries);
+});

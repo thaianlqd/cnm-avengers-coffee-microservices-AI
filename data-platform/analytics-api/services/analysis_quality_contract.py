@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from pydantic import Field
 from services.analysis_contract import Contract
 
-VERSION = '2.8.5'
+VERSION = '2.8.8'
 
 class ScorePart(Contract):
     id: str
@@ -59,6 +59,7 @@ class QualityCoverage(Contract):
     omitted_count: int = 0
 
 class AnalysisQualityAssessment(Contract):
+    publication_checks: list[VerificationCheck] = Field(default_factory=list)
     score: Optional[int | float] = Field(default=None, ge=0, le=100)
     grade: Literal['excellent', 'good', 'partial', 'needs_attention'] = 'needs_attention'
     status: Literal['verified', 'partially_verified', 'not_scored']

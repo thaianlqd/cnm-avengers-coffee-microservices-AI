@@ -411,7 +411,8 @@ class UnderstandingV21Tests(unittest.TestCase):
                 ["Synthetic Branch"],
             )
         connection.set_session.assert_called_once_with(readonly=True, autocommit=False)
-        self.assertEqual(cursor.execute.call_args.args[1], ("%Synthetic\\%%", 8))
+        self.assertEqual(cursor.execute.call_args.args[1], ("%Synthetic\\%%", "Synthetic%", 8))
+        self.assertIn('LOWER',str(cursor.execute.call_args.args[0]))  # exact name wins before the bounded fuzzy page
         connection.rollback.assert_called_once()
         connection.close.assert_called_once()
         with self.assertRaises(ValueError):

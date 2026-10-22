@@ -1,6 +1,6 @@
 {
   "version": "3.4.0",
-  "scope": "Only the23 sources referenced by current Silver views and Bronze jobs. No chatbot/order-cart/security-config replication is added.",
+  "scope": "23 legacy sources + 26 business-coverage sources (PLAN 20/10, user-approved round 3). Contact data, free text, codes, media and coordinates are redacted constants.",
   "default_owner": "avengers-data-team",
   "datasets": {
     "identity.chi_nhanh": {
@@ -3472,6 +3472,3101 @@
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
       "maximum_acceptable_load_lag_seconds": 900,
       "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.customer_wallet": {
+      "dataset_id": "replica.orders.customer_wallet",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.customer_wallet",
+      "target_table": "orders.customer_wallet",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "customer_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "balance": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.gift_cards": {
+      "dataset_id": "replica.orders.gift_cards",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.gift_cards",
+      "target_table": "orders.gift_cards",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "code": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "value": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "sender_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "sender_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "receiver_email": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "receiver_phone": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "receiver_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "message": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "theme": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "status": {
+          "data_type": "USER-DEFINED",
+          "udt_name": "gift_cards_status_enum",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "redeemed_by": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "redeemed_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "current_balance": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.gift_card_theme": {
+      "dataset_id": "replica.orders.gift_card_theme",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.gift_card_theme",
+      "target_table": "orders.gift_card_theme",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "color": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "image_url": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "collection_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "is_active": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.shipper_wallet": {
+      "dataset_id": "replica.orders.shipper_wallet",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.shipper_wallet",
+      "target_table": "orders.shipper_wallet",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipper_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "balance": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "cod_holding": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "pending_commission": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipperId": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "cod_details": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.shipper_cod_remit": {
+      "dataset_id": "replica.orders.shipper_cod_remit",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.shipper_cod_remit",
+      "target_table": "orders.shipper_cod_remit",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipper_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipper_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "branch_code": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "amount": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "status": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "note": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "confirmed_by": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "confirmed_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.shipper_schedule": {
+      "dataset_id": "replica.orders.shipper_schedule",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.shipper_schedule",
+      "target_table": "orders.shipper_schedule",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipper_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "work_date": {
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shift_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "check_in_time": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "check_out_time": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "status": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipperId": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.shipper_exception": {
+      "dataset_id": "replica.orders.shipper_exception",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.shipper_exception",
+      "target_table": "orders.shipper_exception",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipper_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "exception_type": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "description": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "image_url": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "status": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipperId": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "deliveryId": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.chat_conversation": {
+      "dataset_id": "replica.orders.chat_conversation",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.chat_conversation",
+      "target_table": "orders.chat_conversation",
+      "primary_key": [
+        "ma_hoi_thoai"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_hoi_thoai": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_khach_hang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_khach_hang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "ma_nhan_su_phu_trach": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_nhan_su_phu_trach": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "vai_tro_nhan_su_phu_trach": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tin_nhan_cuoi": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "vai_tro_nguoi_gui_cuoi": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tin_nhan_chua_doc_khach": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tin_nhan_chua_doc_nhan_su": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.chat_message": {
+      "dataset_id": "replica.orders.chat_message",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.chat_message",
+      "target_table": "orders.chat_message",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_hoi_thoai": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_nguoi_gui": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_nguoi_gui": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "vai_tro_nguoi_gui": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "noi_dung": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "news.articles": {
+      "dataset_id": "replica.news.articles",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "news.articles",
+      "target_table": "news.articles",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "title": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "description": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "content": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "image_url": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "category": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "author_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "author_id": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "views": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "is_published": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.ho_so_dang_ky": {
+      "dataset_id": "replica.franchise.ho_so_dang_ky",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.ho_so_dang_ky",
+      "target_table": "franchise.ho_so_dang_ky",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ho_ten": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "email": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "so_dien_thoai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "dia_chi_mat_bang": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "thanh_pho": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "dien_tich_m2": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "goi_kiosk": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ly_do_tu_choi": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "franchisee_user_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nguoi_xu_ly_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_anh_urls": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "phuong_xa": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "vi_do": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "kinh_do": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.hop_dong_nhuong_quyen": {
+      "dataset_id": "replica.franchise.hop_dong_nhuong_quyen",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.hop_dong_nhuong_quyen",
+      "target_table": "franchise.hop_dong_nhuong_quyen",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kiosk_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "goi_kiosk": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_ky": {
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_het_han": {
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ty_le_royalty_phan_tram": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_combo_khoi_diem": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_khai_truong": {
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "nguoi_tao_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "file_hop_dong_url": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "so_ngay_an_han": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "phan_tram_phat_tre_han": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.combo_nguyen_lieu": {
+      "dataset_id": "replica.franchise.combo_nguyen_lieu",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.combo_nguyen_lieu",
+      "target_table": "franchise.combo_nguyen_lieu",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_combo": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "mo_ta": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_ban": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_ly_pha_che_uoc_tinh": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "doanh_thu_uoc_tinh_moi_combo": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "don_vi_tinh": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.don_mua_combo": {
+      "dataset_id": "replica.franchise.don_mua_combo",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.don_mua_combo",
+      "target_table": "franchise.don_mua_combo",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kiosk_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "combo_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_luong": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "don_gia": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tong_tien": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "phuong_thuc_thanh_toan": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thanh_toan_ngay": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu_admin": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "nguoi_xu_ly_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_dat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_giao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.cong_no": {
+      "dataset_id": "replica.franchise.cong_no",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.cong_no",
+      "target_table": "franchise.cong_no",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kiosk_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "don_mua_combo_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "royalty_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_phat_sinh": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tien": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "han_thanh_toan": {
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_xac_nhan_thanh_toan": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nguoi_xac_nhan_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "phi_phat_tre_han": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_lan_nhac_nho": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.royalty_hang_thang": {
+      "dataset_id": "replica.franchise.royalty_hang_thang",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.royalty_hang_thang",
+      "target_table": "franchise.royalty_hang_thang",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kiosk_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "doanh_thu_thuc_te": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ty_le_royalty": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tien_royalty": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_xac_nhan": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nguoi_xac_nhan_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_thanh_toan": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu_ke_toan": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.ket_qua_doi_soat": {
+      "dataset_id": "replica.franchise.ket_qua_doi_soat",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.ket_qua_doi_soat",
+      "target_table": "franchise.ket_qua_doi_soat",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kiosk_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ky_doi_soat": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tong_combo_da_mua": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "doanh_thu_ky_vong_moi_combo": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "doanh_thu_ky_vong": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "doanh_thu_thuc_te": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "chenh_lech_phan_tram": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "muc_canh_bao": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_ky_lien_tiep_canh_bao": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_doi_soat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nguoi_doi_soat_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.thu_chi": {
+      "dataset_id": "replica.franchise.thu_chi",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.thu_chi",
+      "target_table": "franchise.thu_chi",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kiosk_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_phieu": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "danh_muc": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tien": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "nguoi_thuc_hien_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.bien_ban_vi_pham": {
+      "dataset_id": "replica.franchise.bien_ban_vi_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.bien_ban_vi_pham",
+      "target_table": "franchise.bien_ban_vi_pham",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kiosk_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_vi_pham": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_phat": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tien_phat": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ly_do": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "nguoi_lap_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.kiosk_shift_session": {
+      "dataset_id": "replica.orders.kiosk_shift_session",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.kiosk_shift_session",
+      "target_table": "orders.kiosk_shift_session",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "co_so_ma": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "staff_username": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "staff_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thoi_gian_mo_ca": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thoi_gian_dong_ca": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_dau_ca": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_cuoi_ca": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_mat_he_thong": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "doanh_thu_he_thong": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_mat_ky_vong": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "chenh_lech": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tong_don_hang": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tong_don_tien_mat": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "dong_ca_boi": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "du_lieu_chi_tiet": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "{}"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.gia_san_pham_kiosk": {
+      "dataset_id": "replica.franchise.gia_san_pham_kiosk",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.gia_san_pham_kiosk",
+      "target_table": "franchise.gia_san_pham_kiosk",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_kiosk": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_san_pham": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_kiosk": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "franchise.kiosk": {
+      "dataset_id": "replica.franchise.kiosk",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "franchise.kiosk",
+      "target_table": "franchise.kiosk",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_kiosk": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_kiosk": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "dia_chi": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "thanh_pho": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_kiosk": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ho_so_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "franchisee_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_combo_hien_tai": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "phuong_xa": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "vi_do": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "kinh_do": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "identity.vi_giao_dich": {
+      "dataset_id": "replica.identity.vi_giao_dich",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "identity.vi_giao_dich",
+      "target_table": "identity.vi_giao_dich",
+      "primary_key": [
+        "ma_giao_dich"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_giao_dich": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_nguoi_dung": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tien": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_giao_dich": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "mo_ta": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.khao_sat_bieu_mau": {
+      "dataset_id": "replica.orders.khao_sat_bieu_mau",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.khao_sat_bieu_mau",
+      "target_table": "orders.khao_sat_bieu_mau",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tieu_de": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "mo_ta": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "cau_hoi": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nguoi_tao": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "identity.membership_config": {
+      "dataset_id": "replica.identity.membership_config",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "identity.membership_config",
+      "target_table": "identity.membership_config",
+      "primary_key": [
+        "key"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "key": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "value": {
+          "data_type": "json",
+          "udt_name": "json",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "identity.loyalty_order_award": {
+      "dataset_id": "replica.identity.loyalty_order_award",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "identity.loyalty_order_award",
+      "target_table": "identity.loyalty_order_award",
+      "primary_key": [
+        "order_id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "order_id": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "user_id": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "base_points": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "awarded_points": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tier_before": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tier_after": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "reward_processed_at": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/business-coverage-20261020/round3/source-schema-readonly-round3.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
       "quality_checks": [],
       "reference_checks": [],
       "volume_baseline": {

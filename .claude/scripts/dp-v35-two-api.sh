@@ -22,6 +22,7 @@ for entry in $entries; do
     -v "$ROOT/data-platform/analytics-api/services:/app/services:ro" \
     -v "$ROOT/data-platform/analytics-api/metadata:/app/metadata:ro" \
     -v "$ROOT/data-platform/analytics-api/common.py:/app/common.py:ro" \
+    -v "$ROOT/data-platform/analytics-api/route_policy.py:/app/route_policy.py:ro" \
     -v "$ROOT/data-platform/analytics-api/routers:/app/routers:ro" \
     --entrypoint python cnm-avengers-coffee-microservices-ai-analytics-api \
     -m uvicorn tools.v35_fixture_server:app --host 127.0.0.1 --port "$port" --no-access-log

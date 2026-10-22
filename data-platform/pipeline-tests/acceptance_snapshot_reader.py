@@ -47,6 +47,8 @@ class SnapshotReaderPostgresTests(TestCase):
                 columns.append(sql.SQL('private_fixture_secret text'))
                 leaf=name.split('.')[1]
                 q.execute(sql.SQL('CREATE TABLE IF NOT EXISTS v34_snapshot_raw.{} ({})').format(sql.Identifier(leaf),sql.SQL(',').join(columns)))
+                for column in columns[:-1]:  # the fixture database persists; later catalog columns are appended
+                    q.execute(sql.SQL('ALTER TABLE v34_snapshot_raw.{} ADD COLUMN IF NOT EXISTS {}').format(sql.Identifier(leaf),column))
                 q.execute(sql.SQL('CREATE OR REPLACE VIEW silver.{} AS SELECT * FROM v34_snapshot_raw.{}').format(sql.Identifier(leaf),sql.Identifier(leaf)))
                 safe=[field for field in definition['columns'] if field not in {'email','so_dien_thoai','ho_ten','dia_chi'}]
                 q.execute(sql.SQL('GRANT SELECT ({}) ON {} TO avengers_analytics_reader').format(sql.SQL(',').join(map(sql.Identifier,safe)),sql.Identifier('silver',leaf)))

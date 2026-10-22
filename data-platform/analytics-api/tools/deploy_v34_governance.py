@@ -22,10 +22,17 @@ NAMES=('026_analysis_modules.sql','027_platform_governance.sql')
 GROUPS={'reader':'avengers_analytics_reader','writer':'avengers_report_writer','pipeline':'avengers_pipeline_writer'}
 
 
-def snapshot_guard_sql():
+def round3_relations():
+    """Silver relations added by the business-coverage rollout (guards in migration 029)."""
+    views=json.loads((ROOT/'metadata/warehouse_views.json').read_text())['views']
+    return {v['name'] for v in views if v.get('introduced_in')=='business-coverage-20261020'}
+
+
+def snapshot_guard_sql(names=None):
     """Reviewed additive DDL only; never called by startup or a data request."""
     from services.query_execution_batch import snapshot_relations
-    names=snapshot_relations()
+    if names is None:  # migration 028 scope: relations that existed before round 3
+        names=[n for n in snapshot_relations() if n not in round3_relations()]
     lines=['BEGIN;', "SET LOCAL lock_timeout='3s';", "SET LOCAL statement_timeout='30s';"]
     for name in names:
         leaf=name.split('.')[1]
@@ -42,7 +49,7 @@ def deploy_snapshot_guards(*,apply=False,approved=False):
     artifact=ROOT/'migrations/028_snapshot_lock_guards.sql'
     if artifact.read_text()!=statement:raise RuntimeError('Snapshot guard migration differs from the approved catalog projection')
     from services.query_execution_batch import snapshot_relations
-    plan={'guard_count':len(snapshot_relations()),'sql_sha256':hashlib.sha256(statement.encode()).hexdigest(),
+    plan={'guard_count':len([n for n in snapshot_relations() if n not in round3_relations()]),'sql_sha256':hashlib.sha256(statement.encode()).hexdigest(),
         'fact_writes':False,'source_grants_changed':False,'guard_contents':'one boolean column, zero rows',
         'applied':False}
     if not apply:return plan

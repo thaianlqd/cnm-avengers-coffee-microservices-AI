@@ -199,6 +199,10 @@ class AnalysisJobs:
 
     def submit(self, request, owner, key):
         from services.access_policy import active_principal,authorize_meaning
+        from services.preflight_service import preflight_catalog
+        from services.input_integrity_service import enforce, request_text
+        if not getattr(request, 'dashboard_id', None) and (request.prompt or request.input_mode!='guided'):
+            enforce(request_text(request), preflight_catalog())
         if getattr(request, 'dashboard_id', None):
             from services.preflight_service import preflight_catalog
             from services.workspace_service import dashboard_template, dashboard_sources
@@ -213,8 +217,8 @@ class AnalysisJobs:
             from services.preflight_service import preflight_catalog
             from services.request_anchors import request_anchors
             catalog=preflight_catalog()
-            authorize_meaning(request.prompt,catalog,analysis_scope=request.analysis_scope,
-                              anchors=request_anchors(request.prompt,catalog,{}))
+            authorize_meaning(request_text(request),catalog,analysis_scope=request.analysis_scope,
+                              anchors=request_anchors(request_text(request),catalog,{}))
         if not owner or not re.fullmatch(r'[A-Za-z0-9_-]{16,100}', key or ''):
             raise AnalysisError('invalid_job_key', 'Owned idempotency key required')
         if request.session_id:
@@ -398,8 +402,10 @@ class AnalysisJobs:
             catalog = pipeline.catalog()
             request.reference_date = pipeline.reference(request, catalog)
             from services import llm_service
+            from services.analytical_resolver import PLAN_POLICY_VERSION
+            from services.input_integrity_service import policy_fingerprint as input_policy_fingerprint
             cache_key = 'plan:' + digest([job['owner'], pipeline.request_signature(request), bool(getattr(request, 'accept_partial_scope', False)),
-                catalog.fingerprint, JOB_VERSION, llm_service.GEMINI_MODELS,
+                catalog.fingerprint, JOB_VERSION, PLAN_POLICY_VERSION, input_policy_fingerprint(), llm_service.GEMINI_MODELS,
                 os.getenv('GEMINI_API_STYLE','native')])
             cached = None if request.refresh else self.repository.read(cache_key)
             from services.session_service import get_session

@@ -106,5 +106,5 @@ class InactiveBindingTests(f.unittest.TestCase):
         attack=f.envelope({'id':'sales_summary_trend_type','derived_features':[],
             'feature_metrics':{'contribution_share':['revenue']}})
         p=self.pipeline(f.scripted(raw,attack,attack))
-        with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D))
+        with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D+' Chỉ ra nhóm dẫn đầu theo doanh thu.'))
         self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()

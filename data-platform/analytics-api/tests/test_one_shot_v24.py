@@ -1,6 +1,7 @@
 """Production single-shot qualification. Transport and warehouse are forbidden."""
 
 import json
+from tests.archive_planner import historical_catalog
 from tests.gate_fixtures import interpreted_input
 import os
 import unittest
@@ -66,10 +67,14 @@ def deep_domain_queries(subject):
             ("distribution", ["payment_count"], ["payment_status"]),
             ("cross_tab", ["payment_count"], ["payment_gateway", "payment_status"])],
         "inventory": [
-            ("aggregate", ["stock_quantity", "low_stock_count"], ["product"]),
-            ("aggregate", ["stock_quantity", "low_stock_count"], ["store"]),
-            ("cross_tab", ["stock_quantity"], ["product", "store"]),
-            ("cross_tab", ["low_stock_count"], ["product", "store"])],
+            # PLAN 20/10 §3.1: retail availability replaced physical stock quantity.
+            # Same-unit availability counts share one chart, so six views need six questions.
+            ("aggregate", ["sale_positions", "paused_sale_positions"], ["store"]),
+            ("aggregate", ["sale_positions"], ["category"]),
+            ("aggregate", ["paused_sale_positions"], ["city"]),
+            ("distribution", ["paused_sale_positions"], ["store"]),
+            ("cross_tab", ["sale_positions"], ["product", "store"]),
+            ("cross_tab", ["paused_sale_positions"], ["product", "store"])],
         "customers": [
             ("aggregate", ["customer_count"], ["customer_role"]),
             ("trend", ["customer_count"], []),
@@ -100,7 +105,7 @@ class OneShotTests(unittest.TestCase):
             guard.start(); self.addCleanup(guard.stop)
         config = patch.dict(os.environ, {"DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "14000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
         config.start(); self.addCleanup(config.stop)
-        self.catalog = AnalysisCatalog(physical_metadata())
+        self.catalog = historical_catalog(AnalysisCatalog(physical_metadata()))  # archived one-shot scope
 
     def pipeline(self, provider=None, executor=None):
         return AnalysisPipeline(metadata_loader=physical_metadata, provider=provider or scripted(decision()),
@@ -190,7 +195,7 @@ class OneShotTests(unittest.TestCase):
 
     def test_deep_policy_is_generic_and_focused_remains_available(self):
         for subject, metric in (("products", "quantity_sold"), ("payments", "payment_count"),
-                                ("customers", "customer_count"), ("inventory", "stock_quantity"),
+                                ("customers", "customer_count"), ("inventory", "paused_sale_positions"),
                                 ("staff_shifts", "shift_count"), ("promotions", "discount_amount")):
             q = {"id": "main", "subject": subject, "operation": "aggregate", "metrics": [metric]}
             p = self.pipeline(scripted(decision(requested_operations=[q])))

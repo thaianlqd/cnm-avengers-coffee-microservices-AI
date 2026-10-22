@@ -120,6 +120,9 @@ IMPLEMENTATION = {"capability_blocked", "unsupported_join", "incompatible_popula
 
 
 def gap_kind(reason, planned):
+    # One observed group is a fact about the data in scope (I12), not a mission or source limit.
+    if reason in {"singleton", "insufficient_periods", "no_rows", "empty_result"}:
+        return "LIMITED_DATA"
     if reason in MISSION_LIMIT:
         return "LIMITED_BY_MISSION"
     if not planned:
@@ -186,11 +189,12 @@ def analysis_coverage(coverage, charts, omitted, targets, *, lens_decisions=(), 
     kind = next((k for k in GAP_ORDER if k in reasons), None) if shortfall else None
     status = "complete" if not shortfall else "partial" if kind in {"PLANNING_GAP", "SOURCE_UNAVAILABLE"} else "limited"
     shown = sum(counted.values())
-    words = {"LIMITED_DATA": "thiếu dữ liệu", "LIMITED_BY_SOURCE_CAPABILITY": "nguồn chưa có thông tin",
+    words = {"LIMITED_DATA": "dữ liệu trong phạm vi không đủ (ví dụ chỉ có một nhóm hoặc một kỳ)", "LIMITED_BY_SOURCE_CAPABILITY": "nguồn chưa có thông tin",
              "CAPACITY_LIMITED": "vượt ngân sách truy vấn", "SOURCE_UNAVAILABLE": "nguồn lỗi khi chạy",
              "PLANNING_GAP": "hệ thống chưa lập được góc nhìn", "LIMITED_BY_MISSION": "nhiệm vụ đã chọn giới hạn loại góc nhìn"}
+    causes = [k for k in GAP_ORDER if k in reasons][:2] if shortfall else []
     summary = (f"Số liệu đã kiểm chứng · {shown}/{target_total} góc nhìn" +
-               (f"; còn thiếu {target_total - shown} do {words[kind]}" if shortfall and kind else ""))
+               (f"; còn thiếu {target_total - shown} do {' và '.join(words[k] for k in causes)}" if causes else ""))
     return dict(version="4.0.0", policy_version=policy_version, effective_depth=depth, selection_origin=origin, family=family,
                 targets={r: targets.get(r, 0) for r in ROLES}, target_total=target_total, rendered=rendered,
                 counted=counted, rendered_total=shown, requested_views=requested_views, status=status, gap_kind=kind,

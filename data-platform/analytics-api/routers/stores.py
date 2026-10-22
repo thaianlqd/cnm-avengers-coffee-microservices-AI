@@ -40,25 +40,32 @@ def fetch_stores_analytics(
                     where_clauses.append(store_branch_cond)
                     filter_params.extend(branch_params)
 
+                from services.store_location_service import coordinate_projection
+                coordinates,coordinate_group=coordinate_projection(alias='cn')
                 query = f"""
                     SELECT
                         cn.ma_chi_nhanh AS store_code,
                         cn.ten_chi_nhanh AS store_name,
+                        cn.loai_diem_ban AS store_type,
+                        {coordinates},
                         COALESCE(cn.thanh_pho, 'Chưa xác định') AS city,
                         COALESCE(NULL::text, 'Đang cập nhật') AS address,
                         CASE WHEN cn.trang_thai = 'ACTIVE' THEN 'Hoạt động' ELSE 'Bảo trì' END AS status,
                         COUNT(o.ma_don_hang) AS total_orders,
+                        COUNT(o.ma_don_hang) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AS valid_orders,
                         COALESCE(SUM(o.tong_tien) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0) AS total_revenue,
                         COALESCE(ROUND(AVG(o.tong_tien) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0), 0) AS aov
                     FROM silver.chi_nhanh cn
                     LEFT JOIN silver.don_hang o ON cn.ma_chi_nhanh = o.co_so_ma AND {date_cond}
                     WHERE {' AND '.join(where_clauses)}
-                    GROUP BY cn.ma_chi_nhanh, cn.ten_chi_nhanh, cn.thanh_pho, NULL::text, cn.trang_thai
+                    GROUP BY cn.ma_chi_nhanh, cn.ten_chi_nhanh, cn.thanh_pho, NULL::text, cn.trang_thai, cn.loai_diem_ban{coordinate_group}
                     ORDER BY total_revenue DESC
                     LIMIT 5001;
                 """
                 cur.execute(query, date_params + filter_params)
                 stores = [dict(r) for r in cur.fetchall()]
+                from services.store_location_service import store_location
+                stores=[{**store,**store_location(store)} for store in stores]
 
                 if len(stores)>5000:
                     raise HTTPException(503, 'Danh sách cửa hàng vượt giới hạn; hãy thu hẹp bộ lọc.')

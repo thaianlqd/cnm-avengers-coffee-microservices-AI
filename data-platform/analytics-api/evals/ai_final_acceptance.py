@@ -4,11 +4,9 @@ Production AnalysisPipeline + resolver + compiler + AST guard + FixtureWarehouse
 case (this measures deterministic planning/execution/verification, NOT model understanding — that is the semantic eval).
 HTTP and psycopg2 are blocked; no provider is reachable.
 
-Expected state per case/depth is derived BEFORE execution from metadata only (``static_audit``: the lens planner with
-no data). A case is RICH_ELIGIBLE at a depth when the planner can plan every role target from governed metadata;
-otherwise LIMITED_BY_SOURCE_CAPABILITY with the planner's typed reasons as proof. After execution on the rich fixture a
-RICH_ELIGIBLE case must render its full target; any PLANNING_GAP fails the gate. Nothing here encodes a chart list or a
-number for a specific question.
+Expected floors, core lenses and honest limitation states are frozen in ai_final_expectations.json from the passing
+pre-hardening corpus. ``static_audit`` remains a diagnostic, never permission to lower those expectations. Holdout
+failure oracles corrupt data, permissions and artifacts independently. Any PLANNING_GAP fails the gate.
 
     python -m evals.ai_final_acceptance --out /app/evaluation/ai-data-final-20261019/acceptance.json [--cases D,F,E] [--holdout]
 """
@@ -18,6 +16,7 @@ import json
 import os
 import sys
 import time
+from pathlib import Path
 from contextlib import ExitStack
 from datetime import date
 from unittest.mock import patch
@@ -158,15 +157,54 @@ CASES = [
     case('E10', 'edge', 'mission_grammar', dict(R('orders', ['revenue'], 'Doanh thu theo chi nhánh tháng 9 năm 2026', dims=['store']), mission='compare')),
 ]
 
+# Separate holdout failure contracts: no demo phrasing, chart-count padding or
+# dynamic expected state from the planner under test. Oracles execute production
+# owners with independently corrupted data/access/artifacts and exact assertions.
+HARDENING_EDGES = [
+    ('E18','all_null','tests.test_ai_final_edges.FinalEdgeTests.test_all_null_measure_never_becomes_zero'),
+    ('E19','source_missing','tests.test_ai_final_edges.FinalEdgeTests.test_missing_source_fails_before_connection_with_source_category'),
+    ('E20','source_stale_incomplete','tests.test_ai_final_edges.FinalEdgeTests.test_stale_incomplete_source_cannot_claim_report_complete'),
+    ('E21','access_denied','tests.test_workspace_revision.WorkspaceRevisionTests.test_permission_denied_cannot_fallback_to_global_report'),
+    ('E22','join_fanout','tests.test_ai_final_edges.FinalEdgeTests.test_governed_join_avoids_fact_multiplication_and_rejects_fanout_axis'),
+    ('E23','budget_timeout','tests.test_ai_final_edges.FinalEdgeTests.test_timeout_and_query_budget_have_no_hidden_retry'),
+    ('E24','saved_tamper','tests.test_ai_final_edges.FinalEdgeTests.test_saved_chart_lens_evidence_and_denominator_tamper_rejected'),
+    ('E25','ui_response_race','node:workspaceInteraction.test.mjs'),
+    ('E26','cancel_revoke',['tests.test_ai_final_edges.FinalEdgeTests.test_cancelled_revision_cannot_publish',
+                           'tests.test_workspace_revision.WorkspaceRevisionTests.test_revoke_during_revision_prevents_atomic_publication']),
+    ('E27','identity_filter_scope','tests.test_workspace_revision.WorkspaceRevisionTests.test_identity_filter_pins_label_axis_without_hiding_the_exact_answer'),
+    ('E29','filtered_ratio_population','tests.test_workspace_revision.WorkspaceRevisionTests.test_filter_recompiles_ratio_on_full_population_without_provider'),
+]
+
+
+def run_hardening_edge(spec, ui_oracle=None):
+    import unittest
+    id, family, oracle = spec
+    if id == 'E25':
+        if not ui_oracle: return dict(id=id,kind='edge',family=family,holdout=True,passed=False,problems=['Source-bound UI oracle required'],runs={})
+        receipt=json.loads(Path(ui_oracle).read_text())
+        web=Path(__file__).resolve().parents[2]/'web-ui'
+        valid=receipt.get('case_id')==id and receipt.get('exit_code')==0 and receipt.get('passed')==3
+        for name, fingerprint in receipt.get('source_files',{}).items():
+            valid = valid and hashlib.sha256((web/name).read_bytes()).hexdigest()==fingerprint
+        valid = valid and set(receipt.get('source_files',{}))=={'src/utils/workspaceInteraction.mjs','src/utils/workspaceInteraction.test.mjs'}
+        return dict(id=id,kind='edge',family=family,holdout=True,passed=valid,problems=[] if valid else ['UI oracle identity mismatch'],runs={},oracle=oracle)
+    result=unittest.TestResult()
+    names=oracle if isinstance(oracle,list) else [oracle]
+    unittest.defaultTestLoader.loadTestsFromNames(names).run(result)
+    valid=result.testsRun==len(names) and result.wasSuccessful() and not result.skipped
+    return dict(id=id,kind='edge',family=family,holdout=True,passed=valid,
+                problems=[] if valid else [message[-1500:] for _,message in result.errors+result.failures],runs={},oracle=oracle)
+
 
 def static_audit(catalog, case_, depth, reference):
     """Planned lenses per role from metadata only (no SQL) — the frozen eligibility proof for this case/depth."""
     from services.analytical_resolver import AnalyticalResolver
     from services.analysis_intent import AnalysisIntentEnvelope
-    from services.analysis_expansion_service import view_targets
+    from services.analysis_expansion_service import view_targets, FIXED_GROUPING_POLICY
     reqs = [dict(case_['req'], **({'forecast': case_['forecast']} if case_.get('forecast') else {}),
                  **({'comparison_time': case_['comparison_time']} if case_.get('comparison_time') else {}))] + case_.get('extra', [])
-    ui = {'server_supporting_expansion': depth, **({'analysis_mission': case_['mission']} if case_.get('mission') else {})}
+    ui = {'server_supporting_expansion': depth, 'fixed_grouping_policy':FIXED_GROUPING_POLICY,
+          **({'analysis_mission': case_['mission']} if case_.get('mission') else {})}
     try:
         resolved = AnalyticalResolver(catalog, reference, ui).resolve(AnalysisIntentEnvelope.model_validate({'decision': 'analyze', 'requirements': reqs}))
     except Exception as error:  # noqa: BLE001 - the audit records the typed category, never hides it
@@ -211,6 +249,9 @@ def run_case(case_, depth, reference):
     cov = report.get('analysis_coverage') or {}
     charts = report['charts']
     return dict(error=None, elapsed_s=round(elapsed, 2), sql_executions=warehouse.call_count, queries=len(report['analytical_queries']),
+        requested_meaning_sha256=hashlib.sha256(json.dumps(sorted(
+            [q for q in report['analytical_queries'] if q['role']=='requested'],key=lambda q:q['id']),sort_keys=True).encode()).hexdigest(),
+        singleton_views=[c['id'] for c in charts if c['chart_type'] in {'bar','horizontal_bar','line','area','donut','scatter'} and len(c.get('data',[]))<2],
         requested_rows=[report['result_sets'][q['id']]['rows'] for q in report['analytical_queries'] if q['role'] == 'requested'],
         charts=[dict(type=c['chart_type'], metrics=c['metrics'], lens=c.get('analysis_lens_id'), role=c.get('analysis_lens_role') or 'requested')
                 for c in charts], forecast_views=len(report.get('forecasts') or []),
@@ -233,6 +274,10 @@ def allowed_metrics(catalog, case_):
 def judge(catalog, case_, audits, runs):
     """Gate one case across its depths. Returns (passed, problems)."""
     problems = []
+    frozen = json.loads(Path(__file__).with_name('ai_final_expectations.json').read_text())['cases'][case_['id']]
+    for depth,run in runs.items():
+        if run.get('error') != frozen[depth]['expected_error']:
+            problems.append(f'{depth}: error category differs from frozen failure oracle')
     if case_['expect_error'] == '':
         for depth, run in runs.items():
             if not run.get('error') and run.get('verified') != 'verified':
@@ -256,6 +301,8 @@ def judge(catalog, case_, audits, runs):
             problems.append(f'{depth}: irrelevant views {[c["metrics"] for c in bad]}')
         if not run['unique_views']:
             problems.append(f'{depth}: duplicate views')
+        if run['singleton_views']:
+            problems.append(f'{depth}: singleton fake views')
         plain = [frozenset(c['metrics']) for c in run['charts'] if c['type'] == 'scatter' and not c['lens']]
         if len(plain) != len(set(plain)):  # the same pair on the same rows drawn twice (axes swapped)
             problems.append(f'{depth}: same scatter pair drawn twice')
@@ -266,6 +313,15 @@ def judge(catalog, case_, audits, runs):
         if run['verified'] != 'verified' or not run['reverified']:
             problems.append(f'{depth}: verification {run["verified"]} reverified={run["reverified"]} breadth={run["breadth"]}')
         cov = run['coverage']
+        expected = frozen[depth]
+        if (cov.get('status'),cov.get('gap_kind')) != (expected['expected_status'],expected['expected_gap']):
+            problems.append(f'{depth}: frozen coverage state differs')
+        if cov.get('rendered_total',0) < expected['min_views']:
+            problems.append(f'{depth}: fewer useful views than frozen independent floor')
+        if expected.get('max_views') is not None and cov.get('rendered_total',0) > expected['max_views']:
+            problems.append(f'{depth}: forbidden views counted despite metadata capability proof')
+        if not set(expected['core_lenses']) <= {c['lens'] for c in run['charts'] if c['role']=='core'}:
+            problems.append(f'{depth}: frozen core lenses lost')
         if cov.get('gap_kind') in {'PLANNING_GAP', 'SOURCE_UNAVAILABLE'}:
             problems.append(f'{depth}: {cov["gap_kind"]} rejected={run["rejected"]}')
         rich = audit.get('planned') and all(audit['planned'][r] >= audit['targets'][r] for r in audit['targets']) if 'planned' in audit else False
@@ -279,6 +335,9 @@ def judge(catalog, case_, audits, runs):
     rows = [runs[d]['requested_rows'] for d in DEPTHS if d in lens_sets]
     if any(r != rows[0] for r in rows[1:]):
         problems.append('requested numbers differ across depths')
+    meanings=[runs[d]['requested_meaning_sha256'] for d in DEPTHS if d in lens_sets]
+    if any(m!=meanings[0] for m in meanings[1:]):
+        problems.append('requested scope/population/metric meaning differs across depths')
     return not problems, problems
 
 
@@ -287,6 +346,7 @@ def main(argv=None):
     parser.add_argument('--out', required=True)
     parser.add_argument('--kinds', default='domain,family,edge')
     parser.add_argument('--holdout-only', action='store_true')
+    parser.add_argument('--ui-oracle', help='Receipt from tools/run_workspace_ui_oracle.py, bound to actual JS source')
     args = parser.parse_args(argv)
     os.environ.update(AI_OFFLINE='1', DATA_ANALYST_ENV='development', DATA_ANALYST_SESSION_STORE='memory', DATA_ANALYST_ARTIFACT_STORE='memory',
                       DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN='3', DATA_ANALYST_ENABLE_CONTRACT_REPAIR='1')
@@ -295,7 +355,8 @@ def main(argv=None):
     from evals.rich_fixture import rich_world
     from services.analysis_catalog import AnalysisCatalog
     from tests.analysis_fixtures import physical_metadata
-    manifest = json.dumps(CASES, sort_keys=True, ensure_ascii=False, default=str)
+    manifest = json.dumps(dict(cases=CASES,holdouts=HARDENING_EDGES,
+        expectations=json.loads(Path(__file__).with_name('ai_final_expectations.json').read_text())), sort_keys=True, ensure_ascii=False, default=str)
     results, started = [], time.perf_counter()
     with ExitStack() as stack:
         for target in ('requests.sessions.Session.request', 'psycopg2.connect'):
@@ -312,6 +373,11 @@ def main(argv=None):
             results.append(dict(id=c['id'], kind=c['kind'], family=c['family'], holdout=c['holdout'], passed=passed, problems=problems,
                                 audit=audits, runs={d: {k: v for k, v in r.items() if k != 'requested_rows'} for d, r in runs.items()}))
             print(('PASS ' if passed else 'FAIL ') + c['id'], '' if passed else problems, flush=True)
+        if 'edge' in args.kinds.split(','):
+            for edge in HARDENING_EDGES:
+                result=run_hardening_edge(edge,args.ui_oracle)
+                results.append(result)
+                print(('PASS ' if result['passed'] else 'FAIL ')+edge[0],result['problems'],flush=True)
     summary = dict(total=len(results), passed=sum(r['passed'] for r in results),
                    by_kind={k: [sum(r['passed'] for r in results if r['kind'] == k), sum(r['kind'] == k for r in results)] for k in ('domain', 'family', 'edge')},
                    rich_full=sum(1 for r in results for d, run in r['runs'].items() if not run.get('error') and (run['coverage'] or {}).get('status') == 'complete'),

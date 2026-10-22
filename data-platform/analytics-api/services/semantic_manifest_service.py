@@ -39,6 +39,8 @@ def build_manifest(catalog, max_chars=None, subject_priority=(), include_compone
     r = catalog.registry
     dims, metrics, subjects = {}, {}, {}
     for id, d in sorted(r["dimensions"].items()):
+        if d.get("lifecycle", {}).get("status") == "deprecated" and not include_components:
+            continue
         try:
             catalog.check_column(d["table"], d["column"])
             if d.get("expression"):
@@ -50,7 +52,7 @@ def build_manifest(catalog, max_chars=None, subject_priority=(), include_compone
         dtype = dimension_logical_type(id,d)
         dims[id] = [id, d["business_name"], dtype, d.get("value_grounding", {}).get("mode", "lookup")]
     for id, m in sorted(r["metrics"].items()):
-        if m.get("component_only") and not include_components:
+        if (m.get("component_only") or m.get("lifecycle", {}).get("status") == "deprecated") and not include_components:
             continue
         try:
             if m["source"] not in catalog.tables:

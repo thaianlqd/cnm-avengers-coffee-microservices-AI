@@ -1,6 +1,7 @@
 import { businessCategory, categoryColor, compositionData, bucketCoverage, conciseChartTitle } from '../utils/analystDashboardLayout.mjs';
 import { formatChartValue } from '../utils/aiChartConfig.mjs';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { axisInset, monotonePath, timeSegments, timePositions } from '../utils/plotGeometry.mjs';
 
 const axisValue = (value: number) => {
   const magnitude = Math.abs(value);
@@ -30,27 +31,31 @@ function usePlotWidth() {
 /** Signed grouped/stacked series. Missing observations remain missing. */
 export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: boolean; percentage?: boolean; unit?: string; onInspect?: (row: any) => void }> = ({ data, series, stacked = false, percentage = false, unit = '', onInspect }) => {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const [page,setPage]=useState(1),pageSize=series.length>1?8:10;
+  const pages=Math.max(1,Math.ceil(data.length/pageSize)),activePage=Math.min(page,pages),visible=data.slice((activePage-1)*pageSize,activePage*pageSize);
   const active = series.filter(s => !hidden[s.key]);
   const { ref, width: plotWidth } = usePlotWidth();
   if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
   const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
   const sums = data.map(row => active.reduce((sum, s) => sum + (Number.isFinite(row[s.key]) ? row[s.key] : 0), 0));
   const low = Math.min(0, ...values), high = percentage ? 100 : Math.max(0, ...(stacked ? sums : values));
+  const left=axisInset([low,(low+high)/2,high].map(axisValue));
   const span = high - low || 1, y = (value: number) => (PLOT_HEIGHT - 38) - (value - low) / span * (PLOT_HEIGHT - 62);
-  const slot = (plotWidth - 78) / data.length;
+  const slot = (plotWidth-left-20) / visible.length;
   return <div className="w-full min-w-0">
     <div className="flex flex-wrap gap-2 text-xs mb-3">{(series.length > 1 ? series : []).map(s => <button key={s.key} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} aria-pressed={!hidden[s.key]} style={{ color: s.color }}>{s.label}</button>)}</div>
     <svg ref={ref} viewBox={`0 0 ${plotWidth} ${PLOT_HEIGHT}`} style={{ height: PLOT_HEIGHT }} role="img" aria-label={stacked ? 'Biểu đồ cột chồng' : 'Biểu đồ cột nhóm'} className="w-full">
-      <line x1="55" x2={plotWidth - 18} y1={y(0)} y2={y(0)} stroke="#94a3b8" />
-      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2={plotWidth - 18} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
-      {data.map((row, i) => { let offset = 0; return <g key={i}>{active.map((s, j) => {
+      <line x1={left} x2={plotWidth - 18} y1={y(0)} y2={y(0)} stroke="#cbd5e1" />
+      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1={left} x2={plotWidth - 18} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 6" /><text data-y-tick x={left-12} y={y(v)+4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
+      {visible.map((row, i) => { let offset = 0; return <g key={i}>{active.map((s, j) => {
         const v = row[s.key]; if (!Number.isFinite(v)) return null;
         const start = stacked ? offset : 0; if (stacked) offset += v;
-        const width = slot * .8 / (stacked ? 1 : Math.max(active.length, 1));
-        const x = 60 + i * slot + (stacked ? 0 : j * width);
+        const groups=stacked?1:Math.max(active.length,1),width=Math.min(48,slot*.72/groups);
+        const x = left + i*slot+(slot-width*groups)/2+(stacked?0:j*width);
         return <rect role={row.entity_ref && onInspect ? 'button' : undefined} aria-label={row.entity_ref && onInspect ? `Xem nhóm ${row.label}` : undefined} onClick={() => row.entity_ref && onInspect?.(row)} onKeyDown={event => { if (row.entity_ref && onInspect && ['Enter', ' '].includes(event.key)) { event.preventDefault(); onInspect(row); } }} key={s.key} x={x} y={Math.min(y(start), y(start + v))} width={Math.max(1, width - 2)} height={Math.abs(y(start + v) - y(start))} rx={3} tabIndex={0} className="outline-none transition-opacity duration-150 motion-reduce:transition-none hover:opacity-80 focus:opacity-80" fill={active.length === 1 ? row.color || s.color || '#2563eb' : s.color || '#2563eb'}><title>{`${row.label}: ${s.label} — ${formatChartValue(v, unit ? ` ${unit}` : '')}`}</title></rect>;
-      })}<text x={60 + i * slot + slot * .4} y={PLOT_HEIGHT - 12} fontSize="11" fill="#64748b" textAnchor="middle">{tickIndices(data.length, Math.min(5, Math.max(2, Math.floor(plotWidth / 85)))).includes(i) ? String(row.label).slice(0, 12) : ''}</text></g>; })}
+      })}<text x={left + (i+.5)*slot} y={PLOT_HEIGHT - 12} fontSize="11" fill="#64748b" textAnchor="middle"><title>{row.label}</title>{tickIndices(visible.length, Math.min(8, Math.max(2, Math.floor(plotWidth / 85)))).includes(i) ? String(row.label).slice(0, 12) : ''}</text></g>; })}
     </svg>
+    {pages>1&&<nav aria-label="Trang nhóm biểu đồ cột" className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-400"><span>{(activePage-1)*pageSize+1}–{Math.min(activePage*pageSize,data.length)}/{data.length} nhóm · cùng thang giá trị</span><div className="flex gap-3"><button type="button" aria-label="Nhóm cột trước" disabled={activePage===1} onClick={()=>setPage(activePage-1)} className="disabled:opacity-30">←</button><button type="button" aria-label="Nhóm cột tiếp theo" disabled={activePage===pages} onClick={()=>setPage(activePage+1)} className="disabled:opacity-30">→</button></div></nav>}
   </div>;
 };
 
@@ -60,16 +65,17 @@ export const ScatterChart: React.FC<{ data: any[]; xLabel?: string; yLabel?: str
   if (!rows.length) return <p>Không có quan sát ghép cặp.</p>;
   const xs = rows.map(r => r.x), ys = rows.map(r => r.y);
   const minX = Math.min(0, ...xs), minY = Math.min(0, ...ys), spanX = Math.max(...xs) - minX || 1, spanY = Math.max(...ys) - minY || 1;
-  const x = (v: number) => 58 + (v - minX) / spanX * (plotWidth - 80), y = (v: number) => (PLOT_HEIGHT - 45) - (v - minY) / spanY * (PLOT_HEIGHT - 75);
+  const left=axisInset([minY,minY+spanY/2,minY+spanY].map(axisValue));
+  const x = (v: number) => left + (v - minX) / spanX * (plotWidth-left-22), y = (v: number) => (PLOT_HEIGHT - 45) - (v - minY) / spanY * (PLOT_HEIGHT - 75);
   return <svg ref={ref} viewBox={`0 0 ${plotWidth} ${PLOT_HEIGHT}`} style={{ height: PLOT_HEIGHT }} role="img" aria-label="Biểu đồ phân tán — liên hệ quan sát" className="w-full">
     {[0, .5, 1].map((fraction, i) => <g key={i}>
-      <line x1="58" x2={plotWidth - 22} y1={y(minY + fraction * spanY)} y2={y(minY + fraction * spanY)} stroke="#e2e8f0" strokeDasharray="4 5" />
-      <text x="50" y={y(minY + fraction * spanY) + 4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(minY + fraction * spanY)}</text>
+      <line x1={left} x2={plotWidth - 22} y1={y(minY + fraction * spanY)} y2={y(minY + fraction * spanY)} stroke="#e2e8f0" strokeDasharray="3 6" />
+      <text data-y-tick x={left-12} y={y(minY + fraction * spanY) + 4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(minY + fraction * spanY)}</text>
       <text x={x(minX + fraction * spanX)} y={PLOT_HEIGHT - 26} textAnchor="middle" fontSize="11" fill="#64748b">{axisValue(minX + fraction * spanX)}</text>
     </g>)}
-    <path d={`M 58 30 V ${PLOT_HEIGHT - 45} H ${plotWidth - 22}`} fill="none" stroke="#94a3b8" />
+    <path d={`M ${left} 30 V ${PLOT_HEIGHT - 45} H ${plotWidth - 22}`} fill="none" stroke="#94a3b8" />
     {rows.map((r, i) => <circle key={i} cx={x(r.x)} cy={y(r.y)} r={rows.length > 100 ? 3 : 5} fill="#0891b2" opacity={rows.length > 100 ? .45 : .75}><title>{`${r.label}: ${formatChartValue(r.x, ` ${xUnit}`)} / ${formatChartValue(r.y, ` ${yUnit}`)}`}</title></circle>)}
-    <text x={plotWidth / 2} y={PLOT_HEIGHT - 4} textAnchor="middle" fontSize="12" fill="#475569">{xLabel} ({xUnit})</text><text x="58" y="17" fontSize="12" fill="#475569">{yLabel} ({yUnit})</text>
+    <text x={(left+plotWidth-22) / 2} y={PLOT_HEIGHT - 4} textAnchor="middle" fontSize="11" fill="#475569">{xLabel} ({xUnit})</text><text x={left} y="17" fontSize="11" fill="#475569">{yLabel} ({yUnit})</text>
   </svg>;
 };
 
@@ -126,34 +132,42 @@ export const AnalystChart: React.FC<{ chart: any; onInspect?: (row: any) => void
   if (chart.chart_type === 'scatter') return <ScatterChart data={data} xLabel={chart.x_label} yLabel={chart.y_label} xUnit={unit} yUnit={chart.y_unit} />;
   if (chart.chart_type === 'heatmap') return <HeatmapChart data={data} valueSuffix={unit ? ` ${unit}` : ''} xLabel={chart.x_label || 'Chiều phân tích'} yLabel={chart.series_label || 'Nhóm phân tích'} />;
   if (chart.chart_type === 'multi_line') return <SeriesLineChart data={data} series={chart.series || []} unit={unit} granularity={chart.granularity} period={chart.period} />;
-  if (chart.chart_type === 'donut') return <DonutChart data={chart.grouped_categories ? data : compositionData(data).data} centerLabel="Tổng trong phạm vi" valueSuffix={unit ? ` ${unit}` : ''} size={170} />;
-  if (chart.chart_type === 'horizontal_bar' || (chart.risk_threshold && chart.chart_type === 'bar')) return <AnalystHorizontalBars data={data} unit={unit} color={color} ranking={chart.selection === 'Top N'} threshold={chart.risk_threshold} onInspect={onInspect} />;
+  if (chart.chart_type === 'donut') return <DonutChart data={chart.grouped_categories ? data : compositionData(data).data} centerLabel={chart.population_scope === 'ranked_cohort' && chart.cohort_label ? `Tổng trong ${chart.cohort_label}` : 'Tổng trong phạm vi'} valueSuffix={unit ? ` ${unit}` : ''} size={170} />;
+  if (chart.chart_type === 'horizontal_bar' || (chart.risk_threshold && chart.chart_type === 'bar')) return <AnalystHorizontalBars data={data} unit={unit} color={color} ranking={chart.selection === 'Top N' || chart.selection === 'Bottom N'} threshold={chart.risk_threshold} onInspect={onInspect} />;
   if (['line', 'area'].includes(chart.chart_type)) return <SeriesLineChart data={data.map((r: any) => ({ label: r.label, series_1: r.value }))} series={[{ key: 'series_1', label: conciseChartTitle(chart), color }]} unit={unit} area={chart.chart_type === 'area'} granularity={chart.granularity} period={chart.period} />;
   return <SeriesBarChart data={data.map((r: any) => ({ ...r, series_1: r.value, color: r.color || color }))} series={[{ key: 'series_1', label: conciseChartTitle(chart), color }]} unit={unit} onInspect={onInspect} />;
 };
 
 export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: string; area?: boolean; granularity?: string; period?: any }> = ({ data, series, unit = '', area = false, granularity, period }) => {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const [hover,setHover]=useState<number|null>(null),gradient=useId().replace(/:/g,'');
   const active = series.filter(s => !hidden[s.key]);
   const { ref, width: plotWidth } = usePlotWidth();
   const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
   if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
+  const positions=timePositions(data);
+  if(!positions)return <div><p role="status">Thời gian chưa theo thứ tự hoặc không hợp lệ; hiển thị bảng dữ liệu quan sát.</p><table><tbody>{data.map((r,i)=><tr key={i}><th>{r.label}</th>{active.map(s=><td key={s.key}>{formatChartValue(r[s.key],unit?` ${unit}`:'')}</td>)}</tr>)}</tbody></table></div>;
   const low = Math.min(0, ...values), high = Math.max(0, ...values), span = high - low || 1;
-  const x = (i: number) => 55 + i * (plotWidth - 78) / Math.max(1, data.length - 1), y = (v: number) => (PLOT_HEIGHT - 38) - (v - low) / span * (PLOT_HEIGHT - 62);
+  const ticks=[low,(low+high)/2,high],left=axisInset(ticks.map(axisValue));
+  const x = (i: number) => left + positions[i] * (plotWidth-left-20), y = (v: number) => (PLOT_HEIGHT - 36) - (v - low) / span * (PLOT_HEIGHT - 62);
   const coverage = data.map(r => bucketCoverage(r.label, granularity, period));
   const periodNote = (i: number) => coverage[i]?.partial ? ` · Kỳ chưa đủ ngày: ${[coverage[i].start, period?.start].filter(Boolean).sort().slice(-1)[0]} → ${[coverage[i].end, period?.end].filter(Boolean).sort()[0]}` : '';
-  return <div className="w-full"><div className="flex flex-wrap gap-2 text-xs mb-3">{(series.length > 1 ? series : []).map(s => <button key={s.key} aria-pressed={!hidden[s.key]} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} style={{ color: s.color }}>{s.label}</button>)}</div>
-    <svg ref={ref} viewBox={`0 0 ${plotWidth} ${PLOT_HEIGHT}`} style={{ height: PLOT_HEIGHT }} role="img" aria-label="Biểu đồ theo thời gian" className="w-full">
-      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2={plotWidth - 18} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
-      {active.map(s => { let connected = false; const path = data.map((r, i) => { if (!Number.isFinite(r[s.key])) { connected = false; return ''; } const point = `${connected ? 'L' : 'M'} ${x(i)} ${y(r[s.key])}`; connected = true; return point; }).join(' ');
-        const segments: number[][] = []; let segment: number[] = [];
-        data.forEach((r, i) => { if (Number.isFinite(r[s.key])) segment.push(i); else if (segment.length) { segments.push(segment); segment = []; } });
-        if (segment.length) segments.push(segment);
-        return <g key={s.key}>{area && segments.map((indices, i) => <path key={i} d={`M ${x(indices[0])} ${y(0)} ${indices.map(index => `L ${x(index)} ${y(data[index][s.key])}`).join(' ')} L ${x(indices[indices.length - 1])} ${y(0)} Z`} fill={s.color || '#6366f1'} opacity=".12" />)}<path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => i > 0 && (coverage[i]?.partial || coverage[i - 1]?.partial) && Number.isFinite(r[s.key]) && Number.isFinite(data[i - 1][s.key])
-          ? <line key={`partial-${i}`} data-partial-segment x1={x(i - 1)} y1={y(data[i - 1][s.key])} x2={x(i)} y2={y(r[s.key])} stroke="white" strokeWidth="3" strokeDasharray="5 4" /> : null)}{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r={coverage[i]?.partial ? 4 : 3} fill={coverage[i]?.partial ? 'white' : s.color || '#6366f1'} stroke={s.color || '#6366f1'} strokeWidth="1.5" tabIndex={0} className="outline-none transition-[stroke-width] duration-150 motion-reduce:transition-none hover:[stroke-width:3] focus:[stroke-width:3]"><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}${periodNote(i)}`}</title></circle> : null)}</g>;
+  const pathFor=(indices:number[],key:string)=>monotonePath(indices.map(i=>({x:x(i),y:y(data[i][key])})));
+  return <div className="time-series-chart w-full relative" onMouseLeave={()=>setHover(null)}><div className="time-series-legend">{(series.length > 1 ? series : []).map(s => <button key={s.key} aria-pressed={!hidden[s.key]} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })}><i style={{background:s.color}}/>{s.label}</button>)}</div>
+    <svg ref={ref} viewBox={`0 0 ${plotWidth} ${PLOT_HEIGHT}`} style={{ height: PLOT_HEIGHT }} role="img" aria-label="Biểu đồ theo thời gian" className="w-full" onPointerMove={event=>{const bounds=event.currentTarget.getBoundingClientRect(),pointer=(event.clientX-bounds.left)*plotWidth/bounds.width;setHover(positions.reduce((best:number,_:number,i:number)=>Math.abs(x(i)-pointer)<Math.abs(x(best)-pointer)?i:best,0));}}>
+      <defs>{active.map((s,i)=><linearGradient key={s.key} id={`${gradient}-${i}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={s.color||'#2563eb'} stopOpacity=".18"/><stop offset="100%" stopColor={s.color||'#2563eb'} stopOpacity=".015"/></linearGradient>)}</defs>
+      {ticks.map((v, i) => <g key={i}><line x1={left} x2={plotWidth - 18} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 6" /><text data-y-tick x={left-12} y={y(v)+4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
+      {hover!==null&&<line x1={x(hover)} x2={x(hover)} y1="22" y2={PLOT_HEIGHT-36} stroke="#94a3b8" strokeDasharray="3 4"/>}
+      {active.map((s,seriesIndex) => {
+        const segments=timeSegments(data,s.key,coverage,granularity),areaSegments=timeSegments(data,s.key,[],granularity).solid;
+        return <g key={s.key}>{area && areaSegments.map((indices:number[],i:number)=><path data-series-area key={i} d={`${pathFor(indices,s.key)} L ${x(indices[indices.length-1])} ${y(0)} L ${x(indices[0])} ${y(0)} Z`} fill={`url(#${gradient}-${seriesIndex})`}/>)}
+          {segments.solid.map((indices:number[],i:number)=><path data-series-line key={`solid-${i}`} d={pathFor(indices,s.key)} fill="none" stroke={s.color||'#2563eb'} strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>)}
+          {segments.partial.map((indices:number[],i:number)=><path data-partial-segment key={`partial-${i}`} d={pathFor(indices,s.key)} fill="none" stroke={s.color||'#2563eb'} strokeWidth="2" strokeDasharray="4 5" strokeLinecap="round"/>)}
+          {data.map((r,i)=>Number.isFinite(r[s.key])?<circle key={i} cx={x(i)} cy={y(r[s.key])} r={hover===i?4.5:coverage[i]?.partial?3.5:2.5} fill={coverage[i]?.partial?'white':s.color||'#2563eb'} stroke={hover===i?'#fff':s.color||'#2563eb'} strokeWidth={hover===i?2:1.4} tabIndex={0} onFocus={()=>setHover(i)} onBlur={()=>setHover(null)}><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key],unit?` ${unit}`:'')}${periodNote(i)}`}</title></circle>:null)}</g>;
       })}
       {tickIndices(data.length, Math.min(5, Math.max(2, Math.floor(plotWidth / 85)))).map(i => <text data-time-tick key={i} x={x(i)} y={PLOT_HEIGHT - 12} fontSize="11" fill="#64748b" textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}><title>{data[i].label}{periodNote(i)}</title>{timeTick(data[i].label, String(data[0].label).slice(0, 4) !== String(data[data.length - 1].label).slice(0, 4))}{coverage[i]?.partial ? '*' : ''}</text>)}
     </svg>
+    {hover!==null&&<div role="status" className="time-series-tooltip" style={{left:`${Math.min(62,Math.max(2,x(hover)/plotWidth*100-12))}%`}}><strong>{data[hover].label?.slice(0,10)}{coverage[hover]?.partial?' · Chưa đủ kỳ':''}</strong>{active.map(s=><p key={s.key}><i style={{background:s.color}}/><span>{s.label}</span><b>{formatChartValue(data[hover][s.key],unit?` ${unit}`:'')}</b></p>)}</div>}
   </div>;
 };
 
@@ -467,9 +481,9 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   );
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 w-full">
+    <div className="chart-donut-layout">
       {/* SVG Donut */}
-      <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      <div className="chart-donut-ring relative flex-shrink-0" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
           <circle
             cx={size / 2}
@@ -522,7 +536,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="flex-1 space-y-1.5 min-w-0 w-full sm:w-auto">
+      <div className="chart-donut-legend space-y-1.5">
         {data.map((slice, idx) => {
           const pct = ((slice.value / total) * 100).toFixed(1);
           const isHovered = hoverIndex === idx;
@@ -1471,23 +1485,26 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
 
 /** V3.1 forecast visual: verified history, server forecast, 80% band. Numbers are server-computed. */
 export const ForecastChart: React.FC<{ history: Array<{ period: string; value: number }>; forecast: Array<{ period: string; value: number; lower_80: number; upper_80: number; kind?: string }>; unit?: string; color?: string }> = ({ history, forecast, unit = '', color = '#4f46e5' }) => {
+  const {ref,width:plotWidth}=usePlotWidth();
   const points = [...history.map(h => ({ ...h, type: 'history' })), ...forecast.map(f => ({ ...f, type: f.kind === 'in_progress' ? 'in_progress' : 'forecast' }))];
   if (!points.length) return <p className="text-xs text-slate-500">Không có dữ liệu dự báo.</p>;
+  const positions=timePositions(points.map(p=>({label:p.period})));
+  if(!positions)return <div><p role="status">Thời gian dự báo chưa hợp lệ; hiển thị giá trị và loại quan sát.</p><table><tbody>{points.map((p,i)=><tr key={i}><th>{p.period}</th><td>{p.type==='history'?'Lịch sử':'Dự báo'}</td><td>{formatChartValue(p.value,unit?` ${unit}`:'')}</td></tr>)}</tbody></table></div>;
   const values = points.flatMap((p: any) => [p.value, p.lower_80, p.upper_80].filter(Number.isFinite));
   const low = Math.min(0, ...values), high = Math.max(0, ...values), span = high - low || 1;
-  const x = (i: number) => 60 + i * 530 / Math.max(1, points.length - 1), y = (v: number) => 245 - (v - low) / span * 215;
+  const ticks=[low,(low+high)/2,high],left=axisInset(ticks.map(axisValue)),height=248;
+  const x = (i: number) => left + positions[i]*(plotWidth-left-20), y = (v: number) => 210 - (v - low) / span * 182;
   const start = history.length ? history.length - 1 : 0;
   const future = points.slice(start);
   const band = forecast.length ? `M ${x(start)} ${y(future[0].value)} ${forecast.map((f, i) => `L ${x(history.length + i)} ${y(f.upper_80)}`).join(' ')} ${[...forecast].reverse().map((f, i) => `L ${x(history.length + forecast.length - 1 - i)} ${y(f.lower_80)}`).join(' ')} Z` : '';
-  const line = (rows: any[], offset: number) => rows.map((p, i) => `${i ? 'L' : 'M'} ${x(offset + i)} ${y(p.value)}`).join(' ');
-  return <svg viewBox="0 0 620 305" role="img" aria-label="Biểu đồ dự báo" className="w-full">
-    {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="595" y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
+  const line = (rows: any[], offset: number) => monotonePath(rows.map((p,i)=>({x:x(offset+i),y:y(p.value)})));
+  return <div data-forecast-plot className="min-w-0"><svg ref={ref} viewBox={`0 0 ${plotWidth} ${height}`} style={{height}} role="img" aria-label="Biểu đồ dự báo" className="w-full">
+    {ticks.map((v, i) => <g key={i}><line x1={left} x2={plotWidth-18} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 6" /><text data-y-tick x={left-12} y={y(v)+4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
     {band && <path data-forecast-band d={band} fill={color} opacity=".12" />}
     {history.length > 0 && <path data-history-line d={line(history, 0)} fill="none" stroke="#334155" strokeWidth="2" />}
     {forecast.length > 0 && <path data-forecast-line d={line(future, start)} fill="none" stroke={color} strokeWidth="2" strokeDasharray="6 4" />}
-    {history.length > 0 && forecast.length > 0 && <line x1={x(start)} x2={x(start)} y1="28" y2="248" stroke="#94a3b8" strokeDasharray="2 4" />}
+    {history.length > 0 && forecast.length > 0 && <line x1={x(start)} x2={x(start)} y1="28" y2="210" stroke="#94a3b8" strokeDasharray="2 4" />}
     {points.map((p: any, i) => <circle key={i} cx={x(i)} cy={y(p.value)} r={p.type === 'history' ? 2.5 : 3.5} fill={p.type === 'in_progress' ? 'white' : p.type === 'history' ? '#334155' : color} stroke={p.type === 'history' ? '#334155' : color}><title>{`${p.period}: ${formatChartValue(p.value, unit ? ` ${unit}` : '')}${p.type === 'history' ? ' (lịch sử)' : p.type === 'in_progress' ? ' (kỳ đang diễn ra — dự báo)' : ` (dự báo; 80%: ${formatChartValue(p.lower_80, '')} – ${formatChartValue(p.upper_80, '')})`}`}</title></circle>)}
-    {tickIndices(points.length, 6).map(i => <text key={i} x={x(i)} y="278" fontSize="11" fill="#64748b" textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}>{timeTick(points[i].period, String(points[0].period).slice(0, 4) !== String(points[points.length - 1].period).slice(0, 4))}</text>)}
-    <g fontSize="11" fill="#475569"><line x1="60" x2="80" y1="296" y2="296" stroke="#334155" strokeWidth="2" /><text x="85" y="300">Lịch sử đã kiểm chứng</text><line x1="230" x2="250" y1="296" y2="296" stroke={color} strokeWidth="2" strokeDasharray="6 4" /><text x="255" y="300">Dự báo</text><rect x="320" y="290" width="16" height="10" fill={color} opacity=".15" /><text x="341" y="300">Khoảng 80%</text></g>
-  </svg>;
+    {tickIndices(points.length,Math.min(6,Math.max(2,Math.floor((plotWidth-left)/90)))).map(i => <text data-time-tick key={i} x={x(i)} y="238" fontSize="11" fill="#64748b" textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}>{timeTick(points[i].period, String(points[0].period).slice(0, 4) !== String(points[points.length - 1].period).slice(0, 4))}</text>)}
+  </svg><div className="forecast-legend"><span><i className="forecast-history"/>Lịch sử đã kiểm chứng</span><span><i className="forecast-future" style={{borderColor:color}}/>Dự báo</span><span><i className="forecast-band" style={{background:color}}/>Khoảng 80%</span></div></div>;
 };

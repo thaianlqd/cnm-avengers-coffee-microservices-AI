@@ -1,0 +1,95 @@
+{
+  "question": "so sánh doanh thu bán hàng của 2 tỉnh có doanh thu ổn định nhất",
+  "request_id": "req_d702b6b70aec42ab81309f7ca0148a8e",
+  "mode": "OFFLINE_METADATA_ONLY",
+  "metrics": [
+    {
+      "phrase": "doanh thu",
+      "candidate_ids": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "start": 8,
+      "end": 17
+    },
+    {
+      "phrase": "doanh thu",
+      "candidate_ids": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "start": 41,
+      "end": 50
+    }
+  ],
+  "metric_locks": [
+    {
+      "phrase": "doanh thu",
+      "metric_id": "revenue",
+      "siblings": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "explicitly_named": [],
+      "explicitly_qualified": []
+    },
+    {
+      "phrase": "doanh thu",
+      "metric_id": "revenue",
+      "siblings": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "explicitly_named": [],
+      "explicitly_qualified": []
+    }
+  ],
+  "recognized_features": [],
+  "recognized_dimensions": [],
+  "revenue_only_control_issues": [],
+  "empty_requirement_control_issues": [
+    {
+      "requirement_id": null,
+      "field": "metric_ids",
+      "code": "explicit_metrics_missing",
+      "candidate_ids": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ]
+    }
+  ],
+  "declared_metric_ids_matching_stability": [],
+  "declared_feature_ids": [
+    "contribution_share",
+    "leader",
+    "top_gap",
+    "group_gap",
+    "change",
+    "change_pct",
+    "concentration",
+    "selected_total",
+    "relationship_strength",
+    "driver_delta"
+  ],
+  "business_queries": 0,
+  "provider_calls": 0,
+  "conclusion": "Canonical revenue is sufficient; the broad missing-metric candidate list is not evidence six metrics are required. No declared stability ranking metric/operator was found. Actual provider draft was not captured here; no claim is made about its exact tokens."
+}

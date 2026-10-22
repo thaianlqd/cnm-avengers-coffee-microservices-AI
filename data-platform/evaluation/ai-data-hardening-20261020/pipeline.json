@@ -1,0 +1,35 @@
+{
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "unit": {
+    "passed": 65,
+    "failed": 0,
+    "elapsed_s": 0.548
+  },
+  "integration": {
+    "passed": 41,
+    "failed": 0,
+    "elapsed_s": 20.324
+  },
+  "api_postgres_redis": {
+    "passed": 33,
+    "failed": 0,
+    "elapsed_s": 13.027
+  },
+  "scope": "Disposable fixture only; no production DB/profile, no Spark/Airflow",
+  "logs": [
+    {
+      "name": "pipeline-unit.log",
+      "sha256": "9b130b9cbd74f1b34034a525fabab994d08a946c9d795c379394bc778bfe6804"
+    },
+    {
+      "name": "pipeline-integration.log",
+      "sha256": "5edb6c5df79a4e271eb1a31c895266287dc302d48d77e95a4be5c32725bb89e3"
+    },
+    {
+      "name": "pipeline-api.log",
+      "sha256": "785b638cb5f12786117b2ba002f45e593a5b4b0119b72588ca73162e8dc2ce09"
+    }
+  ],
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

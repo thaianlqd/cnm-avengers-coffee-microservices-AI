@@ -89,6 +89,15 @@ jobs:
           python3 data-platform/analytics-api/tools/regenerate_pipeline_metadata.py --check
           python3 data-platform/analytics-api/tools/architecture_inventory.py --out /tmp/dp-ci/architecture.json
           git diff --check
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - name: Frozen FINAL acceptance and actual JavaScript race oracle (zero provider I/O)
+        run: |
+          python3 data-platform/analytics-api/tools/run_workspace_ui_oracle.py --out /tmp/dp-ci/ui-oracle.json
+          docker run --rm --network none -e AI_OFFLINE=1 \
+            -v "$PWD/data-platform/analytics-api:/app:ro" -v "$PWD/data-platform/web-ui:/web-ui:ro" \
+            -v /tmp/dp-ci:/evidence avengers-dp-ci \
+            python -m evals.ai_final_acceptance --ui-oracle /evidence/ui-oracle.json --out /evidence/final-acceptance.json
       - name: Scan generated backend evidence before upload
         id: scan
         if: always()
@@ -198,6 +207,7 @@ jobs:
           docker update --cpus 0.5 v35-fixture-api-a v35-fixture-api-b
       - name: Cross-process ownership, idempotency and CAS (zero paid transport)
         run: |
+          docker exec -e V35_TWO_API_FIXTURE=1 -i v35-fixture-api-b python - < data-platform/pipeline-tests/final_workspace_two_api.py > /tmp/dp-v35-ci/workspace.log 2>&1
           docker exec -e V35_TWO_API_FIXTURE=1 -i v35-fixture-api-b python - < data-platform/pipeline-tests/v35_two_api.py > /tmp/dp-v35-ci/ownership.log 2>&1
           bash .claude/scripts/dp-v35-two-api.sh start-a >> /tmp/dp-v35-ci/start.log 2>&1
           docker update --cpus 0.5 v35-fixture-api-a

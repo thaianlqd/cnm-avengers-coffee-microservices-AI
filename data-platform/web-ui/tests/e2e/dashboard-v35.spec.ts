@@ -16,7 +16,9 @@ test('hub loads metadata only, searches sixteen domains and runs only selected p
     return route.fulfill({json:{}});
   });
   await page.goto('/');await page.getByText('Báo cáo & Phân tích',{exact:true}).first().click();
-  await expect(page.locator('[data-dashboard-hub] h2')).toHaveCount(16);
+  await expect(page.locator('[data-dashboard-hub] h2')).toHaveCount(12);
+  await page.getByRole('button',{name:'Danh mục dashboard: trang sau',exact:true}).click();
+  await expect(page.locator('[data-dashboard-hub] h2')).toHaveCount(4);
   expect(api.calls['/api/ai/analysis-jobs']).toBeUndefined();
   await page.getByRole('searchbox',{name:'Tìm dashboard'}).fill('kiosk');
   await expect(page.locator('[data-dashboard-hub] h2')).toHaveCount(1);
@@ -57,7 +59,7 @@ test('login right card has local background, password toggle and mobile layout w
   const form=page.getByRole('form',{name:'Đăng nhập Data Platform'});
   await expect(form).toBeVisible();
   const box=await form.boundingBox();expect(box!.x).toBeGreaterThan(900);
-  const background=page.locator('img[src="/images/login-cafe.png"]');
+  const background=page.locator('img[src="/images/login-analytics.svg"]');
   await expect.poll(()=>background.evaluate((image:HTMLImageElement)=>image.naturalWidth)).toBeGreaterThan(0);
   await page.getByLabel('Mật khẩu',{exact:true}).fill('fixture-only');
   await page.getByRole('button',{name:'Hiện mật khẩu'}).click();
@@ -135,7 +137,11 @@ test('BI and AI share clean chart cards, collapsed explanations and responsive a
   const chartArea=cards.nth(3).locator('[data-chart-viewport]');
   expect(await chartArea.evaluate(element=>element.scrollHeight <= element.clientHeight+1)).toBe(true);
   expect((await cards.nth(3).locator('svg').boundingBox())!.height).toBeLessThan(265);
-  await expect(cards.nth(3).getByText('Lấy tại quán',{exact:true})).toBeVisible();
+  // Narrow cards omit alternate axis ticks; the represented bar retains its
+  // complete category and value in its accessible title.
+  const pickup=cards.nth(3).locator('rect').filter({has:page.locator('title',{hasText:'Lấy tại quán'})});
+  await expect(pickup).toBeVisible();
+  await expect(pickup.locator('title')).toContainText('3');
   await page.screenshot({path:'/tmp/v35-compact-bi.png',fullPage:true});
   await page.locator('[data-short-answer] > summary').click();
   await expect(page.getByText('Giải thích chi tiết 8: doanh thu và số đơn trong phạm vi đã chọn.',{exact:true})).toBeVisible();
@@ -144,7 +150,8 @@ test('BI and AI share clean chart cards, collapsed explanations and responsive a
   await expect(page.locator('[data-conclusion]')).toContainText('Đối chiếu cùng kỳ.');
   await page.locator('[data-conclusion] > summary').click();
   const first=await cards.nth(0).boundingBox(),second=await cards.nth(1).boundingBox();
-  expect(first!.width/second!.width).toBeGreaterThan(1.8);
+  expect(first!.width/second!.width).toBeCloseTo(1.5, 1);
+  expect((await cards.nth(2).boundingBox())!.width/(await cards.nth(3).boundingBox())!.width).toBeGreaterThan(1.8);
   expect(Math.abs(first!.y-second!.y)).toBeLessThan(2);
   await expect(page.locator('[data-chart-insight]')).not.toHaveAttribute('open','');
   await expect(page.getByText('Doanh thu quan sát 100 và 150 VND.',{exact:true})).toBeHidden();
@@ -154,14 +161,16 @@ test('BI and AI share clean chart cards, collapsed explanations and responsive a
   await cards.first().getByText('Xem dữ liệu',{exact:true}).click();
   await expect(cards.first().locator('table')).toContainText('150');
   await page.setViewportSize({width:900,height:1000});
-  const stackedFirst=await cards.nth(0).boundingBox(),stackedSecond=await cards.nth(1).boundingBox();
-  expect(stackedSecond!.y).toBeGreaterThan(stackedFirst!.y+stackedFirst!.height);
+  await expect.poll(async()=>{
+    const stackedFirst=await cards.nth(0).boundingBox(),stackedSecond=await cards.nth(1).boundingBox();
+    return stackedSecond!.y-stackedFirst!.y-stackedFirst!.height;
+  }).toBeGreaterThan(0);
   await page.setViewportSize({width:1680,height:1050});
   await page.getByRole('button',{name:'Trợ lý AI',exact:true}).click();
   await page.locator('textarea').first().fill('Doanh thu tháng 9 năm 2026');
   await page.getByRole('button',{name:'Phân tích',exact:true}).click();
   await expect(cards).toHaveCount(4);
-  expect((await cards.nth(0).boundingBox())!.width/(await cards.nth(1).boundingBox())!.width).toBeGreaterThan(1.8);
+  expect((await cards.nth(0).boundingBox())!.width/(await cards.nth(1).boundingBox())!.width).toBeCloseTo(1.5, 1);
   await expect(page.getByText('Doanh thu quan sát 100 và 150 VND.',{exact:true})).toBeHidden();
   await expect(page.locator('[data-short-answer]')).not.toHaveAttribute('open','');
   await expect(page.locator('[data-conclusion]')).not.toHaveAttribute('open','');
@@ -180,10 +189,10 @@ test('architecture is interactive, honest about unmeasured runtime and never sta
   await page.waitForLoadState('networkidle');
   const before=Object.fromEntries(Object.entries(api.calls).map(([key,value])=>[key,value.length]));
   await page.getByRole('button',{name:'Kiến trúc hệ thống',exact:true}).click();
-  await expect(page.locator('[data-architecture-node]')).toHaveCount(14);
+  await expect(page.locator('[data-architecture-node]')).toHaveCount(34);
   await page.locator('[data-architecture-node="compute"]').click();
   const detail=page.getByRole('region',{name:'Chi tiết thành phần'});
-  await expect(detail).toContainText('Apache Spark');
+  await expect(detail).toContainText('Python / pandas');
   await detail.getByText('Hợp đồng & lưu ý vận hành',{exact:true}).click();
   await expect(detail).toContainText('không khởi động Spark');
   await page.getByText('Danh mục triển khai từ máy chủ',{exact:true}).click();

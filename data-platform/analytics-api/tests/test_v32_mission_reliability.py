@@ -337,10 +337,14 @@ class DepthAndRelevanceTests(Guarded):
     def test_risk_mission_supporting_views_use_risk_metrics_only(self):
         intent = envelope(requirement(metric_ids=["order_cancellation_rate"], dimension_ids=["store"], time=SEPTEMBER))
         provider = ScriptedProvider([call("submit_analysis_intent", intent)])
-        _, report = self.report(provider, question="Kiểm tra các rủi ro vận hành trong tháng 9 năm 2026", analysis_mission="risk_watch")
+        # PLAN 21/10 I04/I05: free-text Risk Watch uses the same deterministic
+        # signal contract as the Risk tab (no interpreter call, no domain drift).
+        proposal = self.pipeline(provider, FixtureWarehouse(self.overlay)).propose(AiTextToReportRequest(
+            question="Kiểm tra các rủi ro vận hành trong tháng 9 năm 2026", analysis_mission="risk_watch", reference_date=REFERENCE))
+        self.assertEqual((proposal["status"], provider.call_count), ("proposal_ready", 0))
         risk_metrics = {s["metric"] for s in self.registry["risk_signals"]} | {
             s["observation_metric"] for s in self.registry["risk_signals"] if s.get("observation_metric")}
-        used = {m for q in report["analytical_queries"] for m in q["metrics"]}
+        used = {m for q in proposal["proposal"]["analytical_queries"] for m in q["metrics"]}
         self.assertTrue(used <= risk_metrics, used)
 
     def test_trend_mission_discovers_related_axes_by_depth(self):

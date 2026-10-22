@@ -1,0 +1,4551 @@
+{
+  "version": 1,
+  "checked_at": "2026-10-21T02:21:38.572064+00:00",
+  "summary": {
+    "metadata_templates_reviewed": 53,
+    "authorized_catalog_dashboards": 41,
+    "live_dashboard_successes": 41,
+    "ui_dashboards_checked": 41,
+    "viewport_widths": [
+      1680,
+      1280,
+      390
+    ],
+    "dashboard_viewport_cases": 123,
+    "rendered_chart_cards": 154,
+    "chart_types": {
+      "area": 20,
+      "horizontal_bar": 52,
+      "bar": 33,
+      "donut": 25,
+      "line": 2,
+      "grouped_bar": 10,
+      "scatter": 12
+    },
+    "geography_api_checks": 23,
+    "geography_api_successes": 23,
+    "provider_calls": 0,
+    "provider_http": 0,
+    "excluded_templates_not_runtime_verified": 12
+  },
+  "checks": [
+    "Fixed dashboard requests with real data, no language-model calls",
+    "All visible dashboards rendered on desktop, laptop and mobile",
+    "No horizontal page overflow, clipped Y-axis labels or chart cards above 650px",
+    "Cards in each grid row align to equal height",
+    "Full-scope composition requires certified total, no negative values and no Top N selection",
+    "Large category plots are paginated with the same scale across pages",
+    "Missing time observations remain gaps; partial periods retain hollow points and dashed segments",
+    "Forecast plot height bounded at 248px; history, forecast and 80% interval are server values",
+    "Refinement typing is local state; no chart DOM mutations and no request until explicit submit",
+    "Selected province uses individual store pins with optional clustering",
+    "Account policy and backend schemas unchanged in this UI task"
+  ],
+  "validation": {
+    "typecheck": "passed",
+    "targeted_unit_tests": {
+      "passed": 110,
+      "failed": 0
+    },
+    "browser_scenarios": {
+      "distinct_passed": 16,
+      "note": "One supplementary-map scenario was rerun after awaiting preflight readiness in the test; the readiness-aware regression suite passed 3/3."
+    },
+    "production_ui": {
+      "errors": [],
+      "served_asset": "/assets/index-C2IXZI1B.js",
+      "payment_cards": [
+        {
+          "span": "8.4",
+          "type": "area",
+          "height": 430
+        },
+        {
+          "span": "3.6",
+          "type": "donut",
+          "height": 430
+        },
+        {
+          "span": "7.2",
+          "type": "horizontal_bar",
+          "height": 357
+        },
+        {
+          "span": "4.8",
+          "type": "donut",
+          "height": 357
+        }
+      ],
+      "forecast_preflight": "READY_GUIDED",
+      "forecast_provider_calls": 0,
+      "forecast_height": 248,
+      "typing_ms": 192,
+      "province_pins": 12,
+      "province_camera": "105.830,19.778,11.71",
+      "mobile_no_overflow": true
+    }
+  },
+  "hidden_templates": [
+    {
+      "id": "D17",
+      "title": "Tài chính nhượng quyền",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.cong_no_nhuong_quyen",
+        "silver.doi_soat_kiosk",
+        "silver.don_mua_combo",
+        "silver.royalty_nhuong_quyen"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D18",
+      "title": "Ví khách & thẻ quà",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.the_qua_tang",
+        "silver.vi_khach_hang_giao_dich"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D19",
+      "title": "COD & ví shipper",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.shipper_nop_cod",
+        "silver.vi_shipper"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D20",
+      "title": "Vận hành kiosk",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.ca_kiosk",
+        "silver.gia_kiosk"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D21",
+      "title": "Mạng lưới nhượng quyền",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.ho_so_nhuong_quyen",
+        "silver.hop_dong_nhuong_quyen",
+        "silver.kiosk"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D22",
+      "title": "Chăm sóc khách hàng",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.hoi_thoai_cskh",
+        "silver.tin_nhan_cskh"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D24",
+      "title": "Tin tức & nội dung",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.bai_viet"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D25",
+      "title": "Câu trả lời khảo sát",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.khao_sat_tra_loi"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D26",
+      "title": "Topping & tuỳ chọn món",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.topping_don_hang"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D34",
+      "title": "Kiosk: ví chủ & giá bán",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.ca_kiosk",
+        "silver.gia_kiosk",
+        "silver.vi_chu_kiosk"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D43",
+      "title": "Điểm thưởng & hạng sau tích điểm",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.thuong_loyalty_don"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    },
+    {
+      "id": "D45",
+      "title": "Thẻ quà: phát hành, đổi & số dư",
+      "status": "not_in_authorized_catalog",
+      "missing_dataset_grants": [
+        "silver.the_qua_tang"
+      ],
+      "verification": "Metadata references checked. No runtime/UI success is claimed for this excluded template."
+    }
+  ],
+  "geography": [
+    {
+      "id": "D01",
+      "title": "Doanh thu & đơn hàng",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D03",
+      "title": "Cửa hàng & khu vực",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D04",
+      "title": "Kiosk",
+      "status": 200,
+      "stores": 60,
+      "provinces": 5
+    },
+    {
+      "id": "D13",
+      "title": "Đánh giá cửa hàng",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D14",
+      "title": "Khảo sát khách hàng",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D16",
+      "title": "Giờ cao điểm",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D23",
+      "title": "Khách mua hàng & chi tiêu",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D33",
+      "title": "Kênh bán & hoàn tất đơn",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D35",
+      "title": "Xu hướng chi nhánh",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D36",
+      "title": "Bản đồ doanh thu & đơn hàng",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D37",
+      "title": "Bản đồ trải nghiệm cửa hàng",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D38",
+      "title": "Bản đồ khả dụng bán",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D39",
+      "title": "Bản đồ thanh toán",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D40",
+      "title": "Bản đồ vận hành giao hàng",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D41",
+      "title": "Hoàn tất & hủy đơn theo địa bàn",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D44",
+      "title": "Chấm công theo tỉnh & ca làm",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D47",
+      "title": "Bản đồ sản lượng & danh mục bán",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D48",
+      "title": "Bản đồ đối soát & lệch tiền mặt",
+      "status": 200,
+      "stores": 1215,
+      "provinces": 55
+    },
+    {
+      "id": "D49",
+      "title": "Bản đồ kiosk nhượng quyền",
+      "status": 200,
+      "stores": 50,
+      "provinces": 5
+    },
+    {
+      "id": "D50",
+      "title": "Bản đồ kiosk vệ tinh",
+      "status": 200,
+      "stores": 10,
+      "provinces": 1
+    },
+    {
+      "id": "D51",
+      "title": "Bản đồ so sánh hai loại kiosk",
+      "status": 200,
+      "stores": 60,
+      "provinces": 5
+    },
+    {
+      "id": "D52",
+      "title": "Bản đồ đánh giá kiosk nhượng quyền",
+      "status": 200,
+      "stores": 50,
+      "provinces": 5
+    },
+    {
+      "id": "D53",
+      "title": "Bản đồ khả dụng bán kiosk vệ tinh",
+      "status": 200,
+      "stores": 10,
+      "provinces": 1
+    }
+  ],
+  "dashboard_measurements": [
+    {
+      "id": "D01",
+      "title": "Doanh thu & đơn hàng",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "area",
+              "width": 402,
+              "height": 405
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 405
+            },
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "bar",
+              "width": 402,
+              "height": 405
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 381,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 976,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D02",
+      "title": "Sản phẩm & danh mục",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 541,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 404
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 404
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 381,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 422
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 422
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 417
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D03",
+      "title": "Cửa hàng & khu vực",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 541,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "bar",
+              "width": 402,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 382
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 381,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "bar",
+              "width": 282,
+              "height": 398
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 398
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D04",
+      "title": "Kiosk",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "area",
+              "width": 402,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "bar",
+              "width": 402,
+              "height": 404
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 404
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "area",
+              "width": 282,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "bar",
+              "width": 282,
+              "height": 436
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 436
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 400
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D05",
+      "title": "Giao hàng & tài xế",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 541,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "bar",
+              "width": 402,
+              "height": 382
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 381,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 398
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "bar",
+              "width": 282,
+              "height": 398
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 433
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D06",
+      "title": "Thanh toán",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "area",
+              "width": 958,
+              "height": 430
+            },
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "donut",
+              "width": 402,
+              "height": 430
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "area",
+              "width": 678,
+              "height": 446
+            },
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "donut",
+              "width": 282,
+              "height": 446
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 402
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 402
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 426
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 396
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D07",
+      "title": "Khuyến mãi & voucher",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 541,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 398
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "horizontal_bar",
+              "width": 402,
+              "height": 398
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 381,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 414
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "horizontal_bar",
+              "width": 282,
+              "height": 414
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 417
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 433
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D08",
+      "title": "Khách hàng & hội viên",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "area",
+              "width": 402,
+              "height": 404
+            },
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "line",
+              "width": 402,
+              "height": 404
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 404
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "area",
+              "width": 579,
+              "height": 347
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "line",
+              "width": 381,
+              "height": 347
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 976,
+              "height": 404
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "line",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 432
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D09",
+      "title": "Khả dụng bán theo điểm bán",
+      "provider_calls": 0,
+      "source_charts": 2,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 1376,
+              "height": 397
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 1376,
+              "height": 397
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 976,
+              "height": 397
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 976,
+              "height": 397
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 434
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 434
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D10",
+      "title": "Ca làm & chấm công",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "area",
+              "width": 402,
+              "height": 390
+            },
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "bar",
+              "width": 402,
+              "height": 390
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "grouped_bar",
+              "width": 541,
+              "height": 390
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "area",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 976,
+              "height": 365
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 386
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D11",
+      "title": "Đối soát thu ngân",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "line",
+              "width": 402,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 1376,
+              "height": 381
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "line",
+              "width": 282,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 976,
+              "height": 381
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "line",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D12",
+      "title": "Đánh giá sản phẩm",
+      "provider_calls": 0,
+      "source_charts": 7,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 541,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 387
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 387
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "donut",
+              "width": 680,
+              "height": 387
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "scatter",
+              "width": 680,
+              "height": 387
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "scatter",
+              "width": 1376,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 381,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 476
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 476
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "donut",
+              "width": 480,
+              "height": 451
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "scatter",
+              "width": 480,
+              "height": 451
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "scatter",
+              "width": 976,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 472
+            },
+            {
+              "row": "4",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 472
+            },
+            {
+              "row": "5",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "6",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D13",
+      "title": "Đánh giá cửa hàng",
+      "provider_calls": 0,
+      "source_charts": 7,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "area",
+              "width": 402,
+              "height": 401
+            },
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 401
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "bar",
+              "width": 402,
+              "height": 420
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 420
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "donut",
+              "width": 402,
+              "height": 420
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "scatter",
+              "width": 680,
+              "height": 347
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "scatter",
+              "width": 680,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "area",
+              "width": 282,
+              "height": 401
+            },
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 401
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 420
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "donut",
+              "width": 579,
+              "height": 420
+            },
+            {
+              "row": "2",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 384
+            },
+            {
+              "row": "2",
+              "span": 7.2,
+              "type": "scatter",
+              "width": 579,
+              "height": 384
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "scatter",
+              "width": 976,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 439
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 472
+            },
+            {
+              "row": "4",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 380
+            },
+            {
+              "row": "5",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "6",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D14",
+      "title": "Khảo sát khách hàng",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4,
+              "type": "area",
+              "width": 448,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4,
+              "type": "bar",
+              "width": 448,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4,
+              "type": "bar",
+              "width": 448,
+              "height": 382
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "area",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 976,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D15",
+      "title": "Yêu thích sản phẩm",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "area",
+              "width": 402,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 1376,
+              "height": 381
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "area",
+              "width": 282,
+              "height": 396
+            },
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 396
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 976,
+              "height": 381
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D16",
+      "title": "Giờ cao điểm",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "bar",
+              "width": 819,
+              "height": 357
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 404
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 404
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "bar",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 406
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 406
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 432
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D23",
+      "title": "Khách mua hàng & chi tiêu",
+      "provider_calls": 0,
+      "source_charts": 2,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "area",
+              "width": 819,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 381
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "area",
+              "width": 579,
+              "height": 406
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 406
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 410
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D27",
+      "title": "Thanh toán thành công & chờ thu",
+      "provider_calls": 0,
+      "source_charts": 2,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "area",
+              "width": 958,
+              "height": 430
+            },
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "donut",
+              "width": 402,
+              "height": 430
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "area",
+              "width": 678,
+              "height": 446
+            },
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "donut",
+              "width": 282,
+              "height": 446
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 426
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D28",
+      "title": "Rủi ro lệch tiền thu ngân",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "donut",
+              "width": 1376,
+              "height": 387
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 406
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 406
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "donut",
+              "width": 976,
+              "height": 387
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 473
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D29",
+      "title": "Xu hướng sản phẩm",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 541,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "donut",
+              "width": 1376,
+              "height": 387
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 381,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "donut",
+              "width": 976,
+              "height": 387
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 476
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D30",
+      "title": "Hiệu quả khuyến mãi",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 541,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 1376,
+              "height": 381
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 381,
+              "height": 380
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 380
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 976,
+              "height": 381
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 417
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D31",
+      "title": "Chấm công & đi trễ",
+      "provider_calls": 0,
+      "source_charts": 2,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "bar",
+              "width": 819,
+              "height": 357
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "bar",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 382
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D32",
+      "title": "Hiệu quả shipper",
+      "provider_calls": 0,
+      "source_charts": 5,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 429
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 429
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 406
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "donut",
+              "width": 402,
+              "height": 406
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "scatter",
+              "width": 1376,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 444
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 444
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 422
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "donut",
+              "width": 282,
+              "height": 422
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "scatter",
+              "width": 976,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 432
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 432
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 396
+            },
+            {
+              "row": "4",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D33",
+      "title": "Kênh bán & hoàn tất đơn",
+      "provider_calls": 0,
+      "source_charts": 2,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 958,
+              "height": 406
+            },
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "donut",
+              "width": 402,
+              "height": 406
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 8.4,
+              "type": "horizontal_bar",
+              "width": 678,
+              "height": 432
+            },
+            {
+              "row": "0",
+              "span": 3.6,
+              "type": "donut",
+              "width": 282,
+              "height": 432
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 380
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D35",
+      "title": "Xu hướng chi nhánh",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 541,
+              "height": 404
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 404
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 1376,
+              "height": 404
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "area",
+              "width": 381,
+              "height": 404
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 404
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 976,
+              "height": 404
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 432
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 432
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D36",
+      "title": "Bản đồ doanh thu & đơn hàng",
+      "provider_calls": 0,
+      "source_charts": 5,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 387
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 387
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "scatter",
+              "width": 1376,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 406
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 406
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 476
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 476
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "scatter",
+              "width": 976,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 488
+            },
+            {
+              "row": "4",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D37",
+      "title": "Bản đồ trải nghiệm cửa hàng",
+      "provider_calls": 0,
+      "source_charts": 6,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 401
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 401
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "donut",
+              "width": 402,
+              "height": 412
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "donut",
+              "width": 958,
+              "height": 412
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "scatter",
+              "width": 680,
+              "height": 347
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "scatter",
+              "width": 680,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 426
+            },
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 426
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "donut",
+              "width": 282,
+              "height": 428
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "donut",
+              "width": 678,
+              "height": 428
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "scatter",
+              "width": 480,
+              "height": 347
+            },
+            {
+              "row": "2",
+              "span": 6,
+              "type": "scatter",
+              "width": 480,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 455
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 380
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 488
+            },
+            {
+              "row": "4",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "5",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D38",
+      "title": "Bản đồ khả dụng bán",
+      "provider_calls": 0,
+      "source_charts": 2,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 1376,
+              "height": 365
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 1376,
+              "height": 397
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 976,
+              "height": 365
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 976,
+              "height": 397
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 402
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 434
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D39",
+      "title": "Bản đồ thanh toán",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "donut",
+              "width": 1376,
+              "height": 387
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 422
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 422
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "donut",
+              "width": 976,
+              "height": 387
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 489
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D40",
+      "title": "Bản đồ vận hành giao hàng",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 401
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 401
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 422
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 422
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 426
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 426
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 410
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 455
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D41",
+      "title": "Hoàn tất & hủy đơn theo địa bàn",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "bar",
+              "width": 1376,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 1376,
+              "height": 397
+            },
+            {
+              "row": "2",
+              "span": 7.2,
+              "type": "grouped_bar",
+              "width": 819,
+              "height": 381
+            },
+            {
+              "row": "2",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 381
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "bar",
+              "width": 976,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 976,
+              "height": 397
+            },
+            {
+              "row": "2",
+              "span": 7.2,
+              "type": "grouped_bar",
+              "width": 579,
+              "height": 406
+            },
+            {
+              "row": "2",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 406
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 434
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 402
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D42",
+      "title": "Đối chiếu bán hàng & đánh giá sản phẩm",
+      "provider_calls": 0,
+      "source_charts": 8,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 396
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 396
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 381
+            },
+            {
+              "row": "2",
+              "span": 7.2,
+              "type": "donut",
+              "width": 819,
+              "height": 387
+            },
+            {
+              "row": "2",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 387
+            },
+            {
+              "row": "3",
+              "span": 6,
+              "type": "scatter",
+              "width": 680,
+              "height": 347
+            },
+            {
+              "row": "3",
+              "span": 6,
+              "type": "scatter",
+              "width": 680,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 421
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 421
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 406
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 406
+            },
+            {
+              "row": "2",
+              "span": 7.2,
+              "type": "donut",
+              "width": 579,
+              "height": 476
+            },
+            {
+              "row": "2",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 476
+            },
+            {
+              "row": "3",
+              "span": 6,
+              "type": "scatter",
+              "width": 480,
+              "height": 347
+            },
+            {
+              "row": "3",
+              "span": 6,
+              "type": "scatter",
+              "width": 480,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 401
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 417
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "4",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 472
+            },
+            {
+              "row": "5",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 472
+            },
+            {
+              "row": "6",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "7",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D44",
+      "title": "Chấm công theo tỉnh & ca làm",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "grouped_bar",
+              "width": 819,
+              "height": 395
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 395
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "bar",
+              "width": 402,
+              "height": 442
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "grouped_bar",
+              "width": 958,
+              "height": 442
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "grouped_bar",
+              "width": 579,
+              "height": 420
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 420
+            },
+            {
+              "row": "1",
+              "span": 3.6,
+              "type": "bar",
+              "width": 282,
+              "height": 442
+            },
+            {
+              "row": "1",
+              "span": 8.4,
+              "type": "grouped_bar",
+              "width": 678,
+              "height": 442
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 402
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 400
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 386
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D46",
+      "title": "Lựa chọn cỡ ly, đường & đá",
+      "provider_calls": 0,
+      "source_charts": 3,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "bar",
+              "width": 819,
+              "height": 357
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 1376,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "bar",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 976,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D47",
+      "title": "Bản đồ sản lượng & danh mục bán",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 381
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 541,
+              "height": 381
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "donut",
+              "width": 819,
+              "height": 387
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 387
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 406
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "horizontal_bar",
+              "width": 381,
+              "height": 406
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "donut",
+              "width": 579,
+              "height": 476
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 476
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 410
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 489
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 472
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D48",
+      "title": "Bản đồ đối soát & lệch tiền mặt",
+      "provider_calls": 0,
+      "source_charts": 5,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 819,
+              "height": 401
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 401
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "donut",
+              "width": 819,
+              "height": 387
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 387
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 1376,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "horizontal_bar",
+              "width": 579,
+              "height": 426
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 426
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "donut",
+              "width": 579,
+              "height": 476
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 476
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 976,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "horizontal_bar",
+              "width": 366,
+              "height": 439
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 472
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 472
+            },
+            {
+              "row": "4",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 394
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D49",
+      "title": "Bản đồ kiosk nhượng quyền",
+      "provider_calls": 0,
+      "source_charts": 5,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4,
+              "type": "area",
+              "width": 448,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4,
+              "type": "bar",
+              "width": 448,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4,
+              "type": "bar",
+              "width": 448,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "scatter",
+              "width": 819,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "area",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "bar",
+              "width": 579,
+              "height": 430
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 430
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "scatter",
+              "width": 976,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 442
+            },
+            {
+              "row": "4",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D50",
+      "title": "Bản đồ kiosk vệ tinh",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "area",
+              "width": 819,
+              "height": 357
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "bar",
+              "width": 819,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "area",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "bar",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 382
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "area",
+              "width": 366,
+              "height": 343
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 394
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D51",
+      "title": "Bản đồ so sánh hai loại kiosk",
+      "provider_calls": 0,
+      "source_charts": 5,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 4,
+              "type": "bar",
+              "width": 448,
+              "height": 404
+            },
+            {
+              "row": "0",
+              "span": 4,
+              "type": "bar",
+              "width": 448,
+              "height": 404
+            },
+            {
+              "row": "0",
+              "span": 4,
+              "type": "bar",
+              "width": 448,
+              "height": 404
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "scatter",
+              "width": 819,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "bar",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "bar",
+              "width": 579,
+              "height": 452
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 452
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "scatter",
+              "width": 976,
+              "height": 347
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 378
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 400
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 442
+            },
+            {
+              "row": "4",
+              "span": 12,
+              "type": "scatter",
+              "width": 366,
+              "height": 343
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D52",
+      "title": "Bản đồ đánh giá kiosk nhượng quyền",
+      "provider_calls": 0,
+      "source_charts": 4,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "bar",
+              "width": 819,
+              "height": 417
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 541,
+              "height": 417
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "donut",
+              "width": 819,
+              "height": 357
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 541,
+              "height": 357
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 7.2,
+              "type": "bar",
+              "width": 579,
+              "height": 442
+            },
+            {
+              "row": "0",
+              "span": 4.8,
+              "type": "bar",
+              "width": 381,
+              "height": 442
+            },
+            {
+              "row": "1",
+              "span": 7.2,
+              "type": "donut",
+              "width": 579,
+              "height": 382
+            },
+            {
+              "row": "1",
+              "span": 4.8,
+              "type": "donut",
+              "width": 381,
+              "height": 382
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 394
+            },
+            {
+              "row": "1",
+              "span": 12,
+              "type": "bar",
+              "width": 366,
+              "height": 400
+            },
+            {
+              "row": "2",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 397
+            },
+            {
+              "row": "3",
+              "span": 12,
+              "type": "donut",
+              "width": 366,
+              "height": 378
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D53",
+      "title": "Bản đồ khả dụng bán kiosk vệ tinh",
+      "provider_calls": 0,
+      "source_charts": 1,
+      "breakpoints": [
+        {
+          "width": 1680,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 1376,
+              "height": 365
+            }
+          ]
+        },
+        {
+          "width": 1280,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 976,
+              "height": 365
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "cards": [
+            {
+              "row": "0",
+              "span": 12,
+              "type": "grouped_bar",
+              "width": 366,
+              "height": 402
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -323,7 +323,7 @@ class CapabilityTests(Guarded):
         c = self.caps()
         for key in ("status", "version", "fingerprint", "registry_fingerprint", "domains", "analysis_depths", "time_presets", "scope_types"):
             self.assertIn(key, c)
-        self.assertEqual(len(c["domains"]), 16)
+        self.assertEqual(len(c["domains"]), 26)  # 16 + 10 business-coverage domains (PLAN 20/10)
         self.assertEqual([m["id"] for m in c["missions"]], list(MISSION_IDS))
         self.assertTrue(all(m["status"] in {"available", "partial", "unavailable"} for m in c["missions"]))
         self.assertTrue(all(m["reason"] for m in c["missions"] if m["status"] != "available"))
@@ -347,7 +347,8 @@ class CapabilityTests(Guarded):
         self.assertFalse(dims & {"store_id", "customer_id", "order_id", "order_status"})
         self.assertEqual((c["unit"], c["semantic_type"], c["historical"], c["forecastable"]), ("%", "ratio", True, False))
         self.assertTrue(c["definition"])
-        self.assertTrue(metrics["low_stock_count"]["current"])
+        self.assertTrue(metrics["paused_sale_positions"]["current"])
+        self.assertFalse({"stock_quantity", "low_stock_count"} & metrics.keys())  # retired (PLAN 20/10 §3.1)
         self.assertTrue(metrics["revenue"]["forecastable"]); self.assertEqual(metrics["revenue"]["forecast"]["cadences"], ["day", "week", "month"])
         for m in metrics.values():
             self.assertFalse(re.search(r"so_dien_thoai|email|dia_chi|mat_khau", json.dumps(m, ensure_ascii=False)), m["id"])
@@ -360,7 +361,7 @@ class CapabilityTests(Guarded):
     def test_risk_signals_and_coverage_shape(self):
         c = self.caps()
         self.assertEqual({s["metric"] for s in c["risk_signals"]}, {"order_cancellation_rate", "delivery_success_rate",
-            "large_cash_discrepancy_shift_count", "late_shift_rate", "low_stock_count", "avg_store_rating"})
+            "large_cash_discrepancy_shift_count", "late_shift_rate", "paused_sale_positions", "avg_store_rating"})
         self.assertTrue(all(s["threshold_kind"] == "system_default" and s["configurable"] for s in c["risk_signals"]))
         self.assertEqual(c["data_coverage"]["freshness"]["mode"], "batch")
         self.assertIn("không phải chuẩn nghiệp vụ", c["threshold_policy"])
@@ -456,7 +457,9 @@ class PreflightTests(Guarded):
         self.assertEqual(self.codes(r)["time_partially_covered"]["coverage"]["max_date"], "2026-10-02")
 
     def test_snapshot_metric_trend_warns(self):
-        self.assertIn("snapshot_metric_trend", self.codes(self.run_pf("Số sản phẩm sắp hết hàng theo tháng năm 2026")))
+        self.assertIn("snapshot_metric_trend", self.codes(self.run_pf("Số vị trí tạm ngưng bán theo tháng năm 2026")))
+        # Physical stock is not a governed retail concept any more (PLAN 20/10 §3.1).
+        self.assertIn("unsupported_concept", self.codes(self.run_pf("Số sản phẩm sắp hết hàng theo tháng năm 2026")))
 
     def test_unsupported_concept_warns_with_nearest(self):
         f = self.codes(self.run_pf("Chỉ số hạnh phúc của khách hàng"))["unsupported_concept"]
@@ -582,7 +585,7 @@ class RiskWatchTests(Guarded):
         self.assertTrue(all("silver." in sql and "gold." not in sql for sql in executed))
         self.assertTrue(all("KIOSK_VE_TINH" in sql for sql in executed))
         self.assertTrue(any("'DELIVERED', 'FAILED', 'CANCELLED'" in sql for sql in executed))  # canonical delivery_success_rate
-        self.assertIn("không áp dụng", signals["low_stock_exists"]["note"])  # snapshot ignores the period
+        self.assertIn("không áp dụng", signals["paused_positions_exist"]["note"])  # snapshot ignores the period
         self.assertTrue(all(s["status_label"] for s in result["signals"]))
 
     def test_healthy_total_does_not_hide_breaching_groups(self):

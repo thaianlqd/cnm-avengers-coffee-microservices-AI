@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { missionMetrics } from '../../utils/workspacePresentation.mjs';
-import { buildGuided, defaultSlots, dimensionValues, missionControls, periodOptions } from '../../utils/missionWorkspace.mjs';
+import { buildGuided, defaultSlots, dimensionValues, missionControls, missionDimensions, periodOptions } from '../../utils/missionWorkspace.mjs';
 
 const select = 'rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 max-w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400';
 const MISSING: Record<string, string> = { metric: 'chỉ số', metric_b: 'chỉ số thứ hai', dimension: 'chiều phân tích', group_a: 'nhóm A', group_b: 'nhóm B khác nhóm A',
@@ -19,7 +19,7 @@ export const MissionInputBuilder: React.FC<{ capabilities: any; mission: string;
   useEffect(() => { setSlots(defaultSlots(capabilities, mission)); }, [mission, capabilities]);
   const set = (key: string, value: any) => setSlots(prev => ({ ...prev, [key]: value }));
   const metric = metrics.find((m: any) => m.id === slots.metric);
-  const dims = metric?.dimensions || [];
+  const dims = missionDimensions(capabilities, mission, metric);
   const values = slots.dimension ? dimensionValues(capabilities, slots.dimension) : [];
   const cadences: string[] = metric?.forecast?.cadences || [];
   const maxHorizon = metric?.forecast?.max_horizon?.[slots.cadence] || 1;

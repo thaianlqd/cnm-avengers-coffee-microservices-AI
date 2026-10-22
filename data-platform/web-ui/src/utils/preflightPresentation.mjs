@@ -4,10 +4,11 @@
 const TONES = { block: 'red', warn: 'amber', info: 'slate' };
 
 export function preflightView(result, { pending = false, error = '' } = {}) {
-  if (error) return { tone: 'slate', status: 'unavailable', label: 'Chưa kiểm tra được câu hỏi; vẫn có thể gửi, máy chủ sẽ kiểm tra lại.', blocked: false, chips: [], findings: [] };
-  if (pending || !result) return { tone: 'slate', status: pending ? 'checking' : 'idle', label: pending ? 'Đang kiểm tra câu hỏi…' : '', blocked: false, chips: [], findings: [] };
+  if (error) return { tone: 'amber', status: 'unavailable', label: 'Chưa kiểm tra được câu hỏi hiện tại. Hãy kiểm tra lại trước khi phân tích.', blocked: true, chips: [], findings: [] };
+  if (pending || !result) return { tone: 'slate', status: pending ? 'checking' : 'idle', label: pending ? 'Đang kiểm tra câu hỏi hiện tại…' : '', blocked: true, chips: [], findings: [] };
   const u = result.understood || {};
   const chips = [
+    ...(result.input_validation?.slots || []).filter(s => s.state !== 'BOUND').map(s => ({kind:'unresolved', label:`${s.label}: “${s.raw}” — chưa xác minh`, hint:s.state})),
     // A canonical metric is THE meaning of a generic phrase; only genuinely
     // ambiguous phrases list same-name alternatives (V3.2 alias priority).
     ...(u.metrics || []).map(m => ({ kind: 'metric', label: m.label,
@@ -35,6 +36,14 @@ export function preflightView(result, { pending = false, error = '' } = {}) {
 /** Apply a server fix. Returns the new UI state fragment, or null for advice-only fixes. */
 export function applyFix(question, fix, maxChars) {
   if (!fix) return null;
+  if(fix.kind==='replace_span') {
+    // Server spans count Unicode code points; JS string offsets count UTF-16.
+    const points=Array.from(question);
+    if(Number.isInteger(fix.start)&&Number.isInteger(fix.end)&&fix.start>=0&&fix.end>=fix.start&&
+      fix.end<=points.length&&typeof fix.new_text==='string'&&points.slice(fix.start,fix.end).join('')===fix.old_text)
+      return {question:points.slice(0,fix.start).join('')+fix.new_text+points.slice(fix.end).join('')};
+    return null;
+  }
   if (fix.patch && typeof fix.patch === 'object') {
     const patch={question};
     if (typeof fix.patch.question === 'string') patch.question=fix.patch.question;
@@ -59,12 +68,13 @@ export function applyFix(question, fix, maxChars) {
  */
 export function createPreflightClient({ fetchImpl, debounceMs = 400, onResult, onPending, setTimer = setTimeout, clearTimer = clearTimeout, url = '/api/ai/preflight' }) {
   let timer = null, controller = null, sequence = 0;
-  const cancel = () => { if (timer) clearTimer(timer); timer = null; controller?.abort(); controller = null; };
+  const cancel = () => { sequence++; if (timer) clearTimer(timer); timer = null; controller?.abort(); controller = null; };
   return {
     request(payload) {
       cancel();
       const id = ++sequence;
-      if (!payload?.question?.trim()) { onPending?.(false); onResult?.(null, null, id); return; }
+      const key = JSON.stringify(payload);
+      if (!payload?.question?.trim()) { onPending?.(false); onResult?.(null, null, id, key); return; }
       onPending?.(true);
       timer = setTimer(async () => {
         timer = null;
@@ -74,11 +84,11 @@ export function createPreflightClient({ fetchImpl, debounceMs = 400, onResult, o
           const response = await fetchImpl(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: own?.signal });
           const data = await response.json();
           if (id !== sequence) return;
-          if (!response.ok) onResult?.(null, data?.detail || 'Chưa kiểm tra được câu hỏi.', id);
-          else onResult?.(data, null, id);
+          if (!response.ok) onResult?.(null, data?.detail || 'Chưa kiểm tra được câu hỏi.', id, key);
+          else onResult?.(data, null, id, key);
         } catch (error) {
           if (id !== sequence || error?.name === 'AbortError') return;
-          onResult?.(null, 'Chưa kiểm tra được câu hỏi.', id);
+          onResult?.(null, 'Chưa kiểm tra được câu hỏi.', id, key);
         } finally {
           if (id === sequence) onPending?.(false);
         }

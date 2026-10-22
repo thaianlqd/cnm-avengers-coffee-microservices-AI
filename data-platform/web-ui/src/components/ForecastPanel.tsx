@@ -1,6 +1,7 @@
 import React from 'react';
 import { forecastSummary, forecastChartData, forecastFreshness } from '../utils/forecastPresentation.mjs';
 import { ForecastChart } from './Charts';
+import { formatChartValue } from '../utils/aiChartConfig.mjs';
 
 /** Server-computed forecasts with provenance; no client-side numbers. */
 export const ForecastPanel: React.FC<{ forecasts?: any[]; coverage?: any }> = ({ forecasts, coverage }) => {
@@ -17,13 +18,14 @@ export const ForecastPanel: React.FC<{ forecasts?: any[]; coverage?: any }> = ({
         );
         const chart = forecastChartData(forecast);
         return (
-          <section key={forecast.query_id || index} className="rounded-2xl border border-indigo-200 bg-white p-5 space-y-4 shadow-2xs">
+          <section key={forecast.query_id || index} data-forecast-card className="rounded-2xl border border-indigo-200 bg-white p-4 sm:p-5 space-y-4 shadow-2xs">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><h4 className="text-sm font-semibold text-slate-900">{s.title}</h4><p className="text-[11px] text-slate-500 mt-1">{s.method} · {s.history}</p></div>
               <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-medium text-indigo-700">Dự báo thống kê tất định</span>
             </div>
-            {(chart.history.length > 0 || chart.forecast.length > 0) && <ForecastChart history={chart.history} forecast={chart.forecast} unit={forecast.metric_unit} />}
-            <div className="grid gap-1 text-xs text-slate-600">
+            <div className="forecast-layout"><div className="min-w-0">{(chart.history.length > 0 || chart.forecast.length > 0) && <ForecastChart history={chart.history} forecast={chart.forecast} unit={forecast.metric_unit} />}</div>
+            <aside className="forecast-summary"><p className="text-[10px] uppercase tracking-wider text-slate-400">Các kỳ dự báo</p>{s.rows.map((row:any)=><div key={row.period} className="forecast-period"><span>{row.period.slice(0,10)} · {row.label}</span><strong>{formatChartValue(row.value,forecast.metric_unit?` ${forecast.metric_unit}`:'')}</strong><small>80%: {formatChartValue(row.lower_80)} – {formatChartValue(row.upper_80)}</small></div>)}</aside></div>
+            <div className="grid gap-1 text-xs text-slate-600 border-t border-slate-100 pt-3">
               <p><strong>Chất lượng kiểm tra lùi:</strong> {s.quality}</p>
               {forecastFreshness(forecast, coverage).map((note: string, i: number) => <p key={i} className={i ? 'text-amber-800' : ''}>{note}</p>)}
             </div>

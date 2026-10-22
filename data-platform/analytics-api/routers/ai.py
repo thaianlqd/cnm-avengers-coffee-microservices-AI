@@ -15,6 +15,7 @@ from common import (
     AiRiskWatchRequest,
     AiSummarizeRequest,
     AiTextToReportRequest,
+    AiWorkspaceRevisionRequest,
 )
 from services.analysis_pipeline import AnalysisPipeline, safe_failure
 from services.llm_service import provider_configuration
@@ -42,6 +43,20 @@ def curated_dashboards():
     from services.data_coverage_service import peek
     from services.workspace_service import dashboard_catalog
     return dashboard_catalog(preflight_catalog(), (peek() or {}).get('data_health'))
+
+
+@router.get('/sessions/{session_id}/geography')
+def geographic_exploration(session_id: str, request: Request, response: Response,
+        revision: int = Query(..., ge=1), city: str | None = Query(None, max_length=160),
+        store: str | None = Query(None, max_length=160)):
+    from services.geography_exploration_service import explore
+    if len(session_id) > 128:
+        raise HTTPException(404, 'Phiên bản đồ không hợp lệ.')
+    try:
+        return explore(session_id, browser_owner(request, response), revision, city, store)
+    except AnalysisError as error:
+        raise HTTPException(422 if error.category in {'query_scope','clarification','capacity_requires_choice','result_contract'} else 503,
+                            safe_failure(error)['message']) from None
 
 
 @router.post('/analysis-jobs', status_code=202)
@@ -251,6 +266,7 @@ def ai_preflight(payload: AiPreflightRequest, request: Request = None, response:
     """Deterministic advisory check while typing: 0 provider calls, 0 warehouse queries."""
     global _preflight_limiter
     from services import preflight_service
+    from services.input_integrity_service import request_text
     try:
         catalog = preflight_service.preflight_catalog()
     except Exception:
@@ -259,11 +275,59 @@ def ai_preflight(payload: AiPreflightRequest, request: Request = None, response:
     # Stable, validated per-browser key (origin-checked; a malformed cookie is replaced).
     if not _preflight_limiter.allow(browser_owner(request, response) or "internal"):
         raise HTTPException(status_code=429, detail="Kiểm tra câu hỏi quá nhanh; vui lòng thử lại sau giây lát.")
-    return preflight_service.run(payload.question, payload.time.model_dump(mode="json") if payload.time else None,
+    return preflight_service.run(request_text(payload), payload.time.model_dump(mode="json") if payload.time else None,
                                  payload.analysis_scope.model_dump(mode="json") if payload.analysis_scope else None,
                                  payload.analysis_mission, payload.reference_date, catalog=catalog,
                                  input_mode=payload.input_mode,
+                                 analysis_depth=payload.analysis_depth,
                                  guided_contract=payload.guided_contract.model_dump(exclude_none=True) if payload.guided_contract else None)
+
+
+_input_resolution_limiter = None
+
+
+@router.post('/resolve-input')
+def resolve_input(payload: AiPreflightRequest, request: Request = None, response: Response = None):
+    """Explicit bounded entity resolution, never used automatically per key."""
+    from services import preflight_service
+    from services.input_integrity_service import entity_lookup, request_text
+    global _input_resolution_limiter
+    catalog = preflight_service.preflight_catalog()
+    _input_resolution_limiter = _limiter(_input_resolution_limiter, catalog, 'input_resolution', (6,60))
+    if not _input_resolution_limiter.allow(browser_owner(request,response) or 'internal'):
+        raise HTTPException(429, 'Tra cứu tên quá thường xuyên; hãy thử lại sau.')
+    return preflight_service.run(request_text(payload), payload.time.model_dump(mode='json') if payload.time else None,
+        payload.analysis_scope.model_dump(mode='json') if payload.analysis_scope else None,
+        payload.analysis_mission, payload.reference_date, catalog=catalog, input_mode=payload.input_mode, analysis_depth=payload.analysis_depth,
+        guided_contract=payload.guided_contract.model_dump(exclude_none=True) if payload.guided_contract else None,
+        input_lookup=entity_lookup(catalog,resolve=True))
+
+
+@router.post('/refinement-preflight')
+def refinement_preflight(payload: AiReportRefineRequest, request: Request = None, response: Response = None,
+                         resolve_entities: bool = False):
+    from services import preflight_service
+    from services.input_integrity_service import validate, entity_lookup
+    from services.session_service import get_session
+    from services.access_policy import current_principal
+    principal = current_principal(required=True)
+    session = get_session(payload.session_id) if payload.session_id else None
+    owner = browser_owner(request,response)
+    if not session or session.owner_id != owner or not session.approved:
+        raise HTTPException(404, 'Phiên phân tích không khả dụng cho tài khoản này.')
+    if payload.current_report.get('revision') != session.revision:
+        raise HTTPException(409, 'Bản báo cáo đã thay đổi. Hãy tải lại trước khi điều chỉnh.')
+    catalog = preflight_service.preflight_catalog()
+    if catalog.fingerprint != session.schema_fingerprint:
+        raise HTTPException(409, 'Danh mục dữ liệu đã thay đổi. Hãy tạo lại phân tích.')
+    global _input_resolution_limiter
+    if resolve_entities:
+        _input_resolution_limiter = _limiter(_input_resolution_limiter,catalog,'input_resolution',(6,60))
+        if not _input_resolution_limiter.allow(principal.owner_key): raise HTTPException(429,'Tra cứu tên quá thường xuyên.')
+    validation = validate(payload.feedback,catalog,
+        context={'revision':session.revision,'mode':'refinement'}, lookup=entity_lookup(catalog,resolve=resolve_entities))
+    return {'can_submit':validation['can_submit'], 'input_validation':validation, 'findings':validation['findings'],
+            'provider_calls':0,'warehouse_queries':0}
 
 
 @router.post("/risk-watch")
@@ -396,6 +460,30 @@ def generate_executive_report(payload: AiTextToReportRequest, request: Request =
 @router.post("/refine-report")
 def refine_report(payload: AiReportRefineRequest, request: Request = None, response: Response = None):
     return _invoke("refine", payload, browser_owner(request, response))
+
+
+@router.post('/workspace-revision')
+async def workspace_revision(payload: AiWorkspaceRevisionRequest, request: Request, response: Response):
+    from services.provider_budget import request_deadline, request_cancelled, PLANNING_SECONDS
+    deadline = time.monotonic() + PLANNING_SECONDS
+    token = request_deadline.set(deadline)
+    cancelled = Event()
+    cancellation_token = request_cancelled.set(cancelled)
+    owner = browser_owner(request, response)
+    worker = asyncio.create_task(asyncio.to_thread(_invoke, 'workspace_revision', payload, owner))
+    try:
+        while not worker.done():
+            await asyncio.wait({worker}, timeout=0.1)
+            if not worker.done() and await request.is_disconnected():
+                raise HTTPException(499, 'Đã dừng chờ revision; kết quả chưa hoàn tất sẽ không được công bố.')
+            if not worker.done() and time.monotonic() >= deadline:
+                return safe_failure(AnalysisError('planning_timeout', 'Workspace revision deadline exhausted'))
+        return worker.result()
+    finally:
+        cancelled.set()
+        worker.cancel()
+        request_cancelled.reset(cancellation_token)
+        request_deadline.reset(token)
 
 
 @router.post("/feedback")

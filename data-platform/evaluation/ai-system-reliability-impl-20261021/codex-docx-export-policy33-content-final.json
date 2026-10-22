@@ -1,0 +1,20 @@
+{
+  "status": "PASS_CONTENT_ONLY",
+  "http_status": 200,
+  "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "sha256": "9f845d9388d62490a6da90ef447fbfcc80a01bb255931c39f18c798be9e083de",
+  "bytes": 225594,
+  "session_id": "e25918b6-a901-417f-8f06-97a9eade9b92",
+  "revision": 1,
+  "checks": {
+    "summary_present": true,
+    "conclusion_present": true,
+    "findings_present": true,
+    "cohort_label_present": true,
+    "geography_warning_present": true,
+    "table_preview_disclosed": true
+  },
+  "visual_render": "Native Word fixture QA:12pages; exact HTTP export content checked here",
+  "save_to_db": false,
+  "source_policy": "2026-10-22.cohort-scope.33"
+}

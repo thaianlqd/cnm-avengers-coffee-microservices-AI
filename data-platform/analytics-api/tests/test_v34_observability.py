@@ -97,6 +97,18 @@ class QueryBudgetTests(TestCase):
         result=budget.snapshot();self.assertEqual(result['attempted'],5);self.assertEqual(result['failed'],5)
         self.assertTrue(result['limited'])
 
+    def test_cold_metadata_reads_never_consume_analytical_attempts(self):
+        from services.analytical_capacity_planner import AnalyticalCapacityContract
+        from services.analysis_catalog import AnalysisError
+        budget=self.budget(AnalyticalCapacityContract(operations=1))
+        for _ in range(6):budget.reserve('metadata')  # cold catalog introspection + warehouse statistics
+        for _ in range(budget.limit):budget.reserve('execute')  # the full analytical allowance is still available
+        with self.assertRaises(AnalysisError):budget.reserve('dry_run')
+        support=self.budget(AnalyticalCapacityContract(operations=1))
+        for _ in range(support.SUPPORT_ATTEMPTS):support.reserve('direct_reader')
+        with self.assertRaises(AnalysisError) as caught:support.reserve('metadata')  # support reads stay bounded
+        self.assertEqual(caught.exception.category,'capacity_requires_choice')
+
     def test_concurrent_sql_workers_share_one_reservation_allowance(self):
         from services.analytical_capacity_planner import AnalyticalCapacityContract,query_attempt
         from services.analysis_catalog import AnalysisError

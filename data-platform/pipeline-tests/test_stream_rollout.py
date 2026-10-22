@@ -20,7 +20,7 @@ class StreamRolloutTests(TestCase):
                 patch.object(module,'sync_table_governed',return_value=0) as extract, \
                 patch.object(module,'create_warehouse_views',side_effect=AssertionError('Governed sync must never issue view DDL')) as ddl:
             module.run_sync_cycle(source,target)
-            self.assertEqual(extract.call_count,23)
+            self.assertEqual(extract.call_count,49)  # 23 v34 + 26 business-coverage sources
             ddl.assert_not_called()
 
     def test_governed_replica_never_uses_broad_target_credentials_or_connects_without_profile(self):

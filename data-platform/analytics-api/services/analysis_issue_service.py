@@ -61,6 +61,25 @@ def semantic_failure_summary(diagnostics):
     return known[:14],problems[:6]
 
 
+def topic_metric_labels(domain_ids, limit=4):
+    """Server-owned metric labels of the retrieved domains, active metrics only."""
+    import json
+    from services.analysis_catalog import CATALOG_PATH
+    try:
+        registry = json.loads(CATALOG_PATH.read_text())['analysis_registry']
+        profiles = registry['domain_intelligence']['profiles']
+    except (OSError, ValueError, KeyError):
+        return []
+    labels = []
+    for domain in domain_ids[:3]:
+        for m in profiles.get(domain, {}).get('metric_refs', []):
+            meta = registry['metrics'].get(m, {})
+            label = meta.get('business_name')
+            if label and label not in labels and meta.get('lifecycle', {}).get('status') != 'deprecated':
+                labels.append(label)
+    return labels[:limit]
+
+
 def actionable_issue(error, message, clarification=None, diagnostics=None):
     code = getattr(error, "business_category", None) or getattr(error, "category", "internal")
     category = "SYSTEM_UNAVAILABLE"
@@ -130,10 +149,16 @@ def actionable_issue(error, message, clarification=None, diagnostics=None):
         if code=='not_analytical_request':
             result['title']='Chưa có câu hỏi phân tích dữ liệu'
             fields=['analysis_goal']
+        # Metric choices come from the retrieved topic (e.g. review ratings),
+        # never a fixed revenue/AOV list that drags the user off-topic.
+        topic=topic_metric_labels((diagnostics or {}).get('detailed_domain_ids') or [])
+        if topic:
+            labels['metric_ids']='Chưa rõ chỉ số muốn xem: '+', '.join(topic[:-1])+(' hay ' if len(topic)>1 else '')+topic[-1]+'.'
         details=[labels[f] for f in fields if f in labels]
         if details:
             result['what_is_missing']=details
-            result['resolution_guidance']='Ví dụ: Doanh thu và số đơn theo chi nhánh trong 30 ngày gần nhất. Nếu không chọn thời gian, hệ thống dùng toàn bộ dữ liệu.'
+            result['resolution_guidance']=(f'Ví dụ: {topic[0]} theo chi nhánh trong 30 ngày gần nhất.' if topic else
+                'Ví dụ: Doanh thu và số đơn theo chi nhánh trong 30 ngày gần nhất.')+' Nếu không chọn thời gian, hệ thống dùng toàn bộ dữ liệu.'
         if diagnostics:
             understood,_=semantic_failure_summary(diagnostics)
             if understood:result['what_is_known']=understood

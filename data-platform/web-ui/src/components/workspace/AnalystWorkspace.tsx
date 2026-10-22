@@ -18,7 +18,7 @@ export interface WorkspaceInput { prompt: string; time: string; start: string; e
 function preflightPayload(v: WorkspaceInput) {
   const time = v.time === 'custom' ? { mode: 'custom', ...(v.start ? { start: v.start } : {}), ...(v.end ? { end: v.end } : {}) } : { mode: v.time };
   const guided = guidedActive(v.guided, v.prompt);
-  return { question: v.prompt, time, ...(v.scope?.mode === 'selected' ? { analysis_scope: v.scope } : {}), ...(v.mission ? { analysis_mission: v.mission } : {}),
+  return { question: v.prompt, time, analysis_depth:v.depth, ...(v.scope?.mode === 'selected' ? { analysis_scope: v.scope } : {}), ...(v.mission ? { analysis_mission: v.mission } : {}),
     ...(guided ? { input_mode: 'guided', guided_contract: v.guided!.contract } : {}) };
 }
 
@@ -26,20 +26,36 @@ const PROVIDER: Record<string, string> = { available: 'Sẵn sàng', degraded: '
 
 /** Step 1 of the AI assistant: a mission-consistent workspace before any AI call. */
 export const AnalystWorkspace: React.FC<{ capabilities: any; status: any; value: WorkspaceInput; disabled: boolean;
-  onChange: (patch: Partial<WorkspaceInput>) => void; onSubmit: (prompt?: string) => void; onPreview?: () => void; children?: React.ReactNode }> = ({ capabilities, status, value, disabled, onChange, onSubmit, onPreview, children }) => {
+  onChange: (patch: Partial<WorkspaceInput>) => void; onSubmit: (prompt?: string) => void; onPreview?: () => void; onCoverage?:(coverage:any)=>void; children?: React.ReactNode }> = ({ capabilities, status, value, disabled, onChange, onSubmit, onPreview, onCoverage, children }) => {
   const [preflight, setPreflight] = useState<PreflightResult | null>(null), [pending, setPending] = useState(false), [error, setError] = useState('');
+  const [checkedKey,setCheckedKey] = useState('');
+  const [resolving,setResolving] = useState(false);
+  const payloadKey = JSON.stringify(preflightPayload(value));
   const [risk, setRisk] = useState<any>(null), [riskBusy, setRiskBusy] = useState(false), [riskError, setRiskError] = useState('');
   const client = useMemo(() => createPreflightClient({ fetchImpl: (url, init) => fetch(url, init), debounceMs: capabilities?.limits?.preflight?.debounce_ms || 400,
-    onPending: setPending, onResult: (result, message) => { setPreflight(result); setError(message || ''); } }), [capabilities?.limits?.preflight?.debounce_ms]);
+    onPending: setPending, onResult: (result, message, _id, key) => { setPreflight(result); setError(!message?'':typeof message==='string'?message:'Chưa kiểm tra được câu hỏi.');setCheckedKey(key); } }), [capabilities?.limits?.preflight?.debounce_ms]);
   const latest = useRef(value); latest.current = value;
   const guided = guidedActive(value.guided, value.prompt);
-  useEffect(() => { client.request(preflightPayload(value)); }, [client, value.prompt, value.time, value.start, value.end, JSON.stringify(value.scope), value.mission, guided]);
+  useEffect(() => { client.request(preflightPayload(value)); }, [client, payloadKey]);
   // A preflight/risk result belongs to one mission/time/scope; never show it for another.
   useEffect(() => { setPreflight(null); }, [value.mission]);
   const riskSeq = useRef(0);
   useEffect(() => { riskSeq.current += 1; setRisk(null); setRiskError(''); setRiskBusy(false); }, [value.time, value.start, value.end, JSON.stringify(value.scope), value.prompt, value.mission]);
   useEffect(() => () => client.cancel(), [client]);
-  const blocked = preflight?.can_submit === false && !pending;
+  const currentPreflight = checkedKey===payloadKey?preflight:null;
+  const checking = pending || checkedKey!==payloadKey || resolving;
+  const blocked = checking || Boolean(error) || currentPreflight?.can_submit !== true;
+  const resolveNames = async () => {
+    const key=payloadKey;client.cancel();setPending(false);setResolving(true);setError('');
+    try {
+      const response=await fetch('/api/ai/resolve-input',{method:'POST',headers:{'Content-Type':'application/json'},body:key});
+      const result=await response.json();
+      if(JSON.stringify(preflightPayload(latest.current))!==key)return;
+      if(!response.ok)throw new Error(typeof result.detail==='string'?result.detail:'Chưa thể kiểm tra tên.');
+      setPreflight(result);setCheckedKey(key);
+    }catch(e:any){if(JSON.stringify(preflightPayload(latest.current))===key)setError(e.message);}
+    finally{setResolving(false);}
+  };
   const chips = suggestionChips(capabilities, value.mission);
   const maxChars = capabilities?.limits?.max_question_chars;
   const contract = missionContract(capabilities, value.mission);
@@ -70,7 +86,7 @@ export const AnalystWorkspace: React.FC<{ capabilities: any; status: any; value:
   const isRisk = value.mission === 'risk_watch';
   const edited = Boolean(value.guided && value.prompt && !guided);
   return <div className="space-y-4" data-analyst-workspace>
-    <DataCoverageBar capabilities={capabilities} />
+    <DataCoverageBar capabilities={capabilities} onCoverage={onCoverage} />
     <Card className="p-5 sm:p-6 space-y-5" label="Không gian phân tích">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div><h2 className="text-xl font-bold text-slate-900 tracking-tight">Trợ lý phân tích dữ liệu</h2>
@@ -100,8 +116,10 @@ export const AnalystWorkspace: React.FC<{ capabilities: any; status: any; value:
           <button type="button" onClick={() => onChange({ prompt: value.guided!.question })} className="rounded-lg border border-amber-300 bg-white px-2 py-0.5 text-[11px] font-medium">Giữ cấu hình đã chọn</button>
           <button type="button" onClick={() => onChange({ guided: null })} className="rounded-lg border border-amber-300 bg-white px-2 py-0.5 text-[11px] font-medium">Dùng câu hỏi tự do</button>
         </div>}
-        <QuestionPreflight result={preflight} pending={pending} error={error} onFix={fix} />
-        <AnalysisScopePanel capabilities={capabilities} preflight={preflight} showTime={!mission || !(contract?.required || []).concat(contract?.optional || []).includes('time') || isRisk}
+        <QuestionPreflight result={currentPreflight} pending={checking} error={checkedKey===payloadKey?error:''} onFix={fix} />
+        {!checking&&currentPreflight?.input_validation?.slots?.some((s:any)=>s.lookup_allowed&&s.state!=='BOUND')&&<button type="button" onClick={()=>void resolveNames()} className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-medium text-blue-700">Kiểm tra tên trong dữ liệu được cấp quyền</button>}
+        {error&&<button type="button" onClick={()=>client.request(preflightPayload(latest.current))} className="text-xs text-blue-700">Kiểm tra lại câu hỏi</button>}
+        <AnalysisScopePanel capabilities={capabilities} preflight={currentPreflight} showTime={!mission || !(contract?.required || []).concat(contract?.optional || []).includes('time') || isRisk}
           time={value.time} start={value.start} end={value.end} scope={value.scope} depth={value.depth} showDepth={!isRisk} disabled={disabled}
           onTime={time => onChange({ time })} onStart={start => onChange({ start })} onEnd={end => onChange({ end })} onScope={scope => onChange({ scope })} onDepth={depth => onChange({ depth })} />
         <div className="flex flex-wrap justify-end items-center gap-2.5 pt-1">

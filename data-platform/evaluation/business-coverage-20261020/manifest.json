@@ -1,0 +1,62 @@
+{
+  "status": "PLAN_AUDIT_ONLY",
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "provider_sends": 0,
+  "database_writes": 0,
+  "limitations": [
+    "Separate source and replica snapshots; aggregate matches do not certify full row parity",
+    "Endpoint identity verified only as configured PostgreSQL shared by app and ingestion; Supabase hosting not independently verified",
+    "Browser checked customer profile and manager overview/menu/reviews/surveys; other roles audited statically",
+    "Not a completed business coverage acceptance",
+    "Round 2 route inventory is static declaration evidence, not proof that every endpoint is registered/authorized/live-tested",
+    "JSON probes cover shapes and counts, not all nested values/versions; no Redis or client contents inspected",
+    "Delivery assignment key conflicts and gift transfer integrity are findings, not fixed or retrospectively reconciled"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "99b49676d6e848baee9f22bba60d966f2019b8fbe4ecb39a489ca6d68f7eaf0c"
+    },
+    {
+      "path": "actor-route-inventory-round2.json",
+      "sha256": "856123704ad463b38ff34ab407471f2443a7f7e248d7c90828fb60439bae2fb0"
+    },
+    {
+      "path": "candidates.json",
+      "sha256": "4acf203487d1d3e8335e32979cc17fb5b4718eb28c63b7948c7da548d6be6dc4"
+    },
+    {
+      "path": "data-shapes-round2-keys.json",
+      "sha256": "0bd815e71f6276beb3703b225029dc38a93df55b4c4e9b518f2a66c8f192a0d7"
+    },
+    {
+      "path": "data-shapes-round2.json",
+      "sha256": "d37cf78e422fdbb18dbc2efbc2a9dc16e1b960b85420332c9830dc53519bab85"
+    },
+    {
+      "path": "db-audit.json",
+      "sha256": "d4ec12e2442428d6c5698fac5a5dfdc7deb516d6385ec3b449581e832ebbe08d"
+    },
+    {
+      "path": "details.json",
+      "sha256": "0dfcb9c7ce88826ecb7ea1728bee6eb40fe3b43019c21dfcea73644c3e25136b"
+    },
+    {
+      "path": "health-summary.json",
+      "sha256": "222fb1981560fd690283e53ff113ca686fc48eaba34724dff352098ec12f60f1"
+    },
+    {
+      "path": "preflight.json",
+      "sha256": "8318ecfeffb799d24a4c73dc4eb1ac57161996123e51a42d62eb860a86f65f35"
+    },
+    {
+      "path": "relations.json",
+      "sha256": "cbfbcdde756ce58e5e6c4b0b0da3c88801bb6c4aa62b0befcdfbf7c90bf95306"
+    },
+    {
+      "path": "source-ledger.json",
+      "sha256": "00730482acb94f4bb000eec549a694709af442b4e78beff07a100c7f268fd055"
+    }
+  ],
+  "audit_rounds": 2
+}

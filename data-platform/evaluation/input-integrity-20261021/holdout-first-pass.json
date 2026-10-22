@@ -1,0 +1,683 @@
+{
+  "checked_at": "2026-10-21T04:40:39.753706+00:00",
+  "scope": "Separately authored contexts after implementation freeze; input-gate decisions only, not numerical/LLM accuracy.",
+  "freeze": {
+    "services/input_integrity_service.py": "45a52f32708169e6660421fbdf37f3dafa3b61d07bf59c35d2a66e4d893f81a8",
+    "metadata/input_integrity_policy.json": "3e3b3dc12d99f462fa80a532424b8bbb9691b840608c4855e68edd6517d1e8b8",
+    "services/preflight_service.py": "fbe5ba924770726e4af8d27ffb153e6715f0f490baeadd5f757ab19d651a7038",
+    "services/agent_pipeline.py": "d3b7d66455cb4c87fe6e06b3380a03c69ba06234b5c2a9183601f33d2c3c8dff"
+  },
+  "passed": 59,
+  "total": 60,
+  "cases": [
+    {
+      "id": "HV01",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV02",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV03",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV04",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV05",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV06",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV07",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV08",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV09",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV10",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV11",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV12",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV13",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV14",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV15",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV16",
+      "expected": true,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": false,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV17",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV18",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV19",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV20",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV21",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV22",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV23",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV24",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV25",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV26",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV27",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV28",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV29",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HV30",
+      "expected": true,
+      "actual": true,
+      "reason_codes": [],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN01",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN02",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN03",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN04",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN05",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved",
+        "input_residual_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN06",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_time_invalid"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN07",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_time_invalid"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN08",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_time_invalid"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN09",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_time_invalid"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN10",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_time_invalid"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN11",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_number_invalid"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN12",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_number_invalid"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN13",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_number_invalid"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN14",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN15",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved",
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN16",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved",
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN17",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN18",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN19",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_lookup_required"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN20",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_lookup_required"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN21",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_lookup_required"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN22",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_lookup_required"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN23",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN24",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_number_invalid",
+        "input_residual_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN25",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_residual_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN26",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_residual_unresolved",
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN27",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_residual_unresolved",
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN28",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN29",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_residual_unresolved",
+        "input_time_invalid"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "HN30",
+      "expected": false,
+      "actual": false,
+      "reason_codes": [
+        "input_entity_unresolved"
+      ],
+      "passed": true,
+      "provider_calls": 0,
+      "analytical_queries": 0,
+      "lookup_queries": 0
+    }
+  ]
+}

@@ -1,0 +1,394 @@
+{
+  "status": "success",
+  "version": "3.1.0",
+  "mission": "risk_watch",
+  "signals": [
+    {
+      "id": "order_cancellation_high",
+      "label": "Tỷ lệ hủy đơn cao",
+      "metric": "order_cancellation_rate",
+      "metric_label": "Tỷ lệ hủy đơn",
+      "unit": "%",
+      "operator": "gt",
+      "operator_symbol": ">",
+      "threshold": 8,
+      "warning_margin": 2,
+      "threshold_kind": "system_default",
+      "definition": "Phần trăm đơn bị hủy (DA_HUY) trên các đơn đã kết thúc (HOAN_THANH + DA_HUY) theo ngày tạo đơn; đơn đang xử lý không vào mẫu số.",
+      "historical": true,
+      "value": 4.68,
+      "observations": null,
+      "breakdown": {
+        "dimension": "store",
+        "dimension_label": "Chi nhánh",
+        "groups_total": 417,
+        "groups_evaluable": 417,
+        "groups_missing": 0,
+        "groups_insufficient_sample": 0,
+        "groups_in_breach": 58,
+        "worst": [
+          {
+            "group": "Highlands Coffee Central Garden D1",
+            "value": 100.0
+          },
+          {
+            "group": "Highlands Coffee KCN Bau Bang Dinh Duong",
+            "value": 75.0
+          },
+          {
+            "group": "Avengers Coffee - Vincom Đồng Khởi",
+            "value": 66.67
+          },
+          {
+            "group": "Cantavil",
+            "value": 50.0
+          },
+          {
+            "group": "Highlands Coffee 236 Tô Ngọc Vân",
+            "value": 50.0
+          },
+          {
+            "group": "Highlands Coffee 366 Le Van Quoi HCM",
+            "value": 50.0
+          },
+          {
+            "group": "Highlands Coffee 377 Tân Kỳ Tân Quý",
+            "value": 50.0
+          },
+          {
+            "group": "Highlands Coffee 49B Thảo Điền - Thủ Đức",
+            "value": 50.0
+          },
+          {
+            "group": "Highlands Coffee 9A Ky Dong D3",
+            "value": 50.0
+          },
+          {
+            "group": "Highlands Coffee Central Retail Phu Nhuan",
+            "value": 50.0
+          }
+        ],
+        "note": "Nhóm có ít quan sát có thể dao động mạnh; đối chiếu số lượng trước khi kết luận."
+      },
+      "note": "Toàn phạm vi trong ngưỡng nhưng 58 chi nhánh vượt ngưỡng.",
+      "period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "status": "green",
+      "bad_direction": "above",
+      "anomaly": {
+        "signal_id": "order_cancellation_high",
+        "signal_version": "3.5.0",
+        "metric_id": "order_cancellation_rate",
+        "status": "unknown_source",
+        "reason": "complete_source_history_not_certified",
+        "sql_queries": 0
+      },
+      "status_label": "Trong ngưỡng"
+    },
+    {
+      "id": "delivery_success_low",
+      "label": "Tỷ lệ giao thành công thấp",
+      "metric": "delivery_success_rate",
+      "metric_label": "Tỷ lệ giao thành công",
+      "unit": "%",
+      "operator": "lt",
+      "operator_symbol": "<",
+      "threshold": 90,
+      "warning_margin": 3,
+      "threshold_kind": "system_default",
+      "definition": "Phần trăm chuyến giao thành công trên các chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); chuyến đang xử lý không vào mẫu số.",
+      "historical": true,
+      "value": 96.4,
+      "observations": null,
+      "breakdown": {
+        "dimension": "store",
+        "dimension_label": "Chi nhánh",
+        "groups_total": 214,
+        "groups_evaluable": 214,
+        "groups_missing": 0,
+        "groups_insufficient_sample": 0,
+        "groups_in_breach": 10,
+        "worst": [
+          {
+            "group": "Highlands Coffee 158 Pham Van Chieu",
+            "value": 0.0
+          },
+          {
+            "group": "Highlands Coffee 26A Hoang Viet HCM",
+            "value": 0.0
+          },
+          {
+            "group": "Highlands Coffee 891 Kha Vạn Cân",
+            "value": 0.0
+          },
+          {
+            "group": "Highlands Coffee CVPM Quang Trung HCM",
+            "value": 0.0
+          },
+          {
+            "group": "Highlands Coffee Đại Phúc Bình Chánh",
+            "value": 0.0
+          },
+          {
+            "group": "Highlands Coffee – GO Mall Huế",
+            "value": 0.0
+          },
+          {
+            "group": "Highlands Coffee Lạc Long Quân - Quận 11",
+            "value": 0.0
+          },
+          {
+            "group": "Highlands Coffee Tropical VH Grand Park D9",
+            "value": 0.0
+          },
+          {
+            "group": "Highlands Coffee Trường Sa HCM",
+            "value": 0.0
+          },
+          {
+            "group": "Highlands Coffee UrBan Hill D7",
+            "value": 0.0
+          }
+        ],
+        "note": "Nhóm có ít quan sát có thể dao động mạnh; đối chiếu số lượng trước khi kết luận."
+      },
+      "note": "Toàn phạm vi trong ngưỡng nhưng 10 chi nhánh vượt ngưỡng.",
+      "period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "status": "green",
+      "bad_direction": "below",
+      "anomaly": {
+        "signal_id": "delivery_success_low",
+        "signal_version": "3.4.0",
+        "metric_id": "delivery_success_rate",
+        "status": "not_applicable",
+        "reason": "baseline_not_enabled",
+        "sql_queries": 0
+      },
+      "status_label": "Trong ngưỡng"
+    },
+    {
+      "id": "cash_discrepancy_high",
+      "label": "Có ca lệch tiền lớn (> 500.000 VND/ca)",
+      "metric": "large_cash_discrepancy_shift_count",
+      "metric_label": "Số ca lệch tiền lớn",
+      "unit": "ca",
+      "operator": "gt",
+      "operator_symbol": ">",
+      "threshold": 0,
+      "warning_margin": 0,
+      "threshold_kind": "system_default",
+      "definition": "Đếm ca đối soát có giá trị tuyệt đối chênh lệch tiền mặt lớn hơn 500.000 VND/ca. 500.000 VND là ngưỡng mặc định hệ thống, không phải chuẩn nghiệp vụ phổ quát.",
+      "historical": true,
+      "value": 0.0,
+      "observations": null,
+      "breakdown": {
+        "dimension": "store",
+        "dimension_label": "Chi nhánh",
+        "groups_total": 6,
+        "groups_evaluable": 6,
+        "groups_missing": 0,
+        "groups_insufficient_sample": 0,
+        "groups_in_breach": 0,
+        "worst": [],
+        "note": "Nhóm có ít quan sát có thể dao động mạnh; đối chiếu số lượng trước khi kết luận."
+      },
+      "note": null,
+      "period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "status": "green",
+      "bad_direction": "above",
+      "anomaly": {
+        "signal_id": "cash_discrepancy_high",
+        "signal_version": "3.4.0",
+        "metric_id": "large_cash_discrepancy_shift_count",
+        "status": "unknown_source",
+        "reason": "complete_source_history_not_certified",
+        "sql_queries": 0
+      },
+      "status_label": "Trong ngưỡng"
+    },
+    {
+      "id": "late_shift_high",
+      "label": "Tỷ lệ ca đi trễ cao",
+      "metric": "late_shift_rate",
+      "metric_label": "Tỷ lệ ca đi trễ",
+      "unit": "%",
+      "operator": "gt",
+      "operator_symbol": ">",
+      "threshold": 15,
+      "warning_margin": 3,
+      "threshold_kind": "system_default",
+      "definition": "Phần trăm ca đi trễ (DI_TRE) trên các ca đã chấm công vào ca (DUNG_GIO, DI_TRE, VE_SOM) theo ngày làm; ca chưa chấm công (ASSIGNED), nghỉ phép (NGHI_PHEP) hoặc vắng mặt (VANG_MAT) không vào mẫu số.",
+      "historical": true,
+      "value": 6.9,
+      "observations": null,
+      "breakdown": {
+        "dimension": "store",
+        "dimension_label": "Chi nhánh",
+        "groups_total": 6,
+        "groups_evaluable": 6,
+        "groups_missing": 0,
+        "groups_insufficient_sample": 0,
+        "groups_in_breach": 0,
+        "worst": [],
+        "note": "Nhóm có ít quan sát có thể dao động mạnh; đối chiếu số lượng trước khi kết luận."
+      },
+      "note": null,
+      "period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "status": "green",
+      "bad_direction": "above",
+      "anomaly": {
+        "signal_id": "late_shift_high",
+        "signal_version": "3.4.0",
+        "metric_id": "late_shift_rate",
+        "status": "not_applicable",
+        "reason": "baseline_not_enabled",
+        "sql_queries": 0
+      },
+      "status_label": "Trong ngưỡng"
+    },
+    {
+      "id": "paused_positions_exist",
+      "label": "Có vị trí món × điểm bán đang tạm ngưng bán",
+      "metric": "paused_sale_positions",
+      "metric_label": "Vị trí tạm ngưng bán",
+      "unit": "vị trí",
+      "operator": "gt",
+      "operator_symbol": ">",
+      "threshold": 0,
+      "warning_margin": 0,
+      "threshold_kind": "system_default",
+      "definition": "Cặp món × điểm bán đang không mở bán (checkout chặn); không phải hết hàng.",
+      "historical": false,
+      "value": 3.0,
+      "observations": null,
+      "breakdown": {
+        "dimension": "store",
+        "dimension_label": "Chi nhánh",
+        "groups_total": 15,
+        "groups_evaluable": 15,
+        "groups_missing": 0,
+        "groups_insufficient_sample": 0,
+        "groups_in_breach": 2,
+        "worst": [
+          {
+            "group": "Highlands Coffee Điện Biên Phủ",
+            "value": 2.0
+          },
+          {
+            "group": "Highlands Coffee D9 Tân Phú",
+            "value": 1.0
+          }
+        ],
+        "note": "Nhóm có ít quan sát có thể dao động mạnh; đối chiếu số lượng trước khi kết luận."
+      },
+      "note": "Chỉ số hiện trạng (ảnh chụp tồn kho); không áp dụng khoảng thời gian.",
+      "period": {
+        "start": null,
+        "end": null
+      },
+      "status": "red",
+      "bad_direction": "above",
+      "anomaly": {
+        "signal_id": "paused_positions_exist",
+        "signal_version": "3.4.0",
+        "metric_id": "paused_sale_positions",
+        "status": "not_applicable",
+        "reason": "baseline_not_enabled",
+        "sql_queries": 0
+      },
+      "status_label": "Vượt ngưỡng"
+    },
+    {
+      "id": "store_rating_low",
+      "label": "Điểm đánh giá chi nhánh thấp",
+      "metric": "avg_store_rating",
+      "metric_label": "Điểm phục vụ trung bình",
+      "unit": "điểm",
+      "operator": "lt",
+      "operator_symbol": "<",
+      "threshold": 3.5,
+      "warning_margin": 0.3,
+      "threshold_kind": "system_default",
+      "definition": "Trung bình số sao đánh giá chi nhánh, làm tròn hai chữ số; đọc cùng cỡ mẫu đánh giá, không cộng trung bình nhóm.",
+      "historical": true,
+      "value": 4.71,
+      "observations": 82,
+      "breakdown": {
+        "dimension": "store",
+        "dimension_label": "Chi nhánh",
+        "groups_total": 69,
+        "groups_evaluable": 1,
+        "groups_missing": 0,
+        "groups_insufficient_sample": 68,
+        "groups_in_breach": 0,
+        "worst": [],
+        "note": "Nhóm có ít quan sát có thể dao động mạnh; đối chiếu số lượng trước khi kết luận."
+      },
+      "note": null,
+      "period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "status": "green",
+      "bad_direction": "below",
+      "anomaly": {
+        "signal_id": "store_rating_low",
+        "signal_version": "3.4.0",
+        "metric_id": "avg_store_rating",
+        "status": "unknown_source",
+        "reason": "complete_source_history_not_certified",
+        "sql_queries": 0
+      },
+      "status_label": "Trong ngưỡng"
+    }
+  ],
+  "counts": {
+    "red": 1,
+    "yellow": 0,
+    "green": 5,
+    "no_data": 0,
+    "insufficient_sample": 0,
+    "not_applicable": 0,
+    "execution_error": 0
+  },
+  "scope": [
+    {
+      "dimension": "city",
+      "operator": "in",
+      "value": [
+        "Hồ Chí Minh"
+      ]
+    }
+  ],
+  "time": {
+    "mode": "custom",
+    "start": "2026-09-01",
+    "end": "2026-09-30",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "scope_label": "Tỉnh/thành trong dữ liệu: Hồ Chí Minh",
+  "resolved_time": {
+    "mode": "custom",
+    "start": "2026-09-01",
+    "end": "2026-09-30",
+    "end_exclusive": "2026-10-01",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "composite_score": null,
+  "threshold_policy": "Ngưỡng là mặc định hệ thống, có thể cấu hình trong danh mục; không phải chuẩn nghiệp vụ phổ quát.",
+  "provider_calls": 0,
+  "sql_queries": 12,
+  "anomaly_sql_queries": 0,
+  "elapsed_ms": 3986.01
+}

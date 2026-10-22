@@ -1,0 +1,813 @@
+{
+  "semantic_intent": {
+    "decision": "analyze",
+    "requirements": [
+      {
+        "id": "req_1",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": null,
+        "lens_hint": null,
+        "supporting_for": null,
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "city"
+        ],
+        "analysis_kind": "ranking",
+        "filters": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "amount": null,
+          "unit": null
+        },
+        "comparison_time": null,
+        "ranking": {
+          "direction": "bottom",
+          "limit": 5,
+          "metric_id": "revenue",
+          "per_group": []
+        },
+        "granularity": null,
+        "derived_features": [
+          "leader",
+          "selected_total",
+          "top_gap"
+        ],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "req_2",
+        "goal": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026; phân tích chi nhánh và phương thức thanh toán chỉ trong 5 tỉnh này",
+        "domain_id": "store",
+        "lens_hint": "store",
+        "supporting_for": null,
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "city",
+          "payment_method",
+          "store"
+        ],
+        "analysis_kind": "ranking",
+        "filters": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "amount": null,
+          "unit": null
+        },
+        "comparison_time": null,
+        "ranking": {
+          "direction": "bottom",
+          "limit": 5,
+          "metric_id": "revenue",
+          "per_group": []
+        },
+        "granularity": null,
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_37a7055d8e4b781595bd6d95",
+        "goal": "Diễn biến trong phạm vi đã chọn",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "supporting_for": "req_1",
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [],
+        "analysis_kind": "trend",
+        "filters": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "amount": null,
+          "unit": null
+        },
+        "comparison_time": null,
+        "ranking": null,
+        "granularity": "day",
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_4db85f68c01a84256a059ad5",
+        "goal": "Tương tác hai chiều",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "supporting_for": "req_2",
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "city",
+          "payment_method"
+        ],
+        "analysis_kind": "cross_tab",
+        "filters": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "amount": null,
+          "unit": null
+        },
+        "comparison_time": null,
+        "ranking": null,
+        "granularity": null,
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_af0af8613abb65f86e0420b2",
+        "goal": "Tương tác hai chiều",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "supporting_for": "req_1",
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "city",
+          "order_type"
+        ],
+        "analysis_kind": "cross_tab",
+        "filters": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "amount": null,
+          "unit": null
+        },
+        "comparison_time": null,
+        "ranking": null,
+        "granularity": null,
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_e00b502792bbb21f775105cf",
+        "goal": "Diễn biến trong phạm vi đã chọn",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "supporting_for": "req_2",
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "store_type"
+        ],
+        "analysis_kind": "trend",
+        "filters": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "amount": null,
+          "unit": null
+        },
+        "comparison_time": null,
+        "ranking": null,
+        "granularity": "day",
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      }
+    ],
+    "clarification": null
+  },
+  "analytical_queries": [
+    {
+      "id": "q_06e381843f6aa0d238c46ff9",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "city",
+        "payment_method",
+        "store"
+      ],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "requested",
+      "parent_id": null,
+      "purpose": "answer",
+      "lens_id": null,
+      "population_relation": "same",
+      "cohort_query_id": null,
+      "cohort_scope_query_id": null,
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "ranking",
+      "ranking": {
+        "metric": "revenue",
+        "direction": "ASC",
+        "top_n": 5,
+        "per_group": []
+      },
+      "granularity": "day"
+    },
+    {
+      "id": "q_769c8994e929285eac64a45f",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "city"
+      ],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "requested",
+      "parent_id": null,
+      "purpose": "answer",
+      "lens_id": "sales_overview",
+      "population_relation": "same",
+      "cohort_query_id": null,
+      "cohort_scope_query_id": null,
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "ranking",
+      "ranking": {
+        "metric": "revenue",
+        "direction": "ASC",
+        "top_n": 5,
+        "per_group": []
+      },
+      "granularity": "day"
+    },
+    {
+      "id": "q_380fdcb57b2691ba3086fb93",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "store_type"
+      ],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_06e381843f6aa0d238c46ff9",
+      "purpose": "context",
+      "lens_id": null,
+      "population_relation": "related",
+      "cohort_query_id": null,
+      "cohort_scope_query_id": "q_06e381843f6aa0d238c46ff9",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "trend",
+      "ranking": null,
+      "granularity": "day"
+    },
+    {
+      "id": "q_af27c95380796d3a6603bc2f",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "city",
+        "order_type"
+      ],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_769c8994e929285eac64a45f",
+      "purpose": "context",
+      "lens_id": null,
+      "population_relation": "related",
+      "cohort_query_id": null,
+      "cohort_scope_query_id": "q_769c8994e929285eac64a45f",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "cross_tab",
+      "ranking": null,
+      "granularity": "day"
+    },
+    {
+      "id": "q_c551db73f57b79989bb47245",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_769c8994e929285eac64a45f",
+      "purpose": "context",
+      "lens_id": "channel_mix",
+      "population_relation": "related",
+      "cohort_query_id": null,
+      "cohort_scope_query_id": "q_769c8994e929285eac64a45f",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "trend",
+      "ranking": null,
+      "granularity": "day"
+    },
+    {
+      "id": "q_da6425777a7700d7c51991f0",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "city",
+        "payment_method"
+      ],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_06e381843f6aa0d238c46ff9",
+      "purpose": "context",
+      "lens_id": null,
+      "population_relation": "related",
+      "cohort_query_id": null,
+      "cohort_scope_query_id": "q_06e381843f6aa0d238c46ff9",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "cross_tab",
+      "ranking": null,
+      "granularity": "day"
+    }
+  ],
+  "resolved_requirement_coverage": [
+    {
+      "requirement_id": "req_1",
+      "state": "RESOLVED",
+      "reason": null,
+      "operation_ids": [
+        "q_769c8994e929285eac64a45f"
+      ],
+      "derived_features": [
+        "leader",
+        "selected_total",
+        "top_gap"
+      ],
+      "goal": "Phân tích yêu cầu",
+      "supporting_for": null,
+      "views": [
+        {
+          "kind": "ranking",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "required": true,
+          "id": null,
+          "operation_ids": [],
+          "transform": null
+        }
+      ]
+    },
+    {
+      "requirement_id": "req_2",
+      "state": "RESOLVED",
+      "reason": null,
+      "operation_ids": [
+        "q_06e381843f6aa0d238c46ff9"
+      ],
+      "derived_features": [],
+      "goal": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026; phân tích chi nhánh và phương thức thanh toán chỉ trong 5 tỉnh này",
+      "supporting_for": null,
+      "views": [
+        {
+          "kind": "ranking",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city",
+            "payment_method",
+            "store"
+          ],
+          "required": true,
+          "id": null,
+          "operation_ids": [],
+          "transform": null
+        }
+      ]
+    },
+    {
+      "requirement_id": "support_37a7055d8e4b781595bd6d95",
+      "state": "RESOLVED",
+      "reason": null,
+      "operation_ids": [
+        "q_c551db73f57b79989bb47245"
+      ],
+      "derived_features": [],
+      "goal": "Diễn biến trong phạm vi đã chọn",
+      "supporting_for": "req_1",
+      "views": [
+        {
+          "kind": "time_series",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "required": false,
+          "id": null,
+          "operation_ids": [],
+          "transform": null
+        }
+      ],
+      "lenses": [
+        {
+          "id": "trend@req_1",
+          "kind": "trend",
+          "shape": "support_37a7055d8e4b781595bd6d95",
+          "shape_key": [
+            "trend",
+            []
+          ],
+          "metrics": [
+            "revenue"
+          ],
+          "granularity": "day",
+          "question": "Chỉ số biến động thế nào theo thời gian?",
+          "show": [
+            {
+              "form": "line",
+              "metrics": [
+                "revenue"
+              ]
+            }
+          ],
+          "base_id": "trend",
+          "role": "core",
+          "position": 0,
+          "rank": [
+            0,
+            0
+          ],
+          "requirement_id": "req_1"
+        }
+      ]
+    },
+    {
+      "requirement_id": "support_4db85f68c01a84256a059ad5",
+      "state": "RESOLVED",
+      "reason": null,
+      "operation_ids": [
+        "q_da6425777a7700d7c51991f0"
+      ],
+      "derived_features": [],
+      "goal": "Tương tác hai chiều",
+      "supporting_for": "req_2",
+      "views": [
+        {
+          "kind": "grouped",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city",
+            "payment_method"
+          ],
+          "required": false,
+          "id": null,
+          "operation_ids": [],
+          "transform": null
+        }
+      ],
+      "lenses": [
+        {
+          "id": "cross_tab:payment_method:city@req_2",
+          "kind": "cross_tab",
+          "shape": "support_4db85f68c01a84256a059ad5",
+          "shape_key": [
+            "cross_tab",
+            [
+              "payment_method",
+              "city"
+            ]
+          ],
+          "metrics": [
+            "revenue"
+          ],
+          "axes": [
+            "payment_method",
+            "city"
+          ],
+          "question": "Doanh thu thay đổi thế nào khi kết hợp phương thức thanh toán và tỉnh/thành trong dữ liệu?",
+          "show": [
+            {
+              "form": "heatmap",
+              "metrics": [
+                "revenue"
+              ]
+            }
+          ],
+          "base_id": "cross_tab:payment_method:city",
+          "role": "diagnostic",
+          "position": 0,
+          "rank": [
+            1,
+            0
+          ],
+          "requirement_id": "req_2"
+        }
+      ]
+    },
+    {
+      "requirement_id": "support_af0af8613abb65f86e0420b2",
+      "state": "RESOLVED",
+      "reason": null,
+      "operation_ids": [
+        "q_af27c95380796d3a6603bc2f"
+      ],
+      "derived_features": [],
+      "goal": "Tương tác hai chiều",
+      "supporting_for": "req_1",
+      "views": [
+        {
+          "kind": "grouped",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city",
+            "order_type"
+          ],
+          "required": false,
+          "id": null,
+          "operation_ids": [],
+          "transform": null
+        }
+      ],
+      "lenses": [
+        {
+          "id": "cross_tab:city:order_type@req_1",
+          "kind": "cross_tab",
+          "shape": "support_af0af8613abb65f86e0420b2",
+          "shape_key": [
+            "cross_tab",
+            [
+              "city",
+              "order_type"
+            ]
+          ],
+          "metrics": [
+            "revenue"
+          ],
+          "axes": [
+            "city",
+            "order_type"
+          ],
+          "question": "Doanh thu thay đổi thế nào khi kết hợp tỉnh/thành trong dữ liệu và hình thức nhận hàng?",
+          "show": [
+            {
+              "form": "heatmap",
+              "metrics": [
+                "revenue"
+              ]
+            }
+          ],
+          "base_id": "cross_tab:city:order_type",
+          "role": "diagnostic",
+          "position": 0,
+          "rank": [
+            1,
+            0
+          ],
+          "requirement_id": "req_1"
+        }
+      ]
+    },
+    {
+      "requirement_id": "support_e00b502792bbb21f775105cf",
+      "state": "RESOLVED",
+      "reason": null,
+      "operation_ids": [
+        "q_380fdcb57b2691ba3086fb93"
+      ],
+      "derived_features": [],
+      "goal": "Diễn biến trong phạm vi đã chọn",
+      "supporting_for": "req_2",
+      "views": [
+        {
+          "kind": "time_series",
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "store_type"
+          ],
+          "required": false,
+          "id": null,
+          "operation_ids": [],
+          "transform": null
+        }
+      ],
+      "lenses": [
+        {
+          "id": "segmented_trend:store_type@req_2",
+          "kind": "segmented_trend",
+          "shape": "support_e00b502792bbb21f775105cf",
+          "shape_key": [
+            "trend",
+            [
+              "store_type"
+            ]
+          ],
+          "metrics": [
+            "revenue"
+          ],
+          "axes": [
+            "store_type"
+          ],
+          "granularity": "day",
+          "question": "Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?",
+          "show": [
+            {
+              "form": "multi_line",
+              "metrics": [
+                "revenue"
+              ]
+            }
+          ],
+          "base_id": "segmented_trend:store_type",
+          "role": "diagnostic",
+          "position": 1,
+          "rank": [
+            1,
+            1
+          ],
+          "requirement_id": "req_2"
+        }
+      ]
+    }
+  ],
+  "normalizations": [
+    {
+      "requirement_id": "req_1",
+      "field": "derived_features",
+      "rule": "catalog_semantic_normalization",
+      "value": [
+        "leader",
+        "selected_total",
+        "top_gap"
+      ]
+    },
+    {
+      "requirement_id": "req_2",
+      "field": "analysis_kind",
+      "rule": "catalog_semantic_normalization",
+      "value": "ranking"
+    },
+    {
+      "requirement_id": "req_2",
+      "field": "dimension_ids",
+      "rule": "catalog_semantic_normalization",
+      "value": [
+        "city",
+        "payment_method",
+        "store"
+      ]
+    }
+  ]
+}

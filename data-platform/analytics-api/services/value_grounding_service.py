@@ -3,10 +3,21 @@
 from __future__ import annotations
 import re
 from difflib import SequenceMatcher
+from functools import lru_cache
 from services.analysis_catalog import normalize, AnalysisError
 
 
 def value_text(value):
+    # Catalog aliases are re-normalized on every request; strings are pure inputs.
+    return _value_text(value) if isinstance(value, str) else _normalized_text(value)
+
+
+@lru_cache(maxsize=65536)
+def _value_text(value):
+    return _normalized_text(value)
+
+
+def _normalized_text(value):
     return re.sub(r"[^\w]+", " ", normalize(value).replace("_", " ")).strip()
 
 
@@ -178,6 +189,12 @@ def canonical_filter(catalog, dimension, value, prompt, evidence, lookup=None):
         )
     )
     values = dimension_values(catalog, dimension)
+    grounding = d.get("value_grounding", {})
+    if literal and lookup and values and grounding.get("lookup_fallback"):
+        found = list(lookup(d["table"], d["column"], str(value), limit=8))
+        exact = [v for v in found if value_text(v) == value_text(value)]
+        if len(exact) == 1:
+            return exact[0]
     if values or d.get("enum"):
         # Being present in the sentence is insufficient to invent a DB enum.
         raise AnalysisError(
@@ -205,3 +222,9 @@ def canonical_filter(catalog, dimension, value, prompt, evidence, lookup=None):
     raise AnalysisError(
         "filter_value_unknown", f"Cần xác nhận giá trị cho {d['business_name']}."
     )
+def selected_scope_lookup_allowance(filters, base=4):
+    """Same bounded allowance for explicitly selected members at intake and execution."""
+    return base + min(16, sum(min(8, len(f['value']) if isinstance(f['value'], list) else 1)
+                              for f in filters))
+
+

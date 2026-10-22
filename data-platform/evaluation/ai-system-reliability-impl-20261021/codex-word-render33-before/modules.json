@@ -1,0 +1,31 @@
+[
+  {
+    "module": "tests.test_word_render_20261022",
+    "returncode": 1,
+    "seconds": 16.355,
+    "tests": 14,
+    "failures": 5,
+    "errors": 1,
+    "skipped": 0,
+    "failed_ids": [
+      "tests.test_word_render_20261022.WordNarrativeTests.test_unplottable_chart_has_explicit_table_without_fabricated_zero",
+      "tests.test_word_render_20261022.WordPlotTests.test_donut_does_not_drop_tail_and_recompute_wrong_shares",
+      "tests.test_word_render_20261022.WordPlotTests.test_multiline_missing_values_are_not_zero_and_names_are_semantic",
+      "tests.test_word_render_20261022.WordPlotTests.test_negative_bar_is_not_clipped",
+      "tests.test_word_render_20261022.WordPlotTests.test_time_distance_is_not_array_index"
+    ],
+    "error_ids": [
+      "tests.test_word_render_20261022.WordNarrativeTests.test_bottom_chart_metadata_and_conclusion_are_factual"
+    ],
+    "passed_ids": [
+      "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_chart_scope_and_unit_mutations_cannot_be_exported",
+      "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_export_rejects_unverified_claim_even_with_stored_perfect_score",
+      "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_fact_refs_and_conclusion_replay_detect_scope_unit_period_and_prose_mutations",
+      "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_geography_warning_discloses_source_labels_without_scoring_name_heuristics",
+      "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_guided_compare_cards_have_verified_fact_ids_and_mutations_fail",
+      "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_unproved_average_rollups_remain_explicit_whole_scope_benchmarks",
+      "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_word_table_discloses_full_result_count_and_displayed_preview",
+      "tests.test_narrative_scope_20261021.NarrativeScopeTests.test_wrong_finding_scope_is_rejected"
+    ]
+  }
+]

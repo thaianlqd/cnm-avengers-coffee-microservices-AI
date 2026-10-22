@@ -1,0 +1,2950 @@
+{
+  "passed": true,
+  "session_id": "caa3a343-b4e6-4dec-a554-9cae29495a8a",
+  "revision": 1,
+  "charts": [
+    {
+      "id": "visual_1",
+      "title": "Doanh thu theo tỉnh/thành trong dữ liệu — Tỉnh/thành trong dữ liệu: Hồ Chí Minh, Đà Nẵng",
+      "query_id": "q_8fecbd2beff3fe6b78db6938",
+      "plotted_observations": 2,
+      "passed": true
+    },
+    {
+      "id": "visual_2",
+      "title": "Doanh thu theo tháng — Tỉnh/thành trong dữ liệu: Hồ Chí Minh, Đà Nẵng",
+      "query_id": "q_c98f8947ba2877234c4185fc",
+      "plotted_observations": 10,
+      "passed": true
+    },
+    {
+      "id": "visual_4",
+      "title": "Doanh thu theo hình thức nhận hàng — Tỉnh/thành trong dữ liệu: Hồ Chí Minh, Đà Nẵng",
+      "query_id": "q_9eb9b0770e87f2d82aa208d5",
+      "plotted_observations": 3,
+      "passed": true
+    },
+    {
+      "id": "visual_5",
+      "title": "Doanh thu theo tháng, chia theo loại điểm bán — Tỉnh/thành trong dữ liệu: Hồ Chí Minh, Đà Nẵng",
+      "query_id": "q_127b2aa2aef5d24f046cfd2e",
+      "plotted_observations": 30,
+      "passed": true
+    }
+  ],
+  "queries": {
+    "q_8fecbd2beff3fe6b78db6938": {
+      "fields": [
+        "city"
+      ],
+      "rows": 2,
+      "total": 1805747500.0,
+      "all_values_equal": true
+    },
+    "q_127b2aa2aef5d24f046cfd2e": {
+      "fields": [
+        "period",
+        "store_type"
+      ],
+      "rows": 30,
+      "total": 1805747500.0,
+      "all_values_equal": true
+    },
+    "q_9eb9b0770e87f2d82aa208d5": {
+      "fields": [
+        "order_type"
+      ],
+      "rows": 3,
+      "total": 1805747500.0,
+      "all_values_equal": true
+    },
+    "q_c7896bdb0b253959665a4943": {
+      "fields": [
+        "store",
+        "store_id"
+      ],
+      "rows": 501,
+      "total": 1805747500.0,
+      "all_values_equal": true
+    },
+    "q_c98f8947ba2877234c4185fc": {
+      "fields": [
+        "period"
+      ],
+      "rows": 10,
+      "total": 1805747500.0,
+      "all_values_equal": true
+    },
+    "q_e4ccf36e9d2ed967cb3220bd": {
+      "fields": [
+        "payment_method"
+      ],
+      "rows": 4,
+      "total": 1805747500.0,
+      "all_values_equal": true
+    }
+  },
+  "checks": [
+    {
+      "check": "correct immutable report identity",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "independent raw population contains only requested cities",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "city scope retained q_8fecbd2beff3fe6b78db6938",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "all-time retained q_8fecbd2beff3fe6b78db6938",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every grouped key and value equals raw warehouse q_8fecbd2beff3fe6b78db6938",
+      "passed": true,
+      "detail": {
+        "rows": 2,
+        "missing": "set()",
+        "extra": "set()"
+      }
+    },
+    {
+      "check": "total reconciles q_8fecbd2beff3fe6b78db6938",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "city scope retained q_127b2aa2aef5d24f046cfd2e",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "all-time retained q_127b2aa2aef5d24f046cfd2e",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every grouped key and value equals raw warehouse q_127b2aa2aef5d24f046cfd2e",
+      "passed": true,
+      "detail": {
+        "rows": 30,
+        "missing": "set()",
+        "extra": "set()"
+      }
+    },
+    {
+      "check": "total reconciles q_127b2aa2aef5d24f046cfd2e",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "city scope retained q_9eb9b0770e87f2d82aa208d5",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "all-time retained q_9eb9b0770e87f2d82aa208d5",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every grouped key and value equals raw warehouse q_9eb9b0770e87f2d82aa208d5",
+      "passed": true,
+      "detail": {
+        "rows": 3,
+        "missing": "set()",
+        "extra": "set()"
+      }
+    },
+    {
+      "check": "total reconciles q_9eb9b0770e87f2d82aa208d5",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "city scope retained q_c7896bdb0b253959665a4943",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "all-time retained q_c7896bdb0b253959665a4943",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every grouped key and value equals raw warehouse q_c7896bdb0b253959665a4943",
+      "passed": true,
+      "detail": {
+        "rows": 501,
+        "missing": "set()",
+        "extra": "set()"
+      }
+    },
+    {
+      "check": "total reconciles q_c7896bdb0b253959665a4943",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "city scope retained q_c98f8947ba2877234c4185fc",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "all-time retained q_c98f8947ba2877234c4185fc",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every grouped key and value equals raw warehouse q_c98f8947ba2877234c4185fc",
+      "passed": true,
+      "detail": {
+        "rows": 10,
+        "missing": "set()",
+        "extra": "set()"
+      }
+    },
+    {
+      "check": "total reconciles q_c98f8947ba2877234c4185fc",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "city scope retained q_e4ccf36e9d2ed967cb3220bd",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "all-time retained q_e4ccf36e9d2ed967cb3220bd",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every grouped key and value equals raw warehouse q_e4ccf36e9d2ed967cb3220bd",
+      "passed": true,
+      "detail": {
+        "rows": 4,
+        "missing": "set()",
+        "extra": "set()"
+      }
+    },
+    {
+      "check": "total reconciles q_e4ccf36e9d2ed967cb3220bd",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart keeps complete group set visual_1",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every plotted observation matches immutable rows visual_1",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "fact bound to exact raw-reconciled row visual_1",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart fact numeric visual_1",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "fact gap percent visual_1",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart fact numeric visual_1",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every plotted observation matches immutable rows visual_2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "fact change percent visual_2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart fact numeric visual_2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "fact bound to exact raw-reconciled row visual_2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart fact numeric visual_2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart keeps complete group set visual_4",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every plotted observation matches immutable rows visual_4",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "fact bound to exact raw-reconciled row visual_4",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart fact numeric visual_4",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "fact bound to exact raw-reconciled row visual_4",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart fact numeric visual_4",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "every plotted observation matches immutable rows visual_5",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "fact change percent visual_5",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart fact numeric visual_5",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "fact bound to exact raw-reconciled row visual_5",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "chart fact numeric visual_5",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map directory exact store set",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT003",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_RIVERSIDE_D7_146",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_FULBRIGHT_UNIVERSI_1135",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CRESCENT_MALL_703",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_THAI_SON_472",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HOAN_MY_HOSPITAL_T_1192",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SARIMI_SALA_THU_DU_1346",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__ETOWN_216",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_127C_DINH_TIEN_HOA_419",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_175B_CAO_THANG_QUA_882",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TROPICAL_VH_GRAND__1179",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_721_HUYNH_TAN_PHAT_237",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-104",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HCM_DIEN_BIEN_PHU",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_540_CONG_HOA_TAN_B_1269",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_FPT_PLAZA_3_DA_NAN_1310",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-124",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LE_TRUNG_NGHIA_TAN_1305",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SG_CENTRE_168",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_145_QUANG_TRUNG_249",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_KIOSK_VJET_G24_TAN_785",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_DAI_HOC_HUTECH_418",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_57_LE_UC_THO_245",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LUY_BAN_BICH_155",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PICO_201",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PHAM_VAN_NGHI_474",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_ONG_ICH_KHIEM_2_DN_914",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_58E_BACH_DANG_191",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_803_HOANG_SA_796",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HA_HUY_GIAP_D12_1289",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_24_BACH_DANG_DA_NA_1261",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TAN_SON_NHI_154",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_417_DIEN_BIEN_PHU_555",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SAIGON_TRADE_162",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TTC_UNG_VAN_KHIEM_274",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_163_HOANG_HOA_THAM_848",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_GO_AI_LO_BINH_DUON_1349",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__HA_O_CENTROSA_711",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CHUNG_CU_VINH_HOI_740",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-145",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_LE_VAN_VIET_734",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PHAN_XICH_LONG_200",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_KCN_BAU_BANG_DINH__1290",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_72_LE_THUC_HOACH_T_1258",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PEGASUITE_QUAN_8_846",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT001",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_XVNT_DA_NANG_621",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-132",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_KCN_VSIP_2_1259",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THOAI_NGOC_HAU_HCM_631",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SAIGON_PEARL_131",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-116",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_77_HOANG_VAN_THAI__526",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TRADE_CENTER_D10_184",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_BINH_KHIEM_461",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TRA_KHUC_TAN_BINH_865",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BA_HOM_QUAN_6_797",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINHOMES_BA_SON_406",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_160_LE_VAN_VIET_TH_767",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_RICHMOND_CITY_BINH_1268",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BAU_CAT_215",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_46_VO_VAN_TAN_D3_592",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__AI_PHUC_BINH_CHANH_698",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LAC_LONG_QUAN_QUAN_793",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PHAN_VAN_TRI_GO_VA_1195",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SARIMI_SALA_THU_DU_1297",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_UOA_TOWER_D7_586",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THI_NGHE_POST_OFFI_1204",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_INH_CHIEU_157",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__ECO_GREEN_D7_736",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_REE_TOWER_HCM_1366",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PHO_QUANG_195",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_LE_LOI_DANAPEARL_251",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TA_HIEN_THU_UC_866",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LE_THANH_TON_135",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_INDOCHINA_A_NANG_10",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PV_GAS_TOWER_NHA_B_1306",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_76_DUY_TAN_250",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_99_NGO_QUYEN_QUAN__840",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_OPERA_HOUSE_165",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TAN_SON_NHAT_INTER_681",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__891_KHA_VAN_CAN_473",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BOTANICA_2_TAN_BIN_1283",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HCM_LY_TU_TRONG",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_45_LY_CHINH_THANG_409",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HCM_DK",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_GRANDPARK_D_799",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_240_NGUYEN_VAN_LUO_246",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values CN-QUAN7",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_MARINA_CENTRAL_D1_1167",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HUNG_VUONG_D5_712",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_FIDECO_137",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NO_2_TRUONG_THO_TH_1166",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HAN_HAI_NGUYEN_273",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_KCN_MY_PHUOC_2_BEN_1286",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TUNG_THIEN_VUONG_180",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_29_THANG_3_DA_NANG_685",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_IMG_1067_152",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TAN_BINH_POST_OFFI_1219",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__GALLERIA_THU_THIEM_570",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HUNG_VUONG_TRET_174",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_287_LIEN_PHUONG_TH_842",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BEN_VAN_DON_HCM_638",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_402_TRAN_HUNG_AO_B_359",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SG_TOWER_156",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BA_THANG_HAI_179",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PHAN_HUY_ICH_2_TAN_702",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HAI_BA_TRUNG_129",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LY_THUONG_KIET_D11_416",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_S2_02_VH_GRAND_PAR_543",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THU_THIEM_PARK_801",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BITEXCO_167",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_DHSP_KY_THUAT_TPHC_830",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_AB_TOWER_HCM_503",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CVPM_QUANG_TRUNG_H_632",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BOTANICA_203",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_66_NGUYEN_HUE_QUAN_813",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_09_ANG_THUY_TRAM_531",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_962_PHAM_VAN_DONG_542",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_GA_XE_LUA_SAIGON_1169",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HUE_VTV_HUE_759",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-109",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_QUANG_TRUNG_192",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PRIVIA_KHANG_DIEN__1270",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_43_TRUONG_CHINH_D1_834",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_ANH_THU_279",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_ORIGAMI_VH_GRAND_P_1330",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_K_HOME_BINH_DUONG_1299",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_46_BUI_THI_XUAN_453",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LY_THUONG_KIET_HM_421",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HIGHLANDS_TAN_THAN_585",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CANTAVIL_205",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CHO_LON_POST_OFFIC_1147",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_IMG_1165_151",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_55_VUON_LAI_447",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LIBERTY_169",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_173_DANG_VAN_BI_423",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CENTRAL_RETAIL_PHU_1225",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TSN_AIRPORT_K4_661",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_L16_HIM_LAM_147",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_14B1_NGO_TAT_TO_HC_1371",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TSN_T3_AIRPORT_ARR_1294",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_NGUYEN_DUY__211",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BV_NHI_DONG_TPHCM_622",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-140",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PEARL_PLAZA_130",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_301_NGO_GIA_TU_D10_1307",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_606_DIEN_BIEN_PHU_814",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_VTV8_DA_NANG_387",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PVOIL_CHXD_SO_61_T_857",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_33_LE_VAN_KHUONG_D_457",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_HUNG_VUONG_11",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_NGUYEN_HUU_THO_8",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_DU_177",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_VAN_TANG_TH_662",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_MONARCHY_DA_NANG_589",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PHAM_INH_HO_513",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_1800_NGUYEN_ANH_TH_789",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_URBAN_HILL_D7_358",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_AIRPORT_3",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_LOTTE_13",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_2_THANG_9_DA_NANG_863",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_132A_NGUYEN_THAI_H_324",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT007",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CITI_GROUND_187",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TO_KY_2_D12_687",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VO_VAN_NGAN_THU_DU_1162",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HUYNH_TAN_PHAT_NHA_1150",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THE_VISTA_AN_PHU_856",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NO_1_BINH_TAN_1136",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_206_CAO_LO_488",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BIG_C_AN_LAC_175",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HUONG_LO_3_BINH_TA_1196",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_THI_TU_BINH_1263",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-101",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_184_LAM_VAN_BEN_239",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_631_LE_DUC_THO_GO__1149",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_203_ONG_ICH_KHIEM__388",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BAO_MINH_TOWER_HCM_202",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values DN_VTV8_BACH_DANG",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LEXINGTON_322",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BEN_XE_MIEN_ONG_CU_868",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_RIVIERA_POINT_D7_411",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PARC_MALL_D8_815",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_18E_PHAN_VAN_TRI_G_1250",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SATRA_3_2_181",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_RMIT_140",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_425_NGUYEN_OANH_GO_1327",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TRAN_THI_NAM_HCM_1364",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_659_XVNT_BINH_THAN_828",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_MAC_INH_CHI_158",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_830_TRUONG_SA_D3_1287",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_236_TO_NGOC_VAN_466",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_EMART_PHAN_VAN_TRI_1228",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VIETTEL_CMT8_150",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_4_TO_KY_D12_518",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_JOY_CITYPOINT_210",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BIG_C_CITYLAND_143",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_DINH_DOC_LAP_2_404",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HOA_HONG_320",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CENTRAL_GARDEN_D1_1212",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGO_UC_KE_136",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_VIP_AIRPORT_7",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LE_TRONG_TAN_468",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THISO_MALL_THU_THI_569",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_8G_LAM_VAN_BEN_QUA_832",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_384_HOANG_DIEU_HCM_1329",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_DIAMOND_134",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_26_DONG_KHOI_D1_1288",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VH_GRAND_PARK_2_629",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_GOLDEN_KING_D7_745",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TA_QUANG_BUU_508",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TRUONG_SA_HCM_741",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THE_MANOR_132",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-100",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_FPT_COMPLEX_DA_NAN_802",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CRESCENT_MALL_144",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PHAN_VAN_HON_HOC_M_1215",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_506_TRUONG_CHINH_276",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PVOIL_CHXD_SO_4_TH_859",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_41_TRAN_NAO_271",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_119_HAM_NGHI_405",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LE_THI_HA_HOC_MON_663",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SUN_VILLAGE_417",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_323_DO_XUAN_HOP_412",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-129",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_26_LIEU_BINH_HUONG_1260",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TOA_NHA_CIENCO_4_323",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_366_LE_VAN_QUOI_HC_639",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_AEON_TAN_PHU_2F_HC_1352",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HOANG_MINH_GIAM_PH_1218",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THE_CREST_THU_THIE_853",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-148",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PARKSON_LE_THANH_T_176",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HONG_BANG_UNIVERSI_1326",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HUNG_VUONG_FOOD_CO_173",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THE_SUN_AVENUE_408",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TINH_LO_8_CU_CHI_883",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HCM_TON_THAT_THIEP",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_194_NGUYEN_TAT_THA_496",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CELADON_TAN_PHU_855",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_25_NO_TRANG_LONG_515",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_399_PHAN_HUY_ICH_282",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VICTORY_HOTEL_D3_1298",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SAIGON_SOUTH_141",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values DN_INDOCHINA_RIVERSIDE",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_214_TRAN_PHU_248",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PVOIL_CHXD_SO_5_TH_860",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_33_LE_QUY_DON_D3_442",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_3_THANG_2_Q_798",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_415_LE_DAI_HANH_D1_791",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_RAC_XIEC_PHU_THO_H_1372",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LANH_BINH_THANG_D1_415",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_THU_UC_206",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LUONG_KHAI_SIEU_TH_900",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SARICA_SALA_487",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_270_VO_THI_SAU_QUA_901",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_416_PHAM_VAN_ONG_B_719",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THE_ORIGAMI_VH_GRA_1369",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LEXINGTON_D2_407",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NO_1_BINH_CHANH_683",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SUNRISE_CITY_VIEW__311",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_28_TRAN_PHU_VT_1370",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SALA_209",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_MUONG_THANH_SAI_GO_1197",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PVOIL_CHXD_BINH_TH_861",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HOANG_DIEU_2_207",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PHU_THUAN_POST_OFF_1296",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_110_HAU_GIANG_QUAN_835",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HCSHCM0201_FRIENDS_552",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_158_PHAM_VAN_CHIEU_420",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_G4_G8_TRUONG_SON_413",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_AZURA_A_NANG_386",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LOTTE_MART_GO_VAP_190",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_433_LE_DUC_THO_GO__551",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_RIVERSIDE_COMPLEX__881",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_2B_LE_DUAN_312",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_1215_BA_THANG_HAI__812",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_99_QUACH_DIEU_HCM_1363",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_312_IEN_BIEN_PHU_H_742",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_827_AU_CO_TAN_PHU_1256",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_225_NGUYEN_INH_CHI_233",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_VTV8_DA_NANG_2_862",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HMC_TOWER_D1_1222",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_B3_178",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_213_HOANG_VAN_THU_618",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_1180_QUANG_TRUNG_284",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-146",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_277_TON_DUC_THANG__392",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SENSE_CITY_THU_UC_243",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_43_PHAN_DANG_LUU_772",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_62_BACH_ANG_HOI_AN_1368",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_261_TRAN_PHU_D5_829",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_GO_MALL_DA_NANG_1233",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_63_PHAM_VAN_HAI_HC_1331",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__117_NGUYEN_VAN_QUA_308",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_179_NUI_THANH_244",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_AKARI_CITY_BINH_TA_744",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT005",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_166_NGUYEN_CONG_TR_448",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_DBP_14",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HIEP_BINH_THU_UC_754",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_FAIFO_LANE_THU_THI_590",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_255_LUY_BAN_BICH_456",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_PHAN_CHAU_TRINH_DN_389",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_359A_LE_QUANG_INH_314",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__NGUYEN_UC_CANH_D7_725",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_AEON_BINH_TAN_172",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_97_UNG_VAN_KHIEM_774",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_IMG_1196_171",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_NESTA_HOTEL_DA_NAN_581",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CENTRAL_MALL_BINH__254",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VH_GRAND_PARK_D9_L_1308",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_VINCOM_DA_NANG_383",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CENTRAL_POINT_198",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SAIGON_PAVILLON_163",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_THI_DINH_HC_511",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT004",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT008",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT009",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_IMG_2306_183",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CHUNG_CU_BO_CONG_A_647",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NKKN_170",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_D9_TAN_PHU_704",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_TRONG_TUYEN_280",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LE_VAN_SY_196",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TSN_T3_AIRPORT_DEP_1295",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_DNG_AIRPORT_ARRIVA_393",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_26A_HOANG_VIET_HCM_422",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_ANG_THUC_VINH_HOC__753",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_SAIGONRES_189",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_601_CMT8_272",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_90_CMT8_161",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_957_NG_TAT_THANH_D_876",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_123_HOANG_HOA_THAM_588",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_LE_VAN_VIET_204",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_686_TRUONG_CHINH_T_1285",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_377_TAN_KY_TAN_QUY_440",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_KIOSK_4",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HIGHLANDS_ROASTERY_1336",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__GREEN_RIVER_D8_574",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LE_THI_RIENG_D12_1227",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_THI_THAP_QU_831",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__COOPXTRA_LINH_TRUN_608",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_AEON_MALL_A_NANG_1344",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_PVOIL_CHXD_SO_7_TH_858",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_NGO_VAN_SO_DNG_391",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_9_ANG_THUY_TRAM_247",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SO_7_BINH_TAN_153",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__MEGA_MARKET_DA_NAN_572",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_BA_NA_HILL_DA_NANG_913",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CRESCENT_RESIDENCE_507",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-135",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SADORA_THU_THIEM_823",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LONG_TOWER_BINH_TH_1138",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VNG_CAMPUS_D7_355",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_180_THACH_LAM_235",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TOPS_MARKET_AU_CO_550",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BV_DH_Y_DUOC_TPHCM_1282",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__170_INH_BO_LINH_540",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_85_NO_3_BINH_TAN_800",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HUE_GO_MALL_HUE_464",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_WEST_GATE_BINH_CHA_1284",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__230_NGUYEN_DUY_TRI_491",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__HISTORICAL_MUSEUM__1170",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SATRA_MALL_QUAN_6_847",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values CN-BINH-THANH",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_331_LE_VAN_VIET_214",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BV_DH_Y_DUOC_TPHCM_1281",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_DHA_QUAN_7_884",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SONG_HANH_THU_UC_838",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_45_LY_CHINH_THANG_281",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values CN-QUAN1",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_NGUYEN_KIM_2",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_DUONG_BA_TRAC_QUAN_811",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TRAN_QUANG_KHAI_160",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_HOANG_ANH_5",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT002",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LANDMARK_4_BINH_TH_843",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_MEGA_MALL_DA_NANG_1232",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_533_NGUYEN_TRI_PHU_790",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_105_DOC_LAP_TAN_PH_576",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CENTRAL_MALL_CU_CH_275",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_GARDEN_PLAZA_138",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_KENH_TAN_HOA_TAN_P_773",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_49B_THAO_IEN_THU_U_787",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_565_TINH_LO_10_553",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CHUNG_CU_PHU_MY_HC_1365",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_AEON_TAN_PHU_277",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__195_TRUNG_SON_351",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_VO_NGUYEN_GIAP_DA__1224",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SAIGON_ROYAL_410",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_654_HAI_BA_TRUNG_H_1301",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_D23_CONG_HOA_TAN_B_1292",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_IMG_7392_182",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_284_HOA_BINH_TAN_P_666",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_THE_EMPORIUM_QUAN__839",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_398_NGUYEN_XI_BINH_836",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SAN_BAY_TAN_SON_NH_188",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SARI_TOWN_SALA_690",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_DUONG_35_CL_CAT_LA_1264",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HONG_LAC_TAN_BINH_841",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HUTECH_D9_354",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_249_HOANG_VAN_THU__899",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NOWZONE_HCM_743",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_DRAGON_HILL_1_NHA__525",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_MAXI_3_2_148",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SG_MALL_194",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_H_ZONE_NGUYEN_HUU__1367",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LUCKY_PALACE_D6_1293",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BEN_XE_MIEN_TAY_455",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_NAM_LONG_145",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TEN_LUA_HCM_603",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_D5_BINH_THANH_1348",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HUNG_VUONG_PLAZA_D_1291",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SUNWAH_PEARL_826",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HUY_CAN_THU_DUC_HC_564",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_140_TRUONG_CHINH_T_898",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CENTRAL_PREMIUM_QU_854",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_82_NG_CHI_THANH_D1_414",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT006",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_SUOI_TIEN_HCM_1353",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_HOAN_MY_DA_NANG_1172",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_384_HOANG_DIEU_HCM_1347",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_338_NG_VAN_LINH_DN_390",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_GO_VAP_193",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_343_BEN_BINH_DONG__664",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_925_TAN_KY_TAN_QUY_609",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_134_TA_UYEN_230",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_KINH_DUONG_VUONG_D_775",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_VINCOM_A_NANG_530",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_NGUYEN_TAT_THANH_D_565",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_HIGHLANDS_COFFEE_1220",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CMC_SPACE_D7_816",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VTI_LIC_NGUYEN_CO__1251",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_972_NGUYEN_VAN_QUA_1328",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_71_LY_TU_TRONG_492",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_IMG_1676_139",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_KCN_MY_PHUOC_3_BEN_1223",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_GATEWAY_795",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_MAXI_CONG_HOA_197",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_210_NGUYEN_TRAI_HC_403",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-103",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CT_LAU_4_186",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_270C_BACH_DANG_HCM_554",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_ANH_THU_D12_686",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_IMG_1010_232",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__MISA_TOWER_DA_NANG_845",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values CN-THU-DUC",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-117",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__287_AU_CO_317",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BAMBOO_AIRWAYS_PHU_786",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_INTL_AIRPORT_6",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-105",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LE_VAN_THO_GO_VAP_701",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_288_THONG_NHAT_485",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_BACH_DANG_1",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_MUONG_THANH_DA_NAN_1206",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NEW_CITY_213",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-118",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KVT010",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_425_NGUYEN_OANH_HC_1334",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VINCOM_THAO_IEN_208",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_9A_KY_DONG_D3_1176",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_CELIA_NESTA_DA_NAN_1189",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values CN-BINH-TAN",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_252_LY_THUONG_KIET_1345",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_FLORA_THU_UC_365",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_QUOC_LO_13_THUDUC_623",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_COOP_LY_THUONG_KIE_557",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BEN_BACH_ANG_810",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_517_TRAN_HUNG_AO_489",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_35_THANG_LONG_TAN__454",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_TRAN_HUNG_AO_159",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__NGUYEN_XI_318",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_ONEHUB_THU_UC_885",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BEN_BACH_DANG_D1_1214",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_XUAN_THUY_212",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_CITY_MUSEUM_164",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values DN_NGUYEN_VAN_THOAI",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_AI_HOC_SU_PHAM_DNG_384",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_48_LE_THI_CHO_D7_1137",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_BA_NA_HILL_2_DA_NA_1173",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_BITEXCO_D1_1257",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_VIVO_CITY_142",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_TRI_PHUONG__1241",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_VAN_TROI_HC_729",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_185A_PHAN_CHAU_TRI_532",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_NGUYEN_KIEM_PHU_NH_837",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_1B_PHO_QUANG_490",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__TOA_NHA_SAI_GON_GI_321",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_310_CAY_TRAM_283",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-149",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__95_NGUYEN_VAN_THOA_385",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LUMIERE_RIVERSIDE__827",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_KHONG__TRUNG_MY_TAY_278",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_LAKAI_149",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_359_KINH_DUONG_VUO_755",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_DN_THAIGRAND_DA_NANG_1255",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values KSK-121",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map store values HC_HCM_IMG_1005_133",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map full summary raw sums and correct AOV denominator",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "map valid coordinate count",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "visible KPI strip amounts belong to two-city data",
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "check_count": 553,
+  "facts_checked": 8,
+  "city_revenue": {
+    "Đà Nẵng": 250088000.0,
+    "Hồ Chí Minh": 1555659500.0
+  },
+  "total_revenue": 1805747500.0,
+  "monthly_revenue": {
+    "2026-01": 229495000.0,
+    "2026-02": 181013000.0,
+    "2026-03": 181739000.0,
+    "2026-04": 180305000.0,
+    "2026-05": 223796000.0,
+    "2026-06": 205928000.0,
+    "2026-07": 227162000.0,
+    "2026-08": 189511000.0,
+    "2026-09": 178867000.0,
+    "2026-10": 7931500.0
+  },
+  "summary": {
+    "revenue": 1805747500.0,
+    "orders": 16650,
+    "aov": 112901.55683381268,
+    "valid_orders": 15994,
+    "store_count": 501,
+    "active_stores": 501
+  },
+  "coordinates_valid": 486,
+  "snapshot_comparison": {
+    "report_oracle_generations_equal": false,
+    "map_oracle_generations_equal": true,
+    "report_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 639,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 633,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "d96e18d26609238d615ba8b1b17bbf789ad54e86f99e4a1c81a5a8c4d69ca608",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "oracle_epoch": {
+      "status": "observed",
+      "sources": [
+        {
+          "dataset_id": "replica.identity.chi_nhanh",
+          "generation": 641,
+          "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+        },
+        {
+          "dataset_id": "replica.orders.don_hang",
+          "generation": 635,
+          "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+        }
+      ],
+      "fingerprint": "501131cb8d294d70fb5d043314d580a16f846f07bcb9ce004adc93dd7f8c8b3e",
+      "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+    },
+    "interpretation": "All captured grouped values match current independent raw-record oracle. Generation vectors changed after original report; not a same-historical-snapshot assertion."
+  },
+  "presentation_notes": [
+    "The four chart scopes are correct. Type/payment/month/store breakdowns combine the two cities; only the primary chart contrasts city against city.",
+    "KPI strip generic labels obscure context: -21.9% is main-store Jan→Sep change; 6,297,000VND is max individual store revenue, not city total.",
+    "October2026 is incomplete and shown dashed/starred, not evidence of full-month collapse."
+  ]
+}

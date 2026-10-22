@@ -21,10 +21,11 @@ def plan(platform):
     path=platform/'metadata/data_contracts.json'
     document=json.loads(path.read_text())
     contracts=document['datasets']
-    if document['version']!='3.4.0' or len(contracts)!=23:
-        raise ValueError('Explicit 23-source contract review required')
+    # Contract format 3.4.0: 23 reviewed sources, or +26 business-coverage sources (user-approved 20/10/2026).
+    if document['version']!='3.4.0' or len(contracts) not in {23,49}:
+        raise ValueError('Explicit reviewed contract set required')
     targets=sorted({c['target_table'] for c in contracts.values()})
-    if len(targets)!=23:raise ValueError('Distinct target tables required')
+    if len(targets)!=len(contracts):raise ValueError('Distinct target tables required')
     qualified=lambda name:'.'.join(identifier(p) for p in name.split('.'))
     if any(len(name.split('.'))!=2 for name in targets):raise ValueError('Qualified target required')
     schemas=sorted({'analytics','public'}|{name.split('.')[0] for name in targets})

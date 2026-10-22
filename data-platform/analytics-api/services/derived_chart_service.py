@@ -4,6 +4,7 @@ import json
 from collections import defaultdict
 from math import isclose
 from services.insight_service import number
+from services.insight_service import ranking_label, population_scope
 from services.business_labels import dimension_labeler
 
 
@@ -46,12 +47,20 @@ def contribution_charts(artifacts, evidence):
         if len(rows) > 100:
             rows = sorted(rows, key=lambda r:(-r['numerator'], r['label']))[:20]
         label=a.grounded.metrics[metric]['business_name']
-        selection='display_subset' if len(rows)<population_count else 'Top N' if a.plan.ranking else 'limited' if a.plan.explicit_limit else 'complete'
-        suffix=f" · Top {a.plan.ranking.top_n}" if a.plan.ranking else ''
+        selection='display_subset' if len(rows)<population_count else ('Bottom N' if a.plan.ranking.direction=='ASC' else 'Top N') if a.plan.ranking else 'limited' if a.plan.explicit_limit else 'complete'
+        suffix=" · "+ranking_label(a.plan.ranking) if a.plan.ranking else ''
         if partition:suffix+=' · '+' / '.join(str(v) for k,v in partition)
         identity=json.dumps([a.signature,denominator.signature,metric,'contribution_share',partition],sort_keys=True,default=str)
         complete_composition = selection=='complete' and 2<=len(rows)<=8 and isclose(sum(r['value'] for r in rows),100,abs_tol=1e-8)
-        output.append(dict(chart_type='donut' if complete_composition else 'horizontal_bar',chart_type_label='Tỷ trọng trong toàn phạm vi',
+        scope,cohort=population_scope(a,artifacts)
+        if scope=='ranked_cohort':suffix+=f' · trong {cohort}'
+        elif scope=='scope_benchmark':suffix+=f' · toàn phạm vi (không riêng {cohort})'
+        output.append(dict(chart_type='donut' if complete_composition else 'horizontal_bar',
+            chart_type_label=f'Tỷ trọng trong {cohort}' if scope=='ranked_cohort' else 'Tỷ trọng trong toàn phạm vi',
+            population_scope=scope,cohort_label=cohort,
+            **({'scope_note':f'Chỉ tính trên {cohort} đối tượng của xếp hạng chính.'} if scope=='ranked_cohort' else
+               {'scope_note':f'Số liệu của toàn bộ phạm vi đã chọn, không chỉ {cohort} đối tượng được xếp hạng; dùng làm bối cảnh so sánh.'}
+               if scope=='scope_benchmark' else {}),
             title='Tỷ trọng '+label.lower()+suffix,metric=metric,metrics=[metric],unit='%',
             query_id=ref,scope_ref=ref,x_field=visible[0],x_label=a.grounded.dimensions[visible[0]]['business_name'],series_field=None,
             role=a.query.role,priority=70,purpose='distribution',selection=selection,layout='standard',

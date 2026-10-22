@@ -117,7 +117,12 @@ class CancellationDepthTests(DepthReportMixin, f.unittest.TestCase):
 
     def test_pinned_store_axis_is_not_segmented_and_other_axes_fill_core(self):
         req = self.req(); req['filters'] = req['filters'] + [dict(dimension='store', operator='eq', value='Quán Tân Định')]
-        _, _, report = self.report(req, 'tỷ lệ hủy đơn tháng 09/2026 tại Quán Tân Định Hồ Chí Minh', rich_orders_data(), analysis_depth='focused')
+        # This tests the pinned cohort AFTER the scripted interpretation. Its
+        # rich fixture name is deliberately absent from the intake metadata;
+        # cache/authorized lookup is qualified separately in test_input_integrity.
+        from tests.gate_fixtures import interpreted_input
+        with interpreted_input():
+            _, _, report = self.report(req, 'tỷ lệ hủy đơn tháng 09/2026 tại Quán Tân Định Hồ Chí Minh', rich_orders_data(), analysis_depth='focused')
         self.assertFalse(any(c.get('x_field') in {'store', 'city'} for c in report['charts']))
         self.assertGreaterEqual(len(report['charts']), 4)
         for chart in report['charts']:
@@ -197,11 +202,23 @@ class GenericFamilyTests(DepthReportMixin, f.unittest.TestCase):
         self.assert_relevant(r, {'stock_quantity'})
         self.assertGreaterEqual(len(r['charts']), 4)
 
-    def test_ranking_question_keeps_its_top_n_and_adds_full_population_lenses(self):
+    def test_ranking_question_keeps_its_top_n_and_labels_full_population_lenses(self):
+        # PLAN 21/10 I01/I09: whole-population lenses of a ranked cohort carry their own label.
         r = self.run_req('Top 5 món doanh thu cao nhất tháng 9 năm 2026', 'deep', domain_id='products', metric_ids=['product_revenue'],
                          dimension_ids=['product'], analysis_kind='ranking', ranking={'limit': 5, 'metric_id': 'product_revenue'})
         top = [c for c in r['charts'] if c.get('selection') == 'Top N']
         self.assertTrue(top)
+        ranking = [q for q in r['analytical_queries'] if q['operation'] == 'ranking']
+        ids = {x['id'] for x in ranking}
+        for c in r['charts']:
+            q = next(q for q in r['analytical_queries'] if q['id'] == c['query_id'])
+            if q.get('cohort_scope_query_id') in ids:
+                self.assertEqual(c.get('population_scope'), 'ranked_cohort', c['title'])
+                self.assertIn('trong Top 5', c['title'])
+            elif q['id'] not in ids and q.get('cohort_query_id') not in ids:
+                # Whole-scope lenses are labelled benchmarks, never presented as the Top 5 itself.
+                self.assertEqual(c.get('population_scope'), 'scope_benchmark', c['title'])
+                self.assertIn('toàn phạm vi', c['title'])
         self.assertGreaterEqual(len(r['charts']), 6); self.assert_relevant(r, {'product_revenue'})
 
     def test_other_ratio_family_uses_the_same_rules(self):

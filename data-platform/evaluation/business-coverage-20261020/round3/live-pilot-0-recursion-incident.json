@@ -1,0 +1,97 @@
+{
+ "prior_ledger": 515,
+ "final_ledger": 527,
+ "physical_sends": 12,
+ "tokens": {
+  "input": 0,
+  "output": 0
+ },
+ "cases": 12,
+ "executed": 1,
+ "first_pass": 0,
+ "holdout_first_pass": 0,
+ "holdout_executed": 0,
+ "mandatory_failed": [
+  "BC-REV-001"
+ ],
+ "rows": [
+  {
+   "id": "BC-REV-001",
+   "group": "B01",
+   "holdout": false,
+   "status": "error",
+   "analysis_state": "PROVIDER_FAILURE",
+   "error_category": "provider_unavailable",
+   "latency_ms": 3298,
+   "physical_http": 12,
+   "tokens": 0,
+   "first_pass": false
+  },
+  {
+   "id": "BC-REV-002",
+   "group": "B01",
+   "holdout": false,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-REV-003",
+   "group": "B01",
+   "holdout": true,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-REV-004",
+   "group": "B01",
+   "holdout": false,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-REV-007",
+   "group": "B01",
+   "holdout": false,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-REV-008",
+   "group": "B02",
+   "holdout": false,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-REV-013",
+   "group": "B01",
+   "holdout": false,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-B09-004",
+   "group": "B09",
+   "holdout": true,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-B24-004",
+   "group": "B24",
+   "holdout": true,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-B03-005",
+   "group": "B03",
+   "holdout": true,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-B27-005",
+   "group": "B27",
+   "holdout": true,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-B03-003",
+   "group": "B03",
+   "holdout": false,
+   "skipped": "campaign_cap"
+  }
+ ]
+}

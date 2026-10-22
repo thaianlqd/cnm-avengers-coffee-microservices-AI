@@ -1,0 +1,28 @@
+{
+  "modules_finished": 105,
+  "modules_expected": 105,
+  "tests": 1676,
+  "failures": 2,
+  "errors": 3,
+  "new_failure_ids": [],
+  "initial_new_failure_ids": [],
+  "rechecked_modules": [],
+  "existing_failure_ids": [
+    "tests.test_natural_v26.NaturalV26Tests.test_four_input_sections_optional_context_and_model_breadth",
+    "tests.test_v35_dashboards.DashboardTests.test_all_sixteen_presets_resolve_through_existing_pipeline_without_provider_or_sql (dashboard='D50')",
+    "tests.test_v35_dashboards.DashboardTests.test_all_sixteen_presets_resolve_through_existing_pipeline_without_provider_or_sql (dashboard='D53')",
+    "tests.test_v35_dashboards.DashboardTests.test_metadata_only_returns_honest_unknown_without_triggering_jobs",
+    "tests.test_workspace_v31.CapabilityTests.test_web_ui_fixture_matches_current_capabilities"
+  ],
+  "baseline_ids_passed_in_current_modules": [
+    "tests.test_business_coverage_corpus.BusinessCoverageCorpusTests.test_candidate_only_receipt",
+    "tests.test_comparison_score_v282.ComparisonScoreTests.test_comparison_executes_correct_populations_and_three_metric_views",
+    "tests.test_comparison_score_v282.ComparisonScoreTests.test_comparison_refines_to_one_city_by_store_without_losing_window",
+    "tests.test_comparison_score_v282.ComparisonScoreTests.test_reported_one_axis_cross_tab_canonicalizes_without_retry_or_scope_loss",
+    "tests.test_comparison_score_v282.ComparisonScoreTests.test_selected_share_is_not_renormalized_to_one_hundred_percent"
+  ],
+  "incomplete_modules": [],
+  "source_drift": [],
+  "qualification": "NO_NEW_REGRESSION_WITH_DOCUMENTED_BASELINE_FAILURES",
+  "isolation": "Fresh process per module; monolithic suite not qualified."
+}

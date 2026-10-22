@@ -1,0 +1,30 @@
+AVENGERS COFFEE SUPPLY CHAIN & BI PLATFORM DỮ LIỆU TẦNG SILVER LAKE
+• Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025.
+Tên cửa hàng không xác nhận địa chỉ thực tế.
+• Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.
+• Tập Bottom N được chọn; không đại diện cơ cấu toàn bộ.
+• Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.
+• Một kết quả hỗ trợ chưa vượt qua kiểm chứng đã được bỏ qua.
+• Biểu đồ chỉ gồm tập Bottom N được chọn (Bottom 2); không đại diện cơ cấu toàn bộ phạm vi.
+• Chỉ tính trên Bottom 2 đối tượng của xếp hạng chính.
+• Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.
+Hành động đề xuất
+• Chỉ số có sự biến động qua các kỳ: Cần tiếp tục theo dõi các kỳ tương đương để dự báo chu kỳ nhu cầu và chủ
+động phân bổ nguồn lực.
+VII. KẾT LUẬN & KHUYẾN NGHỊ HÀNH ĐỘNG
+KẾT LUẬN TỰ ĐỘNG
+KHUYẾN NGHỊ CHO DATA PLATFORM
+Hồ Chí Minh thấp nhất trong Bottom 2: 300 VND theo doanh
+Chỉ số có sự biến động qua các kỳ: Cần tiếp tục theo dõi các kỳ
+thu.
+tương đương để dự báo chu kỳ nhu cầu và chủ động phân bổ
+Doanh thu thay đổi từ 100 thành 400 VND giữa kỳ 2026-09-01
+nguồn lực.
+và 2026-09-29 (300%). Phạm vi: trong Bottom 2 của xếp hạng
+chính.
+Doanh thu (STORE) thay đổi từ 100 thành 200 VND giữa kỳ
+2026-09-01 và 2026-09-15 (100%). Phạm vi: trong Bottom 2 của
+xếp hạng chính.
+Tài liệu nội bộ bảo mật • Bản quyền thuộc Avengers Coffee Data
+Platform
+Định dạng chuẩn Microsoft Word (.docx)

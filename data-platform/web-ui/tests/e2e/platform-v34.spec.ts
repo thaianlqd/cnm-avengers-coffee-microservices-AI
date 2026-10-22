@@ -178,7 +178,7 @@ test.describe('V3.4 auth, health and artifact inspection (mocked API; real brows
     await openAssistant(page);
     await expect(page.locator('[data-source-health="blocked"]')).toContainText('1 nguồn bị chặn');
     await expect(page.locator('[data-source-health="unknown"]')).toContainText('1 nguồn chưa có đủ bằng chứng');
-    await expect(page.locator('[data-source-completeness]')).toContainText('chưa được chứng nhận');
+    await expect(page.locator('[data-source-completeness]')).toContainText('0/2 nguồn đã khớp với hệ thống gốc');
     expect(api.calls['/api/ai/analysis-jobs'] || []).toHaveLength(0);
   });
 });
@@ -210,7 +210,7 @@ test.describe('V3.4 BI data errors and measured values', () => {
     await page.goto('/');
     await expect(page.getByText('Tổng doanh thu',{exact:true})).toBeVisible();
     await expect(page.locator('[data-platform-load-errors]')).toHaveCount(0);
-    await expect(page.getByText('Chưa có dữ liệu giao dịch trong khoảng thời gian này')).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Doanh thu theo thời gian',exact:true}).locator('../..')).toContainText('Không có dữ liệu trong phạm vi này.');
     await expect(page.getByText('12.486',{exact:true})).toHaveCount(0);
     await expect(page.getByText('30/09/2026 14:32',{exact:true})).toHaveCount(0);
     expect(api.calls['/api/ai/analysis-jobs']).toBeUndefined();

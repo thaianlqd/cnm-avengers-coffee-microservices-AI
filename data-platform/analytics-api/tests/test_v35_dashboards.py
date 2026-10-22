@@ -17,6 +17,10 @@ class DashboardTests(TestCase):
         self.catalog = AnalysisCatalog(physical_metadata())
         from evals.fixture_warehouse import DATA
         data = deepcopy(DATA)
+        # Advertised geographic presets now include both kiosk populations.
+        # Keep actual order-bearing stores in each, rather than treating the
+        # satellite preset's empty fixture as an execution failure.
+        data['chi_nhanh'][0]['loai_diem_ban'] = 'KIOSK_VE_TINH'
         data['chi_nhanh'][1]['loai_diem_ban'] = 'KIOSK_NHUONG_QUYEN'
         data['giao_hang'] = [dict(ma_giao_hang='trip1', ma_don_hang='o1', ma_shipper='d1',
             trang_thai_giao_hang='DELIVERED', thoi_gian_nhan_chuyen='2026-09-01T10:00:00',
@@ -26,7 +30,8 @@ class DashboardTests(TestCase):
         self.enterContext(patch.dict(DATA,data))
 
     def request(self, identity, **kwargs):
-        return AiTextToReportRequest(dashboard_id=identity, dashboard_version='1.0.0',
+        version=next(t['version'] for t in self.catalog.registry['workspace']['dashboard_templates'] if t['id']==identity)
+        return AiTextToReportRequest(dashboard_id=identity, dashboard_version=version,
             time={'mode':'all_time'}, reference_date=date(2026,10,19), analysis_depth='focused', **kwargs)
 
     def test_all_sixteen_presets_resolve_through_existing_pipeline_without_provider_or_sql(self):
@@ -129,14 +134,16 @@ class DashboardTests(TestCase):
         intent=dashboard_intent(self.catalog,'D04','1.0.0')
         for req in intent['requirements']:
             self.assertEqual(req['filters'][0]['value'],['KIOSK_NHUONG_QUYEN','KIOSK_VE_TINH'])
-        inventory=dashboard_template(self.catalog,'D09','1.0.0')
+        inventory=dashboard_template(self.catalog,'D09','2.0.0')  # PLAN 20/10: availability, not stock
         self.assertEqual(inventory['default_time'],'all_time')
         self.assertTrue(all(not self.catalog.registry['metrics'][m].get('time_column')
             for req in inventory['requirements'] for m in req['metric_ids']))
 
     def test_metadata_only_returns_honest_unknown_without_triggering_jobs(self):
         metadata=dashboard_catalog(self.catalog)
-        self.assertEqual(len(metadata['dashboards']),16)
+        self.assertEqual({d['id'] for d in metadata['dashboards']},
+                         {f'D{i:02}' for i in range(1,54)})
+        self.assertEqual(len(metadata['dashboards']),53)
         self.assertTrue(all(item['provider_calls']==0 and item['status']=='unknown' for item in metadata['dashboards']))
         broken=deepcopy(self.catalog.registry)
         broken['workspace']['dashboard_templates'][0]['requirements'][0]['metric_ids']=['invented_metric']

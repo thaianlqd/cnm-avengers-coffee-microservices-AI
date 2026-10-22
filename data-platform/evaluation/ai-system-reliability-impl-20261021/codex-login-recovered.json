@@ -1,0 +1,7 @@
+{
+  "base": "http://localhost:8501",
+  "login_status": 200,
+  "elapsed_ms": 1335,
+  "login_form_hidden": true,
+  "verification": "Real browser form submission; credentials and tokens omitted"
+}

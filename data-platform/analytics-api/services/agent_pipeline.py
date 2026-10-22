@@ -94,10 +94,32 @@ class AnalysisPipeline:
             },
         }
 
+    def validate_input(self,question,catalog,context=None):
+        from services.input_integrity_service import enforce
+        try:
+            result=enforce(question,catalog,context=context)
+        except AnalysisError as error:
+            # Preserve the same capability diagnostics as the public preflight
+            # even when this earlier, zero-provider boundary rejects a request.
+            from services.preflight_service import run
+            pf=run(question,catalog=catalog,coverage={})
+            self.semantic_info.update(capability=pf['capability'],
+                capability_decision=pf['capability']['decision'],
+                capability_codes=[c['code'] for c in pf['capability']['constraints']],failure_stage='PRECHECK')
+            codes={f['code'] for f in pf['findings'] if f['level']=='block'}
+            if 'unrecognized_question' in codes:error.category='unrecognized_question'
+            raise
+        self.semantic_info.update(input_validation_fingerprint=result['fingerprint'],
+            input_policy_version=result['version'],lookup_queries=result['lookup_queries'])
+        return result
+
     @staticmethod
     def request_signature(request):
+        from services.input_integrity_service import policy
         return json.dumps(
             {
+                'input_policy': policy(),
+                'request': {
                 k: request.model_dump(mode="json").get(k)
                 for k in (
                     "prompt",
@@ -121,6 +143,7 @@ class AnalysisPipeline:
                     "allow_deterministic_upgrade",
                     "analysis_mission",
                 )
+                }
             },
             sort_keys=True,
         )
@@ -132,6 +155,30 @@ class AnalysisPipeline:
         browser is trusted. Free text is upgraded only when the server's own
         preflight resolves every required field with no ambiguity.
         """
+        # Independent of planning mode and client decision. Preset labels are
+        # server-owned; their typed template/filter validation remains below.
+        if getattr(request,'input_mode','free_text')=='guided':
+            from services import mission_contract_service as missions
+            if not request.guided_contract:raise AnalysisError('guided_contract_invalid','Guided contract required')
+            missions.validate_guided(catalog,request.analysis_mission,request.guided_contract.model_dump(exclude_none=True),
+                scope_filters=context.get('required_filters') or [])
+        if not getattr(request, 'dashboard_id', None) and (request.prompt or request.input_mode!='guided'):
+            from services.input_integrity_service import request_text
+            validation = self.validate_input(request_text(request), catalog)
+            context['input_integrity_policy'] = validation['policy_fingerprint']
+            self.semantic_info.update(input_validation_fingerprint=validation['fingerprint'],
+                input_policy_version=validation['version'],lookup_queries=validation['lookup_queries'])
+            # Every query still passes the existing required-filter coverage
+            # guard; a resolved name is not permission to drop its constraint.
+            context['required_filters'] = list(context.get('required_filters') or []) + validation['required_filters']
+            if request_text(request) != request.prompt:
+                from services.scope_resolution_service import resolve_scope
+                secondary='\n'.join(str(getattr(request,key) or '') for key in ('analysis_context','analysis_expectation','context'))
+                scope=resolve_scope(secondary,catalog,context)
+                if scope['state']=='needs_clarification':
+                    raise AnalysisError('clarification',scope.get('message','Conflicting input scope'))
+                for bound in scope.get('filters',[]):
+                    if bound not in context['required_filters']:context['required_filters'].append(bound)
         if getattr(request, 'dashboard_id', None):
             from services.workspace_service import dashboard_template, dashboard_intent
             template = dashboard_template(catalog, request.dashboard_id, request.dashboard_version)
@@ -155,10 +202,12 @@ class AnalysisPipeline:
         # Server-side input guard applies to every production path, including guided and module requests.
         if self.planning_mode == "one_shot" and request.prompt:
             from services import preflight_service, data_coverage_service
-            pf = preflight_service.run(request.prompt,
+            from services.input_integrity_service import request_text
+            pf = preflight_service.run(request_text(request),
                 request.time_range.model_dump(mode="json") if request.time_range else None,
                 request.analysis_scope.model_dump(mode="json") if request.analysis_scope else None,
                 request.analysis_mission, reference, catalog=catalog, coverage=data_coverage_service.peek(),
+                grounded_scope_filters=context.get('required_filters') or [],
                 input_mode=request.input_mode,
                 guided_contract=request.guided_contract.model_dump(exclude_none=True) if request.guided_contract else None)
             decision = pf["capability"]
@@ -175,6 +224,10 @@ class AnalysisPipeline:
                 raise AnalysisError("guided_contract_invalid", "Guided request needs a mission and its contract")
             slots = missions.validate_guided(catalog, mission["id"], request.guided_contract.model_dump(exclude_none=True),
                                              scope_filters=context.get("required_filters") or [])
+            try:
+                missions.check_metric_clocks(catalog, slots, request.time_range.model_dump(mode="json") if request.time_range else None)
+            except missions.GuidedContractError as error:
+                raise AnalysisError("guided_contract_invalid", str(error)) from None
             # The text is part of the meaning: if it was edited to name a different metric than the contract carries,
             # the guided intent is stale and must not run (the client is expected to drop it; the server enforces it).
             from services.request_anchors import request_anchors
@@ -188,9 +241,16 @@ class AnalysisPipeline:
         elif request.prompt and self.planning_mode == "one_shot":
             legacy_precheck = request.natural_input and getattr(request, "allow_deterministic_upgrade", False)
             guided = pf.get("guided_contract") or {}
-            if not legacy_precheck:
+            risk = (guided.get("slots") or {}).get("mission") == "risk_watch" and request.natural_input
+            if not (legacy_precheck or risk):
                 self.semantic_info["preflight_state"] = pf.get("state")
                 return
+            if risk and guided.get("question_filters"):
+                # Risk Watch has ONE meaning contract for every depth: scope named
+                # in the text is grounded here and joins the structured scope,
+                # instead of sending the request to a different (AI) model.
+                self.merge_question_filters(catalog, context, guided["question_filters"])
+                guided = {**guided, "question_filters": []}
             if pf.get("state") != "READY_GUIDED" or guided.get("source") != "auto_upgrade" or guided.get("question_filters"):
                 self.semantic_info["preflight_state"] = pf.get("state")
                 return
@@ -203,9 +263,40 @@ class AnalysisPipeline:
         else:
             return
         context["guided_intent"] = missions.guided_intent(catalog, slots, period)
+        context['guided_mission_id'] = slots['mission']
+        if slots['mission'] == 'risk_watch':
+            context['analysis_mission'] = 'risk_watch'
+            context['risk_snapshot_metrics'] = sorted({s['metric'] for s in catalog.registry.get('risk_signals', [])
+                if s['id'] in slots.get('signals', [])
+                and catalog.registry['metrics'][s['metric']].get('historical_capability') == 'snapshot'})
+        missions.admit_guided_sql_budget(catalog, context)
         self.semantic_info.update(guided_contract_used=True, guided_source=source,
                                   guided_slots={k: v for k, v in slots.items() if k != "signals"},
                                   preflight_state="READY_GUIDED")
+
+    def merge_question_filters(self, catalog, context, question_filters):
+        from services.semantic_tools import SemanticTools
+        current = {f["dimension"]: f for f in context.get("required_filters") or []}
+        resolver = SemanticTools(catalog, self.value_lookup)
+        wanted = {}
+        for f in question_filters:
+            for v in (f["value"] if isinstance(f["value"], list) else [f["value"]]):
+                answer = resolver.resolve({"dimension": f["dimension"], "reference": str(v)},
+                                          allow_lookup=resolver.lookup_count < self.budget.value_lookups, allow_fallback=True)
+                if answer["status"] != "resolved":
+                    raise AnalysisError("filter_value_unknown", "Question scope could not be resolved")
+                wanted.setdefault(f["dimension"], []).append(answer["value"])
+        merged = dict(current)
+        for dim, values in wanted.items():
+            values = list(dict.fromkeys(values))
+            if dim in current:
+                have = current[dim]["value"] if isinstance(current[dim]["value"], list) else [current[dim]["value"]]
+                if set(values) != set(have):
+                    raise AnalysisError("clarification", "Phạm vi trong câu hỏi khác phạm vi đã chọn; hãy chọn một phạm vi.")
+                continue
+            merged[dim] = {"dimension": dim, "operator": "eq" if len(values) == 1 else "in",
+                           "value": values[0] if len(values) == 1 else values}
+        context["required_filters"] = list(merged.values())
 
     def reference(self, request, catalog):
         from services.analysis_understanding import catalog_today
@@ -293,6 +384,12 @@ class AnalysisPipeline:
             from services.semantic_tools import SemanticTools
             resolver = SemanticTools(catalog, self.value_lookup)
             canonical = []
+            # Each explicitly selected member may need one bounded exact lookup
+            # (curated enums with lookup_fallback); the turn budget alone would
+            # reject the fifth member of a Bottom 5 selection.
+            from services.value_grounding_service import selected_scope_lookup_allowance
+            lookup_limit = selected_scope_lookup_allowance(
+                [f.model_dump(mode='json') for f in scope.filters], self.budget.value_lookups)
             for f in scope.filters:
                 definition = catalog.registry["dimensions"].get(f.dimension)
                 if not definition or not definition.get("scope_selectable"):
@@ -300,7 +397,7 @@ class AnalysisPipeline:
                 values = f.value if isinstance(f.value, list) else [f.value]
                 grounded = []
                 for v in values:
-                    answer = resolver.resolve({"dimension": f.dimension, "reference": str(v)}, allow_lookup=resolver.lookup_count < self.budget.value_lookups)
+                    answer = resolver.resolve({"dimension": f.dimension, "reference": str(v)}, allow_lookup=resolver.lookup_count < lookup_limit, allow_fallback=True)
                     if answer["status"] != "resolved":
                         raise AnalysisError("filter_value_unknown", "Selected scope could not be resolved")
                     grounded.append(answer["value"])
@@ -411,6 +508,12 @@ class AnalysisPipeline:
             session.semantic_intent = deepcopy(self.semantic_info["semantic_intent"])
             session.initial_semantic_intent = deepcopy(self.semantic_info.get("initial_semantic_intent", session.initial_semantic_intent))
             session.semantic_history = deepcopy(self.semantic_info.get("semantic_history", session.semantic_history))
+            if self.semantic_info.get('fixed_grouping_policy'):
+                session.ui_constraints['fixed_grouping_policy']=self.semantic_info['fixed_grouping_policy']
+            if session.semantic_history and 'interaction' not in session.semantic_history[-1]:
+                # Explicit AI feedback starts a new approved interaction base;
+                # later BI changes must not resurrect pre-feedback metrics.
+                session.ui_constraints.pop('workspace_base_intent', None)
             session.intent_fingerprint = self.semantic_info["semantic_intent_fingerprint"]
             session.plan_fingerprint = self.semantic_info["resolved_plan_fingerprint"]
             session.resolved_operations = deepcopy(self.semantic_info["resolved_operations"])
@@ -535,9 +638,14 @@ class AnalysisPipeline:
             modules = AnalysisModules(self.module_repository)
             module = modules.resolve(self.owner_id, request.analysis_module_id, request.analysis_module_name, catalog)
             previous, concepts = modules.prepare_context(self, module, catalog, reference, context)
+        if request.prompt and "cohort_references" not in context:
+            # Persisted with ui_constraints so independent verification replays the same binding.
+            from services.request_anchors import request_anchors
+            context["cohort_references"] = request_anchors(request.prompt, catalog, {}).get("cohort_references") or []
         artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
         check_request_deadline()
         context.update(server_supporting_expansion=self.semantic_info.get('server_supporting_expansion'),
+            fixed_grouping_policy=self.semantic_info.get('fixed_grouping_policy'),
             depth_selection_origin=self.semantic_info.get('depth_selection_origin'), requested_depth=self.semantic_info.get('requested_depth'),
             minimum_visuals=self.semantic_info.get('minimum_visuals',0),
             omitted_supporting_ids=self.semantic_info.get('omitted_supporting_ids',[]))
@@ -641,6 +749,9 @@ class AnalysisPipeline:
         if session:
             self.check_owner(session)
             with session.analysis_lock:
+                if not getattr(request, 'dashboard_id', None) and (request.prompt or request.input_mode!='guided'):
+                    from services.input_integrity_service import request_text
+                    self.validate_input(request_text(request), catalog)
                 if self.planning_mode == "one_shot" and session.contract_version not in {"2.5", "2.8"}:
                     raise AnalysisError("schema_changed", "Refresh the analysis proposal")
                 if session.proposed_request != self.request_signature(request):
@@ -668,6 +779,8 @@ class AnalysisPipeline:
                     known_concepts=session.agent_state.get("resolved_concepts", []))
                 self.semantic_info.update(analysis_components=deepcopy(session.analysis_components), coverage_origin=session.coverage_origin)
                 agent.queries.ui_context = deepcopy(session.ui_constraints)
+                from services.mission_contract_service import admit_guided_sql_budget
+                admit_guided_sql_budget(catalog, agent.queries.ui_context)
                 self.semantic_info.update(analysis_depth=session.analysis_depth,
                     target_visual_count=DEPTH_POLICIES[session.analysis_depth]["target_views"][-1])
                 self.semantic_info["proposal_diagnostics"] = {
@@ -729,6 +842,83 @@ class AnalysisPipeline:
         with session.analysis_lock:
             return self.report(artifacts, plan, catalog, session, reference)
 
+    def workspace_revision(self, request):
+        """One deterministic, atomic input revision through the existing planner.
+
+        Work on a detached session: a failed query, revoke or verifier cannot
+        mutate the published report. Existing storage CAS/lock owns publication.
+        """
+        from copy import copy
+        from services.workspace_service import (workspace_base, workspace_intent,
+            validate_workspace_revision)
+        from services.analytical_resolver import AnalyticalResolver
+        from services.request_anchors import refinement_anchors
+        from services.provider_budget import _provider_forbidden, check_request_deadline
+        token = _provider_forbidden.set(True)
+        try:
+            source = get_session(request.session_id)
+            if not source or not source.approved or source.contract_version != '2.8':
+                raise AnalysisError('session', 'Approved semantic session required')
+            self.check_owner(source)
+            with source.analysis_lock:
+                source = get_session(request.session_id)
+                if not source or not source.approved:
+                    raise AnalysisError('session', 'Session expired before revision')
+                self.check_owner(source)
+                catalog = self.catalog()
+                state = validate_workspace_revision(request, source, catalog)
+                from services.input_integrity_service import enforce, policy_fingerprint
+                if source.ui_constraints.get('input_integrity_policy') != policy_fingerprint() and not source.ui_constraints.get('dashboard_template'):
+                    enforce(source.original_prompt,catalog)
+                session = copy(source)
+                for key, value in source.__dict__.items():
+                    if key != 'analysis_lock': setattr(session, key, deepcopy(value))
+                reference = date.fromisoformat(session.agent_reference_date)
+                base = session.ui_constraints.setdefault('workspace_base_intent', workspace_base(session.semantic_intent))
+                intent = workspace_intent(base, state, catalog, reference)
+                context = session.ui_constraints
+                # Re-plan every lens in one batch/snapshot. No prior revision's
+                # artifact is reused to satisfy the new visual floor.
+                for key in ('omitted_supporting_ids', 'executed_supporting_ids'):
+                    context.pop(key, None)
+                context.update(analysis_depth=request.analysis_depth, server_supporting_expansion=request.analysis_depth,
+                               requested_depth=request.analysis_depth, depth_selection_origin='explicit')
+                from services.analysis_expansion_service import FIXED_GROUPING_POLICY
+                context['fixed_grouping_policy']=FIXED_GROUPING_POLICY
+                history = deepcopy(session.semantic_history)
+                # A typed state replaces previous BI states against the same
+                # frozen root. Keep AI deltas, bounds and old report snapshots;
+                # repeated Apply must not consume the AI conversation allowance.
+                while history and 'interaction' in history[-1]:
+                    history.pop()
+                history.append(dict(interaction=state))
+                anchors, _ = refinement_anchors(session.original_prompt, session.initial_semantic_intent,
+                    history, catalog, context, reference)
+                resolved = AnalyticalResolver(catalog, reference, context).resolve(intent)
+                agent = self.agent(catalog, reference)
+                # Values were bound to authorized immutable rows (or to the
+                # original approved scope). Do not reinterpret identity keys.
+                for req in intent.requirements:
+                    for f in req.filters:
+                        values = f.value if isinstance(f.value, list) else [f.value]
+                        agent.semantic.resolved.setdefault(f.dimension, set()).update(values)
+                prepared = agent._compile_resolved(resolved, context)
+                self.semantic_info.update(semantic_intent=resolved['intent'].model_dump(mode='json'),
+                    initial_semantic_intent=deepcopy(session.initial_semantic_intent), semantic_history=history,
+                    semantic_intent_fingerprint=resolved['intent_fingerprint'], resolved_plan_fingerprint=resolved['plan_fingerprint'],
+                    resolved_operations=resolved['operations'], resolved_requirement_coverage=resolved['coverage'],
+                    derived_feature_bindings=resolved['feature_bindings'], resolver_version=resolved['resolver_version'],
+                    analysis_components=resolved['components'], coverage_origin='server_resolved', request_anchors=anchors,
+                    analysis_depth=request.analysis_depth, server_supporting_expansion=request.analysis_depth,
+                    requested_depth=request.analysis_depth, effective_depth=request.analysis_depth, depth_selection_origin='explicit',
+                    interaction_state=state, refinement_mode='structured_workspace', force_refresh=True,
+                    analysis_mission=context.get('analysis_mission'), provider_physical_attempts=0, provider_http_attempts=0)
+                artifacts, plan = agent._execute_prepared(prepared)
+                check_request_deadline()
+                return self.report(artifacts, plan, catalog, session, reference, refined=True)
+        finally:
+            _provider_forbidden.reset(token)
+
     def refine(self, request):
         session = get_session(request.session_id) if request.session_id else None
         if not session or not session.approved:
@@ -747,19 +937,32 @@ class AnalysisPipeline:
                 return self.refine_visuals(request, session, catalog, reference)
             if not request.feedback.strip():
                 raise AnalysisError("invalid_analysis_contract", "Empty refinement")
+            input_validation = self.validate_input(request.feedback, catalog, context={'revision':session.revision, 'mode':'refinement'})
+            self.semantic_info.update(input_validation_fingerprint=input_validation['fingerprint'],
+                input_policy_version=input_validation['version'],lookup_queries=input_validation['lookup_queries'])
             if self.planning_mode=='one_shot':
                 from services import preflight_service
                 pf=preflight_service.run(session.original_prompt+'; '+request.feedback,
-                    analysis_mission=session.ui_constraints.get('analysis_mission'),reference=reference,catalog=catalog)
+                    analysis_mission=session.ui_constraints.get('analysis_mission'),reference=reference,catalog=catalog,
+                    integrity_text=request.feedback)
                 if pf['capability']['decision']!='READY':
                     self.semantic_info.update(capability=pf['capability'],capability_decision=pf['capability']['decision'],
                         capability_codes=[c['code'] for c in pf['capability']['constraints']],failure_stage='SEMANTIC_CAPABILITY')
                     raise AnalysisError('clarification' if pf['capability']['decision'] in {'CLARIFY','REDIRECT'} else 'unsupported_metric',pf['capability']['message'])
+            # A guided intent authorizes the initial report, not a later natural
+            # language delta. Replaying that envelope as submit_analysis_delta
+            # rejects every refinement before the interpreter can run.
+            refinement_context = dict(session.ui_constraints)
+            new_filters = input_validation['required_filters']
+            if new_filters:
+                changed = {f['dimension'] for f in new_filters}
+                refinement_context['required_filters'] = [f for f in refinement_context.get('required_filters', []) if f['dimension'] not in changed] + new_filters
+            refinement_context.pop("guided_intent", None)
             artifacts, plan = self.agent(
                 catalog, reference, previous=session.agent_artifacts,
                 known_concepts=session.agent_state.get("resolved_concepts", [])
             ).run(request.feedback, {
-                **session.ui_constraints,
+                **refinement_context,
                 "analysis_depth": session.analysis_depth,
                 "semantic_intent": session.semantic_intent,
                 "initial_semantic_intent": session.initial_semantic_intent,
@@ -931,7 +1134,7 @@ class AnalysisPipeline:
             # A report that cannot show a required view is never a complete success.
             self.semantic_info.setdefault("limitations", []).append(
                 {"reason": "required_view_missing", "message": f"Chưa có góc nhìn bắt buộc ({missing['kind']}) cho yêu cầu {missing['requirement_id']}: {missing['reason']}."})
-        cards = compare_cards(dashboard["charts"], artifacts, catalog, mission_hint)
+        cards = compare_cards(dashboard["charts"], artifacts, catalog, mission_hint, evidence=evidence)
         if cards:
             dashboard["kpi_cards"] = cards + [k for k in dashboard.get("kpi_cards", []) if k.get("label") != "Thay đổi giữa hai kỳ quan sát"]
         from services.analytical_capacity_planner import AnalyticalCapacityContract
@@ -1028,16 +1231,33 @@ class AnalysisPipeline:
         session.analysis_components, session.coverage_origin = components, origin
         response["analysis_components"] = components
         from services.data_coverage_service import peek as coverage_snapshot
-        observed=(coverage_snapshot() or {}).get('facts',{})
+        coverage=coverage_snapshot() or {}
+        observed=coverage.get('facts',{})
+        views=(coverage.get('data_health') or {}).get('views',{})
         source_coverage=[]
         for source in sorted({catalog.registry['metrics'][m]['source'] for a in artifacts.values() for m in a.plan.metrics}):
-            fact=observed.get(source,{})
+            fact=observed.get(source)
+            if fact is None:
+                # Snapshot sources have no business clock; their certified view health still applies.
+                health=views.get(source,{})
+                fact={'health_status':health.get('status','unknown'),
+                      'completeness':health.get('completeness','unknown') if health.get('status')=='healthy' else 'unknown'}
+            # G5: event recency (stale) is reported, never used as load completeness;
+            # a late/failed load surfaces through the source health status.
             source_coverage.append(dict(source=source,label=fact.get('label') or catalog.overlay['silver_tables'][source].get('business_name',source),
-                max_date=fact.get('max_date'),stale=fact.get('stale'),completeness=fact.get('completeness','unknown')))
+                max_date=fact.get('max_date'),stale=fact.get('stale'),health_status=fact.get('health_status','unknown'),
+                completeness=fact.get('completeness','unknown')))
+        quality_ui = deepcopy(session.ui_constraints)
+        if self.semantic_info.get('fixed_grouping_policy'):
+            quality_ui['fixed_grouping_policy']=self.semantic_info['fixed_grouping_policy']
         response["quality_context"] = {"version": "2.7", "catalog_fingerprint": catalog.fingerprint,
-            "coverage_origin": origin, "ui_constraints": session.ui_constraints,
+            "coverage_origin": origin, "ui_constraints": quality_ui,
             "reference_date": reference.isoformat(), "limitations": deepcopy(self.semantic_info.get("limitations", [])),
             "partial_scope_approved": session.partial_scope, "source_coverage":source_coverage}
+        response['source_completeness'] = dict(status='limited' if any(s['health_status'] in {'degraded','blocked'} or s['completeness'] in {'partial','incomplete'} for s in source_coverage)
+            else 'complete' if all(s['completeness']=='complete' for s in source_coverage)
+            else 'reconciled' if all(s['completeness'] in {'complete','reconciled'} for s in source_coverage) else 'unknown',
+            sources=deepcopy(source_coverage))
         if self.semantic_info.get("semantic_intent"):
             from services.analytical_resolver import digest
             from services.analysis_quality_contract import VERSION as quality_version
@@ -1063,6 +1283,9 @@ class AnalysisPipeline:
             and (c.get("text") is None or c["text"] == by_evidence[c["evidence_id"]]["statement"])]
         safe_plan["recommendations"] = [c for c in safe_plan["recommendations"] if any(r["evidence_id"] == c["evidence_id"] and r["action"] == c["action"] for r in narrative["recommendations"])]
         response["dashboard_plan_input"] = safe_plan
+        if response.get('semantic_intent'):
+            from services.goal_provenance_service import goal_provenance
+            response['goal_provenance'] = goal_provenance(response,catalog)
         response["quality_limitations"] = report_limitations(artifacts, response["charts"], catalog, response["quality_context"]["limitations"], source_coverage)
         from services.answer_requirement_service import conclusion_from_report
         response['conclusion'],response['short_answer'],response['answer_requirements']=conclusion_from_report(response,artifacts,catalog,evidence)
@@ -1074,6 +1297,11 @@ class AnalysisPipeline:
             response['authorized_scope']={'national':principal.national,'store_ids':list(principal.store_ids),
                 'policy_version':principal.policy_version,'policy_fingerprint':principal.access_fingerprint}
         response.setdefault('provenance',{})['data_epoch']=deepcopy(self.semantic_info.get('data_epoch'))
+        if response.get('semantic_intent'):
+            from services.workspace_service import workspace_contract
+            response['interaction_state'] = deepcopy(self.semantic_info.get('interaction_state') or
+                session.report_response.get('interaction_state') or dict(filters=[], drill_path=[]))
+            response['interaction_contract'] = workspace_contract(response, artifacts, catalog)
         if session.source_analysis:
             response['provenance']['source_analysis']=deepcopy(session.source_analysis)
             response['quality_context']['source_analysis']=deepcopy(session.source_analysis)
@@ -1099,6 +1327,8 @@ class AnalysisPipeline:
             response["outcome"]="PARTIAL_AVAILABLE"
         if response["outcome"] == "PARTIAL_AVAILABLE":
             response["completion_status"] = "partial"
+        if response['source_completeness']['status'] == 'limited':
+            response['completion_status'] = 'partial'
         if (refined and self.semantic_info.get('terminal_error')) or (
                 not self.semantic_info.get('semantic_intent') and response.get('data_warnings')):
             # A failed refinement has not fulfilled the new request. Preserve
@@ -1171,7 +1401,12 @@ class AnalysisPipeline:
             "coverage_views": [(self.semantic_info.get("analysis_coverage") or {}).get(k) for k in ("rendered_total", "target_total")],
             "lens_rejections": sorted({l["reason"] for l in (self.semantic_info.get("analysis_coverage") or {}).get("lenses", []) if l["status"] == "rejected"})},
             default=str))
-        if response["quality_context"]["version"] == "2.8" and response["quality_assessment"]["status"] == "not_scored":
+        from services.analysis_quality_service import publication_issues
+        if response["quality_context"]["version"] == "2.8" and publication_issues(response["quality_assessment"]):
+            # Governed verifier wording only (no question text, values or SQL).
+            self.semantic_info["quality_not_scored_reason"] = response["quality_assessment"].get("reason")
+            self.semantic_info['publication_issues'] = publication_issues(response['quality_assessment'])
+            telemetry_logging.getLogger('ai-analytics').warning('[QualityNotScored] %s', response["quality_assessment"].get("reason"))
             raise AnalysisError("quality_verification","Report provenance failed independent verification")
         self.semantic_info["failure_stage"] = None
         response["diagnostics"]["quality_score_compute_ms"] = round((time.perf_counter() - started_quality) * 1000, 2)
@@ -1180,6 +1415,10 @@ class AnalysisPipeline:
             response['quality_assessment']['score'],len(response['quality_assessment']['verification_checks']),
             sum(c['status'] not in {'passed','not_applicable'} for c in response['quality_assessment']['verification_checks']),
             response['quality_assessment']['accuracy_assessment']['status'])
+        from services.provider_budget import check_request_deadline
+        check_request_deadline()
+        if active_principal.get() is not None:
+            current_principal(required=True)  # Revoke during revision must prevent publication.
         self.save_meaning(session, artifacts, catalog, reference, plan)
         session.last_result_contract = response["result_contracts"]
         session.approved = True
@@ -1268,6 +1507,7 @@ class AnalysisPipeline:
                 request_anchors=deepcopy(session.diagnostics.get("request_anchors", {})),request_anchor_verification="passed",
                 initial_semantic_intent=deepcopy(session.initial_semantic_intent),semantic_history=deepcopy(session.semantic_history),
                 server_supporting_expansion=session.ui_constraints.get('server_supporting_expansion'),
+                fixed_grouping_policy=session.ui_constraints.get('fixed_grouping_policy'),
                 minimum_visuals=session.ui_constraints.get('minimum_visuals',0))
 
     def check_owner(self, session):

@@ -1,0 +1,22 @@
+{
+  "harnesses": [
+    "codex_acceptance_properties",
+    "codex_holdout_cohorts",
+    "codex_remaining_holdouts",
+    "codex_identity_holdouts",
+    "codex_risk_equivalence",
+    "codex_family_matrix",
+    "codex_city_inventory_check",
+    "codex_advertised_roundtrip"
+  ],
+  "hashes": {
+    "codex_acceptance_properties": "ddb763a5e0fe87b1dac5126631bc830ac9b1b079ea10b90b28d4653569264754",
+    "codex_holdout_cohorts": "3d341a677cc6cd29a17ff35569cb90084718ca68629373350618f1818135384e",
+    "codex_remaining_holdouts": "7a4125167e680ad18ca2a8d812f50f70e180721c989098013e2a86686ac20f14",
+    "codex_identity_holdouts": "9505820ab0ac5abb2936460c616cfec39e59f9655fe1880b59cc822ac0dba31f",
+    "codex_risk_equivalence": "d9561aa5215b688cd1f5496c1cfba3a82de1202bd4bc07e07e3a4ff926648276",
+    "codex_family_matrix": "88e0bc781bc895436076151ada3404cdedcd04080c2cff06fdefcb08ca892366",
+    "codex_city_inventory_check": "b1a2a82405243dba54b6b8ffbfcade0303bfeb4fda49e86d0f92fe94ba055e3b",
+    "codex_advertised_roundtrip": "e3a0d0d660b8fb79537248f492b1a57d444b5ee66013ea07eece80617601896d"
+  }
+}

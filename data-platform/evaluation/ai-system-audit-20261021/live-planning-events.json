@@ -1,0 +1,466 @@
+[
+  {
+    "request_id": "req_25d28ef45f5146ad88149bdebeb41aa7",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "products"
+    ],
+    "total_context_chars": 12575,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 23000.41,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_81f05629627c442985f39b3b5c29ea51",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "products"
+    ],
+    "total_context_chars": 12897,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 21788.62,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_d9a90ba0e40b4712a8d64da634e485a8",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders",
+      "stores"
+    ],
+    "total_context_chars": 13039,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 21118.0,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_86d031a278c643c194e11877d846dda5",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders"
+    ],
+    "total_context_chars": 12920,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 22106.57,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_f883657dfb774050ab054922a79a07e2",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders",
+      "stores"
+    ],
+    "total_context_chars": 12603,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 20580.56,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_c69c341120f94c7a901f1573df4824bf",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders"
+    ],
+    "total_context_chars": 13237,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 20348.31,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_7bca77fcb8e644c9ba2742b409d6e30e",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders",
+      "payments"
+    ],
+    "total_context_chars": 12487,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 20655.28,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_1f563c2ede1445b9b28a9f165a2fd035",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders"
+    ],
+    "total_context_chars": 11689,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 20417.91,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_d9a0b3a2ce75474e8cf4fb5dc82ca043",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "delivery"
+    ],
+    "total_context_chars": 11652,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 20388.41,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_199719033b6342a69a4bb2d43514e62a",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [],
+    "total_context_chars": 13600,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 20383.06,
+    "terminal_error": "provider_timeout"
+  },
+  {
+    "request_id": "req_bee008f7e551421d96f75279468dda15",
+    "provider_call_count": 2,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING",
+      "CONTRACT_REPAIR"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 1,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": "no_progress",
+    "capability_status": "INVALID_CONTRACT",
+    "detailed_domain_ids": [
+      "products"
+    ],
+    "total_context_chars": 12575,
+    "repair_context_chars": 14967,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 3326.29,
+    "terminal_error": "semantic_resolution_failed"
+  },
+  {
+    "request_id": "req_c4f00ab021a049d2a87f9f5e43cc45fe",
+    "provider_call_count": 2,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING",
+      "CONTRACT_REPAIR"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 1,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "products"
+    ],
+    "total_context_chars": 12897,
+    "repair_context_chars": 14768,
+    "schema_chars": 4909,
+    "resolver_latency_ms": null,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 2840.51,
+    "terminal_error": "clarification"
+  },
+  {
+    "request_id": "req_f9e63bc702cc4183baac020186a281d5",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders",
+      "stores"
+    ],
+    "total_context_chars": 13039,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": 15.14,
+    "compiler_latency_ms": 312.88,
+    "planning_latency_ms": 2208.22,
+    "terminal_error": null
+  },
+  {
+    "request_id": "req_8189156ee7104d47abd1098cf99ec7ba",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders"
+    ],
+    "total_context_chars": 12920,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": 15.6,
+    "compiler_latency_ms": 298.97,
+    "planning_latency_ms": 2125.07,
+    "terminal_error": null
+  },
+  {
+    "request_id": "req_0e62446252304f5292659a5980dfb9c1",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders",
+      "stores"
+    ],
+    "total_context_chars": 12603,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": 12.82,
+    "compiler_latency_ms": 429.9,
+    "planning_latency_ms": 2365.13,
+    "terminal_error": null
+  },
+  {
+    "request_id": "req_6133bef66d574b59be2ecd2745c87377",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders"
+    ],
+    "total_context_chars": 13237,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": 19.71,
+    "compiler_latency_ms": 786.67,
+    "planning_latency_ms": 2467.95,
+    "terminal_error": null
+  },
+  {
+    "request_id": "req_d0d127b84f39466cafca8729aaf740b8",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders",
+      "payments"
+    ],
+    "total_context_chars": 12487,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": 13.89,
+    "compiler_latency_ms": 255.43,
+    "planning_latency_ms": 2062.39,
+    "terminal_error": null
+  },
+  {
+    "request_id": "req_ba8cfd9d3c614bc1bc6f2d5ba7a76374",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "orders"
+    ],
+    "total_context_chars": 11689,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": 5.33,
+    "compiler_latency_ms": 75.95,
+    "planning_latency_ms": 1433.0,
+    "terminal_error": null
+  },
+  {
+    "request_id": "req_df8d456b65fc4a5c92d53d08a479329e",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [
+      "delivery"
+    ],
+    "total_context_chars": 11652,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": 2.57,
+    "compiler_latency_ms": null,
+    "planning_latency_ms": 1574.98,
+    "terminal_error": "historical_metric_unavailable"
+  },
+  {
+    "request_id": "req_32047b6397044a118c967b58c6287d14",
+    "provider_call_count": 1,
+    "provider_call_reasons": [
+      "INITIAL_UNDERSTANDING"
+    ],
+    "primary_call_count": 1,
+    "semantic_repair_count": 0,
+    "targeted_resolution_count": 0,
+    "transport_retry_count": 0,
+    "semantic_stop_reason": null,
+    "capability_status": null,
+    "detailed_domain_ids": [],
+    "total_context_chars": 13600,
+    "repair_context_chars": null,
+    "schema_chars": 4909,
+    "resolver_latency_ms": 19.3,
+    "compiler_latency_ms": 371.13,
+    "planning_latency_ms": 2545.52,
+    "terminal_error": null
+  }
+]

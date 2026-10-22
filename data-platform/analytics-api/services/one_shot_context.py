@@ -8,6 +8,8 @@ from services.semantic_manifest_service import build_manifest, manifest_referenc
 
 def wire_payload(payload):
     value = {**payload, "domains": deepcopy(payload["domains"])}
+    if isinstance(value.get('ui'),dict):
+        value['ui']={k:v for k,v in value['ui'].items() if k!='input_integrity_policy'}
     knowledge = value["domains"]
     if "lens_directory" in knowledge:
         packed = {l[0] for p in knowledge["packs"] for l in p["lenses"]}

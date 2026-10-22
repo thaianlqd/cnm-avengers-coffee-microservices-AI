@@ -1,0 +1,46 @@
+{
+  "status": "PASS_FINITE_VISUAL_QA",
+  "renderer": "Microsoft Word native read-only print to PDF; PDFKit page rasterization",
+  "note": "Bundled document rendering runtime unavailable; Word installed locally provided native layout. QA fixtures, not delivered DOCX artifacts. Historical renders retained in tmp; final evidence durable here.",
+  "cases": [
+    {
+      "kind": "cohort",
+      "pages": 10,
+      "docx_sha256": "941adb7f037449e7c8552c0be789d8589c922b31d1b20d5d8016f6cf96fbbfc8",
+      "pdf_sha256": "8a548ecdc9f8e1758e60a488efb7b03b3ea15cc4b136acb2199c6f3002cc4f48",
+      "reviewed_pages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "checks": [
+        "readable Vietnamese glyphs",
+        "no clipped/overlapping content",
+        "scoped Bottom labels and factual conclusions",
+        "real group labels and missing observations retained"
+      ]
+    },
+    {
+      "kind": "preview",
+      "pages": 2,
+      "docx_sha256": "940461bbf09ec52d1c4bc0001b9a8ee946e1d63102cc23f02b996cc3049c348c",
+      "pdf_sha256": "e009e8fa282801a88c0944e84176c8c8a7818e210a735c594f94f49a785fa8d4",
+      "reviewed_pages": [
+        1,
+        2
+      ],
+      "checks": [
+        "15 displayed of80 explicitly labeled preview",
+        "missing evidence disclosed",
+        "no fabricated KPIs or findings"
+      ]
+    }
+  ]
+}

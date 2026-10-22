@@ -1,5 +1,6 @@
 """V2.5 contracts with scripted decisions; transport/warehouse are forbidden."""
 
+from tests.archive_planner import historical_catalog
 import json
 import os
 import unittest
@@ -34,7 +35,7 @@ class DomainV25Tests(unittest.TestCase):
             guard.start(); self.addCleanup(guard.stop)
         guard = patch.dict(os.environ, {"AI_OFFLINE": "1", "DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "14000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
         guard.start(); self.addCleanup(guard.stop)
-        self.catalog = AnalysisCatalog(physical_metadata())
+        self.catalog = historical_catalog(AnalysisCatalog(physical_metadata()))  # archived one-shot scope
         self.intelligence = DomainIntelligence(self.catalog)
         self.refs = manifest_references(build_manifest(self.catalog)[0])
 
@@ -301,7 +302,7 @@ class DomainV25Tests(unittest.TestCase):
         from routers.ai import ai_capabilities, ai_scope_values
         from fastapi import HTTPException
         with patch("routers.ai.get_local_metadata", return_value=physical_metadata()), patch("routers.ai.lookup_dimension_values", return_value=["Cửa hàng A"]) as lookup:
-            self.assertEqual(len(ai_capabilities()["domains"]), 16)
+            self.assertEqual(len(ai_capabilities()["domains"]), 26)  # production catalog: 16 + 10 business-coverage domains (PLAN 20/10)
             self.assertEqual(ai_scope_values("store", "Cửa")["values"][0]["label"], "Cửa hàng A")
             with self.assertRaises(HTTPException): ai_scope_values("customer_id", "secret")
             lookup.assert_called_once()

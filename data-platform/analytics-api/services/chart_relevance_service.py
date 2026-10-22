@@ -82,7 +82,6 @@ def grammar_decisions(charts, artifacts, mission, mapping):
 def apply(dashboard, artifacts, catalog, *, mission_id=None, depth="deep", coverage=None, intent=None, evidence=()):
     """Gate and annotate dashboard charts in place. Returns a summary dict."""
     mapping = requirement_map(coverage, artifacts)
-    goals = {r["id"]: r.get("goal") for r in ((intent or {}).get("requirements") or [])}
     allowed_metrics = mission_metric_scope(catalog, mission_id)
     evidence_by_scope = {}
     for e in evidence:
@@ -118,7 +117,7 @@ def apply(dashboard, artifacts, catalog, *, mission_id=None, depth="deep", cover
         dims = [d for d in (artifact.plan.dimensions or []) if d in catalog.registry["dimensions"]]
         chart.update(requirement_id=requirement, mission=mission_id, metric_ids=metrics, dimension_ids=dims,
                      query_id=query_id, relevance_role="primary" if role == "requested" else "supporting",
-                     requirement_goal=chart.get("analysis_lens_question") or goals.get(requirement) or chart.get("purpose"))
+                     requirement_goal=chart.get("analysis_lens_question") or chart.get("title") or chart.get("purpose"))
         # Derived charts already carry verified evidence references; never rewrite them.
         chart.setdefault("evidence_refs", [r for q in refs for r in evidence_by_scope.get(q, [])][:20])
         signal = next((x for x in catalog.registry.get("risk_signals", []) if x["metric"] == chart.get("metric")), None)

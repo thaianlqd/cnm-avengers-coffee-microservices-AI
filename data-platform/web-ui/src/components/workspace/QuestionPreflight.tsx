@@ -11,7 +11,7 @@ export const QuestionPreflight: React.FC<{ result: PreflightResult | null; pendi
   return <div data-preflight={v.status} aria-live="polite" className="space-y-2">
     <div className="flex flex-wrap items-center gap-2 text-[11px]">
       <span className={`rounded-full border px-2 py-0.5 font-medium ${TONE[v.tone] || TONE.slate}`}>{v.label}</span>
-      {!!v.chips.length && <span className="text-slate-400">Hệ thống hiểu:</span>}
+      {!!v.chips.length && <span className="text-slate-400">Đã nhận diện:</span>}
       {v.chips.map((c, i) => <span key={i} title={c.hint} className="rounded-full bg-white border border-slate-200 px-2 py-0.5 text-slate-700">{c.label}{c.hint ? <span className="text-slate-400"> · {c.hint}</span> : null}</span>)}
     </div>
     {v.findings.map((f: any, i: number) => <div key={i} data-finding={f.code} role={f.level === 'block' ? 'alert' : undefined} className={`rounded-xl border px-3 py-2 text-xs ${TONE[f.tone]}`}>

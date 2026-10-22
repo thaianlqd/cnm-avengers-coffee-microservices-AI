@@ -80,7 +80,11 @@ def restore_report_presentation(report, artifacts, catalog):
             raise AnalysisError('quality_metadata','Stored chart no longer matches approved artifact rendering')
         restored.append({**current,**chart,'data':current['data']})
     dashboard['charts']=restored
-    report.update(dashboard)
+    # Rehydrate presentation only. Replacing existing KPI cards with planner
+    # defaults duplicates facts and changes the saved verifier denominator.
+    for key,value in dashboard.items():
+        report.setdefault(key,value)
+    report['charts']=restored
     from services.analysis_quality_service import chart_checks
     if any(not check['valid'] for check in chart_checks(report['charts'],hydrated,evidence)):
         raise AnalysisError('quality_metadata','Restored chart does not match full artifact')

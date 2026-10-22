@@ -10,7 +10,7 @@ class AnalysisComponent(Contract):
     domain_id: Optional[str] = None
     lens_id: Optional[str] = None
     requested_or_supporting: Literal["requested", "supporting"] = "requested"
-    operation_ids: list[str] = Field(default_factory=list, max_length=8)
+    operation_ids: list[str] = Field(default_factory=list, max_length=16)
     status: Literal["planned", "unsupported", "insufficient_data", "needs_input"] = "planned"
     reason: Optional[Literal["historical_data_unavailable", "metric_unavailable", "definition_unavailable", "ambiguous_criterion"]] = None
 

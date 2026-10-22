@@ -55,10 +55,12 @@ services:
       DATA_ANALYST_ENV: production
       DATA_PLATFORM_GOVERNED_INGESTION: ${DATA_PLATFORM_GOVERNED_INGESTION:-1}
       DATA_PLATFORM_WAREHOUSE_PROFILE_PATH: /run/secrets/warehouse-replica.json
+      DATA_PLATFORM_SYNC_CONTROL_DIR: /var/lib/data-platform-sync-control
       SYNC_INTERVAL_SECONDS: 300
       SYNC_SCHEMAS: "orders,identity,menu,inventory,news,ai"
     volumes:
       - ./data-platform/analytics-api/.runtime/replica-secrets:/run/secrets:ro
+      - avengers_sync_control:/var/lib/data-platform-sync-control
     networks:
       - data-network
   # =========================================
@@ -381,6 +383,7 @@ services:
       - ./data-platform/.env
     environment:
       ANALYTICS_INITIALIZE_WAREHOUSE_ON_STARTUP: "false"
+      DATA_PLATFORM_SYNC_CONTROL_DIR: /var/lib/data-platform-sync-control
       DATA_ANALYST_ALLOWED_ORIGINS: ${DATA_ANALYST_ALLOWED_ORIGINS:-}
       PORT: 8000
       PYTHONPATH: /app:/opt/pipeline-common
@@ -434,6 +437,7 @@ services:
     volumes:
       - ./data-platform/analytics-api:/app
       - ./data-platform/pipeline-common:/opt/pipeline-common:ro
+      - avengers_sync_control:/var/lib/data-platform-sync-control
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS --max-time 7 http://localhost:8000/api/readiness >/dev/null || exit 1"]
       interval: 10s
@@ -462,6 +466,7 @@ services:
     networks:
       - data-network
 volumes:
+  avengers_sync_control:
   avengers_analytics_data:
   avengers_zk_data:
   avengers_zk_log:

@@ -27,6 +27,7 @@ logger = logging.getLogger("ai-analytics")
 SYSTEM = """Extract Vietnamese analytical meaning as one intent envelope, one requirement per distinct user goal. Use candidate metric/dimension IDs; lens_hint is advisory. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve metrics, filters, time, ranking and requested features. Question overrides drafts/expectations; governed scope facts and structured UI filters/time are authoritative. Omitted time means all_time. Preserve incompatible populations separately. Unavailable definitions such as ROI without costs stay explicit with controlled reasons. Clarify only genuinely missing meaning. Top N is a selected cohort; contribution_share requires a verified denominator. Never invent values, causes or history. Return requested work; server chooses supporting views. Population disclosures do not imply grouping. Averages cannot have additive shares. Separate whole-scope scalar KPIs from grouped views. Companion metrics do not change the ranking criterion."""
 REPAIR_SYSTEM = """Repair ONLY the identified semantic fields/requirements. Return one intent envelope with requirement id and only the corrected fields. Omitted fields are preserved by the server. Do not resend unaffected requirements. Correct ALL supplied conflicts together. When removing a feature, also remove its feature_metrics entry; feature_metrics is a full replacement map, not a nested patch. For a shape conflict, retain protected_features and move the conflicting feature to a new requirement with its valid shape, original filters and original time. Do not alter the existing trend cadence or grouping to accommodate a whole-scope feature. For an omitted derived feature, add it to a compatible existing requirement using only id and derived_features, preserving existing features. Add a new requirement only for genuinely omitted analytical work. All other fields are frozen. Use the bounded vocabulary or state a genuine clarification/limitation. No SQL, executable graph, reasoning or results."""
 SYSTEM += " Negated ROI/causal claims are guardrails, not requested calculations. Use feature_metrics to target a subset of displayed metrics. Catalog aggregations are aggregate, not raw detail. Non-analytical text uses clarification reason not_analytical_request and missing_fields:[analysis_goal]."
+SYSTEM += " default_metric_ids are the governed bundle of an explicitly named topic: analyze them, never ask which metric."
 SYSTEM += " No optional features for dashboard count. Top N entity goes in dimension_ids; per_group only for an explicit independent partition. Totals/trends have no entity grouping unless requested. Status disclosure adds no filter; preserve catalog populations."
 SYSTEM += " Bind each clause's metrics and grouping. scalar=whole scope; selected_total=ranking metric only."
 SYSTEM += " Concept without candidate metric: decision unsupported. Vague superlative (tốt nhất, ngon nhất) without metric: clarification metric_ambiguous."
@@ -41,6 +42,54 @@ CALL_REASONS = {"primary": "INITIAL_UNDERSTANDING", "repair": "CONTRACT_REPAIR",
                 "resolution": "CONTRACT_REPAIR", "transport": "TRANSPORT_RETRY"}
 
 
+def repair_anchor_context(anchors):
+    """Preserve heterogeneous metadata lists, omitting lexical span details."""
+    return {key: ([{k: deepcopy(v) for k, v in anchor.items() if k not in {'start', 'end', 'phrase'}}
+                   if isinstance(anchor, dict) else deepcopy(anchor) for anchor in value]
+                  if isinstance(value, list) else deepcopy(value))
+            for key, value in anchors.items()
+            if key not in {'ui', 'metric_constraints', 'capability_constraints'}}
+
+
+def cohort_contract(anchors):
+    references=[{k:deepcopy(r[k]) for k in ('dimension','goal_dimensions','goal_metrics') if k in r}
+                for r in anchors.get('cohort_references', [])]
+    return {'references':references, 'rule':
+        'A ranked-set back-reference denotes server-selected keys, never a literal filter value. '
+        'Do not put reference prose, rank labels or invented cohort names in filters. '
+        'Keep the referenced ranking and every independently requested goal. Use separate aggregate requirements for its dependent breakdowns. '
+        'Preserve known user filters and time. Inherit the ranking metric unless another metric is explicit in that clause. '
+        'The server binds dependent goals to the selected keys.'} if references else None
+
+
+def draft_shapes(raw, catalog):
+    """Bounded catalog IDs/types only, available even when schema parsing fails."""
+    result=[]
+    for req in (raw.get('requirements') or [])[:8]:
+        if not isinstance(req,dict):continue
+        def ids(field, known):
+            values=req.get(field)
+            return [v for v in values[:8] if isinstance(v,str) and v in known] if isinstance(values,list) else []
+        filters=req.get('filters')
+        ranking=req.get('ranking')
+        ranking=({k:v for k,v in ranking.items() if
+                  (k=='metric_id' and isinstance(v,str) and v in catalog.registry['metrics']) or
+                  (k=='direction' and isinstance(v,str) and v in {'top','bottom'}) or
+                  (k=='limit' and type(v) is int and 1<=v<=100)} if isinstance(ranking,dict) else None)
+        result.append(dict(requirement_id=req.get('id') if isinstance(req.get('id'),str) and re.fullmatch(r'[a-z][a-z0-9_]{0,39}',req['id']) else 'invalid',
+            supporting_for=req.get('supporting_for') if isinstance(req.get('supporting_for'),str) and re.fullmatch(r'[a-z][a-z0-9_]{0,39}',req['supporting_for']) else None,
+            availability=req.get('availability') if isinstance(req.get('availability'),str) and req['availability'] in {'requested','unsupported','needs_input','insufficient_data'} else None,
+            ranking=ranking,
+            analysis_kind=req.get('analysis_kind') if (req.get('analysis_kind') is None or isinstance(req.get('analysis_kind'),str)) and req.get('analysis_kind') in
+                {'aggregate','cross_tab','distribution','ranking','trend','comparison','relationship','detail','forecast',None} else 'invalid',
+            metric_ids=ids('metric_ids',catalog.registry['metrics']),dimension_ids=ids('dimension_ids',catalog.registry['dimensions']),
+            derived_features=ids('derived_features',catalog.registry.get('derived_features',{})),
+            filters=[dict(dimension=f.get('dimension') if isinstance(f.get('dimension'),str) and f['dimension'] in catalog.registry['dimensions'] else 'invalid',
+                operator=f.get('operator') if isinstance(f.get('operator'),str) and f['operator'] in {'eq','ne','in','not_in','lt','lte','gt','gte'} else 'invalid',
+                value_kind=type(f.get('value')).__name__) for f in filters[:8] if isinstance(f,dict)] if isinstance(filters,list) else []))
+    return result
+
+
 def issue_fingerprint(issues):
     """Canonical unresolved semantic state.
 
@@ -49,6 +98,14 @@ def issue_fingerprint(issues):
     """
     return sorted({(str(i.get("requirement_id")), str(i.get("field")), str(i.get("code"))) for i in issues})
 
+
+
+def unavailable_definitions(registry, anchors=None):
+    """Aliases detect the concept server-side (request_anchors capabilities, preflight
+    unsupported_concept), so the prompt carries only the concepts named in the question."""
+    named = {i for key in ("capabilities", "capability_constraints") for a in (anchors or {}).get(key, []) for i in a["candidate_ids"]}
+    return {id: {k: v for k, v in d.items() if k != "aliases"}
+            for id, d in registry.get("unsupported_capabilities", {}).items() if id in named}
 
 class HybridAnalystPlanner(OneShotPlanner):
     def __init__(self, *args, **kwargs):
@@ -123,24 +180,35 @@ class HybridAnalystPlanner(OneShotPlanner):
                 "metric_definitions":"Honor request_anchors IDs. Concept neighbors are not equivalents: aov SUM/COUNT(*) vs store_aov AVG ignores NULL.",
                 "scope":"population_scopes request catalog definitions, not grouping axes. Keep independent dimension anchors.",
                 "constraints":"Do not turn a prohibition such as không kết luận ROI into a requirement to calculate ROI. Preserve it as a conclusion constraint. Only a positive request for an unavailable calculation needs an unavailable requirement.",
-                "clarification":"Use not_analytical_request for greetings/nonsense without an analytical goal. missing_fields must name genuinely missing metric_ids, dimension_ids, time, filters or analysis_goal. Do not request fields already explicit in the question."},
+                "clarification":"default_metric_ids in the packet are the governed bundle of an explicit topic: analyze them with the explicit metrics; never ask which of them. Use not_analytical_request for greetings/nonsense without an analytical goal. missing_fields must name genuinely missing metric_ids, dimension_ids, time, filters or analysis_goal. Do not request fields already explicit in the question."},
             "dimensions":[[d,r["dimensions"][d]["business_name"]] for d in dims],
             "values":{d:dimension_values(self.catalog,d) for d in dims if dimension_values(self.catalog,d)},
             "features":{id:meta["shape"] for id,meta in r.get("derived_features",{}).items()},
-            "unavailable_definitions":r.get("unsupported_capabilities",{})}
+            "unavailable_definitions":unavailable_definitions(r,getattr(self,"anchors",None))}
 
     def context_payload(self, question, context):
         from services.semantic_candidate_service import candidate_packet
         index = AnalyticalResolver(self.catalog,self.reference).index
         packet,candidates=candidate_packet(self.catalog,index,self.intelligence,self.anchors,question,context,
             [a.query.subject for a in self.queries.previous.values()])
+        self.anchors=packet.anchors  # domain-settled mentions are what the plan is checked against
         selected=packet.candidates['candidate_domains']
         required=[c['id'] for c in candidates if c['protected']]
+        topic=[u for u in packet.candidates.get('unresolved_meaning',[]) if u['kind']=='topic_target']
+        if topic and not required and not packet.candidates['explicit_metric_ids']:
+            # Bare "đánh giá" names no object: ask which reviews, deterministically
+            # and before any provider send (PLAN 20/10 §4.5).
+            concepts=self.catalog.registry['domain_intelligence'].get('topic_concepts',[])
+            targets={t['domain_id']:t for c in concepts for t in c['targets']}
+            profiles=self.intelligence.available()
+            raise AnalysisError('subject_ambiguous','Topic needs an explicit object',choices=[
+                {'label':profiles[d]['business_label'],'followup':question.rstrip(' ?.')+' về '+targets[d]['followup_object']}
+                for d in topic[0]['candidate_ids'] if d in profiles and targets.get(d,{}).get('followup_object')])
         payload = {"question":question,"reference_date":self.reference.isoformat(),"timezone":self.catalog.registry["timezone"],
-            "ui":{k:v for k,v in context.items() if k not in {"semantic_intent","original_question","current_visuals","revision","initial_semantic_intent","semantic_history","guided_intent","analysis_mission"}},
+            "ui":{k:v for k,v in context.items() if k not in {"semantic_intent","cohort_references","original_question","current_visuals","revision","initial_semantic_intent","semantic_history","guided_intent","analysis_mission","fixed_grouping_policy","input_integrity_policy"}},
             "semantic_candidate_packet":packet.wire(),
             "features":{id:meta['shape'] for id,meta in self.catalog.registry.get('derived_features',{}).items()},
-            "unavailable_definitions":self.catalog.registry.get('unsupported_capabilities',{})}
+            "unavailable_definitions":unavailable_definitions(self.catalog.registry,self.anchors)}
         # Forecast bounds only for metrics of the retrieved candidate domains.
         forecastable={m:",".join(f"{u}<={n}" for u,n in self.catalog.registry["metrics"][m]["forecast"]["max_horizon"].items())
             for d in selected for m in index.domains.get(d,{}).get("metric_refs",[])
@@ -159,6 +227,8 @@ class HybridAnalystPlanner(OneShotPlanner):
         if scope.get('bindings'):
             payload['scope_contract']={'mode':'comparison' if any(b.get('comparison') for b in scope['bindings']) else 'union',
                 'rule':'Use the exact governed scope sets in protected_input_facts.scope_resolution. A union is ONE scope on EVERY requested view, never separate cohorts. For comparison use separate cohort totals or the declared comparison_dimension, never city as its substitute.'}
+        if cohort_contract(self.anchors):
+            payload['cohort_contract']=cohort_contract(self.anchors)
         self.diagnostics.update(candidate_packet_chars=packet.chars,
             required_domain_pack_ids=required,supporting_domain_pack_ids=[d for d in selected if d not in required],
             detailed_domain_ids=selected,pruned_optional_domain_ids=[],retrieval_confidence="high" if required else "low",
@@ -299,6 +369,13 @@ class HybridAnalystPlanner(OneShotPlanner):
                            i['field']=='derived_features' for f in i.get('candidate_ids',[])}
         old={r.id:r for r in previous.requirements}
         updates={r.id:r for r in returned.requirements}
+        # apply_delta invalidates generated views when their parent changes.
+        # They must be regenerated from the validated parent, not demanded in a
+        # repair response or reinserted with their old scope/time.
+        resolver=AnalyticalResolver(self.catalog,self.reference)
+        changed_parents={id for id in old.keys() & updates.keys() if
+            requirement_meaning(resolver.normalize(old[id])) != requirement_meaning(resolver.normalize(updates[id]))}
+        regenerated={id for id,r in old.items() if r.supporting_for in changed_parents and id not in updates}
         for id,new in updates.items():
             if id not in old:
                 if None not in targets and id not in targets:
@@ -306,13 +383,47 @@ class HybridAnalystPlanner(OneShotPlanner):
                 # A malformed sibling may not parse, but its valid explicit
                 # time/filter/ranking facts are still protected during repair.
                 raw = getattr(self, "raw_requirements", {}).get(id, {})
+                canonical_before, canonical_after = None, None
+                if raw and targets.get(id) and getattr(self, 'anchors', {}).get('cohort_references'):
+                    # A malformed sibling never entered `old`, but its valid
+                    # frozen facts still matter. Compare shape only after the
+                    # same server cohort normalization on both candidates.
+                    # Only diagnosed fields are patched to parse the baseline;
+                    # metric/time/filter/ranking facts outside targets remain raw.
+                    baseline_raw = deepcopy(raw)
+                    for field in targets[id] & IntentRequirement.model_fields.keys():
+                        baseline_raw[field] = new.model_dump(mode='json')[field]
+                    try:
+                        baseline_req = IntentRequirement.model_validate(baseline_raw)
+                        from services.request_anchors import normalize_cohort_cross_tabs, complete_coordinated_axes
+                        normalized = []
+                        for req in (baseline_req, new):
+                            envelope = AnalysisIntentEnvelope(decision='analyze', requirements=[*old.values(), req])
+                            envelope, _ = normalize_cohort_cross_tabs(envelope, self.anchors)
+                            envelope, _ = complete_coordinated_axes(envelope, self.anchors, resolver.index)
+                            normalized.append(next(r for r in envelope.requirements if r.id == id))
+                        canonical_before, canonical_after = normalized
+                    except (ValidationError, StopIteration):
+                        pass  # Invalid frozen facts still use the original strict guard below.
                 for field in (IntentRequirement.model_fields.keys()-{"id","goal","domain_id","lens_hint"}) - targets.get(id,set()):
                     if field in raw:
                         try:
                             baseline = IntentRequirement.model_validate({"id":id,"goal":"scope",field:raw[field]})
                         except ValidationError:
                             continue
-                        if getattr(baseline,field) != getattr(new,field):
+                        shape_fields = {'analysis_kind', 'dimension_ids', 'ranking', 'derived_features', 'feature_metrics'}
+                        before = getattr(canonical_before, field) if canonical_before and field in shape_fields else getattr(baseline, field)
+                        after = getattr(canonical_after, field) if canonical_after and field in shape_fields else getattr(new, field)
+                        if canonical_before and field in {'derived_features', 'feature_metrics'}:
+                            explicit = {f for a in self.anchors.get('features', []) for f in a['candidate_ids']}
+                            removed = set(canonical_before.derived_features) - set(canonical_after.derived_features)
+                            only_optional_removal = (removed and not removed & explicit
+                                and set(canonical_after.derived_features) <= set(canonical_before.derived_features))
+                            if only_optional_removal and (field == 'derived_features' or
+                                    all(canonical_before.feature_metrics.get(f) == canonical_after.feature_metrics.get(f)
+                                        for f in set(canonical_before.feature_metrics) | set(canonical_after.feature_metrics) if f not in removed)):
+                                continue  # Unaccepted model additions carry no user authority.
+                        if before != after:
                             raise ResolutionIssues([{"requirement_id":id,"field":field,"code":"untargeted_field_changed"}])
                 continue
             resolver=AnalyticalResolver(self.catalog,self.reference)
@@ -350,8 +461,10 @@ class HybridAnalystPlanner(OneShotPlanner):
                         raise ResolutionIssues([{'requirement_id':id,'field':'derived_features','code':'accepted_feature_changed'}])
             old[id]=new
         for id in targets:
-            if id is not None and id not in updates:
+            if id is not None and id not in updates and id not in regenerated:
                 raise ResolutionIssues([{"requirement_id":id,"field":"id","code":"target_requirement_omitted"}])
+        for id in regenerated:
+            old.pop(id)
         for id,new in updates.items():
             if id not in old:
                 old[id]=new
@@ -467,6 +580,9 @@ class HybridAnalystPlanner(OneShotPlanner):
             "Return submit_analysis_delta against current_intent: add/remove/update named requirements; "
             "changes contains only fields explicitly changed by feedback. Preserve all other meaning. "
             "Feedback overrides drafts; governed scope facts and structured UI filters/time are authoritative. "
+            "A report-wide scope change (for example only Ha Noi) must update filters on EVERY requested "
+            "requirement, including scalar totals and trend requirements; updating just one panel leaves the report inconsistent. "
+            "Keep unrelated existing filters and all unchanged metrics, grouping and time. "
             "Use candidate metric/dimension IDs and catalog populations. Never invent values, causes or history. "
             "No SQL, executable graph, full intent replacement, charts or reasoning. "
             "Keep incompatible populations separate, scalar totals ungrouped and ranking companions on the selected cohort. "
@@ -477,6 +593,20 @@ class HybridAnalystPlanner(OneShotPlanner):
             "A removed feature must lose its feature_metrics entry."
         )
         tools=[intent_tool(delta=refinement)]
+        if refinement:
+            # Ground feedback independently of the original request. Otherwise
+            # the protected original packet can make a new place look absent.
+            from services.scope_resolution_service import scope_issues, scope_repair_patches
+            feedback_scope = request_anchors(prompt,self.catalog,context).get('scope_resolution') or {}
+            if feedback_scope.get('bindings'):
+                baseline = AnalysisIntentEnvelope.model_validate(context['semantic_intent'])
+                scope_targets = scope_issues(feedback_scope,baseline.requirements,self.catalog,context)
+                patches = scope_repair_patches(feedback_scope,baseline,scope_targets)
+                if patches:
+                    payload['required_scope_delta'] = [dict(action='update',requirement_id=p['id'],
+                        changes={k:v for k,v in p.items() if k!='id'}) for p in patches if
+                        not next(r for r in baseline.requirements if r.id==p['id']).supporting_for]
+                    system += " Copy required_scope_delta into submit_analysis_delta; those exact filters come from the user's feedback and governed catalog. Derived supporting views regenerate from their parents."
         maximum=char_limit("DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS",24000,48000)
         self.diagnostics["context_char_budget"]=maximum
         from services.one_shot_context import body_sizes
@@ -535,11 +665,18 @@ class HybridAnalystPlanner(OneShotPlanner):
 
     def run(self, prompt, context=None):
         started=time.perf_counter();context=dict(context or {})
+        from services.analysis_expansion_service import FIXED_GROUPING_POLICY
+        context['fixed_grouping_policy']=FIXED_GROUPING_POLICY
+        self.diagnostics['fixed_grouping_policy']=FIXED_GROUPING_POLICY
         self.turn.budget.start_deadline()
         resolver=AnalyticalResolver(self.catalog,self.reference,context)
         refinement, original, initial, history, grounding_started = self._prepare_grounding(prompt, context, resolver)
         accepted_delta = None
         self.semantic.discovered.update(resolver.index.references)
+        # Selected-scope members were already grounded server-side (exact lookup);
+        # re-grounding them here under the turn's lookup budget rejected the fifth one (I03).
+        for f in context.get("required_filters") or []:
+            self.semantic.resolved.setdefault(f["dimension"],set()).update(f["value"] if isinstance(f["value"],list) else [f["value"]])
         self.diagnostics["request_anchors"]=self.anchors
         logger.info("[AnalystCoverageAnchors] %s",json.dumps({"explicit_metric_anchors":[a["candidate_ids"] for a in self.anchors["metrics"]],"dimension_anchors":[a["candidate_ids"] for a in self.anchors["dimensions"]],"time_anchor":bool(self.anchors["times"]),"ranking_anchor":bool(self.anchors["rankings"])}))
         self.diagnostics['local_grounding_ms']=round((time.perf_counter()-grounding_started)*1000,2)
@@ -611,6 +748,8 @@ class HybridAnalystPlanner(OneShotPlanner):
                             if aliases:self.diagnostics.setdefault('semantic_normalizations',[]).append(
                                 dict(field='id',rule='opaque_requirement_ids',count=len(aliases)))
                         self.raw_requirements = {r["id"]:deepcopy(r) for r in raw["requirements"] if isinstance(r,dict) and isinstance(r.get("id"),str)}
+                    if isinstance(raw.get('requirements'), list):
+                        self.diagnostics.setdefault('draft_shapes', []).append(dict(phase=kind, requirements=draft_shapes(raw,self.catalog)))
                     if refinement and tools[0]["name"] == "submit_analysis_delta":
                         intent=apply_delta(AnalysisIntentEnvelope.model_validate(context["semantic_intent"]),raw)
                         if previous is not None and kind != 'primary':
@@ -681,6 +820,17 @@ class HybridAnalystPlanner(OneShotPlanner):
                             from services.analysis_intent import decompose_scalar_draft
                             intent,scalars=decompose_scalar_draft(intent)
                             completed += scalars
+                            from services.analytical_resolver import drop_unrequested_feature_conflicts
+                            intent,dropped=drop_unrequested_feature_conflicts(intent,self.anchors)
+                            completed += dropped
+                        # A field-targeted repair can introduce the same cohort
+                        # shape as a primary interpretation. Preserve dependency
+                        # meaning at every candidate boundary, before resolution.
+                        from services.request_anchors import normalize_cohort_cross_tabs, complete_coordinated_axes
+                        intent,crossed=normalize_cohort_cross_tabs(intent,self.anchors)
+                        completed += crossed
+                        intent,coordinated=complete_coordinated_axes(intent,self.anchors,resolver.index)
+                        completed += coordinated
                         previous=intent
                         if completed:self.diagnostics.setdefault('semantic_normalizations',[]).extend(completed)
                     self.diagnostics["failure_stage"]="ANALYTICAL_RESOLUTION"
@@ -694,8 +844,19 @@ class HybridAnalystPlanner(OneShotPlanner):
                             try:
                                 self.ground_values(data)
                             except UnresolvedFilter as error:
-                                raise AnalysisError("filter_value_ambiguous" if error.resolution['status']=='ambiguous' else "filter_value_unknown",
-                                    "Grounded dimension value requires clarification",choices=error.resolution.get('choices',[])) from None
+                                # "đồ uống"/"món" name the governed subject itself, not a category value:
+                                # an ungroundable filter made only of subject synonyms restricts nothing.
+                                from services.value_grounding_service import value_text
+                                synonyms={value_text(a) for s in self.catalog.registry['subjects'].values()
+                                          for a in [s['business_name'],*s.get('aliases',[])]}
+                                kept=[f for f in data.get('filters',[]) if not (f.get('operator') in ('eq','in') and
+                                      all(value_text(v) in synonyms for v in (f['value'] if isinstance(f['value'],list) else [f['value']])))]
+                                if len(kept)==len(data.get('filters',[])):
+                                    raise AnalysisError("filter_value_ambiguous" if error.resolution['status']=='ambiguous' else "filter_value_unknown",
+                                        "Grounded dimension value requires clarification",choices=error.resolution.get('choices',[])) from None
+                                data['filters']=kept
+                                self.diagnostics.setdefault('semantic_normalizations',[]).append({'rule':'subject_synonym_not_a_filter','requirement_id':req.id})
+                                self.ground_values(data)
                             req.filters = IntentRequirement.model_validate(data).filters
                     try:
                         resolved=resolver.resolve(intent)
@@ -744,7 +905,7 @@ class HybridAnalystPlanner(OneShotPlanner):
                         # Mission reports are judged on relevant planned views, not a
                         # generic count: the floor is what the mission can honestly show.
                         from services.analysis_expansion_service import estimated_views
-                        context['minimum_visuals']=min(context['minimum_visuals'],max(1,estimated_views(resolved['operations'],self.catalog)))
+                        context['minimum_visuals']=min(context['minimum_visuals'],max(1,estimated_views(resolved['operations'],self.catalog,context['fixed_grouping_policy'])))
                     self.diagnostics['resolver_latency_ms']=round((time.perf_counter()-resolution_started)*1000,2)
                     break
                 except (ResolutionIssues,ValidationError) as error:
@@ -880,21 +1041,23 @@ class HybridAnalystPlanner(OneShotPlanner):
                         "affected_requirements":rejected,
                         "frozen_requirement_ids":[r.id for r in previous.requirements if r.id not in targets] if previous else [],
                         "vocabulary":self.vocabulary(domains or self.diagnostics["detailed_domain_ids"]),"domains":{"packs":[]}}
+                    if cohort_contract(self.anchors):payload['cohort_contract']=cohort_contract(self.anchors)
                     payload['feature_target_options']=[dict(requirement_id=r.id,
                         metric_ids=r.metric_ids,
                         additive_metric_ids=[m for m in r.metric_ids if m in self.catalog.registry['metrics']
                             and self.catalog.registry['metrics'][m].get('additive')])
                         for r in previous.requirements if r.id in targets] if previous else []
                     from services.scope_resolution_service import scope_repair_patches
-                    patches=scope_repair_patches(self.anchors.get('scope_resolution') or {},previous,issues)
+                    repair_scope=self.anchors.get('scope_resolution') or {}
+                    if refinement:
+                        feedback_scope=request_anchors(prompt,self.catalog,context).get('scope_resolution') or {}
+                        if feedback_scope.get('bindings'):repair_scope=feedback_scope
+                    patches=scope_repair_patches(repair_scope,previous,issues)
                     if patches:
                         payload['required_scope_patches']=patches
                         payload['scope_patch_rule']='Copy these exact diagnosed fields into the named targets; preserve all frozen fields. Correct other diagnosed feature fields too. A union must not be split into narrower scopes.'
                     if any(i.get('requirement_id') is None for i in issues):
-                        payload['request_anchors']={
-                            key:([{k:v for k,v in anchor.items() if k not in {'start','end','phrase'}} for anchor in value]
-                                 if isinstance(value,list) else value)
-                            for key,value in self.anchors.items() if key not in {'ui','metric_constraints','capability_constraints'}}
+                        payload['request_anchors'] = repair_anchor_context(self.anchors)
                         payload['addition_policy']='Use a new repair_add ID for omitted work. Existing untargeted requirements cannot change.'
                     if any(i.get('requirement_id') is None and i['field']=='derived_features' for i in issues):
                         payload['feature_repair_candidates']=[dict(id=r.id,analysis_kind=r.analysis_kind,

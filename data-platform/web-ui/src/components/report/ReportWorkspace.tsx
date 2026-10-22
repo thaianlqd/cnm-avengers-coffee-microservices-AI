@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnalystChart } from '../Charts';
-import { chartAccent, conciseChartTitle, dashboardCharts, dashboardPrimaryCharts, dashboardChartTabs, dashboardHighlights, dashboardFindings, chartGridSpans, initialChartType, chartExplanation, businessCategory } from '../../utils/analystDashboardLayout.mjs';
+import { DashboardChartGrid, type ChartGridPlacement } from '../DashboardChartGrid';
+import { chartAccent, conciseChartTitle, dashboardCharts, dashboardPrimaryCharts, dashboardChartTabs, dashboardHighlights, dashboardFindings, initialChartType, chartExplanation, businessCategory , scopeChip } from '../../utils/analystDashboardLayout.mjs';
 import { formatChartValue } from '../../utils/aiChartConfig.mjs';
 import { analysisChartGroups, analysisPlanLabel } from '../../utils/analysisPresentation.mjs';
 import { groupDifference, kpiStrip, missionTabs, orderChartsByMission, reportContext } from '../../utils/workspacePresentation.mjs';
@@ -12,6 +13,72 @@ import { FollowUpChips } from '../workspace/FollowUpChips';
 import { ForecastPanel } from '../ForecastPanel';
 import { ChartInsight, ChartSource } from './ChartInsight';
 import { VerificationPanel } from './VerificationPanel';
+import { queueWorkspaceFilter, workspaceRevisionInput, workspaceRevisionController } from '../../utils/workspaceInteraction.mjs';
+
+const WorkspaceFilters: React.FC<{report: any; onPublish: (report: any) => void; selection: any; onBusy:(busy:boolean)=>void}> = ({report, onPublish, selection, onBusy}) => {
+  const applied = report.interaction_state || {filters: [], drill_path: []};
+  const [filters, setFilters] = useState<any[]>(applied.filters);
+  const [drill, setDrill] = useState<any[]>(applied.drill_path);
+  const [depth, setDepth] = useState(report.analysis_breadth);
+  const [chartId, setChartId] = useState('');
+  const [choice, setChoice] = useState('');
+  const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const controller = useRef(workspaceRevisionController());
+  useEffect(()=>{onBusy(busy);},[busy,onBusy]);
+  useEffect(() => {
+    controller.current.invalidate(); setBusy(false); setError('');
+    setFilters(applied.filters); setDrill(applied.drill_path); setDepth(report.analysis_breadth); setChartId(''); setChoice('');
+    return () => controller.current.invalidate();
+  }, [report.session_id, report.revision]);
+  const entries = report.interaction_contract.charts || [];
+  useEffect(() => { if (selection) setFilters(previous=>queueWorkspaceFilter(previous,selection)); }, [selection]);
+  const entry = entries.find((c: any) => c.chart_id === chartId);
+  const selected = entry?.options[Number(choice)];
+  const dirty = JSON.stringify([filters,drill,depth]) !== JSON.stringify([applied.filters,applied.drill_path,report.analysis_breadth]);
+  const apply = async (refresh = false) => {
+    setError(''); setBusy(true);
+    try {
+      await controller.current.apply(workspaceRevisionInput(report, refresh ? applied.filters : filters, refresh ? applied.drill_path : drill,
+        refresh ? report.analysis_breadth : depth, refresh), async (input, signal) => {
+        const response = await fetch('/api/ai/workspace-revision', {method:'POST', credentials:'same-origin', signal,
+          headers:{'Content-Type':'application/json'}, body:JSON.stringify(input)});
+        const data = await response.json();
+        if (!response.ok || data.status !== 'success') throw new Error(data.message || data.detail || 'Chưa áp dụng được bộ lọc.');
+        return data;
+      }, onPublish);
+    } catch (e: any) { if (e.name !== 'AbortError') setError(e.message); }
+    finally { setBusy(false); }
+  };
+  return <section data-workspace-filters aria-label="Bộ lọc tương tác" className="rounded-xl border bg-white p-3 space-y-2 text-xs min-w-0">
+    <p data-applied-filters>Đã áp dụng: {applied.filters.length} bộ lọc · {applied.drill_path.length} cấp chi tiết · revision {report.revision}</p>
+    <div className="flex flex-wrap items-end gap-2">
+      <label>Chiều phân tích<select aria-label="Chiều lọc biểu đồ" disabled={busy} value={chartId} onChange={e=>{setChartId(e.target.value);setChoice('');}} className="block max-w-full w-52 border rounded-lg p-2">
+        <option value="">Chọn chiều</option>{entries.map((c:any)=><option key={c.chart_id} value={c.chart_id}>{c.label}{c.selection_behavior !== 'population_filter' ? ' · chỉ xem' : ''}</option>)}</select></label>
+      <label>Giá trị<select aria-label="Giá trị lọc biểu đồ" value={choice} disabled={busy || !entry || entry.selection_behavior !== 'population_filter'} onChange={e=>setChoice(e.target.value)} className="block max-w-full w-52 border rounded-lg p-2">
+        <option value="">Chọn nhóm</option>{entry?.options.map((o:any,i:number)=><option key={i} value={String(i)}>{o.label}</option>)}</select></label>
+      <button type="button" disabled={!selected || choice === '' || busy} onClick={()=>{setFilters(queueWorkspaceFilter(filters,selected.selection));setChoice('');}} className="border rounded-lg p-2 disabled:opacity-50">Thêm lọc chờ</button>
+      <button type="button" disabled={!selected || choice === '' || !entry?.next_levels.length || busy} onClick={()=>{setDrill([...drill,{selection:selected.selection,target_dimension_id:entry.next_levels[0]}]);setChoice('');}} className="border rounded-lg p-2 disabled:opacity-50">Đi sâu một cấp</button>
+      <label>Mức phân tích<select aria-label="Mức phân tích báo cáo" disabled={busy} value={depth} onChange={e=>setDepth(e.target.value)} className="block border rounded-lg p-2"><option value="focused">Tập trung</option><option value="deep">Sâu</option><option value="comprehensive">Toàn diện</option></select></label>
+    </div>
+    {entry && entry.selection_behavior !== 'population_filter' && <p role="status">Chiều này chỉ dùng xem/đối chiếu; không thể lọc quần thể của mọi chỉ số trong báo cáo.</p>}
+    {entry && !entry.next_levels.length && <p>Cấp hiện tại không có drilldown phù hợp.</p>}
+    {entry?.options_truncated && <p>Danh sách chọn chỉ hiển thị một phần nhóm; bảng kết quả giữ toàn bộ dữ liệu.</p>}
+    <nav aria-label="Đường dẫn chi tiết" className="flex flex-wrap items-center gap-2"><span>Phạm vi gốc</span>{drill.map((d:any,i:number)=><span key={i}>› {d.selection.values.map((v:any)=>String(v.value)).join(', ')} → {d.target_dimension_id}</span>)}
+      <button type="button" disabled={!drill.length || busy} onClick={()=>setDrill(drill.slice(0,-1))} className="underline disabled:opacity-50">Quay lại một cấp</button>
+      <button type="button" disabled={!drill.length || busy} onClick={()=>setDrill([])} className="underline disabled:opacity-50">Đặt lại đường dẫn</button>
+    </nav>
+    <div data-pending-filters className="flex flex-wrap gap-2 items-center"><span>{dirty ? 'Bộ lọc chờ áp dụng' : 'Bộ lọc đang hiển thị'}</span>{filters.map((f:any,i:number)=><button type="button" disabled={busy} key={i} aria-label={`Xóa lọc ${f.dimension_id}`} onClick={()=>setFilters(filters.filter((_,j)=>j!==i))} className="border rounded-full px-2 py-1 break-all">{f.dimension_id}: {f.values.map((v:any)=>String(v.value)).join(', ')} ×</button>)}</div>
+    <div className="flex flex-wrap gap-2">
+      <button type="button" disabled={!dirty || busy} onClick={()=>void apply()} className="bg-emerald-800 text-white rounded-lg px-3 py-2 disabled:opacity-50">Áp dụng bộ lọc</button>
+      <button type="button" disabled={!dirty || busy} onClick={()=>{setFilters(applied.filters);setDrill(applied.drill_path);setDepth(report.analysis_breadth);}} className="border rounded-lg p-2 disabled:opacity-50">Bỏ thay đổi chờ</button>
+      <button type="button" disabled={busy} onClick={()=>{setFilters([]);setDrill([]);}} className="border rounded-lg p-2">Xóa toàn bộ lọc</button>
+      <button type="button" disabled={busy || dirty} onClick={()=>void apply(true)} className="border rounded-lg p-2 disabled:opacity-50">Làm mới dữ liệu</button>
+      {busy && <button type="button" onClick={()=>{controller.current.invalidate();setBusy(false);}} className="border rounded-lg p-2">Dừng chờ kết quả</button>}
+    </div>
+    {busy && <p data-report-stale role="status">Đang tạo revision mới. Toàn bộ số liệu bên dưới vẫn thuộc revision {report.revision} đã áp dụng.</p>}
+    {error && <p role="alert" className="text-amber-800">{error}</p>}
+  </section>;
+};
 
 /** "Xem dữ liệu": rows rendered only once opened (keeps paged charts honest). */
 const ChartData: React.FC<{ chart: any }> = ({ chart }) => {
@@ -21,30 +88,37 @@ const ChartData: React.FC<{ chart: any }> = ({ chart }) => {
   </details>;
 };
 
-const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; definition?: string; onInspect?: (chart: any, row: any) => void }> = ({ chart, compact, span, editing, onChartTypeChange, definition, onInspect }) => {
+const ChartCard: React.FC<{ chart: any; placement: ChartGridPlacement; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; definition?: string; onInspect?: (chart: any, row: any) => void; interaction?: any; onSelect?: (selection:any)=>void }> = ({ chart, placement, editing, onChartTypeChange, definition, onInspect, interaction, onSelect }) => {
   const [type, setType] = useState(initialChartType(chart));
   useEffect(() => setType(initialChartType(chart)), [chart.id, chart.chart_type, chart.query_id]);
   const accent = chartAccent(chart);
   // Two-group comparison: deterministic difference from the verified chart rows.
-  const difference = !chart.series && ['bar', 'horizontal_bar'].includes(type) && chart.data?.length === 2 && chart.selection !== 'Top N' ? groupDifference(chart.data, 'label', 'value', chart.unit) : null;
+  const difference = !chart.series && ['bar', 'horizontal_bar'].includes(type) && chart.data?.length === 2 && !['Top N', 'Bottom N'].includes(chart.selection) ? groupDifference(chart.data, 'label', 'value', chart.unit) : null;
   const types = chart.value_transform ? [] : ['bar', 'horizontal_bar'].includes(type) ? ['horizontal_bar', 'bar'] : ['line', 'area'].includes(type) ? ['area', 'line'] : [];
-  return <article data-dashboard-chart className={`${span} bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 min-w-0 w-full h-full flex flex-col shadow-sm shadow-slate-100/40`}>
-    <div className="flex items-start justify-between gap-3 mb-2">
+  return <article data-dashboard-chart data-chart-type={type} data-chart-rows={chart.data?.length||0} data-chart-row={placement.row} data-chart-span={placement.span}
+    style={{ '--chart-span': Math.round(placement.span * 5), '--chart-height': `${placement.height}px` } as React.CSSProperties}
+    className="dashboard-chart-card bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 min-w-0 w-full flex flex-col shadow-sm shadow-slate-100/40">
+    <div data-chart-header className="flex items-start justify-between gap-3 mb-2">
       <div className="min-w-0"><div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{ background: accent }} /><h5 className="text-xs font-semibold text-slate-900">{conciseChartTitle(chart)}</h5></div>
         <p className="text-[11px] text-slate-500 mt-1">{chart.x_label || chart.lens_label || chart.domain_label || 'Trong phạm vi đã chọn'}{chart.unit ? ` · ${chart.unit}` : ''}</p>
         {difference && <p data-group-difference className="text-xs font-medium text-slate-700 mt-1.5">{difference.text}</p>}
+        {scopeChip(chart) && <span data-scope-chip={scopeChip(chart)!.tone} className={`inline-block mt-2 mr-1 rounded-full px-2 py-1 text-[10px] font-semibold ${scopeChip(chart)!.tone === 'cohort' ? 'bg-blue-50 text-blue-800' : 'bg-amber-50 text-amber-800'}`}>{scopeChip(chart)!.text}</span>}
         {chart.role === 'supporting' && <span data-lens-role={chart.analysis_lens_role || undefined} className="inline-block mt-2 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-medium text-teal-700">{lensBadge(chart) ? `Góc nhìn ${lensBadge(chart)!.toLowerCase()}` : 'Góc nhìn bổ sung'}</span>}
       </div>
       <details className="relative shrink-0 text-xs"><summary aria-label={`Tùy chọn ${conciseChartTitle(chart)}`} className="cursor-pointer list-none rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-50">•••</summary>
         <div className="absolute right-0 z-10 w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-lg space-y-2">
           {(chart.analysis_lens_question || chart.purpose) && <p className="text-slate-500 leading-relaxed">{chart.analysis_lens_question || chart.purpose}</p>}
           {types.length > 0 && <label className="block text-slate-600">Cách trình bày<select aria-label={`Cách trình bày: ${chart.title}`} value={type} disabled={editing}
-            onChange={e => { setType(e.target.value); onChartTypeChange?.(chart.id, e.target.value); }} className="mt-1 w-full border border-slate-200 rounded-lg p-2">{types.map(t => <option key={t} value={t}>{analysisPlanLabel({ chart_type: t })}</option>)}</select></label>}
+            onChange={e => { if(onChartTypeChange)onChartTypeChange(chart.id,e.target.value);else setType(e.target.value); }} className="mt-1 w-full border border-slate-200 rounded-lg p-2">{types.map(t => <option key={t} value={t}>{analysisPlanLabel({ chart_type: t })}</option>)}</select></label>}
         </div>
       </details>
     </div>
-    <div data-chart-viewport className="h-[224px] sm:h-[234px] overflow-auto min-w-0"><div className="min-h-full flex flex-col justify-center"><AnalystChart chart={{ ...chart, chart_type: type, accent_color: accent }} onInspect={onInspect ? row => onInspect(chart, row) : undefined} /></div></div>
-    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-100 pt-2">
+    <div data-chart-viewport className="dashboard-chart-viewport flex flex-col justify-center min-w-0"><div className="w-full"><AnalystChart chart={{ ...chart, chart_type: type, accent_color: accent }} onInspect={onInspect ? row => onInspect(chart, row) : undefined} /></div></div>
+    <div data-chart-footer className="min-w-0"><div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-100 pt-2">
+    {interaction && onSelect && <select aria-label={`Lọc nhóm từ ${conciseChartTitle(chart)}`} value="" disabled={editing || interaction.selection_behavior!=='population_filter'}
+      onChange={e=>{if(e.target.value!=='')onSelect(interaction.options[Number(e.target.value)].selection);}} className="max-w-full min-w-0 rounded border p-1 text-xs">
+      <option value="">{interaction.selection_behavior==='population_filter' ? 'Chọn nhóm để thêm lọc chờ' : 'Chỉ xem · không lọc quần thể'}</option>
+      {interaction.options.map((o:any,i:number)=><option key={i} value={String(i)}>{o.label}</option>)}</select>}
     <details data-chart-details className="text-[11px] text-slate-600 open:w-full"><summary className="cursor-pointer font-medium focus-visible:outline-blue-500">Chi tiết biểu đồ</summary>
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
         <details className="text-xs text-slate-600 leading-relaxed"><summary data-chart-explanation className="cursor-pointer">Cách đọc biểu đồ</summary><p className="mt-1 max-w-md">{chartExplanation({ ...chart, chart_type: type })}</p></details>
@@ -58,26 +132,28 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
     {chart.grouped_categories > 0 && <p className="text-[11px] leading-relaxed text-slate-500 mt-2">6 nhóm lớn nhất và Khác ({chart.grouped_categories} nhóm). Tổng và tỷ trọng tính trên toàn bộ {chart.population_count} nhóm; xem từng nhóm trong bảng dữ liệu.</p>}
 
     </details>
-    <ChartInsight insight={chart.insight} />
+    <ChartInsight insight={chart.insight} scopeNote={chart.scope_note} />
     </div>
-    {(chart.selection === 'Top N' || chart.selection === 'limited' || chart.selection === 'display_subset') && <p className="text-[10px] text-slate-500 mt-2">
-      {chart.selection === 'Top N' ? 'Tập Top N được chọn; không phải cơ cấu toàn bộ.' : chart.selection === 'limited' ? 'Kết quả có giới hạn số dòng.' : `${chart.displayed_count}/${chart.population_count} nhóm · Bảng kết quả giữ đầy đủ; số liệu phân tích dùng đầy đủ các nhóm.`}
+    {(chart.selection === 'Top N' || chart.selection === 'Bottom N' || chart.selection === 'limited' || chart.selection === 'display_subset') && <p className="text-[10px] text-slate-500 mt-2">
+      {chart.selection === 'Top N' || chart.selection === 'Bottom N' ? `Tập ${chart.ranking_direction === 'ASC' || chart.selection === 'Bottom N' ? 'Bottom' : 'Top'} N được chọn; không phải cơ cấu toàn bộ.` : chart.selection === 'limited' ? 'Kết quả có giới hạn số dòng.' : `${chart.displayed_count}/${chart.population_count} nhóm · Bảng kết quả giữ đầy đủ; số liệu phân tích dùng đầy đủ các nhóm.`}
     </p>}
+    </div>
   </article>;
 };
 
-export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean; dashboardLayout?: boolean; definitions?: Record<string, string>; onInspect?: (chart: any, row: any) => void }> = ({ charts = [], onChartTypeChange, editing = false, compact = false, definitions = {}, onInspect }) => {
-  const renderGrid = (items: any[]) => {
-    const spans = chartGridSpans(items);
-    return <div data-dashboard-grid className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-      {items.map((chart, index) => <ChartCard key={chart.id || index} chart={chart} span={spans[index]} editing={editing} onChartTypeChange={onChartTypeChange} definition={definitions[chart.metric]} onInspect={onInspect} />)}
-    </div>;
-  };
-  return compact ? renderGrid(charts) : <div className="space-y-3">
+export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean; dashboardLayout?: boolean; definitions?: Record<string, string>; onInspect?: (chart: any, row: any) => void; interactions?:any[]; onSelect?:(selection:any)=>void }> = ({ charts = [], onChartTypeChange, editing = false, compact = false, definitions = {}, onInspect, interactions, onSelect }) => {
+  const [columns, setColumns] = useState(3);
+  const renderGrid = (items: any[]) => <DashboardChartGrid charts={items} maxColumns={columns}>
+    {(chart, placement) => <ChartCard key={chart.id || placement.index} chart={chart} placement={placement} editing={editing} onChartTypeChange={onChartTypeChange} definition={definitions[chart.metric]} onInspect={onInspect} interaction={interactions?.find(c=>c.chart_id===chart.id)} onSelect={onSelect} />}
+  </DashboardChartGrid>;
+  return <div className="space-y-3" data-analyst-views>
+    {charts.length > 1 && <nav aria-label="Bố cục biểu đồ" className="flex flex-wrap items-center justify-end gap-1 text-[11px] text-slate-500"><span className="mr-2">Bố cục</span>{[[3,'Tự động · 2–3 ô'],[2,'Hai ô mỗi hàng'],[1,'Toàn chiều rộng']].map(([value,label])=><button key={value} type="button" aria-pressed={columns===value} onClick={()=>setColumns(Number(value))} className={`rounded-lg border px-2.5 py-1.5 ${columns===value?'border-blue-200 bg-blue-50 text-blue-700':'border-slate-200 bg-white'}`}>{label}</button>)}</nav>}
+    {compact ? renderGrid(charts) : <div className="space-y-3">
     {analysisChartGroups(charts).map(group => <section key={group.role} aria-label={group.title} className="space-y-3">
       <h4 className="text-xs font-semibold text-slate-500">{group.title}</h4>
       {renderGrid(group.charts)}
     </section>)}
+  </div>}
   </div>;
 };
 
@@ -89,10 +165,12 @@ const REPORT_TABS = [['report', 'Báo cáo'], ['verification', 'Kiểm chứng &
  * save/export live in their own tabs.
  */
 export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; capabilities?: any; onFollowUp?: (question: string) => void; onGroupAnalysis?: (draft: any) => void;
-  initialTab?: 'report' | 'verification' | 'data' | 'export'; onSave?: () => void; onExport?: () => void }> = ({ report, editing, onChartTypeChange, capabilities, onFollowUp, onGroupAnalysis, initialTab = 'report', onSave, onExport }) => {
+  geographicView?: React.ReactNode; initialTab?: 'report' | 'verification' | 'data' | 'export'; onSave?: () => void; onExport?: () => void; onReportChange?: (report: any) => void }> = ({ report, editing, onChartTypeChange, capabilities, onFollowUp, onGroupAnalysis, initialTab = 'report', onSave, onExport, onReportChange, geographicView }) => {
   const [showAll, setShowAll] = useState(false);
   const [view, setView] = useState('all');
   const [tab, setTab] = useState<string>(initialTab);
+  const [selection, setSelection] = useState<any>(null);
+  const [workspaceBusy, setWorkspaceBusy] = useState(false);
   useEffect(() => { setView('all'); setShowAll(false); setTab(initialTab); }, [report.session_id, report.revision]);
   const [resultId, setResultId] = useState<string | null>(null);
   const [inspect, setInspect] = useState<any>(null);
@@ -147,6 +225,11 @@ export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChart
   const caveats = [...new Set((report.charts || []).flatMap((c: any) => c.insight?.caveats || []))].slice(0, 4) as string[];
   const sql = report.sql ? Object.entries(report.sql).map(([name, text]) => `-- ${name}\n${text}`).join('\n\n') : report.sql_query;
   return <div className="space-y-3">
+    {report.interaction_contract && onReportChange && <fieldset disabled={Boolean(editing)} aria-label="Tương tác báo cáo" className="min-w-0"><WorkspaceFilters report={report} onPublish={onReportChange} selection={selection} onBusy={setWorkspaceBusy} /></fieldset>}
+    {report.source_completeness?.status === 'limited' && <p data-source-limitation role="status" className="text-xs text-amber-800">Nguồn chưa chứng minh đầy đủ hoặc đang trễ; số liệu theo snapshot đã ghi nhận, báo cáo chưa hoàn tất về dữ liệu.</p>}
+    {report.source_completeness?.status === 'unknown' && <p data-source-limitation role="status" className="text-xs text-amber-800">Độ đầy đủ dữ liệu nguồn chưa được chứng nhận; hoàn tất phân tích không chứng minh nguồn đầy đủ.</p>}
+    {report.source_completeness?.status === 'reconciled' && <p data-source-verified="reconciled" role="status" className="text-xs text-slate-600">Nguồn đã đối soát đầy đủ với hệ thống gốc ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần.</p>}
+    {report.source_completeness?.status === 'complete' && <p data-source-verified="complete" role="status" className="text-xs text-emerald-800">Nguồn đã đối soát đầy đủ với hệ thống gốc (khớp từng dòng).</p>}
     <section data-report-context className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-4">
       {context.mission && <p><span className="text-slate-400">Nhiệm vụ:</span> <strong className="text-slate-800">{context.mission}</strong></p>}
       <p><span className="text-slate-400">Phạm vi:</span> {context.scope}</p>
@@ -171,6 +254,7 @@ export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChart
       {report.view_coverage.filter((v:any)=>v.required && v.status==='satisfied').length}/{report.view_coverage.filter((v:any)=>v.required).length} yêu cầu bằng chứng đã đáp ứng; báo cáo chưa đầy đủ.
       {report.view_coverage.filter((v:any)=>v.required && v.status==='missing').map((v:any,i:number)=><p key={i}>{v.requirement_id}: {v.reason || 'Chưa có bằng chứng phù hợp'}</p>)}
     </div>}
+    {geographicView}
     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-semibold text-slate-900">Các góc nhìn phân tích <span className="font-normal text-slate-400">· {selected.charts.length} biểu đồ</span></h3>
     {coverage && <details data-analysis-coverage={coverage.tone} className={`text-[11px] rounded-full border px-2 py-1 open:rounded-xl ${coverage.tone === 'ok' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : coverage.tone === 'gap' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
       <summary className="cursor-pointer">{coverage.label}</summary>
@@ -184,7 +268,9 @@ export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChart
     </div>
     <div id="analysis-chart-panel" role={tabs.length > 1 ? 'tabpanel' : undefined} aria-labelledby={tabs.length > 1 ? `chart-tab-${activeTab.id}` : undefined} className="space-y-4">
     {(view === 'forecast' || (view === 'all' && report.analysis_mission === 'forecast')) && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
-    {view !== 'forecast' && <AnalystViews charts={visibleCharts} compact dashboardLayout={curated} editing={editing} onChartTypeChange={onChartTypeChange} definitions={definitions} onInspect={(chart, row) => { inspectTrigger.current = document.activeElement as HTMLElement; setInspect({ chart, row }); }} />}
+    {view !== 'forecast' && <AnalystViews charts={visibleCharts} compact dashboardLayout={curated} editing={editing || workspaceBusy} onChartTypeChange={onChartTypeChange} definitions={definitions}
+      interactions={onReportChange ? report.interaction_contract?.charts : undefined} onSelect={s=>setSelection({...s})}
+      onInspect={(chart, row) => { inspectTrigger.current = document.activeElement as HTMLElement; setInspect({ chart, row }); }} />}
     {view === 'all' && forecasts && report.analysis_mission !== 'forecast' && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
     </div>
     {!selected.charts.length && !forecasts && <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed">Chưa có biểu đồ phù hợp được kiểm chứng cho kết quả này. Xem bảng dữ liệu trong tab “Dữ liệu / SQL” và mục “Kiểm chứng & nguồn”.</div>}

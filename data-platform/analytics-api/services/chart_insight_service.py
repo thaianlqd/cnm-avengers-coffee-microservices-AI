@@ -8,7 +8,7 @@ descriptive: no causal claims; follow-ups are labelled "Điểm nên kiểm tra 
 import math
 from datetime import date
 
-from services.insight_service import trend_bucket_coverage
+from services.insight_service import trend_bucket_coverage, fact_reference
 
 CAUSAL_TERMS = ("do đó", "vì vậy", "nguyên nhân là", "dẫn đến", "gây ra", "bởi vì")
 
@@ -197,12 +197,20 @@ def insight(chart, artifact, catalog, reference=None, mission_id=None):
             for r in breach[:2]:
                 next_checks.append(f"Kiểm tra {name.lower()} tại {_label(r, dims, catalog)} ({fmt(r[metric], unit)}).")
             caveats.append("Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp.")
-        if chart.get("selection") in {"display_subset", "Top N"} or artifact.plan.ranking:
-            caveats.append("Biểu đồ chỉ hiển thị nhóm được chọn (Top N/tập hiển thị); số liệu phân tích dùng toàn bộ phạm vi.")
+        if artifact.plan.ranking or chart.get("selection") in {"Top N", "Bottom N"}:
+            rank = artifact.plan.ranking
+            label = f"{'Bottom' if rank and rank.direction == 'ASC' else 'Top'} {rank.top_n}" if rank else chart.get("selection")
+            caveats.append(f"Biểu đồ chỉ gồm tập {'Bottom' if rank and rank.direction == 'ASC' else 'Top'} N được chọn ({label}); "
+                           "không đại diện cơ cấu toàn bộ phạm vi.")
+        elif chart.get("selection") == "display_subset":
+            caveats.append("Biểu đồ chỉ hiển thị một phần nhóm; số liệu phân tích dùng toàn bộ phạm vi.")
         if meta.get("aggregation_semantics") in {"ratio", "average"}:
             caveats.append("Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.")
     if chart.get("grouped_categories"):
         caveats.append(f"{chart['grouped_categories']} nhóm nhỏ được gộp vào “Khác”.")
+    if chart.get("scope_note"):
+        # I01/G06: the population of this view (ranked cohort vs. whole-scope benchmark) leads the caveats.
+        caveats.insert(0, chart["scope_note"])
     return {"chart_id": chart.get("id"), "why_relevant": why, "what_it_shows": shows, "key_facts": facts[:4],
             "interpretation": interpretation, "caveats": list(dict.fromkeys(caveats)), "next_checks": next_checks,
             "how_to_read": {"line": "Trục ngang là thời gian; điểm mờ/dấu * là kỳ chưa đủ ngày.",
@@ -372,7 +380,7 @@ def short_answer(charts, limit=3):
     return out[:limit]
 
 
-def compare_cards(charts, artifacts, catalog, mission_id):
+def compare_cards(charts, artifacts, catalog, mission_id, evidence=None):
     """Compare mission KPI strip (§15): A, B, absolute gap, percentage gap — from verified rows only."""
     if mission_id != "compare":
         return []
@@ -396,6 +404,14 @@ def compare_cards(charts, artifacts, catalog, mission_id):
         if unit != "%" and b[metric]:
             cards.append({"label": "Chênh lệch %", "value": gap / abs(b[metric]) * 100, "unit": "%", "metric": metric,
                           "scope_ref": qid, "evidence_ref": f"{qid}:{metric}:{_key(a, dims)}-{_key(b, dims)}"})
+        if evidence is not None:
+            fact = next((e for e in evidence if e['scope_ref'] == qid and e['metric'] == metric
+                         and e['feature'] == 'group_comparison' and e['values']['observed_groups'] == 2
+                         and e['values']['largest_value'] == a[metric] and e['values']['smallest_value'] == b[metric]), None)
+            if fact is None:
+                continue
+            for card, field in zip(cards, ('largest_value', 'smallest_value', 'gap', 'relative_gap_pct')):
+                card.update(evidence_id=fact['id'], value_field=field)
         return cards
     return []
 
@@ -465,12 +481,12 @@ def build_conclusion(short_answer, narrative, evidence, caveats, follow_ups, for
 
     Built only from already-verified facts: a finding is kept only when its evidence id exists (or it
     is a forecast finding that points at the report's own forecast)."""
-    known = {e.get("id") for e in evidence or []}
+    known = {e.get("id"): e for e in evidence or []}
     f_answers, f_findings, f_caveats = _forecast_sentences(forecasts, cadence_labels or {})
     # Statements that ARE the answer to an association/driver question come first (they carry typed provenance).
     derived = [e for e in evidence or [] if e.get("feature") in DERIVED_ANSWER_FEATURES and e.get("statement")]
-    d_findings = [{"statement": e["statement"], "evidence_id": e["id"]} for e in derived][:3]
-    findings = d_findings + [{"statement": f["finding"], "evidence_id": f["evidence_id"]}
+    d_findings = [{"statement": e["statement"], "evidence_id": e["id"], **fact_reference(e)} for e in derived][:3]
+    findings = d_findings + [{"statement": f["finding"], "evidence_id": f["evidence_id"], **fact_reference(known[f['evidence_id']])}
                 for f in (narrative or {}).get("key_findings", []) if f.get("evidence_id") in known][:3] + f_findings[:3]
     present = {f["statement"] for f in findings}
     view_findings = [f for f in lens_facts if f["statement"] not in present]  # each bound to a verified chart, not evidence

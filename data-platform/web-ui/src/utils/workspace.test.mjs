@@ -82,10 +82,10 @@ test('suggestion chips are real example questions, filtered by mission', () => {
 
 test('"Hỏi được gì?" lists 16 groups with badges, dimensions, search and unsupported items', () => {
   const groups = capabilityGroups(caps);
-  assert.equal(groups.length, 16);
+  assert.equal(groups.length, 26);  // PLAN 20/10: 16 + 10 business-coverage domains
   const revenue = groups.flatMap(g => g.metrics).find(m => m.id === 'revenue');
   assert.deepEqual(revenue.badges, ['Có xu hướng', 'Dự báo được']);
-  assert.deepEqual(groups.flatMap(g => g.metrics).find(m => m.id === 'low_stock_count').badges, ['Hiện tại', 'Tín hiệu rủi ro', 'Không cộng qua thời gian']);  // V3.2: risk-signal badge
+  assert.deepEqual(groups.flatMap(g => g.metrics).find(m => m.id === 'paused_sale_positions').badges, ['Hiện tại', 'Tín hiệu rủi ro', 'Không cộng qua thời gian']);  // V3.2: risk-signal badge
   assert.ok(capabilityGroups(caps, 'hủy đơn').flatMap(g => g.metrics).some(m => m.id === 'order_cancellation_rate'));
   assert.ok(unsupportedItems(caps).some(u => u.id === 'profit_margin' && u.nearest.length));
   const Drawer = component('../components/workspace/CapabilityDrawer.tsx', 'CapabilityDrawer');
@@ -106,7 +106,7 @@ test('preflight view: understood chips, blocking, warnings and quick fixes', () 
   assert.equal(blocked.blocked, true); assert.equal(blocked.tone, 'red');
   const Panel = component('../components/workspace/QuestionPreflight.tsx', 'QuestionPreflight');
   const html = render(Panel, { result, onFix: () => {} });
-  assert.ok(html.includes('Hệ thống hiểu:')); assert.ok(html.includes('Đổi thành 6 tháng')); assert.ok(html.includes('data-finding="forecast_horizon_exceeded"'));
+  assert.ok(html.includes('Đã nhận diện:')); assert.ok(html.includes('Đổi thành 6 tháng')); assert.ok(html.includes('data-finding="forecast_horizon_exceeded"'));
   assert.match(render(Panel, { result: { ...result, can_submit: false, findings: [{ level: 'block', code: 'privacy_blocked', message: 'Bị chặn', fixes: [] }] }, onFix: () => {} }), /role="alert"/);
 });
 

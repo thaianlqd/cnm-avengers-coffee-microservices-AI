@@ -1,0 +1,5 @@
+{
+  "status": "INTERRUPTED_NOT_FINAL",
+  "completed_modules": 67,
+  "reason": "New intake regression and native Word plot errors reproduced; cancel before edits; final full replay required after fixes."
+}

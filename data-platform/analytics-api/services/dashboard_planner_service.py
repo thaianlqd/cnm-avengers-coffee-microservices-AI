@@ -1,7 +1,7 @@
 """Validate model dashboard choices against stored rows; no chart-only queries."""
 
 from services.analyst_contract import DashboardPlan, DashboardVisual
-from services.insight_service import number, trend_bucket_coverage
+from services.insight_service import number, trend_bucket_coverage, ranking_label, selected_total_label, population_scope
 from services.business_labels import dimension_labeler
 from services.semantic_manifest_service import NON_ADDITIVE_SEMANTICS
 import hashlib
@@ -27,21 +27,29 @@ def visible_dimensions(a):
 
 
 def pinned_by_scope(a, artifacts=None):
-    """Every visible grouping axis is fixed to ONE value by the query's own scope filter (e.g. "by city" with
-    city = X) AND the same value is already reported as a whole-scope KPI by a sibling result: a one-bar chart would
-    only restate the scope, so it is not drawn (FINAL §4.3). Without such a KPI the bar stays (never hide the answer)."""
+    """A fixed cohort is preserved in its validated result/KPI, not a fake comparison.
+
+    Include metric-owned predicates, not only user filters. This also applies
+    when no sibling scalar exists: every result already has a validated table.
+    """
     plan = getattr(a, "plan", None)
     if plan is None or not getattr(plan, "dimensions", None):
         return False
+    from services.analysis_expansion_service import fixed_grouping, FIXED_GROUPING_POLICY
     visible = visible_dimensions(a)
+    if getattr(a,'fixed_grouping_policy',None)==FIXED_GROUPING_POLICY:
+        return plan.kind in {'aggregate','distribution','ranking'} and fixed_grouping(
+            dict(dimensions=a.grounded.dimensions,metrics=a.grounded.metrics),plan.metrics,a.query.filters,visible)
+    # Existing saved/model-authored contracts keep their original rendering:
+    # suppress a fixed grouping only when a sibling already supplies its KPI.
     def single(d):
-        return any(f.dimension == d and f.operator in {"eq", "in"} and len(set(map(str, f.value if isinstance(f.value, list) else [f.value]))) == 1
-                   for f in a.query.filters)
-    if not (visible and plan.kind in {"aggregate", "distribution", "ranking"} and all(single(d) for d in visible)):
+        return any(f.dimension==d and f.operator in {'eq','in'} and
+            len(set(map(str,f.value if isinstance(f.value,list) else [f.value])))==1 for f in a.query.filters)
+    if not (visible and plan.kind in {'aggregate','distribution','ranking'} and all(single(d) for d in visible)):
         return False
-    return any(b is not a and getattr(b, "plan", None) is not None and b.plan.kind == "aggregate" and not b.plan.dimensions
-               and b.query.filters == a.query.filters and b.grounded.period == a.grounded.period
-               and set(plan.metrics) <= set(b.plan.metrics) and b.result.get("rows") for b in (artifacts or {}).values())
+    return any(b is not a and getattr(b,'plan',None) is not None and b.plan.kind=='aggregate' and not b.plan.dimensions
+        and b.query.filters==a.query.filters and b.grounded.period==a.grounded.period
+        and set(plan.metrics)<=set(b.plan.metrics) and b.result.get('rows') for b in (artifacts or {}).values())
 
 
 def category_fields(v, a):
@@ -586,7 +594,7 @@ def render(v, a, index, max_categories=100):
         if a.plan.ranking.per_group:
             output['ranking_note'] = 'Xếp hạng riêng trong từng nhóm: ' + ' / '.join(
                 a.grounded.dimensions[d]['business_name'] for d in a.plan.ranking.per_group)
-        output["title"] = f"Top {a.plan.ranking.top_n} — " + output["title"]
+        output["title"] = f"{ranking_label(a.plan.ranking)} — " + output["title"]
         if metric != a.plan.ranking.metric:
             output["title"] += " trong tập xếp hạng theo " + a.grounded.metrics[a.plan.ranking.metric]["business_name"]
     # V3.2: a title names its grouping axis; two views of one metric must not
@@ -605,7 +613,7 @@ def render(v, a, index, max_categories=100):
     if v.chart_type in ("donut", "stacked_100", "pareto") and not output["title"].startswith("Tỷ trọng"):
         output["title"] = "Tỷ trọng " + output["title"][:1].lower() + output["title"][1:]
     output["title"] += " — " + population_label(a)
-    output.update(selection="Top N" if a.plan.ranking else "limited" if a.plan.explicit_limit else "complete", layout="wide" if v.chart_type in ("line", "area", "multi_line", "heatmap", "scatter") else "standard")
+    output.update(selection=("Bottom N" if a.plan.ranking.direction == 'ASC' else "Top N") if a.plan.ranking else "limited" if a.plan.explicit_limit else "complete", layout="wide" if v.chart_type in ("line", "area", "multi_line", "heatmap", "scatter") else "standard")
     if a.plan.kind == "trend":
         output.update(granularity=a.plan.granularity, period=a.grounded.period)
         partial = sum(trend_bucket_coverage(r["period"], a.plan.granularity, a.grounded.period)["partial"] for r in rows)
@@ -803,6 +811,19 @@ def build_dashboard(
             lens = lenses.get(v.analysis_lens_id) or {}
             preview.update(analysis_lens_id=v.analysis_lens_id, analysis_lens_role=v.analysis_lens_role,
                            analysis_lens_kind=lens.get("kind"), analysis_lens_question=lens.get("question"))
+        scope, cohort = population_scope(a, artifacts) if preview else (None, None)
+        if preview and preview.get('metrics') and all(
+                a.grounded.metrics[m].get('historical_capability') == 'snapshot' for m in preview['metrics']):
+            preview['title'] += ' (hiện trạng)'
+        if scope == "ranked_cohort":
+            preview.update(population_scope=scope, cohort_label=cohort, title=preview["title"] + f" · trong {cohort}",
+                           scope_note=f"Chỉ tính trên {cohort} đối tượng của xếp hạng chính.")
+        elif scope == "scope_benchmark":
+            # I01/I09: a whole-scope view beside a Top/Bottom N cohort is a benchmark,
+            # never evidence about the ranked entities themselves.
+            preview.update(population_scope=scope, cohort_label=cohort, title=preview["title"] + f" · toàn phạm vi (không riêng {cohort})",
+                           scope_note=f"Số liệu của toàn bộ phạm vi đã chọn, không chỉ {cohort} đối tượng được xếp hạng; "
+                                      "dùng làm bối cảnh so sánh.")
         key = ("physical_view", preview["semantic_view_key"]) if preview else (
             (
                 a.signature,
@@ -918,7 +939,7 @@ def build_dashboard(
                     "label": {
                         "scalar": "Giá trị trong phạm vi",
                         "top_gap": "Chênh lệch hạng 1–2",
-                        "selected_total": "Tổng của tập Top N",
+                        "selected_total": selected_total_label(e),
                         "change": "Thay đổi giữa hai kỳ quan sát",
                         "concentration": "Tỷ trọng lớn nhất",
                     }[e["feature"]],

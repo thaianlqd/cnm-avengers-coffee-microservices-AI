@@ -1,0 +1,1733 @@
+{
+  "version": 1,
+  "plan": "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md",
+  "frozen_at": "2026-10-20 (round 3)",
+  "analytic_states": [
+    "AVAILABLE",
+    "NO_ROWS",
+    "SOURCE_NOT_CAPTURED",
+    "SOURCE_UNAVAILABLE",
+    "SOURCE_INTEGRITY_ISSUE",
+    "UNVERIFIED_PROVENANCE",
+    "TECHNICAL_EXCLUDED",
+    "POLICY_RESTRICTED",
+    "UNSUPPORTED_ANALYSIS",
+    "IMPLEMENTATION_GAP"
+  ],
+  "human_actor_contexts": [
+    "GUEST",
+    "CUSTOMER",
+    "ADMIN",
+    "MANAGER",
+    "STAFF",
+    "KIOSK_STAFF",
+    "FRANCHISEE",
+    "FRANCHISE_STAFF",
+    "ACCOUNTANT",
+    "SHIPPER_SEPARATE_AUTH"
+  ],
+  "technical_actor_contexts": [
+    "PAYMENT_CALLBACK",
+    "DELIVERY_CALLBACK",
+    "CHECKOUT_OUTBOX_WORKER",
+    "INGESTION_WORKER",
+    "AI_COMMERCE_SERVICE"
+  ],
+  "source_tables": [
+    {
+      "source_table": "ai.chat_ai_conversation",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "ai.inference_logs",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "ai.mo_hinh_ai",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "ai.model_registry",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "ai.nhat_ky_suy_luan",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "analytics.ai_logs",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "analytics.ai_modules",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "analytics.morning_digest",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "context.thoi_tiet_ngay",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "finance.chi_phi_van_hanh",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "finance.hop_dong_nq",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.audit_log",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.bien_ban_vi_pham",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.combo_nguyen_lieu",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.cong_no",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.don_mua_combo",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.gia_san_pham_kiosk",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.ho_so_dang_ky",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.hop_dong_nhuong_quyen",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.ket_qua_doi_soat",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.kiosk",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.royalty_hang_thang",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "franchise.thu_chi",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "identity.chi_nhanh",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "identity.dia_chi_giao_hang",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "identity.external_voucher_usage",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "identity.khu_vuc",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "identity.khuyen_mai",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "identity.khuyen_mai_su_dung",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "identity.loyalty_order_award",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "identity.membership_config",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "identity.nguoi_dung",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "identity.order_voucher_claim",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "identity.vi_giao_dich",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "inventory.ton_kho_san_pham",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "master_data.co_so",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "menu.bien_the_san_pham",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "menu.danh_muc",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "menu.san_pham",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "menu.thuoc_tinh",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "news.articles",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.ca_doi_soat",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.ca_lam_viec_nhan_vien",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.cart_metadata",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.cart_mutation_operation",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.chat_conversation",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.chat_message",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.checkout_operation",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.checkout_outbox",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.checkout_quote",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.checkout_voucher_claim",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.chi_tiet_don_hang",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.customer_wallet",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.customer_wallet_transaction",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.danh_gia_chi_nhanh",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.danh_gia_san_pham",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.delivery_tracking",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.don_hang",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.giao_dich_thanh_toan",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.gift_card_theme",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.gift_cards",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.gio_hang",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.khao_sat_bieu_mau",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.khao_sat_phan_hoi",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.kiosk_shift_session",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.shipper",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.shipper_cod_remit",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.shipper_delivery",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.shipper_exception",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.shipper_schedule",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.shipper_wallet",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.smtp_config",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.thong_bao",
+      "audit_disposition": "active_domain_candidate_requires_contract",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.voucher",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "orders.wallet_voucher_claim_outbox",
+      "audit_disposition": "technical_or_sensitive_no_default_business_metric",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "orders.yeu_thich_san_pham",
+      "audit_disposition": "governed_source_requires_business_review",
+      "governed_ingestion": true
+    },
+    {
+      "source_table": "public.ai_chat_sessions",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    },
+    {
+      "source_table": "public.ai_turn_log",
+      "audit_disposition": "auxiliary_or_technical_requires_provenance",
+      "governed_ingestion": false
+    }
+  ],
+  "groups": [
+    {
+      "group_id": "B01",
+      "title": "Đơn hàng/kênh",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "GUEST",
+        "STAFF",
+        "MANAGER"
+      ],
+      "source_tables": [
+        "orders.chi_tiet_don_hang",
+        "orders.don_hang"
+      ],
+      "domain_ids": [
+        "orders",
+        "order_items",
+        "hourly"
+      ],
+      "metric_refs": [
+        "revenue",
+        "order_count",
+        "order_cancellation_rate"
+      ],
+      "open_items": [
+        {
+          "state": "UNVERIFIED_PROVENANCE",
+          "item": "Đơn có trạng thái LAY_TAI_QUAN ít (4 đơn); funnel trạng thái theo thời gian cần lịch sử chuyển trạng thái"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_retrieval.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "mixed",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B02",
+      "title": "Món/biến thể",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "ADMIN",
+        "MANAGER"
+      ],
+      "source_tables": [
+        "menu.bien_the_san_pham",
+        "menu.danh_muc",
+        "menu.san_pham",
+        "menu.thuoc_tinh"
+      ],
+      "domain_ids": [
+        "products",
+        "order_items"
+      ],
+      "metric_refs": [
+        "quantity_sold",
+        "product_revenue",
+        "topping_selection_count"
+      ],
+      "open_items": [
+        {
+          "state": "NO_ROWS",
+          "item": "custom_attributes của 72.063 dòng món đều {}: không có thuộc tính tùy chỉnh để phân tích"
+        },
+        {
+          "state": "UNVERIFIED_PROVENANCE",
+          "item": "Size ghi lẫn M/L/Vừa/Nhỏ/Lớn: báo nguyên văn, không tự gộp"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "mixed",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B03",
+      "title": "Khả dụng bán",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "MANAGER",
+        "STAFF",
+        "ADMIN"
+      ],
+      "source_tables": [
+        "inventory.ton_kho_san_pham"
+      ],
+      "domain_ids": [
+        "inventory"
+      ],
+      "metric_refs": [
+        "sale_positions",
+        "paused_sale_positions"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có lịch sử bật/tắt: thời gian ngưng bán, doanh thu mất không tính được"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_availability.py",
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P1",
+      "data_origin": "mixed",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B04",
+      "title": "Đánh giá sản phẩm",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "MANAGER"
+      ],
+      "source_tables": [
+        "orders.danh_gia_san_pham"
+      ],
+      "domain_ids": [
+        "product_reviews"
+      ],
+      "metric_refs": [
+        "avg_product_rating",
+        "review_count"
+      ],
+      "open_items": [
+        {
+          "state": "UNVERIFIED_PROVENANCE",
+          "item": "3.004/3.005 nhận xét có tiền tố [Dữ liệu mẫu]"
+        },
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Chưa phân loại nội dung nhận xét (review_text_topics)"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_retrieval.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "marked_sample",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B05",
+      "title": "Đánh giá chi nhánh",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "MANAGER",
+        "ADMIN"
+      ],
+      "source_tables": [
+        "orders.danh_gia_chi_nhanh"
+      ],
+      "domain_ids": [
+        "store_reviews"
+      ],
+      "metric_refs": [
+        "avg_store_rating",
+        "store_review_count",
+        "public_store_review_count"
+      ],
+      "open_items": [
+        {
+          "state": "UNVERIFIED_PROVENANCE",
+          "item": "HIEN_THI (2.065) chưa có quyết định ánh xạ công khai; mặc định quản lý xem mọi trạng thái, lọc review_visibility để khớp trang khách"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py",
+        "tests/test_business_coverage_retrieval.py",
+        "tests/test_business_coverage_rollout.py"
+      ],
+      "owner_phase": "P1",
+      "data_origin": "mixed",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B06",
+      "title": "Khảo sát",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "MANAGER",
+        "ADMIN"
+      ],
+      "source_tables": [
+        "orders.khao_sat_bieu_mau",
+        "orders.khao_sat_phan_hoi"
+      ],
+      "domain_ids": [
+        "customer_surveys",
+        "survey_answers"
+      ],
+      "metric_refs": [
+        "survey_response_count",
+        "survey_answer_count",
+        "survey_respondent_count",
+        "avg_survey_score"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có mẫu số người được mời nên không có tỷ lệ phản hồi"
+        },
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Biểu mẫu không lưu version: tiêu đề câu hỏi lấy tại lúc trả lời"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B07",
+      "title": "Khách hàng/loyalty",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "ADMIN"
+      ],
+      "source_tables": [
+        "identity.loyalty_order_award",
+        "identity.membership_config",
+        "identity.nguoi_dung"
+      ],
+      "domain_ids": [
+        "customers",
+        "loyalty_awards"
+      ],
+      "metric_refs": [
+        "customer_count",
+        "total_spent",
+        "loyalty_points_awarded",
+        "tier_upgrade_count"
+      ],
+      "open_items": [
+        {
+          "state": "NO_ROWS",
+          "item": "loyalty_order_award chưa có bản ghi: điểm thưởng/lên hạng = 0 thật"
+        },
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có lịch sử hạng trước khi có award ledger"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B08",
+      "title": "Vòng quay",
+      "analytic_state": "SOURCE_NOT_CAPTURED",
+      "actor_contexts": [
+        "CUSTOMER"
+      ],
+      "source_tables": [],
+      "domain_ids": [],
+      "metric_refs": [],
+      "open_items": [
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có ledger lượt quay; khái niệm wheel_spin_history được giải thích, chỉ báo voucher đã phát"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B09",
+      "title": "Ví khách hàng",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER"
+      ],
+      "source_tables": [
+        "orders.customer_wallet",
+        "orders.customer_wallet_transaction"
+      ],
+      "domain_ids": [
+        "customer_wallet"
+      ],
+      "metric_refs": [
+        "wallet_topup_amount",
+        "wallet_spend_amount",
+        "wallet_refund_amount",
+        "wallet_pending_topup_count",
+        "wallet_unreferenced_payment_count",
+        "customer_wallet_balance"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_INTEGRITY_ISSUE",
+          "item": "62/72 PAYMENT SUCCESS thiếu reference: có metric wallet_unreferenced_payment_count, chưa đối soát từng đơn"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B10",
+      "title": "Thẻ quà tặng",
+      "analytic_state": "SOURCE_INTEGRITY_ISSUE",
+      "actor_contexts": [
+        "CUSTOMER"
+      ],
+      "source_tables": [
+        "orders.gift_card_theme",
+        "orders.gift_cards"
+      ],
+      "domain_ids": [
+        "gift_cards"
+      ],
+      "metric_refs": [
+        "gift_card_issued_count",
+        "gift_card_issued_value",
+        "gift_card_outstanding_balance",
+        "gift_card_redeemed_count"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_INTEGRITY_ISSUE",
+          "item": "transferGiftCardBalance tạo TOP_UP PENDING rồi đặt REDEEMED: tiền chuyển ví bị chặn (gift_card_credited_amount)"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B11",
+      "title": "Khuyến mãi/voucher",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "ADMIN",
+        "MANAGER"
+      ],
+      "source_tables": [
+        "identity.external_voucher_usage",
+        "identity.khuyen_mai",
+        "identity.khuyen_mai_su_dung",
+        "identity.order_voucher_claim",
+        "orders.checkout_voucher_claim",
+        "orders.voucher",
+        "orders.wallet_voucher_claim_outbox"
+      ],
+      "domain_ids": [
+        "promotions"
+      ],
+      "metric_refs": [
+        "voucher_revenue",
+        "discount_amount",
+        "voucher_order_count",
+        "promotion_redemption_count"
+      ],
+      "open_items": [
+        {
+          "state": "UNSUPPORTED_ANALYSIS",
+          "item": "Không có khóa nghiệp vụ nối voucher identity với voucher đơn: bảng claim là outbox/idempotency kỹ thuật; hai namespace báo cáo riêng"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B12",
+      "title": "Yêu thích/giỏ hàng",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER"
+      ],
+      "source_tables": [
+        "orders.cart_metadata",
+        "orders.cart_mutation_operation",
+        "orders.gio_hang",
+        "orders.yeu_thich_san_pham"
+      ],
+      "domain_ids": [
+        "wishlist_favorites"
+      ],
+      "metric_refs": [
+        "favorite_count"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Giỏ hiện tại không phải bỏ giỏ (cart_abandonment)"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B13",
+      "title": "Địa chỉ",
+      "analytic_state": "POLICY_RESTRICTED",
+      "actor_contexts": [
+        "CUSTOMER"
+      ],
+      "source_tables": [
+        "identity.dia_chi_giao_hang"
+      ],
+      "domain_ids": [],
+      "metric_refs": [],
+      "open_items": [
+        {
+          "state": "POLICY_RESTRICTED",
+          "item": "Liên hệ/địa chỉ là PII: sensitive_request_concepts chặn"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B14",
+      "title": "Thanh toán/hoàn tiền",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "STAFF",
+        "PAYMENT_CALLBACK"
+      ],
+      "source_tables": [
+        "orders.giao_dich_thanh_toan"
+      ],
+      "domain_ids": [
+        "payments"
+      ],
+      "metric_refs": [
+        "payment_count",
+        "payment_revenue",
+        "settled_payment_amount",
+        "unsettled_payment_count"
+      ],
+      "open_items": [
+        {
+          "state": "UNVERIFIED_PROVENANCE",
+          "item": "Trạng thái thành công ghi 3 cách (SUCCESS/THANH_CONG/DA_THANH_TOAN); payment_revenue gồm mọi lần thử"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B15",
+      "title": "Bàn/QR",
+      "analytic_state": "SOURCE_NOT_CAPTURED",
+      "actor_contexts": [
+        "MANAGER",
+        "STAFF"
+      ],
+      "source_tables": [],
+      "domain_ids": [],
+      "metric_refs": [],
+      "open_items": [
+        {
+          "state": "NO_ROWS",
+          "item": "0/40.460 đơn gắn ma_ban"
+        },
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có sức chứa/lượt ngồi (table_occupancy)"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B16",
+      "title": "Ca làm/chấm công",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "STAFF",
+        "MANAGER"
+      ],
+      "source_tables": [
+        "orders.ca_lam_viec_nhan_vien"
+      ],
+      "domain_ids": [
+        "staff_shifts"
+      ],
+      "metric_refs": [
+        "shift_count",
+        "late_count",
+        "late_shift_rate"
+      ],
+      "open_items": [],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B17",
+      "title": "Chốt ca/đối soát",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "STAFF",
+        "MANAGER"
+      ],
+      "source_tables": [
+        "orders.ca_doi_soat"
+      ],
+      "domain_ids": [
+        "cashier_reconciliation"
+      ],
+      "metric_refs": [
+        "total_cash_difference",
+        "reconciled_shifts"
+      ],
+      "open_items": [],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P3",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B18",
+      "title": "Giao hàng",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "STAFF",
+        "MANAGER",
+        "SHIPPER_SEPARATE_AUTH",
+        "DELIVERY_CALLBACK"
+      ],
+      "source_tables": [
+        "orders.delivery_tracking",
+        "orders.shipper",
+        "orders.shipper_delivery"
+      ],
+      "domain_ids": [
+        "delivery"
+      ],
+      "metric_refs": [
+        "delivery_count",
+        "delivered_count",
+        "delivery_success_rate",
+        "delivery_driver_key_conflict_count"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_INTEGRITY_ISSUE",
+          "item": "7.472/7.857 chuyến lệch khóa tài xế: metric delivery_driver_key_conflict_count, chưa chứng nhận phân tích theo tài xế"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py",
+        "tests/test_business_coverage_rollout.py"
+      ],
+      "owner_phase": "P2",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B19",
+      "title": "Ví/COD shipper",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "SHIPPER_SEPARATE_AUTH"
+      ],
+      "source_tables": [
+        "orders.shipper_cod_remit",
+        "orders.shipper_exception",
+        "orders.shipper_schedule",
+        "orders.shipper_wallet"
+      ],
+      "domain_ids": [
+        "shipper_finance"
+      ],
+      "metric_refs": [
+        "cod_remitted_amount",
+        "cod_pending_remit_amount",
+        "shipper_cod_holding",
+        "shipper_wallet_balance",
+        "delivery_exception_count"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_INTEGRITY_ISSUE",
+          "item": "API getKpiData/getFinanceData trả số cố định (app NestJS, ngoài data-platform) — không ingest"
+        },
+        {
+          "state": "NO_ROWS",
+          "item": "shipper_schedule/shipper_exception chưa có bản ghi"
+        },
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có sổ chi trả shipper (shipper_payout)"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B20",
+      "title": "CSKH/chat",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "MANAGER",
+        "STAFF"
+      ],
+      "source_tables": [
+        "orders.chat_conversation",
+        "orders.chat_message"
+      ],
+      "domain_ids": [
+        "customer_care"
+      ],
+      "metric_refs": [
+        "support_conversation_count",
+        "support_unread_customer_messages",
+        "support_message_count"
+      ],
+      "open_items": [
+        {
+          "state": "POLICY_RESTRICTED",
+          "item": "Nội dung chat bị loại khỏi kho (chat_content_analysis)"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B21",
+      "title": "Tin tức/static",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "STAFF"
+      ],
+      "source_tables": [
+        "news.articles"
+      ],
+      "domain_ids": [
+        "news_content"
+      ],
+      "metric_refs": [
+        "published_article_count",
+        "article_view_total"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có CTR/engagement theo kỳ (content_engagement)"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B22",
+      "title": "Mạng lưới điểm bán",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "ADMIN"
+      ],
+      "source_tables": [
+        "franchise.kiosk",
+        "identity.chi_nhanh",
+        "identity.khu_vuc",
+        "master_data.co_so"
+      ],
+      "domain_ids": [
+        "stores",
+        "franchise_network"
+      ],
+      "metric_refs": [
+        "store_revenue",
+        "store_order_count",
+        "kiosk_count",
+        "unmapped_kiosk_count"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_INTEGRITY_ISSUE",
+          "item": "1/51 kiosk không khớp chi nhánh (unmapped_kiosk_count)"
+        },
+        {
+          "state": "UNVERIFIED_PROVENANCE",
+          "item": "master_data.co_so chưa xác minh write-path"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P2",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B23",
+      "title": "Onboarding nhượng quyền",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "ADMIN",
+        "ACCOUNTANT"
+      ],
+      "source_tables": [
+        "franchise.ho_so_dang_ky",
+        "franchise.hop_dong_nhuong_quyen"
+      ],
+      "domain_ids": [
+        "franchise_network"
+      ],
+      "metric_refs": [
+        "franchise_application_count",
+        "franchise_approved_count",
+        "active_franchise_contract_count"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có lịch sử từng bước hồ sơ (franchise_stage_duration)"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B24",
+      "title": "Combo nhượng quyền",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "FRANCHISEE",
+        "KIOSK_STAFF"
+      ],
+      "source_tables": [
+        "franchise.combo_nguyen_lieu",
+        "franchise.don_mua_combo"
+      ],
+      "domain_ids": [
+        "franchise_finance"
+      ],
+      "metric_refs": [
+        "combo_order_count",
+        "combo_order_value",
+        "combo_units_ordered"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Bảng giao combo satellite không có ở nguồn"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B25",
+      "title": "Công nợ/royalty",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "FRANCHISEE",
+        "ACCOUNTANT"
+      ],
+      "source_tables": [
+        "franchise.cong_no",
+        "franchise.royalty_hang_thang"
+      ],
+      "domain_ids": [
+        "franchise_finance"
+      ],
+      "metric_refs": [
+        "debt_outstanding_amount",
+        "debt_overdue_amount",
+        "debt_late_fee_amount",
+        "royalty_billed_amount",
+        "royalty_paid_amount"
+      ],
+      "open_items": [
+        {
+          "state": "UNVERIFIED_PROVENANCE",
+          "item": "Royalty phải thu khác tiền đã thu; chỉ DA_THANH_TOAN được tính đã trả"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B26",
+      "title": "Đối soát/thu chi",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "ACCOUNTANT",
+        "FRANCHISEE"
+      ],
+      "source_tables": [
+        "franchise.audit_log",
+        "franchise.bien_ban_vi_pham",
+        "franchise.ket_qua_doi_soat",
+        "franchise.thu_chi"
+      ],
+      "domain_ids": [
+        "franchise_finance"
+      ],
+      "metric_refs": [
+        "kiosk_reconciliation_count",
+        "kiosk_red_alert_count",
+        "franchise_cashbook_amount"
+      ],
+      "open_items": [
+        {
+          "state": "NO_ROWS",
+          "item": "thu_chi và biên bản vi phạm chưa có bản ghi"
+        },
+        {
+          "state": "TECHNICAL_EXCLUDED",
+          "item": "audit_log là nhật ký kỹ thuật, không phải giao dịch"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B27",
+      "title": "POS/ca/giá kiosk",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "FRANCHISEE",
+        "FRANCHISE_STAFF",
+        "KIOSK_STAFF"
+      ],
+      "source_tables": [
+        "franchise.gia_san_pham_kiosk",
+        "orders.kiosk_shift_session"
+      ],
+      "domain_ids": [
+        "kiosk_operations"
+      ],
+      "metric_refs": [
+        "kiosk_shift_count",
+        "kiosk_shift_revenue",
+        "kiosk_cash_difference",
+        "kiosk_price_override_count",
+        "kiosk_price_above_list_count"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_INTEGRITY_ISSUE",
+          "item": "4/6 ca kiosk dùng co_so_ma không khớp chi nhánh"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B28",
+      "title": "Ví identity/chủ kiosk",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "FRANCHISEE",
+        "CUSTOMER"
+      ],
+      "source_tables": [
+        "identity.vi_giao_dich"
+      ],
+      "domain_ids": [
+        "franchise_finance"
+      ],
+      "metric_refs": [
+        "owner_wallet_topup_amount",
+        "owner_debt_payment_amount"
+      ],
+      "open_items": [
+        {
+          "state": "UNVERIFIED_PROVENANCE",
+          "item": "Chỉ quan sát chủ kiosk dùng ví identity; tách khỏi ví khách"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B29",
+      "title": "Tài khoản/cấu hình/thông báo",
+      "analytic_state": "TECHNICAL_EXCLUDED",
+      "actor_contexts": [
+        "ADMIN"
+      ],
+      "source_tables": [
+        "orders.smtp_config",
+        "orders.thong_bao"
+      ],
+      "domain_ids": [],
+      "metric_refs": [],
+      "open_items": [
+        {
+          "state": "TECHNICAL_EXCLUDED",
+          "item": "Cấu hình/secret ngoài analytics; thông báo không chứng minh đã đọc"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B30",
+      "title": "Nguồn phụ trợ",
+      "analytic_state": "UNVERIFIED_PROVENANCE",
+      "actor_contexts": [
+        "ADMIN",
+        "INGESTION_WORKER"
+      ],
+      "source_tables": [
+        "analytics.ai_logs",
+        "analytics.ai_modules",
+        "analytics.morning_digest",
+        "context.thoi_tiet_ngay",
+        "finance.chi_phi_van_hanh",
+        "finance.hop_dong_nq"
+      ],
+      "domain_ids": [],
+      "metric_refs": [],
+      "open_items": [
+        {
+          "state": "UNVERIFIED_PROVENANCE",
+          "item": "Chưa xác minh lineage/write-path; không dùng cho ROI/P&L"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B31",
+      "title": "Khách vãng lai/liên kết/reorder",
+      "analytic_state": "AVAILABLE",
+      "actor_contexts": [
+        "GUEST",
+        "CUSTOMER",
+        "STAFF"
+      ],
+      "source_tables": [
+        "orders.checkout_quote"
+      ],
+      "domain_ids": [
+        "orders"
+      ],
+      "metric_refs": [
+        "anonymous_order_count"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có event liên kết/reorder: đơn tính theo chủ hiện tại"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_oracles.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B32",
+      "title": "Điểm/điều phối tài xế",
+      "analytic_state": "SOURCE_INTEGRITY_ISSUE",
+      "actor_contexts": [
+        "CUSTOMER",
+        "ADMIN",
+        "SHIPPER_SEPARATE_AUTH"
+      ],
+      "source_tables": [],
+      "domain_ids": [
+        "delivery"
+      ],
+      "metric_refs": [
+        "driver_rating"
+      ],
+      "open_items": [
+        {
+          "state": "SOURCE_INTEGRITY_ISSUE",
+          "item": "driver_rating là điểm hồ sơ cập nhật trọng số, không có lịch sử lượt chấm"
+        },
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có SLA (delivery_on_time_rate)"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py",
+        "tests/test_business_coverage_retrieval.py"
+      ],
+      "owner_phase": "P1",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B33",
+      "title": "AI commerce/ML/RAG",
+      "analytic_state": "POLICY_RESTRICTED",
+      "actor_contexts": [
+        "CUSTOMER",
+        "ADMIN",
+        "AI_COMMERCE_SERVICE"
+      ],
+      "source_tables": [
+        "ai.chat_ai_conversation",
+        "ai.inference_logs",
+        "ai.mo_hinh_ai",
+        "ai.model_registry",
+        "ai.nhat_ky_suy_luan",
+        "public.ai_chat_sessions",
+        "public.ai_turn_log"
+      ],
+      "domain_ids": [],
+      "metric_refs": [],
+      "open_items": [
+        {
+          "state": "SOURCE_NOT_CAPTURED",
+          "item": "Không có exposure/outcome (ai_recommendation_uplift)"
+        },
+        {
+          "state": "POLICY_RESTRICTED",
+          "item": "Prompt/chat/audio ngoài analytics"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    },
+    {
+      "group_id": "B34",
+      "title": "Callback/async/kỹ thuật",
+      "analytic_state": "TECHNICAL_EXCLUDED",
+      "actor_contexts": [
+        "PAYMENT_CALLBACK",
+        "DELIVERY_CALLBACK",
+        "CHECKOUT_OUTBOX_WORKER",
+        "INGESTION_WORKER"
+      ],
+      "source_tables": [
+        "orders.checkout_operation",
+        "orders.checkout_outbox"
+      ],
+      "domain_ids": [],
+      "metric_refs": [],
+      "open_items": [
+        {
+          "state": "TECHNICAL_EXCLUDED",
+          "item": "Callback/outbox là kỹ thuật; queued ≠ settled; dùng cho freshness/health"
+        }
+      ],
+      "test_refs": [
+        "tests/test_business_coverage_corpus.py"
+      ],
+      "owner_phase": "P4",
+      "data_origin": "unknown",
+      "evidence": [
+        "AI_DATA_ANALYST_BUSINESS_COVERAGE_PLAN_20261020.md#A.3",
+        "evaluation/business-coverage-20261020/round3/reader-verification.json"
+      ],
+      "owner": "avengers-data-team"
+    }
+  ]
+}

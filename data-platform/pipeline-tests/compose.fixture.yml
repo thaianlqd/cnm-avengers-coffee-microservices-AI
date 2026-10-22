@@ -82,6 +82,7 @@ services:
       - ../analytics-api/metadata/warehouse_views.json:/workspace/analytics-api/metadata/warehouse_views.json:ro
       - ../evaluation/v34/implementation-20261018/source-schema-readonly.json:/workspace/evaluation/v34/implementation-20261018/source-schema-readonly.json:ro
       - ../evaluation/v34/implementation-20261018/views-parity-before.json:/workspace/evaluation/v34/implementation-20261018/views-parity-before.json:ro
+      - ../evaluation/business-coverage-20261020/round3:/workspace/evaluation/business-coverage-20261020/round3:ro
     command: [python, -m, unittest, discover, -s, pipeline-tests, -p, 'integration_*.py']
   redis:
     cpus: 0.05

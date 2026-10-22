@@ -1,0 +1,5 @@
+[
+  "services/agent_pipeline.py",
+  "services/analysis_quality_service.py",
+  "tests/test_completion_20261022.py"
+]

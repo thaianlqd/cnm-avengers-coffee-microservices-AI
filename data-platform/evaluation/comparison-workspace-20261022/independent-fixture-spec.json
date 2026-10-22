@@ -1,0 +1,147 @@
+{
+  "status": "PLANNED_EXPECTED_FIXTURE_NOT_EXECUTED",
+  "unit": "VND",
+  "reference_date": "2027-03-15",
+  "scope_members": [
+    "Alpha",
+    "Beta"
+  ],
+  "outside_member": "Gamma",
+  "orders": [
+    {
+      "id": "A1",
+      "member": "Alpha",
+      "amount": 100,
+      "status": "HOAN_THANH",
+      "customer": "U1",
+      "date": "2027-01-10",
+      "order_type": "DUNG_TAI_CHO"
+    },
+    {
+      "id": "A2",
+      "member": "Alpha",
+      "amount": 200,
+      "status": "HOAN_THANH",
+      "customer": "U1",
+      "date": "2027-02-10",
+      "order_type": "MANG_DI"
+    },
+    {
+      "id": "A3",
+      "member": "Alpha",
+      "amount": 900,
+      "status": "DA_HUY",
+      "customer": "U9",
+      "date": "2027-02-11",
+      "order_type": "GIAO_TAN_NOI"
+    },
+    {
+      "id": "B1",
+      "member": "Beta",
+      "amount": 400,
+      "status": "HOAN_THANH",
+      "customer": "U1",
+      "date": "2027-01-10",
+      "order_type": "GIAO_TAN_NOI"
+    },
+    {
+      "id": "B2",
+      "member": "Beta",
+      "amount": 200,
+      "status": "HOAN_THANH",
+      "customer": "U2",
+      "date": "2027-02-10",
+      "order_type": "DUNG_TAI_CHO"
+    },
+    {
+      "id": "B3",
+      "member": "Beta",
+      "amount": 100,
+      "status": "HOAN_THANH",
+      "customer": "U2",
+      "date": "2027-02-11",
+      "order_type": "MANG_DI"
+    },
+    {
+      "id": "B4",
+      "member": "Beta",
+      "amount": 70,
+      "status": "DA_HUY",
+      "customer": "U8",
+      "date": "2027-02-12",
+      "order_type": "GIAO_TAN_NOI"
+    },
+    {
+      "id": "B5",
+      "member": "Beta",
+      "amount": 80,
+      "status": "DA_HUY",
+      "customer": "U8",
+      "date": "2027-02-13",
+      "order_type": "GIAO_TAN_NOI"
+    },
+    {
+      "id": "G1",
+      "member": "Gamma",
+      "amount": 1000000,
+      "status": "HOAN_THANH",
+      "customer": "U3",
+      "date": "2027-02-10",
+      "order_type": "DUNG_TAI_CHO"
+    }
+  ],
+  "expected": {
+    "revenue": {
+      "Alpha": 300,
+      "Beta": 700,
+      "union": 1000
+    },
+    "valid_orders": {
+      "Alpha": 2,
+      "Beta": 3,
+      "union": 5
+    },
+    "aov": {
+      "Alpha": 150,
+      "Beta": 233.33333333333334,
+      "union": 200
+    },
+    "terminal_cancellation": {
+      "Alpha": {
+        "numerator": 1,
+        "denominator": 3
+      },
+      "Beta": {
+        "numerator": 2,
+        "denominator": 5
+      },
+      "union": {
+        "numerator": 3,
+        "denominator": 8
+      }
+    },
+    "valid_customer_distinct": {
+      "Alpha": 1,
+      "Beta": 2,
+      "union": 2
+    },
+    "union_order_type": {
+      "DUNG_TAI_CHO": 300,
+      "MANG_DI": 300,
+      "GIAO_TAN_NOI": 400
+    },
+    "union_monthly": {
+      "2027-01": 500,
+      "2027-02": 500
+    }
+  },
+  "additional_fixtures_required": [
+    "DANG_GIAO revenue-vs-terminal-rate status difference",
+    "missing vs realzero, zero/negative baseline",
+    "overlap cohort with stable fact keys",
+    "snapshot historical incompatibility",
+    "canonical identity duplicate labels",
+    "forecast rich/sparse/empty and temporalalignment"
+  ],
+  "purpose": "No city/sample-question literals in production. Expected values are hand-authored; adapt canonical catalog fixture through generic mapping only."
+}

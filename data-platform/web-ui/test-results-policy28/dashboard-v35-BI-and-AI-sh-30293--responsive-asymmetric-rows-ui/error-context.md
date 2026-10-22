@@ -1,0 +1,256 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: AC
+      - generic [ref=e7]:
+        - generic [ref=e8]: Avengers Coffee
+        - generic [ref=e9]: Data Analytics Platform
+    - generic [ref=e10]: Điều hướng chính
+    - navigation "Điều hướng chính" [ref=e11]:
+      - button "Tổng quan" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: Tổng quan
+      - button "Báo cáo & Phân tích" [ref=e14] [cursor=pointer]:
+        - generic [ref=e15]: Báo cáo & Phân tích
+      - button "Trợ lý AI" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: Trợ lý AI
+      - button "Quản lý Báo cáo" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: Quản lý Báo cáo
+      - button "Khám phá dữ liệu" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: Khám phá dữ liệu
+      - button "Kiến trúc hệ thống" [ref=e23] [cursor=pointer]:
+        - generic [ref=e24]: Kiến trúc hệ thống
+      - button "Quản trị hệ thống" [ref=e25] [cursor=pointer]:
+        - generic [ref=e26]: Quản trị hệ thống
+    - button "Hệ thống phân tích Xem kiến trúc & luồng dữ liệu" [ref=e28] [cursor=pointer]:
+      - generic [ref=e29]:
+        - generic [ref=e30]: Hệ thống phân tích
+        - generic [ref=e31]: Xem kiến trúc & luồng dữ liệu
+  - generic [ref=e33]:
+    - banner [ref=e34]:
+      - textbox "Tìm bài toán phân tích toàn hệ thống" [ref=e36]:
+        - /placeholder: Tìm bài toán, báo cáo phân tích…
+      - group "Hồ sơ và phiên đăng nhập" [ref=e38]:
+        - generic [ref=e40]: AC
+        - button "Đăng xuất tài khoản phân tích" [ref=e42] [cursor=pointer]:
+          - img [ref=e43]
+          - generic [ref=e45]: Đăng xuất
+    - main [ref=e46]:
+      - generic [ref=e48]:
+        - button "← Tất cả dashboard" [ref=e49] [cursor=pointer]
+        - generic [ref=e50]:
+          - generic [ref=e51]:
+            - generic [ref=e52]:
+              - heading "Doanh thu & đơn hàng" [level=1] [ref=e53]
+              - paragraph [ref=e54]: Kinh doanh / D01
+            - generic [ref=e55]:
+              - paragraph [ref=e56]: Bài toán 1
+              - group [ref=e57]:
+                - generic "Định nghĩa & phạm vi" [ref=e58] [cursor=pointer]
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - text: Kỳ báo cáo
+              - combobox "Kỳ báo cáo dashboard" [ref=e61]:
+                - option "30 ngày gần nhất" [selected]
+                - option "7 ngày gần nhất"
+                - option "Tháng trước"
+                - option "Tháng này"
+                - option "Toàn bộ dữ liệu"
+                - option "Tùy chọn"
+            - button "Cập nhật dashboard" [ref=e62] [cursor=pointer]
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - paragraph [ref=e65]: "Phạm vi: Toàn hệ thống"
+            - paragraph [ref=e66]: "Thời gian: Toàn bộ dữ liệu hiện có"
+          - tablist "Phần báo cáo" [ref=e67]:
+            - tab "Báo cáo" [selected] [ref=e68] [cursor=pointer]
+            - tab "Kiểm chứng & nguồn" [ref=e69] [cursor=pointer]
+            - tab "Dữ liệu / SQL" [ref=e70] [cursor=pointer]
+            - tab "Lưu & xuất" [ref=e71] [cursor=pointer]
+          - tabpanel "Báo cáo" [ref=e72]:
+            - generic [ref=e73]:
+              - generic [ref=e74]:
+                - paragraph [ref=e75]: revenue
+                - paragraph [ref=e76]: 174.347.500 đ
+                - group [ref=e77]:
+                  - generic "Chi tiết chỉ số" [ref=e78] [cursor=pointer]
+              - generic [ref=e79]:
+                - paragraph [ref=e80]: orders
+                - paragraph [ref=e81]: 1.696 đơn
+                - group [ref=e82]:
+                  - generic "Chi tiết chỉ số" [ref=e83] [cursor=pointer]
+              - generic [ref=e84]:
+                - paragraph [ref=e85]: customers
+                - paragraph [ref=e86]: 305 khách
+                - group [ref=e87]:
+                  - generic "Chi tiết chỉ số" [ref=e88] [cursor=pointer]
+              - generic [ref=e89]:
+                - paragraph [ref=e90]: aov
+                - paragraph [ref=e91]: 109.584 đ
+                - group [ref=e92]:
+                  - generic "Chi tiết chỉ số" [ref=e93] [cursor=pointer]
+            - group [ref=e95]:
+              - generic "Trả lời ngắn" [ref=e96] [cursor=pointer]
+            - generic [ref=e97]:
+              - heading "Các góc nhìn phân tích · 4 biểu đồ" [level=3] [ref=e98]:
+                - text: Các góc nhìn phân tích
+                - generic [ref=e99]: · 4 biểu đồ
+              - tablist "Góc nhìn biểu đồ" [ref=e100]:
+                - tab "Tất cả · 4" [selected] [ref=e101] [cursor=pointer]
+                - tab "Diễn biến · 1" [ref=e102] [cursor=pointer]
+                - tab "Cơ cấu · 1" [ref=e103] [cursor=pointer]
+                - tab "So sánh · 2" [ref=e104] [cursor=pointer]
+            - tabpanel "Tất cả · 4" [ref=e105]:
+              - generic [ref=e106]:
+                - navigation "Bố cục biểu đồ" [ref=e107]:
+                  - generic [ref=e108]: Bố cục
+                  - button "Tự động · 2–3 ô" [pressed] [ref=e109] [cursor=pointer]
+                  - button "Hai ô mỗi hàng" [ref=e110] [cursor=pointer]
+                  - button "Toàn chiều rộng" [ref=e111] [cursor=pointer]
+                - generic [ref=e112]:
+                  - article [ref=e113]:
+                    - generic [ref=e114]:
+                      - generic [ref=e115]:
+                        - heading "Doanh thu theo ngày" [level=5] [ref=e118]
+                        - paragraph [ref=e119]: Ngày · VND
+                      - group [ref=e120]:
+                        - generic "Tùy chọn Doanh thu theo ngày" [ref=e121] [cursor=pointer]: •••
+                        - option "Miền"
+                        - option "Đường" [selected]
+                    - img "Biểu đồ theo thời gian" [ref=e125]:
+                      - generic [ref=e127]: "0"
+                      - generic [ref=e129]: "75"
+                      - generic [ref=e131]: "150"
+                      - generic [ref=e132]:
+                        - 'generic "2026-09-01: Doanh thu theo ngày — 100 VND" [ref=e134]'
+                        - 'generic "2026-09-02: Doanh thu theo ngày — 150 VND" [ref=e135]'
+                      - generic "2026-09-01" [ref=e136]: 01/09
+                      - generic "2026-09-02" [ref=e137]: 02/09
+                    - generic [ref=e139]:
+                      - group [ref=e140]:
+                        - generic "Chi tiết biểu đồ" [ref=e141] [cursor=pointer]
+                        - generic [ref=e142]:
+                          - group [ref=e143]:
+                            - generic "Cách đọc biểu đồ" [ref=e144] [cursor=pointer]
+                          - group [ref=e145]:
+                            - generic "Xem dữ liệu" [active] [ref=e146] [cursor=pointer]
+                            - table [ref=e147]:
+                              - rowgroup [ref=e148]:
+                                - row "2026-09-01 100 VND" [ref=e149]:
+                                  - cell "2026-09-01" [ref=e150]
+                                  - cell "100 VND" [ref=e151]
+                                - row "2026-09-02 150 VND" [ref=e152]:
+                                  - cell "2026-09-02" [ref=e153]
+                                  - cell "150 VND" [ref=e154]
+                      - group [ref=e155]:
+                        - generic "Nhận định từ biểu đồ" [ref=e156] [cursor=pointer]
+                        - generic [ref=e157]:
+                          - paragraph [ref=e158]: "Vì sao có biểu đồ này: Giữ nguyên phạm vi doanh thu"
+                          - list [ref=e159]:
+                            - listitem [ref=e160]:
+                              - generic [ref=e162]: Doanh thu quan sát 100 và 150 VND.
+                          - paragraph [ref=e163]: "Lưu ý: Chỉ so sánh cùng kỳ đầy đủ."
+                  - article [ref=e164]:
+                    - generic [ref=e165]:
+                      - generic [ref=e166]:
+                        - heading "Cơ cấu kênh bán" [level=5] [ref=e169]
+                        - paragraph [ref=e170]: Kênh · đơn
+                      - group [ref=e171]:
+                        - generic "Tùy chọn Cơ cấu kênh bán" [ref=e172] [cursor=pointer]: •••
+                    - generic [ref=e175]:
+                      - generic [ref=e176]:
+                        - img [ref=e177]
+                        - generic:
+                          - generic: "10"
+                          - generic: Tổng trong phạm vi
+                      - generic [ref=e181]:
+                        - generic [ref=e182] [cursor=pointer]:
+                          - generic "Tại quán" [ref=e185]
+                          - generic [ref=e186]:
+                            - generic [ref=e187]: 80.0%
+                            - generic [ref=e188]: 8 đơn
+                        - generic [ref=e189] [cursor=pointer]:
+                          - generic "Giao hàng" [ref=e192]
+                          - generic [ref=e193]:
+                            - generic [ref=e194]: 20.0%
+                            - generic [ref=e195]: 2 đơn
+                    - group [ref=e198]:
+                      - generic "Chi tiết biểu đồ" [ref=e199] [cursor=pointer]
+                  - article [ref=e200]:
+                    - generic [ref=e201]:
+                      - generic [ref=e202]:
+                        - heading "Xếp hạng cửa hàng" [level=5] [ref=e205]
+                        - paragraph [ref=e206]: Trong phạm vi đã chọn · VND
+                      - group [ref=e207]:
+                        - generic "Tùy chọn Xếp hạng cửa hàng" [ref=e208] [cursor=pointer]: •••
+                        - option "Cột ngang" [selected]
+                        - option "Cột dọc"
+                    - generic [ref=e212]:
+                      - 'generic "Highlands Coffee Chi nhánh 1: 853.500 VND" [ref=e213]':
+                        - generic [ref=e214]: Highlands Coffee Chi nhánh 1
+                        - generic [ref=e217]: 853,5 nghìn
+                      - 'generic "Highlands Coffee Chi nhánh 2: 854.500 VND" [ref=e218]':
+                        - generic [ref=e219]: Highlands Coffee Chi nhánh 2
+                        - generic [ref=e222]: 854,5 nghìn
+                      - 'generic "Highlands Coffee Chi nhánh 3: 855.500 VND" [ref=e223]':
+                        - generic [ref=e224]: Highlands Coffee Chi nhánh 3
+                        - generic [ref=e227]: 855,5 nghìn
+                      - 'generic "Highlands Coffee Chi nhánh 4: 856.500 VND" [ref=e228]':
+                        - generic [ref=e229]: Highlands Coffee Chi nhánh 4
+                        - generic [ref=e232]: 856,5 nghìn
+                      - 'generic "Highlands Coffee Chi nhánh 5: 857.500 VND" [ref=e233]':
+                        - generic [ref=e234]: Highlands Coffee Chi nhánh 5
+                        - generic [ref=e237]: 857,5 nghìn
+                      - 'generic "Highlands Coffee Chi nhánh 6: 858.500 VND" [ref=e238]':
+                        - generic [ref=e239]: Highlands Coffee Chi nhánh 6
+                        - generic [ref=e242]: 858,5 nghìn
+                      - 'generic "Highlands Coffee Chi nhánh 7: 859.500 VND" [ref=e243]':
+                        - generic [ref=e244]: Highlands Coffee Chi nhánh 7
+                        - generic [ref=e247]: 859,5 nghìn
+                      - 'generic "Highlands Coffee Chi nhánh 8: 860.500 VND" [ref=e248]':
+                        - generic [ref=e249]: Highlands Coffee Chi nhánh 8
+                        - generic [ref=e252]: 860,5 nghìn
+                      - 'generic "Highlands Coffee Chi nhánh 9: 861.500 VND" [ref=e253]':
+                        - generic [ref=e254]: Highlands Coffee Chi nhánh 9
+                        - generic [ref=e257]: 861,5 nghìn
+                      - 'generic "Highlands Coffee Chi nhánh 10: 862.500 VND" [ref=e258]':
+                        - generic [ref=e259]: Highlands Coffee Chi nhánh 10
+                        - generic [ref=e262]: 862,5 nghìn
+                    - group [ref=e265]:
+                      - generic "Chi tiết biểu đồ" [ref=e266] [cursor=pointer]
+                  - article [ref=e267]:
+                    - generic [ref=e268]:
+                      - generic [ref=e269]:
+                        - heading "Hình thức nhận hàng" [level=5] [ref=e272]
+                        - paragraph [ref=e273]: Trong phạm vi đã chọn
+                      - group [ref=e274]:
+                        - generic "Tùy chọn Hình thức nhận hàng" [ref=e275] [cursor=pointer]: •••
+                        - option "Cột ngang"
+                        - option "Cột dọc" [selected]
+                    - img "Biểu đồ cột nhóm" [ref=e279]:
+                      - generic [ref=e281]: "0"
+                      - generic [ref=e283]: 392,5
+                      - generic [ref=e285]: "785"
+                      - generic [ref=e286]:
+                        - 'generic "Dùng tại chỗ: Hình thức nhận hàng — 785" [ref=e287]'
+                        - generic "Dùng tại chỗ" [ref=e288]
+                      - generic [ref=e289]:
+                        - 'generic "Giao tận nơi: Hình thức nhận hàng — 291" [ref=e290]'
+                        - generic "Giao tận nơi" [ref=e291]
+                      - generic [ref=e292]:
+                        - 'generic "Lấy tại quán: Hình thức nhận hàng — 3" [ref=e293]'
+                        - generic "Lấy tại quán" [ref=e294]
+                      - generic [ref=e295]:
+                        - 'generic "Mang đi: Hình thức nhận hàng — 512" [ref=e296]'
+                        - generic "Mang đi" [ref=e297]
+                    - group [ref=e300]:
+                      - generic "Chi tiết biểu đồ" [ref=e301] [cursor=pointer]
+            - group [ref=e302]:
+              - generic "Độ đầy đủ bằng chứng · Chưa đo" [ref=e303] [cursor=pointer]
+            - group [ref=e304]:
+              - generic "Giới hạn quan trọng" [ref=e305] [cursor=pointer]
+            - group [ref=e306]:
+              - generic "Kết luận phân tích" [ref=e307] [cursor=pointer]
+```

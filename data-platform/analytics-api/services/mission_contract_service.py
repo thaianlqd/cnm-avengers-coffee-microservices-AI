@@ -63,11 +63,20 @@ def contracts(registry):
 def mission_signals(text, registry):
     """Missions whose governed operator vocabulary occurs in the normalized text."""
     import re
+    from services.request_anchors import metric_mentions
+    vocabulary={}
+    for id,metric in registry['metrics'].items():
+        for alias in [metric['business_name'],*metric.get('aliases',[])]:
+            vocabulary.setdefault(value_text(alias),set()).add(id)
+    # Operator words inside a governed metric name belong to that noun phrase.
+    # A separate explicit forecast/risk/trend operator still participates.
+    ranges=metric_mentions(text,vocabulary)
     hits = {}
     for mission in registry.get("analysis_missions", []):
         for phrase in (mission.get("input_contract") or {}).get("intent_vocabulary", []):
             p = value_text(phrase)
-            if p and re.search(r"(?<!\w)" + re.escape(p) + r"(?!\w)", text):
+            if p and any(not any(a['start']<match.end() and match.start()<a['end'] for a in ranges)
+                         for match in re.finditer(r"(?<!\w)" + re.escape(p) + r"(?!\w)", text)):
                 hits.setdefault(mission["id"], []).append(phrase)
     return hits
 
@@ -134,6 +143,63 @@ def _relationship_pairs(registry):
     return pairs
 
 
+def check_metric_clocks(catalog, slots, time_range):
+    """A snapshot metric has no event clock: a bounded period cannot be honoured (I10).
+
+    Preflight and execution share this rule, so READY is never followed by
+    historical_metric_unavailable for the same guided contract.
+    """
+    mode = (time_range or {}).get("mode")
+    if mode in (None, "auto", "all_time"):
+        return
+    metrics = catalog.registry["metrics"]
+    for key in ("metric", "metric_b"):
+        m = slots.get(key)
+        if m and metrics.get(m, {}).get("historical_capability") == "snapshot":
+            raise GuidedContractError("time", f"“{metrics[m]['business_name']}” là dữ liệu hiện trạng, không có lịch sử theo kỳ. "
+                                              "Chọn “Toàn bộ thời gian” hoặc một chỉ số có lịch sử.")
+
+
+def guided_operation_capacity(registry, context):
+    if context.get('guided_intent') is None:
+        return 8
+    mission = next((m for m in registry.get('analysis_missions', [])
+                    if m.get('id') == context.get('analysis_mission')), {})
+    return min(16, max(8, int(mission.get('max_operations', 8))))
+
+
+def admit_guided_sql_budget(catalog, context):
+    """Use only the catalog ceiling of a server-validated guided mission."""
+    mission_id = context.get('guided_mission_id')
+    if not mission_id or mission_id != context.get('analysis_mission') or context.get('guided_intent') is None:
+        return
+    mission = next((m for m in catalog.registry.get('analysis_missions', []) if m['id'] == mission_id), {})
+    if 'max_operations' not in mission:
+        return
+    from services.analytical_capacity_planner import request_sql_budget
+    budget = request_sql_budget.get()
+    if budget is not None:
+        budget.admit_governed_mission(mission_id, catalog.fingerprint, guided_operation_capacity(catalog.registry, context))
+
+
+def allows_current_risk_snapshot(context, metric_definitions, metric_ids):
+    """Only server-generated Risk Watch requirements can use a current clock.
+
+    The marker is set after validating the mission/signals, saved with the
+    report, and never accepted from a browser query or a model requirement.
+    """
+    if context.get('analysis_mission') != 'risk_watch' or not metric_ids:
+        return False
+    allowed = set(context.get('risk_snapshot_metrics') or [])
+    guided = context.get('guided_intent') or {}
+    declared = {m for req in guided.get('requirements', [])
+                if (req.get('time') or {}).get('kind') == 'relative'
+                and (req.get('time') or {}).get('mode') == 'all_time'
+                for m in req.get('metric_ids', [])}
+    return set(metric_ids) <= allowed & declared and all(
+        metric_definitions.get(m, {}).get('historical_capability') == 'snapshot' for m in metric_ids)
+
+
 def validate_guided(catalog, mission_id, contract, *, scope_filters=()):
     """Normalized guided slots for a mission, or GuidedContractError.
 
@@ -171,6 +237,10 @@ def validate_guided(catalog, mission_id, contract, *, scope_filters=()):
         out["metric"] = data["metric"]
     if "dimension" in data:
         _dimension_compatible(catalog, data["metric"], data["dimension"])
+        if mission_id=='composition':
+            from services.semantic_preflight_contract import additive_across,metric_capability
+            if not additive_across(metric_capability(data['metric'],r['metrics'][data['metric']]),data['dimension']):
+                raise GuidedContractError('dimension','Chỉ số chưa được phép cộng qua chiều phân tích này.')
         if r["dimensions"][data["dimension"]].get("identity") == data["dimension"]:
             raise GuidedContractError("dimension", "Không phân tích theo mã định danh.")
         out["dimension"] = data["dimension"]
@@ -289,8 +359,10 @@ def guided_intent(catalog, slots, period=None):
         for i, sid in enumerate(slots.get("signals", []), start=1):
             metric = signals[sid]["metric"]
             dims = [d for d in ("store",) if d in catalog.compatible_dimensions(metric)]
-            reqs.append(base(id=f"r{i}", goal=signals[sid]["label"], metric_ids=[metric], dimension_ids=dims,
-                             analysis_kind="aggregate"))
+            current = r['metrics'][metric].get('historical_capability') == 'snapshot'
+            reqs.append(base(id=f"r{i}", goal=signals[sid]["label"] + (' (hiện trạng)' if current else ''),
+                             metric_ids=[metric], dimension_ids=dims, analysis_kind="aggregate",
+                             **({'time': {'kind': 'relative', 'mode': 'all_time'}} if current else {})))
     else:
         raise GuidedContractError("mission", "Nhiệm vụ chưa hỗ trợ chế độ có hướng dẫn.")
     return {"decision": "analyze", "requirements": reqs}
