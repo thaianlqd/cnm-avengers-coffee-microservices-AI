@@ -1,6 +1,4 @@
-function normalizeSearch(value) {
-  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase().trim()
-}
+import { normalizeSearch } from './smartSelectModel'
 export default function WorkspaceSearchResults({ items, query, onSelect }) {
   const needle = normalizeSearch(query)
   const matches = items.filter(item => normalizeSearch(item.label + ' ' + (item.group || '')).includes(needle))

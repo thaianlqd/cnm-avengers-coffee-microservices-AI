@@ -9,11 +9,11 @@ import {
   XMarkIcon,
   PlusIcon,
   MinusIcon,
-} from '@heroicons/react/24/outline';
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
-import QuickViewModal from '../../components/QuickViewModal';
-import ProductSalesSummary from '../../components/ProductSalesSummary';
-import ReviewPagination from '../../components/ReviewPagination';
+} from '../../components/common/icons';
+import { StarIcon as StarIconSolid } from '../../components/common/iconsSolid';
+import QuickViewModal from '../../components/modals/QuickViewModal';
+import ProductSalesSummary from '../../components/product/ProductSalesSummary';
+import ReviewPagination from '../../components/common/ReviewPagination';
 import { useReviewPagination } from '../../lib/useReviewPagination';
 import { productUnitPrice } from '../../lib/productPrice';
 import { useTranslation } from 'react-i18next';
@@ -235,10 +235,8 @@ export default function ProductDetailPage({
           {/* Right Column: Details & Actions */}
           <div className="md:col-span-6 flex flex-col justify-between py-2">
             <div>
-              <span className="text-sm font-bold text-gray-500 uppercase tracking-wide">
-                Highlands Coffee
-              </span>
-              <h1 className="text-xl sm:text-2xl lg:text-[28px] font-semibold text-[#222222] mt-1 uppercase">
+              <span className="text-sm font-bold text-gray-500  tracking-wide"> Avengers Coffee </span>
+              <h1 className="text-xl sm:text-2xl lg:text-[28px] font-semibold text-[#222222] mt-1 ">
                 {product.ten_san_pham || product.name}
               </h1>
 
@@ -267,7 +265,7 @@ export default function ProductDetailPage({
                   if (isMulti) {
                     return (
                       <div key={ui(attrName)} className="relative mt-4">
-                        <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">{ui(attrName)}:</span>
+                        <span className="block text-xs font-bold text-gray-500  mb-2.5">{ui(attrName)}:</span>
                         <button
                           type="button"
                           onClick={() => setShowDynamicToppings(!showDynamicToppings)}
@@ -437,7 +435,7 @@ export default function ProductDetailPage({
                   {/* Toppings (Multi-select) */}
                   {product.toppings && Object.keys(product.toppings || {}).length > 0 && (
                     <div className="relative mt-4">
-                      <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Topping:</span>
+                      <span className="block text-xs font-bold text-gray-500  mb-2.5">Topping:</span>
                       <button
                         type="button"
                         onClick={() => setShowToppingsList(!showToppingsList)}
@@ -503,14 +501,14 @@ export default function ProductDetailPage({
               <button
                 type="button"
                 disabled={addingToCart} onClick={() => handleMainAddToCart(true)}
-                className="flex-1 min-w-[160px] py-3.5 px-8 rounded-full bg-[#d0021b] text-white font-bold text-sm uppercase tracking-wider shadow-md hover:bg-[#a80014] transition-all text-center"
+                className="flex-1 min-w-[160px] py-3.5 px-8 rounded-full bg-[#d0021b] text-white font-bold text-sm  tracking-wider shadow-md hover:bg-[#a80014] transition-all text-center"
               >
                 {t('productDetail.buyNow')}
               </button>
               <button
                 type="button"
                 disabled={addingToCart} onClick={() => handleMainAddToCart(false)}
-                className="flex-1 min-w-[160px] py-3.5 px-8 rounded-full bg-[#ff5a5f] text-white font-bold text-sm uppercase tracking-wider shadow-md hover:bg-[#e0484d] transition-all text-center"
+                className="flex-1 min-w-[160px] py-3.5 px-8 rounded-full bg-[#ff5a5f] text-white font-bold text-sm  tracking-wider shadow-md hover:bg-[#e0484d] transition-all text-center"
               >
                 {t('productDetail.addToCart')}
               </button>
@@ -522,7 +520,7 @@ export default function ProductDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-12 pb-14 border-b border-gray-200">
           {/* Left Description */}
           <div className="lg:col-span-8">
-            <h2 className="text-xl font-semibold text-[#222222] border-b-2 border-gray-800 pb-3 mb-6 uppercase">
+            <h2 className="text-xl font-semibold text-[#222222] border-b-2 border-gray-800 pb-3 mb-6 ">
               {t('productDetail.description')}
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-4 text-[15px]">
@@ -536,7 +534,7 @@ export default function ProductDetailPage({
           <div className="lg:col-span-4">
             <div className="bg-[#fffcf7] rounded-2xl border border-orange-100 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-orange-200/60">
-                <h3 className="font-black text-base text-[#8B4513] uppercase">
+                <h3 className="font-semibold text-base text-[#8B4513] ">
                   {t('productDetail.missingCakes')} 🍰
                 </h3>
               </div>
@@ -556,7 +554,7 @@ export default function ProductDetailPage({
                         <h4 className="font-bold text-xs text-gray-800 line-clamp-1">
                           {pastry.ten_san_pham}
                         </h4>
-                        <span className="font-black text-xs text-[#b22830]">
+                        <span className="font-semibold text-xs text-[#b22830]">
                           {(Number(pastry.gia_ban) || 19000).toLocaleString(uiLocale())}{ui("đ")}</span>
                       </div>
                     </div>
@@ -580,9 +578,9 @@ export default function ProductDetailPage({
         {/* PRODUCT REVIEWS SECTION */}
         <div className="mt-12 pb-14 border-b border-gray-200">
           <div className="flex items-center gap-3 mb-8">
-            <h2 className="text-xl font-semibold text-[#222222] uppercase">{ui("Đánh giá từ khách hàng")}</h2>
+            <h2 className="text-xl font-semibold text-[#222222] ">{ui("Đánh giá từ khách hàng")}</h2>
             {totalReviews > 0 && (
-              <span className="bg-[#b22830]/10 text-[#b22830] text-sm font-black px-3 py-1 rounded-full">
+              <span className="bg-[#b22830]/10 text-[#b22830] text-sm font-semibold px-3 py-1 rounded-full">
                 {totalReviews}{ui(" đánh giá")}</span>
             )}
           </div>
@@ -610,7 +608,7 @@ export default function ProductDetailPage({
             /* Empty State */
             <div className="text-center py-14 bg-[#fafafa] rounded-2xl border border-gray-100">
               <div className="text-5xl mb-4">⭐</div>
-              <h3 className="text-lg font-black text-gray-700 mb-2">{ui("Chưa có đánh giá nào")}</h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">{ui("Chưa có đánh giá nào")}</h3>
               <p className="text-sm text-gray-400 font-medium">{ui("Hãy mua và trải nghiệm sản phẩm để là người đầu tiên đánh giá!")}</p>
             </div>
           ) : (
@@ -688,7 +686,7 @@ export default function ProductDetailPage({
                       {/* Header */}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-base flex-shrink-0 ${colorClass}`}>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-base flex-shrink-0 ${colorClass}`}>
                             {initials}
                           </div>
                           <div>
@@ -723,7 +721,7 @@ export default function ProductDetailPage({
                       {/* Manager reply */}
                       {review.phan_hoi_quan_ly && (
                         <div className="bg-[#fdf8f4] border-l-4 border-[#b22830] rounded-r-xl p-3 mt-2">
-                          <p className="text-xs font-black text-[#b22830] mb-1 uppercase tracking-wider">{ui("☕ Phản hồi của Avengers Coffee")}</p>
+                          <p className="text-xs font-semibold text-[#b22830] mb-1  tracking-wider">{ui("☕ Phản hồi của Avengers Coffee")}</p>
                           <p className="text-xs text-gray-700 leading-relaxed">
                             {review.phan_hoi_quan_ly}
                           </p>
@@ -740,7 +738,7 @@ export default function ProductDetailPage({
 
         {/* RELATED PRODUCTS SECTION (Sản phẩm cùng loại - Ảnh 4) */}
         <div className="mt-12">
-          <h2 className="text-xl font-semibold text-[#222222] mb-6 uppercase">
+          <h2 className="text-xl font-semibold text-[#222222] mb-6 ">
             {t('productDetail.relatedProducts')}
           </h2>
 
@@ -779,9 +777,7 @@ export default function ProductDetailPage({
 
                   <div className="p-4 flex flex-col flex-1 justify-between">
                     <div>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                        Highlands Coffee
-                      </span>
+                      <span className="text-[10px] font-bold text-gray-400  tracking-wider block"> Avengers Coffee </span>
                       <h3
                         onClick={() => openModal(relProduct)}
                         className="font-bold text-sm text-[#333333] hover:text-[#b22830] line-clamp-2 mt-1 cursor-pointer"
@@ -791,7 +787,7 @@ export default function ProductDetailPage({
                     </div>
 
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                      <span className="font-black text-base text-[#b22830]">
+                      <span className="font-semibold text-base text-[#b22830]">
                         {(Number(relProduct.gia_ban) || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
 
                       {/* Red circle plus button bottom right */}

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon } from '../../components/common/icons';
 import { apiClient } from '../../lib/apiClient';
 import { normalizeNewsArticle } from '../../lib/news';
+import { NewsListSkeleton } from '../../components/common/Skeleton';
 
 export default function NewsPage({ onSelectArticle }) {
   const { i18n } = useTranslation();
@@ -21,7 +22,7 @@ export default function NewsPage({ onSelectArticle }) {
   const categoryName = value => ({ COFFEEHOLIC: copy('Chuyện cà phê', 'Coffee stories'), TEAHOLIC: copy('Chuyện trà', 'Tea stories'), LIFESTYLE: copy('Đời sống', 'Lifestyle') }[value] || value);
   return <div className="news-editorial">
     <header className="editorial-heading">
-      <p className="editorial-eyebrow">AVENGERS COFFEE / {copy('TIN TỨC', 'JOURNAL')}</p>
+      <p className="editorial-eyebrow">Avengers coffee / {copy('TIN TỨC', 'JOURNAL')}</p>
       <h1>{copy('Chuyện bên ly cà phê.', 'Stories over coffee.')}</h1>
       <p>{copy('Tin mới, những hương vị quen và câu chuyện từ Avengers.', 'News, familiar flavours and stories from Avengers.')}</p>
     </header>
@@ -30,7 +31,7 @@ export default function NewsPage({ onSelectArticle }) {
         {value === 'all' ? copy('Tất cả', 'All stories') : categoryName(value)}
       </button>)}
     </nav>
-    {query.isPending ? <div className="news-skeleton" role="status" aria-label={copy('Đang tải tin tức', 'Loading stories')} /> : query.isError && !articles.length ? <div className="editorial-empty">
+    {query.isPending ? <NewsListSkeleton /> : query.isError && !articles.length ? <div className="editorial-empty">
       <p>{copy('Chưa tải được tin tức. Bạn thử lại nhé.', 'Stories could not be loaded. Please try again.')}</p>
       <button onClick={() => query.refetch()}>{copy('Thử lại', 'Retry')}</button>
     </div> : !featured ? <p className="editorial-empty">{copy('Chưa có bài viết trong chủ đề này.', 'There are no stories in this topic yet.')}</p> : <>

@@ -3,22 +3,23 @@ import React, { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'rea
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { io } from 'socket.io-client';
-import PageErrorBoundary from './components/PageErrorBoundary';
-import ScrollExperience from './components/ScrollExperience';
-import CampaignPopup from './components/CampaignPopup';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import OrderFooter from './components/OrderFooter';
-import ProductCard from './components/ProductCard';
+import PageErrorBoundary from './components/common/PageErrorBoundary';
+import ScrollExperience from './components/layout/ScrollExperience';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import CampaignPopup from './components/modals/CampaignPopup';
+import OrderFooter from './components/layout/OrderFooter';
+import ProductCard from './components/product/ProductCard';
+import { PageSkeleton, OrderHistoryModalSkeleton } from './components/common/Skeleton';
 const LoginPage = lazy(() => import('./pages/Login'));
-import QuickViewModal from './components/QuickViewModal';
+import QuickViewModal from './components/modals/QuickViewModal';
 const CartPage = lazy(() => import('./pages/Cart'));
-import FavoriteDrawer from './components/FavoriteDrawer';
-const OrderHistoryModal = lazy(() => import('./components/OrderHistoryModal'));
-import ChristmasBanner from './components/ChristmasBanner';
+import FavoriteDrawer from './components/product/FavoriteDrawer';
+const OrderHistoryModal = lazy(() => import('./components/modals/OrderHistoryModal'));
+import ChristmasBanner from './components/layout/ChristmasBanner';
 import { pageModules, preloadPage } from './lib/pageModules';
 const CommunityPage = lazy(pageModules['other-group']);
-import ChatWidget from './components/DeferredChat';
+import ChatWidget from './components/chat/DeferredChat';
 import { accountId, getGuestSessionId } from './lib/guestSession';
 import Home from './pages/Home';
 const About = lazy(() => import('./pages/About'));
@@ -28,7 +29,7 @@ const NewsPage = lazy(() => import('./pages/News'));
 const NewsDetailPage = lazy(() => import('./pages/NewsDetailPage'));
 const OrderPage = lazy(pageModules['order']);
 const ProductDetailPage = lazy(() => import('./pages/ProductDetail'));
-const ProfilePageContent = lazy(() => import('./components/ProfilePageContent'));
+const ProfilePageContent = lazy(() => import('./pages/Profile/ProfilePageContent'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const ChinhSachDatHangPage = lazy(() => import('./pages/ChinhSachDatHang'));
 const LienHePage = lazy(() => import('./pages/LienHe'));
@@ -38,18 +39,20 @@ const MembershipPage = lazy(() => import('./pages/Membership'));
 const LuckyWheelPage = lazy(() => import('./pages/LuckyWheel'));
 const GiftCardPage = lazy(() => import('./pages/GiftCard'));
 const FranchisePage = lazy(() => import('./pages/FranchisePage'));
-const OrderLookupPage = lazy(() => import('./pages/features_thaian/OrderLookupPage'));
-const OrderTrackingPage = lazy(() => import('./pages/features_thaian/OrderTrackingPage'));
+const FranchiseDepositPaymentPage = lazy(() => import('./pages/FranchiseDepositPaymentPage'));
+const OrderLookupPage = lazy(() => import('./pages/OrderTracking/OrderLookupPage'));
+const OrderTrackingPage = lazy(() => import('./pages/OrderTracking/OrderTrackingPage'));
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
 import { apiClient, clearPublicReadCache } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
-import SurveyPopup from './components/SurveyPopup';
+import SurveyPopup from './components/modals/SurveyPopup';
 const SurveyPage = lazy(() => import('./pages/Survey'));
 import { normalizeNewsArticle } from './lib/news';
 import { buildAddressOptionsFromBranches, getAddressSelectionDefaults, normalizeAddressSelection } from './lib/addressOptions';
-import { UserCircleIcon, KeyIcon, MapPinIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { markCustomerActivity, customerSessionExpired, clearCustomerActivity } from './lib/idleSession';
+import { UserCircleIcon, KeyIcon, MapPinIcon, ChevronLeftIcon, ChevronRightIcon } from './components/common/icons';
 
-const normalizeTab = tab => ({giftcard:'gift-card',franchise:'nhuong-quyen','order-lookup':'tra-cuu-don',checkout:'cart',support:'contact','privacy-policy':'privacy'})[tab] || tab;
+const normalizeTab = tab => ({wallet:'profile',giftcard:'gift-card',franchise:'nhuong-quyen','order-lookup':'tra-cuu-don',checkout:'cart',support:'contact','privacy-policy':'privacy','franchise-deposit':'franchise-deposit','thanh-toan-coc':'franchise-deposit'})[tab] || tab;
 const EMPTY_ITEMS = Object.freeze([]);
 const FALLBACK_BANNER_URL = '/campaigns/highlands-christmas-office.jpg';
 // Highlands Coffee section images (from local _files folder)
@@ -376,8 +379,8 @@ function HorizontalProductCarousel({
               >
                 <img src={p.hinh_anh_url} alt={p.ten_san_pham} className={imageClassName} />
                 <div className="min-w-0 text-left">
-                  <p className={`truncate font-black text-gray-900 ${compact ? 'text-sm' : 'mt-4 text-lg'}`}>{p.ten_san_pham}</p>
-                  <p className={`font-black text-[#1a8b46] ${compact ? 'mt-1 text-xs' : 'mt-2 text-xl'}`}>
+                  <p className={`truncate font-semibold text-gray-900 ${compact ? 'text-sm' : 'mt-4 text-lg'}`}>{p.ten_san_pham}</p>
+                  <p className={`font-semibold text-[#1a8b46] ${compact ? 'mt-1 text-xs' : 'mt-2 text-xl'}`}>
                     {Number(p.gia_ban).toLocaleString(uiLocale())}{ui(" đ")}</p>
                 </div>
               </button>
@@ -436,6 +439,7 @@ function AppContent() {
       localStorage.removeItem('qr_tableId');
       localStorage.removeItem('qr_storeId');
     }
+    if (params.get('tab') === 'wallet' && params.get('code')) sessionStorage.setItem('pending_gift_card', params.get('code'));
     return normalizeTab(params.get('tab') || (tableId ? 'order' : 'home')); // redirect to order if scanned QR
   });
   const [trackingOrderId, setTrackingOrderId] = useState(() => {
@@ -617,6 +621,7 @@ function AppContent() {
     data: products = EMPTY_ITEMS,
     isLoading: isProductsLoading,
     isError: isProductsError,
+    refetch: refetchProducts,
   } = useQuery({
     queryKey: queryKeys.menuProducts,
     queryFn: async () => {
@@ -724,6 +729,7 @@ function AppContent() {
     data: categories = EMPTY_ITEMS,
     isLoading: isCategoriesLoading,
     isError: isCategoriesError,
+    refetch: refetchCategories,
   } = useQuery({
     queryKey: queryKeys.menuCategories,
     queryFn: async () => {
@@ -920,7 +926,7 @@ function AppContent() {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
 
-    if (savedToken && savedUser) {
+    if (savedToken && savedUser && !customerSessionExpired()) {
       try {
         setUser(JSON.parse(savedUser));
       } catch {
@@ -930,9 +936,11 @@ function AppContent() {
     } else {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
+      clearCustomerActivity();
     }
 
     const handleAuthExpired = () => {
+      queryClient.clear();
       setUser(null);
       syncCartWithUser(null);
     };
@@ -962,6 +970,33 @@ function AppContent() {
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (!user) return undefined;
+    const expire = () => {
+      if (!customerSessionExpired()) return;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('avengers_guest_session_id');
+      localStorage.removeItem('avengers_anon_user_id');
+      clearCustomerActivity();
+      window.dispatchEvent(new Event('auth:expired'));
+      setNotificationToast({ title: 'Phiên đăng nhập', message: 'Bạn đã được đăng xuất sau 30 phút không hoạt động.', branchName: '' });
+    };
+    const activity = () => {
+      if (customerSessionExpired()) { expire(); return; }
+      markCustomerActivity();
+    };
+    const events = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => window.addEventListener(event, activity, { passive: true, capture: true }));
+    window.addEventListener('focus', expire);
+    const timer = window.setInterval(expire, 1000);
+    return () => {
+      events.forEach(event => window.removeEventListener(event, activity, true));
+      window.removeEventListener('focus', expire);
+      window.clearInterval(timer);
+    };
+  }, [user]);
+
 
   const showCartSuccessToast = (message) => {
     setNotificationToast({
@@ -989,10 +1024,14 @@ function AppContent() {
       queryClient.removeQueries({ queryKey: ['customer-favorites', previousUserId] });
     }
 
-    await syncCartWithUser(nextUser);
+    // A fresh sign-in starts a new activity window before authenticated cart requests.
+    markCustomerActivity();
+    const transferred = await syncCartWithUser(nextUser);
+    if (transferred === false) return false;
     if (!localStorage.getItem('token')) return false;
     setUser(nextUser);
     localStorage.setItem('user', JSON.stringify(nextUser));
+    markCustomerActivity();
     // token đã được lưu trong AuthModal — chỉ cần đảm bảo user object được lưu song song
 
     if (userData?.nhanVoucherSinhNhat) {
@@ -1043,18 +1082,19 @@ function AppContent() {
     queryClient.removeQueries({ queryKey: queryKeys.voucherList });
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    clearCustomerActivity();
     localStorage.removeItem('avengers_guest_session_id');
     localStorage.removeItem('avengers_anon_user_id');
     setUser(null);
     await syncCartWithUser(null);
     // Sau khi user = null, query voucher sẽ re-fetch với anonymous (không có user_id)
     queryClient.invalidateQueries({ queryKey: queryKeys.voucherList });
-    alert(ui("Hẹn gặp lại bạn tại Avengers House! ☕"));
+    alert(ui("Hẹn gặp lại bạn tại Avengers Coffee! ☕"));
   };
 
   const handleUserUpdated = (updatedUser) => {
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    try { localStorage.setItem('user', JSON.stringify(updatedUser)); } catch { /* Keep the current session usable when storage is full. */ }
   };
 
   const markNotificationReadMutation = useMutation({
@@ -1496,7 +1536,7 @@ function AppContent() {
     };
 
     updateScrollSpy();
-    window.addEventListener('scroll', updateScrollSpy, { passive: true });
+    window.addEventListener('scroll', updateScrollSpy, { passive: true, capture: true });
 
     return () => {
       window.removeEventListener('scroll', updateScrollSpy);
@@ -1599,7 +1639,7 @@ function AppContent() {
       setSelectedStoreId(filteredStores[0].id);
     }
   }, [filteredStores, selectedStoreId]);
-  // ProfilePageContent has been moved to a separate file ./components/ProfilePageContent.jsx
+  // ProfilePageContent has been moved to a separate file ./components/../pages/Profile/ProfilePageContent.jsx
 
   const featuredCarouselItems = useMemo(() => products.slice(0, 12), [products]);
   const orderCarouselItems = useMemo(() => filteredProducts.slice(0, 18), [filteredProducts]);
@@ -1608,6 +1648,7 @@ function AppContent() {
     <div className="min-h-screen flex flex-col bg-white">
       {!['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'gift-card', 'order-history', 'tra-cuu-don', 'tracking'].includes(activeTab) && (
         <Header
+          userAvatar={user?.avatar_url || user?.avatarUrl}
           userName={user ? user.ho_ten || user.hoTen || 'Đăng nhập' : 'Đăng nhập'}
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -1663,10 +1704,10 @@ function AppContent() {
       )}
 
       <ScrollExperience pageKey={activeTab} />
-      <CampaignPopup activeTab={activeTab} onOrder={() => setActiveTab('order')} />
+      {activeTab !== 'home' && <CampaignPopup activeTab={activeTab} onOrder={() => setActiveTab('order')} />}
       <main className="flex-grow" data-customer-content>
         <PageErrorBoundary pageKey={activeTab} message={t('common.loadError')} retry={t('common.retry')}>
-        <Suspense fallback={<div className="page-loading" role="status">{t('common.loading')}</div>}>
+        <Suspense fallback={<PageSkeleton page={activeTab} />}>
         {activeTab === 'home' ? (
           <Home
             setActiveTab={setActiveTab}
@@ -1726,8 +1767,8 @@ function AppContent() {
           <>
             <section className="border-b border-gray-100 bg-gradient-to-b from-[#e8f5ee] via-white to-[#f0faf4]">
               <div className="mx-auto max-w-[1240px] px-4 py-14 md:px-6 md:py-16">
-                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#1a8b46]">Voucher Center</p>
-                <h1 className="mt-4 text-4xl font-black uppercase tracking-tight text-[#1f1f1f] md:text-6xl font-sans">{ui("Khuyến mãi dành cho bạn")}</h1>
+                <p className="text-[11px] font-semibold  tracking-[0.28em] text-[#1a8b46]">Voucher Center</p>
+                <h1 className="mt-4 text-4xl font-semibold  tracking-tight text-[#1f1f1f] md:text-6xl font-sans">{ui("Khuyến mãi dành cho bạn")}</h1>
                 <p className="mt-4 max-w-[780px] text-base font-semibold leading-relaxed text-[#4d433c] md:text-lg">{ui("Cập nhật danh sách mã ưu đãi đang hoạt động. Nhấn vào mã để sao chép nhanh và áp dụng khi đặt hàng.")}</p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -1743,7 +1784,7 @@ function AppContent() {
                         key={item.code}
                         type="button"
                         onClick={() => setVoucherTypeFilter(item.code)}
-                        className={`rounded-full border px-5 py-2 text-xs font-black uppercase tracking-[0.2em] transition-all ${active
+                        className={`rounded-full border px-5 py-2 text-xs font-semibold  tracking-[0.2em] transition-all ${active
                           ? 'border-[#1a8b46] bg-[#1a8b46] text-white shadow-md shadow-green-200'
                           : 'border-gray-200 bg-white text-[#1a8b46] hover:border-[#1a8b46]'
                           }`}
@@ -1769,7 +1810,7 @@ function AppContent() {
                 </div>
               ) : filteredVoucherItems.length === 0 ? (
                 <div className="rounded-[28px] border border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-center">
-                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#1a8b46]">{ui("Chưa có voucher phù hợp")}</p>
+                  <p className="text-sm font-semibold  tracking-[0.2em] text-[#1a8b46]">{ui("Chưa có voucher phù hợp")}</p>
                   <p className="mt-2 text-sm font-semibold text-gray-500">{ui("Thử đổi bộ lọc hoặc quay lại sau để cập nhật ưu đãi mới nhất.")}</p>
                 </div>
               ) : (
@@ -1799,41 +1840,41 @@ function AppContent() {
                               type="button"
                               disabled={isLocked}
                               onClick={() => handleCopyVoucherCode(voucher.ma_khuyen_mai)}
-                              className={`rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.2em] ${isLocked ? 'border-gray-400 bg-gray-100 text-gray-400 cursor-not-allowed' : 'border-[#1a8b46] bg-white text-[#1a8b46]'}`}
+                              className={`rounded-xl border px-3 py-2 text-xs font-semibold  tracking-[0.2em] ${isLocked ? 'border-gray-400 bg-gray-100 text-gray-400 cursor-not-allowed' : 'border-[#1a8b46] bg-white text-[#1a8b46]'}`}
                               title={isLocked ? ui("Không thể dùng do chưa đủ hạng") : ui("Sao chép mã")}
                             >
                               {isLocked ? ui("🔒 Khóa") : voucher.ma_khuyen_mai}
                             </button>
                             <div className="flex gap-1.5 items-center">
                               {voucher.hang_toi_thieu && (
-                                <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] ${getTierBadgeStyle(voucher.hang_toi_thieu)}`}>{ui("Hạng ")}{voucher.hang_toi_thieu}
+                                <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold  tracking-[0.1em] ${getTierBadgeStyle(voucher.hang_toi_thieu)}`}>{ui("Hạng ")}{voucher.hang_toi_thieu}
                                 </span>
                               )}
-                              <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${typeMeta.className}`}>
+                              <span className={`rounded-full border px-3 py-1 text-[10px] font-semibold  tracking-[0.2em] ${typeMeta.className}`}>
                                 {ui(typeMeta.label)}
                               </span>
                             </div>
                           </div>
                           {!isLocked && copiedVoucherCode === voucher.ma_khuyen_mai ? (
-                            <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">{ui("Đã sao chép mã")}</p>
+                            <p className="mt-2 text-[11px] font-semibold  tracking-[0.18em] text-emerald-700">{ui("Đã sao chép mã")}</p>
                           ) : null}
                         </div>
 
                         <div className="p-5">
-                          <h3 className="text-xl font-black uppercase leading-tight text-[#1f1f1f]">{voucher.ten_khuyen_mai || ui("Voucher ưu đãi")}</h3>
-                          <p className="mt-2 text-base font-black text-[#c41230]">{formatVoucherValue(voucher)}</p>
+                          <h3 className="text-xl font-semibold  leading-tight text-[#1f1f1f]">{voucher.ten_khuyen_mai || ui("Voucher ưu đãi")}</h3>
+                          <p className="mt-2 text-base font-semibold text-[#c41230]">{formatVoucherValue(voucher)}</p>
                           <p className="mt-2 min-h-[44px] text-sm font-semibold leading-relaxed text-[#5b524b]">
                             {voucher.mo_ta || ui("Áp dụng cho đơn hàng hợp lệ theo điều kiện của chương trình.")}
                           </p>
 
                           <div className="mt-4 grid grid-cols-2 gap-3 text-xs font-semibold text-[#5d544d]">
                             <div className="rounded-xl bg-[#f0faf4] p-3">
-                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1a8b46]">{ui("Đơn tối thiểu")}</p>
-                              <p className="mt-1 text-sm font-black text-[#3f3731]">{Number(voucher.gia_tri_don_toi_thieu || 0).toLocaleString(uiLocale())}d</p>
+                              <p className="text-[10px] font-semibold  tracking-[0.18em] text-[#1a8b46]">{ui("Đơn tối thiểu")}</p>
+                              <p className="mt-1 text-sm font-semibold text-[#3f3731]">{Number(voucher.gia_tri_don_toi_thieu || 0).toLocaleString(uiLocale())}d</p>
                             </div>
                             <div className="rounded-xl bg-[#f0faf4] p-3">
-                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1a8b46]">{ui("Còn lại")}</p>
-                              <p className="mt-1 text-sm font-black text-[#3f3731]">{hasLimit ? ui("{{v0}} lượt", {v0:Number(remaining || 0).toLocaleString(uiLocale())}) : ui("Vô hạn")}</p>
+                              <p className="text-[10px] font-semibold  tracking-[0.18em] text-[#1a8b46]">{ui("Còn lại")}</p>
+                              <p className="mt-1 text-sm font-semibold text-[#3f3731]">{hasLimit ? ui("{{v0}} lượt", {v0:Number(remaining || 0).toLocaleString(uiLocale())}) : ui("Vô hạn")}</p>
                             </div>
                           </div>
 
@@ -1844,12 +1885,12 @@ function AppContent() {
                           </div>
 
                           <div className="mt-4 flex flex-wrap gap-2">
-                            <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${isOut ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                            <span className={`rounded-full px-3 py-1 text-[10px] font-semibold  tracking-[0.18em] ${isOut ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
                               {isOut ? ui("Hết lượt") : ui("Còn hiệu lực")}
                             </span>
                             {userId ? (
                               <span
-                                className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${isLocked
+                                className={`rounded-full px-3 py-1 text-[10px] font-semibold  tracking-[0.18em] ${isLocked
                                   ? 'bg-amber-50 text-amber-700 border-amber-200 border'
                                   : canUse
                                     ? 'bg-[#eef7ff] text-[#1f6fb2]'
@@ -1863,7 +1904,7 @@ function AppContent() {
                                     : ui("Bạn đã đạt giới hạn")}
                               </span>
                             ) : (
-                              <span className="rounded-full bg-[#eef7ff] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#1f6fb2]">{ui("Đăng nhập để theo dõi lượt dùng")}</span>
+                              <span className="rounded-full bg-[#eef7ff] px-3 py-1 text-[10px] font-semibold  tracking-[0.18em] text-[#1f6fb2]">{ui("Đăng nhập để theo dõi lượt dùng")}</span>
                             )}
                           </div>
                         </div>
@@ -1899,9 +1940,14 @@ function AppContent() {
           <GiftCardPage onBackToMain={() => setActiveTab('home')} />
         ) : activeTab === 'nhuong-quyen' ? (
           <FranchisePage onNavigate={setActiveTab} />
+        ) : activeTab === 'franchise-deposit' ? (
+          <FranchiseDepositPaymentPage onNavigate={setActiveTab} />
         ) : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'order-history', 'tra-cuu-don', 'tracking'].includes(activeTab) ? (
-          <OrderPage
+          <OrderPage userAvatar={user?.avatar_url || user?.avatarUrl}
             menuSections={menuSections}
+            isMenuLoading={activeTab === 'order' && loading}
+            isMenuError={activeTab === 'order' && hasMenuError}
+            onRetryMenu={() => { refetchProducts(); refetchCategories(); }}
             products={products}
             categories={categories}
             selectedCatId={selectedCatId}
@@ -1930,8 +1976,8 @@ function AppContent() {
             {activeTab === 'login' ? (
               <LoginPage
                 onLoginSuccess={async (user) => {
-                  if (await handleLoginSuccess(user) === false) return;
-                  const redirectTab = sessionStorage.getItem('post_login_redirect');
+                  if (await handleLoginSuccess(user) === false) return false;
+                  const redirectTab = sessionStorage.getItem('post_login_redirect') || (new URLSearchParams(window.location.search).get('redirect') === 'cart' ? 'cart' : '');
                   if (redirectTab === 'survey') {
                     const orderId = sessionStorage.getItem('post_login_order_id') || '';
                     sessionStorage.removeItem('post_login_redirect');
@@ -2034,10 +2080,16 @@ function AppContent() {
         onRemoveFavorite={handleToggleFavorite}
         isWorking={toggleFavoriteMutation.isPending}
       />
-      {isOrderHistoryOpen && <Suspense fallback={<div className="page-loading" role="status">{t('common.loading')}</div>}><OrderHistoryModal
+      {isOrderHistoryOpen && <Suspense fallback={<OrderHistoryModalSkeleton />}><OrderHistoryModal
         isOpen={isOrderHistoryOpen}
         onClose={handleCloseOrderHistory}
         user={user}
+        onNavigateToLookup={(orderId) => {
+          setIsOrderHistoryOpen(false);
+          setTrackingOrderId(orderId);
+          setActiveTab('tra-cuu-don');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       /></Suspense>}
 
       <SurveyPopup
@@ -2096,11 +2148,11 @@ function AppContent() {
 
       {notificationToast ? (
         <div className="fixed bottom-6 right-6 z-[150] w-[92vw] max-w-sm rounded-2xl border border-green-100 bg-white/95 p-4 shadow-2xl shadow-green-100 backdrop-blur">
-          <p className="text-[11px] font-black uppercase tracking-widest text-[#1a8b46]">{ui("Thông báo mới")}</p>
-          <p className="mt-1 text-sm font-black text-gray-800">{notificationToast.title}</p>
+          <p className="text-[11px] font-semibold  tracking-widest text-[#1a8b46]">{ui("Thông báo mới")}</p>
+          <p className="mt-1 text-sm font-semibold text-gray-800">{notificationToast.title}</p>
           <p className="mt-1 text-xs font-semibold text-gray-500">{notificationToast.message}</p>
           {notificationToast.branchName ? (
-            <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-600">{ui("Cơ sở xử lý: ")}{notificationToast.branchName}</p>
+            <p className="mt-1 text-[11px] font-bold  tracking-wide text-gray-600">{ui("Cơ sở xử lý: ")}{notificationToast.branchName}</p>
           ) : null}
         </div>
       ) : null}
@@ -2128,15 +2180,13 @@ function AppContent() {
               🎂🎈🎉
             </div>
 
-            <h3 className="text-2xl font-black uppercase text-[#8c252a] tracking-tight mb-2 font-sans">{ui("Chúc Mừng Sinh Nhật!")}</h3>
+            <h3 className="text-2xl font-semibold  text-[#8c252a] tracking-tight mb-2 font-sans">{ui("Chúc Mừng Sinh Nhật!")}</h3>
 
-            <p className="text-[#c89a58] font-black text-sm uppercase tracking-widest mb-6">
-              Avengers House Special Gift
-            </p>
+            <p className="text-[#c89a58] font-semibold text-sm  tracking-widest mb-6"> Avengers Coffee Special Gift </p>
 
             <div className="bg-amber-50/70 border border-amber-100/50 rounded-2xl p-5 mb-6 w-full shadow-inner">
-              <p className="text-sm font-semibold text-gray-700 leading-relaxed">{ui("Nhân dịp tháng sinh nhật của bạn, Avengers House xin gửi tặng bạn một món quà đặc biệt. Một **Voucher mừng sinh nhật** đã được gửi vào kho voucher cá nhân của bạn!")}</p>
-              <div className="mt-4 py-2 px-4 bg-[#8c252a] text-white font-black text-sm rounded-xl tracking-wider uppercase inline-block shadow-md">{ui("QUÀ TẶNG THÀNH VIÊN")}</div>
+              <p className="text-sm font-semibold text-gray-700 leading-relaxed">{ui("Nhân dịp tháng sinh nhật của bạn, Avengers Coffee xin gửi tặng bạn một món quà đặc biệt. Một **Voucher mừng sinh nhật** đã được gửi vào kho voucher cá nhân của bạn!")}</p>
+              <div className="mt-4 py-2 px-4 bg-[#8c252a] text-white font-semibold text-sm rounded-xl tracking-wider  inline-block shadow-md">{ui("Quà tặng thành viên")}</div>
             </div>
 
             <div className="flex flex-col gap-3 w-full">
@@ -2147,12 +2197,12 @@ function AppContent() {
                   setActiveTab('profile');
                   setIsOrderHistoryOpen(false);
                 }}
-                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg active:scale-98 transform cursor-pointer border-none"
+                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm  tracking-wider rounded-xl transition-all shadow-lg active:scale-98 transform cursor-pointer border-none"
               >{ui("Xem quà tặng của tôi")}</button>
               <button
                 type="button"
                 onClick={() => setShowBirthdayVoucherModal(false)}
-                className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
+                className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs  tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
               >{ui("Đóng")}</button>
             </div>
           </div>
@@ -2169,9 +2219,9 @@ function AppContent() {
               </svg>
             </div>
 
-            <h3 className="text-2xl font-black text-[#1a1a1a] uppercase tracking-wide mb-3 font-serif">{ui("Đồng bộ đơn hàng")}</h3>
+            <h3 className="text-2xl font-semibold text-[#1a1a1a]  tracking-wide mb-3 font-serif">{ui("Đồng bộ đơn hàng")}</h3>
 
-            <p className="text-[#c89a58] font-black text-sm uppercase tracking-widest mb-6">
+            <p className="text-[#c89a58] font-semibold text-sm  tracking-widest mb-6">
               Avengers Coffee Member Sync
             </p>
 
@@ -2202,7 +2252,7 @@ function AppContent() {
                     setIsLinkingOrders(false);
                   });
                 }}
-                className="w-full py-3.5 bg-[#8c252a] hover:bg-[#731c20] disabled:bg-gray-400 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg active:scale-98 transform cursor-pointer border-none"
+                className="w-full py-3.5 bg-[#8c252a] hover:bg-[#731c20] disabled:bg-gray-400 text-white font-semibold text-sm  tracking-wider rounded-xl transition-all shadow-lg active:scale-98 transform cursor-pointer border-none"
               >
                 {isLinkingOrders ? ui("Đang liên kết...") : ui("Liên kết ngay")}
               </button>
@@ -2214,7 +2264,7 @@ function AppContent() {
                   localStorage.removeItem('avengers_anon_user_id');
                   setShowLinkOrderPrompt(false);
                 }}
-                className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
+                className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs  tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
               >{ui("Để sau / Bỏ qua")}</button>
             </div>
           </div>

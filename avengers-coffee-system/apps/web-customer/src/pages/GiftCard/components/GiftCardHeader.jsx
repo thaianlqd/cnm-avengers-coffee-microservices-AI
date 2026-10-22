@@ -18,7 +18,7 @@ export const GiftCardHeader = ({ activePage, onNavigate }) => {
       <div className="mx-auto flex py-2.5 w-full max-w-[1280px] items-center px-4 md:px-8">
         {/* Logo */}
         <button onClick={() => onNavigate('home')} className="flex-shrink-0 focus:outline-none">
-          <img src="/hc-assets/red_BG_logo800.png" alt="Avengers Coffee" className="h-[64px] w-auto object-contain" />
+          <img src="/images/brand/logo-white.png" alt="Avengers Coffee" className="h-[72px] py-1 w-auto object-contain" />
         </button>
 
         {/* Nav - right aligned */}
@@ -34,22 +34,25 @@ export const GiftCardHeader = ({ activePage, onNavigate }) => {
                     <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45"></div>
                     <div className="flex gap-12 relative">
                       <div className="flex-1">
-                        <p className="text-[14px] font-black text-[#b22830] mb-3 uppercase tracking-wide">{t('giftcard.nav.boSuuTap2024')}</p>
+                        <p className="text-[14px] font-semibold text-[#b22830] mb-3 tracking-wide">{ui("Bộ Sưu Tập 2025")}</p>
                         <ul className="space-y-2">
-                          {['Festive 2024 Collection', 'Chill Hè 2024 Collection'].map(it => (
-                            <li key={it} className="flex items-start gap-1.5"><span className="text-gray-400 text-[11px] mt-1">▸</span><button onClick={() => onNavigate('bo-suu-tap')} className="text-[14px] font-medium text-[#444] hover:text-[#b22830] transition-colors text-left">{it}</button></li>
+                          {['Chill Hè 2025 Collection', 'Tết Mã 2025 Collection'].map(it => (
+                            <li key={it} className="flex items-start gap-1.5"><span className="text-gray-400 text-[11px] mt-1">▸</span><button onClick={() => { setDropdownOpen(false); onNavigate('bo-suu-tap'); }} className="text-[14px] font-medium text-[#444] hover:text-[#b22830] transition-colors text-left">{it}</button></li>
                           ))}
                         </ul>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[14px] font-black text-[#b22830] mb-3 uppercase tracking-wide">{t('giftcard.nav.boSuuTap2025')}</p>
+                        <p className="text-[14px] font-semibold text-[#b22830] mb-3 tracking-wide">{ui("Bộ Sưu Tập 2026")}</p>
                         <ul className="space-y-2">
-                          <li className="flex items-start gap-1.5"><span className="text-gray-400 text-[11px] mt-1">▸</span><button onClick={() => onNavigate('bo-suu-tap')} className="text-[14px] font-medium text-[#444] hover:text-[#b22830] transition-colors text-left">{t('giftcard.nav.theFestive2025')}</button></li>
+                          {['Festive 2026 Collection', 'Thank You 2026 Collection'].map(it => (
+                            <li key={it} className="flex items-start gap-1.5"><span className="text-gray-400 text-[11px] mt-1">▸</span><button onClick={() => { setDropdownOpen(false); onNavigate('bo-suu-tap'); }} className="text-[14px] font-medium text-[#444] hover:text-[#b22830] transition-colors text-left">{it}</button></li>
+                          ))}
                         </ul>
                       </div>
                     </div>
+
                     <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
-                      <button onClick={() => onNavigate('bo-suu-tap')} className="text-[14px] font-bold text-[#b22830] hover:underline uppercase">{t('giftcard.nav.xemTatCa')}</button>
+                      <button onClick={() => onNavigate('bo-suu-tap')} className="text-[14px] font-bold text-[#b22830] hover:underline ">{t('giftcard.nav.xemTatCa')}</button>
                     </div>
                   </div>
                 )}

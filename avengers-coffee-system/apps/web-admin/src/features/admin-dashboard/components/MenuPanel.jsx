@@ -21,7 +21,7 @@ import {
   Sparkles,
   Check,
   DollarSign
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 import { fmtMoney, normalizeViText } from '../utils'
 
 const GRID_PAGE_SIZE = 12
@@ -113,9 +113,9 @@ export function MenuPanel({
   return (
     <div className="panel-container" style={{
       padding: '1.75rem',
-      background: '#f8fafc',
+      background: '#f8f9f6',
       borderRadius: '20px',
-      border: '1px solid #e2e8f0',
+      border: '1px solid #e2e4df',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)'
     }}>
       {/* Header Bar & Title */}
@@ -142,10 +142,10 @@ export function MenuPanel({
             <Coffee size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#252927' }}>
               Quản lý Thực Đơn
             </h2>
-            <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
+            <span style={{ fontSize: '0.825rem', color: '#69736a' }}>
               Bật/tắt mở bán sản phẩm, theo dõi giá cả và danh mục thực đơn toàn quán
             </span>
           </div>
@@ -157,7 +157,7 @@ export function MenuPanel({
           background: '#ffffff',
           padding: '0.25rem',
           borderRadius: '10px',
-          border: '1px solid #e2e8f0'
+          border: '1px solid #e2e4df'
         }}>
           <button
             type="button"
@@ -169,8 +169,8 @@ export function MenuPanel({
               padding: '0.45rem 0.85rem',
               borderRadius: '8px',
               border: 'none',
-              background: viewMode === 'grid' ? '#3b82f6' : 'transparent',
-              color: viewMode === 'grid' ? '#ffffff' : '#64748b',
+              background: viewMode === 'grid' ? "var(--primary)" : 'transparent',
+              color: viewMode === 'grid' ? '#ffffff' : '#69736a',
               fontWeight: viewMode === 'grid' ? '700' : '500',
               fontSize: '0.825rem',
               cursor: 'pointer',
@@ -191,8 +191,8 @@ export function MenuPanel({
               padding: '0.45rem 0.85rem',
               borderRadius: '8px',
               border: 'none',
-              background: viewMode === 'list' ? '#3b82f6' : 'transparent',
-              color: viewMode === 'list' ? '#ffffff' : '#64748b',
+              background: viewMode === 'list' ? "var(--primary)" : 'transparent',
+              color: viewMode === 'list' ? '#ffffff' : '#69736a',
               fontWeight: viewMode === 'list' ? '700' : '500',
               fontSize: '0.825rem',
               cursor: 'pointer',
@@ -216,7 +216,7 @@ export function MenuPanel({
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
@@ -235,8 +235,8 @@ export function MenuPanel({
             <Grid size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Tổng số món</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#1e293b' }}>{stats.total} món</div>
+            <div style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Tổng số món</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#30382e' }}>{stats.total} món</div>
           </div>
         </div>
 
@@ -244,7 +244,7 @@ export function MenuPanel({
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
@@ -254,7 +254,7 @@ export function MenuPanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: '#eff6ff',
+            background: "#f4f5f2",
             color: '#2563eb',
             display: 'flex',
             alignItems: 'center',
@@ -263,7 +263,7 @@ export function MenuPanel({
             <CheckCircle2 size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Đang mở bán</div>
+            <div style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Đang mở bán</div>
             <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#2563eb' }}>{stats.selling} món</div>
           </div>
         </div>
@@ -272,7 +272,7 @@ export function MenuPanel({
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
@@ -282,7 +282,7 @@ export function MenuPanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: '#fef2f2',
+            background: "#f4f5f2",
             color: '#ef4444',
             display: 'flex',
             alignItems: 'center',
@@ -291,7 +291,7 @@ export function MenuPanel({
             <PauseCircle size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Tạm ngưng bán</div>
+            <div style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Tạm ngưng bán</div>
             <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#ef4444' }}>{stats.paused} món</div>
           </div>
         </div>
@@ -300,7 +300,7 @@ export function MenuPanel({
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
@@ -319,7 +319,7 @@ export function MenuPanel({
             <Layers size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Số danh mục</div>
+            <div style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Số danh mục</div>
             <div style={{ fontSize: '1.3rem', fontWeight: '600', color: 'var(--primary)' }}>{stats.categoryCount} nhóm</div>
           </div>
         </div>
@@ -330,7 +330,7 @@ export function MenuPanel({
         background: '#ffffff',
         padding: '1rem 1.25rem',
         borderRadius: '16px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid #e2e4df',
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
@@ -341,7 +341,7 @@ export function MenuPanel({
           <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '420px' }}>
             <Search
               size={18}
-              color="#94a3b8"
+              color="#85907d"
               style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }}
             />
             <input
@@ -353,14 +353,14 @@ export function MenuPanel({
                 width: '100%',
                 padding: '0.55rem 0.75rem 0.55rem 2.4rem',
                 borderRadius: '10px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid #ccd3c7',
                 fontSize: '0.875rem',
                 outline: 'none',
                 boxSizing: 'border-box',
                 transition: 'border 0.2s ease'
               }}
               onFocus={(e) => { e.target.style.borderColor = '#3b82f6' }}
-              onBlur={(e) => { e.target.style.borderColor = '#cbd5e1' }}
+              onBlur={(e) => { e.target.style.borderColor = '#ccd3c7' }}
             />
             {searchText && (
               <button
@@ -373,7 +373,7 @@ export function MenuPanel({
                   transform: 'translateY(-50%)',
                   background: 'none',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: '#85907d',
                   cursor: 'pointer',
                   padding: '0.2rem',
                   display: 'flex',
@@ -385,11 +385,11 @@ export function MenuPanel({
             )}
           </div>
 
-          <div style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: '#69736a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {hasFilter ? (
               <>
-                <span style={{
-                  background: '#eff6ff',
+                <span className="workspace-inline-label" style={{
+                  background: "#f4f5f2",
                   color: '#1d4ed8',
                   fontWeight: '700',
                   padding: '0.2rem 0.6rem',
@@ -421,11 +421,11 @@ export function MenuPanel({
         </div>
 
         {/* Category & Status Filter Chips */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.85rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid #f4f5f2', paddingTop: '0.85rem' }}>
           {/* Categories row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569', minWidth: '70px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Tag size={13} color="#64748b" /> Danh mục:
+            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#596255', minWidth: '70px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Tag size={13} color="#69736a" /> Danh mục:
             </span>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
               {categories.map((cat) => {
@@ -438,9 +438,9 @@ export function MenuPanel({
                     style={{
                       padding: '0.35rem 0.8rem',
                       borderRadius: '8px',
-                      border: isActive ? '1px solid #3b82f6' : '1px solid #e2e8f0',
-                      background: isActive ? '#eff6ff' : '#ffffff',
-                      color: isActive ? '#1d4ed8' : '#475569',
+                      border: isActive ? "1px solid var(--primary)" : '1px solid #e2e4df',
+                      background: isActive ? "#f4f5f2" : '#ffffff',
+                      color: isActive ? "var(--primary)" : '#596255',
                       fontWeight: isActive ? '700' : '500',
                       fontSize: '0.825rem',
                       cursor: 'pointer',
@@ -456,8 +456,8 @@ export function MenuPanel({
 
           {/* Status row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569', minWidth: '70px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Filter size={13} color="#64748b" /> Trạng thái:
+            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#596255', minWidth: '70px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Filter size={13} color="#69736a" /> Trạng thái:
             </span>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
               {SELLING_STATUS_OPTIONS.map((opt) => {
@@ -470,9 +470,9 @@ export function MenuPanel({
                     style={{
                       padding: '0.35rem 0.8rem',
                       borderRadius: '8px',
-                      border: isActive ? '1px solid #3b82f6' : '1px solid #e2e8f0',
-                      background: isActive ? '#3b82f6' : '#ffffff',
-                      color: isActive ? '#ffffff' : '#475569',
+                      border: isActive ? "1px solid var(--primary)" : '1px solid #e2e4df',
+                      background: isActive ? "var(--primary)" : '#ffffff',
+                      color: isActive ? '#ffffff' : '#596255',
                       fontWeight: isActive ? '700' : '500',
                       fontSize: '0.825rem',
                       cursor: 'pointer',
@@ -496,18 +496,18 @@ export function MenuPanel({
           padding: '3.5rem 1.5rem',
           background: '#ffffff',
           borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          color: '#64748b'
+          border: '1px solid #e2e4df',
+          color: '#69736a'
         }}>
           <RefreshCw size={32} color="#3b82f6" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
-          <h4 style={{ margin: '0 0 0.25rem 0', color: '#334155' }}>Đang tải danh sách thực đơn...</h4>
+          <h4 style={{ margin: '0 0 0.25rem 0', color: '#414743' }}>Đang tải danh sách thực đơn...</h4>
           <p style={{ margin: 0, fontSize: '0.85rem' }}>Dữ liệu sản phẩm đang được cập nhật từ hệ thống.</p>
         </div>
       ) : inventoryState.error ? (
         <div style={{
           textAlign: 'center',
           padding: '2.5rem 1.5rem',
-          background: '#fef2f2',
+          background: "#f4f5f2",
           borderRadius: '16px',
           border: '1px solid #fecaca',
           color: '#b91c1c'
@@ -522,11 +522,11 @@ export function MenuPanel({
           padding: '3.5rem 1.5rem',
           background: '#ffffff',
           borderRadius: '16px',
-          border: '1px dashed #cbd5e1'
+          border: '1px dashed #ccd3c7'
         }}>
-          <AlertCircle size={40} color="#94a3b8" style={{ marginBottom: '0.75rem' }} />
-          <h4 style={{ margin: '0 0 0.5rem 0', color: '#334155', fontSize: '1.1rem' }}>Không tìm thấy sản phẩm phù hợp</h4>
-          <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.875rem' }}>
+          <AlertCircle size={40} color="#85907d" style={{ marginBottom: '0.75rem' }} />
+          <h4 style={{ margin: '0 0 0.5rem 0', color: '#414743', fontSize: '1.1rem' }}>Không tìm thấy sản phẩm phù hợp</h4>
+          <p style={{ margin: '0 0 1.25rem 0', color: '#69736a', fontSize: '0.875rem' }}>
             Vui lòng thử tìm với từ khóa khác hoặc xóa bộ lọc danh mục/trạng thái.
           </p>
           {hasFilter && (
@@ -534,7 +534,7 @@ export function MenuPanel({
               type="button"
               onClick={resetFilters}
               style={{
-                background: '#3b82f6',
+                background: "var(--primary)",
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
@@ -563,7 +563,7 @@ export function MenuPanel({
                 key={item.ma_san_pham}
                 style={{
                   background: item.dang_ban ? '#ffffff' : '#fafafa',
-                  border: item.dang_ban ? '1px solid #e2e8f0' : '1px dashed #cbd5e1',
+                  border: item.dang_ban ? '1px solid #e2e4df' : '1px dashed #ccd3c7',
                   borderRadius: '16px',
                   padding: '1.25rem',
                   boxShadow: item.dang_ban ? '0 4px 6px -1px rgba(0, 0, 0, 0.03)' : 'none',
@@ -589,12 +589,12 @@ export function MenuPanel({
                     {item.category || 'Khác'}
                   </span>
 
-                  <span style={{
+                  <span className="workspace-inline-label" style={{
                     fontSize: '0.75rem',
                     fontWeight: '700',
                     padding: '0.2rem 0.6rem',
                     borderRadius: '9999px',
-                    background: item.dang_ban ? '#dbeafe' : '#fee2e2',
+                    background: item.dang_ban ? "#f4f5f2" : "#f4f5f2",
                     color: item.dang_ban ? '#1d4ed8' : '#b91c1c',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -612,8 +612,8 @@ export function MenuPanel({
                       width: '36px',
                       height: '36px',
                       borderRadius: '10px',
-                      background: item.dang_ban ? 'var(--primary-light)' : '#f1f5f9',
-                      color: item.dang_ban ? 'var(--primary)' : '#94a3b8',
+                      background: item.dang_ban ? 'var(--primary-light)' : '#f4f5f2',
+                      color: item.dang_ban ? 'var(--primary)' : '#85907d',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -626,12 +626,12 @@ export function MenuPanel({
                         margin: 0,
                         fontSize: '1.05rem',
                         fontWeight: '700',
-                        color: '#0f172a',
+                        color: '#252927',
                         lineHeight: 1.3
                       }}>
                         {normalizeViText(item.name)}
                       </h3>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '500' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#85907d', fontWeight: '500' }}>
                         Mã SP: #{item.ma_san_pham}
                       </span>
                     </div>
@@ -643,7 +643,7 @@ export function MenuPanel({
                 </div>
 
                 {/* Toggle Status Action Button */}
-                <div style={{ paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9' }}>
+                <div style={{ paddingTop: '0.75rem', borderTop: '1px solid #f4f5f2' }}>
                   <button
                     type="button"
                     onClick={() => handleToggle(item.ma_san_pham, item.dang_ban)}
@@ -653,7 +653,7 @@ export function MenuPanel({
                       padding: '0.6rem 0.85rem',
                       borderRadius: '10px',
                       border: 'none',
-                      background: item.dang_ban ? '#ef4444' : '#3b82f6',
+                      background: item.dang_ban ? '#ef4444' : "var(--primary)",
                       color: '#ffffff',
                       fontSize: '0.85rem',
                       fontWeight: '700',
@@ -692,7 +692,7 @@ export function MenuPanel({
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           overflow: 'hidden',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)'
         }}>
@@ -708,7 +708,7 @@ export function MenuPanel({
                   justifyContent: 'space-between',
                   gap: '1rem',
                   padding: '1rem 1.25rem',
-                  borderBottom: idx < pageItems.length - 1 ? '1px solid #f1f5f9' : 'none',
+                  borderBottom: idx < pageItems.length - 1 ? '1px solid #f4f5f2' : 'none',
                   background: item.dang_ban ? '#ffffff' : '#fafafa'
                 }}
               >
@@ -718,8 +718,8 @@ export function MenuPanel({
                     width: '40px',
                     height: '40px',
                     borderRadius: '10px',
-                    background: item.dang_ban ? 'var(--primary-light)' : '#f1f5f9',
-                    color: item.dang_ban ? 'var(--primary)' : '#94a3b8',
+                    background: item.dang_ban ? 'var(--primary-light)' : '#f4f5f2',
+                    color: item.dang_ban ? 'var(--primary)' : '#85907d',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -729,7 +729,7 @@ export function MenuPanel({
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#0f172a' }}>
+                      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#252927' }}>
                         {normalizeViText(item.name)}
                       </h3>
                       <span style={{
@@ -743,7 +743,7 @@ export function MenuPanel({
                         {item.category || 'Khác'}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.775rem', color: '#94a3b8' }}>
+                    <span style={{ fontSize: '0.775rem', color: '#85907d' }}>
                       Mã SP: #{item.ma_san_pham}
                     </span>
                   </div>
@@ -763,7 +763,7 @@ export function MenuPanel({
                       padding: '0.5rem 1rem',
                       borderRadius: '8px',
                       border: 'none',
-                      background: item.dang_ban ? '#ef4444' : '#3b82f6',
+                      background: item.dang_ban ? '#ef4444' : "var(--primary)",
                       color: '#ffffff',
                       fontSize: '0.825rem',
                       fontWeight: '700',
@@ -807,10 +807,10 @@ export function MenuPanel({
           gap: '1rem',
           marginTop: '1.5rem',
           paddingTop: '1.25rem',
-          borderTop: '1px solid #e2e8f0',
+          borderTop: '1px solid #e2e4df',
           flexWrap: 'wrap'
         }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+          <div style={{ fontSize: '0.85rem', color: '#69736a' }}>
             Hiển thị <strong>{(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)}</strong> trên <strong>{filtered.length}</strong> món
           </div>
 
@@ -825,9 +825,9 @@ export function MenuPanel({
                 gap: '0.25rem',
                 padding: '0.45rem 0.85rem',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid #ccd3c7',
                 background: '#ffffff',
-                color: safePage === 1 ? '#cbd5e1' : '#334155',
+                color: safePage === 1 ? '#ccd3c7' : '#414743',
                 fontSize: '0.825rem',
                 fontWeight: '600',
                 cursor: safePage === 1 ? 'not-allowed' : 'pointer'
@@ -850,9 +850,9 @@ export function MenuPanel({
                 gap: '0.25rem',
                 padding: '0.45rem 0.85rem',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid #ccd3c7',
                 background: '#ffffff',
-                color: safePage === totalPages ? '#cbd5e1' : '#334155',
+                color: safePage === totalPages ? '#ccd3c7' : '#414743',
                 fontSize: '0.825rem',
                 fontWeight: '600',
                 cursor: safePage === totalPages ? 'not-allowed' : 'pointer'

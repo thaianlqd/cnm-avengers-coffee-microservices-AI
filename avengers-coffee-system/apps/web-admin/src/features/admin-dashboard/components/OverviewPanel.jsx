@@ -1,5 +1,5 @@
 import { money, number } from "../../../components/console/chartModel";
-import { Store, ShoppingBag, Coffee, CheckCircle2, Wallet } from "lucide-react";
+import { Store, ShoppingBag, Coffee, CheckCircle2, Wallet } from '../../../components/console/WorkspaceIcons';
 import {
   OVERVIEW_TIME_RANGES,
   ORDER_STATUS_LABEL,

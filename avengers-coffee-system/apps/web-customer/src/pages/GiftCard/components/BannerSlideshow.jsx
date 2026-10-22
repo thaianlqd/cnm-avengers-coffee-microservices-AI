@@ -11,7 +11,7 @@ export const BannerSlideshow = () => {
     <div className="relative w-full overflow-hidden bg-[#fbf8f1]">
       {BANNER_SLIDES.map((src, i) => (
         <div key={i} className={`transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}>
-          <img src={src} alt={`Banner ${i + 1}`} className="w-full h-auto max-h-[600px] object-cover object-center block" />
+          <img src={src} alt={`Banner ${i + 1}`} className="w-full aspect-[21/9] max-h-[600px] object-cover object-center block" />
         </div>
       ))}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2.5 z-10">

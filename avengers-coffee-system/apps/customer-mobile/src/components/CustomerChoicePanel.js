@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { View, Text, Pressable, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { initialChoices, toggleOption, missingChoices, configurationAction } from '../../../web-customer/src/components/customerChoices'
+import { initialChoices, toggleOption, missingChoices, configurationAction } from '../../../web-customer/src/components/product/customerChoices'
 import { colors } from '../theme'
 const border = '#ead6d9', muted = '#8290a2'
 function Button({ label, onPress, disabled, secondary }) {

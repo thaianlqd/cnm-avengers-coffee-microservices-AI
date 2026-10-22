@@ -1,33 +1,33 @@
 // Avengers Coffee · Delivery partner design tokens
 export const colors = {
   // Brand
-  primary: '#B42332',        // Avengers brand red
-  primaryDark: '#861B29',    // Darker red
-  primaryLight: '#D94C59',   // Lighter red
-  primaryBg: '#FFF0F1',      // Red tint background
+  primary: '#b22830',        // Avengers brand crimson red
+  primaryDark: '#8f1c24',    // Darker red
+  primaryLight: '#d9434e',   // Lighter red
+  primaryBg: '#fff1f2',      // Soft red tint background
   secondary: '#1A1A2E',      // Deep navy
   accent: '#FF8C00',         // Orange accent (earnings/COD)
   accentBg: '#FFF4E0',       // Orange tint
 
   // Gradient pairs
-  gradientRed: ['#B42332', '#861B29'],
+  gradientRed: ['#b22830', '#8f1c24'],
   gradientDark: ['#1A1A2E', '#16213E'],
-  gradientOrange: ['#FF8C00', '#B42332'],
+  gradientOrange: ['#FF8C00', '#b22830'],
 
   // Status colors
-  success: '#00A86B',        // Green (delivered/online)
-  successBg: '#E6F7F2',
-  warning: '#FF8C00',        // Orange (pending/COD)
-  warningBg: '#FFF4E0',
-  danger: '#B42332',         // Red (failed/urgent)
-  dangerBg: '#FFF0F1',
-  info: '#0066CC',           // Blue (info)
-  infoBg: '#E6F0FF',
-  offline: '#758091',
-  online: '#00A86B',
+  success: '#16a34a',        // Green (delivered/online)
+  successBg: '#f0fdf4',
+  warning: '#ea580c',        // Orange (pending/COD)
+  warningBg: '#fffbeb',
+  danger: '#b22830',         // Red (failed/urgent)
+  dangerBg: '#fff1f2',
+  info: '#2563eb',           // Blue (info)
+  infoBg: '#eff6ff',
+  offline: '#94a3b8',
+  online: '#16a34a',
 
   // Backgrounds
-  bg: '#FFFFFF',             // White canvas; red is reserved for emphasis
+  bg: '#f8fafc',             // Soft light backdrop
   surface: '#FFFFFF',
   card: '#FFFFFF',
   darkBg: '#1A1A2E',

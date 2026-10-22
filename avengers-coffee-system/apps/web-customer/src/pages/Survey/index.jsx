@@ -2,8 +2,8 @@ import { uiText as ui, useUiLanguage } from "../../lib/uiText";
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
-import { StarIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
-import { StarIcon as StarOutline } from '@heroicons/react/24/outline';
+import { StarIcon, CheckCircleIcon } from '../../components/common/iconsSolid';
+import { StarIcon as StarOutline } from '../../components/common/icons';
 
 export default function SurveyPage({ onBackToHome }) {
   useUiLanguage();
@@ -156,11 +156,11 @@ export default function SurveyPage({ onBackToHome }) {
   if (isError || !activeForm) {
     return (
       <div className="w-full max-w-[700px] mx-auto py-20 px-4 text-center space-y-4">
-        <h2 className="text-2xl font-black uppercase text-[#c41230] font-serif">{ui("Không có khảo sát nào")}</h2>
+        <h2 className="text-2xl font-semibold  text-[#c41230] font-serif">{ui("Không có khảo sát nào")}</h2>
         <p className="text-gray-500 font-semibold">{ui("Hiện tại không có chương trình khảo sát trải nghiệm nào đang kích hoạt. Cám ơn sự đồng hành của bạn!")}</p>
         <button
           onClick={onBackToHome}
-          className="mt-4 px-6 py-3 bg-[#c41230] hover:bg-[#a30f28] text-white font-extrabold text-xs uppercase tracking-widest rounded-full transition-colors"
+          className="mt-4 px-6 py-3 bg-[#c41230] hover:bg-[#a30f28] text-white font-semibold text-xs  tracking-widest rounded-full transition-colors"
         >{ui("Quay lại trang chủ")}</button>
       </div>
     );
@@ -172,25 +172,25 @@ export default function SurveyPage({ onBackToHome }) {
         <div className="w-20 h-20 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center mx-auto shadow-inner">
           <CheckCircleIcon className="w-12 h-12 text-emerald-500" />
         </div>
-        <h2 className="text-3xl font-black text-gray-800 uppercase font-serif tracking-tight leading-tight">{ui("Cảm ơn bạn rất nhiều!")}</h2>
-        <p className="text-gray-500 font-semibold leading-relaxed max-w-md mx-auto">{ui("Những chia sẻ quý báu của bạn giúp chúng tôi không ngừng cải tiến dịch vụ để mang đến trải nghiệm tuyệt vời nhất tại Avengers House.")}</p>
+        <h2 className="text-3xl font-semibold text-gray-800  font-serif tracking-tight leading-tight">{ui("Cảm ơn bạn rất nhiều!")}</h2>
+        <p className="text-gray-500 font-semibold leading-relaxed max-w-md mx-auto">{ui("Những chia sẻ quý báu của bạn giúp chúng tôi không ngừng cải tiến dịch vụ để mang đến trải nghiệm tuyệt vời nhất tại Avengers Coffee.")}</p>
 
         {voucherCode ? (
           <div className="bg-gradient-to-b from-[#fdfcf7] via-[#fff] to-[#f9f5e8] border border-dashed border-amber-300 rounded-[28px] p-6 shadow-md max-w-md mx-auto space-y-4 relative overflow-hidden">
             <div className="absolute left-[-10px] top-1/2 -translate-y-1/2 w-5 h-5 bg-[#faf7f4] rounded-full border-r border-amber-200"></div>
             <div className="absolute right-[-10px] top-1/2 -translate-y-1/2 w-5 h-5 bg-[#faf7f4] rounded-full border-l border-amber-200"></div>
 
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-700">{ui("Quà tặng hoàn thành khảo sát")}</p>
-            <h3 className="text-2xl font-black text-[#c41230] font-serif uppercase tracking-tight">{ui("GIẢM NGAY 20%")}</h3>
+            <p className="text-[10px] font-semibold  tracking-[0.25em] text-amber-700">{ui("Quà tặng hoàn thành khảo sát")}</p>
+            <h3 className="text-2xl font-semibold text-[#c41230] font-serif  tracking-tight">{ui("Giảm ngay 20%")}</h3>
             <p className="text-xs text-gray-500 font-semibold">{ui("Áp dụng cho đơn hàng kế tiếp từ 100.000đ. Hiệu lực 5 ngày.")}</p>
 
             <div className="flex items-center justify-between bg-white border border-dashed border-amber-300 rounded-2xl p-3.5 mt-4">
-              <span className="font-mono text-lg font-black text-amber-800 tracking-wider">
+              <span className="font-mono text-lg font-semibold text-amber-800 tracking-wider">
                 {voucherCode}
               </span>
               <button
                 onClick={copyToClipboard}
-                className="bg-black hover:bg-gray-800 text-white text-[11px] font-black uppercase tracking-wider px-4 py-2 rounded-xl transition-all"
+                className="bg-black hover:bg-gray-800 text-white text-[11px] font-semibold  tracking-wider px-4 py-2 rounded-xl transition-all"
               >{ui("Sao chép")}</button>
             </div>
 
@@ -206,7 +206,7 @@ export default function SurveyPage({ onBackToHome }) {
         <div className="pt-6">
           <button
             onClick={onBackToHome}
-            className="px-8 py-3.5 bg-black hover:bg-gray-800 text-white font-extrabold text-xs uppercase tracking-widest rounded-full transition-colors shadow-md"
+            className="px-8 py-3.5 bg-black hover:bg-gray-800 text-white font-semibold text-xs  tracking-widest rounded-full transition-colors shadow-md"
           >{ui("Quay lại đặt hàng")}</button>
         </div>
       </div>
@@ -218,7 +218,7 @@ export default function SurveyPage({ onBackToHome }) {
 
       {/* Title block */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl sm:text-[40px] font-extrabold uppercase text-gray-900 tracking-tight font-serif leading-none">
+        <h1 className="text-3xl sm:text-[40px] font-semibold  text-gray-900 tracking-tight font-serif leading-none">
           {activeForm.tieu_de}
         </h1>
         {activeForm.mo_ta && (
@@ -228,7 +228,7 @@ export default function SurveyPage({ onBackToHome }) {
         )}
 
         {isLoggedIn ? (
-          <div className="inline-block bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-full py-1.5 px-4 text-xs font-bold mt-2">{ui("🎁 Hoàn thành khảo sát để nhận ngay ")}<span className="text-[#c41230] font-black">Voucher 20%</span>
+          <div className="inline-block bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-full py-1.5 px-4 text-xs font-bold mt-2">{ui("🎁 Hoàn thành khảo sát để nhận ngay ")}<span className="text-[#c41230] font-semibold">Voucher 20%</span>
           </div>
         ) : (
           <div className="inline-block bg-amber-50 text-amber-800 border border-amber-100 rounded-2xl py-2 px-4 text-xs font-semibold mt-2">{ui("💡 Lưu ý: Cần đăng nhập để hệ thống tự động phát hành Voucher 20% vào tài khoản.")}</div>
@@ -240,7 +240,7 @@ export default function SurveyPage({ onBackToHome }) {
         {/* Guest Input Info (only if guest) */}
         {!isLoggedIn && (
           <div className="border-b border-gray-100 pb-6 space-y-4">
-            <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest">{ui("Thông tin liên hệ (Không bắt buộc)")}</h3>
+            <h3 className="text-xs font-semibold  text-gray-400 tracking-widest">{ui("Thông tin liên hệ (Không bắt buộc)")}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-gray-500">{ui("Họ và tên")}</label>
@@ -273,7 +273,7 @@ export default function SurveyPage({ onBackToHome }) {
 
             return (
               <div key={q.id} className="space-y-3">
-                <label className="block text-base font-extrabold text-gray-800 leading-snug">
+                <label className="block text-base font-semibold text-gray-800 leading-snug">
                   {index + 1}. {q.tieu_de}{' '}
                   {q.bat_buoc && <span className="text-[#c41230]">*</span>}
                 </label>
@@ -323,7 +323,7 @@ export default function SurveyPage({ onBackToHome }) {
                       );
                     })}
                     {answer && (
-                      <span className="text-xs font-black text-amber-600 bg-amber-50 rounded-full px-2.5 py-0.5 ml-2">
+                      <span className="text-xs font-semibold text-amber-600 bg-amber-50 rounded-full px-2.5 py-0.5 ml-2">
                         {answer}/5 sao
                       </span>
                     )}
@@ -433,7 +433,7 @@ export default function SurveyPage({ onBackToHome }) {
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black text-sm tracking-wider uppercase shadow-md shadow-red-100 transition-all disabled:opacity-60"
+            className="flex-1 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-semibold text-sm tracking-wider  shadow-md shadow-red-100 transition-all disabled:opacity-60"
           >
             {submitting ? ui("Đang gửi...") : ui("Gửi khảo sát")}
           </button>

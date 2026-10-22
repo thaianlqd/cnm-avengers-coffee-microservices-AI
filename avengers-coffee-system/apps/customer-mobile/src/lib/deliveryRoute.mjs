@@ -5,4 +5,4 @@ export function routePoints(delivery, coordinate) {
   const points = terminal ? [store, destination] : pickedUp ? [driver || store, destination] : [driver, store, destination]
   return points.filter(Boolean).filter((p, i, all) => !i || p.latitude !== all[i-1].latitude || p.longitude !== all[i-1].longitude)
 }
-export { parseMeasuredRoute as parseRoute } from '../../../web-customer/src/components/deliveryMapPresentation.js'
+export { parseMeasuredRoute as parseRoute } from '../../../web-customer/src/components/map/deliveryMapPresentation.js'

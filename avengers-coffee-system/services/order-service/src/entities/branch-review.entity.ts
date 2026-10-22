@@ -40,6 +40,8 @@ export class BranchReview {
     ve_sinh?: number;
     toc_do?: number;
     chat_luong_mon?: number;
+    ma_shipper?: string;
+    danh_gia_shipper?: number;
   };
 
   @Column({ type: 'text', nullable: true })

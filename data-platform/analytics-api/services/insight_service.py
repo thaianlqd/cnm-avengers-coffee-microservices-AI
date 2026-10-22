@@ -773,50 +773,9 @@ def grounded_narrative(plan, evidence):
                     "action": rec.action,
                 }
             )
-    if not recommendations:
-        for e in selected:
-            feat = e["feature"]
-            if feat == "peer_gap" and e["values"].get("judgment") in {"below_peer", "needs_review"}:
-                entity = e["values"].get("entity", "nhóm")
-                recommendations.append({
-                    "text": f"Đối chiếu quy mô hoạt động và cỡ mẫu của {entity} với nhóm cùng phạm vi trước khi điều chỉnh vận hành.",
-                    "evidence_id": e["id"],
-                    "action": "review_gap"
-                })
-                break
-            elif feat in ("concentration", "contribution_share"):
-                recommendations.append({
-                    "text": "Theo dõi mức tập trung của các nhóm chủ lực trong cùng phạm vi để cân đối cơ cấu phát triển bền vững.",
-                    "evidence_id": e["id"],
-                    "action": "review_concentration"
-                })
-                break
-            elif feat in ("top_gap", "population_gap", "group_comparison"):
-                recommendations.append({
-                    "text": "Khoảng cách giữa nhóm dẫn đầu và phần còn lại rõ rệt: Đề xuất nghiên cứu mô hình của nhóm đạt chỉ số cao nhất để tối ưu toàn chuỗi.",
-                    "evidence_id": e["id"],
-                    "action": "review_gap"
-                })
-                break
-            elif feat == "change":
-                recommendations.append({
-                    "text": "Chỉ số có sự biến động qua các kỳ: Cần tiếp tục theo dõi các kỳ tương đương để dự báo chu kỳ nhu cầu và chủ động phân bổ nguồn lực.",
-                    "evidence_id": e["id"],
-                    "action": "monitor_variation"
-                })
-                break
-            elif feat == "pearson":
-                recommendations.append({
-                    "text": "Ghi nhận mối liên hệ giữa các thước đo: Nên kết hợp thêm dữ liệu khảo sát thực tế trước khi đưa ra quyết sách điều chỉnh.",
-                    "evidence_id": e["id"],
-                    "action": "investigate_relationship"
-                })
-                break
-
     if selected:
-        primary_text = selected[0]["statement"]
-        supporting_texts = " ".join(e["statement"] for e in selected[1:5])
-        summary = f"{primary_text} {supporting_texts}".strip()
+        # The opening answers one point; supporting evidence is already listed below.
+        summary = selected[0]["statement"]
     else:
         summary = "Không có dữ liệu trong phạm vi đã chọn."
 

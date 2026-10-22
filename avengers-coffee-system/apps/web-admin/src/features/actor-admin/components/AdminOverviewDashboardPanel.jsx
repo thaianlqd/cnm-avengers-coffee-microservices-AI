@@ -1,7 +1,7 @@
 import { selectChartPeriod, vietnamDay } from '../../../components/console/chartPeriod';
 import { money, number } from "../../../components/console/chartModel";
 import { useState } from "react";
-import { Users, Store, Coffee, UserCheck, Search } from "lucide-react";
+import { Users, Store, Coffee, UserCheck, Search } from '../../../components/console/WorkspaceIcons';
 import {
   Chart,
   Metric,
@@ -12,7 +12,7 @@ const roles = {
   MANAGER: "Quản lý",
   STAFF: "Nhân viên",
   CUSTOMER: "Khách hàng",
-  ACCOUNTANT: "Kế toán",
+  ACCOUNTANT: "Quản lý nhượng quyền",
   FRANCHISEE: "Đối tác kiosk",
   FRANCHISE_STAFF: "Nhân viên kiosk",
   SHIPPER: "Shipper",
@@ -88,14 +88,7 @@ export function AdminOverviewDashboardPanel({
     .slice(0, 10);
   return (
     <section className="console-dashboard">
-      <div className="console-page-heading">
-        <div>
-          <span className="console-eyebrow">AVENGERS · SYSTEM OVERVIEW</span>
-          <h1>Tổng quan hệ thống</h1>
-          <p>Nắm tình hình mạng lưới, tài khoản và các hoạt động mới nhất.</p>
-        </div>
-        <span className="console-chart-badge">Dữ liệu hiện có</span>
-      </div>
+
       {statsState.loading ? (
         <DashboardSkeleton />
       ) : statsState.error && !statsState.data ? (
@@ -106,7 +99,7 @@ export function AdminOverviewDashboardPanel({
         <>
           <div className="console-kpis">
             <Metric
-              label="Tài khoản hệ thống"
+              label="Nhân viên hệ thống"
               value={number(dashboardSummary.totalUsers)}
               icon={Users}
             />
@@ -149,7 +142,7 @@ export function AdminOverviewDashboardPanel({
           </div>
         </>
       )}
-      <div className="console-page-heading">
+      <div className="admin-dashboard-section">
         <div>
           <h2 style={{ fontSize: 17, margin: 0 }}>
             Hoạt động đơn hàng gần đây
@@ -198,12 +191,12 @@ export function AdminOverviewDashboardPanel({
           }))}
         />
       </div>
-      <article className="console-card">
+      <article className="console-card admin-activity-card">
         <div className="console-page-heading workspace-section-heading">
           <h3 style={{ margin: 0 }}>Nhật ký hoạt động</h3>
-          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Search size={16} />
-            <input
+          <label className="workspace-field admin-activity-search">
+
+            <input className="ui-input"
               aria-label="Tìm hoạt động"
               placeholder="Tìm đơn, tài khoản…"
               value={keyword}
@@ -215,9 +208,9 @@ export function AdminOverviewDashboardPanel({
           <table>
             <thead>
               <tr>
-                <th>Hoạt động</th>
-                <th>Nội dung</th>
-                <th>Thời gian</th>
+                <th style={{ width: '45%' }}>Hoạt động</th>
+                <th style={{ width: '30%' }}>Nội dung</th>
+                <th style={{ width: '25%', textAlign: 'right' }}>Thời gian</th>
               </tr>
             </thead>
             <tbody>
@@ -225,7 +218,7 @@ export function AdminOverviewDashboardPanel({
                 <tr key={item.id}>
                   <td>{item.title}</td>
                   <td>{item.description}</td>
-                  <td>
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     {item.date && Number.isFinite(new Date(item.date).getTime())
                       ? new Date(item.date).toLocaleString("vi-VN")
                       : "Chưa có thời gian"}

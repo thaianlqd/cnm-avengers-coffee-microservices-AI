@@ -1,3 +1,5 @@
+import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
+import { Check as WorkspaceSymbolCheck } from '../../../components/console/WorkspaceIcons'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   Newspaper,
@@ -23,7 +25,7 @@ import {
   Eye,
   Check,
   FolderKanban
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 
 function fmtDate(value) {
@@ -71,6 +73,7 @@ export function NewsPanel() {
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('')
   const [activeArticleId, setActiveArticleId] = useState('')
+  const [editorOpen, setEditorOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [imageFile, setImageFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -157,6 +160,7 @@ export function NewsPanel() {
   }, [activeArticle?.id])
 
   const resetForCreate = () => {
+    setEditorOpen(true)
     setActiveArticleId('')
     setForm(EMPTY_FORM)
     setImageFile(null)
@@ -207,6 +211,7 @@ export function NewsPanel() {
       if (!activeArticleId && data?.id) {
         setActiveArticleId(data.id)
       }
+      setEditorOpen(false)
     } catch (err) {
       setError(err?.message || 'Không thể lưu bài viết')
     } finally {
@@ -234,6 +239,7 @@ export function NewsPanel() {
       setMessage('Đã xóa bài viết thành công!')
       if (activeArticleId === id) {
         resetForCreate()
+        setEditorOpen(false)
       }
       await loadArticles()
     } catch (err) {
@@ -250,9 +256,9 @@ export function NewsPanel() {
   return (
     <div className="panel-container" style={{
       padding: '1.75rem',
-      background: '#f8fafc',
+      background: '#f8f9f6',
       borderRadius: '20px',
-      border: '1px solid #e2e8f0',
+      border: '1px solid #e2e4df',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)'
     }}>
       {/* Top Header Bar */}
@@ -279,10 +285,10 @@ export function NewsPanel() {
             <Newspaper size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#252927' }}>
               Quản lý Tin Tức & Bài Viết
             </h2>
-            <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
+            <span style={{ fontSize: '0.825rem', color: '#69736a' }}>
               Đăng tin tức, bài viết blog, chương trình khuyến mãi và tải ảnh minh họa bài viết
             </span>
           </div>
@@ -298,7 +304,7 @@ export function NewsPanel() {
             padding: '0.6rem 1.2rem',
             borderRadius: '10px',
             border: 'none',
-            background: '#3b82f6',
+            background: "var(--primary)",
             color: '#ffffff',
             fontSize: '0.875rem',
             fontWeight: '700',
@@ -322,7 +328,7 @@ export function NewsPanel() {
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
@@ -341,8 +347,8 @@ export function NewsPanel() {
             <FileText size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Tổng số bài viết</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#1e293b' }}>{stats.total} bài</div>
+            <div style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Tổng số bài viết</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#30382e' }}>{stats.total} bài</div>
           </div>
         </div>
 
@@ -350,7 +356,7 @@ export function NewsPanel() {
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
@@ -360,7 +366,7 @@ export function NewsPanel() {
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: '#eff6ff',
+            background: "#f4f5f2",
             color: '#2563eb',
             display: 'flex',
             alignItems: 'center',
@@ -369,7 +375,7 @@ export function NewsPanel() {
             <Globe size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Đã xuất bản</div>
+            <div style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Đã xuất bản</div>
             <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#2563eb' }}>{stats.published} bài</div>
           </div>
         </div>
@@ -378,7 +384,7 @@ export function NewsPanel() {
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
@@ -388,7 +394,7 @@ export function NewsPanel() {
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: '#fef3c7',
+            background: "#f4f5f2",
             color: '#d97706',
             display: 'flex',
             alignItems: 'center',
@@ -397,7 +403,7 @@ export function NewsPanel() {
             <FileEdit size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Bản nháp (Draft)</div>
+            <div style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Bản nháp (Draft)</div>
             <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#d97706' }}>{stats.draft} bài</div>
           </div>
         </div>
@@ -408,7 +414,7 @@ export function NewsPanel() {
         <div style={{
           padding: '0.85rem 1.25rem',
           borderRadius: '12px',
-          background: '#fef2f2',
+          background: "#f4f5f2",
           border: '1px solid #fecaca',
           color: '#b91c1c',
           fontSize: '0.875rem',
@@ -426,7 +432,7 @@ export function NewsPanel() {
         <div style={{
           padding: '0.85rem 1.25rem',
           borderRadius: '12px',
-          background: '#eff6ff',
+          background: "#f4f5f2",
           border: '1px solid #bfdbfe',
           color: '#1d4ed8',
           fontSize: '0.875rem',
@@ -440,8 +446,8 @@ export function NewsPanel() {
         </div>
       )}
 
-      {/* Two Column Main Dashboard Layout */}
-      <div style={{
+      {/* Article list */}
+      <div className="workspace-news-layout" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
         gap: '1.5rem',
@@ -451,7 +457,7 @@ export function NewsPanel() {
         <div style={{
           background: '#ffffff',
           borderRadius: '18px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           padding: '1.25rem',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
           display: 'flex',
@@ -462,13 +468,13 @@ export function NewsPanel() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '1px solid #f1f5f9',
+            borderBottom: '1px solid #f4f5f2',
             paddingBottom: '0.75rem'
           }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <FolderKanban size={18} color="#2563eb" /> Danh sách bài viết
             </h3>
-            <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', background: 'var(--primary-light)', padding: '0.2rem 0.6rem', borderRadius: '9999px' }}>
+            <span className="workspace-inline-label" style={{ fontSize: '0.8rem', color: '#69736a', fontWeight: '600', background: 'var(--primary-light)', padding: '0.2rem 0.6rem', borderRadius: '9999px' }}>
               {filteredArticles.length} kết quả
             </span>
           </div>
@@ -476,7 +482,7 @@ export function NewsPanel() {
           {/* Search & Category Filter */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <div style={{ position: 'relative', width: '100%' }}>
-              <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <Search size={16} color="#85907d" style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 type="text"
                 value={search}
@@ -486,7 +492,7 @@ export function NewsPanel() {
                   width: '100%',
                   padding: '0.5rem 0.65rem 0.5rem 2.2rem',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid #ccd3c7',
                   fontSize: '0.85rem',
                   outline: 'none',
                   boxSizing: 'border-box'
@@ -503,7 +509,7 @@ export function NewsPanel() {
                     transform: 'translateY(-50%)',
                     background: 'none',
                     border: 'none',
-                    color: '#94a3b8',
+                    color: '#85907d',
                     cursor: 'pointer'
                   }}
                 >
@@ -520,9 +526,9 @@ export function NewsPanel() {
                 style={{
                   padding: '0.25rem 0.65rem',
                   borderRadius: '6px',
-                  border: filterCat === '' ? '1px solid #3b82f6' : '1px solid #e2e8f0',
-                  background: filterCat === '' ? '#eff6ff' : '#ffffff',
-                  color: filterCat === '' ? '#1d4ed8' : '#64748b',
+                  border: filterCat === '' ? "1px solid var(--primary)" : '1px solid #e2e4df',
+                  background: filterCat === '' ? "#f4f5f2" : '#ffffff',
+                  color: filterCat === '' ? "var(--primary)" : '#69736a',
                   fontSize: '0.775rem',
                   fontWeight: filterCat === '' ? '700' : '500',
                   cursor: 'pointer'
@@ -538,9 +544,9 @@ export function NewsPanel() {
                   style={{
                     padding: '0.25rem 0.65rem',
                     borderRadius: '6px',
-                    border: filterCat === cat ? '1px solid #3b82f6' : '1px solid #e2e8f0',
-                    background: filterCat === cat ? '#eff6ff' : '#ffffff',
-                    color: filterCat === cat ? '#1d4ed8' : '#64748b',
+                    border: filterCat === cat ? "1px solid var(--primary)" : '1px solid #e2e4df',
+                    background: filterCat === cat ? "#f4f5f2" : '#ffffff',
+                    color: filterCat === cat ? "var(--primary)" : '#69736a',
                     fontSize: '0.775rem',
                     fontWeight: filterCat === cat ? '700' : '500',
                     cursor: 'pointer'
@@ -554,14 +560,14 @@ export function NewsPanel() {
 
           {/* List items */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#69736a' }}>
               <RefreshCw size={24} color="#3b82f6" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.5rem' }} />
               <p style={{ margin: 0, fontSize: '0.85rem' }}>Đang tải bài viết...</p>
             </div>
           ) : pageRows.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
-              <Newspaper size={32} color="#94a3b8" style={{ marginBottom: '0.5rem' }} />
-              <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>Không tìm thấy bài viết nào.</p>
+            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8f9f6', borderRadius: '12px', border: '1px dashed #ccd3c7' }}>
+              <Newspaper size={32} color="#85907d" style={{ marginBottom: '0.5rem' }} />
+              <p style={{ margin: 0, color: '#69736a', fontSize: '0.85rem' }}>Không tìm thấy bài viết nào.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -570,12 +576,12 @@ export function NewsPanel() {
                 return (
                   <div
                     key={article.id}
-                    onClick={() => setActiveArticleId(article.id)}
+                    onClick={() => { setActiveArticleId(article.id); setError(''); setEditorOpen(true) }}
                     style={{
                       padding: '0.85rem 1rem',
                       borderRadius: '12px',
-                      border: isActive ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                      background: isActive ? '#eff6ff' : '#ffffff',
+                      border: isActive ? '2px solid #3b82f6' : '1px solid #e2e4df',
+                      background: isActive ? "#f4f5f2" : '#ffffff',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       display: 'flex',
@@ -585,23 +591,23 @@ export function NewsPanel() {
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                      <h4 style={{ margin: 0, fontSize: '0.925rem', fontWeight: '700', color: '#0f172a', lineHeight: 1.35 }}>
+                      <h4 style={{ margin: 0, fontSize: '0.925rem', fontWeight: '700', color: '#252927', lineHeight: 1.35 }}>
                         {article.title}
                       </h4>
-                      <span style={{
+                      <span className="workspace-inline-label" style={{
                         fontSize: '0.7rem',
                         fontWeight: '700',
                         padding: '0.15rem 0.5rem',
                         borderRadius: '9999px',
                         flexShrink: 0,
-                        background: article.is_published ? '#dbeafe' : '#fef3c7',
+                        background: article.is_published ? "#f4f5f2" : "#f4f5f2",
                         color: article.is_published ? '#1d4ed8' : '#b45309'
                       }}>
                         {article.is_published ? 'Đã xuất bản' : 'Bản nháp'}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.775rem', color: '#64748b', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.775rem', color: '#69736a', flexWrap: 'wrap', gap: '0.4rem' }}>
                       <span style={{ background: 'var(--primary-subtle)', color: 'var(--primary)', padding: '0.1rem 0.45rem', borderRadius: '4px', fontWeight: '600' }}>
                         {article.category || 'BLOG'}
                       </span>
@@ -612,7 +618,7 @@ export function NewsPanel() {
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.2rem' }}>
                       <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); setActiveArticleId(article.id); }}
+                        onClick={(e) => { e.stopPropagation(); setActiveArticleId(article.id); setError(''); setEditorOpen(true); }}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -641,7 +647,7 @@ export function NewsPanel() {
                           padding: '0.25rem 0.55rem',
                           borderRadius: '6px',
                           border: 'none',
-                          background: '#fef2f2',
+                          background: "#f4f5f2",
                           color: '#ef4444',
                           fontSize: '0.75rem',
                           fontWeight: '600',
@@ -666,7 +672,7 @@ export function NewsPanel() {
               gap: '0.4rem',
               marginTop: '0.5rem',
               paddingTop: '0.75rem',
-              borderTop: '1px solid #f1f5f9'
+              borderTop: '1px solid #f4f5f2'
             }}>
               <button
                 type="button"
@@ -678,9 +684,9 @@ export function NewsPanel() {
                   gap: '0.2rem',
                   padding: '0.35rem 0.65rem',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid #ccd3c7',
                   background: '#ffffff',
-                  color: safePage === 1 ? '#cbd5e1' : '#334155',
+                  color: safePage === 1 ? '#ccd3c7' : '#414743',
                   fontSize: '0.775rem',
                   fontWeight: '600',
                   cursor: safePage === 1 ? 'not-allowed' : 'pointer'
@@ -689,7 +695,7 @@ export function NewsPanel() {
                 <ChevronLeft size={14} /> Trước
               </button>
 
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', padding: '0 0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', color: '#69736a', fontWeight: '600', padding: '0 0.5rem' }}>
                 Trang {safePage} / {totalPages}
               </span>
 
@@ -703,9 +709,9 @@ export function NewsPanel() {
                   gap: '0.2rem',
                   padding: '0.35rem 0.65rem',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid #ccd3c7',
                   background: '#ffffff',
-                  color: safePage === totalPages ? '#cbd5e1' : '#334155',
+                  color: safePage === totalPages ? '#ccd3c7' : '#414743',
                   fontSize: '0.775rem',
                   fontWeight: '600',
                   cursor: safePage === totalPages ? 'not-allowed' : 'pointer'
@@ -718,10 +724,10 @@ export function NewsPanel() {
         </div>
 
         {/* RIGHT COLUMN: ARTICLE EDITOR FORM */}
-        <div style={{
+        {editorOpen && <WorkspaceDialog label={activeArticleId ? 'Cập nhật bài viết' : 'Soạn bài viết mới'} title="Biên tập bài viết" busy={submitting} onClose={() => setEditorOpen(false)} className="workspace-dialog--wide"><div className="workspace-news-editor" style={{
           background: '#ffffff',
           borderRadius: '18px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           padding: '1.25rem',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
           display: 'flex',
@@ -731,11 +737,11 @@ export function NewsPanel() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '1px solid #f1f5f9',
+            borderBottom: '1px solid #f4f5f2',
             paddingBottom: '0.75rem',
             marginBottom: '1rem'
           }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <FileEdit size={18} color="#3b82f6" />
               {activeArticleId ? 'Cập nhật bài viết' : 'Soạn bài viết mới'}
             </h3>
@@ -744,9 +750,9 @@ export function NewsPanel() {
                 type="button"
                 onClick={resetForCreate}
                 style={{
-                  background: '#f1f5f9',
+                  background: '#f4f5f2',
                   border: 'none',
-                  color: '#475569',
+                  color: '#596255',
                   padding: '0.3rem 0.65rem',
                   borderRadius: '6px',
                   fontSize: '0.775rem',
@@ -762,10 +768,11 @@ export function NewsPanel() {
             )}
           </div>
 
+          {error && <p className="workspace-form-error" role="alert">{error}</p>}
           <form className="workspace-form" onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {/* Title */}
             <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.3rem' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
                 Tiêu đề bài viết <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
@@ -777,10 +784,10 @@ export function NewsPanel() {
                   width: '100%',
                   padding: '0.55rem 0.75rem',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid #ccd3c7',
                   fontSize: '0.875rem',
                   fontWeight: '600',
-                  color: '#0f172a',
+                  color: '#252927',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
@@ -790,7 +797,7 @@ export function NewsPanel() {
             {/* Category & Author */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '0.75rem' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.3rem' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
                   Danh mục
                 </label>
                 <select
@@ -800,9 +807,9 @@ export function NewsPanel() {
                     width: '100%',
                     padding: '0.55rem 0.75rem',
                     borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #ccd3c7',
                     fontSize: '0.85rem',
-                    color: '#1e293b',
+                    color: '#30382e',
                     outline: 'none',
                     boxSizing: 'border-box'
                   }}
@@ -814,7 +821,7 @@ export function NewsPanel() {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.3rem' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
                   Tác giả
                 </label>
                 <input
@@ -826,9 +833,9 @@ export function NewsPanel() {
                     width: '100%',
                     padding: '0.55rem 0.75rem',
                     borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #ccd3c7',
                     fontSize: '0.85rem',
-                    color: '#1e293b',
+                    color: '#30382e',
                     outline: 'none',
                     boxSizing: 'border-box'
                   }}
@@ -838,7 +845,7 @@ export function NewsPanel() {
 
             {/* Description */}
             <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.3rem' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
                 Mô tả ngắn (tóm tắt)
               </label>
               <textarea
@@ -850,7 +857,7 @@ export function NewsPanel() {
                   width: '100%',
                   padding: '0.55rem 0.75rem',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid #ccd3c7',
                   fontSize: '0.85rem',
                   resize: 'vertical',
                   boxSizing: 'border-box'
@@ -860,7 +867,7 @@ export function NewsPanel() {
 
             {/* Content */}
             <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.3rem' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
                 Nội dung chi tiết bài viết <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <textarea
@@ -872,7 +879,7 @@ export function NewsPanel() {
                   width: '100%',
                   padding: '0.55rem 0.75rem',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid #ccd3c7',
                   fontSize: '0.875rem',
                   resize: 'vertical',
                   boxSizing: 'border-box',
@@ -883,15 +890,15 @@ export function NewsPanel() {
 
             {/* Upload Image */}
             <div style={{
-              background: '#f8fafc',
+              background: '#f8f9f6',
               padding: '0.85rem',
               borderRadius: '12px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #e2e4df',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.5rem'
             }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <ImageIcon size={15} color="#3b82f6" /> Ảnh đại diện bài viết
               </label>
               <input
@@ -901,10 +908,10 @@ export function NewsPanel() {
                 style={{ fontSize: '0.825rem' }}
               />
               {activeArticleId && !imageFile && (
-                <small style={{ color: '#64748b' }}>Bỏ trống để giữ ảnh hiện tại, chọn ảnh mới để thay thế.</small>
+                <small style={{ color: '#69736a' }}>Bỏ trống để giữ ảnh hiện tại, chọn ảnh mới để thay thế.</small>
               )}
               {imageFile && (
-                <small style={{ color: '#2563eb', fontWeight: '600' }}>✓ Đã chọn ảnh mới: {imageFile.name}</small>
+                <small style={{ color: '#2563eb', fontWeight: '600' }}><WorkspaceSymbolCheck size="1.1em" aria-hidden="true" /> Đã chọn ảnh mới: {imageFile.name}</small>
               )}
 
               {imagePreview && (
@@ -917,7 +924,7 @@ export function NewsPanel() {
                       maxHeight: '160px',
                       borderRadius: '8px',
                       objectFit: 'cover',
-                      border: '1px solid #e2e8f0'
+                      border: '1px solid #e2e4df'
                     }}
                   />
                 </div>
@@ -931,7 +938,7 @@ export function NewsPanel() {
               gap: '0.5rem',
               padding: '0.5rem 0.75rem',
               borderRadius: '10px',
-              background: form.is_published ? '#eff6ff' : '#fef3c7',
+              background: form.is_published ? "#f4f5f2" : "#f4f5f2",
               border: form.is_published ? '1px solid #bfdbfe' : '1px solid #fde68a'
             }}>
               <input
@@ -947,6 +954,7 @@ export function NewsPanel() {
             </div>
 
             {/* Submit Action Buttons */}
+            <button type="button" className="workspace-secondary-button" disabled={submitting} onClick={() => setEditorOpen(false)}>Hủy</button>
             <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.5rem' }}>
               <button
                 type="submit"
@@ -960,7 +968,7 @@ export function NewsPanel() {
                   padding: '0.75rem 1rem',
                   borderRadius: '10px',
                   border: 'none',
-                  background: '#3b82f6',
+                  background: "var(--primary)",
                   color: '#ffffff',
                   fontSize: '0.9rem',
                   fontWeight: '700',
@@ -1007,7 +1015,7 @@ export function NewsPanel() {
               )}
             </div>
           </form>
-        </div>
+        </div></WorkspaceDialog>}
       </div>
     </div>
   )

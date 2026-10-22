@@ -192,7 +192,7 @@ export function trendComparison(report, evidence) {
   const first = full[0], last = full[full.length - 1], change = last.value - first.value;
   return { ...values, first: first.value, last: last.value, first_period: first.label, last_period: last.label, change, change_pct: first.value ? change / Math.abs(first.value) * 100 : null, excluded_partial_buckets: excluded };
 }
-export function dashboardFindings(report = {}) {
+export function dashboardFindings(report = {}, limit = 6) {
   const seen = new Set(), scopes = new Set();
   const findings = (report.key_findings || []).flatMap(f => {
     const e = (report.evidence || []).find(e => e.id === f.evidence_id);
@@ -215,7 +215,7 @@ export function dashboardFindings(report = {}) {
     if (finding.scope_ref && scopes.has(finding.scope_ref)) extra.push(finding);
     else { first.push(finding); if (finding.scope_ref) scopes.add(finding.scope_ref); }
   }
-  return [...first, ...extra].slice(0, 6);
+  return [...first, ...extra].slice(0, limit);
 }
 export function initialChartType(chart = {}) {
   const rows = chart.data || [];

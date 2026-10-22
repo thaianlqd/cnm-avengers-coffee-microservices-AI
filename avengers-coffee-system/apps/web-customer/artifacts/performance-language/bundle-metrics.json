@@ -1,8 +1,0 @@
-{
-  "reference_pre_split_build_main_bytes": 1214010,
-  "reference_pre_split_build_main_gzip_bytes": 337290,
-  "current_main_file": "index-CvBkSw67.js",
-  "current_main_bytes": 804269,
-  "current_main_gzip_bytes": 249244,
-  "method": "entry script from production index.html; source includes UI translations; not an end-to-end latency benchmark"
-}

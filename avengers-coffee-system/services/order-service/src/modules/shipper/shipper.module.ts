@@ -7,6 +7,7 @@ import { ShipperSchedule } from './entities/shipper-schedule.entity';
 import { ShipperException } from './entities/shipper-exception.entity';
 import { ShipperCodRemit } from './entities/shipper-cod-remit.entity';
 import { ShipperService } from './shipper.service';
+import { ShipperAccessGuard } from './shipper-access.guard';
 import { ShipperController } from './shipper.controller';
 import { DonHang } from '../thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from '../thanh-toan/entities/chi-tiet-don-hang.entity';
@@ -31,7 +32,7 @@ import { InfrastructureModule } from '../../infrastructure/infrastructure.module
     NotificationModule,
     InfrastructureModule,
   ],
-  providers: [ShipperService],
+  providers: [ShipperService, ShipperAccessGuard],
   controllers: [ShipperController],
   exports: [ShipperService],
 })

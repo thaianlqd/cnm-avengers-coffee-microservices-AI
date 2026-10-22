@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare } from '../../../components/console/WorkspaceIcons'
 import { createStaffInbox } from '../../../components/console/staffInbox.mjs'
 export function AdminChatWidget({ session, onOpenInbox, hidden }) {
   const [unread, setUnread] = useState(0)

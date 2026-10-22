@@ -100,13 +100,14 @@ export function MembershipScreen() {
 
   const currentTierName =
     hang_hien_tai?.ten_hang ||
-    (currentTierCode === 'DIAMOND' ? 'Kim Cương' : currentTierCode === 'GOLD' ? 'Vàng' : currentTierCode === 'SILVER' ? 'Bạc' : 'Thành Viên')
+    (currentTierCode === 'PLATINUM' ? 'Bạch Kim' : currentTierCode === 'DIAMOND' ? 'Kim Cương' : currentTierCode === 'GOLD' ? 'Vàng' : currentTierCode === 'SILVER' ? 'Bạc' : 'Thành Viên')
 
   const tierGradients = {
     MEMBER: ['#64748b', '#334155'],
     SILVER: ['#94a3b8', '#475569'],
     GOLD: ['#f59e0b', '#b45309'],
     DIAMOND: ['#0284c7', '#0369a1'],
+    PLATINUM: ['#0f172a', '#334155'],
   }
 
   const cardColors = tierGradients[currentTierCode] || tierGradients.MEMBER
@@ -201,6 +202,7 @@ export function MembershipScreen() {
                   { id: '2', ma_hang: 'SILVER', ten_hang: 'Bạc', chi_tieu_toi_thieu: 500000 },
                   { id: '3', ma_hang: 'GOLD', ten_hang: 'Vàng', chi_tieu_toi_thieu: 2000000 },
                   { id: '4', ma_hang: 'DIAMOND', ten_hang: 'Kim Cương', chi_tieu_toi_thieu: 5000000 },
+                  { id: '5', ma_hang: 'PLATINUM', ten_hang: 'Bạch Kim', chi_tieu_toi_thieu: 6000000 },
                 ]
             ).map((tier) => {
               const code = String(tier.ma_hang || tier.ma).toUpperCase()

@@ -37,11 +37,11 @@ import StaffChatPanel from './StaffChatPanel'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, shadows } from '../theme'
 import useAgentChat from '../hooks/useAgentChat'
-import ChatRichText from '../components/ChatRichText'
+import ChatRichText from '../components/chat/ChatRichText'
 import ChatActions, { CheckoutCard } from '../components/ChatActions'
-import CustomerChoicePanel, { SelectionTray } from '../components/CustomerChoicePanel'
-import { productIdentity, toggleProductSelection, updateProductQuantity, selectionAction, actionMessage } from '../../../web-customer/src/components/customerChoices'
-import { branchDistanceLabel } from '../../../web-customer/src/components/chatWidgetActions'
+import CustomerChoicePanel, { SelectionTray } from '../components/product/CustomerChoicePanel'
+import { productIdentity, toggleProductSelection, updateProductQuantity, selectionAction, actionMessage } from '../../../web-customer/src/components/product/customerChoices'
+import { branchDistanceLabel } from '../../../web-customer/src/components/chat/chatWidgetActions'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function formatTime(value) {

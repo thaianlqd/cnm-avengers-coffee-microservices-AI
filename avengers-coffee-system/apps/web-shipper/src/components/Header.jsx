@@ -17,12 +17,9 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="bg-white rounded-lg p-2">
-              <MapPin className="w-6 h-6 text-purple-600" />
-            </div>
+            <img src="/images/logo-white.png" alt="Avengers Coffee" className="h-9 w-auto object-contain" />
             <div>
               <h1 className="text-2xl font-bold">Avengers Delivery</h1>
-              <p className="text-xs text-purple-100">Ứng dụng giao hàng</p>
             </div>
           </div>
 
@@ -49,11 +46,8 @@ export default function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
-            <button className="relative p-2 hover:bg-white/10 rounded-lg transition">
+            <button className="relative p-2 hover:bg-white/10 rounded-lg transition" aria-label="Thông báo">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 bg-red-400 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                3
-              </span>
             </button>
 
             <button

@@ -2,7 +2,7 @@ import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import { menuCategoryLabel } from '../../lib/categoryLabels';
 import { useTranslation } from 'react-i18next';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, ArrowLongRightIcon, ArrowLongLeftIcon } from '../../components/common/icons';
 
 /* ────────────────────────────────────────────────────────
    DATA: Nội dung giới thiệu chi tiết, giàu cảm xúc & thiết kế đẳng cấp
@@ -179,11 +179,11 @@ function AutoPlayProductCarousel({ items, onSelect }) {
               />
             </div>
             <div style={{ padding: '0 16px' }}>
-              <p style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase', color: '#4a3728', margin: 0, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '38px' }}>
+              <p style={{ fontWeight: 700, fontSize: '14px', textTransform: '', color: '#4a3728', margin: 0, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '38px' }}>
                 {p.ten_san_pham}
               </p>
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
-                <span style={{ fontSize: '11px', color: '#8c7b6b', fontWeight: 700 }}>Highlands</span>
+                <span style={{ fontSize: '11px', color: '#8c7b6b', fontWeight: 700 }}>Avengers Coffee</span>
                 <div className="menu-intro-page" style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#b22830' }}></div>
                 <span style={{ fontWeight: 700, fontSize: '14px', color: '#b22830', whiteSpace: 'nowrap' }}>
                   {Number(p.gia_ban).toLocaleString(uiLocale())}{ui(" đ")}</span>
@@ -378,7 +378,7 @@ export default function MenuIntroPage({
                 <div style={{ flex: '1 1 500px', minWidth: 0, zIndex: 2 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
 
-                    <span style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: theme.accentColor }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, textTransform: '', letterSpacing: '1px', color: theme.accentColor }}>
                       {copy('Thực đơn Avengers', 'Avengers menu')}
                     </span>
                   </div>
@@ -386,7 +386,7 @@ export default function MenuIntroPage({
                   <h2 style={{
                     fontSize: 'clamp(32px, 4vw, 48px)',
                     fontWeight: 700,
-                    textTransform: 'uppercase',
+                    textTransform: '',
                     color: theme.titleColor,
                     margin: '0 0 28px',
                     lineHeight: 1.15,
@@ -418,7 +418,7 @@ export default function MenuIntroPage({
                       fontSize: '13px',
                       fontWeight: 700,
                       borderRadius: '4px',
-                      textTransform: 'uppercase',
+                      textTransform: '',
                       letterSpacing: '1px',
                       cursor: 'pointer',
                       transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)',
@@ -496,11 +496,11 @@ export default function MenuIntroPage({
       <div className="menu-intro-page" style={{ width: '100%', minHeight: '100vh', background: '#fdfbfa', fontFamily: "var(--font-sans)" }}>
         {/* Breadcrumb */}
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 40px 0' }}>
-          <nav style={{ fontSize: '11px', fontWeight: 700, color: '#a09080', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <nav style={{ fontSize: '11px', fontWeight: 700, color: '#a09080', textTransform: '', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
               type="button"
               onClick={() => onCategoryChange?.('all')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', padding: 0 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 700, textTransform: '', letterSpacing: '2px', padding: 0 }}
               onMouseEnter={e => e.currentTarget.style.color = '#b22830'}
               onMouseLeave={e => e.currentTarget.style.color = '#a09080'}
             >
@@ -515,7 +515,7 @@ export default function MenuIntroPage({
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 40px 60px' }}>
           <div style={{ borderLeft: '4px solid #b22830', paddingLeft: '24px' }}>
             <h1 style={{
-              fontSize: '48px', fontWeight: 700, textTransform: 'uppercase',
+              fontSize: '48px', fontWeight: 700, textTransform: '',
               color: '#4a3728', margin: '0 0 16px', lineHeight: 1.1,
               fontFamily: "var(--font-sans)",
             }}>
@@ -559,7 +559,7 @@ export default function MenuIntroPage({
                     <h2 style={{
                       fontSize: '34px',
                       fontWeight: 700,
-                      textTransform: 'uppercase',
+                      textTransform: '',
                       color: '#4a3728',
                       margin: '0 0 20px',
                       lineHeight: 1.2,
@@ -588,7 +588,7 @@ export default function MenuIntroPage({
                         fontSize: '12px',
                         fontWeight: 700,
                         borderRadius: '4px',
-                        textTransform: 'uppercase',
+                        textTransform: '',
                         letterSpacing: '2px',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
@@ -626,7 +626,7 @@ export default function MenuIntroPage({
                             style={{ width: '76px', height: '76px', objectFit: 'contain', borderRadius: '10px', flexShrink: 0 }}
                           />
                           <div style={{ minWidth: 0 }}>
-                            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#4a3728', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#4a3728', margin: '0 0 4px', textTransform: '', letterSpacing: '0.5px' }}>
                               {prod.ten_san_pham}
                             </h4>
                             <p style={{ fontSize: '13px', fontWeight: 700, color: '#b22830', margin: 0 }}>
@@ -662,11 +662,11 @@ export default function MenuIntroPage({
       <div className="menu-intro-page" style={{ width: '100%', minHeight: '100vh', background: '#fdfbfa', fontFamily: "var(--font-sans)" }}>
         {/* Breadcrumb */}
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 40px 0' }}>
-          <nav style={{ fontSize: '11px', fontWeight: 700, color: '#a09080', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <nav style={{ fontSize: '11px', fontWeight: 700, color: '#a09080', textTransform: '', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={() => onCategoryChange?.('all')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', padding: 0 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 700, textTransform: '', letterSpacing: '2px', padding: 0 }}
               onMouseEnter={e => e.currentTarget.style.color = '#b22830'}
               onMouseLeave={e => e.currentTarget.style.color = '#a09080'}
             >
@@ -676,7 +676,7 @@ export default function MenuIntroPage({
             <button
               type="button"
               onClick={() => onCategoryChange?.(currentBigGroup.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', padding: 0 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 700, textTransform: '', letterSpacing: '2px', padding: 0 }}
               onMouseEnter={e => e.currentTarget.style.color = '#b22830'}
               onMouseLeave={e => e.currentTarget.style.color = '#a09080'}
             >
@@ -695,7 +695,7 @@ export default function MenuIntroPage({
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               color: '#b22830', fontSize: '13px', fontWeight: 700,
-              textTransform: 'uppercase', letterSpacing: '1px',
+              textTransform: '', letterSpacing: '1px',
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               padding: 0
             }}
@@ -713,7 +713,7 @@ export default function MenuIntroPage({
             <div style={{ flex: '1 1 700px', minWidth: 0 }}>
               <div style={{ marginBottom: '40px' }}>
                 <h1 style={{
-                  fontSize: '44px', fontWeight: 700, textTransform: 'uppercase',
+                  fontSize: '44px', fontWeight: 700, textTransform: '',
                   color: '#4a3728', margin: '0 0 20px', lineHeight: 1.1,
                   fontFamily: "var(--font-sans)",
                 }}>
@@ -738,7 +738,7 @@ export default function MenuIntroPage({
                   border: '1px solid #efeae2',
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: '#b22830', margin: 0, fontFamily: "var(--font-sans)" }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 700, textTransform: '', letterSpacing: '2px', color: '#b22830', margin: 0, fontFamily: "var(--font-sans)" }}>
                       {copy('Khám phá danh sách sản phẩm', 'Explore the products')}
                     </h3>
                   </div>
@@ -767,7 +767,7 @@ export default function MenuIntroPage({
                 position: 'sticky', top: '100px',
               }}>
                 <h3 style={{
-                  fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
+                  fontSize: '13px', fontWeight: 700, textTransform: '',
                   color: '#4a3728', margin: '0 0 24px', letterSpacing: '2px',
                   paddingBottom: '16px', borderBottom: '2px solid #efeae2',
                 }}>
@@ -796,7 +796,7 @@ export default function MenuIntroPage({
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <h4 style={{
                           fontSize: '13px', fontWeight: 700, color: '#4a3728',
-                          margin: '0 0 4px', textTransform: 'uppercase', lineHeight: 1.35,
+                          margin: '0 0 4px', textTransform: '', lineHeight: 1.35,
                           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                         }}>
                           {prod.ten_san_pham}

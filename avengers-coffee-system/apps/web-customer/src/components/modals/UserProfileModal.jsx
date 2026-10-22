@@ -1,0 +1,297 @@
+import AvatarUpload from '../common/AvatarUpload';
+import { uiText as ui, useUiLanguage } from "../../lib/uiText";
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { XMarkIcon, UserCircleIcon, KeyIcon } from '../common/icons';
+import { apiClient } from '../../lib/apiClient';
+import { queryKeys } from '../../lib/queryKeys';
+
+export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated }) {
+  useUiLanguage();
+
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('profile');
+  const [profileForm, setProfileForm] = useState({ hoTen: '', soDienThoai: '', avatarUrl: '' });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [profileError, setProfileError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const userId = useMemo(() => user?.ma_nguoi_dung || user?.maNguoiDung || null, [user]);
+
+  const {
+    data: profile,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: queryKeys.userProfile(userId),
+    queryFn: async () => {
+      const response = await apiClient.get(`/users/${userId}/profile`);
+      return response.data;
+    },
+    enabled: Boolean(isOpen && userId),
+    staleTime: 30 * 1000,
+    refetchInterval: 120 * 1000,
+  });
+
+  useEffect(() => {
+    if (!isOpen) {
+      setActiveTab('profile');
+      setProfileError('');
+      setPasswordError('');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      return;
+    }
+
+    if (profile) {
+      setProfileForm({
+        hoTen: profile.ho_ten || '',
+        soDienThoai: profile.so_dien_thoai || '',
+        avatarUrl: profile.avatar_url || '',
+      });
+    }
+  }, [isOpen, profile]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (payload) => {
+      const response = await apiClient.patch(`/users/${userId}/profile`, payload);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setProfileError('');
+      const updatedUser = {
+        ...user,
+        ho_ten: data?.user?.ho_ten,
+        hoTen: data?.user?.ho_ten,
+        email: data?.user?.email,
+      };
+
+      onUserUpdated?.(updatedUser);
+      queryClient.invalidateQueries({ queryKey: queryKeys.userProfile(userId) });
+      alert(ui("Cập nhật thông tin thành công!"));
+    },
+    onError: (err) => {
+      setProfileError(err?.response?.data?.message || 'Không thể cập nhật thông tin.');
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async (payload) => {
+      const response = await apiClient.post(`/users/${userId}/change-password`, payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      setPasswordError('');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      alert(ui("Đổi mật khẩu thành công!"));
+    },
+    onError: (err) => {
+      setPasswordError(err?.response?.data?.message || 'Không thể đổi mật khẩu.');
+    },
+  });
+
+  if (!isOpen) return null;
+
+  const handleUpdateProfile = (e) => {
+    e.preventDefault();
+    setProfileError('');
+
+    updateProfileMutation.mutate({
+      hoTen: profileForm.hoTen,
+      soDienThoai: profileForm.soDienThoai,
+      avatarUrl: profileForm.avatarUrl,
+    });
+  };
+
+  const handleChangePassword = (e) => {
+    e.preventDefault();
+    setPasswordError('');
+
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError('Mật khẩu mới phải có ít nhất 6 ký tự.');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('Xác nhận mật khẩu không khớp.');
+      return;
+    }
+
+    changePasswordMutation.mutate({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={onClose}></div>
+
+      <div className="relative z-10 h-[88vh] w-full max-w-3xl overflow-hidden rounded-[28px] border border-orange-100 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-orange-50 bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-5">
+          <div>
+            <h2 className="text-2xl font-semibold  tracking-tight text-gray-800">{ui("Trang cá nhân")}</h2>
+            <p className="mt-1 text-sm font-semibold text-gray-500">{ui("Quản lý thông tin và bảo mật tài khoản của bạn")}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-xl p-2 text-gray-500 hover:bg-white">
+            <XMarkIcon className="h-7 w-7" />
+          </button>
+        </div>
+
+        {!userId ? (
+          <div className="p-8 text-center text-lg font-bold text-gray-700">{ui("Bạn cần đăng nhập để xem trang cá nhân.")}</div>
+        ) : (
+          <div className="h-[calc(88vh-86px)] overflow-y-auto bg-[#fffdf9] p-6">
+            <div className="mb-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveTab('profile')}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold  tracking-wide ${
+                  activeTab === 'profile' ? 'bg-tch-orange text-white' : 'bg-white text-gray-500 border border-gray-200'
+                }`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <UserCircleIcon className="h-5 w-5" />{ui("Hồ sơ")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('password')}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold  tracking-wide ${
+                  activeTab === 'password' ? 'bg-tch-orange text-white' : 'bg-white text-gray-500 border border-gray-200'
+                }`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <KeyIcon className="h-5 w-5" />{ui("Đổi mật khẩu")}</span>
+              </button>
+            </div>
+
+            {activeTab === 'profile' ? (
+              <div className="rounded-2xl border border-orange-100 bg-white p-5">
+                {isLoading ? (
+                  <div className="space-y-3">
+                    <div className="h-12 animate-pulse rounded-xl bg-orange-100/70"></div>
+                    <div className="h-12 animate-pulse rounded-xl bg-orange-100/70"></div>
+                    <div className="h-12 animate-pulse rounded-xl bg-orange-100/70"></div>
+                  </div>
+                ) : isError ? (
+                  <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                    {error?.response?.data?.message || ui("Không thể tải thông tin cá nhân.")}
+                  </div>
+                ) : (
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div>
+                      <p className="mb-2 text-xs font-semibold  tracking-widest text-gray-400">{ui("Họ tên")}</p>
+                      <input
+                        type="text"
+                        required
+                        value={profileForm.hoTen}
+                        onChange={(e) => setProfileForm((prev) => ({ ...prev, hoTen: e.target.value }))}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                      />
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-xs font-semibold  tracking-widest text-gray-400">{ui("Email")}</p>
+                      <input
+                        type="text"
+                        disabled
+                        value={profile?.email || ''}
+                        className="w-full rounded-xl border border-gray-100 bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-500"
+                      />
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-xs font-semibold  tracking-widest text-gray-400">{ui("Số điện thoại")}</p>
+                      <input
+                        type="text"
+                        value={profileForm.soDienThoai}
+                        onChange={(e) => setProfileForm((prev) => ({ ...prev, soDienThoai: e.target.value }))}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
+                        placeholder={ui("Nhập số điện thoại")}
+                      />
+                    </div>
+
+                    <AvatarUpload userId={userId} value={profileForm.avatarUrl} name={profileForm.hoTen}
+                      onSaved={(saved) => {
+                        setProfileForm(prev => ({ ...prev, avatarUrl: saved.avatar_url || '' }));
+                        onUserUpdated?.({ ...user, ...saved, avatarUrl: saved.avatar_url || null });
+                        queryClient.invalidateQueries({ queryKey: queryKeys.userProfile(userId) });
+                      }} />
+
+                    {profileError ? <p className="text-sm font-semibold text-red-600">{profileError}</p> : null}
+
+                    <button
+                      type="submit"
+                      disabled={updateProfileMutation.isPending}
+                      className="rounded-xl bg-tch-orange px-5 py-3 text-sm font-semibold  tracking-wide text-white shadow-lg shadow-orange-200 disabled:bg-gray-300"
+                    >
+                      {updateProfileMutation.isPending ? ui("Đang cập nhật...") : ui("Lưu thay đổi")}
+                    </button>
+                  </form>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-gray-200/90 bg-white p-5 shadow-2xs">
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold  tracking-wider text-gray-700">{ui("Mật khẩu hiện tại")}</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder={ui("Mật khẩu hiện tại")}
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                      className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold  tracking-wider text-gray-700">{ui("Mật khẩu mới")}</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder={ui("Mật khẩu mới ít nhất 6 ký tự")}
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                      className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold  tracking-wider text-gray-700">{ui("Xác nhận mật khẩu mới")}</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder={ui("Xác nhận mật khẩu mới")}
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                      className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800"
+                    />
+                  </div>
+
+                  {passwordError ? (
+                    <div className="rounded-xl bg-rose-50 border border-rose-200 p-2.5 text-xs font-semibold text-rose-700">
+                      {passwordError}
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="submit"
+                    disabled={changePasswordMutation.isPending}
+                    className="w-full rounded-xl bg-[#b22830] hover:bg-[#8f1d24] px-5 py-2.5 text-xs font-bold  tracking-wider text-white shadow-2xs disabled:bg-gray-300 transition-all cursor-pointer active:scale-95"
+                  >
+                    {changePasswordMutation.isPending ? ui("Đang xử lý...") : ui("Đổi mật khẩu")}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

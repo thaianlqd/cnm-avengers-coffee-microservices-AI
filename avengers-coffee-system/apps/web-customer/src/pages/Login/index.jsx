@@ -7,7 +7,7 @@ import { postAuthRequest } from '../../lib/authRequest';
 import { navigateTab } from '../../lib/navigate';
 
 // ============================================================
-// Sub-header giống bên order.highlandscoffee.com.vn
+// Sub-header giống bên Avengers Coffee
 // ============================================================
 function OrderSubHeader() {
   useUiLanguage();
@@ -42,14 +42,14 @@ function OrderSubHeader() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>{ui("Liên hệ")}</button>
           <a
-            href="https://bankrista.highlandscoffee.com.vn/"
+            href="/?tab=careers"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-white text-[13px] font-semibold whitespace-nowrap hover:text-red-200 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>{ui("Bankrista Thịnh Vượng")}</a>
+            </svg>{ui("Đồng hành cùng Avengers")}</a>
         </div>
       </div>
     </div>
@@ -66,13 +66,13 @@ function OrderFooter() {
       <div className="mx-auto max-w-[1380px] px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <img src="/hc-assets/logo.png" alt="Highlands Coffee" className="h-12 object-contain mb-4" />
-            <p className="text-[12px] text-gray-500 leading-relaxed">{ui("CÔNG TY CỔ PHẦN DỊCH VỤ CÀ PHÊ CAO NGUYÊN")}</p>
-            <p className="text-[12px] text-gray-500 mt-1">MST: 0309965814</p>
+            <img src="/images/brand/logo-red.png" alt="Avengers Coffee" className="h-14 sm:h-16 object-contain mb-4" />
+            <p className="text-[12px] text-gray-500 leading-relaxed">{ui("Công Ty Cổ Phần Avengers Coffee")}</p>
+
           </div>
 
           <div>
-            <h4 className="text-[13px] font-bold text-gray-700 uppercase mb-3">{ui("Chính sách")}</h4>
+            <h4 className="text-[13px] font-bold text-gray-700  mb-3">{ui("Chính sách")}</h4>
             <ul className="space-y-2">
               <li><button type="button" onClick={() => navigateTab('chinh-sach-dat-hang')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Chính sách đặt hàng")}</button></li>
               <li><button type="button" onClick={() => navigateTab('chinh-sach-dat-hang')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Chính sách bảo mật")}</button></li>
@@ -81,7 +81,7 @@ function OrderFooter() {
           </div>
 
           <div>
-            <h4 className="text-[13px] font-bold text-gray-700 uppercase mb-3">{ui("Hỗ trợ")}</h4>
+            <h4 className="text-[13px] font-bold text-gray-700  mb-3">{ui("Hỗ trợ")}</h4>
             <ul className="space-y-2">
               <li><button type="button" onClick={() => navigateTab('home')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Tìm kiếm")}</button></li>
               <li><button type="button" onClick={() => navigateTab('login')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Đăng nhập")}</button></li>
@@ -90,8 +90,8 @@ function OrderFooter() {
           </div>
 
           <div>
-            <h4 className="text-[13px] font-bold text-gray-700 uppercase mb-3">{ui("Đăng ký nhận tin")}</h4>
-            <p className="text-[12px] text-gray-500 mb-3">{ui("Nhận ưu đãi & tin tức mới nhất từ Highlands Coffee")}</p>
+            <h4 className="text-[13px] font-bold text-gray-700  mb-3">{ui("Đăng ký nhận tin")}</h4>
+            <p className="text-[12px] text-gray-500 mb-3">{ui("Nhận ưu đãi & tin tức mới nhất từ Avengers Coffee")}</p>
             <div className="flex gap-2">
               <input
                 type="email"
@@ -103,7 +103,7 @@ function OrderFooter() {
           </div>
         </div>
         <div className="mt-8 pt-6 border-t border-gray-300 text-center">
-          <p className="text-[12px] text-gray-400">© 2025 Highlands Coffee. All rights reserved.</p>
+          <p className="text-[12px] text-gray-400">© 2026 Avengers Coffee. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -208,18 +208,26 @@ function LoginPageInner({
       authMutation.mutate(
         { endpoint, payload },
         {
-          onSuccess: (data) => {
+          onSuccess: async (data) => {
             if (isLoginView) {
               localStorage.setItem('token', data.accessToken);
-              onLoginSuccess(data.user);
+              if (await onLoginSuccess(data.user) === false) {
+                setError('Chưa đồng bộ được giỏ hàng. Vui lòng đăng nhập lại để thử tiếp.');
+                return;
+              }
               resetSocialState();
               return;
             }
 
-            alert(ui("Đăng ký thành công! Mời bạn đăng nhập."));
-            setIsLoginView(true);
-            setFormData({ email: '', password: '', hoTen: '', soDienThoai: '' });
-            resetSocialState();
+            try {
+              const signedIn = await postAuthRequest('/auth/login', { email: identifier, password });
+              localStorage.setItem('token', signedIn.accessToken);
+              await onLoginSuccess(signedIn.user);
+              resetSocialState();
+            } catch (error) {
+              setIsLoginView(true);
+              setError(error?.response?.data?.message || 'Đăng ký thành công. Vui lòng đăng nhập để tiếp tục.');
+            }
           },
           onError: (err) => {
             setError(err?.response?.data?.message || 'Có lỗi xảy ra, vui lòng kiểm tra lại.');
@@ -444,8 +452,8 @@ function LoginPageInner({
       </div>
 
       <div className="flex-1 mx-auto w-full max-w-[520px] px-4 md:px-6 py-10">
-        <h1 className="text-center text-[22px] font-medium uppercase text-[#333] mb-1">
-          {showForgotView ? ui("KHÔI PHỤC MẬT KHẨU") : isLoginView ? ui("ĐĂNG NHẬP TÀI KHOẢN") : ui("ĐĂNG KÝ TÀI KHOẢN")}
+        <h1 className="text-center text-[22px] font-medium  text-[#333] mb-1">
+          {showForgotView ? ui("Khôi phục mật khẩu") : isLoginView ? ui("Đăng nhập tài khoản") : ui("Đăng ký tài khoản")}
         </h1>
 
         <div className="text-center text-[13px] text-gray-600 mb-8">
@@ -798,7 +806,7 @@ function QuickGoogleButton({ onLoginSuccess, resetSocialState, setError }) {
       <button
         type="button"
         onClick={() => handleQuickGoogleLogin()}
-        className="rounded-full border border-[#eadfcd] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#8f6a50] hover:bg-[#fff7ef] transition-colors"
+        className="rounded-full border border-[#eadfcd] bg-white px-4 py-2 text-xs font-semibold  tracking-[0.14em] text-[#8f6a50] hover:bg-[#fff7ef] transition-colors"
       >{ui("Dùng Google fallback")}</button>
     </div>
   );

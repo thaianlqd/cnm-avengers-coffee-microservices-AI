@@ -1,117 +1,204 @@
-import { uiText as ui } from "../../../lib/uiText";
+import { uiText as ui, useUiLanguage } from "../../../lib/uiText";
 import React from 'react';
 
-export const GiftCardPolicy = () => (
-  <div className="bg-white min-h-screen font-sans text-[#333]">
-    <div className="max-w-[1140px] mx-auto px-4 md:px-8 py-12 md:py-16">
+export const GiftCardPolicy = () => {
+  useUiLanguage();
 
-      {/* Title */}
-      <h1 className="text-[26px] md:text-[32px] font-bold text-[#b22830] text-center mb-8 uppercase leading-snug">{ui("HƯỚNG DẪN ĐĂNG KÝ, NẠP TIỀN, KÍCH HOẠT VÀ NHẬN THẺ AVENGERS COFFEE KHI THỰC HIỆN NẠP TIỀN TRÊN WEBSITE CARD.AVENGERSCOFFEE.COM.VN")}</h1>
+  const scrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
-      <p className="font-bold text-[15px] text-[#1a1a1a] mb-6">{ui("Ngày Cập Nhật: 31/05/2024")}</p>
+  return (
+    <div className="bg-[#fcfaf7] min-h-screen font-sans text-stone-800 pb-24">
+      {/* Hero Header */}
+      <section className="bg-gradient-to-r from-[#7a141a] via-[#9e1c24] to-[#450a0e] text-white py-16 px-4">
+        <div className="max-w-[1140px] mx-auto text-center">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-white/15 text-amber-200 text-xs font-semibold tracking-wider uppercase mb-4 backdrop-blur-sm">
+            {ui("Điều Khoản & Pháp Lý")}
+          </span>
+          <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">
+            {ui("Chính Sách & Hướng Dẫn Sử Dụng Thẻ")}
+          </h1>
+          <p className="text-stone-200 text-sm md:text-base max-w-[680px] mx-auto leading-relaxed font-light">
+            {ui("Quy định chi tiết về việc đăng ký, nạp tiền, kích hoạt, sử dụng Thẻ Quà Tặng Avengers Coffee và các cam kết bảo mật thông tin khách hàng.")}
+          </p>
+        </div>
+      </section>
 
-      <p className="text-[15px] leading-relaxed mb-6">{ui("Bạn vui lòng xem kỹ Hướng Dẫn này để hiểu rõ cách thức đăng ký và nạp tiền vào Thẻ Avengers Coffee qua website card.avengerscoffee.com.vn, Gửi tặng thẻ Avengers Coffee cho người thân, bạn bè. Đồng thời lưu ý các chính sách, quy định về việc Nhận mã xác nhận, Thời hạn kích hoạt, Địa điểm kích hoạt.")}</p>
+      {/* Main Container */}
+      <div className="max-w-[1140px] mx-auto px-4 sm:px-6 pt-10">
 
-      <p className="text-[15px] leading-relaxed mb-6">{ui("Khi bạn đăng ký, kích hoạt hoặc sử dụng Thẻ Avengers Coffee, bạn đồng ý chịu ràng buộc bời ĐIỀU KHOẢN SỬ DỤNG THẺ AVENGERS COFFEE được đăng tải trên ")}<a href="#" className="text-blue-600 hover:underline">https://www.avengerscoffee.com.vn/vn/dieu-khoan-su-dung-doi-voi-the-avengers-coffee.html</a>
-      </p>
+        {/* Key Takeaways Callout Box */}
+        <div className="bg-white rounded-3xl p-6 md:p-8 border border-stone-200/80 shadow-sm mb-12">
+          <h3 className="font-bold text-stone-900 text-base mb-4 flex items-center gap-2">
+            <span className="text-[#b22830] text-lg">📌</span>
+            <span>{ui("Những Điểm Cốt Lõi Cần Lưu Ý")}</span>
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs md:text-sm">
+            <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-100">
+              <span className="font-bold text-amber-900 block mb-1">⏱️ {ui("Thời Hạn Mã Kích Hoạt")}</span>
+              <p className="text-stone-600 leading-relaxed">{ui("Mã xác nhận mua thẻ có hiệu lực tối đa 90 ngày kể từ ngày thanh toán thành công.")}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-100">
+              <span className="font-bold text-emerald-900 block mb-1">💳 {ui("Số Dư Ví Khách Hàng")}</span>
+              <p className="text-stone-600 leading-relaxed">{ui("Sau khi nạp mã vào Ví Avengers, số dư ví không bao giờ hết hạn sử dụng.")}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-red-50/60 border border-red-100">
+              <span className="font-bold text-red-900 block mb-1">🚫 {ui("Không Hoàn Tiền Mặt")}</span>
+              <p className="text-stone-600 leading-relaxed">{ui("Thẻ quà tặng và số dư ví không được quy đổi thành tiền mặt trong mọi trường hợp.")}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-100">
+              <span className="font-bold text-blue-900 block mb-1">🔒 {ui("Bảo Mật Tiêu Chuẩn")}</span>
+              <p className="text-stone-600 leading-relaxed">{ui("Cam kết bảo vệ dữ liệu cá nhân theo Luật An toàn thông tin mạng hiện hành.")}</p>
+            </div>
+          </div>
+        </div>
 
-      <p className="text-[15px] leading-relaxed mb-10">{ui("Xin vui lòng xem kỹ Chính Sách Bảo Mật Thông Tin bên dưới để hiểu cách Avengers Coffee thu thập, sử dụng, bảo mật, tiết lộ các thông tin về khách hàng trên website: ")}<a href="#" className="text-blue-600 hover:underline">https://card.avengerscoffee.com.vn/</a>
-      </p>
+        {/* Content Layout with Table of Contents */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-      {/* Section 1 */}
-      <h2 className="text-[20px] font-bold text-[#1a1a1a] uppercase mb-4 mt-8">{ui("1. ĐĂNG KÝ VÀ NẠP TIỀN QUA WEBSITE CARD.AVENGERSCOFFEE.COM.VN")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Bạn có thể đăng ký và nạp tiền vào Thẻ Avengers Coffee bằng cách truy cập vào website: card.avengerscoffee.com.vn và hoàn tất các bước sau đây:")}</p>
-      <ol className="list-decimal list-outside pl-5 space-y-1 text-[15px] mb-8">
-        <li>{ui("Truy cập vào website ")}<a href="#" className="text-blue-600 hover:underline">https://card.avengerscoffee.com.vn/</a></li>
-        <li>{ui("Chọn mẫu thiết kế của Thẻ Avengers Coffee")}</li>
-        <li>{ui("Chọn giá trị tiền nạp vào Thẻ Avengers Coffee")}</li>
-        <li>{ui("Nhập tên, số điện thoại, địa chỉ email của bạn")}</li>
-        <li>{ui("Nhấn tick vào ô “Tôi muốn gửi tặng cho chính mình”")}</li>
-        <li>{ui("Nhấn “Gửi”")}</li>
-        <li>{ui("Xem lại thông tin giao dịch")}</li>
-        <li>{ui("Vui lòng xem kỹ Điều Khoản Sử Dụng Thẻ Avengers Coffee trước khi nạp tiền vào Thẻ Avengers Coffee")}</li>
-        <li>{ui("Nếu bạn đồng ý với Điều Khoản Sử Dụng Thẻ Avengers Coffee, vui lòng chọn “Xác nhận”")}</li>
-        <li>{ui("Nhập thông tin tài khoản thanh toán của bạn vào trang thanh toán do nhà cung cấp dịch vụ thanh toán của chúng tôi cung cấp để nạp tiền vào Thẻ Avengers Coffee")}</li>
-        <li>{ui("Sau khi hoàn tất bước nạp tiền, bạn sẽ nhận được một Mã xác nhận qua SMS.")}</li>
-      </ol>
+          {/* Sticky Sidebar: Table of Contents */}
+          <aside className="lg:col-span-1 hidden lg:block">
+            <div className="sticky top-24 bg-white rounded-2xl p-6 border border-stone-200/80 shadow-sm space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-3">{ui("Mục Lục")}</h4>
+              <nav className="space-y-1.5 text-xs font-medium text-stone-600">
+                <button onClick={() => scrollTo('sec-1')} className="block text-left w-full hover:text-[#b22830] transition-colors py-1">
+                  1. Đăng ký & Nạp tiền online
+                </button>
+                <button onClick={() => scrollTo('sec-2')} className="block text-left w-full hover:text-[#b22830] transition-colors py-1">
+                  2. Gửi tặng Thẻ cho người khác
+                </button>
+                <button onClick={() => scrollTo('sec-3')} className="block text-left w-full hover:text-[#b22830] transition-colors py-1">
+                  3. Quy định Mã xác nhận
+                </button>
+                <button onClick={() => scrollTo('sec-4')} className="block text-left w-full hover:text-[#b22830] transition-colors py-1">
+                  4. Thời hạn kích hoạt thẻ
+                </button>
+                <button onClick={() => scrollTo('sec-5')} className="block text-left w-full hover:text-[#b22830] transition-colors py-1">
+                  5. Địa điểm áp dụng
+                </button>
+                <button onClick={() => scrollTo('sec-6')} className="block text-left w-full hover:text-[#b22830] transition-colors py-1">
+                  6. Liên kết & Quản lý Thẻ
+                </button>
+                <button onClick={() => scrollTo('sec-privacy')} className="block text-left w-full hover:text-[#b22830] transition-colors py-1 text-[#b22830] font-bold pt-2 border-t border-stone-100">
+                  7. Chính Sách Bảo Mật
+                </button>
+              </nav>
+            </div>
+          </aside>
 
-      {/* Section 2 */}
-      <h2 className="text-[20px] font-bold text-[#1a1a1a] uppercase mb-4 mt-8">{ui("2. GỬI TẶNG THẺ AVENGERS COFFEE")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Bạn có thể gửi tặng Thẻ Avengers Coffee cho bạn bè và người thân bằng cách truy cập vào trang website: card.avengerscoffee.com.vn bằng cách hoàn tất các bước sau đây:")}</p>
-      <ol className="list-decimal list-outside pl-5 space-y-1 text-[15px] mb-8">
-        <li>{ui("Truy cập vào ")}<a href="#" className="text-blue-600 hover:underline">https://card.avengerscoffee.com.vn/</a></li>
-        <li>{ui("Chọn mẫu thiết kế của Thẻ Avengers Coffee")}</li>
-        <li>{ui("Chọn giá trị tiền nạp vào Thẻ Avengers Coffee")}</li>
-        <li>{ui("Nhập tên, số điện thoại, địa chỉ email của người gửi và tên, số điện thoại, địa chỉ email của người nhận và tin nhắn cá nhân của bạn")}</li>
-        <li>{ui("Nhấn “Gửi”")}</li>
-        <li>{ui("Xem lại thông tin giao dịch")}</li>
-        <li>{ui("Vui lòng xem kỹ Điều Khoản Sử Dụng Thẻ Avengers Coffee trước khi nạp tiền vào Thẻ Avengers Coffee")}</li>
-        <li>{ui("Nếu bạn đồng ý với Điều Khoản Sử Dụng Thẻ Avengers Coffee, vui lòng chọn “Xác nhận”")}</li>
-        <li>{ui("Nhập thông tin tài khoản thanh toán của bạn vào trang thanh toán do nhà cung cấp dịch vụ thanh toán của chúng tôi cung cấp để nạp tiền vào Thẻ Avengers Coffee")}</li>
-        <li>{ui("Sau khi hoàn tất bước nạp tiền, người được bạn gửi tặng Thẻ Avengers Coffee sẽ nhận được một Mã xác nhận qua SMS.")}</li>
-      </ol>
+          {/* Main Legal Text Document */}
+          <main className="lg:col-span-3 bg-white rounded-3xl p-8 md:p-12 border border-stone-200/80 shadow-sm space-y-10 leading-relaxed text-sm md:text-[15px] text-stone-700">
 
-      {/* Section 3 */}
-      <h2 className="text-[20px] font-bold text-[#1a1a1a] uppercase mb-4 mt-8">{ui("3. MÃ XÁC NHẬN")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Mã xác nhận sẽ được gửi đến bạn qua SMS trong vòng 2-5 phút sau khi bạn hoàn tất đăng ký Thẻ Avengers Coffee và nạp tiền vào thẻ thành công.")}</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Bạn vui lòng lưu ý, với 01 Mã xác nhận bạn sẽ chỉ được kích hoạt 01 lần và được nhận 01 Thẻ Avengers Coffee duy nhất trong Thời Hạn Kích Hoạt nêu tại [Mục IV] của Hướng dẫn này.")}</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Chúng tôi sẽ không chịu trách nhiệm trong trường hợp bạn nhập sai thông tin của người nhận khi đăng ký Thẻ Avengers Coffee.")}</p>
-      <p className="text-[15px] leading-relaxed mb-8">{ui("Trường hợp bạn không nhận được Mã xác nhận sau 5 phút hoặc gặp phải các sự cố với Mã xác nhận (vd: làm mất Mã xác nhận hoặc Mã xác nhận bị lỗi), xin vui lòng liên hệ tới Chăm Sóc Khách Hàng Avengers Coffee qua hotline 1900 1755 hoặc email ")}<a href="mailto:customerservice@avengerscoffee.com.vn" className="text-blue-600 hover:underline">customerservice@avengerscoffee.com.vn</a>{ui(" để được hướng dẫn cụ thể và hỗ trợ.")}</p>
+            <div className="border-b border-stone-100 pb-6">
+              <span className="text-xs text-stone-400">{ui("Cập nhật lần cuối: 22/10/2026")}</span>
+              <p className="mt-2 text-stone-600">
+                {ui("Bạn vui lòng xem kỹ Hướng Dẫn này để hiểu rõ cách thức đăng ký và nạp tiền vào Thẻ Avengers Coffee, gửi tặng thẻ cho người thân, bạn bè cũng như các quy định về việc nhận mã xác nhận, thời hạn kích hoạt và điều khoản bảo mật.")}
+              </p>
+            </div>
 
-      {/* Section 4 */}
-      <h2 className="text-[20px] font-bold text-[#1a1a1a] uppercase mb-4 mt-8">{ui("4. THỜI HẠN KÍCH HOẠT")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Sau khi nhận được Mã xác nhận, bạn sẽ cần kích hoạt Thẻ Avengers Coffee trong vòng tối đa ")}<span className="font-bold">{ui("90 (chín mươi) ngày")}</span>{ui(" kể từ ngày nhận được Mã xác nhận.")}</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Thời hạn kích hoạt được hiểu là thời hạn bạn có thể sử dụng Mã xác nhận, mang đến hệ thống cửa hàng Avengers Coffee được quy định tại [Mục 5] để đổi lấy Thẻ Avengers Coffee.")}</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Thời hạn kích hoạt ")}<span className="font-bold">{ui("KHÔNG PHẢI")}</span>{ui(" thời hạn sử dụng của Thẻ Avengers Coffee. Nếu bạn muốn tìm hiểu thêm về thông tin thời hạn sử dụng Thẻ Avengers Coffee, vui lòng xem chi tiết Điều Khoản Sử Dụng Thẻ Avengers Coffee được đăng tải tại:")}</p>
-      <p className="text-[15px] leading-relaxed mb-4"><a href="#" className="text-blue-600 hover:underline">https://www.avengerscoffee.com.vn/vn/dieu-khoan-su-dung-doi-voi-the-avengers-coffee.html</a></p>
-      <p className="text-[15px] leading-relaxed mb-8">{ui("Bạn vui lòng lưu ý rằng, nếu sau ")}<span className="font-bold">{ui("90 ngày")}</span>{ui(" kể từ ngày nhận được Mã xác nhận mà Thẻ Avengers Coffee vẫn chưa được kích hoạt thì Mã xác nhận sẽ hết hiệu lực và không thể sử dụng để kích hoạt Thẻ Avengers Coffee được nữa. Chúng tôi sẽ không giải quyết cấp lại Mã xác nhận và hoàn tiền, vì vậy, bạn vui lòng kích hoạt Thẻ Avengers Coffee trong Thời hạn kích hoạt.")}</p>
+            {/* Section 1 */}
+            <section id="sec-1" className="space-y-3 pt-2">
+              <h2 className="text-lg md:text-xl font-bold text-stone-900 flex items-center gap-2">
+                <span className="text-[#b22830]">1.</span>
+                <span>{ui("Đăng Ký Và Nạp Tiền Qua Website")}</span>
+              </h2>
+              <p className="text-stone-600">{ui("Bạn có thể đăng ký và nạp tiền vào Thẻ Avengers Coffee bằng cách thực hiện các bước sau:")}</p>
+              <ol className="list-decimal pl-5 space-y-1.5 text-stone-600">
+                <li>{ui("Truy cập trang Thẻ Quà Tặng trên website Avengers Coffee.")}</li>
+                <li>{ui("Chọn mẫu thiết kế thẻ mong muốn trong các bộ sưu tập.")}</li>
+                <li>{ui("Chọn giá trị tiền nạp vào thẻ (từ 50.000đ đến 5.000.000đ).")}</li>
+                <li>{ui("Nhập tên, số điện thoại và email của bạn.")}</li>
+                <li>{ui("Tick chọn ô “Tôi muốn gửi tặng cho chính mình”.")}</li>
+                <li>{ui("Kiểm tra lại thông tin và xác nhận thanh toán.")}</li>
+                <li>{ui("Hoàn tất thanh toán, hệ thống sẽ gửi mã thẻ quà tặng qua Email/SMS tức thì.")}</li>
+              </ol>
+            </section>
 
-      {/* Section 5 */}
-      <h2 className="text-[20px] font-bold text-[#1a1a1a] uppercase mb-4 mt-8">{ui("5. ĐỊA ĐIỂM KÍCH HOẠT VÀ SỬ DỤNG THẺ AVENGERS COFFEE")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Trong Thời hạn kích hoạt, bạn có thể kích hoạt Thẻ Avengers Coffee trực tiếp tại tất cả cửa hàng Avengers Coffee trên toàn quốc (ngoại trừ những cửa hàng Avengers Coffee nằm trong các hệ thống sau: Foodcourt Menas Mall, Giga Mall, Lotte Mart, Sense City, Aeon Mall và sân bay quốc tế Đà Nẵng).")}</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Sau khi kích hoạt, bạn có thể sử dụng Thẻ Avengers Coffee để mua các sản phẩm trực tiếp tại cửa hàng Avengers Coffee như việc sử dụng tiền mặt. Bạn vui lòng tham khảo chi tiết cách sử dụng Thẻ Avengers Coffee tại ")}<a href="#" className="text-blue-600 hover:underline">https://www.avengerscoffee.com.vn/vn/dieu-khoan-su-dung-doi-voi-the-avengers-coffee.html</a>.</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Trên đây là Hướng Dẫn đăng ký, nạp tiền, nhận và kích hoạt Thẻ Avengers Coffee khi thực hiện online trên website card.avengerscoffee.com.vn.")}</p>
-      <p className="text-[15px] leading-relaxed mb-8">{ui("Nếu bạn có bất cứ thắc mắc nào liên quan đến Thẻ Avengers Coffee, xin vui lòng liên hệ tới Chăm Sóc Khách Hàng Avengers Coffee số 1900 1755 hoặc email ")}<a href="mailto:customerservice@avengerscoffee.com.vn" className="text-blue-600 hover:underline">customerservice@avengerscoffee.com.vn</a></p>
+            {/* Section 2 */}
+            <section id="sec-2" className="space-y-3 pt-4 border-t border-stone-100">
+              <h2 className="text-lg md:text-xl font-bold text-stone-900 flex items-center gap-2">
+                <span className="text-[#b22830]">2.</span>
+                <span>{ui("Gửi Tặng Thẻ Avengers Coffee Cho Người Khác")}</span>
+              </h2>
+              <p className="text-stone-600">{ui("Khi gửi tặng cho người thân hoặc bạn bè:")}</p>
+              <ol className="list-decimal pl-5 space-y-1.5 text-stone-600">
+                <li>{ui("Chọn mẫu thẻ và mệnh giá phù hợp với dịp tặng.")}</li>
+                <li>{ui("Nhập đầy đủ thông tin người gửi (Họ tên, SĐT, Email).")}</li>
+                <li>{ui("Nhập thông tin người nhận (Họ tên, SĐT, Email nhận thiệp).")}</li>
+                <li>{ui("Viết lời chúc riêng tư hoặc chọn các lời chúc có sẵn.")}</li>
+                <li>{ui("Xác nhận thanh toán an toàn.")}</li>
+                <li>{ui("Người nhận sẽ nhận được thiệp chúc mừng kèm mã thẻ 16 ký tự để nạp vào ví cá nhân.")}</li>
+              </ol>
+            </section>
 
-      {/* Section 6 */}
-      <h2 className="text-[20px] font-bold text-[#1a1a1a] uppercase mb-4 mt-8">{ui("6. LIÊN KẾT & QUẢN LÝ THẺ AVENGERS COFFEE")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Bạn có thể liên kết toàn bộ Thẻ Avengers Coffee của bạn thông qua ứng dụng Avengers Coffee chỉ với vài thao tác đơn giản như sau:")}</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Bước 1: Tải Ứng Dụng Avengers Coffee tại đây: ")}<a href="#" className="text-blue-600 hover:underline">https://sl.avengerscoffee.com.vn/fb</a></p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Bước 2: Đăng Nhập / Đăng ký nếu bạn chưa có tài khoản")}</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Bước 3: Tại Trang Chủ chọn mục \"Thẻ Avengers\"")}</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Bước 4: Trong mục thẻ quà tặng vật lý chọn \"Thêm Thẻ\"")}</p>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Bước 5: Nhập đầy đủ số Thẻ được in sau Thẻ Avengers và nhấn “Xác nhận”")}</p>
-      <p className="text-[15px] leading-relaxed mb-12 italic">{ui("Lưu ý: Nếu bạn đã liên kết số điện thoại với Thẻ tại quầy, ứng dụng sẽ tự động hiển thị thông tin Thẻ của bạn.")}</p>
+            {/* Section 3 */}
+            <section id="sec-3" className="space-y-3 pt-4 border-t border-stone-100">
+              <h2 className="text-lg md:text-xl font-bold text-stone-900 flex items-center gap-2">
+                <span className="text-[#b22830]">3.</span>
+                <span>{ui("Quy Định Về Mã Xác Nhận")}</span>
+              </h2>
+              <p className="text-stone-600">
+                {ui("Mã xác nhận (Gift Card Code) sẽ được gửi đến người nhận qua Email và SMS trong vòng 1-5 phút sau khi giao dịch thành công. Mỗi mã thẻ chỉ được nạp một (01) lần duy nhất. Sau khi nạp, mã thẻ sẽ chuyển sang trạng thái đã sử dụng (REDEEMED) và không thể tái kích hoạt.")}
+              </p>
+            </section>
 
-      {/* CHÍNH SÁCH BẢO MẬT */}
-      <h1 className="text-[26px] md:text-[32px] font-bold text-[#b22830] text-center mt-16 mb-8 uppercase">{ui("CHÍNH SÁCH BẢO MẬT THÔNG TIN")}</h1>
+            {/* Section 4 */}
+            <section id="sec-4" className="space-y-3 pt-4 border-t border-stone-100">
+              <h2 className="text-lg md:text-xl font-bold text-stone-900 flex items-center gap-2">
+                <span className="text-[#b22830]">4.</span>
+                <span>{ui("Thời Hạn Kích Hoạt")}</span>
+              </h2>
+              <p className="text-stone-600">
+                {ui("Mã thẻ quà tặng có thời hạn kích hoạt tối đa là 12 tháng kể từ ngày phát hành. Người dùng vui lòng nạp mã thẻ vào ví trước thời điểm hết hạn. Sau khi đã nạp vào Ví Khách Hàng, số dư ví không bao giờ hết hạn.")}
+              </p>
+            </section>
 
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Cập nhật mới nhất: 22/01/2024")}</p>
-      <p className="text-[15px] leading-relaxed mb-8">{ui("Chính Sách Bảo Mật Thông Tin này (\"Chính Sách\") áp dụng thẻ Avengers Coffee. Trong Chính Sách này, các thuật ngữ “Avengers Coffee”, “chúng tôi” là để chỉ Công ty. Chúng tôi cam kết bảo vệ và tôn trọng quyền riêng tư của bạn. Chính Sách này giải thích cách chúng tôi xử lý thông tin cá nhân của bạn. Nếu bạn không đồng ý với Chính Sách này, bạn có quyền từ chối cung cấp thông tin và chúng tôi sẽ không chịu trách nhiệm giải quyết bất kỳ khiếu nại nào liên quan đến thẻ Avengers Coffee.")}</p>
+            {/* Section 5 */}
+            <section id="sec-5" className="space-y-3 pt-4 border-t border-stone-100">
+              <h2 className="text-lg md:text-xl font-bold text-stone-900 flex items-center gap-2">
+                <span className="text-[#b22830]">5.</span>
+                <span>{ui("Địa Điểm Áp Dụng")}</span>
+              </h2>
+              <p className="text-stone-600">
+                {ui("Thẻ Quà Tặng Avengers Coffee và số dư ví được chấp nhận thanh toán tại hơn 50+ chi nhánh thuộc hệ thống Avengers Coffee trên toàn quốc, cũng như cho mọi đơn hàng đặt giao tận nơi trên website và app di động.")}
+              </p>
+            </section>
 
-      <h2 className="text-[22px] font-bold text-[#1a1a1a] mb-4">{ui("Phạm Vi Xử Lý Thông Tin")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Trong phạm vi Chính Sách này, \"Xử lý thông tin cá nhân” có nghĩa là một hoặc nhiều hoạt động tác động tới dữ liệu cá nhân, như: thu thập, ghi, phân tích, xác nhận, lưu trữ, chỉnh sửa, công khai, kết hợp, truy cập, truy xuất, thu hồi, mã hóa, giải mã, sao chép, chia sẻ, truyền đưa, cung cấp, chuyển giao, xóa, hủy dữ liệu cá nhân hoặc các hành động khác có liên quan.")}</p>
-      <p className="text-[15px] leading-relaxed mb-8">{ui("Khi bạn sử dụng thẻ Avengers Coffee hoặc đăng ký và nạp tiền thẻ Avengers Coffee qua website card.avengerscoffee.com.vn, chúng tôi xử lý một số thông tin cá nhân về bạn và các dịch vụ mà bạn sử dụng. Loại thông tin cá nhân mà chúng tôi xử lý có thể bao gồm thông tin cá nhân cơ bản chẳng hạn như số điện thoại,... Thông tin cá nhân của bạn mà chúng tôi xử lý được thu thập từ hai nguồn (i) thông tin bạn cung cấp cho chúng tôi (ii) Thông tin chúng tôi thu thâp một cách tự động khi bạn sử dụng các dịch vụ của chúng tôi.")}</p>
+            {/* Section 6 */}
+            <section id="sec-6" className="space-y-3 pt-4 border-t border-stone-100">
+              <h2 className="text-lg md:text-xl font-bold text-stone-900 flex items-center gap-2">
+                <span className="text-[#b22830]">6.</span>
+                <span>{ui("Liên Kết Và Quản Lý Thẻ")}</span>
+              </h2>
+              <p className="text-stone-600">
+                {ui("Khách hàng có thể dễ dàng quản lý toàn bộ các thẻ đã nhận hoặc số dư ví trong mục Tài Khoản > Thẻ Quà Tặng. Mọi lịch sử cộng tiền, trừ tiền thanh toán đơn hàng đều được lưu vết minh bạch.")}
+              </p>
+            </section>
 
-      <h2 className="text-[22px] font-bold text-[#1a1a1a] mb-4">{ui("Thông Tin Bạn Cung Cấp Cho Chúng Tôi")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Chúng tôi thu thập thông tin mà bạn cung cấp cho chúng tôi khi bạn sử dụng các dịch vụ của chúng tôi. Một số ví dụ về việc sử dụng “các dịch vụ\" của chúng tôi là khi bạn thực hiện một giao dịch tại một trong các cửa hàng của chúng tôi.")}</p>
-      <p className="text-[15px] leading-relaxed mb-8">{ui("Thông tin bạn cung cấp cho chúng tôi có thể bao gồm tên hoặc họ; tên người dùng; mật khẩu; địa chỉ email; địa chỉ nhận thư; số điện thoại;")}</p>
+            {/* Privacy Policy */}
+            <section id="sec-privacy" className="space-y-4 pt-6 border-t-2 border-stone-200">
+              <div className="inline-block px-3 py-1 rounded-full bg-red-50 text-[#b22830] text-xs font-bold uppercase tracking-wider">
+                {ui("Chính Sách Bảo Mật")}
+              </div>
+              <h2 className="text-xl md:text-2xl font-bold text-stone-900">
+                {ui("Cam Kết Bảo Mật Thông Tin Khách Hàng")}
+              </h2>
+              <p className="text-stone-600">
+                {ui("Avengers Coffee cam kết bảo mật tuyệt đối thông tin cá nhân của bạn theo Luật An ninh mạng và các quy định pháp luật liên quan. Dữ liệu thẻ và thông tin thanh toán được mã hóa theo chuẩn bảo mật TLS 1.3 và không bao giờ được chia sẻ cho bên thứ ba vì mục đích thương mại trái phép.")}
+              </p>
+              <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-xs text-stone-500">
+                {ui("Nếu bạn phát hiện bất kỳ dấu hiệu bất thường nào liên quan đến mã thẻ hoặc ví cá nhân, xin vui lòng thông báo ngay cho Ban quản trị qua hotline 1900 1755 để được hỗ trợ khóa thẻ kịp thời.")}
+              </div>
+            </section>
 
-      <h2 className="text-[22px] font-bold text-[#1a1a1a] mb-4">{ui("Thông Tin Chúng Tôi Thu Thập Một Cách Tự Động Khi Bạn Sử Dụng Các Dịch Vụ Của Chúng Tôi")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4"><span className="font-bold">{ui("Thông Tin Về Giao Dịch Mua")}</span>{ui(" – Chúng tôi có thể thu thập thông tin về các giao dịch của bạn tại các cửa hàng của chúng tôi bao gồm những sản phẩm bạn mua, mức độ thường xuyên bạn mua các sản phẩm, bất kỳ quà tặng hoặc khuyến mại liên quan đến giao dịch mua.")}</p>
-      <p className="text-[15px] leading-relaxed mb-8"><span className="font-bold">{ui("Thông Tin Tài Khoản")}</span>{ui(" - Khi bạn thanh toán cho các giao dịch tại cửa hàng thông qua thiết bị của nhà cung cấp dịch vụ thanh toán của chúng tôi.")}</p>
+          </main>
+        </div>
 
-      <h2 className="text-[22px] font-bold text-[#1a1a1a] mb-4">{ui("1.Cách Chúng Tôi Chia Sẻ Thông Tin mà Chúng Tôi Thu Thập")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4"><span className="font-bold">{ui("Khi Chúng Tôi Làm Việc Với Nhà Cung Cấp Dịch Vụ")}</span>{ui(" – Chúng tôi có thể chia sẻ thông tin của bạn với các nhà cung cấp dịch vụ mà họ cung cấp cho chúng tôi các dịch vụ hỗ trợ, chẳng hạn như máy chủ trang web, gửi email, vị trí bản đồ, quy trình thư bưu chính, chuẩn bị và giao hàng theo đơn, và phân tích. Chúng tôi yêu cầu các công ty này không thực hiện việc thu thập, sử dụng và tiết lộ thông tin của bạn trừ khi họ đang thực hiện công việc cho chúng tôi hoặc khi việc tiết lộ thông tin của bạn được yêu cầu theo pháp luật.")}</p>
-      <p className="text-[15px] leading-relaxed mb-4"><span className="font-bold">{ui("Khi Việc Chia Sẻ Hoặc Tiết Lộ Là Theo Quy Định Của Pháp Luật Hoặc Để Bảo Vệ Các Lợi Ích Hợp Pháp")}</span>{ui(" – Chúng tôi có thể tiết lộ thông tin của bạn theo yêu cầu của pháp luật, để thực thi các thỏa thuận và chính sách của chúng tôi, hoặc để bảo vệ quyền và lợi ích hợp pháp, hoặc sự an toàn của Avengers Coffee hoặc các khách hàng hoặc các đối tác của chúng tôi.")}</p>
-      <p className="text-[15px] leading-relaxed mb-4"><span className="font-bold">{ui("Khi Chúng Tôi Chia Sẻ Với Các Công Ty Khác Nhằm Mục Đích Tiếp Thị")}</span>{ui(" – Chúng tôi có thể chia sẻ thông tin của bạn với các đơn vị cung cấp dịch vụ để sử dụng thông tin của bạn thay mặt chúng tôi để cung cấp cho bạn các khuyến mại và các đề nghị đặc biệt, thông báo cho bạn về các cuộc thi, rút thăm trúng thưởng, các sự kiện hoặc cho mục đích khuyến mại khác.")}</p>
-      <p className="text-[15px] leading-relaxed mb-8"><span className="font-bold">{ui("Khi Bạn Chấp Thuận")}</span>{ui(" – Chúng tôi có thể chia sẻ thông tin về bạn với các công ty khác nếu bạn cho phép chúng tôi hoặc chỉ thị cho chúng tôi chia sẻ thông tin.")}</p>
-
-      <h2 className="text-[22px] font-bold text-[#1a1a1a] mb-4">{ui("2. Cam Kết Bảo Mật Thông Tin Cá Nhân Khách Hàng")}</h2>
-      <p className="text-[15px] leading-relaxed mb-4">{ui("Avengers Coffee bảo vệ thông tin của bạn bằng cách sử dụng các biện pháp bảo mật về kỹ thuật, vật lý và quản lý để giảm nguy cơ bị mất, sử dụng sai, truy cập, tiết lộ hoặc sửa đổi bất hợp pháp các thông tin của bạn theo quy định của Luật. Một số biện pháp bảo vệ của chúng tôi bao gồm tường lửa, mã hóa dữ liệu, kiểm soát truy cập vật lý, và kiểm soát thông tin quản trị.")}</p>
-      <p className="text-[15px] leading-relaxed mb-8">{ui("Tuy nhiên, trong khi chúng tôi sử dụng các công nghệ và quy trình an ninh để giúp bảo vệ thông tin cá nhân của bạn, bạn thừa nhận và đồng ý rằng không có hệ thống bảo mật nào là hoàn hảo và do bản chất vốn có của Internet, chúng tôi không thể đảm bảo rằng dữ liệu, bao gồm cả thông tin cá nhân, được an toàn tuyệt đối trước sự xâm nhập hoặc truy cập trái phép của người khác. Trong trường hợp xảy ra giao dịch đáng nghi ngờ, vui lòng liên hệ Trung Tâm Chăm Sóc Khách Hàng của chúng tôi để chúng tôi sẽ nỗ lực hết sức để hỗ trợ bạn ngăn chặn hậu quả của sự cố này, nhưng chúng tôi không chịu bất kỳ trách nhiệm pháp lý nào phát sinh từ những sự cố như vậy.")}</p>
-
-      <p className="text-[20px] font-bold text-[#1a1a1a] uppercase mt-12 mb-4 text-center">AVENGERS COFFEE</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};

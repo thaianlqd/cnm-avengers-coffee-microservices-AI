@@ -1,8 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { randomUUID } from 'expo-crypto'
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { AppState } from 'react-native'
 import apiClient, { clearAuthToken, setAuthToken, setGuestSessionId } from '../lib/apiClient'
-import { clearUserSession, loadUserSession, saveUserSession, getGuestUserId } from '../lib/storage'
+import { clearUserSession, loadUserSession, saveUserSession, getGuestUserId, touchUserSession, userSessionExpired } from '../lib/storage'
 import { getUserId } from '../lib/customerData'
 
 const UserContext = createContext(null)
@@ -31,6 +32,8 @@ export function UserProvider({ children }) {
   const [guestId, setGuestId] = useState(null)
   const [cartMergeError, setCartMergeError] = useState('')
   const [hydrated, setHydrated] = useState(false)
+  const lastTouchWrite = useRef(0)
+  const sessionVersion = useRef(0)
 
   useEffect(() => {
     ; (async () => {
@@ -65,10 +68,12 @@ export function UserProvider({ children }) {
       throw new Error('Chưa nhận được phiên đăng nhập hợp lệ. Bạn hãy thử lại.')
     }
 
+    ++sessionVersion.current
     setUser(nextUser)
     setToken(nextToken)
     await setAuthToken(nextToken)
     await saveUserSession(nextUser, nextToken)
+    await touchUserSession()
 
     // Same guest capability merge as web; failed merges remain retryable.
     try {
@@ -127,8 +132,10 @@ export function UserProvider({ children }) {
       return null
     }
 
+    const version = sessionVersion.current
     const profile = await apiClient.get(`/users/${userId}/profile`)
     const loyalty = await apiClient.get(`/users/${userId}/loyalty`).catch(() => null)
+    if (version !== sessionVersion.current) return null
 
     const nextUser = normalizeUser({
       ...user,
@@ -143,11 +150,31 @@ export function UserProvider({ children }) {
   }
 
   const logout = async () => {
+    ++sessionVersion.current
     setUser(null)
     setToken(null)
+    queryClient.clear()
     await clearAuthToken()
     await clearUserSession()
   }
+
+  const verifyIdle = async () => {
+    if (token && await userSessionExpired()) await logout()
+  }
+  const touchSession = async () => {
+    if (!token) return
+    if (await userSessionExpired()) { await logout(); return }
+    if (Date.now() - lastTouchWrite.current < 15000) return
+    lastTouchWrite.current = Date.now()
+    await touchUserSession()
+  }
+
+  useEffect(() => {
+    if (!token) return undefined
+    const timer = setInterval(verifyIdle, 30000)
+    const subscription = AppState.addEventListener('change', state => { if (state === 'active') verifyIdle() })
+    return () => { clearInterval(timer); subscription.remove() }
+  }, [token])
 
   const activeUserId = useMemo(() => {
     return user?.id || user?.ma_nguoi_dung || guestId || 'guest-customer'
@@ -167,6 +194,7 @@ export function UserProvider({ children }) {
       updateSession,
       refreshProfile,
       logout,
+      touchSession,
     }),
     [hydrated, user, token, guestId, activeUserId, cartMergeError],
   )

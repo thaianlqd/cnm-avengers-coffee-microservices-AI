@@ -78,19 +78,22 @@ function cleanGeoName(str) {
 
 export function normalizeAddressSelection(parsedAddress, addressOptions) {
   const parsed = parsedAddress || {};
-  const fallback = getAddressSelectionDefaults(addressOptions);
 
   const cityKeys = Object.keys(addressOptions || {});
-  let city = cityKeys.find(
-    (c) => c === parsed.city || (parsed.city && (cleanGeoName(c) === cleanGeoName(parsed.city) || cleanGeoName(c).includes(cleanGeoName(parsed.city)) || cleanGeoName(parsed.city).includes(cleanGeoName(c))))
-  );
-  if (!city) city = fallback.city || parsed.city || '';
+  let city = '';
+  if (parsed.city) {
+    city = cityKeys.find(
+      (c) => c === parsed.city || (cleanGeoName(c) === cleanGeoName(parsed.city) || cleanGeoName(c).includes(cleanGeoName(parsed.city)) || cleanGeoName(parsed.city).includes(cleanGeoName(c)))
+    ) || parsed.city;
+  }
 
-  const wardKeys = addressOptions?.[city] || [];
-  let ward = wardKeys.find(
-    (w) => w === parsed.ward || (parsed.ward && (cleanGeoName(w) === cleanGeoName(parsed.ward) || cleanGeoName(w).includes(cleanGeoName(parsed.ward)) || cleanGeoName(parsed.ward).includes(cleanGeoName(w))))
-  );
-  if (!ward) ward = wardKeys[0] || parsed.ward || fallback.ward || '';
+  const wardKeys = city ? (addressOptions?.[city] || []) : [];
+  let ward = '';
+  if (parsed.ward) {
+    ward = wardKeys.find(
+      (w) => w === parsed.ward || (cleanGeoName(w) === cleanGeoName(parsed.ward) || cleanGeoName(w).includes(cleanGeoName(parsed.ward)) || cleanGeoName(parsed.ward).includes(cleanGeoName(w)))
+    ) || parsed.ward;
+  }
 
   return {
     city,

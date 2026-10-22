@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
-import { MessageSquare, Search, RefreshCw, Send, ChevronLeft, Check, Sparkles } from 'lucide-react'
+import { MessageSquare, Search, RefreshCw, Send, ChevronLeft, Check, Sparkles } from '../../../components/console/WorkspaceIcons'
 import { createStaffInbox, filteredConversations, SUPPORT_REPLIES } from '../../../components/console/staffInbox.mjs'
 import './StaffInbox.css'
 

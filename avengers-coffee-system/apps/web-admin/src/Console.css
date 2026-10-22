@@ -65,9 +65,9 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: #fff !important;
+  background: #09090b !important;
   border: 0 !important;
-  border-right: 1px solid var(--border-light) !important;
+  border-right: 1px solid #18181b !important;
   box-shadow: none !important;
   padding: 20px 14px !important;
   overflow: hidden;
@@ -269,7 +269,7 @@
   max-width: 100%;
   border-radius: 9px !important;
   font-size: 13px !important;
-  border-color: #dce4ef !important;
+  border-color: #d9ded4 !important;
   box-shadow: none !important;
 }
 .console-shell textarea {
@@ -370,24 +370,32 @@
 .console-segments {
   display: flex;
   gap: 4px;
-  padding: 5px;
-  border: 1px solid #e4eaf2;
-  background: white;
-  border-radius: 11px;
+  padding: 4px;
+  border: 1px solid #e4e4e7;
+  background: #f4f4f5;
+  border-radius: 8px;
 }
 .console-segments button {
-  border: 0;
+  border: 1px solid transparent;
   background: transparent;
-  border-radius: 7px;
-  color: #65738b;
-  padding: 8px 12px;
-  font-weight: 600;
+  border-radius: 6px;
+  color: #71717a;
+  padding: 6px 12px;
+  font-weight: 500;
   font-size: 12px;
+  cursor: pointer;
   box-shadow: none !important;
+  transition: all 0.15s ease;
+}
+.console-segments button:hover {
+  color: #09090b;
 }
 .console-segments button[aria-pressed="true"] {
-  background: var(--primary);
-  color: #fff;
+  background: #ffffff;
+  border-color: #e4e4e7;
+  color: #09090b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  font-weight: 600;
 }
 .console-kpis {
   display: grid;
@@ -446,15 +454,15 @@
   color: var(--primary);
 }
 .tone-teal {
-  background: #eaf7fd;
+  background: #f4f5f2;
   color: #0284c7;
 }
 .tone-amber {
-  background: #fff7e5;
+  background: #f4f5f2;
   color: #cc8b24;
 }
 .tone-red {
-  background: #fff0f2;
+  background: #f4f5f2;
   color: #d15165;
 }
 .console-charts {
@@ -587,7 +595,7 @@
   line-height: 1.8;
 }
 .console-error {
-  background: #fff3f4;
+  background: #f4f5f2;
   color: #af2944;
   padding: 16px;
   border: 1px solid #fad8df;
@@ -604,7 +612,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid #dce4ef;
+  border: 1px solid #d9ded4;
   border-radius: 9px;
   padding: 9px 13px;
   background: #fff;
@@ -944,11 +952,11 @@
   fill: none !important;
 }
 .console-chart .console-plot circle {
-  fill: var(--primary) !important;
+  fill: var(--chart-primary, #4f86c6) !important;
 }
 .console-chart .console-plot polyline {
   fill: none !important;
-  stroke: var(--primary) !important;
+  stroke: var(--chart-primary, #4f86c6) !important;
 }
 .console-sidebar .logout-btn {
   box-shadow: none !important;
@@ -993,7 +1001,7 @@
 .console-shell .console-search-field {
   height: auto !important;
   min-height: 44px;
-  border-color: #dce4ef !important;
+  border-color: #d9ded4 !important;
   min-width: min(100%, 240px) !important;
 }
 .console-shell .console-search-field input {
@@ -1072,6 +1080,124 @@
   min-width: 0 !important;
   max-width: 100%;
 }
+.console-shell.franchise-owner-workspace .console-partner-body,
+.franchise-owner-workspace .franchise-page {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.console-shell.franchise-owner-workspace .franchise-filter-select {
+  width: 280px !important;
+  max-width: 100%;
+  min-width: 0 !important;
+  flex: 0 1 280px;
+}
+.franchise-owner-workspace .console-context-bar > .franchise-filter-select {
+  width: 400px !important;
+  flex-basis: 400px;
+}
+.franchise-owner-workspace .console-context-bar > label {
+  margin: 0;
+  flex: 0 0 auto;
+}
+.franchise-owner-workspace .console-context-bar > div:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.franchise-owner-workspace .franchise-filter-bar > :first-child {
+  min-width: min(260px, 100%) !important;
+}
+.franchise-owner-workspace .franchise-filter-bar > button,
+.franchise-owner-workspace .franchise-payment-actions > button,
+.franchise-owner-workspace .franchise-action {
+  width: auto;
+  max-width: 100%;
+  flex: 0 0 auto;
+  min-height: 40px;
+}
+.franchise-owner-workspace .franchise-payment-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.franchise-owner-workspace .franchise-debt-summary {
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.franchise-owner-workspace .franchise-deposit-controls {
+  width: 100%;
+  max-width: 680px;
+  flex-wrap: wrap;
+}
+.franchise-owner-workspace .franchise-deposit-controls > input {
+  min-width: 0;
+  width: auto !important;
+  flex: 1 1 240px !important;
+}
+.franchise-owner-workspace .franchise-deposit-controls > button {
+  flex: 0 0 auto;
+  min-height: 40px;
+  width: auto;
+}
+@media (max-width: 640px) {
+  .console-shell.franchise-owner-workspace .franchise-filter-select {
+    width: 100% !important;
+    flex-basis: 100%;
+  }
+  .franchise-owner-workspace .franchise-payment-actions {
+    justify-content: flex-start;
+  }
+}
+.console-shell.franchise-manager-workspace .console-page,
+.franchise-manager-workspace :is(.franchise-management-page, .workspace-cashflow, .console-dashboard) {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.franchise-manager-workspace .console-page > .console-dashboard {
+  padding: 0;
+}
+.franchise-manager-workspace .franchise-management-toolbar {
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 10px !important;
+}
+.franchise-manager-workspace .franchise-management-toolbar > h3 {
+  min-width: min(240px, 100%);
+}
+.franchise-manager-workspace .franchise-management-filters > h3 {
+  flex: 1 0 100% !important;
+  margin-bottom: 4px !important;
+}
+.console-shell.franchise-manager-workspace .franchise-management-toolbar > :is(select, .standard-searchable-select) {
+  width: 240px !important;
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 240px;
+}
+.franchise-manager-workspace :is(.franchise-management-toolbar, .franchise-management-tabs) > button {
+  flex: 0 0 auto !important;
+  width: auto;
+  max-width: 100%;
+  min-height: 38px;
+}
+.franchise-manager-workspace .franchise-management-tabs {
+  gap: 6px !important;
+}
+.franchise-manager-workspace .console-table-scroll {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .console-shell.franchise-manager-workspace .franchise-management-toolbar > :is(select, .standard-searchable-select) {
+    width: 100% !important;
+    flex-basis: 100%;
+  }
+  .franchise-manager-workspace .console-page {
+    padding: 16px;
+  }
+}
 .console-partner-body {
   min-width: 0;
 }
@@ -1100,7 +1226,7 @@
 }
 .console-shell .console-logout:hover,
 .console-shell .logout-btn:hover {
-  background: #ffedf0 !important;
+  background: #f4f5f2 !important;
 }
 .console-recovery {
   display: grid;
@@ -1132,7 +1258,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  border: 1px solid #dce4ef;
+  border: 1px solid #d9ded4;
   border-radius: 10px;
   background: white;
   color: var(--primary);
@@ -1287,7 +1413,7 @@
 .workspace-notification-list { max-height: 390px; overflow-y: auto; }
 .workspace-notification-list article { display: flex; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f2f5f6; }
 .workspace-notification-list article.is-unread { background: var(--primary-light); }
-.workspace-notification-dot { width: 6px; height: 6px; flex-shrink: 0; margin-top: 7px; background: #d6dfe2; border-radius: 50%; }
+.workspace-notification-dot { width: 6px; height: 6px; flex-shrink: 0; margin-top: 7px; background: #f4f5f2; border-radius: 50%; }
 .is-unread .workspace-notification-dot { background: var(--primary); }
 .workspace-notification-list article > div { min-width: 0; flex: 1; }
 .workspace-notification-list h4 { margin: 0 0 5px; font-size: 12px; line-height: 1.5; }
@@ -1299,14 +1425,35 @@
 .workspace-notification-error { padding: 16px 18px; font-size: 12px; color: #9b493b; }
 .workspace-notification-skeleton { padding: 16px 18px; display: grid; gap: 12px; }
 .workspace-shimmer { display: block; height: 45px; width: 100%; border-radius: 8px; background: linear-gradient(100deg,#f3f6f7 20%,#fafcfc 40%,#f3f6f7 60%); background-size: 200% 100%; animation: workspace-shimmer 1.4s ease infinite; }
-.workspace-mobile-toggle, .workspace-sidebar-backdrop { display: none; }
+.workspace-mobile-toggle,
+.workspace-sidebar-backdrop,
+.console-shell .workspace-mobile-toggle,
+.console-shell .workspace-sidebar-backdrop {
+  display: none !important;
+}
 @keyframes workspace-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes workspace-shimmer { to { background-position: -200% 0; } }
 @media (max-width: 1100px) { .workspace-search-trigger span { display: none; } .workspace-search-trigger kbd { margin-left: 0; } .console-shell .console-sidebar { width: 236px !important; min-width: 236px; } }
 @media (max-width: 760px) {
   .console-shell .workspace-sidebar { position: fixed; inset: 0 auto 0 0; width: 264px !important; min-width: 264px; z-index: 110; transform: translateX(-100%); transition: transform .2s ease; padding-top: 54px !important; }
   .console-shell .workspace-sidebar.is-open { transform: translateX(0); }
-  .workspace-mobile-toggle { display: inline-flex; position: fixed; top: 13px; left: 10px; z-index: 120; }
+  .workspace-mobile-toggle,
+  .console-shell .workspace-mobile-toggle {
+    display: inline-flex !important;
+    position: fixed !important;
+    top: 13px !important;
+    left: 10px !important;
+    z-index: 120 !important;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    color: #71717a;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    cursor: pointer;
+  }
   .workspace-sidebar-backdrop { display: block; position: fixed; inset: 0; background: #24424945; z-index: 105; }
   .console-shell:has(.workspace-sidebar) .console-main > header { padding-left: 60px !important; }
   .workspace-search-trigger { width: 40px; padding: 0 !important; justify-content: center; }
@@ -1366,24 +1513,25 @@
 .console-shell button { font-size: 12px !important; font-weight: 500 !important; }
 .console-shell :is(th,td) { padding: 11px 14px !important; }
 .console-shell .console-main > header { min-height: 66px !important; padding-top: 11px !important; padding-bottom: 11px !important; background: #fff !important; }
-.console-shell .console-sidebar { background: #171b24 !important; border-right: 1px solid #252c38 !important; }
-.console-shell[data-actor="admin"] .console-sidebar { background: #141820 !important; }
+.console-shell .console-sidebar { background: #09090b !important; border-right: 1px solid #18181b !important; }
+.console-shell[data-actor="admin"] .console-sidebar { background: #09090b !important; }
 .console-shell .console-brand { padding-bottom: 20px; }
 .console-shell .console-brand b { color: #f4f6fb; font-size: 14px; font-weight: 600; }
-.console-shell .console-brand small, .console-shell .console-user small { color: #929cab; }
-.console-shell .console-brand-icon { background: var(--primary); color: #fff; border: 0; width: 36px; height: 36px; border-radius: 9px; }
-.console-shell .console-user b { color: #e9edf4; }
-.console-shell .console-avatar { color: #dbe5f5; background: #30394a; }
-.console-shell .workspace-sidebar-footer { border-color: #2b3340; }
-.console-shell .workspace-nav-heading { color: #8994a6 !important; font-size: 10px !important; letter-spacing: .02em; }
-.console-shell .console-sidebar .console-nav-item { color: #b7c0ce !important; font-size: 12px !important; min-height: 39px; padding: 9px 11px !important; gap: 10px; }
-.console-shell .console-sidebar .console-nav-item > svg { width: 16px; height: 16px; color: #9aa7bc !important; background: none; padding: 0; flex-shrink: 0; }
-.console-shell .console-sidebar .console-nav-item:hover { color: #fff !important; background: #262e3d !important; }
+.console-shell .console-brand small, .console-shell .console-user small { color: #71717a; }
+.console-shell .console-brand-icon { background: #18181b; color: #fff; border: 1px solid #27272a; width: 36px; height: 36px; border-radius: 9px; }
+.console-shell .console-user b { color: #f4f4f5; }
+.console-shell .console-avatar { color: #fafafa; background: #27272a; border: 1px solid #3f3f46; }
+.console-shell .workspace-sidebar-footer { border-color: #18181b; }
+.console-shell .workspace-nav-heading { color: #71717a !important; font-size: 10px !important; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; }
+.console-shell .console-sidebar .console-nav-item { color: #a1a1aa !important; font-size: 13px !important; min-height: 39px; padding: 9px 11px !important; gap: 10px; border-radius: 6px !important; }
+.console-shell .console-sidebar .console-nav-item > svg { width: 16px; height: 16px; color: inherit !important; background: none; padding: 0; flex-shrink: 0; }
+.console-shell .console-sidebar .console-nav-item:hover { color: #fff !important; background: #18181b !important; }
 .console-shell .console-sidebar .console-nav-item[aria-current="page"],
-.console-shell .console-sidebar .console-nav-item[aria-current="page"]:hover { color: #fff !important; background: var(--primary) !important; border-color: transparent !important; box-shadow: 0 3px 10px #0002 !important; }
+.console-shell .console-sidebar .console-nav-item[aria-current="page"]:hover { color: #fff !important; background: #27272a !important; border-color: #3f3f46 !important; box-shadow: none !important; font-weight: 500 !important; }
 .console-shell .console-sidebar .console-nav-item[aria-current="page"] > svg { color: #fff !important; }
-.console-shell .console-sidebar .console-logout { background: #222a37 !important; border-color: #343e4e !important; color: #bdc7d5 !important; }
-.console-shell .console-sidebar nav { scrollbar-color: #394355 transparent; }
+.console-shell .console-sidebar .console-logout { background: transparent !important; border: 1px solid #27272a !important; color: #a1a1aa !important; border-radius: 6px !important; }
+.console-shell .console-sidebar .console-logout:hover { background: #18181b !important; color: #fff !important; border-color: #3f3f46 !important; }
+.console-shell .console-sidebar nav { scrollbar-color: #27272a transparent; }
 .console-shell .workspace-icon-button { background: #fff !important; color: #65738a !important; border-color: #e4e8ef !important; }
 .console-shell .workspace-icon-button:hover, .console-shell .workspace-icon-button[aria-expanded="true"] { background: var(--primary-light) !important; color: var(--primary) !important; }
 .console-shell .workspace-search-trigger { background: #f8f9fc !important; color: #7c8799 !important; }
@@ -1396,10 +1544,10 @@
 .console-shell .console-metric p { font-size: 12px !important; font-weight: 400; margin-bottom: 7px; }
 .console-shell .console-metric strong { font-size: 22px; font-weight: 600; }
 .console-shell .console-metric-icon { width: 36px; height: 36px; border-radius: 10px; }
-.console-shell .tone-blue { color: #3b6ee8; background: #edf3ff; }
-.console-shell .tone-teal { color: #0891c8; background: #eaf7fd; }
-.console-shell .tone-amber { color: #d38b24; background: #fff7e8; }
-.console-shell .tone-red { color: #df4939; background: #fff1ef; }
+.console-shell .tone-blue { color: #3b6ee8; background: #f4f5f2; }
+.console-shell .tone-teal { color: #0891c8; background: #f4f5f2; }
+.console-shell .tone-amber { color: #d38b24; background: #f4f5f2; }
+.console-shell .tone-red { color: #df4939; background: #f4f5f2; }
 .console-shell .console-chart { border-top: 0; }
 .console-shell .console-chart header { padding: 0; background: none; border: 0; min-height: 54px; margin-bottom: 12px; }
 .console-shell .console-chart header p { font-size: 11px !important; }
@@ -1417,31 +1565,31 @@
 .console-shell button:is(.btn-primary,.btn-save,.btn-save-green,.branch-btn--create,.branch-btn--save,.cat-btn--success,.menu-btn--success,.promo-btn--success):hover,
 .console-shell .workspace-form button[type="submit"]:where(:not(.btn-danger,.btn-delete,.btn-cancel)):hover { background: var(--primary-hover) !important; color: #fff !important; }
 .console-shell :is(.btn-primary,.btn-save,.btn-save-green,.branch-btn--create,.branch-btn--save) :is(span,svg) { color: #fff !important; }
-.console-shell :is(.btn-cancel,.branch-btn--cancel) { color: #64748b !important; background: #fff !important; border-color: #dce2ec !important; }
+.console-shell :is(.btn-cancel,.branch-btn--cancel) { color: #69736a !important; background: #fff !important; border-color: #d4dbcf !important; }
 .console-shell :is(.btn-cancel,.branch-btn--cancel) :is(span,svg) { color: inherit !important; }
 .console-shell .console-kiosk-tabs button[aria-current="page"] { background: var(--primary) !important; color: #fff !important; }
 /* Popups have a neutral canvas, bounded scrolling and one focus ring per field. */
 .console-shell :is(.cat-modal-overlay,.menu-modal-overlay,.promo-modal-overlay,.admin-modal-overlay) { padding: 20px !important; background: #141b2d88 !important; backdrop-filter: blur(3px) !important; }
 .console-shell :is(.cat-modal-card,.menu-modal-card,.promo-modal-card,.admin-modal) { background: #fff !important; border: 1px solid #e6eaf1 !important; border-radius: 14px !important; max-height: calc(100dvh - 40px); overflow-y: auto; box-shadow: 0 24px 80px #10182833; }
-.console-shell :is(.branch-form-card,.workspace-edit-form) { background: #fff !important; border-color: #e4e8f0 !important; }
+.console-shell :is(.branch-form-card,.workspace-edit-form) { background: #fff !important; border-color: #e2e4df !important; }
 .console-shell :is(.cat-modal-head,.menu-modal-head,.promo-modal-head,.branch-form-header,.workspace-form-heading) { background: #f6f8fc !important; padding: 18px 20px !important; border-bottom: 1px solid #e8ecf3 !important; }
 .console-shell :is(.cat-modal-title,.menu-modal-title,.promo-modal-title,.branch-form-header-title,.workspace-form-heading) :is(h2,h3) { color: #273348 !important; font-size: 16px !important; }
 .console-shell :is(.cat-modal-title,.menu-modal-title,.promo-modal-title,.branch-form-header-title) > svg { color: var(--primary) !important; }
 .console-shell :is(.cat-modal-body,.menu-modal-body,.promo-modal-body,.workspace-form) { background: #fff !important; }
 .console-shell :is(.cat-modal-body,.menu-modal-body,.promo-modal-body) { padding: 20px !important; }
 .console-shell .workspace-form { padding: 18px; border-radius: 10px; min-width: 0; }
-.console-shell :is(.cat-modal-section,.menu-modal-section,.promo-modal-section,.cat-form-group--highlight) { background: #f8f9fc !important; border-color: #e7ecf3 !important; }
+.console-shell :is(.cat-modal-section,.menu-modal-section,.promo-modal-section,.cat-form-group--highlight) { background: #f8f9fc !important; border-color: #e6e9e2 !important; }
 .console-shell :is(.cat-modal-footer,.menu-modal-footer,.promo-modal-footer,.branch-form-actions,.system-admin-form-actions) { border-top-color: #e8edf4 !important; }
-.console-shell :is(.workspace-form,.workspace-edit-form,.branch-form-card,.cat-modal-card,.menu-modal-card,.promo-modal-card,.admin-modal) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea) { background: #fff !important; border-color: #dce3ed !important; font-weight: 400 !important; }
-.console-shell .workspace-field { display: flex; align-items: center; background: #fff !important; border: 1px solid #dce3ed !important; border-radius: 8px; min-width: 0; }
-.console-shell .workspace-field:focus-within { border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(var(--accent-rgb),.1); }
-.console-shell .workspace-field :is(input,select,textarea) { background: transparent !important; border: 0 !important; border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; outline: none !important; min-width: 0; }
-.console-shell button:is(.cat-modal-close,.menu-modal-close,.promo-modal-close,.branch-form-close-btn) { padding: 0 !important; width: 32px !important; height: 32px !important; min-width: 32px; background: #fff !important; color: #64748b !important; border: 1px solid #e3e8ef !important; border-radius: 8px !important; }
-.console-shell button:is(.cat-modal-close,.menu-modal-close,.promo-modal-close,.branch-form-close-btn) svg { color: #64748b !important; flex-shrink: 0; width: 18px; height: 18px; }
+.console-shell :is(.workspace-form,.workspace-edit-form,.branch-form-card,.cat-modal-card,.menu-modal-card,.promo-modal-card,.admin-modal) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(.standard-select-input):not([role="combobox"]),select:not(.standard-searchable-select),textarea) { background: #fff !important; border-color: #d4dbcf !important; font-weight: 400 !important; }
+.console-shell .workspace-field { display: flex; align-items: center; background: #fff !important; border: 1px solid #e4e4e7 !important; border-radius: 6px; min-width: 0; }
+.console-shell .workspace-field:focus-within { border-color: #09090b !important; box-shadow: 0 0 0 1px #09090b !important; }
+.console-shell button:is(.cat-modal-close,.menu-modal-close,.promo-modal-close,.branch-form-close-btn) { padding: 0 !important; width: 32px !important; height: 32px !important; min-width: 32px; background: #ffffff !important; color: #ef4444 !important; border: 1px solid #fecaca !important; border-radius: 8px !important; transition: all 0.15s ease !important; }
+.console-shell button:is(.cat-modal-close,.menu-modal-close,.promo-modal-close,.branch-form-close-btn):hover { background: #fee2e2 !important; border-color: #f87171 !important; color: #dc2626 !important; }
+.console-shell button:is(.cat-modal-close,.menu-modal-close,.promo-modal-close,.branch-form-close-btn) svg { color: inherit !important; flex-shrink: 0; width: 18px; height: 18px; }
 .console-shell .workspace-tier-card > div:first-child { background: #f6f8fc; margin: -20px -20px 0; padding: 16px 20px; border-radius: 12px 12px 0 0; border-bottom-color: #e8edf4 !important; }
-.console-shell .workspace-tier-card > div:nth-child(2) > div { background: #f8f9fc !important; border-color: #e7ecf3 !important; }
+.console-shell .workspace-tier-card > div:nth-child(2) > div { background: #f8f9fc !important; border-color: #e6e9e2 !important; }
 .console-shell .workspace-tier-card > div:nth-child(3) { background: var(--primary-light) !important; }
-.console-shell :is(.workspace-search-input,.workspace-notification-panel > header,.workspace-notification-actions) { background: #f6f8fc; color: #64748b; }
+.console-shell :is(.workspace-search-input,.workspace-notification-panel > header,.workspace-notification-actions) { background: #f6f8fc; color: #69736a; }
 .console-shell .workspace-notification-panel > header { padding-bottom: 14px; }
 @media (max-width: 760px) { .console-shell .console-charts { grid-template-columns: minmax(0,1fr); } }
 .console-shell .admin-chat-bubble-btn { width: 44px; height: 44px; font-size: 18px !important; background: #263247; box-shadow: 0 5px 18px #16243d24; }
@@ -1454,11 +1602,11 @@
 /* Bright detail accents, legible text and restrained financial status surfaces. */
 .console-shell .console-page-heading p, .console-shell .console-metric p,
 .console-shell .console-chart header p { color: #536581; }
-.console-shell .console-chart-badge { color: #1764d8; background: #edf4ff; }
+.console-shell .console-chart-badge { color: #1764d8; background: #f4f5f2; }
 .console-shell .console-axis { fill: #617392; }
 .console-shell .workspace-chart-note { color: #526681; }
-.console-shell .workspace-search-trigger { color: #456182 !important; background: #f2f7ff !important; }
-.console-shell .workspace-debt-badge { display: flex; align-items: center; gap: 7px; padding: 7px 11px; color: #1764d8; background: #edf4ff; border: 1px solid #d0e2ff; border-radius: 9px; font-size: 12px; font-weight: 500; }
+.console-shell .workspace-search-trigger { color: #456182 !important; background: #f4f5f2 !important; }
+.console-shell .workspace-debt-badge { display: flex; align-items: center; gap: 7px; padding: 7px 11px; color: #1764d8; background: #f4f5f2; border: 1px solid #d0e2ff; border-radius: 9px; font-size: 12px; font-weight: 500; }
 .console-shell .workspace-partner-stat { border-top: 3px solid var(--stat-color) !important; }
 .console-shell .workspace-partner-stat > div:first-child { color: var(--stat-color) !important; }
 .console-shell .workspace-partner-stat > div:first-child svg { color: var(--stat-color) !important; }
@@ -1468,7 +1616,7 @@
 .console-shell .workspace-franchise-hero > div > div { background: #fff !important; color: #163b65; border: 1px solid #ffffff99; }
 .console-shell .workspace-franchise-hero > div > div > div:first-child { color: #496584; opacity: 1 !important; }
 .console-shell .workspace-franchise-hero > div > div:nth-child(3) > div:last-child { color: #d74727; }
-.console-shell .workspace-financial-summary { background: #edf4ff !important; border-color: #cbdfff !important; }
+.console-shell .workspace-financial-summary { background: #f4f5f2 !important; border-color: #cbdfff !important; }
 .console-shell .workspace-financial-summary > div { color: #1764d8 !important; }
 .console-login-copy h1 { font-size: clamp(30px,3vw,46px); max-width: 590px; text-shadow: 0 2px 18px #0004; }
 .console-login-copy p { color: #fff; text-shadow: 0 1px 7px #0005; }
@@ -1477,7 +1625,7 @@
 .console-login-form h2 { font-size: 25px; margin: 10px 0; }
 .console-login-form p { color: #52657c; font-size: 13px; }
 .console-login-form .console-eyebrow { color: var(--primary); font-weight: 500; }
-.console-role-tabs { background: #f1f6ff; border-color: #dbe7fb; gap: 3px; }
+.console-role-tabs { background: #f4f5f2; border-color: #dbe7fb; gap: 3px; }
 .console-role-tabs button { color: #546b88; font-weight: 500; font-size: 10px; }
 .console-role-tabs button[aria-selected="true"] { color: #fff; background: var(--primary); box-shadow: 0 3px 9px rgba(var(--accent-rgb),.16) !important; }
 .console-login-fields { margin-top: 22px; }
@@ -1487,3 +1635,129 @@
 @media (min-width:761px) and (max-width:1000px) { .console-login { grid-template-columns: minmax(0,1fr) 420px; padding: 28px; gap: 24px; } .console-login-copy h1 { font-size: 32px; } }
 
 .console-login-form .error-text { color: #c83126; }
+
+/* ==========================================================================
+   REFINED, SLENDER TYPOGRAPHY MATCHING SIDEBAR ACROSS ALL ADMIN PAGES
+   ========================================================================== */
+.console-shell,
+.console-shell * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base font-weight across console */
+.console-shell {
+  font-weight: 400 !important;
+}
+
+/* Slender, elegant headings (no overly thick bold) */
+.console-shell :is(h1, h2, h3, h4, h5, h6, .panel-head h2, .system-admin-panel-head h2, .content-header-title h1, .cat-modal-title h2, .menu-modal-title h2, .promo-modal-title h2) {
+  font-weight: 500 !important;
+  letter-spacing: -0.015em;
+}
+
+/* Moderate emphasis tags */
+.console-shell :is(strong, b) {
+  font-weight: 500 !important;
+}
+
+/* Slender field labels */
+.console-shell :is(label, .workspace-field label, .system-admin-panel label, form label) {
+  font-weight: 500 !important;
+}
+
+/* Clean, crisp table headers */
+.console-shell :is(th, thead th, .admin-table th, .system-admin-table th) {
+  font-weight: 500 !important;
+}
+
+/* Buttons have medium weight, matching sidebar navigation */
+.console-shell :is(button, .btn, .btn-save, .btn-save-green, .btn-cancel, .admin-pg-btn) {
+  font-weight: 500 !important;
+}
+
+/* Regular inputs and text areas */
+.console-shell :is(input, select, textarea) {
+  font-weight: 400 !important;
+}
+
+/* Body text, paragraphs, cells */
+.console-shell :is(p, td, li, .workspace-field) {
+  font-weight: 400;
+}
+
+/* Status pills and badges */
+.console-shell :is(.badge, .status-pill, .workspace-debt-badge, .console-chart-badge, [class*="status-pill"], [class*="badge"]) {
+  font-weight: 500 !important;
+}
+
+/* Lighten metric cards values */
+.console-shell .console-metric strong {
+  font-weight: 500 !important;
+}
+
+/* Universal override for inline heavy font weights (700, 800, 600, bold) across admin console */
+.console-shell [style*="font-weight: 700"],
+.console-shell [style*="font-weight:700"],
+.console-shell [style*="font-weight: 800"],
+.console-shell [style*="font-weight:800"],
+.console-shell [style*="font-weight: bold"],
+.console-shell [style*="font-weight:bold"] {
+  font-weight: 500 !important;
+}
+
+.console-shell [style*="font-weight: 600"],
+.console-shell [style*="font-weight:600"] {
+  font-weight: 500 !important;
+}
+
+.management-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(24, 28, 31, .54);
+}
+.management-dialog-backdrop .management-dialog {
+  width: min(100%, 760px);
+  max-height: min(90vh, 920px);
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #d8d5d1 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 28px 70px rgba(0,0,0,.18) !important;
+}
+.console-shell .management-dialog :is(.branch-form-header,[style*="backgroundColor: '#f8f9f6'"]) {
+  background: #fff !important;
+}
+.smart-select { position: relative; display: flex; align-items: center; gap: 8px; min-width: 180px; padding: 0 10px; border: 1px solid #c7c4c0; border-radius: 6px; background: #fff; color: #756e68; }
+.smart-select:focus-within { border-color: #75202c; }
+.smart-select input { width: 100%; min-width: 0; height: 39px; padding: 0; border: 0 !important; outline: 0; background: transparent; font-size: 13px; color: #292524; }
+.smart-select-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 1300; max-height: 272px; overflow: auto; background: #fff; border: 1px solid #d6d3d1; box-shadow: 0 16px 28px rgba(0,0,0,.12); }
+.smart-select-list button { width: 100%; display: block; border: 0; background: #fff; padding: 10px 12px; text-align: left; font-size: 13px; color: #292524; cursor: pointer; }
+.smart-select-list button:hover, .smart-select-list button.is-highlighted { background: #f5f3f0; }
+.smart-select-list p { margin: 0; padding: 12px; color: #78716c; font-size: 12px; }
+
+/* Management surfaces use white and stone neutrals; status is conveyed by text and icons. */
+.console-shell :is(.tone-blue,.tone-teal,.tone-amber,.tone-red,.console-chart-badge,.workspace-search-trigger,.workspace-debt-badge,.workspace-financial-summary,.workspace-search-input,.workspace-notification-panel > header,.workspace-notification-actions),
+.console-shell :is(.cat-modal-head,.menu-modal-head,.promo-modal-head,.branch-form-header,.workspace-form-heading,.cat-modal-section,.menu-modal-section,.promo-modal-section,.cat-form-group--highlight),
+.console-shell :is(th,.workspace-tier-card > div:first-child,.workspace-tier-card > div:nth-child(2) > div,.workspace-tier-card > div:nth-child(3)) {
+  background: #f5f5f4 !important;
+  border-color: #e7e5e4 !important;
+  color: #57534e !important;
+}
+.console-shell tbody tr:hover { background: #fafaf9 !important; }
+.console-shell .workspace-franchise-hero { background: #292524 !important; border-color: #292524 !important; }
+.console-shell .workspace-franchise-hero h2,
+.console-shell .workspace-franchise-hero > p { color: #fff !important; }
+.console-shell .workspace-franchise-hero > div > div { background: #fff !important; color: #292524 !important; border-color: #e7e5e4 !important; }
+.console-shell .workspace-financial-summary > div,
+.console-shell .workspace-debt-badge { color: #44403c !important; }
+.console-role-tabs { background: #f5f5f4 !important; border-color: #e7e5e4 !important; }
+.console-shell .workspace-search-trigger { background: #f5f5f4 !important; color: #57534e !important; }
+
+/* Preserve each chart gradient despite legacy global polygon styling. */
+.console-chart .console-plot polygon { fill: var(--chart-area-fill) !important; }

@@ -247,8 +247,10 @@ export const CartProvider = ({ children }) => {
           await queryClient.invalidateQueries({ queryKey: guestKey, refetchType: 'none' });
         }
         setGuestMergeError('');
+        try { localStorage.removeItem('pending_cart_items'); } catch { /* Snapshot is optional. */ }
       } catch (error) {
         setGuestMergeError(error?.response?.data?.message || error.message || 'Chưa chuyển được giỏ khách. Các món vẫn được giữ để thử lại.');
+        return false;
       } finally {
         if (handoff && mergingRef.current === handoff) mergingRef.current = null;
       }
@@ -258,6 +260,7 @@ export const CartProvider = ({ children }) => {
     if (revision !== ownerRevision.current) return;
     setActiveUserId(nextUserId);
     await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(nextUserId) });
+    return true;
   };
 
   // Recover a pending handoff after a reload, using the same operation id.

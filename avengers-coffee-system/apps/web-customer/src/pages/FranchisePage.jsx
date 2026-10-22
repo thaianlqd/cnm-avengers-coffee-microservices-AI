@@ -3,15 +3,77 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
-import BranchReviewModal from '../components/BranchReviewModal';
-import { MagnifyingGlassIcon, XMarkIcon, MapPinIcon, StarIcon as StarOutline } from '@heroicons/react/24/outline';
-import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
+import BranchReviewModal from '../components/modals/BranchReviewModal';
+import {
+  MagnifyingGlassIcon,
+  XMarkIcon,
+  MapPinIcon,
+  StarIcon as StarOutline,
+  ChevronDownIcon,
+  BuildingStorefrontIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  CheckCircleIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+} from '../components/common/icons';
+import { StarIcon as StarSolid } from '../components/common/iconsSolid';
 
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
 
 const buildMapEmbedUrl = (address) => `https://www.google.com/maps?q=${encodeURIComponent(String(address || ''))}&output=embed`;
 
-const COMPANY_EMAIL = 'ankudo1234@gmail.com';
+const COMPANY_EMAIL = 'franchise@avengerscoffee.vn';
+
+const PARTNER_BENEFITS = [
+  {
+    icon: SparklesIcon,
+    title: 'Thương Hiệu Đã Định Vị',
+    desc: 'Hưởng lợi ngay từ tệp khách hàng trung thành và độ nhận diện uy tín của chuỗi Avengers Coffee trên toàn quốc.',
+    color: '#b22830',
+  },
+  {
+    icon: BuildingStorefrontIcon,
+    title: 'Bảo Vệ Độc Quyền Vị Trí',
+    desc: 'Cam kết độc quyền bán kính tối thiểu 500m quanh điểm bán của bạn, đảm bảo lượng khách hàng ổn định và không cạnh tranh nội bộ.',
+    color: '#0284c7',
+  },
+  {
+    icon: ShieldCheckIcon,
+    title: 'Nguyên Liệu Chuẩn Kiểm Định',
+    desc: 'Cung cấp 100% nguyên liệu chất lượng cao với mức giá ưu đãi tận xưởng, ổn định nguồn cung và chất lượng quanh năm.',
+    color: '#16a34a',
+  },
+  {
+    icon: CheckCircleIcon,
+    title: 'Công Nghệ Vận Hành Toàn Diện',
+    desc: 'Trang bị trọn bộ phần mềm POS, quản lý xuất nhập tồn tự động và kết nối trực tiếp với ứng dụng khách hàng Avengers Coffee.',
+    color: '#d97706',
+  },
+];
+
+const FRANCHISE_FAQS = [
+  {
+    q: 'Chi phí đầu tư các gói nhượng quyền đã bao gồm những gì?',
+    a: 'Chi phí đầu tư trọn gói đã bao gồm toàn bộ thiết kế, gia công quầy/xe/container chuẩn thương hiệu, máy pha chế espresso chuyên dụng, bộ dụng cụ pha chế, đào tạo nhân sự và combo nguyên liệu ban đầu đủ phục vụ từ 120 đến 280 ly. Cam kết không phát sinh chi phí ẩn ngoài hợp đồng.',
+  },
+  {
+    q: 'Chính sách bảo đảm bán kính độc quyền 500m hoạt động như thế nào?',
+    a: 'Để bảo vệ quyền lợi và doanh thu tối ưu cho từng đối tác, Avengers Coffee cam kết không mở thêm bất kỳ điểm bán hoặc kiosk nào trong bán kính 500m tính từ vị trí đã duyệt của bạn. Hệ thống sẽ tự động xác minh tọa độ GPS ngay khi bạn gửi hồ sơ.',
+  },
+  {
+    q: 'Từ lúc nộp hồ sơ đăng ký đến khi khai trương mất bao lâu?',
+    a: 'Quy trình chuẩn diễn ra nhanh chóng trong vòng 7 - 14 ngày làm việc: Phản hồi & khảo sát mặt bằng (trong vòng 24 - 48h), hoàn tất ký kết & chuẩn bị trang thiết bị (3 - 5 ngày), thi công lắp đặt và đào tạo pha chế (3 - 5 ngày).',
+  },
+  {
+    q: 'Tôi chưa có kinh nghiệm trong ngành F&B thì có tham gia được không?',
+    a: 'Hoàn toàn được. Avengers Coffee có giáo trình chuyển giao toàn diện từ kỹ thuật pha chế, tiêu chuẩn an toàn vệ sinh, văn hóa phục vụ khách hàng đến hướng dẫn làm chủ phần mềm quản lý và kinh nghiệm tối ưu doanh thu.',
+  },
+  {
+    q: 'Thời gian thu hồi vốn và tỷ suất lợi nhuận ước tính là bao lâu?',
+    a: 'Tùy thuộc vào vị trí mặt bằng và mô hình kinh doanh, tỷ suất lợi nhuận ròng trung bình dao động từ 25% - 35%. Thời gian thu hồi vốn trung bình của các đối tác Kiosk là từ 3 đến 6 tháng đối với xe lưu động và kiosk cố định.',
+  },
+];
 
 const PACKAGES = [
   {
@@ -193,6 +255,16 @@ export default function FranchisePage({ onNavigate }) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
+
+  // States cho tính năng Đăng Ký và FAQ
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [expandedFaq, setExpandedFaq] = useState(null);
+
+  const handleOpenRegister = (packageId = 'KIOSK_CO_DINH') => {
+    setForm((f) => ({ ...f, goi_kiosk: packageId }));
+    setResult(null);
+    setShowRegisterModal(true);
+  };
 
   // States cho tính năng Tra Cứu Hồ Sơ
   const [showLookup, setShowLookup] = useState(false);
@@ -447,7 +519,7 @@ export default function FranchisePage({ onNavigate }) {
               fontSize: 13,
               fontWeight: 700,
               letterSpacing: '0.08em',
-              textTransform: 'uppercase',
+              textTransform: '',
               marginBottom: 24,
             }}
           >
@@ -483,8 +555,9 @@ export default function FranchisePage({ onNavigate }) {
           </p>
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a
-              href="#dang-ky"
+            <button
+              type="button"
+              onClick={() => handleOpenRegister(form.goi_kiosk || 'KIOSK_CO_DINH')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -495,13 +568,14 @@ export default function FranchisePage({ onNavigate }) {
                 fontWeight: 800,
                 fontSize: 15,
                 borderRadius: 12,
-                textDecoration: 'none',
-                boxShadow: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(178, 40, 48, 0.4)',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
             >
-              {copy('Đăng Ký Ngay', 'Apply now')}
-            </a>
+              {copy('Đăng Ký Tư Vấn Ngay', 'Apply Now')}
+            </button>
 
             <button
               onClick={() => setShowLookup(true)}
@@ -562,7 +636,7 @@ export default function FranchisePage({ onNavigate }) {
               borderRadius: 999,
               fontSize: 12,
               fontWeight: 800,
-              textTransform: 'uppercase',
+              textTransform: '',
               letterSpacing: '0.06em',
               marginBottom: 12,
             }}
@@ -630,7 +704,7 @@ export default function FranchisePage({ onNavigate }) {
 
                 {/* Body card */}
                 <div style={{ padding: '24px 26px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: '#64748b', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{ui("Chi tiết hạng mục đầu tư")}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#64748b', marginBottom: 14, textTransform: '', letterSpacing: '0.06em' }}>{ui("Chi tiết hạng mục đầu tư")}</div>
 
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {pkg.features.map((f, i) => (
@@ -646,7 +720,7 @@ export default function FranchisePage({ onNavigate }) {
 
                   {/* Combo nguyên liệu */}
                   <div style={{ marginTop: 20, padding: '14px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{ui("Combo Nguyên Liệu Đầu Kỳ")}</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: '#475569', marginBottom: 6, textTransform: '', letterSpacing: '0.05em' }}>{ui("Combo Nguyên Liệu Đầu Kỳ")}</div>
                     {pkg.combos.map((c, idx) => (
                       <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -676,17 +750,17 @@ export default function FranchisePage({ onNavigate }) {
                       alignItems: 'center',
                     }}
                   >
-                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>{ui("TỔNG CỘNG DỰ KIẾN")}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>{ui("Tổng cộng dự kiến")}</div>
                     <div style={{ fontSize: 19, fontWeight: 700, color: pkg.color }}>
                       {(pkg.features.reduce((sum, f) => sum + f.price, 0) + (pkg.combos[0]?.gia || 0)).toLocaleString(uiLocale())}{ui(" đ")}</div>
                   </div>
 
                   {/* Nút hành động */}
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setForm((f) => ({ ...f, goi_kiosk: pkg.id }));
-                      document.getElementById('dang-ky')?.scrollIntoView({ behavior: 'smooth' });
+                      handleOpenRegister(pkg.id);
                     }}
                     style={{
                       marginTop: 22,
@@ -703,7 +777,7 @@ export default function FranchisePage({ onNavigate }) {
                       boxShadow: isSelected ? '0 4px 14px rgba(143, 27, 35, 0.3)' : 'none',
                     }}
                   >
-                    {isSelected ? ui("Đã chọn gói này") : ui("Chọn gói này")}
+                    {ui("Đăng ký mô hình này")}
                   </button>
                 </div>
               </div>
@@ -725,7 +799,7 @@ export default function FranchisePage({ onNavigate }) {
                 borderRadius: 999,
                 fontSize: 12,
                 fontWeight: 800,
-                textTransform: 'uppercase',
+                textTransform: '',
                 letterSpacing: '0.06em',
                 marginBottom: 12,
               }}
@@ -768,7 +842,7 @@ export default function FranchisePage({ onNavigate }) {
                     >
                       {step.n}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: isActive ? '#8f1b23' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{ui("Bước ")}{step.n}
+                    <div style={{ fontSize: 13, fontWeight: 800, color: isActive ? '#8f1b23' : '#94a3b8', textTransform: '', letterSpacing: '0.05em' }}>{ui("Bước ")}{step.n}
                     </div>
                   </div>
 
@@ -793,7 +867,7 @@ export default function FranchisePage({ onNavigate }) {
               borderRadius: 999,
               fontSize: 12,
               fontWeight: 800,
-              textTransform: 'uppercase',
+              textTransform: '',
               letterSpacing: '0.06em',
               marginBottom: 12,
             }}
@@ -1006,7 +1080,7 @@ export default function FranchisePage({ onNavigate }) {
                           style={{ flex: 1, padding: '10px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12, cursor: 'pointer', transition: 'background 0.2s' }}
                           onMouseEnter={(e) => e.currentTarget.style.background = '#d97706'}
                           onMouseLeave={(e) => e.currentTarget.style.background = '#f59e0b'}
-                        >{ui("XEM ĐÁNH GIÁ")}</button>
+                        >{ui("Xem đánh giá")}</button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1015,7 +1089,7 @@ export default function FranchisePage({ onNavigate }) {
                           style={{ flex: 1, padding: '10px', background: '#8f1b23', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12, cursor: 'pointer', transition: 'background 0.2s' }}
                           onMouseEnter={(e) => e.currentTarget.style.background = '#73141a'}
                           onMouseLeave={(e) => e.currentTarget.style.background = '#8f1b23'}
-                        >{ui("ĐÁNH GIÁ CHI NHÁNH NÀY")}</button>
+                        >{ui("Đánh giá chi nhánh này")}</button>
                       </div>
                     )}
                   </div>
@@ -1057,14 +1131,87 @@ export default function FranchisePage({ onNavigate }) {
               <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: '0 0 12px' }}>
                 Kiosk: {selectedKiosk.ten_kiosk}
               </h3>
-              <p style={{ color: '#64748b', fontSize: 14, margin: 0, maxWidth: 600, lineHeight: 1.6 }}>{ui("Tại Kiosk, chúng tôi cam kết mang đến đồ uống chất lượng với không gian vệ sinh sạch sẽ, đáp ứng nhu cầu thưởng thức cà phê tiện lợi của bạn mỗi ngày. Hãy nhấp vào ")}<strong>{ui("ĐÁNH GIÁ CHI NHÁNH NÀY")}</strong>{ui(" ở danh sách bên trên nếu bạn muốn để lại phản hồi cho chúng tôi!")}</p>
+              <p style={{ color: '#64748b', fontSize: 14, margin: 0, maxWidth: 600, lineHeight: 1.6 }}>{ui("Tại Kiosk, chúng tôi cam kết mang đến đồ uống chất lượng với không gian vệ sinh sạch sẽ, đáp ứng nhu cầu thưởng thức cà phê tiện lợi của bạn mỗi ngày. Hãy nhấp vào ")}<strong>{ui("Đánh giá chi nhánh này")}</strong>{ui(" ở danh sách bên trên nếu bạn muốn để lại phản hồi cho chúng tôi!")}</p>
             </div>
           </div>
         )}
       </section>
-      {/* ── BIỂU MẪU ĐĂNG KÝ ───────────────────────────────── */}
-      <section id="dang-ky" style={{ padding: '72px 24px', background: '#f8fafc' }}>
-        <div style={{ maxWidth: 740, margin: '0 auto' }}>
+      {/* ── CAM KẾT ĐỒNG HÀNH & QUYỀN LỢI ĐỐI TÁC ───────────── */}
+      <section style={{ padding: '72px 24px', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div
+              style={{
+                display: 'inline-block',
+                padding: '6px 16px',
+                background: '#fce7e8',
+                color: '#b22830',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                marginBottom: 12,
+              }}
+            >
+              {ui("Đặc quyền đối tác")}
+            </div>
+            <h2 style={{ fontSize: 34, fontWeight: 700, color: '#0f172a', margin: '0 0 14px', letterSpacing: '-0.02em' }}>
+              {ui("Tại Sao Nên Chọn Avengers Coffee?")}
+            </h2>
+            <p style={{ color: '#64748b', fontSize: 15, maxWidth: 640, margin: '0 auto', lineHeight: 1.6 }}>
+              {ui("Chúng tôi không chỉ cung cấp mô hình kinh doanh trọn gói mà còn đồng hành hỗ trợ toàn diện từ giai đoạn khảo sát mặt bằng đến vận hành sinh lời bền vững.")}
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24 }}>
+            {PARTNER_BENEFITS.map((item, idx) => {
+              const IconComp = item.icon;
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    background: '#ffffff',
+                    padding: '28px 24px',
+                    borderRadius: 20,
+                    border: '1.5px solid #e2e8f0',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.03)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 14,
+                      background: `${item.color}14`,
+                      color: item.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <IconComp style={{ width: 28, height: 28 }} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '0 0 8px' }}>
+                      {ui(item.title)}
+                    </h3>
+                    <p style={{ fontSize: 14, color: '#64748b', margin: 0, lineHeight: 1.6 }}>
+                      {ui(item.desc)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CÂU HỎI THƯỜNG GẶP (FAQ) ─────────────────────────── */}
+      <section style={{ padding: '72px 24px', background: '#ffffff', borderTop: '1px solid #f1f5f9' }}>
+        <div style={{ maxWidth: 840, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 44 }}>
             <div
               style={{
@@ -1075,365 +1222,677 @@ export default function FranchisePage({ onNavigate }) {
                 borderRadius: 999,
                 fontSize: 12,
                 fontWeight: 800,
-                textTransform: 'uppercase',
                 letterSpacing: '0.06em',
                 marginBottom: 12,
               }}
-            >{ui("Bắt đầu hành trình")}</div>
-            <h2 style={{ fontSize: 34, fontWeight: 700, color: '#0f172a', margin: '0 0 14px', letterSpacing: '-0.02em' }}>{ui("Đăng Ký Hồ Sơ Nhượng Quyền")}</h2>
-            <p style={{ color: '#64748b', fontSize: 15, margin: 0, lineHeight: 1.6 }}>{ui("Chúng tôi sẽ phản hồi trong vòng ")}<strong>{ui("24 giờ làm việc")}</strong>{ui(". Thư xác nhận sẽ được gửi về hộp thư tiếp nhận ")}<strong style={{ color: '#8f1b23' }}>{COMPANY_EMAIL}</strong>.
-            </p>
+            >
+              {ui("Giải đáp thắc mắc")}
+            </div>
+            <h2 style={{ fontSize: 32, fontWeight: 700, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+              {ui("Câu Hỏi Thường Gặp Về Nhượng Quyền")}
+            </h2>
           </div>
 
-          {result ? (
-            <div
-              style={{
-                padding: '36px 30px',
-                borderRadius: 20,
-                textAlign: 'center',
-                background: result.success ? '#f0fdf4' : '#fef2f2',
-                border: `2px solid ${result.success ? '#86efac' : '#fca5a5'}`,
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'inline-block',
-                  padding: '6px 18px',
-                  borderRadius: 999,
-                  background: result.success ? '#dcfce7' : '#fee2e2',
-                  color: result.success ? '#15803d' : '#b91c1c',
-                  fontWeight: 800,
-                  fontSize: 13,
-                  marginBottom: 16,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                {result.success ? ui("Tiếp nhận thành công") : ui("Gửi hồ sơ chưa thành công")}
-              </div>
-
-              <h3 style={{ fontSize: 22, fontWeight: 700, color: result.success ? '#15803d' : '#b91c1c', margin: '0 0 12px' }}>
-                {result.success ? ui("Hồ sơ đã được tiếp nhận thành công") : ui("Đã xảy ra lỗi khi gửi hồ sơ")}
-              </h3>
-
-              <p style={{ color: result.success ? '#166534' : '#991b1b', fontSize: 15, lineHeight: 1.6, margin: '0 0 24px' }}>{result.message}</p>
-
-              {result.success && (
-                <div style={{ padding: '20px 24px', background: '#ffffff', borderRadius: 14, border: '1px solid #bbf7d0', marginBottom: 24, textAlign: 'left' }}>
-                  <div style={{ fontSize: 14, color: '#15803d', fontWeight: 800, marginBottom: 10 }}>{ui("Các bước tiếp theo:")}</div>
-                  <ul style={{ margin: 0, padding: '0 0 0 18px', color: '#334155', fontSize: 14, lineHeight: 2 }}>
-                    <li>{ui("Thư xác nhận đã được gửi đến hộp thư của quý khách")}</li>
-                    <li>{ui("Đội ngũ tư vấn sẽ liên hệ trực tiếp trong vòng 24 giờ làm việc")}</li>
-                    <li>{ui("Quý khách vui lòng chuẩn bị thông tin mặt bằng và nguồn vốn dự kiến để được tư vấn chính xác nhất")}</li>
-                  </ul>
-                </div>
-              )}
-
-              <button
-                onClick={() => setResult(null)}
-                style={{
-                  padding: '12px 30px',
-                  background: result.success ? '#15803d' : '#b91c1c',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  boxShadow: result.success ? '0 4px 14px rgba(21, 128, 61, 0.3)' : '0 4px 14px rgba(185, 28, 28, 0.3)',
-                }}
-              >
-                {result.success ? ui("Trở về trang nhượng quyền") : ui("Thử lại")}
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} style={{ background: '#ffffff', padding: '40px 36px', borderRadius: 24, boxShadow: '0 16px 40px -12px rgba(0, 0, 0, 0.08)', border: '1px solid #e2e8f0' }}>
-              {/* Chọn mô hình gói đầu tư */}
-              <div style={{ marginBottom: 26 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{ui("Mô hình nhượng quyền quan tâm *")}</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
-                  {PACKAGES.map((pkg) => {
-                    const isSelected = form.goi_kiosk === pkg.id;
-                    return (
-                      <label
-                        key={pkg.id}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          padding: '16px 12px',
-                          border: isSelected ? `2px solid ${pkg.color}` : '1.5px solid #e2e8f0',
-                          borderRadius: 14,
-                          cursor: 'pointer',
-                          textAlign: 'center',
-                          background: isSelected ? `${pkg.color}10` : '#ffffff',
-                          transition: 'all 0.2s ease',
-                          boxShadow: isSelected ? `0 4px 14px ${pkg.color}20` : 'none',
-                        }}
-                      >
-                        <input type="radio" name="goi_kiosk" value={pkg.id} checked={isSelected} onChange={handleChange} style={{ display: 'none' }} />
-                        <div style={{ fontWeight: 800, fontSize: 14, color: isSelected ? pkg.color : '#1e293b' }}>{pkg.name}</div>
-                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 4, fontWeight: 600 }}>{pkg.invest}</div>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Họ tên và Số điện thoại */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 18 }}>
-                {[
-                  { name: 'ho_ten', label: 'Họ và tên *', placeholder: 'Ví dụ: Nguyễn Văn A', required: true },
-                  { name: 'so_dien_thoai', label: 'Số điện thoại liên hệ *', placeholder: 'Ví dụ: 0912345678', required: true },
-                ].map((field) => (
-                  <div key={field.name}>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui(field.label)}</label>
-                    <input
-                      name={field.name}
-                      value={form[field.name]}
-                      onChange={handleChange}
-                      placeholder={field.placeholder}
-                      required={field.required}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {FRANCHISE_FAQS.map((faq, idx) => {
+              const isExpanded = expandedFaq === idx;
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    border: isExpanded ? '1.5px solid #b22830' : '1.5px solid #e2e8f0',
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    transition: 'all 0.2s ease',
+                    background: isExpanded ? '#fff9f9' : '#ffffff',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedFaq(isExpanded ? null : idx)}
+                    style={{
+                      width: '100%',
+                      padding: '20px 24px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 16,
+                      background: 'none',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: isExpanded ? '#8f1b23' : '#1e293b',
+                    }}
+                  >
+                    <span>{ui(faq.q)}</span>
+                    <ChevronDownIcon
                       style={{
-                        width: '100%',
-                        padding: '12px 14px',
-                        border: '1.5px solid #cbd5e1',
-                        borderRadius: 10,
-                        fontSize: 14,
-                        boxSizing: 'border-box',
-                        background: '#ffffff',
-                        color: '#0f172a',
-                        outline: 'none',
+                        width: 20,
+                        height: 20,
+                        color: isExpanded ? '#8f1b23' : '#64748b',
+                        transform: isExpanded ? 'rotate(180deg)' : 'none',
+                        transition: 'transform 0.2s ease',
+                        flexShrink: 0,
                       }}
                     />
-                  </div>
-                ))}
-              </div>
-
-              {/* Email */}
-              <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Hộp thư điện tử nhận thông tin *")}</label>
-                <input
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="name@example.com"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '1.5px solid #cbd5e1',
-                    borderRadius: 10,
-                    fontSize: 14,
-                    boxSizing: 'border-box',
-                    background: '#ffffff',
-                    color: '#0f172a',
-                    outline: 'none',
-                  }}
-                />
-                <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>{ui("Thư xác nhận và thông tin tài khoản quản trị sẽ gửi về địa chỉ thư này")}</div>
-              </div>
-
-              {/* Địa chỉ mặt bằng */}
-              <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Địa chỉ mặt bằng dự kiến *")}</label>
-                <input
-                  name="dia_chi_mat_bang"
-                  value={form.dia_chi_mat_bang}
-                  onChange={handleChange}
-                  placeholder={ui("Số nhà, Tên đường")}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '1.5px solid #cbd5e1',
-                    borderRadius: 10,
-                    fontSize: 14,
-                    boxSizing: 'border-box',
-                    background: '#ffffff',
-                    color: '#0f172a',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
-              {/* Tỉnh thành, Phường xã, Diện tích */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 18 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Tỉnh, Thành phố *")}</label>
-                  <input
-                    list="provinces-list"
-                    name="thanh_pho"
-                    value={form.thanh_pho}
-                    onChange={handleChangeProvince}
-                    placeholder={ui("Chọn hoặc nhập Tỉnh/Thành phố...")}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      border: '1.5px solid #cbd5e1',
-                      borderRadius: 10,
-                      fontSize: 14,
-                      boxSizing: 'border-box',
-                      background: '#ffffff',
-                      color: '#0f172a',
-                      outline: 'none',
-                    }}
-                  />
-                  <datalist id="provinces-list">
-                    {provinces.map((p) => (
-                      <option key={p.code} value={p.name} />
-                    ))}
-                  </datalist>
+                  </button>
+                  {isExpanded && (
+                    <div style={{ padding: '0 24px 20px', fontSize: 14, color: '#475569', lineHeight: 1.7 }}>
+                      {ui(faq.a)}
+                    </div>
+                  )}
                 </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
+      {/* ── CALL TO ACTION (CTA BANNER) ─────────────────────── */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #7f141b 0%, #4a0d11 100%)',
+          padding: '80px 24px',
+          color: '#ffffff',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ maxWidth: 740, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: '#ffffff', margin: '0 0 18px', letterSpacing: '-0.02em' }}>
+            {ui("Sẵn Sàng Khởi Nghiệp Cùng Avengers Coffee?")}
+          </h2>
+          <p style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.88)', lineHeight: 1.7, margin: '0 auto 36px', maxWidth: 600 }}>
+            {ui("Gia nhập mạng lưới kiosk cà phê năng động, sinh lời bền vững. Để lại thông tin dự kiến để nhận tư vấn thẩm định vị trí trong vòng 24 giờ.")}
+          </p>
 
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => handleOpenRegister(form.goi_kiosk || 'KIOSK_CO_DINH')}
+              style={{
+                padding: '15px 36px',
+                background: '#ffffff',
+                color: '#8f1b23',
+                borderRadius: 12,
+                fontWeight: 800,
+                fontSize: 15,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+                transition: 'transform 0.15s ease',
+              }}
+            >
+              {ui("Nộp Hồ Sơ Tư Vấn Ngay")}
+            </button>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Phường, Xã *")}</label>
-                  <input
-                    list="wards-list"
-                    name="phuong_xa"
-                    value={form.phuong_xa}
-                    onChange={handleChange}
-                    placeholder={ui("Chọn hoặc nhập Phường/Xã...")}
-                    required
-                    disabled={!form.thanh_pho}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      border: '1.5px solid #cbd5e1',
-                      borderRadius: 10,
-                      fontSize: 14,
-                      boxSizing: 'border-box',
-                      background: form.thanh_pho ? '#ffffff' : '#f1f5f9',
-                      color: '#0f172a',
-                      outline: 'none',
-                    }}
-                  />
-                  <datalist id="wards-list">
-                    {wards.map((w, idx) => (
-                      <option key={idx} value={w.name} />
-                    ))}
-                  </datalist>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Diện tích (m²)")}</label>
-                  <input
-                    name="dien_tich_m2"
-                    type="number"
-                    value={form.dien_tich_m2}
-                    onChange={handleChange}
-                    placeholder="m²"
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      border: '1.5px solid #cbd5e1',
-                      borderRadius: 10,
-                      fontSize: 14,
-                      boxSizing: 'border-box',
-                      background: '#ffffff',
-                      color: '#0f172a',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Ghi chú */}
-              <div style={{ marginBottom: 28 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Ghi chú thêm")}</label>
-                <textarea
-                  name="ghi_chu"
-                  value={form.ghi_chu}
-                  onChange={handleChange}
-                  rows={3}
-                  placeholder={ui("Kinh nghiệm kinh doanh, câu hỏi hoặc yêu cầu cần tư vấn chi tiết...")}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '1.5px solid #cbd5e1',
-                    borderRadius: 10,
-                    fontSize: 14,
-                    boxSizing: 'border-box',
-                    background: '#ffffff',
-                    color: '#0f172a',
-                    resize: 'vertical',
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
-              {/* Nút gửi - Màu xanh lá cho hành động xác nhận gửi theo chuẩn UX */}
-              <button
-                type="submit"
-                disabled={submitting}
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  background: submitting ? '#94a3b8' : '#8f1b23',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: 12,
-                  fontSize: 16,
-                  fontWeight: 800,
-                  cursor: submitting ? 'not-allowed' : 'pointer',
-                  boxShadow: submitting ? 'none' : '0 6px 20px rgba(143, 27, 35, 0.35)',
-                  transition: 'background 0.2s ease, transform 0.15s ease',
-                }}
-              >
-                {submitting ? ui("Đang gửi hồ sơ...") : ui("Nộp Hồ Sơ Đăng Ký")}
-              </button>
-
-              <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', margin: '16px 0 0', lineHeight: 1.6 }}>{ui("Bằng cách gửi biểu mẫu này, quý khách đồng ý để chúng tôi liên hệ tư vấn. Mọi thông tin được cam kết bảo mật theo chính sách thương hiệu.")}</p>
-            </form>
-          )}
+            <button
+              type="button"
+              onClick={() => setShowLookup(true)}
+              style={{
+                padding: '15px 30px',
+                background: 'rgba(255, 255, 255, 0.12)',
+                color: '#ffffff',
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 15,
+                border: '1.5px solid rgba(255, 255, 255, 0.35)',
+                cursor: 'pointer',
+                transition: 'background 0.2s ease',
+              }}
+            >
+              {ui("Tra Cứu Hồ Sơ Đã Gửi")}
+            </button>
+          </div>
         </div>
       </section>
 
       {/* ── THÔNG TIN LIÊN HỆ TRỰC TIẾP ─────────────────────── */}
-      <section style={{ background: '#0f172a', padding: '54px 24px', textAlign: 'center', color: '#ffffff' }}>
-        <div style={{ maxWidth: 640, margin: '0 auto' }}>
-          <h3 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 10px', color: '#ffffff' }}>{ui("Muốn tư vấn trực tiếp?")}</h3>
-          <p style={{ color: '#94a3b8', fontSize: 15, margin: '0 0 28px', lineHeight: 1.6 }}>{ui("Liên hệ trực tiếp với bộ phận phát triển nhượng quyền Avengers Coffee")}</p>
+      <section style={{ background: '#0f172a', padding: '44px 24px', textAlign: 'center', color: '#ffffff' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
+          <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px', color: '#ffffff' }}>
+            {ui("Bạn cần hỗ trợ trực tiếp?")}
+          </h3>
+          <p style={{ color: '#94a3b8', fontSize: 14, margin: '0 0 24px' }}>
+            {ui("Liên hệ trực tiếp với Phòng Phát Triển Nhượng Quyền Avengers Coffee qua các kênh chính thức")}
+          </p>
 
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
             <a
               href={`mailto:${COMPANY_EMAIL}`}
               style={{
-                padding: '13px 28px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '11px 22px',
                 background: '#8f1b23',
                 color: '#ffffff',
-                borderRadius: 12,
+                borderRadius: 10,
                 fontWeight: 700,
                 fontSize: 14,
                 textDecoration: 'none',
-                boxShadow: '0 4px 14px rgba(143, 27, 35, 0.4)',
+                boxShadow: '0 4px 14px rgba(143, 27, 35, 0.35)',
               }}
             >
+              <EnvelopeIcon style={{ width: 16, height: 16 }} />
               {COMPANY_EMAIL}
             </a>
 
             <div
               style={{
-                padding: '13px 28px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '11px 22px',
                 background: '#1e293b',
                 color: '#e2e8f0',
-                borderRadius: 12,
+                borderRadius: 10,
                 fontWeight: 700,
                 fontSize: 14,
                 border: '1px solid #334155',
               }}
             >
+              <PhoneIcon style={{ width: 16, height: 16, color: '#38bdf8' }} />
               Hotline: 1800 6936
             </div>
           </div>
         </div>
       </section>
+
+      {/* ── MODAL ĐĂNG KÝ HỒ SƠ NHƯỢNG QUYỀN ─────────────────── */}
+      {showRegisterModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: 16,
+            backdropFilter: 'blur(6px)',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !submitting) {
+              setShowRegisterModal(false);
+            }
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: 24,
+              width: '100%',
+              maxWidth: 720,
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.3)',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '24px 28px',
+                borderBottom: '1px solid #f1f5f9',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                background: 'linear-gradient(180deg, #fff9f9 0%, #ffffff 100%)',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '4px 12px',
+                    borderRadius: 999,
+                    background: '#fee2e2',
+                    color: '#991b1b',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    marginBottom: 8,
+                  }}
+                >
+                  <SparklesIcon style={{ width: 14, height: 14 }} />
+                  {ui("Hồ Sơ Nhượng Quyền Đối Tác")}
+                </div>
+                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a' }}>
+                  {ui("Đăng Ký Tư Vấn & Thẩm Định Nhượng Quyền")}
+                </h3>
+                <p style={{ margin: '6px 0 0', fontSize: 13, color: '#64748b' }}>
+                  {ui("Chúng tôi sẽ phản hồi và hỗ trợ khảo sát mặt bằng trong vòng 24 giờ làm việc.")}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!submitting) setShowRegisterModal(false);
+                }}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: 10,
+                  width: 36,
+                  height: 36,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#64748b',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease',
+                  flexShrink: 0,
+                  marginLeft: 12,
+                }}
+              >
+                <XMarkIcon style={{ width: 20, height: 20 }} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '24px 28px' }}>
+              {result?.success ? (
+                /* Tiếp nhận thành công */
+                <div style={{ textAlign: 'center', padding: '20px 8px' }}>
+                  <div
+                    style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: '50%',
+                      background: '#dcfce7',
+                      color: '#15803d',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 16px',
+                    }}
+                  >
+                    <CheckCircleIcon style={{ width: 36, height: 36 }} />
+                  </div>
+                  <h4 style={{ fontSize: 20, fontWeight: 700, color: '#15803d', margin: '0 0 10px' }}>
+                    {ui("Tiếp Nhận Hồ Sơ Thành Công!")}
+                  </h4>
+                  <p style={{ fontSize: 14, color: '#334155', maxWidth: 480, margin: '0 auto 24px', lineHeight: 1.6 }}>
+                    {result.message}
+                  </p>
+
+                  <div
+                    style={{
+                      background: '#f8fafc',
+                      borderRadius: 16,
+                      border: '1px solid #e2e8f0',
+                      padding: '18px 20px',
+                      textAlign: 'left',
+                      marginBottom: 24,
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>
+                      {ui("Quy trình tiếp theo:")}
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#475569', lineHeight: 1.8 }}>
+                      <li>{ui("Thư xác nhận đã được gửi đến email bạn đã đăng ký.")}</li>
+                      <li>{ui("Chuyên viên phát triển nhượng quyền sẽ liên hệ trực tiếp trong 24 giờ.")}</li>
+                      <li>{ui("Bạn có thể dùng số điện thoại để tra cứu tiến độ hồ sơ bất kỳ lúc nào.")}</li>
+                    </ul>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResult(null);
+                      setShowRegisterModal(false);
+                    }}
+                    style={{
+                      padding: '12px 32px',
+                      background: '#8f1b23',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: 12,
+                      fontWeight: 700,
+                      fontSize: 14,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {ui("Hoàn tất & Đóng")}
+                  </button>
+                </div>
+              ) : (
+                /* Biểu mẫu nhập */
+                <form onSubmit={handleSubmit}>
+                  {result && !result.success && (
+                    <div
+                      style={{
+                        padding: '14px 16px',
+                        borderRadius: 12,
+                        background: '#fef2f2',
+                        border: '1px solid #fca5a5',
+                        color: '#b91c1c',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        marginBottom: 20,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {result.message}
+                    </div>
+                  )}
+
+                  {/* Lựa chọn mô hình gói */}
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 10 }}>
+                      {ui("Mô hình nhượng quyền mong muốn *")}
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                      {PACKAGES.map((pkg) => {
+                        const isSelected = form.goi_kiosk === pkg.id;
+                        return (
+                          <div
+                            key={pkg.id}
+                            onClick={() => setForm((f) => ({ ...f, goi_kiosk: pkg.id }))}
+                            style={{
+                              padding: '12px 14px',
+                              borderRadius: 12,
+                              border: isSelected ? `2px solid ${pkg.color}` : '1.5px solid #e2e8f0',
+                              background: isSelected ? `${pkg.color}0c` : '#ffffff',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <div style={{ fontWeight: 700, fontSize: 13, color: isSelected ? pkg.color : '#0f172a' }}>
+                              {pkg.name}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginTop: 4 }}>
+                              {pkg.invest} • {pkg.area}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Thông tin người đại diện */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                        {ui("Họ và tên đối tác *")}
+                      </label>
+                      <input
+                        name="ho_ten"
+                        value={form.ho_ten}
+                        onChange={handleChange}
+                        placeholder={ui("Nguyễn Văn A")}
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: '1.5px solid #cbd5e1',
+                          borderRadius: 10,
+                          fontSize: 14,
+                          boxSizing: 'border-box',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                        {ui("Số điện thoại liên hệ *")}
+                      </label>
+                      <input
+                        name="so_dien_thoai"
+                        type="tel"
+                        value={form.so_dien_thoai}
+                        onChange={handleChange}
+                        placeholder={ui("0912 345 678")}
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: '1.5px solid #cbd5e1',
+                          borderRadius: 10,
+                          fontSize: 14,
+                          boxSizing: 'border-box',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                      {ui("Email nhận kết quả thẩm định & tài khoản quản trị *")}
+                    </label>
+                    <input
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder="name@example.com"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1.5px solid #cbd5e1',
+                        borderRadius: 10,
+                        fontSize: 14,
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  {/* Mặt bằng dự kiến */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                      {ui("Địa chỉ mặt bằng dự kiến *")}
+                    </label>
+                    <input
+                      name="dia_chi_mat_bang"
+                      value={form.dia_chi_mat_bang}
+                      onChange={handleChange}
+                      placeholder={ui("Số nhà, Tên đường...")}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1.5px solid #cbd5e1',
+                        borderRadius: 10,
+                        fontSize: 14,
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  {/* Tỉnh thành, Phường xã, Diện tích */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', gap: 12, marginBottom: 16 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                        {ui("Tỉnh / Thành phố *")}
+                      </label>
+                      <input
+                        list="modal-provinces-list"
+                        name="thanh_pho"
+                        value={form.thanh_pho}
+                        onChange={handleChangeProvince}
+                        placeholder={ui("Chọn Tỉnh/TP...")}
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1.5px solid #cbd5e1',
+                          borderRadius: 10,
+                          fontSize: 13,
+                          boxSizing: 'border-box',
+                          outline: 'none',
+                        }}
+                      />
+                      <datalist id="modal-provinces-list">
+                        {provinces.map((p) => (
+                          <option key={p.code} value={p.name} />
+                        ))}
+                      </datalist>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                        {ui("Phường / Xã *")}
+                      </label>
+                      <input
+                        list="modal-wards-list"
+                        name="phuong_xa"
+                        value={form.phuong_xa}
+                        onChange={handleChange}
+                        placeholder={ui("Chọn Phường/Xã...")}
+                        required
+                        disabled={!form.thanh_pho}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1.5px solid #cbd5e1',
+                          borderRadius: 10,
+                          fontSize: 13,
+                          boxSizing: 'border-box',
+                          background: form.thanh_pho ? '#ffffff' : '#f1f5f9',
+                          outline: 'none',
+                        }}
+                      />
+                      <datalist id="modal-wards-list">
+                        {wards.map((w, idx) => (
+                          <option key={idx} value={w.name} />
+                        ))}
+                      </datalist>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                        {ui("Diện tích")}
+                      </label>
+                      <input
+                        name="dien_tich_m2"
+                        type="number"
+                        value={form.dien_tich_m2}
+                        onChange={handleChange}
+                        placeholder="m²"
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1.5px solid #cbd5e1',
+                          borderRadius: 10,
+                          fontSize: 13,
+                          boxSizing: 'border-box',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Ghi chú */}
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                      {ui("Ghi chú thêm hoặc câu hỏi tư vấn")}
+                    </label>
+                    <textarea
+                      name="ghi_chu"
+                      value={form.ghi_chu}
+                      onChange={handleChange}
+                      rows={2}
+                      placeholder={ui("Kinh nghiệm kinh doanh, thời gian dự kiến mở quán...")}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1.5px solid #cbd5e1',
+                        borderRadius: 10,
+                        fontSize: 13,
+                        boxSizing: 'border-box',
+                        resize: 'vertical',
+                        outline: 'none',
+                        fontFamily: 'inherit',
+                      }}
+                    />
+                  </div>
+
+                  {/* Box cam kết bán kính 500m */}
+                  <div
+                    style={{
+                      padding: '12px 14px',
+                      background: '#f8fafc',
+                      borderRadius: 10,
+                      border: '1px dashed #cbd5e1',
+                      fontSize: 12,
+                      color: '#475569',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      marginBottom: 20,
+                    }}
+                  >
+                    <ShieldCheckIcon style={{ width: 18, height: 18, color: '#16a34a', flexShrink: 0 }} />
+                    <span>{ui("Hệ thống tự động kiểm tra GPS để bảo đảm độc quyền khu vực bán kính 500m quanh điểm kinh doanh của bạn.")}</span>
+                  </div>
+
+                  {/* Buttons */}
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid #f1f5f9', paddingTop: 18 }}>
+                    <button
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => setShowRegisterModal(false)}
+                      style={{
+                        padding: '11px 22px',
+                        background: '#f1f5f9',
+                        color: '#475569',
+                        border: 'none',
+                        borderRadius: 10,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: submitting ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {ui("Hủy bỏ")}
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      style={{
+                        padding: '11px 28px',
+                        background: submitting ? '#94a3b8' : 'linear-gradient(135deg, #b22830 0%, #8f1b23 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: 10,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        cursor: submitting ? 'not-allowed' : 'pointer',
+                        boxShadow: submitting ? 'none' : '0 4px 14px rgba(178, 40, 48, 0.35)',
+                      }}
+                    >
+                      {submitting ? ui("Đang kiểm tra & gửi...") : ui("Nộp Hồ Sơ Đăng Ký")}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── MODAL TRA CỨU HỒ SƠ ───────────────────────────────── */}
       {showLookup && (
@@ -1615,10 +2074,60 @@ export default function FranchisePage({ onNavigate }) {
                         </div>
                       )}
 
-                      {/* Nút hủy hồ sơ - Hành động nguy hiểm dùng màu đỏ chuẩn UX */}
-                      {canCancel && (
+                      {/* Khi hồ sơ được yêu cầu cọc: Hiển thị nút thanh toán đặt cọc nổi bật */}
+                      {hs.trang_thai === 'CHO_DAT_COC' && (
+                        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                          <div style={{ fontSize: 13, color: '#b45309', fontWeight: 600 }}>
+                            ⚠️ {ui("Hồ sơ đã được duyệt sơ bộ. Vui lòng đặt cọc 5.000.000đ để giữ độc quyền vị trí!")}
+                          </div>
+                          <div style={{ display: 'flex', gap: 10 }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                window.history.pushState({}, '', `/?tab=franchise-deposit&ho_so_id=${hs.id}`);
+                                if (onNavigate) {
+                                  onNavigate('franchise-deposit');
+                                } else {
+                                  window.location.href = `/?tab=franchise-deposit&ho_so_id=${hs.id}`;
+                                }
+                              }}
+                              style={{
+                                padding: '9px 18px',
+                                background: '#991b1b',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: 10,
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 12px rgba(153, 27, 27, 0.25)',
+                              }}
+                            >
+                              💳 {ui("Thanh toán đặt cọc ngay (5.000.000đ)")} →
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCancelApplication(hs.id)}
+                              style={{
+                                padding: '9px 14px',
+                                background: '#f1f5f9',
+                                color: '#475569',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: 10,
+                                fontSize: 13,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >{ui("Hủy hồ sơ")}</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Nút hủy hồ sơ cho CHO_XEM_XET */}
+                      {hs.trang_thai === 'CHO_XEM_XET' && (
                         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
                           <button
+                            type="button"
                             onClick={() => handleCancelApplication(hs.id)}
                             style={{
                               padding: '9px 18px',

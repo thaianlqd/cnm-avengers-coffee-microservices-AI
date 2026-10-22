@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 import { getAdminAccessToken, getAdminSession } from '../../../lib/adminFetch'
 
+import PROVINCES_DATA from '../../../data/provinces.json'
+
 const authHeaders = (extra = {}) => {
   const token = getAdminAccessToken()
   return {
@@ -39,7 +41,7 @@ const DEFAULT_BRANCH_FORM = {
   ma_chi_nhanh: '',
   ten_chi_nhanh: '',
   dia_chi_chi_tiet: '',
-  thanh_pho: 'HO_CHI_MINH',
+  thanh_pho: 'Thành phố Hồ Chí Minh',
   quan_huyen: '',
   phuong_xa: '',
   so_dien_thoai: '',
@@ -50,66 +52,21 @@ const DEFAULT_BRANCH_FORM = {
   trang_thai: 'ACTIVE',
 }
 
-const LOCATION_TREE = {
-  HO_CHI_MINH: {
-    label: 'TP. Hồ Chí Minh',
-    districts: {
-      QUAN_1: {
-        label: 'Quận 1',
-        wards: ['Bến Nghé', 'Bến Thành', 'Đa Kao', 'Nguyễn Thái Bình', 'Phạm Ngũ Lão', 'Tân Định'],
-      },
-      QUAN_3: {
-        label: 'Quận 3',
-        wards: ['Võ Thị Sáu', 'Phường 1', 'Phường 2', 'Phường 3', 'Phường 4', 'Phường 5'],
-      },
-      BINH_THANH: {
-        label: 'Quận Bình Thạnh',
-        wards: ['Phường 1', 'Phường 2', 'Phường 3', 'Phường 11', 'Phường 13', 'Phường 14', 'Phường 15', 'Phường 24', 'Phường 25', 'Phường 26'],
-      },
-      PHU_NHUAN: {
-        label: 'Quận Phú Nhuận',
-        wards: ['Phường 1', 'Phường 2', 'Phường 3', 'Phường 4', 'Phường 5', 'Phường 7', 'Phường 8', 'Phường 9', 'Phường 10', 'Phường 11', 'Phường 13', 'Phường 15', 'Phường 17'],
-      },
-      THU_DUC: {
-        label: 'TP Thủ Đức',
-        wards: ['An Khánh', 'An Lợi Đông', 'An Phú', 'Hiệp Bình Chánh', 'Hiệp Bình Phước', 'Linh Chiểu', 'Linh Đông', 'Linh Tây', 'Linh Trung', 'Thảo Điền', 'Tam Bình', 'Tam Phú'],
-      },
-    },
-  },
-  HA_NOI: {
-    label: 'Hà Nội',
-    districts: {
-      BA_DINH: {
-        label: 'Quan Ba Dinh',
-        wards: ['Cong Vi', 'Doi Can', 'Giang Vo', 'Kim Ma', 'Lieu Giai', 'Ngoc Ha', 'Ngoc Khanh', 'Phuc Xa', 'Truc Bach', 'Vinh Phuc'],
-      },
-      HOAN_KIEM: {
-        label: 'Quan Hoan Kiem',
-        wards: ['Chuong Duong', 'Cua Dong', 'Cua Nam', 'Dong Xuan', 'Hang Bac', 'Hang Bong', 'Hang Buom', 'Hang Dao', 'Hang Gai', 'Hang Ma', 'Ly Thai To', 'Phan Chu Trinh', 'Tran Hung Dao'],
-      },
-      DONG_DA: {
-        label: 'Quan Dong Da',
-        wards: ['Cat Linh', 'Hang Bot', 'Kham Thien', 'Kim Lien', 'Lang Thuong', 'Nam Dong', 'O Cho Dua', 'Phuong Lien', 'Quoc Tu Giam', 'Thinh Quang', 'Thinh Liet', 'Van Chuong'],
-      },
-    },
-  },
-  DA_NANG: {
-    label: 'Đà Nẵng',
-    districts: {
-      HAI_CHAU: {
-        label: 'Quan Hai Chau',
-        wards: ['Binh Hien', 'Binh Thuan', 'Hai Chau 1', 'Hai Chau 2', 'Hoa Cuong Bac', 'Hoa Cuong Nam', 'Nam Duong', 'Phuoc Ninh', 'Thanh Binh', 'Thach Thang', 'Thuan Phuoc'],
-      },
-      THANH_KHE: {
-        label: 'Quan Thanh Khe',
-        wards: ['An Khe', 'Chinh Gian', 'Hoa Khe', 'Tam Thuan', 'Tan Chinh', 'Thac Gian', 'Thanh Khe Dong', 'Thanh Khe Tay', 'Vinh Trung', 'Xuan Ha'],
-      },
-      SON_TRA: {
-        label: 'Quan Son Tra',
-        wards: ['An Hai Bac', 'An Hai Dong', 'An Hai Tay', 'Man Thai', 'Nai Hien Dong', 'Phuoc My', 'Tho Quang'],
-      },
-    },
-  },
+const LOCATION_TREE = {}
+PROVINCES_DATA.forEach((prov) => {
+  LOCATION_TREE[prov.name] = {
+    label: prov.name,
+    wards: (prov.wards || []).map((w) => w.name),
+  }
+})
+if (LOCATION_TREE['Thành phố Hồ Chí Minh']) {
+  LOCATION_TREE['HO_CHI_MINH'] = LOCATION_TREE['Thành phố Hồ Chí Minh']
+}
+if (LOCATION_TREE['Thành phố Hà Nội']) {
+  LOCATION_TREE['HA_NOI'] = LOCATION_TREE['Thành phố Hà Nội']
+}
+if (LOCATION_TREE['Thành phố Đà Nẵng']) {
+  LOCATION_TREE['DA_NANG'] = LOCATION_TREE['Thành phố Đà Nẵng']
 }
 
 function normalizeText(value = '') {
@@ -132,53 +89,48 @@ function parseBranchAddress(address) {
   }
 
   let cityCode = ''
-  let districtCode = ''
   let wardName = ''
 
-  const allCityCodes = Object.keys(LOCATION_TREE)
   const normalizedParts = parts.map((item) => normalizeText(item))
 
-  cityCode = allCityCodes.find((code) => {
-    const cityLabel = LOCATION_TREE[code].label
-    const normalizedCityLabel = normalizeText(cityLabel)
-    return normalizedParts.some((part) => part.includes(normalizedCityLabel) || normalizedCityLabel.includes(part))
-  }) || ''
+  // Find matching province from 34 provinces
+  const matchedProv = PROVINCES_DATA.find((prov) => {
+    const normProv = normalizeText(prov.name)
+    const shortName = normalizeText(prov.name.replace(/^(Thành phố|Tỉnh)\s+/i, ''))
+    return normalizedParts.some(
+      (part) => part.includes(normProv) || normProv.includes(part) || (shortName && part.includes(shortName))
+    )
+  })
 
-  if (!cityCode) {
-    if (normalizedParts.some((part) => part.includes('tp hcm') || part.includes('ho chi minh') || part.includes('tphcm'))) {
-      cityCode = 'HO_CHI_MINH'
-    }
-    if (normalizedParts.some((part) => part.includes('ha noi'))) {
-      cityCode = 'HA_NOI'
-    }
-    if (normalizedParts.some((part) => part.includes('da nang'))) {
-      cityCode = 'DA_NANG'
-    }
-  }
-
-  if (cityCode) {
-    const districtEntries = Object.entries(LOCATION_TREE[cityCode].districts)
-    districtCode = districtEntries.find(([, district]) => {
-      const normalizedDistrictLabel = normalizeText(district.label)
-      return normalizedParts.some((part) => part.includes(normalizedDistrictLabel) || normalizedDistrictLabel.includes(part))
-    })?.[0] || ''
-
-    if (districtCode) {
-      const wardList = LOCATION_TREE[cityCode].districts[districtCode].wards
-      wardName = wardList.find((ward) => {
-        const normalizedWard = normalizeText(ward)
-        return normalizedParts.some((part) => part.includes(normalizedWard) || normalizedWard.includes(part))
-      }) || ''
+  if (matchedProv) {
+    cityCode = matchedProv.name
+    // Find matching ward within matched province
+    wardName = (matchedProv.wards || []).find((w) => {
+      const normWard = normalizeText(w.name)
+      const shortWard = normalizeText(w.name.replace(/^(Phường|Xã|Thị trấn)\s+/i, ''))
+      return normalizedParts.some(
+        (part) => part.includes(normWard) || normWard.includes(part) || (shortWard && part.includes(shortWard))
+      )
+    })?.name || ''
+  } else {
+    if (normalizedParts.some((p) => p.includes('hcm') || p.includes('ho chi minh'))) {
+      cityCode = 'Thành phố Hồ Chí Minh'
+    } else if (normalizedParts.some((p) => p.includes('ha noi'))) {
+      cityCode = 'Thành phố Hà Nội'
+    } else if (normalizedParts.some((p) => p.includes('da nang'))) {
+      cityCode = 'Thành phố Đà Nẵng'
     }
   }
 
   const knownTokens = [
-    cityCode ? normalizeText(LOCATION_TREE[cityCode]?.label) : '',
-    districtCode ? normalizeText(LOCATION_TREE[cityCode]?.districts[districtCode]?.label) : '',
+    cityCode ? normalizeText(cityCode) : '',
+    cityCode ? normalizeText(cityCode.replace(/^(Thành phố|Tỉnh)\s+/i, '')) : '',
     wardName ? normalizeText(wardName) : '',
     'tp hcm',
     'tphcm',
     'ho chi minh',
+    'viet nam',
+    'vietnam',
   ].filter(Boolean)
 
   const detailParts = parts.filter((part) => {
@@ -190,15 +142,14 @@ function parseBranchAddress(address) {
     ...DEFAULT_BRANCH_FORM,
     dia_chi_chi_tiet: detailParts.join(', '),
     thanh_pho: cityCode || DEFAULT_BRANCH_FORM.thanh_pho,
-    quan_huyen: districtCode,
+    quan_huyen: '',
     phuong_xa: wardName,
   }
 }
 
 function composeBranchAddress(form) {
-  const cityLabel = LOCATION_TREE[form.thanh_pho]?.label || ''
-  const districtLabel = LOCATION_TREE[form.thanh_pho]?.districts?.[form.quan_huyen]?.label || ''
-  const parts = [form.dia_chi_chi_tiet, form.phuong_xa, districtLabel, cityLabel]
+  const cityLabel = resolveCityLabel(form?.thanh_pho) || form?.thanh_pho || ''
+  const parts = [form?.dia_chi_chi_tiet, form?.phuong_xa, cityLabel]
     .map((item) => String(item || '').trim())
     .filter(Boolean)
   return parts.join(', ')
@@ -209,15 +160,13 @@ function resolveCityLabel(cityCodeOrLabel) {
   if (LOCATION_TREE[cityCodeOrLabel]) {
     return LOCATION_TREE[cityCodeOrLabel].label
   }
+  const found = PROVINCES_DATA.find((p) => p.name === cityCodeOrLabel)
+  if (found) return found.name
   return String(cityCodeOrLabel).trim()
 }
 
-function resolveDistrictLabel(cityCodeOrLabel, districtCodeOrLabel) {
-  if (!districtCodeOrLabel) return ''
-  if (LOCATION_TREE[cityCodeOrLabel]?.districts?.[districtCodeOrLabel]) {
-    return LOCATION_TREE[cityCodeOrLabel].districts[districtCodeOrLabel].label
-  }
-  return String(districtCodeOrLabel).trim()
+function resolveDistrictLabel() {
+  return ''
 }
 
 const DEFAULT_MENU_FORM = {
@@ -408,7 +357,7 @@ export function useSystemAdmin() {
 
   const menuQuery = useQuery({
     queryKey: ['system-admin', 'menu', owner],
-    enabled: needs('overview','menu','promotions'),
+    enabled: needs('overview','menu','promotions','categories'),
     queryFn: fetchMenuItems,
   })
 
@@ -521,29 +470,22 @@ export function useSystemAdmin() {
   }, [menuQuery.data])
 
   const cityOptions = useMemo(() => {
-    const all = Object.entries(LOCATION_TREE).map(([code, city]) => ({ code, label: city.label }))
+    const all = PROVINCES_DATA.map((prov) => ({ code: prov.name, label: prov.name }))
     const keyword = normalizeText(locationSearch.city)
     if (!keyword) return all
     return all.filter((city) => normalizeText(city.label).includes(keyword))
   }, [locationSearch.city])
 
-  const districtOptions = useMemo(() => {
-    const city = LOCATION_TREE[branchForm.thanh_pho]
-    if (!city) return []
-    const all = Object.entries(city.districts).map(([code, district]) => ({ code, label: district.label }))
-    const keyword = normalizeText(locationSearch.district)
-    if (!keyword) return all
-    return all.filter((district) => normalizeText(district.label).includes(keyword))
-  }, [branchForm.thanh_pho, locationSearch.district])
+  const districtOptions = useMemo(() => [], [])
 
   const wardOptions = useMemo(() => {
-    const district = LOCATION_TREE[branchForm.thanh_pho]?.districts?.[branchForm.quan_huyen]
-    if (!district) return []
-    const all = district.wards.map((ward) => ({ code: ward, label: ward }))
+    const city = LOCATION_TREE[branchForm.thanh_pho]
+    if (!city) return []
+    const all = (city.wards || []).map((ward) => ({ code: ward, label: ward }))
     const keyword = normalizeText(locationSearch.ward)
     if (!keyword) return all
     return all.filter((ward) => normalizeText(ward.label).includes(keyword))
-  }, [branchForm.thanh_pho, branchForm.quan_huyen, locationSearch.ward])
+  }, [branchForm.thanh_pho, locationSearch.ward])
 
   const branchAddressPreview = useMemo(() => composeBranchAddress(branchForm), [branchForm])
 
@@ -585,21 +527,14 @@ export function useSystemAdmin() {
     }
   }
 
-  const loadCustomers = async (filters = customerFilters) => {
+  const loadCustomers = async () => {
     setCustomersState((prev) => ({ ...prev, loading: true, error: '' }))
     try {
-      const params = new URLSearchParams()
-      params.set('role', 'CUSTOMER')
-      if (filters.q) params.set('q', filters.q)
-
-      const response = await fetch(`${API_BASE_URL}/users/admin/accounts?${params.toString()}`)
+      const response = await fetch(`${API_BASE_URL}/users/admin/accounts?role=CUSTOMER`)
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.message || 'Khong tai duoc danh sach khach hang')
 
-      const items = payload?.items || []
-      const status = String(filters.status || '').trim().toUpperCase()
-      const filteredItems = status ? items.filter((item) => String(item.trang_thai || '').toUpperCase() === status) : items
-      setCustomersState({ loading: false, error: '', items: filteredItems })
+      setCustomersState({ loading: false, error: '', items: payload?.items || [] })
     } catch (error) {
       setCustomersState({ loading: false, error: error.message || 'Khong tai duoc danh sach khach hang', items: [] })
     }
@@ -784,7 +719,7 @@ export function useSystemAdmin() {
       await promotionsQuery.refetch()
       pushAdminNotification('Cập nhật Voucher', 'Đã lưu thay đổi voucher / template thành công.')
     } catch (error) {
-      window.alert(error.message || 'Khong luu duoc khuyen mai')
+      return { ok: false, error: error.message || 'Khong luu duoc khuyen mai' }
     } finally {
       setSavingPromotion(false)
     }
@@ -887,18 +822,18 @@ export function useSystemAdmin() {
 
   const startEditBranch = (item) => {
     const parsedAddress = parseBranchAddress(item.dia_chi)
-    const cityKeyByLabel = Object.keys(LOCATION_TREE).find((code) => normalizeText(LOCATION_TREE[code].label) === normalizeText(item.thanh_pho || ''))
-    const districtKeyByLabel = cityKeyByLabel
-      ? Object.keys(LOCATION_TREE[cityKeyByLabel].districts || {}).find(
-          (code) => normalizeText(LOCATION_TREE[cityKeyByLabel].districts[code].label) === normalizeText(item.quan_huyen || ''),
-        )
-      : ''
+    const matchedCity = PROVINCES_DATA.find(
+      (p) => normalizeText(p.name) === normalizeText(item.thanh_pho || '') || normalizeText(p.name).includes(normalizeText(item.thanh_pho || ''))
+    )
+    const cityKey = matchedCity ? matchedCity.name : (parsedAddress.thanh_pho || DEFAULT_BRANCH_FORM.thanh_pho)
+
     setEditingBranchCode(item.ma_chi_nhanh)
     setLocationSearch({ city: '', district: '', ward: '' })
     setBranchForm({
       ...parsedAddress,
-      thanh_pho: cityKeyByLabel || parsedAddress.thanh_pho,
-      quan_huyen: districtKeyByLabel || parsedAddress.quan_huyen,
+      thanh_pho: cityKey,
+      quan_huyen: '',
+      phuong_xa: parsedAddress.phuong_xa || '',
       ma_chi_nhanh: item.ma_chi_nhanh,
       ten_chi_nhanh: item.ten_chi_nhanh || '',
       so_dien_thoai: item.so_dien_thoai || '',
@@ -924,8 +859,7 @@ export function useSystemAdmin() {
         ma_chi_nhanh: branchForm.ma_chi_nhanh,
         ten_chi_nhanh: branchForm.ten_chi_nhanh,
         dia_chi: fullAddress || undefined,
-        thanh_pho: resolveCityLabel(branchForm.thanh_pho) || undefined,
-        quan_huyen: resolveDistrictLabel(branchForm.thanh_pho, branchForm.quan_huyen) || undefined,
+        thanh_pho: resolveCityLabel(branchForm.thanh_pho) || branchForm.thanh_pho || undefined,
         so_dien_thoai: branchForm.so_dien_thoai || undefined,
         hinh_anh_url: branchForm.hinh_anh_url || undefined,
         gio_mo_cua: branchForm.gio_mo_cua || undefined,
@@ -944,7 +878,6 @@ export function useSystemAdmin() {
             ten_chi_nhanh: payload.ten_chi_nhanh,
             dia_chi: payload.dia_chi,
             thanh_pho: payload.thanh_pho,
-            quan_huyen: payload.quan_huyen,
             so_dien_thoai: payload.so_dien_thoai,
             hinh_anh_url: payload.hinh_anh_url,
             gio_mo_cua: payload.gio_mo_cua,
@@ -966,8 +899,9 @@ export function useSystemAdmin() {
       cancelEditBranch()
       await Promise.all([loadBranches(), loadUsers(), loadStats()])
       pushAdminNotification('Cập nhật chi nhánh', 'Thông tin chi nhánh đã được lưu.')
+      return true
     } catch (error) {
-      window.alert(error.message || 'Khong luu duoc chi nhanh')
+      return { ok: false, error: error.message || 'Khong luu duoc chi nhanh' }
     } finally {
       setSavingBranch(false)
     }
@@ -1023,8 +957,9 @@ export function useSystemAdmin() {
       cancelEditUser()
       await Promise.all([loadUsers(), loadStats()])
       pushAdminNotification('Cập nhật tài khoản', 'Đã lưu thay đổi tài khoản người dùng.')
+      return true
     } catch (error) {
-      window.alert(error.message || 'Không thể lưu tài khoản')
+      return { ok: false, error: error.message || 'Không thể lưu tài khoản' }
     } finally {
       setSavingUser(false)
     }
@@ -1080,7 +1015,7 @@ export function useSystemAdmin() {
       await Promise.all([loadCustomers(), loadUsers(), loadStats()])
       pushAdminNotification('Cập nhật khách hàng', 'Đã lưu thay đổi tài khoản khách hàng.')
     } catch (error) {
-      window.alert(error.message || 'Không thể lưu thông tin khách hàng')
+      return { ok: false, error: error.message || 'Không thể lưu thông tin khách hàng' }
     } finally {
       setSavingCustomer(false)
     }
@@ -1184,7 +1119,7 @@ export function useSystemAdmin() {
       await Promise.all([loadCategories(), loadMenu()])
       pushAdminNotification('Cập nhật danh mục', 'Đã lưu thay đổi danh mục thành công.')
     } catch (error) {
-      window.alert(error.message || 'Khong luu duoc danh muc')
+      return { ok: false, error: error.message || 'Khong luu duoc danh muc' }
     } finally {
       setSavingCategory(false)
     }
@@ -1208,7 +1143,7 @@ export function useSystemAdmin() {
     setEditingMenuId(item.id)
     setMenuForm({
       name: item.name || '',
-      category_code: String(item.category_code || ''),
+      category_code: String(item.category_code || item.ma_danh_muc || ''),
       price: Number(item.price || 0),
       original_price: Number(item.original_price || 0),
       image: item.image || '',
@@ -1236,7 +1171,7 @@ export function useSystemAdmin() {
     setSavingMenu(true)
     try {
       const categoryExists = categoriesState.items.some(
-        (cat) => String(cat.code) === String(menuForm.category_code),
+        (cat) => String(cat.code) === String(menuForm.category_code) || String(cat.id) === String(menuForm.category_code),
       )
       if (!categoryExists) {
         throw new Error('Danh muc duoc chon khong ton tai, vui long chon lai danh muc hop le')
@@ -1274,7 +1209,7 @@ export function useSystemAdmin() {
       await loadAttributes().catch(() => {}) // Refresh attributes list
       pushAdminNotification('Cập nhật sản phẩm', 'Đã lưu thay đổi sản phẩm/menu thành công.')
     } catch (error) {
-      window.alert(error.message || 'Khong luu duoc mon')
+      return { ok: false, error: error.message || 'Khong luu duoc mon' }
     } finally {
       setSavingMenu(false)
     }

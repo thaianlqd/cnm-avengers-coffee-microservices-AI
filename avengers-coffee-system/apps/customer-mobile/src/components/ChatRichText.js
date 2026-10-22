@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text } from 'react-native'
-import { inlineText, textBlocks } from '../../../web-customer/src/components/chatText'
+import { inlineText, textBlocks } from '../../../web-customer/src/components/chat/chatText'
 
 function Inline({ value }) {
   const render = (nodes) => nodes.map((node, i) => node.type === 'text' ? node.text

@@ -1,10 +1,13 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, SetMetadata, UseGuards, Req } from '@nestjs/common';
 import { ShipperService } from './shipper.service';
+import { SHIPPER_PUBLIC_KEY, ShipperAccessGuard } from './shipper-access.guard';
 
 @Controller('shippers')
+@UseGuards(ShipperAccessGuard)
 export class ShipperController {
   constructor(private readonly shipperService: ShipperService) {}
 
+  @SetMetadata(SHIPPER_PUBLIC_KEY, true)
   @Post('login')
   async login(@Body() body: { username?: string; password?: string }) {
     return this.shipperService.login(String(body?.username || ''), String(body?.password || ''));
@@ -119,15 +122,16 @@ export class ShipperController {
    * Staff bấm "Shipper Nội Bộ" → Chuyển đơn sang DANG_GIAO để Shipper pool thấy
    */
   @Post('orders/:orderId/mark-ready')
-  async markOrderReadyForDelivery(@Param('orderId') orderId: string) {
-    return this.shipperService.markOrderReadyForDelivery(orderId);
+  async markOrderReadyForDelivery(@Param('orderId') orderId: string, @Req() request: any) {
+    return this.shipperService.markOrderReadyForDelivery(orderId, request.user?.role === 'STAFF' ? request.user.branchCode : undefined);
   }
 
   @Post('assign-order')
   async assignOrderToShipper(
     @Body() body: { ma_don_hang: string; shipper_id: string; manager_id?: string },
+    @Req() request: any,
   ) {
-    return this.shipperService.assignOrderToShipper(body.ma_don_hang, body.shipper_id, body.manager_id || 'system');
+    return this.shipperService.assignOrderToShipper(body.ma_don_hang, body.shipper_id, body.manager_id || 'system', request.user?.role === 'STAFF' ? request.user.branchCode : undefined);
   }
 
   // ============ SHIPPER CRUD ============
@@ -217,7 +221,7 @@ export class ShipperController {
     @Param('shipperId') shipperId: string,
     @Param('deliveryId') deliveryId: string,
   ) {
-    return this.shipperService.getDeliveryDetail(deliveryId);
+    return this.shipperService.getDeliveryDetail(deliveryId, shipperId);
   }
 
   /**

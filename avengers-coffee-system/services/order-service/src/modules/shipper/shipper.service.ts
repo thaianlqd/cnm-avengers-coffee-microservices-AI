@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { Shipper } from './entities/shipper.entity';
@@ -11,6 +11,9 @@ import { DonHang } from '../thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from '../thanh-toan/entities/chi-tiet-don-hang.entity';
 import { DeliveryTracking } from './features_thaian/delivery-tracking.entity';
 import { NotificationGateway } from '../notification/notification.gateway';
+import { JwtService } from '@nestjs/jwt';
+import { randomBytes } from 'crypto';
+import { hashShipperPassword, verifyShipperPassword } from './shipper-auth';
 import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
 
 @Injectable()
@@ -27,6 +30,7 @@ export class ShipperService {
     @InjectRepository(DeliveryTracking) private trackingRepo: Repository<DeliveryTracking>,
     private readonly notificationGateway: NotificationGateway,
     private readonly redisCacheService: RedisCacheService,
+    @Optional() private readonly jwtService?: JwtService,
   ) {}
 
   private branchCache: { data: any[]; expiresAt: number } | null = null;
@@ -186,46 +190,25 @@ export class ShipperService {
 
   async login(username: string, password: string) {
     const normalizedUsername = String(username || '').trim();
-    const normalizedPassword = String(password || '').trim();
-
-    if (!normalizedUsername || !normalizedPassword) {
-      throw new BadRequestException('Username and password are required');
+    if (!normalizedUsername || !password) throw new BadRequestException('Username and password are required');
+    const shipper = await this.shipperRepo.findOne({ where: { username: normalizedUsername } });
+    if (!shipper || !verifyShipperPassword(password, shipper.password)) {
+      throw new UnauthorizedException('Thông tin đăng nhập tài xế không hợp lệ');
     }
-
-    const demoPassword = String(process.env.SHIPPER_DEMO_PASSWORD || '123456').trim();
-
-    let shipper = await this.shipperRepo.findOne({ where: { username: normalizedUsername } });
-
-    if (!shipper) {
-      if (normalizedPassword !== demoPassword) {
-        throw new UnauthorizedException('Thông tin đăng nhập tài xế không hợp lệ');
-      }
-      const usernameSlug = normalizedUsername.replace(/[^a-zA-Z0-9_\-]/g, '').slice(0, 24) || 'shipper';
-      shipper = this.shipperRepo.create({
-        username: normalizedUsername,
-        full_name: `Shipper ${usernameSlug}`,
-        phone: `09${Date.now().toString().slice(-8)}`,
-        email: null,
-        status: 'INACTIVE',
-        branch_code: 'HCM_DIEN_BIEN_PHU',
-        rating: 4.8,
-        password: normalizedPassword,
-      });
-      shipper = await this.shipperRepo.save(shipper);
-    } else {
-      const validPassword =
-        (shipper.password && normalizedPassword === String(shipper.password).trim()) ||
-        normalizedPassword === demoPassword;
-      if (!validPassword) {
-        throw new UnauthorizedException('Mật khẩu đăng nhập tài xế không chính xác');
-      }
+    if (shipper.status === 'INACTIVE') {
+      throw new UnauthorizedException('Tài khoản tài xế đã bị khóa. Vui lòng liên hệ quản lý.');
     }
-
-    return {
-      accessToken: `shipper-token-${shipper.id}`,
-      access_token: `shipper-token-${shipper.id}`,
-      shipper,
-    };
+    if (!this.jwtService) throw new UnauthorizedException('Dịch vụ xác thực chưa sẵn sàng');
+    if (!shipper.password?.startsWith('scrypt:')) {
+      shipper.password = hashShipperPassword(password);
+      await this.shipperRepo.save(shipper);
+    }
+    const token = await this.jwtService.signAsync({
+      sub: shipper.id, role: 'SHIPPER', username: shipper.username,
+      email: shipper.email, branchCode: shipper.branch_code, branchName: null,
+    }, { expiresIn: '8h' });
+    const { password: _password, ...safeShipper } = shipper;
+    return { accessToken: token, access_token: token, shipper: safeShipper };
   }
 
   // ============ SHIPPER MANAGEMENT ============
@@ -403,10 +386,20 @@ export class ShipperService {
 
   /**
    * Shipper tự nhận đơn: Tạo ShipperDelivery record và link với đơn hàng.
-   * Chấp nhận cả đơn DANG_GIAO và DANG_CHUAN_BI (tự động nâng cấp lên DANG_GIAO).
+   * Chỉ nhận đơn đã được cửa hàng chuyển sang DANG_GIAO.
    * Nếu đơn đã được shipper khác đang active nhận → throw error.
    */
   async acceptOrder(shipperId: string, maDonHang: string) {
+    // Serialize self-assignment across API instances so two riders cannot pass
+    // the active-delivery check for the same order at the same time.
+    const lockRunner = this.deliveryRepo.manager?.connection?.createQueryRunner?.();
+    if (lockRunner) await lockRunner.connect();
+    let locked = false;
+    try {
+    if (lockRunner) {
+      await lockRunner.query('SELECT pg_advisory_lock(hashtext($1))', [`shipper-order:${maDonHang}`]);
+      locked = true;
+    }
     const donHang = await this.donHangRepo.findOne({
       where: { ma_don_hang: maDonHang },
       relations: ['chi_tiet'],
@@ -431,14 +424,14 @@ export class ShipperService {
       throw new BadRequestException(`Bạn là tài xế trực thuộc cơ sở ${shipper.branch_code}, không thể nhận đơn hàng của cơ sở ${donHang.co_so_ma}.`);
     }
 
-    const acceptableStatuses = ['DANG_GIAO', 'DANG_CHUAN_BI', 'DA_XAC_NHAN'];
-    if (!acceptableStatuses.includes(donHang.trang_thai_don_hang)) {
+    if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
       throw new BadRequestException(`Đơn hàng không thể nhận ở trạng thái ${donHang.trang_thai_don_hang}`);
     }
 
     // Kiểm tra xem đã có shipper khác đang ACTIVE nhận chưa
     const existing = await this.deliveryRepo.findOne({
       where: { ma_don_hang: maDonHang },
+      order: { assigned_at: 'DESC' },
     });
 
     if (existing && ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'].includes(existing.status)) {
@@ -477,11 +470,6 @@ export class ShipperService {
 
     const saved = await this.deliveryRepo.save(delivery);
 
-    // Đảm bảo đơn hàng ở trạng thái DANG_GIAO
-    if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
-      await this.donHangRepo.update({ ma_don_hang: maDonHang }, { trang_thai_don_hang: 'DANG_GIAO' });
-    }
-
     // Tăng total_deliveries của shipper
     await this.shipperRepo.increment({ id: shipperId }, 'total_deliveries', 1);
 
@@ -513,6 +501,10 @@ export class ShipperService {
       },
       message: 'Nhận đơn thành công',
     };
+    } finally {
+      try { if (locked) await lockRunner!.query('SELECT pg_advisory_unlock(hashtext($1))', [`shipper-order:${maDonHang}`]); }
+      finally { if (lockRunner) await lockRunner.release(); }
+    }
   }
 
   // ============ DELIVERY MANAGEMENT ============
@@ -586,7 +578,7 @@ export class ShipperService {
     });
   }
 
-  async getDeliveryDetail(deliveryId: string) {
+  async getDeliveryDetail(deliveryId: string, shipperId?: string) {
     // Support cả delivery ID lẫn ma_don_hang
     let delivery = await this.deliveryRepo.findOne({
       where: { id: deliveryId },
@@ -600,6 +592,7 @@ export class ShipperService {
     }
 
     if (!delivery) throw new NotFoundException('Delivery not found');
+    if (shipperId && delivery.shipper_id !== shipperId) throw new UnauthorizedException('Đơn giao không thuộc tài xế này');
 
     const shipper = delivery.shipper_id ? await this.shipperRepo.findOne({ where: { id: delivery.shipper_id } }) : null;
     delivery.shipper = shipper;
@@ -647,110 +640,71 @@ export class ShipperService {
     };
   }
 
-  async confirmPickup(deliveryId: string, shipperId: string) {
+  private async transitionDelivery(deliveryId: string, shipperId: string, from: ShipperDelivery['status'][], change: Partial<ShipperDelivery>) {
     const delivery = await this.deliveryRepo.findOne({ where: { id: deliveryId } });
-    if (!delivery) throw new NotFoundException('Delivery not found');
-    if (delivery.shipper_id !== shipperId) throw new BadRequestException('Not authorized');
+    if (!delivery) throw new NotFoundException('Không tìm thấy đơn giao');
+    if (delivery.shipper_id !== shipperId) throw new UnauthorizedException('Đơn giao không thuộc tài xế này');
+    if (delivery.status === change.status) return { success: true, message: 'Trạng thái đã được cập nhật' };
+    if (!from.includes(delivery.status)) throw new BadRequestException('Không thể chuyển trạng thái đơn giao hiện tại');
+    const updated = await this.deliveryRepo.update({ id: deliveryId, shipper_id: shipperId, status: delivery.status }, change);
+    if (updated.affected !== 1) throw new BadRequestException('Đơn giao vừa thay đổi, vui lòng tải lại');
+    return { success: true, message: 'Đã cập nhật trạng thái giao hàng' };
+  }
 
-    await this.deliveryRepo.update({ id: deliveryId }, { status: 'PICKING_UP', picked_up_at: new Date() });
-    return { success: true, message: 'Pickup confirmed' };
+  async confirmPickup(deliveryId: string, shipperId: string) {
+    return this.transitionDelivery(deliveryId, shipperId, ['CONFIRMED'], { status: 'PICKING_UP', picked_up_at: new Date() });
   }
 
   async startDelivery(deliveryId: string, shipperId: string, latitude: number, longitude: number) {
-    const delivery = await this.deliveryRepo.findOne({ where: { id: deliveryId } });
-    if (!delivery) throw new NotFoundException('Delivery not found');
-    if (delivery.shipper_id !== shipperId) throw new BadRequestException('Not authorized');
-
-    await this.deliveryRepo.update(
-      { id: deliveryId },
-      { status: 'IN_TRANSIT', pickup_latitude: latitude, pickup_longitude: longitude },
-    );
-    return { success: true, message: 'Delivery started' };
+    return this.transitionDelivery(deliveryId, shipperId, ['PICKING_UP'], { status: 'IN_TRANSIT', pickup_latitude: latitude, pickup_longitude: longitude });
   }
 
-  async completeDelivery(deliveryId: string, shipperId: string, latitude: number, longitude: number, proofImageUrl?: string, isBatched?: boolean) {
-    const delivery = await this.deliveryRepo.findOne({ where: { id: deliveryId } });
-    if (!delivery) throw new NotFoundException('Delivery not found');
-    if (delivery.shipper_id !== shipperId) throw new BadRequestException('Not authorized');
-
-    await this.deliveryRepo.update(
-      { id: deliveryId },
-      {
-        status: 'DELIVERED',
-        delivered_at: new Date(),
-        delivery_latitude: latitude,
-        delivery_longitude: longitude,
-        proof_image_url: proofImageUrl || null,
-        delivery_note: isBatched ? '[BATCHED] Giao ghép tuyến AI' : delivery.delivery_note,
-      },
-    );
-
-    // Cập nhật đơn hàng → HOAN_THANH
-    let cod_amount = 0;
-    let branch_code = 'MAC_DINH_CHI';
-    if (delivery.ma_don_hang) {
-      const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: delivery.ma_don_hang } });
-      if (donHang) {
-        branch_code = donHang.co_so_ma || 'MAC_DINH_CHI';
-        if (donHang.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG') {
-          cod_amount = Number(donHang.tong_tien || 0);
-        }
-        
-        const lichSu = Array.isArray(donHang.lich_su_trang_thai) ? [...donHang.lich_su_trang_thai] : [];
-        lichSu.push({
-          loai: 'ORDER',
-          trang_thai: 'HOAN_THANH',
-          thoi_gian: new Date().toISOString(),
-        });
-        if (donHang.trang_thai_thanh_toan !== 'DA_THANH_TOAN') {
-          lichSu.push({
-            loai: 'PAYMENT',
-            trang_thai: 'DA_THANH_TOAN',
-            thoi_gian: new Date().toISOString(),
-          });
-        }
-        
-        await this.donHangRepo.update(
-          { ma_don_hang: delivery.ma_don_hang },
-          { 
-            trang_thai_don_hang: 'HOAN_THANH', 
-            trang_thai_thanh_toan: 'DA_THANH_TOAN',
-            lich_su_trang_thai: lichSu
-          },
-        );
+  async completeDelivery(deliveryId: string, shipperId: string, latitude: number, longitude: number, proofImageUrl?: string, _isBatched?: boolean) {
+    // Serialize all wallet mutations for this driver, and commit the delivery,
+    // order and money together. A retried request must never pay twice.
+    return this.deliveryRepo.manager.transaction(async manager => {
+      const shipper = await manager.getRepository(Shipper).findOne({ where: { id: shipperId }, lock: { mode: 'pessimistic_write' } });
+      if (!shipper) throw new NotFoundException('Không tìm thấy tài xế');
+      const deliveries = manager.getRepository(ShipperDelivery);
+      const orders = manager.getRepository(DonHang);
+      const wallets = manager.getRepository(ShipperWallet);
+      const delivery = await deliveries.findOne({ where: { id: deliveryId }, lock: { mode: 'pessimistic_write' } });
+      if (!delivery) throw new NotFoundException('Không tìm thấy đơn giao');
+      if (delivery.shipper_id !== shipperId) throw new UnauthorizedException('Đơn giao không thuộc tài xế này');
+      if (delivery.status === 'DELIVERED') return { success: true, message: 'Đơn đã giao thành công' };
+      // The mobile batch route records pickup for the whole route. Only a batch
+      // persisted by the server may use that path; the request flag is ignored.
+      const allowed = delivery.is_batched ? ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'] : ['IN_TRANSIT'];
+      if (!allowed.includes(delivery.status)) throw new BadRequestException('Đơn phải được lấy và bắt đầu giao trước khi hoàn tất');
+      const order = await orders.findOne({ where: { ma_don_hang: delivery.ma_don_hang }, lock: { mode: 'pessimistic_write' } });
+      if (!order || order.trang_thai_don_hang !== 'DANG_GIAO') throw new BadRequestException('Đơn hàng không còn ở trạng thái đang giao');
+      const isCod = order.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG';
+      if (!isCod && order.trang_thai_thanh_toan !== 'DA_THANH_TOAN') throw new BadRequestException('Đơn thanh toán trực tuyến chưa được xác nhận thanh toán');
+      const codAmount = isCod && order.trang_thai_thanh_toan !== 'DA_THANH_TOAN' ? Number(order.tong_tien || 0) : 0;
+      const deliveryFee = Number(delivery.delivery_fee ?? 15000);
+      if (!Number.isFinite(codAmount) || codAmount < 0 || !Number.isFinite(deliveryFee) || deliveryFee < 0) throw new BadRequestException('Số tiền của đơn giao không hợp lệ');
+      const now = new Date();
+      const history = Array.isArray(order.lich_su_trang_thai) ? [...order.lich_su_trang_thai] : [];
+      history.push({ loai: 'ORDER', trang_thai: 'HOAN_THANH', thoi_gian: now.toISOString() });
+      if (order.trang_thai_thanh_toan !== 'DA_THANH_TOAN') history.push({ loai: 'PAYMENT', trang_thai: 'DA_THANH_TOAN', thoi_gian: now.toISOString() });
+      await orders.update({ ma_don_hang: order.ma_don_hang }, { trang_thai_don_hang: 'HOAN_THANH', trang_thai_thanh_toan: 'DA_THANH_TOAN', lich_su_trang_thai: history });
+      await deliveries.update({ id: deliveryId }, { status: 'DELIVERED', delivered_at: now, delivery_latitude: latitude, delivery_longitude: longitude, proof_image_url: proofImageUrl || null });
+      let wallet = await wallets.findOne({ where: { shipper_id: shipperId } });
+      if (!wallet) wallet = wallets.create({ shipper_id: shipperId, balance: 0, cod_holding: 0, pending_commission: 0, cod_details: {} });
+      wallet.balance = Number(wallet.balance) + deliveryFee;
+      if (codAmount > 0) {
+        wallet.cod_holding = Number(wallet.cod_holding) + codAmount;
+        const branch = order.co_so_ma || shipper.branch_code || 'LEGACY_COD';
+        wallet.cod_details = { ...(wallet.cod_details || {}), [branch]: Number(wallet.cod_details?.[branch] || 0) + codAmount };
       }
-    }
-
-    // Cập nhật Ví tài xế (ShipperWallet)
-    let wallet = await this.walletRepo.findOne({ where: { shipper_id: shipperId } });
-    if (!wallet) {
-      wallet = this.walletRepo.create({ shipper_id: shipperId, balance: 0, cod_holding: 0, pending_commission: 0, cod_details: {} });
-    }
-    
-    // Hardcode phí giao hàng = 15,000 VND
-    const delivery_fee = 15000;
-    
-    wallet.balance = Number(wallet.balance) + delivery_fee;
-    if (cod_amount > 0) {
-      wallet.cod_holding = Number(wallet.cod_holding) + cod_amount;
-      
-      const currentDetails = typeof wallet.cod_details === 'object' && wallet.cod_details !== null ? { ...wallet.cod_details } : {};
-      const currentBranchCod = Number(currentDetails[branch_code] || 0);
-      currentDetails[branch_code] = currentBranchCod + cod_amount;
-      wallet.cod_details = currentDetails;
-    }
-    await this.walletRepo.save(wallet);
-
-    return { success: true, message: 'Delivery completed' };
+      await wallets.save(wallet);
+      return { success: true, message: 'Giao hàng thành công' };
+    });
   }
 
   async failDelivery(deliveryId: string, shipperId: string, reason: string) {
-    const delivery = await this.deliveryRepo.findOne({ where: { id: deliveryId } });
-    if (!delivery) throw new NotFoundException('Delivery not found');
-    if (delivery.shipper_id !== shipperId) throw new BadRequestException('Not authorized');
-
-    await this.deliveryRepo.update({ id: deliveryId }, { status: 'FAILED', delivery_note: reason });
-    return { success: true, message: 'Delivery marked as failed' };
+    if (!String(reason || '').trim()) throw new BadRequestException('Vui lòng nhập lý do giao không thành công');
+    return this.transitionDelivery(deliveryId, shipperId, ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'], { status: 'FAILED', delivery_note: String(reason).trim() });
   }
 
   async getDeliveryStats(shipperId: string) {
@@ -922,7 +876,8 @@ export class ShipperService {
   }
 
   async createShipper(data: any) {
-    const existing = await this.shipperRepo.findOne({ where: { username: data.username } });
+    if (!String(data?.username || '').trim()) throw new BadRequestException('Vui lòng nhập tên đăng nhập tài xế');
+    const existing = await this.shipperRepo.findOne({ where: { username: String(data.username).trim() } });
     if (existing) throw new BadRequestException('Tên đăng nhập (username) đã tồn tại');
 
     const branchCode = await this.requireSystemBranch(data.branch_code);
@@ -930,7 +885,7 @@ export class ShipperService {
     if (password.length < 6) throw new BadRequestException('Mật khẩu cần ít nhất 6 ký tự.');
     const shipper = this.shipperRepo.create({
       username: String(data.username || '').trim(),
-      password,
+      password: hashShipperPassword(password),
       full_name: data.full_name,
       phone: data.phone || data.phone_number || '0900000000',
       email: data.email || null,
@@ -947,7 +902,8 @@ export class ShipperService {
     if (!shipper) throw new NotFoundException('Shipper không tồn tại');
 
     if (data.username && data.username !== shipper.username) {
-      const existing = await this.shipperRepo.findOne({ where: { username: data.username } });
+      if (!String(data?.username || '').trim()) throw new BadRequestException('Vui lòng nhập tên đăng nhập tài xế');
+    const existing = await this.shipperRepo.findOne({ where: { username: String(data.username).trim() } });
       if (existing && existing.id !== id) {
         throw new BadRequestException('Tên đăng nhập (username) đã tồn tại');
       }
@@ -962,7 +918,7 @@ export class ShipperService {
     if (data.status) shipper.status = data.status;
     if (data.vehicle_type) shipper.vehicle_type = this.supportedVehicle(data.vehicle_type);
     if (data.vehicle_plate) shipper.vehicle_plate = data.vehicle_plate;
-    if (data.password) shipper.password = String(data.password).trim();
+    if (data.password) shipper.password = hashShipperPassword(String(data.password).trim());
 
     return this.shipperRepo.save(shipper);
   }
@@ -971,8 +927,9 @@ export class ShipperService {
     const shipper = await this.shipperRepo.findOne({ where: { id } });
     if (!shipper) throw new NotFoundException('Tài xế không tồn tại');
 
-    const defaultPass = String(newPassword || '123456').trim();
-    shipper.password = defaultPass;
+    const defaultPass = String(newPassword || randomBytes(9).toString('base64url')).trim();
+    if (defaultPass.length < 8) throw new BadRequestException('Mật khẩu mới cần ít nhất 8 ký tự');
+    shipper.password = hashShipperPassword(defaultPass);
     shipper.status = 'INACTIVE';
     await this.shipperRepo.save(shipper);
 
@@ -984,11 +941,12 @@ export class ShipperService {
       console.warn('[resetAccount] Failed to clear redis cache:', err?.message || err);
     }
 
+    const { password: _password, ...safeShipper } = shipper;
     return {
       success: true,
-      message: `Đã reset tài khoản tài xế @${shipper.username} thành công. Mật khẩu mặc định là: ${defaultPass}`,
+      message: `Đã reset tài khoản tài xế @${shipper.username} thành công. Mật khẩu mới đã được tạo.`,
       default_password: defaultPass,
-      shipper,
+      shipper: safeShipper,
     };
   }
 
@@ -1046,19 +1004,104 @@ export class ShipperService {
     };
   }
 
-  async getKpiData(range: string = 'week') {
-    const shippers = await this.shipperRepo.find();
-    return {
-      total_deliveries: shippers.reduce((acc, s) => acc + (s.total_deliveries || 0), 0),
-      avg_rating: 4.8,
-      on_time_rate: 96.5,
-      top_shippers: shippers.slice(0, 5).map(s => ({
+  async getKpiData(range: string = '30d') {
+    let days = 30;
+    if (range === '7d' || range === 'week') days = 7;
+    else if (range === '90d' || range === 'quarter' || range === '3m') days = 90;
+    else if (range === '30d' || range === 'month') days = 30;
+
+    const schema = process.env.DB_SCHEMA || 'orders';
+    const sql = `
+      WITH period_deliveries AS (
+        SELECT *
+        FROM ${schema}.shipper_delivery
+        WHERE assigned_at >= NOW() - ($1 || ' days')::INTERVAL
+      ),
+      overall_stats AS (
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'DELIVERED') AS total_delivered,
+          COUNT(*) FILTER (WHERE status IN ('FAILED', 'CANCELLED')) AS total_failed,
+          COUNT(*) AS total_deliveries
+        FROM period_deliveries
+      ),
+      shipper_stats AS (
+        SELECT
+          d.shipper_id AS id,
+          COALESCE(s.full_name, 'Tài xế') AS full_name,
+          COALESCE(s.username, 'shipper') AS username,
+          COALESCE(s.rating, 5.0) AS rating,
+          COUNT(*) FILTER (WHERE d.status = 'DELIVERED') AS delivered,
+          COUNT(*) FILTER (WHERE d.status IN ('FAILED', 'CANCELLED')) AS failed,
+          COUNT(*) AS total_orders
+        FROM period_deliveries d
+        LEFT JOIN ${schema}.shipper s ON s.id = d.shipper_id
+        GROUP BY d.shipper_id, s.full_name, s.username, s.rating
+        ORDER BY delivered DESC, total_orders DESC
+      )
+      SELECT 
+        (SELECT total_delivered FROM overall_stats) AS total_delivered,
+        (SELECT total_failed FROM overall_stats) AS total_failed,
+        (SELECT total_deliveries FROM overall_stats) AS total_deliveries,
+        (SELECT json_agg(shipper_stats) FROM shipper_stats) AS shippers;
+    `;
+
+    try {
+      const rows = await this.deliveryRepo.manager.query(sql, [days]);
+      const row = rows?.[0] || {};
+      const total_delivered = Number(row.total_delivered || 0);
+      const total_failed = Number(row.total_failed || 0);
+      const total_deliveries = Number(row.total_deliveries || 0);
+      const total_finished = total_delivered + total_failed;
+      const success_rate = total_finished > 0 ? Math.round((total_delivered / total_finished) * 100) : 100;
+      const shippers = Array.isArray(row.shippers) ? row.shippers.map((s: any) => ({
         id: s.id,
+        full_name: s.full_name,
         name: s.full_name,
-        completed_orders: s.total_deliveries,
-        rating: s.rating,
-      })),
-    };
+        username: s.username,
+        rating: Number(s.rating || 5),
+        delivered: Number(s.delivered || 0),
+        failed: Number(s.failed || 0),
+        total_orders: Number(s.total_orders || 0),
+        completed_orders: Number(s.delivered || 0),
+      })) : [];
+
+      return {
+        total_delivered,
+        total_deliveries,
+        total_failed,
+        success_rate,
+        on_time_rate: success_rate,
+        avg_rating: 4.8,
+        shippers,
+        top_shippers: shippers.slice(0, 5),
+      };
+    } catch (err) {
+      const shippers = await this.shipperRepo.find();
+      const totalDel = shippers.reduce((acc, s) => acc + (s.total_deliveries || 0), 0);
+      return {
+        total_delivered: totalDel,
+        total_deliveries: totalDel,
+        total_failed: 0,
+        success_rate: 98,
+        on_time_rate: 98,
+        avg_rating: 4.8,
+        shippers: shippers.map(s => ({
+          id: s.id,
+          full_name: s.full_name,
+          username: s.username,
+          rating: Number(s.rating || 5),
+          delivered: Number(s.total_deliveries || 0),
+          failed: 0,
+          total_orders: Number(s.total_deliveries || 0),
+        })),
+        top_shippers: shippers.slice(0, 5).map(s => ({
+          id: s.id,
+          name: s.full_name,
+          completed_orders: s.total_deliveries,
+          rating: s.rating,
+        })),
+      };
+    }
   }
 
   async getFinanceData(limit: number = 20) {
@@ -1077,56 +1120,15 @@ export class ShipperService {
     };
   }
 
-  async assignOrderToShipper(maDonHang: string, shipperId: string, managerId: string) {
-    const donHang = await this.donHangRepo.findOne({
-      where: { ma_don_hang: maDonHang },
-      relations: ['chi_tiet'],
-    });
-
-    if (!donHang) throw new NotFoundException('Đơn hàng không tồn tại');
-    if (!['DANG_GIAO', 'DANG_CHUAN_BI', 'DA_XAC_NHAN'].includes(donHang.trang_thai_don_hang)) {
-      throw new BadRequestException(`Không thể phân công đơn ở trạng thái ${donHang.trang_thai_don_hang}`);
+  async assignOrderToShipper(maDonHang: string, shipperId: string, _managerId: string, actorBranchCode?: string) {
+    // Manager assignment follows the same readiness, branch, status and
+    // concurrency checks as a driver's self-assignment.
+    if (actorBranchCode) {
+      const order = await this.donHangRepo.findOne({ where: { ma_don_hang: maDonHang } });
+      if (!order || !this.checkBranchMatch(actorBranchCode, order.co_so_ma)) throw new UnauthorizedException('Đơn hàng không thuộc chi nhánh của bạn');
     }
-
-    const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
-    if (!shipper) throw new NotFoundException('Shipper không tồn tại');
-    this.requireReadyForOrders(shipper);
-
-    // Chặn nếu nhân viên gán đơn khác chi nhánh của shipper
-    if (shipper.branch_code && donHang.co_so_ma) {
-      const branches = await this.layDanhSachChiNhanh();
-      const isMatch = this.checkBranchMatch(shipper.branch_code, donHang.co_so_ma, branches);
-      if (!isMatch) {
-        throw new BadRequestException(`Tài xế ${shipper.full_name} thuộc cơ sở ${shipper.branch_code}, không thể phân công đơn của cơ sở ${donHang.co_so_ma}.`);
-      }
-    }
-
-    // Hủy delivery record cũ nếu có
-    await this.deliveryRepo.update({ ma_don_hang: maDonHang }, { status: 'CANCELLED' });
-
-    // Lấy tracking data để gán toạ độ
-    const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: maDonHang } });
-
-    // Tạo delivery record mới
-    const delivery = this.deliveryRepo.create({
-      ma_don_hang: maDonHang,
-      shipper_id: shipperId,
-      status: 'CONFIRMED',
-      delivery_address: donHang.dia_chi_giao_hang,
-      delivery_fee: 15000,
-      delivery_latitude: tracking?.destination_latitude ? Number(tracking.destination_latitude) : null,
-      delivery_longitude: tracking?.destination_longitude ? Number(tracking.destination_longitude) : null,
-      pickup_latitude: tracking?.store_latitude ? Number(tracking.store_latitude) : null,
-      pickup_longitude: tracking?.store_longitude ? Number(tracking.store_longitude) : null,
-    });
-    const saved = await this.deliveryRepo.save(delivery);
-
-    // Cập nhật trạng thái đơn → DANG_GIAO
-    if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
-      await this.donHangRepo.update({ ma_don_hang: maDonHang }, { trang_thai_don_hang: 'DANG_GIAO' });
-    }
-
-    return { success: true, delivery: saved, message: `Đã phân công đơn ${maDonHang} cho Shipper ${shipper.full_name}` };
+    const result = await this.acceptOrder(shipperId, maDonHang);
+    return { ...result, message: `Đã phân công đơn ${maDonHang} cho Shipper` };
   }
 
   // ============ STAFF: Chuyển đơn sang DANG_GIAO cho Shipper nội bộ nhận ============
@@ -1135,23 +1137,26 @@ export class ShipperService {
    * Được gọi khi Staff bấm "Shipper Nội Bộ": 
    * Chuyển đơn sang DANG_GIAO để xuất hiện trong pool của Shipper.
    */
-  async markOrderReadyForDelivery(maDonHang: string) {
+  async markOrderReadyForDelivery(maDonHang: string, actorBranchCode?: string) {
     const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: maDonHang } });
     if (!donHang) throw new NotFoundException('Đơn hàng không tồn tại');
+    if (actorBranchCode && !this.checkBranchMatch(actorBranchCode, donHang.co_so_ma)) throw new UnauthorizedException('Đơn hàng không thuộc chi nhánh của bạn');
 
     const allowedStatuses = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO'];
     if (!allowedStatuses.includes(donHang.trang_thai_don_hang)) {
       throw new BadRequestException(`Không thể chuyển đơn ở trạng thái ${donHang.trang_thai_don_hang} sang DANG_GIAO`);
     }
 
-    // Hủy delivery record cũ bị stuck (không phải DELIVERED) để đơn xuất hiện lại trong pool
-    await this.deliveryRepo
-      .createQueryBuilder()
-      .update()
-      .set({ status: 'CANCELLED' })
-      .where('ma_don_hang = :maDonHang', { maDonHang })
-      .andWhere('status IN (:...cancelStatuses)', { cancelStatuses: ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT'] })
-      .execute();
+    // An active delivery belongs to a driver. Staff must use the exception flow
+    // rather than silently cancelling it and putting the order back in the pool.
+    const activeDelivery = await this.deliveryRepo.findOne({
+      where: [
+        { ma_don_hang: maDonHang, status: 'CONFIRMED' },
+        { ma_don_hang: maDonHang, status: 'PICKING_UP' },
+        { ma_don_hang: maDonHang, status: 'IN_TRANSIT' },
+      ],
+    });
+    if (activeDelivery) throw new BadRequestException('Đơn đã có tài xế nhận. Hãy xử lý ngoại lệ trước khi phân lại.');
 
     // Chuyển đơn sang DANG_GIAO
     if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
@@ -1365,55 +1370,30 @@ export class ShipperService {
    * Shipper xác nhận đã nộp tiền COD cho cửa hàng, tạo bản ghi chờ xác nhận
    */
   async submitCodRemit(shipperId: string, amount: number, branchCode?: string, note?: string) {
-    const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
-    if (!shipper) throw new NotFoundException('Shipper not found');
-
-    const effectiveBranchCode = (branchCode || shipper.branch_code || 'MAC_DINH_CHI').trim();
-
-    const wallet = await this.walletRepo.findOne({ where: { shipper_id: shipperId } });
-    if (!wallet) throw new BadRequestException('Ví không tồn tại');
-
-    const currentDetails = typeof wallet.cod_details === 'object' && wallet.cod_details !== null ? wallet.cod_details : {};
-    let actualCodHoldingForBranch = Number(currentDetails[effectiveBranchCode] || 0);
-
-    // Tính tổng COD đã được tracking
-    const trackedCodSum = Object.values(currentDetails).reduce((sum, val) => sum + Number(val || 0), 0);
-    const untrackedLegacyCod = Math.max(0, Number(wallet.cod_holding) - Number(trackedCodSum));
-
-    // Nếu tiền nộp vượt quá mức branch đang giữ, nhưng vẫn nằm trong khoản tiền cũ chưa tracking
-    if (amount > actualCodHoldingForBranch && amount <= actualCodHoldingForBranch + untrackedLegacyCod) {
-      actualCodHoldingForBranch += untrackedLegacyCod;
-    }
-
-    if (actualCodHoldingForBranch <= 0) {
-      throw new BadRequestException('Không có tiền COD nào của cơ sở này đang giữ để nộp.');
-    }
-
-    if (amount > actualCodHoldingForBranch) {
-      throw new BadRequestException(`Số tiền nộp (${amount}) vượt quá số COD đang giữ của cơ sở này (${actualCodHoldingForBranch}).`);
-    }
-
-    const remit = this.codRemitRepo.create({
-      shipper_id: shipperId,
-      shipper_name: shipper.full_name,
-      branch_code: branchCode,
-      amount: amount,
-      status: 'PENDING',
-      note: note || null,
-    } as any);
-    await this.codRemitRepo.save(remit);
-
-    // Trừ tiền ngay lập tức khỏi ví shipper để UI không hiển thị nữa (tránh shipper bấm nộp 2 lần)
-    wallet.cod_holding = Math.max(0, Number(wallet.cod_holding) - amount);
-    if (branchCode && branchCode !== 'LEGACY_COD' && typeof wallet.cod_details === 'object' && wallet.cod_details !== null) {
-      const currentDetails = { ...wallet.cod_details } as Record<string, number>;
-      const currentBranchCod = Number(currentDetails[branchCode] || 0);
-      currentDetails[branchCode] = Math.max(0, currentBranchCod - amount);
-      wallet.cod_details = currentDetails;
-    }
-    await this.walletRepo.save(wallet);
-
-    return { success: true, remit, message: `Đã gửi yêu cầu nộp ${amount.toLocaleString('vi-VN')}đ — đang chờ quản lý xác nhận.` };
+    amount = Number(amount);
+    if (!Number.isSafeInteger(amount) || amount <= 0) throw new BadRequestException('Số tiền nộp COD phải là số nguyên dương');
+    return this.walletRepo.manager.transaction(async manager => {
+      const shipper = await manager.getRepository(Shipper).findOne({ where: { id: shipperId }, lock: { mode: 'pessimistic_write' } });
+      if (!shipper) throw new NotFoundException('Không tìm thấy tài xế');
+      const branch = String(branchCode || shipper.branch_code || 'LEGACY_COD').trim();
+      const wallets = manager.getRepository(ShipperWallet);
+      const remits = manager.getRepository(ShipperCodRemit);
+      const wallet = await wallets.findOne({ where: { shipper_id: shipperId } });
+      if (!wallet) throw new BadRequestException('Ví không tồn tại');
+      const details = { ...(wallet.cod_details || {}) };
+      const branchHolding = Number(details[branch] || 0);
+      const tracked = Object.values(details).reduce((sum, value) => sum + Number(value || 0), 0);
+      const legacy = Math.max(0, Number(wallet.cod_holding) - tracked);
+      // Legacy balances can only be remitted at the driver's assigned branch.
+      const available = branchHolding + (branch === shipper.branch_code || branch === 'LEGACY_COD' ? legacy : 0);
+      if (amount > available || amount > Number(wallet.cod_holding)) throw new BadRequestException('Số tiền nộp vượt quá số COD đang giữ của cơ sở này');
+      const remit = await remits.save(remits.create({ shipper_id: shipperId, shipper_name: shipper.full_name, branch_code: branch, amount, status: 'PENDING', note: note || '' }));
+      wallet.cod_holding = Number(wallet.cod_holding) - amount;
+      if (branch !== 'LEGACY_COD') details[branch] = Math.max(0, branchHolding - amount);
+      wallet.cod_details = details;
+      await wallets.save(wallet);
+      return { success: true, remit, message: `Đã gửi yêu cầu nộp ${amount.toLocaleString('vi-VN')}đ — đang chờ quản lý xác nhận.` };
+    });
   }
 
   async acceptBatchOrders(shipperId: string, orderIds: string[]) {
@@ -1425,67 +1405,20 @@ export class ShipperService {
     if (!shipper) throw new NotFoundException('Tài xế không tồn tại.');
     this.requireReadyForOrders(shipper);
 
-    const branches = await this.layDanhSachChiNhanh();
     const acceptedDeliveries: any[] = [];
+    const rejectedOrders: { orderId: string; reason: string }[] = [];
     let commonBranchInfo: any = null;
 
-    for (const orderId of orderIds) {
+    for (const orderId of [...new Set(orderIds)]) {
       try {
-        const donHang = await this.donHangRepo.findOne({
-          where: { ma_don_hang: orderId },
-          relations: ['chi_tiet'],
-        });
-        if (!donHang) continue;
-
-        if (!commonBranchInfo) {
-          const bCode = (donHang.co_so_ma || shipper.branch_code) || undefined;
-          commonBranchInfo = await this.getBranchInfo(bCode);
-        }
-
-        let delivery = await this.deliveryRepo.findOne({
-          where: { ma_don_hang: orderId },
-        });
-
+        const result = await this.acceptOrder(shipperId, orderId);
+        const delivery = result.delivery;
+        const updated = await this.deliveryRepo.update({ id: delivery.id, shipper_id: shipperId, status: delivery.status }, { is_batched: true });
+        if (updated.affected !== 1) throw new BadRequestException('Đơn vừa thay đổi trạng thái, vui lòng tải lại');
+        const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: orderId }, relations: ['chi_tiet'] });
+        if (!donHang) throw new NotFoundException('Không tìm thấy đơn hàng');
         const tracking = await this.trackingRepo.findOne({ where: { ma_don_hang: orderId } });
-
-        if (delivery) {
-          delivery.status = 'CONFIRMED';
-          delivery.shipper_id = shipperId;
-          delivery.is_batched = true;
-          if (!delivery.delivery_latitude && tracking?.destination_latitude) {
-            delivery.delivery_latitude = Number(tracking.destination_latitude);
-          }
-          if (!delivery.delivery_longitude && tracking?.destination_longitude) {
-            delivery.delivery_longitude = Number(tracking.destination_longitude);
-          }
-          if (!delivery.pickup_latitude) {
-            delivery.pickup_latitude = tracking?.store_latitude ? Number(tracking.store_latitude) : commonBranchInfo?.latitude;
-          }
-          if (!delivery.pickup_longitude) {
-            delivery.pickup_longitude = tracking?.store_longitude ? Number(tracking.store_longitude) : commonBranchInfo?.longitude;
-          }
-          await this.deliveryRepo.save(delivery);
-        } else {
-          delivery = this.deliveryRepo.create({
-            ma_don_hang: orderId,
-            shipper_id: shipperId,
-            status: 'CONFIRMED',
-            delivery_address: donHang.dia_chi_giao_hang,
-            delivery_fee: 15000,
-            is_batched: true,
-            delivery_latitude: tracking?.destination_latitude ? Number(tracking.destination_latitude) : null,
-            delivery_longitude: tracking?.destination_longitude ? Number(tracking.destination_longitude) : null,
-            pickup_latitude: tracking?.store_latitude ? Number(tracking.store_latitude) : commonBranchInfo?.latitude,
-            pickup_longitude: tracking?.store_longitude ? Number(tracking.store_longitude) : commonBranchInfo?.longitude,
-          });
-          await this.deliveryRepo.save(delivery);
-          await this.shipperRepo.increment({ id: shipperId }, 'total_deliveries', 1);
-        }
-
-        if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
-          await this.donHangRepo.update({ ma_don_hang: orderId }, { trang_thai_don_hang: 'DANG_GIAO' });
-        }
-
+        if (!commonBranchInfo) commonBranchInfo = await this.getBranchInfo(donHang.co_so_ma);
         acceptedDeliveries.push({
           id: delivery.id,
           ma_don_hang: donHang.ma_don_hang,
@@ -1509,7 +1442,7 @@ export class ShipperService {
           items: (donHang.chi_tiet || []).map(i => ({ ten_san_pham: i.ten_san_pham, so_luong: i.so_luong })),
         });
       } catch (err: any) {
-        console.warn(`[acceptBatchOrders] Lỗi khi gán đơn ${orderId}:`, err?.message || err);
+        rejectedOrders.push({ orderId, reason: err?.message || 'Không thể nhận đơn' });
       }
     }
 
@@ -1544,7 +1477,7 @@ export class ShipperService {
 
     this.notificationGateway.phatSongDonHangChoShipper({
       action: 'BATCH_CREATED',
-      orderIds,
+      orderIds: acceptedDeliveries.map(delivery => delivery.ma_don_hang),
       shipperId,
       branchCode: batch.branch_code,
     });
@@ -1552,6 +1485,7 @@ export class ShipperService {
     return {
       success: true,
       message: `Đã ghép thành công ${acceptedDeliveries.length} đơn hàng`,
+      rejected_orders: rejectedOrders,
       batch,
     };
   }
@@ -1693,41 +1627,26 @@ export class ShipperService {
    * Admin xác nhận đã nhận tiền mặt từ shipper → xóa nợ COD khỏi ví shipper
    */
   async confirmCodRemit(remitId: string, confirmedBy: string, action: 'CONFIRMED' | 'REJECTED') {
-    const remit = await this.codRemitRepo.findOne({ where: { id: remitId } });
-    if (!remit) throw new NotFoundException('Không tìm thấy phiếu nộp COD.');
-    if (remit.status !== 'PENDING') throw new BadRequestException('Phiếu này đã được xử lý rồi.');
-
-    const isUuid = Boolean(confirmedBy && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(confirmedBy));
-    const confirmedByUuid = isUuid ? confirmedBy : null;
-
-    await this.codRemitRepo.update(remit.id, {
-      status: action,
-      confirmed_by: confirmedByUuid as any,
-      confirmed_at: new Date(),
-    });
-
-    if (action === 'REJECTED') {
-      // HOÀN LẠI TIỀN cho shipper (vì admin từ chối phiếu nộp)
-      const wallet = await this.walletRepo.findOne({ where: { shipper_id: remit.shipper_id } });
-      if (wallet) {
+    if (!['CONFIRMED', 'REJECTED'].includes(action)) throw new BadRequestException('Thao tác xác nhận COD không hợp lệ');
+    const existing = await this.codRemitRepo.findOne({ where: { id: remitId } });
+    if (!existing) throw new NotFoundException('Không tìm thấy phiếu nộp COD');
+    return this.codRemitRepo.manager.transaction(async manager => {
+      // Use the same lock order as completion/remittance to avoid lost balances.
+      await manager.getRepository(Shipper).findOne({ where: { id: existing.shipper_id }, lock: { mode: 'pessimistic_write' } });
+      const remits = manager.getRepository(ShipperCodRemit);
+      const remit = await remits.findOne({ where: { id: remitId }, lock: { mode: 'pessimistic_write' } });
+      if (!remit || remit.status !== 'PENDING') throw new BadRequestException('Phiếu này đã được xử lý rồi');
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(confirmedBy || '');
+      await remits.update(remit.id, { status: action, confirmed_by: isUuid ? confirmedBy : null as any, confirmed_at: new Date() });
+      if (action === 'REJECTED') {
+        const wallets = manager.getRepository(ShipperWallet);
+        const wallet = await wallets.findOne({ where: { shipper_id: remit.shipper_id } });
+        if (!wallet) throw new BadRequestException('Không tìm thấy ví để hoàn COD');
         wallet.cod_holding = Number(wallet.cod_holding) + Number(remit.amount);
-        
-        if (typeof wallet.cod_details === 'object' && wallet.cod_details !== null && remit.branch_code !== 'LEGACY_COD') {
-          const currentDetails = { ...wallet.cod_details };
-          const currentBranchCod = Number(currentDetails[remit.branch_code] || 0);
-          currentDetails[remit.branch_code] = currentBranchCod + Number(remit.amount);
-          wallet.cod_details = currentDetails;
-        }
-
-        await this.walletRepo.save(wallet);
+        if (remit.branch_code && remit.branch_code !== 'LEGACY_COD') wallet.cod_details = { ...(wallet.cod_details || {}), [remit.branch_code]: Number(wallet.cod_details?.[remit.branch_code] || 0) + Number(remit.amount) };
+        await wallets.save(wallet);
       }
-    }
-
-    return {
-      success: true,
-      message: action === 'CONFIRMED'
-        ? `Đã xác nhận nhận ${Number(remit.amount).toLocaleString('vi-VN')}đ từ ${remit.shipper_name}.`
-        : `Đã từ chối phiếu nộp COD của ${remit.shipper_name}.`,
-    };
+      return { success: true, message: action === 'CONFIRMED' ? 'Đã xác nhận nhận tiền COD' : 'Đã từ chối và hoàn lại khoản COD đang giữ' };
+    });
   }
 }

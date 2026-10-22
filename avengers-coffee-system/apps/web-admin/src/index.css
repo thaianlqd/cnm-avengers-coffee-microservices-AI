@@ -1,4 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* Neutral default; each authenticated actor supplies its own accent in Console.css. */
@@ -27,7 +30,7 @@
   --surface-container: #ffffff; /* Card & sidebar white */
   --surface-low: #f3f7f8;
   --text-main: #29353b;
-  --text-body: #374151; /* Gray 700 */
+  --text-body: #414743; /* Gray 700 */
   --text-muted: #6b7280; /* Gray 500 */
   --text-subtle: #9ca3af; /* Gray 400 */
   --border-light: #e5ebed;
@@ -84,7 +87,21 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6, button, input, select, textarea {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, select, textarea {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  color: var(--text-main, #0f172a);
+  letter-spacing: -0.01em;
+}
+
+input::placeholder, textarea::placeholder {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  color: #94a3b8;
+  font-weight: 400;
 }
 
 /* Custom Sleek Scrollbar */

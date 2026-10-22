@@ -1,3 +1,4 @@
+import { Check as WorkspaceSymbolCheck, Info as WorkspaceSymbolInfo, ShieldCheck as WorkspaceSymbolShieldCheck } from '../../../components/console/WorkspaceIcons'
 import { readWorkspaceSession, saveWorkspaceSession } from '../../../lib/workspaceAuth'
 import { useEffect, useMemo, useState } from 'react'
 import { io } from 'socket.io-client'
@@ -6,18 +7,13 @@ import {
   User,
   ShieldCheck,
   Lock,
-  Bell,
   CheckCircle2,
   KeyRound,
-  CheckCheck,
   Mail,
   Phone,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
+  Image,
   AlertCircle
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`
 const ADMIN_LOCAL_NOTIFY_EVENT = 'avengers-admin-local-notify'
@@ -281,489 +277,493 @@ export function AccountCenterPanel({ session }) {
   const displayName = profileForm.hoTen || session?.user?.hoTen || session?.user?.tenDangNhap || 'System Admin'
 
   return (
-    <div className="workspace-account" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
-      
-      {/* Sleek Top Banner Header */}
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        border: '1px solid #e2e8f0',
-        padding: '1.25rem 1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* Clean Centered Avatar Box */}
-          <div style={{ width: '3.5rem', height: '3.5rem', flexShrink: 0 }}>
-            {profileForm.avatarUrl ? (
-              <img
-                src={profileForm.avatarUrl}
-                alt="Avatar"
-                style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)', display: 'block' }}
-              />
-            ) : (
-              <div style={{
-                width: '3.5rem',
-                height: '3.5rem',
-                borderRadius: '50%',
-                backgroundColor: 'var(--primary-light)',
-                color: 'var(--primary)',
+    <div className="workspace-account" style={{ width: '100%', maxWidth: '100%', margin: 0, padding: 0 }}>
+      {/* ========================================================================= */}
+      {/* 1 SINGLE UNIFIED CARD: HỒ SƠ & BẢO MẬT HỆ THỐNG */}
+      {/* ========================================================================= */}
+      <div
+        className="admin-surface admin-settings-card"
+        style={{
+          width: '100%',
+          backgroundColor: '#ffffff',
+          border: '1px solid var(--border-light)',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* SECTION 1: HEADER BANNER (Thông tin hồ sơ tóm tắt) */}
+        <div
+          style={{
+            padding: '1.25rem 1.75rem',
+            borderBottom: '1px solid var(--border-light)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1.25rem',
+            background: '#f8fafc'
+          }}
+        >
+          {/* User Identity */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+            <div style={{ width: '46px', height: '46px', flexShrink: 0 }}>
+              {profileForm.avatarUrl ? (
+                <img
+                  src={profileForm.avatarUrl}
+                  alt="Avatar"
+                  style={{ width: '46px', height: '46px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #3b82f6', display: 'block' }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '50%',
+                    backgroundColor: '#eff6ff',
+                    color: '#1d4ed8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: '600',
+                    fontSize: '1.1rem',
+                    border: '1.5px solid #bfdbfe',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <h1 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: '#0f172a', letterSpacing: '-0.01em' }}>
+                  {displayName}
+                </h1>
+                <span
+                  style={{
+                    padding: '0.15rem 0.6rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.72rem',
+                    fontWeight: '500',
+                    backgroundColor: '#eff6ff',
+                    color: '#1d4ed8',
+                    border: '1px solid #bfdbfe'
+                  }}
+                >
+                  {userRole}
+                </span>
+              </div>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78125rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <Mail size={13} color="#94a3b8" /> {profileForm.email || session?.user?.email || 'admin@avengers.coffee'}
+                </span>
+                {profileForm.soDienThoai && (
+                  <>
+                    <span>•</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <Phone size={13} color="#94a3b8" /> {profileForm.soDienThoai}
+                    </span>
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Right Status Indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: '700',
-                fontSize: '1.35rem',
-                lineHeight: 1,
-                textAlign: 'center',
-                border: '2px solid var(--primary-subtle)',
-                boxSizing: 'border-box'
-              }}>
-                {displayName.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <h1 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '700', color: '#0f172a' }}>
-                {displayName}
-              </h1>
-              <span style={{
-                backgroundColor: userRole === 'ADMIN' ? 'var(--primary-light)' : 'var(--primary-light)',
-                color: userRole === 'ADMIN' ? 'var(--primary)' : 'var(--primary)',
-                border: userRole === 'ADMIN' ? '1px solid #ddd6fe' : '1px solid #bfdbfe',
-                fontSize: '0.7rem',
-                fontWeight: '700',
-                padding: '0.12rem 0.5rem',
-                borderRadius: '999px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em'
-              }}>
-                {userRole}
-              </span>
+                gap: '0.45rem',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+              }}
+            >
+              <ShieldCheck size={16} color="#16a34a" />
+              <span style={{ fontSize: '0.78125rem', color: '#15803d', fontWeight: '500' }}>Tài khoản An toàn</span>
             </div>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78125rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Mail size={13} color="#94a3b8" /> {profileForm.email || session?.user?.email || 'admin@avengers.coffee'}</span>
-              {profileForm.soDienThoai && (
-                <>
-                  <span>•</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Phone size={13} color="#94a3b8" /> {profileForm.soDienThoai}</span>
-                </>
-              )}
-            </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ backgroundColor: '#f8fafc', padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <ShieldCheck size={16} color="#3b82f6" />
-            <span style={{ fontSize: '0.78125rem', color: '#0f172a', fontWeight: '600' }}>Tài khoản An toàn</span>
+        {!userId && (
+          <div style={{ margin: '1rem 1.75rem 0', padding: '0.75rem 1rem', backgroundColor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', color: '#dc2626', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={16} /> Không tìm thấy mã người dùng trong phiên đăng nhập hiện tại.
           </div>
+        )}
+
+        {/* SECTION 2: 2 TABS NGANG NẰM TRONG CÙNG 1 CARD (Hồ sơ cá nhân & Đổi mật khẩu) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2rem',
+            padding: '0 1.75rem',
+            backgroundColor: '#ffffff',
+            borderBottom: '1px solid var(--border-light)',
+            overflowX: 'auto'
+          }}
+        >
+          <button
+            type="button"
+            className="account-tab-btn"
+            onClick={() => setActiveTab('profile')}
+            style={{
+              padding: '0.85rem 0.25rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'profile' ? '2px solid #2563eb' : '2px solid transparent',
+              color: activeTab === 'profile' ? '#2563eb' : '#64748b',
+              fontWeight: activeTab === 'profile' ? '600' : '500',
+              fontSize: '0.8125rem',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              whiteSpace: 'nowrap',
+              borderRadius: 0,
+              outline: 'none',
+              boxShadow: 'none',
+              transition: 'color 0.15s ease'
+            }}
+          >
+            <User size={15} /> Hồ sơ cá nhân
+          </button>
+
+          <button
+            type="button"
+            className="account-tab-btn"
+            onClick={() => setActiveTab('security')}
+            style={{
+              padding: '0.85rem 0.25rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'security' ? '2px solid #2563eb' : '2px solid transparent',
+              color: activeTab === 'security' ? '#2563eb' : '#64748b',
+              fontWeight: activeTab === 'security' ? '600' : '500',
+              fontSize: '0.8125rem',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              whiteSpace: 'nowrap',
+              borderRadius: 0,
+              outline: 'none',
+              boxShadow: 'none',
+              transition: 'color 0.15s ease'
+            }}
+          >
+            <Lock size={15} /> Đổi mật khẩu &amp; Bảo mật
+          </button>
         </div>
-      </div>
 
-      {!userId ? (
-        <div style={{ padding: '0.85rem 1rem', backgroundColor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', color: '#dc2626', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <AlertCircle size={16} /> Không tìm thấy mã người dùng trong phiên đăng nhập hiện tại.
-        </div>
-      ) : null}
+        {/* SECTION 3: TAB CONTENT BODY */}
+        <div style={{ padding: '1.75rem', width: '100%', boxSizing: 'border-box' }}>
+          {/* TAB 1: Profile Info */}
+          {activeTab === 'profile' && (
+            <div style={{ maxWidth: '680px', width: '100%' }}>
+              <div style={{ marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <User size={16} color="#2563eb" /> Cập nhật hồ sơ cá nhân
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                  Tài khoản @{session?.user?.tenDangNhap || session?.user?.username}
+                </span>
+              </div>
 
-      {/* Clean Sub-Navigation Tabs */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.375rem',
-        borderBottom: '1px solid #e2e8f0',
-        backgroundColor: '#ffffff',
-        padding: '0.5rem 0.75rem',
-        borderRadius: '8px',
-        border: '1px solid #e2e8f0'
-      }}>
-        <button
-          type="button"
-          onClick={() => setActiveTab('profile')}
-          style={{
-            padding: '0.45rem 0.85rem',
-            borderRadius: '6px',
-            fontSize: '0.8125rem',
-            fontWeight: '600',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            backgroundColor: activeTab === 'profile' ? 'var(--primary-light)' : 'transparent',
-            color: activeTab === 'profile' ? 'var(--primary-hover)' : '#64748b',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <User size={15} /> Hồ sơ cá nhân
-        </button>
+              {profileState.loading && <p style={{ fontSize: '0.8125rem', color: '#64748b' }}>Đang tải thông tin...</p>}
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('security')}
-          style={{
-            padding: '0.45rem 0.85rem',
-            borderRadius: '6px',
-            fontSize: '0.8125rem',
-            fontWeight: '600',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            backgroundColor: activeTab === 'security' ? 'var(--primary-light)' : 'transparent',
-            color: activeTab === 'security' ? 'var(--primary-hover)' : '#64748b',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <Lock size={15} /> Đổi mật khẩu &amp; Bảo mật
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('notifications')}
-          style={{
-            padding: '0.45rem 0.85rem',
-            borderRadius: '6px',
-            fontSize: '0.8125rem',
-            fontWeight: '600',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            backgroundColor: activeTab === 'notifications' ? 'var(--primary-light)' : 'transparent',
-            color: activeTab === 'notifications' ? 'var(--primary-hover)' : '#64748b',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <Bell size={15} /> Thông báo hệ thống {unreadCount > 0 && <span style={{ backgroundColor: '#ef4444', color: '#fff', fontSize: '0.68rem', borderRadius: '999px', padding: '0.08rem 0.4rem', fontWeight: '700' }}>{unreadCount}</span>}
-        </button>
-      </div>
-
-      {/* TAB 1: Profile Info */}
-      {activeTab === 'profile' && (
-        <section className="system-admin-card" style={{ borderTop: '3px solid var(--primary)' }}>
-          <div style={{ marginBottom: '1.25rem', paddingBottom: '0.65rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <User size={17} color="var(--primary)" /> Cập nhật hồ sơ cá nhân
-            </h2>
-            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Thông tin tài khoản {session?.user?.tenDangNhap}</span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
-            {/* Left Column: Form Inputs */}
-            <div>
-              {profileState.loading ? <p style={{ fontSize: '0.8125rem', color: '#64748b' }}>Đang tải thông tin...</p> : null}
-
-              <form className="workspace-form" onSubmit={saveProfile} style={{ display: 'grid', gap: '1rem' }}>
-                <div className="workspace-account-fields">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Họ tên đầy đủ</label>
+              <form onSubmit={saveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
+                  {/* Full Name */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label htmlFor="account-profile-name" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                      <User size={14} color="#64748b" />
+                      <span>Họ tên đầy đủ</span>
+                    </label>
                     <input
+                      id="account-profile-name"
+                      type="text"
                       value={profileForm.hoTen}
                       onChange={(e) => setProfileForm((prev) => ({ ...prev, hoTen: e.target.value }))}
                       placeholder="Nhập họ tên đầy đủ"
+                      style={{
+                        width: '100%',
+                        height: '38px',
+                        padding: '0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        backgroundColor: '#ffffff',
+                        fontSize: '0.8125rem',
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
                     />
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Số điện thoại</label>
+                  {/* Phone Number */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label htmlFor="account-profile-phone" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                      <Phone size={14} color="#64748b" />
+                      <span>Số điện thoại</span>
+                    </label>
                     <input
+                      id="account-profile-phone"
+                      type="text"
                       value={profileForm.soDienThoai}
                       onChange={(e) => setProfileForm((prev) => ({ ...prev, soDienThoai: e.target.value }))}
                       placeholder="Nhập số điện thoại"
+                      style={{
+                        width: '100%',
+                        height: '38px',
+                        padding: '0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        backgroundColor: '#ffffff',
+                        fontSize: '0.8125rem',
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
                     />
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Email liên hệ</label>
+                {/* Email */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label htmlFor="account-profile-email" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                    <Mail size={14} color="#64748b" />
+                    <span>Email liên hệ</span>
+                  </label>
                   <input
+                    id="account-profile-email"
                     type="email"
                     value={profileForm.email}
                     onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))}
                     placeholder="Nhập địa chỉ email"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      padding: '0 0.85rem',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      backgroundColor: '#ffffff',
+                      fontSize: '0.8125rem',
+                      color: '#0f172a',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Đường dẫn Ảnh Avatar (URL)</label>
+                {/* Avatar URL */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label htmlFor="account-profile-avatar" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                    <Image size={14} color="#64748b" />
+                    <span>Đường dẫn Ảnh Avatar (URL)</span>
+                  </label>
                   <input
+                    id="account-profile-avatar"
+                    type="text"
                     value={profileForm.avatarUrl}
                     onChange={(e) => setProfileForm((prev) => ({ ...prev, avatarUrl: e.target.value }))}
                     placeholder="Dán liên kết URL ảnh đại diện (https://...)"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      padding: '0 0.85rem',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      backgroundColor: '#ffffff',
+                      fontSize: '0.8125rem',
+                      color: '#0f172a',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   />
                 </div>
 
-                {profileState.error ? (
+                {profileState.error && (
                   <p style={{ margin: 0, color: '#dc2626', fontSize: '0.8125rem', backgroundColor: '#fef2f2', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #fee2e2' }}>
                     {profileState.error}
                   </p>
-                ) : null}
+                )}
 
-                {profileState.success ? (
-                  <p style={{ margin: 0, color: '#2563eb', fontSize: '0.8125rem', backgroundColor: '#eff6ff', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                {profileState.success && (
+                  <p style={{ margin: 0, color: '#15803d', fontSize: '0.8125rem', backgroundColor: '#f0fdf4', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                     <CheckCircle2 size={16} /> {profileState.success}
                   </p>
-                ) : null}
+                )}
 
-                <div className="system-admin-form-actions" style={{ marginTop: '0.25rem' }}>
-                  <button type="submit" disabled={profileState.saving || !userId}>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <button
+                    type="submit"
+                    disabled={profileState.saving || !userId}
+                    className="admin-button-primary btn-save"
+                    style={{
+                      height: '38px',
+                      padding: '0 1.25rem',
+                      borderRadius: '6px',
+                      fontSize: '0.8125rem',
+                      fontWeight: '500',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: profileState.saving ? 'not-allowed' : 'pointer'
+                    }}
+                  >
                     <CheckCircle2 size={15} /> {profileState.saving ? 'Đang lưu...' : 'Lưu thay đổi hồ sơ'}
                   </button>
                 </div>
               </form>
             </div>
+          )}
 
-            {/* Right Column: Avatar Preview & Account Info Card */}
-            <div style={{ backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#475569', alignSelf: 'flex-start' }}>Xem trước ảnh đại diện</span>
-              
-              <div style={{ width: '5.5rem', height: '5.5rem', borderRadius: '50%', overflow: 'hidden', border: '3px solid var(--primary)', boxShadow: '0 4px 10px rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--primary-light)' }}>
-                {profileForm.avatarUrl ? (
-                  <img src={profileForm.avatarUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <span style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--primary)' }}>{displayName.charAt(0).toUpperCase()}</span>
-                )}
+          {/* TAB 2: Change Password */}
+          {activeTab === 'security' && (
+            <div style={{ maxWidth: '680px', width: '100%' }}>
+              <div style={{ marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Lock size={16} color="#0284c7" /> Thao tác đổi mật khẩu tài khoản
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Đảm bảo an toàn hệ thống</span>
               </div>
 
-              <div>
-                <h4 style={{ margin: '0 0 0.2rem 0', fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a' }}>{displayName}</h4>
-                <p style={{ margin: 0, fontSize: '0.78125rem', color: '#64748b' }}>{profileForm.email || 'admin@avengers.coffee'}</p>
-              </div>
-
-              <div style={{ width: '100%', borderTop: '1px solid #e2e8f0', paddingTop: '0.85rem', display: 'grid', gap: '0.4rem', textAlign: 'left', fontSize: '0.78125rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>Mã người dùng:</span>
-                  <span style={{ fontWeight: '600', color: '#0f172a', fontFamily: 'monospace' }}>{userId || '---'}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>Vai trò quyền hạn:</span>
-                  <span style={{ fontWeight: '600', color: 'var(--primary)' }}>{userRole}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>Xác thực tài khoản:</span>
-                  <span style={{ fontWeight: '600', color: '#3b82f6' }}>Đã xác thực ✓</span>
-                </div>
-              </div>
-
-              <div style={{ backgroundColor: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.72rem', color: '#64748b', textAlign: 'left', lineHeight: 1.35, width: '100%', boxSizing: 'border-box' }}>
-                💡 <strong>Mẹo:</strong> Dán đường dẫn ảnh PNG/JPG sắc nét tỉ lệ 1:1 để ảnh đại diện hiển thị tối ưu nhất.
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* TAB 2: Change Password */}
-      {activeTab === 'security' && (
-        <section className="system-admin-card" style={{ borderTop: '3px solid #0284c7' }}>
-          <div style={{ marginBottom: '1.25rem', paddingBottom: '0.65rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Lock size={17} color="#0284c7" /> Thao tác đổi mật khẩu tài khoản
-            </h2>
-            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Đảm bảo an toàn hệ thống</span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
-            {/* Left Column: Password Form */}
-            <div>
-              <form className="workspace-form" onSubmit={changePassword} style={{ display: 'grid', gap: '1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Mật khẩu hiện tại</label>
+              <form onSubmit={changePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                {/* Current Password */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label htmlFor="account-pwd-current" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                    <Lock size={14} color="#64748b" />
+                    <span>Mật khẩu hiện tại</span>
+                  </label>
                   <input
+                    id="account-pwd-current"
                     type="password"
                     value={passwordForm.currentPassword}
                     onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
                     placeholder="••••••••"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      padding: '0 0.85rem',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      backgroundColor: '#ffffff',
+                      fontSize: '0.8125rem',
+                      color: '#0f172a',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   />
                 </div>
 
-                <div className="workspace-account-fields">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Mật khẩu mới</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
+                  {/* New Password */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label htmlFor="account-pwd-new" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                      <KeyRound size={14} color="#64748b" />
+                      <span>Mật khẩu mới</span>
+                    </label>
                     <input
+                      id="account-pwd-new"
                       type="password"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
                       placeholder="Tối thiểu 6 ký tự"
+                      style={{
+                        width: '100%',
+                        height: '38px',
+                        padding: '0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        backgroundColor: '#ffffff',
+                        fontSize: '0.8125rem',
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
                     />
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Xác nhận mật khẩu mới</label>
+                  {/* Confirm Password */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label htmlFor="account-pwd-confirm" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                      <KeyRound size={14} color="#64748b" />
+                      <span>Xác nhận mật khẩu mới</span>
+                    </label>
                     <input
+                      id="account-pwd-confirm"
                       type="password"
                       value={passwordForm.confirmPassword}
                       onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                       placeholder="Nhập lại mật khẩu mới"
+                      style={{
+                        width: '100%',
+                        height: '38px',
+                        padding: '0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        backgroundColor: '#ffffff',
+                        fontSize: '0.8125rem',
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
                     />
                   </div>
                 </div>
 
-                {passwordState.error ? (
+                {passwordState.error && (
                   <p style={{ margin: 0, color: '#dc2626', fontSize: '0.8125rem', backgroundColor: '#fef2f2', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #fee2e2' }}>
                     {passwordState.error}
                   </p>
-                ) : null}
+                )}
 
-                {passwordState.success ? (
-                  <p style={{ margin: 0, color: '#2563eb', fontSize: '0.8125rem', backgroundColor: '#eff6ff', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                {passwordState.success && (
+                  <p style={{ margin: 0, color: '#15803d', fontSize: '0.8125rem', backgroundColor: '#f0fdf4', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                     <CheckCircle2 size={16} /> {passwordState.success}
                   </p>
-                ) : null}
+                )}
 
-                <div className="system-admin-form-actions" style={{ marginTop: '0.25rem' }}>
-                  <button type="submit" disabled={passwordState.saving || !userId} style={{ backgroundColor: '#0284c7' }}>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <button
+                    type="submit"
+                    disabled={passwordState.saving || !userId}
+                    className="admin-button-primary btn-save"
+                    style={{
+                      height: '38px',
+                      padding: '0 1.25rem',
+                      borderRadius: '6px',
+                      fontSize: '0.8125rem',
+                      fontWeight: '500',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      backgroundColor: '#0284c7',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: passwordState.saving ? 'not-allowed' : 'pointer'
+                    }}
+                  >
                     <KeyRound size={15} /> {passwordState.saving ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
                   </button>
                 </div>
               </form>
             </div>
-
-            {/* Right Column: Security Best Practices Widget */}
-            <div style={{ backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ShieldCheck size={18} color="#0284c7" />
-                <h4 style={{ margin: 0, fontSize: '0.875rem', fontWeight: '700', color: '#0f172a' }}>Nguyên tắc bảo mật tài khoản</h4>
-              </div>
-
-              <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.78125rem', color: '#475569', display: 'grid', gap: '0.45rem', lineHeight: 1.45 }}>
-                <li>Mật khẩu mới phải bao gồm ít nhất <strong>6 ký tự</strong>.</li>
-                <li>Nên kết hợp cả <strong>chữ hoa, chữ thường, số</strong> và ký tự đặc biệt (!@#$).</li>
-                <li>Đổi mật khẩu định kỳ <strong>90 ngày/lần</strong> để giữ an toàn tuyệt đối.</li>
-                <li>Tuyệt đối không chia sẻ thông tin tài khoản Admin với người khác.</li>
-              </ul>
-
-              <div style={{ backgroundColor: '#f0f9ff', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #bae6fd', fontSize: '0.72rem', color: '#0369a1', lineHeight: 1.35 }}>
-                🛡️ <strong>Lưu ý:</strong> Khi đổi mật khẩu thành công, thông báo bảo mật sẽ tự động gửi tới email của bạn.
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* TAB 3: Notifications Center */}
-      {activeTab === 'notifications' && (
-        <section className="system-admin-card" style={{ borderTop: '3px solid #3b82f6' }}>
-          <div style={{ marginBottom: '1rem', paddingBottom: '0.65rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <h2 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Bell size={17} color="#3b82f6" /> Trung tâm thông báo hệ thống
-              </h2>
-              <span style={{
-                backgroundColor: unreadCount > 0 ? '#fee2e2' : '#f1f5f9',
-                color: unreadCount > 0 ? '#dc2626' : '#64748b',
-                fontSize: '0.7rem',
-                fontWeight: '700',
-                padding: '0.12rem 0.5rem',
-                borderRadius: '999px',
-                border: unreadCount > 0 ? '1px solid #fca5a5' : '1px solid #e2e8f0'
-              }}>
-                Chưa đọc: {unreadCount}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              className="secondary"
-              onClick={markAllNotificationsRead}
-              disabled={markingAll || !userId || unreadCount === 0}
-              style={{ fontSize: '0.78125rem' }}
-            >
-              <CheckCheck size={14} /> {markingAll ? 'Đang xử lý...' : 'Đánh dấu đã đọc tất cả'}
-            </button>
-          </div>
-
-          {notificationsState.loading ? <p style={{ fontSize: '0.8125rem', color: '#64748b' }}>Đang tải danh sách thông báo...</p> : null}
-          {notificationsState.error ? <p className="error-text">{notificationsState.error}</p> : null}
-
-          {!notificationsState.loading && !notificationsState.items.length ? (
-            <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.8125rem' }}>
-              Hiện tại bạn chưa có thông báo hệ thống nào.
-            </div>
-          ) : null}
-
-          <div style={{ display: 'grid', gap: '0.5rem' }}>
-            {pageNotificationItems.map((item) => (
-              <article
-                key={item.id}
-                style={{
-                  padding: '0.75rem 0.9rem',
-                  borderRadius: '8px',
-                  border: item.da_doc ? '1px solid #e2e8f0' : '1px solid #bfdbfe',
-                  backgroundColor: item.da_doc ? '#ffffff' : 'var(--primary-light)',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <div style={{ flexGrow: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
-                    {!item.da_doc ? (
-                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'inline-block' }}></span>
-                    ) : null}
-                    <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: '600', color: '#0f172a' }}>
-                      {item.tieu_de || 'Thông báo hệ thống'}
-                    </h4>
-                  </div>
-                  <p style={{ margin: '0 0 0.2rem 0', fontSize: '0.8125rem', color: '#475569', lineHeight: 1.4 }}>
-                    {item.noi_dung || ''}
-                  </p>
-                  <small style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                    {fmtDateTime(item.ngay_tao)}
-                  </small>
-                </div>
-
-                {!item.da_doc ? (
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => markOneNotificationRead(item.id)}
-                    disabled={markingNotificationId === String(item.id)}
-                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem', flexShrink: 0 }}
-                  >
-                    {markingNotificationId === String(item.id) ? 'Đang lưu...' : 'Đọc'}
-                  </button>
-                ) : (
-                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', padding: '0.2rem 0.4rem', flexShrink: 0 }}>Đã đọc</span>
-                )}
-              </article>
-            ))}
-          </div>
-
-          {notificationsState.items.length > PAGE_SIZE ? (
-            <div style={{ marginTop: '0.85rem', paddingTop: '0.65rem', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78125rem', color: '#64748b' }}>
-              <span>Hiển thị {(safePage - 1) * PAGE_SIZE + 1}-{Math.min(safePage * PAGE_SIZE, notificationsState.items.length)} / {notificationsState.items.length} thông báo</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <button type="button" className="secondary" onClick={() => setNotificationPage(1)} disabled={safePage <= 1} style={{ padding: '0.25rem', height: '28px' }}>
-                  <ChevronsLeft size={15} />
-                </button>
-                <button type="button" className="secondary" onClick={() => setNotificationPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1} style={{ padding: '0.25rem', height: '28px' }}>
-                  <ChevronLeft size={15} />
-                </button>
-                <span style={{ fontWeight: '600', color: '#0f172a', margin: '0 0.3rem' }}>Trang {safePage} / {totalPages}</span>
-                <button type="button" className="secondary" onClick={() => setNotificationPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages} style={{ padding: '0.25rem', height: '28px' }}>
-                  <ChevronRight size={15} />
-                </button>
-                <button type="button" className="secondary" onClick={() => setNotificationPage(totalPages)} disabled={safePage >= totalPages} style={{ padding: '0.25rem', height: '28px' }}>
-                  <ChevronsRight size={15} />
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </section>
-      )}
-
+          )}
+        </div>
+      </div>
     </div>
   )
 }

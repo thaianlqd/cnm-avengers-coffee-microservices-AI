@@ -8,22 +8,358 @@ import { useShipper } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { colors } from '../theme'
 import { formatCurrency, formatDateTime } from '../lib/shipperData'
-import { Header, Reveal, Skeleton, EmptyState, ui } from '../components/Experience'
+import { Header, IconButton, Reveal, Skeleton, HistorySkeleton, EmptyState, ui } from '../components/Experience'
 import Pagination, { usePagination } from '../components/Pagination'
-const filters = [{ id: 7,label: '7 ngày' },{ id: 30,label: '30 ngày' },{ id: 90,label: '3 tháng' },{ id: 0,label: 'Tất cả' }]
+
+const statusFilters = [
+  { id: 'ALL', label: 'Tất cả' },
+  { id: 'DELIVERED', label: 'Đã giao' },
+  { id: 'CANCELLED', label: 'Đã hủy' },
+]
+
 export function HistoryScreen({ navigation }) {
-  const { shipper } = useShipper(), focused = useIsFocused(), list = useRef(null)
+  const { shipper } = useShipper()
+  const focused = useIsFocused()
+  const list = useRef(null)
   const [openedAt] = useState(Date.now)
-  const [days,setDays] = useState(7), [search,setSearch] = useState(''), [status,setStatus] = useState('ALL')
-  const query = useQuery({ queryKey: ['deliveriesHistory',shipper?.id], enabled: focused && !!shipper?.id, queryFn: async () => { const res = await apiClient.get(`/shippers/${shipper.id}/deliveries`); return (Array.isArray(res) ? res : res?.items || []).filter(d => ['DELIVERED','FAILED','CANCELLED'].includes(d.status)) } })
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('ALL')
+  const [manualRefreshing, setManualRefreshing] = useState(false)
+
+  const query = useQuery({
+    queryKey: ['deliveriesHistory', shipper?.id],
+    enabled: focused && !!shipper?.id,
+    queryFn: async () => {
+      const res = await apiClient.get(`/shippers/${shipper.id}/deliveries`)
+      return (Array.isArray(res) ? res : res?.items || []).filter((d) =>
+        ['DELIVERED', 'FAILED', 'CANCELLED'].includes(d.status)
+      )
+    },
+  })
+
+  const handleManualRefresh = async () => {
+    setManualRefreshing(true)
+    try {
+      await query.refetch()
+    } finally {
+      setManualRefreshing(false)
+    }
+  }
+
   const snapshotTime = query.dataUpdatedAt || openedAt
-  const filtered = useMemo(() => (query.data || []).filter(d => !days || snapshotTime-new Date(d.delivered_at || d.updated_at).getTime() <= days*86400000).filter(d => status === 'ALL' || d.status === status).filter(d => `${d.ma_don_hang} ${d.customer_name || ''} ${d.delivery_address || ''}`.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi'))).sort((a,b) => new Date(b.delivered_at || b.updated_at)-new Date(a.delivered_at || a.updated_at)),[query.data,days,status,search,snapshotTime])
-  const period = (query.data || []).filter(d => !days || snapshotTime-new Date(d.delivered_at || d.updated_at).getTime() <= days*86400000)
-  const complete = period.filter(d => d.status === 'DELIVERED'), failed = period.filter(d => d.status === 'FAILED')
-  const pagination = usePagination(filtered,[days,status,search,shipper?.id].join('|'))
-  return <SafeAreaView edges={['top','left','right']} style={ui.screen}><Header title="Lịch sử giao hàng" subtitle="Các chuyến đã kết thúc" /><View style={s.summary}>{[{label:'Tổng chuyến',value:period.length,color:'#336fba',icon:'cube-outline'}, {label:'Giao thành công',value:complete.length,color:'#187660',icon:'checkmark-done-outline'}, {label:'Thất bại',value:failed.length,color:'#b22830',icon:'alert-circle-outline'}].map(metric=><View key={metric.label} style={s.summaryItem}><Ionicons name={metric.icon} size={17} color={metric.color} /><Text style={s.summaryValue}>{query.isLoading || query.isError ? '—' : metric.value}</Text><Text style={s.summaryLabel}>{metric.label}</Text></View>)}</View><View style={s.controls}><View style={s.search}><Ionicons name="search-outline" size={19} color={colors.muted} /><TextInput accessibilityLabel="Tìm trong lịch sử giao hàng" value={search} onChangeText={setSearch} placeholder="Mã đơn, người nhận hoặc địa chỉ" placeholderTextColor={colors.muted} style={{ flex: 1,minWidth: 0,fontSize: 13,paddingVertical: 12 }} /></View><View style={s.filters}>{filters.map(f => <Pressable accessibilityRole="tab" accessibilityState={{ selected: days === f.id }} key={f.id} onPress={() => setDays(f.id)} style={[s.filter,days === f.id && { backgroundColor: colors.primary }]}><Text style={{ color: days === f.id ? '#fff' : colors.textSecondary,fontSize: 12,fontWeight: '600' }}>{f.label}</Text></Pressable>)}</View><View style={s.statuses}>{[{ id: 'ALL',label: 'Tất cả' },{ id: 'DELIVERED',label: 'Đã giao' },{ id: 'FAILED',label: 'Thất bại' }].map(f => <Pressable key={f.id} onPress={() => setStatus(f.id)} style={{ paddingVertical: 8,paddingHorizontal: 10,borderBottomWidth: status === f.id ? 2 : 0,borderColor: colors.primary }}><Text style={{ color: status === f.id ? colors.primary : colors.muted,fontSize: 13,fontWeight: '600' }}>{f.label}</Text></Pressable>)}<Text style={[ui.caption,{ marginLeft: 'auto' }]}>{filtered.length} chuyến</Text></View></View>
-    <FlatList ref={list} data={pagination.items} keyExtractor={i => String(i.id || i.ma_don_hang)} initialNumToRender={4} maxToRenderPerBatch={5} windowSize={5} contentContainerStyle={{ padding: 16 }} refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={query.refetch} tintColor={colors.primary} />} renderItem={({ item }) => <Reveal><Pressable accessibilityRole="button" accessibilityLabel={`Chi tiết đơn ${String(item.ma_don_hang).slice(0,8)}`} onPress={() => navigation.navigate('OrderDetail',{ deliveryId: item.id })} style={[ui.card,{ marginBottom: 12 }]}><View style={s.cardHeader}><Text style={{ fontSize: 14,color: colors.text,fontWeight: '700' }}>#{String(item.ma_don_hang || item.id).slice(0,8).toUpperCase()}</Text><Text style={[s.badge,{ color: item.status === 'DELIVERED' ? colors.success : colors.primary,backgroundColor: item.status === 'DELIVERED' ? colors.successBg : colors.primaryBg }]}>{item.status === 'DELIVERED' ? 'Đã giao' : item.status === 'CANCELLED' ? 'Đã hủy' : 'Thất bại'}</Text></View><Text style={[ui.caption,{ marginTop: 6 }]}>{formatDateTime(item.delivered_at || item.updated_at)}</Text><View style={s.address}><Ionicons name="location-outline" size={18} color={colors.muted} /><Text numberOfLines={2} style={{ flex: 1,fontSize: 13,color: colors.text,lineHeight: 21 }}>{item.delivery_address || 'Chưa cập nhật địa chỉ'}</Text></View><View style={s.cardFooter}><Text style={ui.caption}>Phí giao hàng</Text><Text style={{ color: item.status === 'DELIVERED' ? colors.success : colors.textSecondary,fontSize: 16,fontWeight: '700' }}>{item.delivery_fee != null ? formatCurrency(item.delivery_fee) : 'Chưa cập nhật'}</Text><Ionicons name="chevron-forward" size={17} color={colors.muted} /></View></Pressable></Reveal>} ListEmptyComponent={query.isLoading ? <Skeleton /> : <EmptyState title={query.isError ? 'Chưa tải được lịch sử' : 'Chưa có chuyến giao'} description={query.isError ? 'Kiểm tra kết nối và thử lại.' : 'Thử khoảng thời gian hoặc từ khóa khác.'} retry={query.isError ? query.refetch : undefined} />} />
-    {filtered.length > 0 && <Pagination total={filtered.length} pages={pagination.pages} page={pagination.page} onChange={page => { pagination.setPage(page); list.current?.scrollToOffset({ offset: 0,animated: false }) }} />}
-  </SafeAreaView>
+  const filtered = useMemo(() => {
+    return (query.data || [])
+      .filter((d) => {
+        if (status === 'ALL') return true
+        if (status === 'DELIVERED') return d.status === 'DELIVERED'
+        if (status === 'CANCELLED') return d.status === 'CANCELLED' || d.status === 'FAILED'
+        return true
+      })
+      .filter((d) =>
+        `${d.ma_don_hang} ${d.customer_name || ''} ${d.delivery_address || ''}`
+          .toLocaleLowerCase('vi')
+          .includes(search.trim().toLocaleLowerCase('vi'))
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.delivered_at || b.updated_at) - new Date(a.delivered_at || a.updated_at)
+      )
+  }, [query.data, status, search])
+
+  const pagination = usePagination(filtered, [status, search, shipper?.id].join('|'))
+
+  const renderHeader = () => (
+    <View style={{ paddingBottom: 12 }}>
+      {/* Search Input with Filter Button */}
+      <View style={s.searchRow}>
+        <View style={s.searchInputWrap}>
+          <Ionicons name="search-outline" size={18} color="#94a3b8" />
+          <TextInput
+            accessibilityLabel="Tìm mã đơn hoặc người nhận"
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Tìm mã đơn, người nhận..."
+            placeholderTextColor="#94a3b8"
+            style={s.searchInput}
+          />
+          {search !== '' && (
+            <Pressable onPress={() => setSearch('')}>
+              <Ionicons name="close-circle" size={18} color="#94a3b8" />
+            </Pressable>
+          )}
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Lọc danh sách"
+          style={s.filterIconButton}
+          onPress={handleManualRefresh}
+        >
+          <Ionicons name="funnel-outline" size={18} color={colors.primary} />
+        </Pressable>
+      </View>
+
+      {/* Filter Chips matching Mockup Screen 6 */}
+      <View style={s.chipRow}>
+        {statusFilters.map((f) => {
+          const isActive = status === f.id
+          return (
+            <Pressable
+              key={f.id}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              onPress={() => setStatus(f.id)}
+              style={[s.chip, isActive && s.chipActive]}
+            >
+              <Text style={[s.chipText, isActive && s.chipTextActive]}>{f.label}</Text>
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+
+  const renderItem = ({ item }) => {
+    const isSuccess = item.status === 'DELIVERED'
+    const code = `#${String(item.ma_don_hang || item.id).slice(0, 8)}`
+    const amount = item.cod_amount != null ? formatCurrency(item.cod_amount) : item.delivery_fee != null ? formatCurrency(item.delivery_fee) : '0đ'
+
+    return (
+      <Reveal>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Chi tiết đơn ${String(item.ma_don_hang).slice(0, 8)}`}
+          onPress={() => navigation.navigate('OrderDetail', { deliveryId: item.id })}
+          style={s.card}
+        >
+          <View style={s.cardLeft}>
+            <View style={s.boxIconWrap}>
+              <Ionicons name="cube-outline" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={s.orderCodeText}>{code}</Text>
+              <Text style={s.timeText}>
+                {formatDateTime(item.delivered_at || item.updated_at)}
+              </Text>
+            </View>
+          </View>
+
+          <View style={s.cardRight}>
+            <View
+              style={[
+                s.statusPill,
+                { backgroundColor: isSuccess ? '#f0fdf4' : '#fff1f2' },
+              ]}
+            >
+              <View
+                style={[
+                  s.statusDot,
+                  { backgroundColor: isSuccess ? colors.success : colors.primary },
+                ]}
+              />
+              <Text
+                style={[
+                  s.statusText,
+                  { color: isSuccess ? colors.success : colors.primary },
+                ]}
+              >
+                {isSuccess ? 'Đã giao' : 'Đã hủy'}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+              <Text style={s.amountText}>{amount}</Text>
+              <Ionicons name="chevron-forward" size={14} color="#94a3b8" />
+            </View>
+          </View>
+        </Pressable>
+      </Reveal>
+    )
+  }
+
+  return (
+    <SafeAreaView edges={['top', 'left', 'right']} style={ui.screen}>
+      <Header
+        title="Lịch sử đơn hàng"
+        right={
+          <IconButton
+            name="refresh-outline"
+            label="Làm mới"
+            onPress={handleManualRefresh}
+          />
+        }
+      />
+
+      <FlatList
+        ref={list}
+        data={pagination.items}
+        keyExtractor={(i) => String(i.id || i.ma_don_hang)}
+        initialNumToRender={4}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={manualRefreshing}
+            onRefresh={handleManualRefresh}
+            tintColor={colors.primary}
+          />
+        }
+        renderItem={renderItem}
+        ListEmptyComponent={
+          query.isLoading ? (
+            <HistorySkeleton count={4} />
+          ) : (
+            <EmptyState
+              title={query.isError ? 'Chưa tải được lịch sử' : 'Chưa có đơn hàng nào'}
+              description={
+                query.isError
+                  ? 'Kiểm tra kết nối và thử lại.'
+                  : 'Các đơn giao sẽ được lưu lại tại đây.'
+              }
+              retry={query.isError ? query.refetch : undefined}
+            />
+          )
+        }
+      />
+
+      {filtered.length > 0 && pagination.pages > 1 && (
+        <Pagination
+          total={filtered.length}
+          pages={pagination.pages}
+          page={pagination.page}
+          onChange={(page) => {
+            pagination.setPage(page)
+            list.current?.scrollToOffset({ offset: 0, animated: false })
+          }}
+        />
+      )}
+    </SafeAreaView>
+  )
 }
-const s = StyleSheet.create({ summary:{flexDirection:'row',backgroundColor:'#fff',paddingHorizontal:16,paddingBottom:16,paddingTop:6},summaryItem:{flex:1,gap:5,paddingHorizontal:5},summaryValue:{fontSize:21,fontWeight:'600',color:colors.text},summaryLabel:{fontSize:10,color:colors.muted}, controls: { padding: 16,paddingBottom: 0,backgroundColor: '#fff' },search: { flexDirection: 'row',alignItems: 'center',gap: 8,paddingHorizontal: 12,backgroundColor: '#f5f6f8',borderRadius: 8 },filters: { flexDirection: 'row',gap: 7,marginTop: 14 },filter: { flex: 1,paddingVertical: 10,borderRadius: 6,backgroundColor: '#f4f5f7',alignItems: 'center' },statuses: { flexDirection: 'row',alignItems: 'center',gap: 2,marginTop: 12 },cardHeader: { flexDirection: 'row',justifyContent: 'space-between',alignItems: 'center',gap: 8 },badge: { fontSize: 11,fontWeight: '600',paddingVertical: 4,paddingHorizontal: 7,borderRadius: 5 },address: { flexDirection: 'row',gap: 8,marginVertical: 12 },cardFooter: { flexDirection: 'row',alignItems: 'center',gap: 10,paddingTop: 12,borderTopWidth: 1,borderColor: colors.borderLight } })
+
+const s = StyleSheet.create({
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  searchInputWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    minHeight: 44,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text,
+    paddingVertical: 8,
+  },
+  filterIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  chip: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  chipTextActive: {
+    color: '#ffffff',
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    padding: 14,
+    marginBottom: 10,
+  },
+  cardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    minWidth: 0,
+  },
+  boxIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#fff1f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orderCodeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  timeText: {
+    fontSize: 11,
+    color: '#94a3b8',
+    marginTop: 2,
+  },
+  cardRight: {
+    alignItems: 'flex-end',
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  amountText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+})

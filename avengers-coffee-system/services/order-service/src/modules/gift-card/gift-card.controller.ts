@@ -1,43 +1,55 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Req, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Req, ParseUUIDPipe } from '@nestjs/common';
 import { GiftCardService } from './gift-card.service';
 import { PurchaseGiftCardDto, RedeemGiftCardDto } from './dto/gift-card.dto';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { assertAccountCheckoutOwner } from '../../auth/cart-auth.guard';
 
 @Controller('gift-cards')
 export class GiftCardController {
   constructor(private readonly giftCardService: GiftCardService) {}
 
   @Get('themes')
-  async getThemes() {
-    return this.giftCardService.getThemes();
-  }
+  getThemes() { return this.giftCardService.getThemes(); }
 
   @Post('purchase')
-  async purchaseGiftCard(@Body() dto: PurchaseGiftCardDto) {
+  @UseGuards(JwtAuthGuard)
+  purchaseGiftCard(@Body() dto: PurchaseGiftCardDto, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, dto.sender_id);
     return this.giftCardService.purchaseGiftCard(dto);
   }
 
+  @Post('validate')
+  @UseGuards(JwtAuthGuard)
+  validateGiftCard(@Body() dto: RedeemGiftCardDto, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, dto.customer_id);
+    return this.giftCardService.validateGiftCard(dto.code, dto.customer_id);
+  }
+
   @Post('redeem')
-  async redeemGiftCard(@Body() dto: RedeemGiftCardDto) {
+  @UseGuards(JwtAuthGuard)
+  redeemGiftCard(@Body() dto: RedeemGiftCardDto, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, dto.customer_id);
     return this.giftCardService.redeemGiftCard(dto);
   }
 
-  @Get(':code')
-  async getGiftCardDetails(@Param('code') code: string) {
-    return this.giftCardService.getGiftCardDetails(code);
-  }
-
   @Get('my-cards/:customerId')
-  async getMyGiftCards(@Param('customerId') customerId: string) {
+  @UseGuards(JwtAuthGuard)
+  getMyGiftCards(@Param('customerId', ParseUUIDPipe) customerId: string, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, customerId);
     return this.giftCardService.getMyGiftCards(customerId);
   }
 
   @Post('transfer-balance')
-  async transferGiftCardBalance(@Body() dto: { gift_card_id: string; customer_id: string }) {
+  @UseGuards(JwtAuthGuard)
+  transferGiftCardBalance(@Body() dto: { gift_card_id: string; customer_id: string }, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, dto.customer_id);
     return this.giftCardService.transferGiftCardBalance(dto.gift_card_id, dto.customer_id);
   }
 
-  @Delete(':id')
-  async deleteGiftCard(@Param('id') id: string) {
-    return this.giftCardService.deleteGiftCard(id);
+  @Get(':code')
+  @UseGuards(JwtAuthGuard)
+  getGiftCardDetails(@Param('code') code: string, @Req() req: any) {
+    assertAccountCheckoutOwner(req.user, req.user.sub);
+    return this.giftCardService.getGiftCardDetails(code, req.user.sub);
   }
 }

@@ -4,7 +4,7 @@ describe('Shipper readiness is explicit and shared by all dispatch paths', () =>
   let service: ShipperService;
   let shipperRepo: any, deliveryRepo: any, orderRepo: any;
   beforeEach(() => {
-    shipperRepo = { findOne: jest.fn().mockResolvedValue({ id: 's1', branch_code: 'D9', status: 'INACTIVE' }), update: jest.fn().mockResolvedValue({}), create: jest.fn(value => value), save: jest.fn(value => value) };
+    shipperRepo = { findOne: jest.fn().mockResolvedValue({ id: 's1', branch_code: 'D9', status: 'INACTIVE' }), update: jest.fn().mockResolvedValue({}), increment: jest.fn().mockResolvedValue({}), create: jest.fn(value => value), save: jest.fn(value => value) };
     deliveryRepo = { findOne: jest.fn().mockResolvedValue(null), find: jest.fn().mockResolvedValue([]), update: jest.fn(), create: jest.fn(value => value), save: jest.fn(value => ({ ...value, id: 'd1' })) };
     orderRepo = { findOne: jest.fn().mockResolvedValue({ ma_don_hang: 'o1', co_so_ma: 'D9', trang_thai_don_hang: 'DANG_GIAO', chi_tiet: [] }), update: jest.fn() };
     service = new ShipperService(shipperRepo, deliveryRepo, {} as any, {} as any, {} as any, {} as any, orderRepo, {} as any, { findOne: jest.fn().mockResolvedValue(null) } as any, { phatSongDonHangChoShipper: jest.fn(), guiThongBao: jest.fn() } as any, { delete: jest.fn().mockResolvedValue(null), getJson: jest.fn().mockResolvedValue(null) } as any);

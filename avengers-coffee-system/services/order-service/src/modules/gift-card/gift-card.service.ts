@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { randomBytes } from 'crypto';
 import { GiftCard } from './entities/gift-card.entity';
 import { PurchaseGiftCardDto, RedeemGiftCardDto } from './dto/gift-card.dto';
 import { GiftCardTheme } from './entities/gift-card-theme.entity';
 import { CustomerWalletService } from '../customer-wallet/customer-wallet.service';
-import { buildBrandedEmailHtml, SmtpService } from '../smtp/smtp.service';
+import { buildBrandedEmailHtml, escapeEmailHtml, SmtpService } from '../smtp/smtp.service';
 @Injectable()
 export class GiftCardService {
   private readonly logger = new Logger(GiftCardService.name);
@@ -48,17 +49,49 @@ export class GiftCardService {
   }
 
   private generateCode(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'GIFT-';
-    for (let i = 0; i < 8; i++) {
-      if (i === 4) code += '-';
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    return randomBytes(8).toString('hex').toUpperCase().match(/.{4}/g)!.join('-');
+  }
+
+  private normalizeCode(code: string) {
+    const compact = String(code || '').toUpperCase().replace(/[\s-]/g, '');
+    if (!/^[A-Z0-9]{12,16}$/.test(compact)) {
+      throw new BadRequestException({ code: 'GIFT_CARD_INVALID', message: 'Mã thẻ phải gồm 12–16 ký tự chữ hoặc số' });
     }
-    return code; // e.g. GIFT-ABCD-1234
+    return compact.match(/.{1,4}/g)!.join('-');
+  }
+
+  private assertRedeemable(card: GiftCard | null, customerId: string) {
+    if (!card) throw new BadRequestException({ code: 'GIFT_CARD_NOT_FOUND', message: 'Mã thẻ không tồn tại' });
+    if (card.status === 'REDEEMED' || Number(card.current_balance) <= 0 ||
+        (card.redeemed_by && card.redeemed_by !== customerId)) {
+      throw new BadRequestException({ code: 'GIFT_CARD_USED', message: 'Thẻ quà tặng đã được sử dụng' });
+    }
+    if (card.status === 'EXPIRED' || (card.expires_at && new Date(card.expires_at).getTime() <= Date.now())) {
+      throw new BadRequestException({ code: 'GIFT_CARD_EXPIRED', message: 'Thẻ quà tặng đã hết hạn' });
+    }
+    if (!['ACTIVE', 'CLAIMED'].includes(card.status)) {
+      throw new BadRequestException({ code: 'GIFT_CARD_INVALID', message: 'Thẻ quà tặng không hợp lệ' });
+    }
+  }
+
+  async validateGiftCard(code: string, customerId: string) {
+    const card = await this.giftCardRepo.findOne({ where: { code: this.normalizeCode(code) } });
+    this.assertRedeemable(card, customerId);
+    // A code preview never exposes the sender or recipient's personal details.
+    return { success: true, data: { code: card!.code, value: Number(card!.value),
+      current_balance: Number(card!.current_balance), expires_at: card!.expires_at || null } };
   }
 
   async purchaseGiftCard(dto: PurchaseGiftCardDto) {
-    // 1. Tạo Gift Card
+    if (typeof dto.sender_name !== 'string' || !dto.sender_name.trim() || dto.sender_name.length > 255
+        || typeof dto.receiver_email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.receiver_email)
+        || dto.receiver_email.length > 255 || (dto.message != null && (typeof dto.message !== 'string' || dto.message.length > 2000))) {
+      throw new BadRequestException('Thông tin người gửi hoặc người nhận không hợp lệ');
+    }
+    if (!Number.isSafeInteger(dto.value) || dto.value < 10000 || dto.value > 5000000) {
+      throw new BadRequestException('Mệnh giá phải từ 10.000đ đến 5.000.000đ');
+    }
+    // Issue funded cards only: wallet debit and card creation commit together.
     const card = this.giftCardRepo.create({
       code: this.generateCode(),
       value: dto.value,
@@ -71,9 +104,11 @@ export class GiftCardService {
       message: dto.message,
       theme: dto.theme || 'default',
       status: 'ACTIVE',
+      expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
     });
     
-    await this.giftCardRepo.save(card);
+    await this.walletService.withWalletPayment(dto.sender_id, dto.value, `GIFT_PURCHASE:${card.code}`,
+      async manager => manager.getRepository(GiftCard).save(card));
 
     // 2. Gửi Email xịn xò
     let emailUrl: string | null | boolean = null;
@@ -88,31 +123,26 @@ export class GiftCardService {
       success: true,
       message: 'Mua thẻ quà tặng thành công',
       data: card,
-      email_url: emailUrl,
-      loyalty_points_earned: Math.floor(dto.value / 10000), // Ví dụ: 10k = 1 điểm
+      email_status: emailUrl ? 'SENT' : 'NOT_SENT',
     };
   }
 
   async redeemGiftCard(dto: RedeemGiftCardDto) {
-    const card = await this.giftCardRepo.findOne({ where: { code: dto.code } });
-    
-    if (!card) throw new BadRequestException('Mã thẻ không tồn tại');
-    if (card.status === 'REDEEMED' || card.status === 'CLAIMED' || card.redeemed_by) {
-      throw new BadRequestException('Thẻ này đã được lưu vào bộ sưu tập của người khác hoặc đã sử dụng');
-    }
-    if (card.status === 'EXPIRED') throw new BadRequestException('Thẻ đã hết hạn');
-
-    // Lưu thẻ vào bộ sưu tập
-    card.status = 'CLAIMED';
-    card.redeemed_by = dto.customer_id;
-    card.redeemed_at = new Date();
-    await this.giftCardRepo.save(card);
-
-    return {
-      success: true,
-      message: `Đã lưu thẻ ${card.value} VND vào bộ sưu tập thành công`,
-      data: card,
-    };
+    const code = this.normalizeCode(dto.code);
+    return this.giftCardRepo.manager.transaction(async manager => {
+      const repo = manager.getRepository(GiftCard);
+      const card = await repo.findOne({ where: { code }, lock: { mode: 'pessimistic_write' } });
+      this.assertRedeemable(card, dto.customer_id);
+      const amount = Number(card!.current_balance);
+      const credit = await this.walletService.creditGiftCard(dto.customer_id, amount, card!.code, manager);
+      card!.status = 'REDEEMED';
+      card!.current_balance = 0;
+      card!.redeemed_by = dto.customer_id;
+      card!.redeemed_at = new Date();
+      await repo.save(card!);
+      return { success: true, message: 'Đã nạp thẻ quà tặng vào ví', balance_added: amount,
+        code: card!.code, ...credit };
+    });
   }
 
   async getMyGiftCards(customerId: string) {
@@ -130,45 +160,11 @@ export class GiftCardService {
   async transferGiftCardBalance(giftCardId: string, customerId: string) {
     const card = await this.giftCardRepo.findOne({ where: { id: giftCardId, redeemed_by: customerId } });
     if (!card) throw new BadRequestException('Không tìm thấy thẻ trong bộ sưu tập của bạn');
-    if (card.current_balance <= 0) throw new BadRequestException('Thẻ này đã hết số dư');
-
-    const amountToTransfer = Number(card.current_balance);
-
-    // Nạp tiền vào ví
-    await this.walletService.topUp(customerId, amountToTransfer);
-
-    // Cập nhật thẻ
-    card.current_balance = 0;
-    card.status = 'REDEEMED';
-    await this.giftCardRepo.save(card);
-
-    return {
-      success: true,
-      message: `Đã chuyển ${amountToTransfer.toLocaleString()} VND vào ví điện tử`,
-      balance_added: amountToTransfer,
-    };
+    return this.redeemGiftCard({ code: card.code, customer_id: customerId });
   }
 
-  async getGiftCardDetails(code: string) {
-    const card = await this.giftCardRepo.findOne({ where: { code } });
-    if (!card) throw new BadRequestException('Mã thẻ không tồn tại');
-    
-    return {
-      success: true,
-      data: card,
-    };
-  }
-
-  async deleteGiftCard(id: string) {
-    const card = await this.giftCardRepo.findOne({ where: { id } });
-    if (!card) {
-      throw new BadRequestException('Không tìm thấy thẻ quà tặng');
-    }
-    await this.giftCardRepo.remove(card);
-    return {
-      success: true,
-      message: 'Đã xóa thẻ quà tặng thành công',
-    };
+  async getGiftCardDetails(code: string, customerId: string) {
+    return this.validateGiftCard(code, customerId);
   }
 
   // Gửi email thẻ quà tặng E-Gift Card đồng bộ từ máy chủ SMTP cấu hình
@@ -179,44 +175,27 @@ export class GiftCardService {
         return null;
       }
 
-      // Tạo HTML template phong cách Avengers Coffee cực xịn
       const formattedValue = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(card.value);
       const clientBaseUrl = process.env.CUSTOMER_WEB_URL || process.env.WEB_CUSTOMER_BASE_URL || 'http://localhost:5173';
       const redeemUrl = `${clientBaseUrl}/?tab=wallet&code=${encodeURIComponent(card.code)}`;
-
+      const safeSender = escapeEmailHtml(card.sender_name);
       const giftDetailsHtml = `
-        <div style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; text-align: center; margin-bottom: 16px;">
-          ${card.message ? `
-            <div style="background-color: #ffffff; border-left: 4px solid #b22830; padding: 14px 18px; border-radius: 8px; font-style: italic; color: #475569; font-size: 14px; margin-bottom: 18px; text-align: left; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-              "${card.message}"
-            </div>
-          ` : ''}
-
-          <div style="margin: 12px auto; background: #ffffff; padding: 16px; border-radius: 12px; border: 2px dashed #b22830; display: inline-block;">
-            <div style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">MÃ THẺ QUÀ TẶNG CỦA BẠN:</div>
-            <div style="font-size: 26px; font-weight: 900; letter-spacing: 3px; color: #b22830; font-family: monospace;">${card.code}</div>
-            <div style="margin-top: 14px;">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${card.code}" style="width: 140px; height: 140px; border-radius: 8px;" alt="QR Code" />
-            </div>
-          </div>
-        </div>
-      `;
-
-      const termsHtml = `
-        - Thẻ quà tặng có giá trị thanh toán toàn bộ menu tại chuỗi cửa hàng Avengers Coffee.<br/>
-        - Sử dụng mã để nạp tiền vào Ví Điện Tử trên website hoặc đưa mã QR cho thu ngân tại quầy.<br/>
-        - Thẻ có thể sử dụng nhiều lần cho đến khi hết số dư.
-      `;
+        <div style="padding:16px 0;border-top:1px solid #e7e2dc;border-bottom:1px solid #e7e2dc;">
+          ${card.message ? `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#4d4843;">“${escapeEmailHtml(card.message)}”</p>` : ''}
+          <div style="font-size:11px;color:#756e68;letter-spacing:1px;">MÃ THẺ QUÀ TẶNG</div>
+          <div style="margin-top:6px;font-size:21px;font-weight:600;letter-spacing:2px;color:#6f1825;">${escapeEmailHtml(card.code)}</div>
+        </div>`;
+      const termsHtml = `Mã thẻ được nạp vào ví một lần. Hạn sử dụng: ${card.expires_at ? new Date(card.expires_at).toLocaleDateString('vi-VN') : 'Không giới hạn'}. Số dư ví có thể dùng cho nhiều đơn hàng.`;
 
       const htmlContent = buildBrandedEmailHtml({
         headerTagline: 'THẾ MỚI ĐẬM VỊ • MÓN QUÀ ĐẶC QUYỀN',
         heroTitle: 'BẠN NHẬN ĐƯỢC E-GIFT CARD ĐẶC QUYỀN',
-        heroSubtitle: `MÓN QUÀ YÊU THƯƠNG TỪ ${card.sender_name.toUpperCase()}`,
+        heroSubtitle: `MÓN QUÀ YÊU THƯƠNG TỪ ${String(card.sender_name || '').toUpperCase()}`,
         heroBadgeTitle: 'GIÁ TRỊ THẺ QUÀ TẶNG',
         heroBadgeValue: formattedValue,
         heroBadgeSub: `Mã thẻ: ${card.code} • Người gửi: ${card.sender_name}`,
         greetingTitle: `Chúc mừng ${card.receiver_name || 'bạn'},`,
-        greetingBody: `Bạn vừa nhận được một chiếc <strong>E-Gift Card</strong> trị giá <strong>${formattedValue}</strong> từ <strong>${card.sender_name}</strong> gửi tặng qua Avengers Coffee.`,
+        greetingBody: `Bạn vừa nhận được thẻ quà tặng trị giá <strong>${formattedValue}</strong> từ <strong>${safeSender}</strong>.`,
         greetingEn: `You have received a special Gift Card worth ${formattedValue} from ${card.sender_name}.`,
         highlightCode: card.code,
         ctaText: 'NẠP VÍ & SỬ DỤNG NGAY',
@@ -239,7 +218,7 @@ export class GiftCardService {
       return res.previewUrl || true;
     } catch (err) {
       this.logger.error('Email error:', err);
-      return err.message || String(err);
+      return null;
     }
   }
 }

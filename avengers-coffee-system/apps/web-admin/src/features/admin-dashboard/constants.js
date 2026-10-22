@@ -9,7 +9,7 @@ export const NAV_TABS = [
   { id: 'shift', label: 'Chốt ca' },
   { id: 'pos', label: 'POS tạo đơn nhanh' },
   { id: 'table-management', label: 'Quản lý Bàn' },
-  { id: 'franchise-manage', label: '🏪 Nhượng quyền Kiosk' },
+  { id: 'franchise-manage', label: "Nhượng quyền Kiosk" },
 ]
 
 export const ACCOUNT_TAB = { id: 'account', label: 'Hồ sơ & Bảo mật' }
@@ -19,7 +19,7 @@ export const MANAGER_SHIFT_APPROVAL_TAB = { id: 'shift-approval', label: 'Kiểm
 export const MANAGER_EMPLOYEE_MANAGEMENT_TAB = { id: 'employee-manage', label: 'Quản lý nhân viên' }
 export const MANAGER_WORKFORCE_MANAGEMENT_TAB = { id: 'workforce-manage', label: 'Quản lý lịch làm nhân viên' }
 export const MANAGER_CUSTOMER_CARE_TAB = { id: 'customer-care', label: 'Phản hồi & CSKH' }
-export const MANAGER_SURVEY_TAB = { id: 'survey-manage', label: '📊 Quản lý Khảo sát' }
+export const MANAGER_SURVEY_TAB = { id: 'survey-manage', label: "Quản lý Khảo sát" }
 
 export const DASHBOARD_ROLES = {
   ADMIN: 'ADMIN',

@@ -1,4 +1,4 @@
-import ChristmasBanner from '../../components/ChristmasBanner';
+import ChristmasBanner from '../../components/layout/ChristmasBanner';
 import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,11 +27,13 @@ import {
   ChevronDownIcon,
   Bars3Icon,
   TruckIcon
-} from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
-import QuickViewModal from '../../components/QuickViewModal';
-import ProductCard from '../../components/ProductCard';
-import ProductSalesSummary from '../../components/ProductSalesSummary';
+} from '../../components/common/icons';
+import { HeartIcon as HeartSolidIcon } from '../../components/common/iconsSolid';
+import { RiArrowUpLine } from 'react-icons/ri';
+import QuickViewModal from '../../components/modals/QuickViewModal';
+import ProductCard from '../../components/product/ProductCard';
+import { OrderCatalogSkeleton } from '../../components/common/Skeleton';
+import ProductSalesSummary from '../../components/product/ProductSalesSummary';
 
 const MENU_ICONS = [
   '/hc-assets/menu_icon_1.png',
@@ -67,11 +69,15 @@ function SaleCountdown({ copy }) {
 
 export default function OrderPage({
   menuSections = [],
+  isMenuLoading = false,
+  isMenuError = false,
+  onRetryMenu,
   products = [],
   categories = [],
   cartCount = 0,
   onOpenCart,
   userName,
+  userAvatar,
   onOpenAccount,
   onViewDetail,
   onAddToCart,
@@ -123,6 +129,7 @@ export default function OrderPage({
     setActiveCategory(selectedCatId || 'all');
   }
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -210,14 +217,18 @@ export default function OrderPage({
   const [sortByOrder, setSortByOrder] = useState('default'); // 'default' | 'price-asc' | 'price-desc' | 'name-asc'
   const [expandedParents, setExpandedParents] = useState({});
   const [viewCategory, setViewCategory] = useState('all');
+  const [showAllCategories, setShowAllCategories] = useState(true);
   const mobileMenuRef = useRef(null);
   const dropdownRef = useRef(null);
   const productsContainerRef = useRef(null);
 
   const matchingSearchProducts = useMemo(() => {
     if (!searchKeyword || !String(searchKeyword).trim()) return [];
-    const kw = String(searchKeyword).trim().toLowerCase();
-    return products.filter((p) => String(p.ten_san_pham || p.name || '').toLowerCase().includes(kw));
+    const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const kw = normalize(searchKeyword.trim());
+    return products.filter(p => normalize(p.ten_san_pham || p.name).includes(kw))
+      .sort((a, b) => Number(normalize(b.ten_san_pham || b.name).startsWith(kw)) - Number(normalize(a.ten_san_pham || a.name).startsWith(kw)))
+      .slice(0, 8);
   }, [products, searchKeyword]);
 
 
@@ -230,9 +241,64 @@ export default function OrderPage({
     });
   }, [menuSections]);
 
-  const renderedSections = viewCategory === 'all'
-    ? sortedMenuSections
-    : sortedMenuSections.filter(s => String(s.id) === String(viewCategory));
+  const CATEGORY_ORDER = [
+    'cà phê', 'coffee',
+    'trà', 'tea',
+    'trà sữa', 'macchiato',
+    'đá xay', 'thức uống đá xay', 'freeze', 'frappe',
+    'bánh', 'đồ ăn', 'food',
+    'bánh mặn', 'ăn nhẹ',
+    'thẻ quà tặng', 'gift card',
+    'khác'
+  ];
+
+  const getCatRank = (name) => {
+    const lower = String(name || '').toLowerCase();
+    const idx = CATEGORY_ORDER.findIndex(term => lower.includes(term));
+    return idx === -1 ? 999 : idx;
+  };
+
+  const parentCats = useMemo(() => {
+    return categories
+      .filter(c => c.cap_bac === 1 || (!c.ma_danh_muc_cha && c.cap_bac !== 2))
+      .sort((a, b) => getCatRank(a.ten_danh_muc) - getCatRank(b.ten_danh_muc));
+  }, [categories]);
+
+  const visibleParentCats = parentCats;
+
+  // Resolve the 1 single category to display (defaults to the first parent category, e.g. Cà Phê)
+  const targetParentCategory = useMemo(() => {
+    if (!visibleParentCats || visibleParentCats.length === 0) return null;
+    if (!activeCategory || activeCategory === 'all') {
+      return visibleParentCats[0];
+    }
+    const cleanId = String(activeCategory).replace('group-', '');
+    const foundParent = visibleParentCats.find(c => String(c.ma_danh_muc) === cleanId);
+    if (foundParent) return foundParent;
+    const foundChild = categories.find(c => String(c.ma_danh_muc) === cleanId);
+    if (foundChild?.ma_danh_muc_cha) {
+      const parentOfChild = visibleParentCats.find(c => String(c.ma_danh_muc) === String(foundChild.ma_danh_muc_cha));
+      if (parentOfChild) return parentOfChild;
+    }
+    return visibleParentCats[0];
+  }, [activeCategory, visibleParentCats, categories]);
+
+  // Render ONLY the sections belonging to the 1 selected category
+  const renderedSections = useMemo(() => {
+    if (!sortedMenuSections || sortedMenuSections.length === 0) return [];
+    if (!targetParentCategory) return sortedMenuSections.slice(0, 1);
+
+    const parentId = String(targetParentCategory.ma_danh_muc);
+    const childIds = categories
+      .filter(c => String(c.ma_danh_muc_cha) === parentId)
+      .map(c => String(c.ma_danh_muc));
+
+    const matched = sortedMenuSections.filter(s =>
+      String(s.id) === parentId || childIds.includes(String(s.id))
+    );
+
+    return matched.length > 0 ? matched : sortedMenuSections.slice(0, 1);
+  }, [sortedMenuSections, targetParentCategory, categories]);
 
   const isMenuAlwaysOpen = false;
 
@@ -250,31 +316,41 @@ export default function OrderPage({
   }, []);
 
   useEffect(() => {
+    let frame = null;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const scrollY = window.scrollY;
 
-      // ScrollSpy for Category Section
-      const scrollPos = window.scrollY + 180;
-      const sections = document.querySelectorAll('section[id^="category-"]');
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const section = sections[i];
-        if (section.offsetTop <= scrollPos) {
-          const catId = section.id.replace('category-', '');
-          setActiveCategory((prev) => {
-            if (prev !== catId) {
-              return catId;
-            }
-            return prev;
-          });
-          break;
-        }
+      // Hysteresis for header transformation to eliminate jitter/oscillation:
+      // When scrolling down, activate only past 120px; when scrolling up, deactivate below 40px.
+      // This 80px gap comfortably exceeds the 24px layout shift between 96px and 72px header heights.
+      setIsScrolled((prev) => {
+        if (!prev && scrollY > 120) return true;
+        if (prev && scrollY < 40) return false;
+        return prev;
+      });
+
+      // Dedicated hysteresis for the scroll-to-top button:
+      // Only display when user has scrolled significantly down (350px), hide when near top (180px).
+      setShowScrollTop((prev) => {
+        if (!prev && scrollY > 350) return true;
+        if (prev && scrollY < 180) return false;
+        return prev;
+      });
+    };
+    const schedule = () => {
+      if (frame == null) {
+        frame = requestAnimationFrame(() => {
+          frame = null;
+          handleScroll();
+        });
       }
     };
-    let frame = null;
-    const schedule = () => { if (frame == null) frame = requestAnimationFrame(() => { frame = null; handleScroll(); }); };
     window.addEventListener('scroll', schedule, { passive: true });
     handleScroll();
-    return () => { window.removeEventListener('scroll', schedule); cancelAnimationFrame(frame); };
+    return () => {
+      window.removeEventListener('scroll', schedule);
+      if (frame != null) cancelAnimationFrame(frame);
+    };
   }, [menuSections]);
 
   const handleCopyVoucherCode = (code) => {
@@ -368,16 +444,16 @@ export default function OrderPage({
 
         {/* Left Stub */}
         <div className={`${stubBg} text-white flex flex-col justify-center items-center w-[72px] px-1 py-1 flex-shrink-0 relative overflow-hidden select-none`}>
-          <span className="inline-flex items-center gap-0.5 text-[7.5px] font-extrabold tracking-wider uppercase bg-white/20 px-1 py-0.25 rounded-full text-white z-10">
+          <span className="inline-flex items-center gap-0.5 text-[7.5px] font-semibold tracking-wider  bg-white/20 px-1 py-0.25 rounded-full text-white z-10">
             <TagIconComp className="w-2 h-2 text-amber-200" />
             {tagLabel}
           </span>
 
           <div className="my-0.5 text-center z-10">
-            <span className="text-[17px] font-black leading-none tracking-tight block drop-shadow-xs font-sans">
+            <span className="text-[17px] font-semibold leading-none tracking-tight block drop-shadow-xs font-sans">
               {valueText}
             </span>
-            <span className="text-[8px] font-extrabold tracking-widest uppercase text-white/80 block leading-none mt-0.5">{ui("GIẢM")}</span>
+            <span className="text-[8px] font-semibold tracking-widest  text-white/80 block leading-none mt-0.5">{ui("GIẢM")}</span>
           </div>
         </div>
 
@@ -388,13 +464,13 @@ export default function OrderPage({
         <div className="p-2 pl-3 flex-1 flex flex-col justify-between bg-white min-w-0">
           <div className="flex items-center justify-between gap-1">
             <div className="flex items-center gap-1 min-w-0">
-              <span className={`text-[10.5px] font-mono font-black tracking-wider uppercase truncate px-1.5 py-0.25 rounded ${isPersonal ? 'bg-red-50 text-[#c41230] border border-red-100' : 'bg-gray-100 text-gray-800 border border-gray-200'
+              <span className={`text-[10.5px] font-mono font-semibold tracking-wider  truncate px-1.5 py-0.25 rounded ${isPersonal ? 'bg-red-50 text-[#c41230] border border-red-100' : 'bg-gray-100 text-gray-800 border border-gray-200'
                 }`}>
                 {code}
               </span>
             </div>
             {isPersonal && (
-              <span className="text-[8px] font-extrabold text-amber-700 bg-amber-50 px-1 py-0.25 rounded border border-amber-200/80 shrink-0">{ui("ĐỘC QUYỀN")}</span>
+              <span className="text-[8px] font-semibold text-amber-700 bg-amber-50 px-1 py-0.25 rounded border border-amber-200/80 shrink-0">{ui("Độc quyền")}</span>
             )}
           </div>
 
@@ -428,7 +504,7 @@ export default function OrderPage({
                   <CheckIcon className="w-2.5 h-2.5 stroke-[3]" />{ui("ĐÃ CHÉP")}</>
               ) : (
                 <>
-                  <ClipboardDocumentIcon className="w-2.5 h-2.5" />{ui("SAO CHÉP")}</>
+                  <ClipboardDocumentIcon className="w-2.5 h-2.5" />{ui("Sao chép")}</>
               )}
             </button>
           </div>
@@ -448,6 +524,7 @@ export default function OrderPage({
     }
     setActiveCategory(id);
     setViewCategory('all'); // Go back to overview mode when using header menu
+    setShowAllCategories(true);
     if (onSelectedCatIdChange) onSelectedCatIdChange(id);
     if (onSearchKeywordChange) onSearchKeywordChange(''); // Clear search when switching categories
     if (onNavigate) onNavigate('order');
@@ -464,11 +541,12 @@ export default function OrderPage({
       const parsedId = String(id).replace('group-', '');
       let targetElem = document.getElementById(`category-${parsedId}`) || document.getElementById(`category-${id}`);
 
-      // If parent category selected, try to find section for its first child
+      // If parent category selected, try to find section for its children
       if (!targetElem) {
-        const childCat = categories.find(c => String(c.ma_danh_muc_cha) === parsedId);
-        if (childCat) {
-          targetElem = document.getElementById(`category-${childCat.ma_danh_muc}`);
+        const childCats = categories.filter(c => String(c.ma_danh_muc_cha) === parsedId);
+        for (const child of childCats) {
+          targetElem = document.getElementById(`category-${child.ma_danh_muc}`);
+          if (targetElem) break;
         }
       }
 
@@ -499,30 +577,26 @@ export default function OrderPage({
     setExpandedParents(prev => ({ ...prev, [parentId]: !prev[parentId] }));
   };
 
-  const parentCats = categories.filter(c => c.cap_bac === 1);
   const categoryMenuItems = (
     <>
-      {parentCats.map((parent, idx) => {
+      {visibleParentCats.map((parent, idx) => {
         const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
-        const isActive = activeCategory === parent.ma_danh_muc;
+        const isActive = targetParentCategory && String(targetParentCategory.ma_danh_muc) === String(parent.ma_danh_muc);
         return (
           <li key={parent.ma_danh_muc} className="flex flex-col border-b border-gray-100/70 last:border-b-0">
             <button
               type="button"
               onClick={() => handleCategorySelect(parent.ma_danh_muc)}
               className={`w-full flex items-center justify-between px-6 py-3.5 text-left transition-all duration-200 cursor-pointer ${isActive
-                  ? 'bg-[#b22830] text-white font-extrabold shadow-xs'
+                  ? 'bg-[#b22830] text-white font-semibold shadow-xs'
                   : 'text-gray-800 hover:bg-red-50/60 hover:text-[#b22830] font-semibold bg-white'
                 }`}
             >
               <div className="flex items-center gap-3.5">
-                <img loading="lazy" decoding="async"
-                  src={iconUrl}
-                  alt={parent.ten_danh_muc}
-                  className={`w-5 h-5 object-contain transition-transform duration-200 ${isActive ? 'brightness-0 invert scale-110' : ''}`}
-                />
+                <img loading="lazy" decoding="async" src={iconUrl} alt={parent.ten_danh_muc}
+                  className={`w-5 h-5 object-contain transition-transform duration-200 ${isActive ? 'brightness-0 invert scale-110' : ''}`} />
                 <span className="text-[14px] capitalize tracking-wide">
-                  {tCategory(parent.ten_danh_muc).toLowerCase()}
+                  {tCategory(parent.ten_danh_muc)}
                 </span>
               </div>
             </button>
@@ -535,7 +609,7 @@ export default function OrderPage({
   return (
     <div className="w-full min-h-screen bg-white flex flex-col">
       {/* ── TOP HEADER (Full Width) ── */}
-      <header className={`customer-order-header w-full bg-white flex items-center px-4 lg:px-6 sticky top-0 z-[60] shadow-sm gap-4 border-b border-gray-100 relative transition-all duration-300 ${isScrolled ? 'h-[64px]' : 'h-[84px]'}`}>
+      <header className={`customer-order-header w-full bg-white flex items-center px-4 lg:px-6 sticky top-0 z-[60] shadow-sm gap-4 border-b border-gray-100 relative transition-all duration-300 ${isScrolled ? 'h-[72px]' : 'h-[96px]'}`}>
 
         {/* Mobile Toggle & Logo */}
         <div className="flex items-center h-full relative" ref={mobileMenuRef}>
@@ -551,13 +625,11 @@ export default function OrderPage({
             <span className="w-6 h-0.5 bg-gray-800 block"></span>
           </button>
 
-          <div className="flex-shrink-0 h-full flex items-center lg:ml-6 lg:w-[180px] xl:w-[260px]">
-            {isScrolled && <img src="/hc-assets/logo.png" alt="Highlands Coffee" className="lg:hidden h-[46px] w-auto object-contain" />}
+          <div className="flex-shrink-0 h-full flex items-center lg:ml-6 lg:w-[220px] xl:w-[280px]">
+            {isScrolled && <img src="/images/brand/logo-red.png" alt="Avengers Coffee" className="lg:hidden h-[54px] w-auto object-contain" />}
             {!isScrolled ? (
-              <img loading="lazy" decoding="async"
-                src="/hc-assets/logo.png"
-                alt="Highlands Coffee"
-                className="h-[60px] w-auto object-contain cursor-pointer transition-transform hover:scale-105"
+              <img loading="lazy" decoding="async" src="/images/brand/logo-red.png" alt="Avengers Coffee"
+                className="h-[48px] sm:h-[56px] w-auto object-contain cursor-pointer transition-transform hover:scale-105"
                 onClick={() => {
                   handleCategorySelect('all');
                   if (onNavigate) {
@@ -633,7 +705,7 @@ export default function OrderPage({
               <div className="absolute top-full left-0 right-0 mt-2.5 z-50 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50/80">
                   <span className="text-[14px] font-bold text-gray-700">
-                    {t('home.searchResult')} <span className="text-[#b22830] font-black">{searchKeyword}</span>
+                    {t('home.searchResult')} <span className="text-[#b22830] font-semibold">{searchKeyword}</span>
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
@@ -691,7 +763,7 @@ export default function OrderPage({
                               {p.ten_san_pham || p.name}
                             </span>
                           </div>
-                          <span className="font-black text-sm text-[#b22830]">
+                          <span className="font-semibold text-sm text-[#b22830]">
                             {(Number(p.gia_ban) || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
                         </div>
                       ))}
@@ -720,7 +792,7 @@ export default function OrderPage({
                           <span className="font-bold text-xs text-[#333333] line-clamp-1 mt-2">
                             {p.ten_san_pham || p.name}
                           </span>
-                          <span className="font-black text-sm text-[#b22830] mt-1">
+                          <span className="font-semibold text-sm text-[#b22830] mt-1">
                             {(Number(p.gia_ban) || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
                         </div>
                       ))}
@@ -734,7 +806,7 @@ export default function OrderPage({
                     onClick={() => setIsSearchBoxOpen(false)}
                     className="text-xs font-bold text-gray-700 hover:text-[#b22830] transition-colors"
                   >
-                    {t('home.searchMore')} <span className="text-[#b22830] font-black">{searchKeyword}</span>
+                    {t('home.searchMore')} <span className="text-[#b22830] font-semibold">{searchKeyword}</span>
                   </button>
                 </div>
               </div>
@@ -766,8 +838,8 @@ export default function OrderPage({
               <PhoneIcon className="w-[18px] h-[18px]" />
             </div>
             <div className="flex flex-col text-right">
-              <span className="text-[11px] font-bold text-gray-500 uppercase">{copy('Giao tận nơi', 'DELIVERY')}</span>
-              <span className="text-[16px] font-black text-[#b22830] leading-none">1900 1755</span>
+              <span className="text-[11px] font-bold text-gray-500 ">{copy('Giao tận nơi', 'DELIVERY')}</span>
+              <span className="text-[16px] font-semibold text-[#b22830] leading-none">1900 1755</span>
             </div>
           </div>
 
@@ -777,7 +849,7 @@ export default function OrderPage({
               onClick={!userName ? onOpenAccount : onOpenProfile}
             >
               <div className="w-[34px] h-[34px] rounded-full border border-[#b22830] flex items-center justify-center text-[#b22830] group-hover:bg-[#b22830] group-hover:text-white transition-colors">
-                <UserCircleIcon className="w-5 h-5" />
+                {userAvatar ? <img src={userAvatar} alt="" className="w-8 h-8 rounded-full object-cover" /> : <UserCircleIcon className="w-5 h-5" />}
               </div>
               <div className="hidden lg:flex flex-col">
                 <span className="text-[12px] text-gray-700 font-bold leading-tight">{t('header.account')}</span>
@@ -880,7 +952,7 @@ export default function OrderPage({
           </button>
           <a href="#" className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity hidden sm:flex">
             <img loading="lazy" decoding="async" src="/hc-assets/icon_bank.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            <span className="text-[13px] font-medium">{ui("Bankrista Thịnh Vượng")}</span>
+            <span className="text-[13px] font-medium">{ui("Đồng hành cùng Avengers")}</span>
           </a>
         </div>
       </div>
@@ -919,15 +991,12 @@ export default function OrderPage({
                 {/* FLASH SALE SECTION (MOVED TO TOP) */}
                 {viewCategory === 'all' && (
                   <div className="mb-10 w-full bg-[#fffcf5] border border-amber-200 rounded-2xl p-5 shadow-sm">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-                      <div>
-                        <h2 className="text-2xl font-bold flex items-center gap-2 italic">
-                          <span className="text-[#f5a623]">⚡⚡</span>
-                          FLASH SALE
-                          <span className="text-[#f5a623]">⚡⚡</span>
-                        </h2>
-                        <p className="text-gray-500 text-[13px] mt-1">{copy('Sản phẩm sẽ trở về giá gốc khi hết giờ', 'Prices return to normal when the offer ends')}</p>
-                      </div>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                      <h2 className="text-2xl font-bold flex items-center gap-2 italic">
+                        <span className="text-[#f5a623]">⚡⚡</span>
+                        Flash Sale
+                        <span className="text-[#f5a623]">⚡⚡</span>
+                      </h2>
                       <SaleCountdown copy={copy} />
                     </div>
 
@@ -954,7 +1023,7 @@ export default function OrderPage({
                             />
                           </div>
                           <div className="flex flex-col flex-1">
-                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 block">
+                            <span className="text-[10px] text-gray-400 font-bold  tracking-wider mb-1 block">
                               {item.category}
                             </span>
                             <h3 className="text-[14px] font-bold text-gray-800 line-clamp-2 mb-2 min-h-[40px] leading-snug">
@@ -989,7 +1058,7 @@ export default function OrderPage({
                       <div className="w-6 h-6 rounded-lg bg-[#b22830]/10 flex items-center justify-center text-[#b22830]">
                         <TagIcon className="w-3.5 h-3.5 text-[#b22830]" />
                       </div>
-                      <h3 className="text-sm font-extrabold text-gray-900 tracking-tight">{t('order.voucherAndOffers')}</h3>
+                      <h3 className="text-sm font-semibold text-gray-900 tracking-tight">{t('order.voucherAndOffers')}</h3>
                       <span className="inline-flex items-center gap-1 bg-[#b22830]/10 text-[#b22830] text-[10px] font-bold px-2 py-0.5 rounded-full">
                         {t('order.offersCount', { count: personalVouchers.length + publicVouchers.length })}
                       </span>
@@ -1021,10 +1090,8 @@ export default function OrderPage({
                       {/* Section Top Header */}
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
                         <div>
-                          <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-[#c41230] bg-red-50 px-3 py-1 rounded-full border border-red-100/80 mb-2">
-                            <SparklesIcon className="w-3.5 h-3.5 text-[#c41230]" />
-                            SMART RECOMMENDATION
-                          </div>
+                          <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold  tracking-[0.2em] text-[#c41230] bg-red-50 px-3 py-1 rounded-full border border-red-100/80 mb-2">
+                            <SparklesIcon className="w-3.5 h-3.5 text-[#c41230]" /> smart recommendation </div>
                           <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-gray-900 font-sans">
                             {t('order.top5Favs')}
                           </h2>
@@ -1033,17 +1100,15 @@ export default function OrderPage({
                           </p>
                         </div>
 
-                        <div className="self-start md:self-center inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-amber-300 bg-amber-50 text-xs font-black text-amber-800 uppercase tracking-wider shadow-2xs shrink-0">
-                          <SparklesIcon className="w-4 h-4 text-amber-600" />
-                          AI PERSONAL
-                        </div>
+                        <div className="self-start md:self-center inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-amber-300 bg-amber-50 text-xs font-semibold text-amber-800  tracking-wider shadow-2xs shrink-0">
+                          <SparklesIcon className="w-4 h-4 text-amber-600" /> ai personal </div>
                       </div>
 
                       {/* Unified Product Cards Grid */}
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
                         {aiRecommendedProducts.slice(0, 5).map((product) => {
                           const isFav = isFavoriteProduct ? isFavoriteProduct(product) : false;
-                          const categoryName = product?.danhMuc?.ten_danh_muc || 'Highlands Coffee';
+                          const categoryName = product?.danhMuc?.ten_danh_muc || 'Avengers Coffee';
 
                           return (
                             <div
@@ -1062,10 +1127,10 @@ export default function OrderPage({
 
                                 {/* Badges Overlay */}
                                 <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
-                                  <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-[#c41230] to-amber-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                  <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-[#c41230] to-amber-600 px-1.5 py-0.5 text-[10px] font-bold  tracking-wider text-white shadow-sm">
                                     <SparklesIcon className="w-3 h-3 text-amber-200" />{ui(" Gợi ý AI")}</span>
                                   {product.la_hot && (
-                                    <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                    <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold  tracking-wider text-white shadow-sm">
                                       {copy('Bán chạy tháng này', 'Best sellers')}
                                     </span>
                                   )}
@@ -1074,9 +1139,7 @@ export default function OrderPage({
 
                               {/* Product Info */}
                               <div className="p-4 flex flex-col flex-1 relative bg-white">
-                                <span className="text-[11px] text-gray-400 uppercase tracking-widest font-normal mb-1 block">
-                                  HIGHLANDS COFFEE
-                                </span>
+                                <span className="text-[11px] text-gray-400  tracking-widest font-normal mb-1 block"> avengers coffee </span>
                                 <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
                                   {product.ten_san_pham || product.name}
                                 </h4>
@@ -1116,29 +1179,28 @@ export default function OrderPage({
 
                 {/* Mobile Horizontal Scroll Category Tab Bar (Sticky top below main header) */}
                 {viewCategory === 'all' && (
-                  <div className="lg:hidden sticky top-[84px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-4 sm:px-6">
+                  <div className="lg:hidden sticky top-[72px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-4 sm:px-6">
                     <button
                       type="button"
                       onClick={() => {
                         setViewCategory('all');
                         handleCategorySelect('all');
                       }}
-                      className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 cursor-pointer ${activeCategory === 'all'
+                      className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all flex-shrink-0 cursor-pointer ${activeCategory === 'all'
                           ? 'bg-[#b22830] text-white shadow-sm'
                           : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
                         }`}
                     >
                       {copy('Tất cả', 'All')}
                     </button>
-                    {parentCats.map((parent, idx) => {
-                      const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
-                      const isActive = activeCategory === parent.ma_danh_muc;
+                    {visibleParentCats.map((parent) => {
+                      const isActive = targetParentCategory && String(targetParentCategory.ma_danh_muc) === String(parent.ma_danh_muc);
                       return (
                         <button
                           key={parent.ma_danh_muc}
                           type="button"
                           onClick={() => handleCategorySelect(parent.ma_danh_muc)}
-                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 cursor-pointer ${isActive
+                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all flex-shrink-0 cursor-pointer ${isActive
                               ? 'bg-[#b22830] text-white shadow-sm'
                               : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
                             }`}
@@ -1154,9 +1216,34 @@ export default function OrderPage({
                 <div ref={productsContainerRef} className="flex flex-col gap-8 px-4 sm:px-6 lg:px-8 mt-6">
                   <div className="flex-1 min-w-0">
 
-                    {/* Product Grids - All Category Sections rendered, Smooth Scroll to target */}
-                    <div className="space-y-12">
+                    {/* Product Grids - Render single chosen category section, Smooth Scroll to target */}
+                    {targetParentCategory && (
+                      <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3 mb-4 pt-1">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
+                          <h2 className="text-xl md:text-2xl font-bold text-gray-900 font-sans tracking-tight">
+                            {tCategory(targetParentCategory.ten_danh_muc)}
+                          </h2>
+                          <span className="text-xs font-semibold bg-red-50 text-[#b22830] px-3 py-1 rounded-full border border-red-100/80">
+                            {renderedSections.reduce((acc, s) => acc + s.subSections.flatMap(sub => sub.items).length, 0)} {copy('sản phẩm', 'products')}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-10">
                       {(() => {
+
+                        if (isMenuLoading) {
+                          return <OrderCatalogSkeleton />;
+                        }
+
+                        if (isMenuError && renderedSections.length === 0) {
+                          return <div className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center">
+                            <p className="text-gray-700">{copy('Chưa tải được thực đơn.', 'The menu could not be loaded.')}</p>
+                            <button type="button" onClick={onRetryMenu} className="mt-4 rounded-full bg-[#b22830] px-5 py-2 text-sm font-semibold text-white">{copy('Thử lại', 'Try again')}</button>
+                          </div>;
+                        }
 
                         if (renderedSections.length === 0) {
                           return (
@@ -1174,7 +1261,7 @@ export default function OrderPage({
                           );
                         }
 
-                        return renderedSections.map((section, idx) => {
+                        return renderedSections.map((section) => {
                           const allItems = section.subSections.flatMap(sub => sub.items);
                           const sortedItems = [...allItems].sort((a, b) => {
                             if (sortByOrder === 'price-asc') return Number(a.gia_ban || 0) - Number(b.gia_ban || 0);
@@ -1183,22 +1270,19 @@ export default function OrderPage({
                             if (sortByOrder === 'name-desc') return String(b.ten_san_pham || '').localeCompare(String(a.ten_san_pham || ''), 'vi');
                             return 0;
                           });
-                          const displayItems = viewCategory === 'all' ? sortedItems.slice(0, 5) : sortedItems;
-                          const hasMore = viewCategory === 'all' && sortedItems.length > 5;
-
-                          const parentCatIndex = parentCats.findIndex(c => String(c.ma_danh_muc) === String(section.id));
-                          const sectionIconUrl = parentCatIndex !== -1 ? MENU_ICONS[parentCatIndex % MENU_ICONS.length] : MENU_ICONS[idx % MENU_ICONS.length];
+                          const displayItems = sortedItems;
+                          const hasMore = false;
 
                           return (
                             <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[100px]">
                               {viewCategory !== 'all' ? (
                                 <div className="mb-6 pt-2">
-                                  <div className="text-[13px] text-gray-500 mb-8 uppercase tracking-wider font-semibold">
+                                  <div className="text-[13px] text-gray-500 mb-8  tracking-wider font-semibold">
                                     <span className="cursor-pointer hover:text-[#b22830] transition-colors" onClick={() => setViewCategory('all')}>{copy('Trang chủ', 'Home')}</span>
                                     <span className="mx-2">/</span>
                                     <span className="text-[#333333] font-bold">{tCategory(section.label)}</span>
                                   </div>
-                                  <h1 className="text-3xl md:text-[32px] font-normal text-[#333333] uppercase mb-8">
+                                  <h1 className="text-3xl md:text-[32px] font-normal text-[#333333]  mb-8">
                                     {tCategory(section.label)}
                                   </h1>
                                   <div className="flex flex-wrap items-center gap-4 md:gap-6 text-[13px] font-semibold text-gray-500 mb-8 pb-4">
@@ -1211,17 +1295,16 @@ export default function OrderPage({
                                   </div>
                                 </div>
                               ) : (
-                                <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
-                                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 font-sans tracking-wide">
-                                      {tCategory(section.label)}
-                                    </h3>
+                                (renderedSections.length > 1 || section.label !== targetParentCategory?.ten_danh_muc) && (
+                                  <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-5 pt-2">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-2 h-5 rounded-full bg-stone-400 shrink-0"></div>
+                                      <h3 className="text-base md:text-lg font-semibold text-gray-800 font-sans tracking-wide">
+                                        {tCategory(section.label)}
+                                      </h3>
+                                    </div>
                                   </div>
-                                  <span className="text-xs font-extrabold text-[#b22830] bg-red-50 px-3.5 py-1 rounded-full border border-red-100 shadow-2xs">
-                                    {sortedItems.length} {copy('món', 'items')}
-                                  </span>
-                                </div>
+                                )
                               )}
 
                               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
@@ -1245,12 +1328,12 @@ export default function OrderPage({
                                         {/* Badges Overlay */}
                                         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
                                           {p.la_hot && (
-                                            <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                            <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold  tracking-wider text-white shadow-sm">
                                               {copy('Bán chạy tháng này', 'Best sellers')}
                                             </span>
                                           )}
                                           {p.la_moi && (
-                                            <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                            <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold  tracking-wider text-white shadow-sm">
                                               {copy('Món mới', 'New')}
                                             </span>
                                           )}
@@ -1259,8 +1342,8 @@ export default function OrderPage({
 
                                       {/* Product Info */}
                                       <div className="p-4 flex flex-col flex-1 relative bg-white">
-                                        <span className="text-[11px] text-gray-400 uppercase tracking-widest font-normal mb-1 block">
-                                          HIGHLANDS COFFEE
+                                        <span className="text-[11px] text-gray-400 tracking-wider font-normal mb-1 block">
+                                          Avengers Coffee
                                         </span>
                                         <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
                                           {p.ten_san_pham || p.name}
@@ -1295,21 +1378,6 @@ export default function OrderPage({
                                   );
                                 })}
                               </div>
-                              {hasMore && (
-                                <div className="mt-6 flex justify-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setViewCategory(section.id);
-                                      setActiveCategory(section.id);
-                                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }}
-                                    className="px-6 py-2.5 rounded-full border-2 border-[#b22830] text-[#b22830] font-bold text-[14px] hover:bg-[#b22830] hover:text-white transition-all duration-300 cursor-pointer flex items-center gap-2"
-                                  >
-                                    {copy('Xem tất cả', 'View all')} {sortedItems.length} {copy('món', 'items')}
-                                  </button>
-                                </div>
-                              )}
                             </section>
                           );
                         });
@@ -1341,9 +1409,7 @@ export default function OrderPage({
 
                               {/* Product Info */}
                               <div className="p-4 flex flex-col flex-1 relative bg-white">
-                                <span className="text-[11px] text-gray-400 uppercase tracking-widest font-normal mb-1 block">
-                                  HIGHLANDS COFFEE
-                                </span>
+                                <span className="text-[11px] text-gray-400  tracking-widest font-normal mb-1 block"> avengers coffee </span>
                                 <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
                                   {p.ten_san_pham || p.name}
                                 </h4>
@@ -1386,15 +1452,18 @@ export default function OrderPage({
       </div>
 
       {/* Scroll to Top Button */}
-      {isScrolled && (
-        <button
-          type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-24 right-8 w-12 h-12 bg-[#b22830] text-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#911f25] transition-all z-50 animate-bounce cursor-pointer border-none"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path></svg>
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        aria-label="Cuộn lên đầu trang"
+        className={`fixed bottom-24 right-8 w-12 h-12 bg-[#b22830] text-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#911f25] hover:scale-105 active:scale-95 transition-all duration-300 z-50 cursor-pointer border-none ${
+          showScrollTop
+            ? 'opacity-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 translate-y-4 pointer-events-none'
+        }`}
+      >
+        <RiArrowUpLine className="w-6 h-6" />
+      </button>
 
       {/* Quick View Modal */}
       {quickViewProduct && (

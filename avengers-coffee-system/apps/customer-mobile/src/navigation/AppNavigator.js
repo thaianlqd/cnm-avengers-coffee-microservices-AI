@@ -1,7 +1,7 @@
 import { useCart } from '../hooks/useCart'
 import React, { useState, useEffect } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ActivityIndicator, View, Text, StyleSheet, Platform, Pressable, Image } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
@@ -11,6 +11,7 @@ import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
 import { getUserId, normalizeCartItem, normalizeProduct, safeArray } from '../lib/customerData'
 import { colors, shadows, radius } from '../theme'
+import { CustomerHomeSkeleton } from '../components/common/Skeleton'
 import { LoginScreen } from '../screens/LoginScreen'
 import { HomeScreen } from '../screens/HomeScreen'
 import { MenuScreen } from '../screens/MenuScreen'
@@ -131,11 +132,7 @@ export function AppNavigator() {
   useQuery({ queryKey: ['customer', 'menu-products-all'], queryFn: async () => safeArray(await apiClient.get('/menu/san-pham', { timeout: 12000 })).map(p => ({ ...normalizeProduct(p), danh_muc_id: String(p.danhMuc?.ma_danh_muc || p.danh_muc_id || ''), trang_thai: Boolean(p.trang_thai) })), enabled: hydrated, staleTime: 60000, retry: false })
   useEffect(() => { if (hydrated && introDone) setBooted(true) }, [hydrated, introDone])
   if (!booted) {
-    return <View style={{ flex: 1, backgroundColor: '#b22830', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <Image source={require('../../assets/branding/splash-logo.png')} accessibilityLabel="Highlands Coffee" style={{ width: 200, height: 154 }} resizeMode="contain" />
-      <ActivityIndicator color="#fff" />
-      <Text style={{ color: '#f2dfe1', marginTop: 16, fontSize: 13 }}>Một ly cà phê. Một khoảnh khắc của bạn.</Text>
-    </View>
+    return <CustomerHomeSkeleton />
   }
 
   return (

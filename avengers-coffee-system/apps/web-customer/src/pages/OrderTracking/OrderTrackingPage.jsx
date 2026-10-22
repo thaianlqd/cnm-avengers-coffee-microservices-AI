@@ -1,0 +1,519 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
+import React, { useEffect, useRef, useState } from 'react';
+import { io } from 'socket.io-client';
+import ShipperMapView from '../../components/delivery/ShipperMapView';
+import { OrderTrackingSkeleton } from '../../components/common/Skeleton';
+import { apiClient } from '../../lib/apiClient';
+import { resolveAddressCoordinates } from '../../lib/geocodingService';
+
+export default function OrderTrackingPage({ id, onBack }) {
+  useUiLanguage();
+  const [zoomProof, setZoomProof] = useState(false);
+  const [trackingData, setTrackingData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const isMounted = useRef(true);
+
+  // Rating states
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [isRated, setIsRated] = useState(false);
+  const [submittingRating, setSubmittingRating] = useState(false);
+  const SAFE_POD_FALLBACK = "data:image/svg+xml;utf8," + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <defs>
+    <linearGradient id="podGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdfbf7"/>
+      <stop offset="100%" stop-color="#f5ede3"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#podGrad)"/>
+  <rect x="24" y="24" width="552" height="352" rx="20" fill="#ffffff" stroke="#e6dbcf" stroke-width="2"/>
+  <circle cx="300" cy="150" r="48" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="2"/>
+  <path d="M280 150l14 14 28-28" fill="none" stroke="#059669" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="300" y="240" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="800" fill="#1f2937" text-anchor="middle">Ảnh Xác Nhận Giao Hàng</text>
+  <text x="300" y="272" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="14" font-weight="600" fill="#059669" text-anchor="middle">Đã bàn giao đơn hàng thành công</text>
+  <text x="300" y="304" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" fill="#9ca3af" text-anchor="middle">Avengers Coffee System</text>
+</svg>
+`);
+
+  const API_BASE_URL = apiClient.defaults?.baseURL || import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? `http://${window.location.hostname}:3000` : '');
+  const rawProofUrl = trackingData?.shipper_delivery?.proof_image_url || trackingData?.order?.proof_image_url;
+  const isDelivered = trackingData?.order?.trang_thai_don_hang === 'HOAN_THANH' || trackingData?.shipper_delivery?.status === 'DELIVERED';
+  const proofUrl = rawProofUrl && !rawProofUrl.startsWith('file://')
+    ? (rawProofUrl.startsWith('/') ? `${API_BASE_URL}${rawProofUrl}` : rawProofUrl)
+    : (isDelivered || rawProofUrl ? SAFE_POD_FALLBACK : null);
+
+
+  const [publicBranches, setPublicBranches] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiClient.get('/users/branches/public')
+      .then((res) => {
+        const items = Array.isArray(res.data?.items) ? res.data.items : (Array.isArray(res.data) ? res.data : []);
+        if (isMounted && items.length > 0) {
+          setPublicBranches(items);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
+  const handleRateShipper = async () => {
+    setSubmittingRating(true);
+    try {
+      await apiClient.post(`/customers/guest/orders/${id}/rate-shipper`, { rating, comment });
+      setIsRated(true);
+      alert(ui("Cảm ơn bạn đã đánh giá Shipper!"));
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá');
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
+
+  const fetchTracking = async () => {
+    try {
+      const res = await apiClient.get(`/shippers/delivery/tracking/${id}?t=${Date.now()}`);
+      if (!isMounted.current) return;
+
+      // Ensure coordinates are numbers because Postgres decimal comes as string
+      if (res.data?.shipper_location?.latitude) {
+        res.data.shipper_location.latitude = Number(res.data.shipper_location.latitude);
+        res.data.shipper_location.longitude = Number(res.data.shipper_location.longitude);
+      }
+
+      setTrackingData(res.data);
+      setError(null);
+    } catch (err) {
+      if (!isMounted.current) return;
+      // Chỉ hiện lỗi khi chưa có data (lần đầu load).
+      // Nếu đã có data cũ, giữ nguyên — polling tạm lỗi, sẽ tự retry sau.
+      setTrackingData((prev) => {
+        if (prev === null) {
+          setError(err.response?.data?.message || 'Không tìm thấy thông tin đơn hàng');
+        }
+        return prev;
+      });
+    } finally {
+      if (isMounted.current) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    isMounted.current = true;
+    fetchTracking();
+
+    const isDangGiao = trackingData?.order?.trang_thai_don_hang === 'DANG_GIAO' || trackingData?.tracking?.status === 'IN_TRANSIT';
+    const pollTime = isDangGiao ? 3000 : 8000;
+
+    // 1. Polling tự động
+    const interval = setInterval(() => {
+      fetchTracking();
+    }, pollTime);
+
+    // 2. WebSocket nhận vị trí Shipper tức thời
+    const socketBase = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`;
+    const socket = io(`${socketBase}/notifications`, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+    });
+
+    const orderId = trackingData?.order?.ma_don_hang || id;
+    const trackingCode = trackingData?.tracking?.tracking_code || trackingData?.order?.tracking_code;
+
+    socket.on('connect', () => {
+      socket.emit('tracking:subscribe', { maDonHang: orderId, trackingCode });
+    });
+
+    socket.on('shipper:location:update', (data) => {
+      if (data?.latitude && data?.longitude && isMounted.current) {
+        const lat = Number(data.latitude);
+        const lng = Number(data.longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          setTrackingData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              shipper_location: {
+                latitude: lat,
+                longitude: lng,
+                updated_at: data.thoiGianCapNhat || new Date().toISOString(),
+              },
+            };
+          });
+        }
+      }
+    });
+
+    return () => {
+      isMounted.current = false;
+      clearInterval(interval);
+      socket.disconnect();
+    };
+  }, [id, trackingData?.order?.trang_thai_don_hang, trackingData?.tracking?.status]);
+
+  if (loading && !trackingData) {
+    return (
+      <div className="w-full min-h-screen bg-[#fcfaf7] py-8 px-4 sm:px-6 lg:px-8">
+        <OrderTrackingSkeleton />
+      </div>
+    );
+  }
+
+  if (error || !trackingData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 text-center">
+        <div className="text-4xl mb-4">🔍</div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{ui("Không tìm thấy đơn hàng")}</h2>
+        <p className="text-gray-500 mb-6">{ui(error)}</p>
+        <button onClick={onBack} className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow hover:bg-indigo-700">{ui("Quay lại")}</button>
+      </div>
+    );
+  }
+
+  const { order, tracking, shipper, shipper_location, timeline, lalamove, shipper_delivery } = trackingData;
+
+  const deliveryNote = shipper_delivery?.delivery_note || '';
+  const isActuallyRated = isRated || (deliveryNote && deliveryNote.includes('[Đánh giá'));
+  let ratedStars = null;
+  let ratedComment = '';
+  if (isActuallyRated && deliveryNote) {
+     const match = deliveryNote.match(/\[Đánh giá (\d)⭐\]/);
+     if (match) ratedStars = parseInt(match[1]);
+     ratedComment = deliveryNote.replace(/\[Đánh giá \d⭐\]\s*/, '');
+  }
+
+
+  const getBranchInfo = (code) => {
+    const codeStr = String(code || '').trim().toUpperCase();
+    const codeNorm = codeStr.replace(/-/g, '_');
+    const branch = publicBranches.find((b) => {
+      const bCode = String(b.ma_chi_nhanh || b.co_so_ma || b.branch_code || b.id || '').trim().toUpperCase();
+      return bCode === codeStr || bCode === codeNorm || bCode.replace(/-/g, '_') === codeNorm;
+    });
+
+    const storeLoc = tracking?.store_location?.latitude
+      ? tracking.store_location
+      : (branch?.vi_do && branch?.kinh_do ? { latitude: Number(branch.vi_do), longitude: Number(branch.kinh_do) } : { latitude: 10.80734, longitude: 106.717612 });
+
+    const branchName = tracking?.branch_name || branch?.ten_chi_nhanh || branch?.name || `Avengers Coffee - ${codeStr || 'Cơ sở'}`;
+    const branchAddress = tracking?.branch_address || branch?.dia_chi || branchName;
+
+    return {
+      name: branchName,
+      address: branchAddress,
+      storeLoc,
+    };
+  };
+
+  const branchInfo = getBranchInfo(tracking?.branch_code || order?.co_so_ma);
+
+  const currentStep = [...timeline].reverse().find(s => s.completed) || timeline[0];
+
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header */}
+      <div className="bg-white px-4 py-3 sticky top-0 z-50 shadow-sm flex items-center gap-3">
+        <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100">
+          <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div>
+          <h1 className="font-semibold text-gray-900 leading-tight">{ui("Theo dõi đơn hàng")}</h1>
+          <p className="text-xs font-bold text-gray-500">#{order.ma_don_hang}</p>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto p-4 space-y-4">
+
+        {/* Status Banner */}
+        <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between">
+          <div>
+            <p className="text-indigo-100 text-sm font-medium">{ui("Trạng thái hiện tại")}</p>
+            <h2 className="text-xl font-semibold">{currentStep?.label || order.trang_thai_don_hang}</h2>
+            {tracking?.delivery_mode === 'LAY_TAI_QUAN' && tracking.pickup_time && (
+              <p className="text-sm mt-1">{ui("Giờ lấy: ")}{new Date(tracking.pickup_time).toLocaleString(uiLocale())}</p>
+            )}
+            {tracking?.delivery_mode === 'GIAO_TAN_NOI' && tracking?.delivery_method && (
+              <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-white/20 rounded text-xs font-bold text-white border border-white/30">
+                {tracking.delivery_method === 'LALAMOVE' ? ui("🚀 Giao hỏa tốc Lalamove") : '🛵 Avengers Delivery'}
+              </div>
+            )}
+          </div>
+          <div className="text-4xl">{currentStep?.icon || '📦'}</div>
+        </div>
+
+        {/* Rating Section when Completed */}
+        {order?.trang_thai_don_hang === 'HOAN_THANH' && tracking?.delivery_mode === 'GIAO_TAN_NOI' && (
+          <div className="bg-white p-5 rounded-2xl shadow-lg border-2 border-indigo-100 text-center animate-fade-in-up mb-4">
+            {!isActuallyRated ? (
+              <>
+                <div className="text-4xl mb-2">🎉</div>
+                <h3 className="font-semibold text-xl text-gray-900 mb-1">{ui("Giao hàng thành công!")}</h3>
+                <p className="text-sm text-gray-500 mb-4">{ui("Bạn đánh giá tài xế giao hàng thế nào?")}</p>
+
+                <div className="flex justify-center gap-2 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setRating(star)}
+                      className={`text-3xl transition-transform hover:scale-110 ${star <= rating ? 'text-yellow-400' : 'text-gray-200'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder={ui("Chia sẻ thêm cảm nhận của bạn (không bắt buộc)...")}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm mb-4 outline-none focus:border-indigo-500 transition-colors"
+                  rows={2}
+                />
+
+                <button
+                  onClick={handleRateShipper}
+                  disabled={submittingRating}
+                  className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  {submittingRating ? ui("Đang gửi...") : ui("Gửi Đánh Giá")}
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="text-4xl mb-2">🎉</div>
+                <h3 className="font-semibold text-xl text-gray-900 mb-1">{ui("Giao hàng thành công!")}</h3>
+                <p className="text-sm text-gray-500 mb-4">{ui("Cảm ơn bạn đã đánh giá tài xế.")}</p>
+                <div className="flex justify-center gap-2 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span key={star} className={`text-3xl ${star <= (ratedStars || rating) ? 'text-yellow-400' : 'text-gray-200'}`}>
+                      ★
+                    </span>
+                  ))}
+                </div>
+                {(ratedComment || comment) ? (
+                  <p className="bg-gray-50 p-3 rounded-xl text-gray-600 text-sm font-medium border border-gray-100">
+                    "{ratedComment || comment}"
+                  </p>
+                ) : null}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Batch Info Warning */}
+        {trackingData?.batch_info?.is_delivering_other && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex gap-3 text-left shadow-sm">
+            <div className="text-amber-500 text-xl mt-0.5">⚠️</div>
+            <div>
+              <p className="font-bold text-amber-800 text-sm mb-1">{ui("Shipper đang giao chuyến ghép (")}{trackingData.batch_info.total_batch_orders}{ui(" đơn)")}</p>
+              <p className="text-amber-700 text-xs leading-relaxed">{ui("Tài xế đang giao một đơn hàng khác trên cùng lộ trình. Thời gian dự kiến có thể kéo dài thêm một chút, mong bạn thông cảm!")}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Map Section */}
+        {tracking?.delivery_mode === 'GIAO_TAN_NOI' && order?.trang_thai_don_hang !== 'HOAN_THANH' && (
+          <div className="space-y-2">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1 relative">
+              <ShipperMapView
+                height="60vh"
+                shipperLocation={shipper_location?.latitude ? shipper_location : null}
+                storeLocation={tracking?.store_location || branchInfo.storeLoc}
+                destinationLocation={(() => {
+                  let destLoc = tracking?.destination_location || (order?.delivery_latitude ? { latitude: Number(order.delivery_latitude), longitude: Number(order.delivery_longitude) } : null);
+                  if (!destLoc || !destLoc.latitude) {
+                    const addr = tracking?.destination_address || order?.dia_chi_giao_hang || '';
+                    const resolved = resolveAddressCoordinates(addr);
+                    if (resolved) {
+                      destLoc = { latitude: resolved.lat, longitude: resolved.lng };
+                    } else {
+                      destLoc = null;
+                    }
+                  }
+                  return destLoc;
+                })()}
+                otherDestinations={trackingData?.batch_info?.other_destinations || []}
+                shipperName={shipper?.full_name || 'Tài xế'}
+                deliveryStatus={trackingData?.shipper_delivery?.status || order.trang_thai_don_hang}
+                storeAddress={branchInfo.address}
+              />
+
+
+            </div>
+          </div>
+        )}
+
+        {/* Shipper/Lalamove Info */}
+        {shipper && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4">
+            <div className="w-14 h-14 bg-gray-100 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border-2 border-indigo-100 text-2xl">
+              {shipper.avatar_url ? <img src={shipper.avatar_url} alt="Shipper" className="w-full h-full object-cover" /> : '👤'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 truncate">{shipper.full_name}</h3>
+              <p className="text-sm font-bold text-indigo-600">{shipper.phone}</p>
+              <div className="flex items-center gap-2 mt-1 text-xs font-bold text-gray-500">
+                <span className="bg-gray-100 px-2 py-0.5 rounded">{shipper.vehicle_plate}</span>
+                {tracking?.delivery_method === 'LALAMOVE' && <span className="text-orange-600 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">Lalamove</span>}
+              </div>
+            </div>
+            <a href={`tel:${shipper.phone}`} className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex flex-shrink-0 items-center justify-center hover:bg-green-200 transition-colors">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+              </svg>
+            </a>
+          </div>
+        )}
+
+        {/* Lalamove specific info */}
+        {lalamove?.share_link && (
+          <div className="bg-orange-50 rounded-2xl shadow-sm border border-orange-200 p-4 flex flex-col items-center justify-center gap-2 text-center">
+            {['ON_GOING', 'PICKED_UP', 'COMPLETED'].includes(lalamove.status) ? (
+              <>
+                <p className="text-sm font-bold text-orange-800">{ui("Theo dõi trực tiếp trên app Lalamove")}</p>
+                <a
+                  href={lalamove.share_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#F15A24] text-white px-6 py-2 rounded-xl font-bold hover:bg-orange-600 text-sm w-full"
+                >{ui("Mở link Lalamove")}</a>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-orange-700">
+                <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-bold">{ui("Đang tìm tài xế Lalamove, vui lòng chờ giây lát...")}</p>
+              </div>
+            )}
+          </div>
+        )}
+        {/* Ảnh xác nhận giao hàng */}
+        {proofUrl && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-gray-900 text-sm">{ui("Ảnh xác nhận giao hàng")}</h3>
+              </div>
+              {trackingData?.shipper_delivery?.delivered_at && (
+                <span className="text-xs font-bold text-gray-500">
+                  {new Date(trackingData.shipper_delivery.delivered_at).toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-gray-50 max-w-xs w-full shadow-xs">
+                <img
+                  src={proofUrl}
+                  alt={ui("Ảnh xác nhận giao hàng")}
+                  onError={(e) => {
+                    if (e.currentTarget.src !== SAFE_POD_FALLBACK) {
+                      e.currentTarget.src = SAFE_POD_FALLBACK;
+                    }
+                  }}
+                  className="w-full h-48 object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
+                  onClick={() => setZoomProof(proofUrl)}
+                />
+              </div>
+              <div className="flex-1 space-y-2 text-xs md:text-sm">
+                <p className="text-emerald-700 font-bold">{ui("Đã giao hàng thành công")}</p>
+                <p className="text-gray-500">{ui("Tài xế đã hoàn tất đơn và chụp ảnh xác nhận vị trí giao.")}</p>
+                <button
+                  type="button"
+                  onClick={() => setZoomProof(proofUrl)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition-colors cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                  </svg>
+                  <span>{ui("Xem ảnh lớn")}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Timeline */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <h3 className="font-semibold text-gray-900 mb-4">{ui("Tiến trình đơn hàng")}</h3>
+          <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[1.125rem] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+            {timeline.map((step, idx) => (
+              <div key={step.key} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                <div className={`flex items-center justify-center w-9 h-9 rounded-full border-4 border-white z-10 font-bold text-sm flex-shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 ${
+                  step.completed ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-400'
+                }`}>
+                  {step.icon}
+                </div>
+                <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] bg-white p-3 rounded-xl border border-gray-100 shadow-sm ml-2 md:ml-0 md:mr-2 md:group-odd:mr-0 md:group-odd:ml-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className={`font-bold ${step.completed ? 'text-gray-900' : 'text-gray-400'}`}>{ui(step.label)}</h4>
+                    {step.time && (
+                      <time className="text-[10px] font-medium text-gray-400">
+                        {new Date(step.time).toLocaleTimeString(uiLocale(), { hour: '2-digit', minute:'2-digit' })}
+                      </time>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Order Details Summary */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <h3 className="font-semibold text-gray-900 mb-3 border-b border-gray-100 pb-3">{ui("Chi tiết đơn hàng")}</h3>
+          <div className="space-y-3">
+            {order.items.map((item, idx) => (
+              <div key={idx} className="flex gap-3 items-center">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  {item.hinh_anh_url ? <img src={item.hinh_anh_url} alt={item.ten_san_pham} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl">☕</div>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-900 text-sm truncate">{item.ten_san_pham}</p>
+                  {item.kich_co && <p className="text-xs text-gray-500">Size: {item.kich_co}</p>}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-gray-900">{item.gia_ban.toLocaleString(uiLocale())}{ui(" đ")}</p>
+                  <p className="text-xs text-gray-500">x{item.so_luong}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+            <span className="font-bold text-gray-600">{ui("Tổng cộng")}</span>
+            <span className="font-semibold text-indigo-600 text-lg">{order.tong_tien.toLocaleString(uiLocale())}{ui(" đ")}</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Cửa sổ phóng to ảnh xác nhận giao hàng */}
+      {zoomProof && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs" onClick={() => setZoomProof(null)}>
+          <div className="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl p-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+              <span className="text-sm font-bold text-gray-800">{ui("Ảnh xác nhận giao hàng")}</span>
+              <button
+                type="button"
+                onClick={() => setZoomProof(null)}
+                className="text-gray-400 hover:text-gray-700 text-lg font-bold p-1 cursor-pointer"
+              >✕</button>
+            </div>
+            <div className="p-2 flex items-center justify-center max-h-[75vh] overflow-auto">
+              <img src={zoomProof} alt={ui("Ảnh xác nhận giao hàng")} className="max-w-full max-h-[70vh] rounded-xl object-contain shadow-sm" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -20,7 +20,7 @@ import {
   ThumbsUp,
   MessageCircle,
   AlertTriangle
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 
 const FILTERS = [
   { id: 'ALL', label: 'Tất cả đánh giá' },
@@ -47,7 +47,7 @@ function StarRating({ rating }) {
         <Star
           key={i}
           size={16}
-          color={i < value ? '#f59e0b' : '#cbd5e1'}
+          color={i < value ? '#f59e0b' : '#ccd3c7'}
           fill={i < value ? '#f59e0b' : 'none'}
         />
       ))}
@@ -152,9 +152,9 @@ export function ManagerCustomerCarePanel({
   return (
     <div className="panel-container" style={{
       padding: '1.75rem',
-      background: '#f8fafc',
+      background: '#f8f9f6',
       borderRadius: '20px',
-      border: '1px solid #e2e8f0',
+      border: '1px solid #e2e4df',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)'
     }}>
       {/* Top Header */}
@@ -181,10 +181,10 @@ export function ManagerCustomerCarePanel({
             <MessageSquare size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#252927' }}>
               Phản hồi & Chăm sóc Khách hàng
             </h2>
-            <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
+            <span style={{ fontSize: '0.825rem', color: '#69736a' }}>
               Quản lý và phản hồi trực tiếp các đánh giá sản phẩm từ khách hàng để cải thiện chất lượng dịch vụ
             </span>
           </div>
@@ -202,7 +202,7 @@ export function ManagerCustomerCarePanel({
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
@@ -212,8 +212,8 @@ export function ManagerCustomerCarePanel({
             <MessageCircle size={20} />
           </div>
           <div>
-            <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Tổng đánh giá</span>
-            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#1e293b', display: 'block' }}>{stats.total} lượt</strong>
+            <span style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Tổng đánh giá</span>
+            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#30382e', display: 'block' }}>{stats.total} lượt</strong>
           </div>
         </div>
 
@@ -221,17 +221,17 @@ export function ManagerCustomerCarePanel({
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: "#f4f5f2", color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Clock size={20} />
           </div>
           <div>
-            <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Chờ phản hồi</span>
+            <span style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Chờ phản hồi</span>
             <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#d97706', display: 'block' }}>{stats.unreplied} đánh giá</strong>
           </div>
         </div>
@@ -240,17 +240,17 @@ export function ManagerCustomerCarePanel({
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: "#f4f5f2", color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <CheckCircle2 size={20} />
           </div>
           <div>
-            <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Đã phản hồi</span>
+            <span style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Đã phản hồi</span>
             <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#2563eb', display: 'block' }}>{stats.replied} đánh giá</strong>
           </div>
         </div>
@@ -259,17 +259,17 @@ export function ManagerCustomerCarePanel({
           background: '#ffffff',
           padding: '1.1rem 1.25rem',
           borderRadius: '14px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           display: 'flex',
           alignItems: 'center',
           gap: '0.85rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#fef2f2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: "#f4f5f2", color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <AlertTriangle size={20} />
           </div>
           <div>
-            <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Đánh giá 1-3 sao</span>
+            <span style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Đánh giá 1-3 sao</span>
             <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#ef4444', display: 'block' }}>{stats.lowRating} đánh giá</strong>
           </div>
         </div>
@@ -280,7 +280,7 @@ export function ManagerCustomerCarePanel({
         background: '#ffffff',
         padding: '1rem 1.25rem',
         borderRadius: '16px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid #e2e4df',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.85rem',
@@ -288,7 +288,7 @@ export function ManagerCustomerCarePanel({
       }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '420px' }}>
-            <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+            <Search size={18} color="#85907d" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
               value={keyword}
@@ -298,7 +298,7 @@ export function ManagerCustomerCarePanel({
                 width: '100%',
                 padding: '0.55rem 0.75rem 0.55rem 2.4rem',
                 borderRadius: '10px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid #ccd3c7',
                 fontSize: '0.875rem',
                 outline: 'none',
                 boxSizing: 'border-box'
@@ -315,7 +315,7 @@ export function ManagerCustomerCarePanel({
                   transform: 'translateY(-50%)',
                   background: 'none',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: '#85907d',
                   cursor: 'pointer'
                 }}
               >
@@ -335,9 +335,9 @@ export function ManagerCustomerCarePanel({
                   style={{
                     padding: '0.4rem 0.85rem',
                     borderRadius: '8px',
-                    border: isActive ? '1px solid #3b82f6' : '1px solid #e2e8f0',
-                    background: isActive ? '#3b82f6' : '#ffffff',
-                    color: isActive ? '#ffffff' : '#475569',
+                    border: isActive ? "1px solid var(--primary)" : '1px solid #e2e4df',
+                    background: isActive ? "var(--primary)" : '#ffffff',
+                    color: isActive ? '#ffffff' : '#596255',
                     fontWeight: isActive ? '700' : '500',
                     fontSize: '0.825rem',
                     cursor: 'pointer',
@@ -355,14 +355,14 @@ export function ManagerCustomerCarePanel({
 
       {/* Loading & Error States */}
       {reviewsState.loading && (
-        <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+        <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e4df', color: '#69736a' }}>
           <RefreshCw size={32} color="#3b82f6" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
           <h4 style={{ margin: 0 }}>Đang tải danh sách đánh giá...</h4>
         </div>
       )}
 
       {reviewsState.error && (
-        <div style={{ padding: '0.85rem', borderRadius: '12px', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+        <div style={{ padding: '0.85rem', borderRadius: '12px', background: "#f4f5f2", border: '1px solid #fecaca', color: '#b91c1c', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
           <AlertCircle size={16} style={{ display: 'inline', marginRight: '0.4rem' }} />
           {reviewsState.error}
         </div>
@@ -370,10 +370,10 @@ export function ManagerCustomerCarePanel({
 
       {/* Review List */}
       {!reviewsState.loading && pageRows.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#ffffff', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
-          <MessageSquare size={40} color="#94a3b8" style={{ marginBottom: '0.75rem' }} />
-          <h4 style={{ margin: '0 0 0.5rem 0', color: '#334155' }}>Chưa có đánh giá nào phù hợp</h4>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '0.875rem' }}>Vui lòng chọn bộ lọc khác hoặc kiểm tra lại từ khóa tìm kiếm.</p>
+        <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#ffffff', borderRadius: '16px', border: '1px dashed #ccd3c7' }}>
+          <MessageSquare size={40} color="#85907d" style={{ marginBottom: '0.75rem' }} />
+          <h4 style={{ margin: '0 0 0.5rem 0', color: '#414743' }}>Chưa có đánh giá nào phù hợp</h4>
+          <p style={{ margin: 0, color: '#69736a', fontSize: '0.875rem' }}>Vui lòng chọn bộ lọc khác hoặc kiểm tra lại từ khóa tìm kiếm.</p>
         </div>
       ) : !reviewsState.loading && pageRows.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -390,7 +390,7 @@ export function ManagerCustomerCarePanel({
                 style={{
                   background: '#ffffff',
                   borderRadius: '16px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #e2e4df',
                   padding: '1.25rem',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
                   display: 'flex',
@@ -406,8 +406,8 @@ export function ManagerCustomerCarePanel({
                       height: '48px',
                       borderRadius: '12px',
                       overflow: 'hidden',
-                      border: '1px solid #e2e8f0',
-                      background: '#f8fafc',
+                      border: '1px solid #e2e4df',
+                      background: '#f8f9f6',
                       flexShrink: 0,
                       display: 'flex',
                       alignItems: 'center',
@@ -416,16 +416,16 @@ export function ManagerCustomerCarePanel({
                       {productImage ? (
                         <img src={productImage} alt={productName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <Coffee size={24} color="#94a3b8" />
+                        <Coffee size={24} color="#85907d" />
                       )}
                     </div>
 
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f172a' }}>
+                      <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#252927' }}>
                         {productName}
                       </h3>
-                      <span style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.15rem' }}>
-                        <User size={13} color="#64748b" /> Khách hàng: <strong>{review.ten_nguoi_dung || String(review.ma_nguoi_dung || '').slice(0, 8)}</strong>
+                      <span style={{ fontSize: '0.8rem', color: '#69736a', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.15rem' }}>
+                        <User size={13} color="#69736a" /> Khách hàng: <strong>{review.ten_nguoi_dung || String(review.ma_nguoi_dung || '').slice(0, 8)}</strong>
                       </span>
                     </div>
                   </div>
@@ -433,12 +433,12 @@ export function ManagerCustomerCarePanel({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <StarRating rating={review.so_sao} />
 
-                    <span style={{
+                    <span className="workspace-inline-label" style={{
                       fontSize: '0.75rem',
                       fontWeight: '700',
                       padding: '0.25rem 0.65rem',
                       borderRadius: '9999px',
-                      background: hasManagerReply ? '#dbeafe' : '#fef3c7',
+                      background: hasManagerReply ? "#f4f5f2" : "#f4f5f2",
                       color: hasManagerReply ? '#1d4ed8' : '#b45309',
                       border: hasManagerReply ? '1px solid #bfdbfe' : '1px solid #fde68a',
                       display: 'inline-flex',
@@ -453,21 +453,21 @@ export function ManagerCustomerCarePanel({
 
                 {/* Customer Comment Card */}
                 <div style={{
-                  background: '#f8fafc',
-                  border: '1px solid #f1f5f9',
+                  background: '#f8f9f6',
+                  border: '1px solid #f4f5f2',
                   borderRadius: '12px',
                   padding: '0.85rem 1rem',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.35rem'
                 }}>
-                  <span style={{ fontSize: '0.775rem', fontWeight: '700', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <MessageSquare size={13} color="#64748b" /> Nội dung đánh giá từ khách hàng:
+                  <span style={{ fontSize: '0.775rem', fontWeight: '700', color: '#596255', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <MessageSquare size={13} color="#69736a" /> Nội dung đánh giá từ khách hàng:
                   </span>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#1e293b', lineHeight: 1.5, fontWeight: '500' }}>
-                    {review.binh_luan ? `"${review.binh_luan}"` : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Khách hàng chỉ chấm sao, không để lại bình luận chữ.</span>}
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#30382e', lineHeight: 1.5, fontWeight: '500' }}>
+                    {review.binh_luan ? `"${review.binh_luan}"` : <span style={{ color: '#85907d', fontStyle: 'italic' }}>Khách hàng chỉ chấm sao, không để lại bình luận chữ.</span>}
                   </p>
-                  <span style={{ fontSize: '0.725rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.725rem', color: '#85907d', marginTop: '0.25rem' }}>
                     Thời gian: {review.ngay_cap_nhat ? new Date(review.ngay_cap_nhat).toLocaleString('vi-VN') : '---'}
                   </span>
                 </div>
@@ -475,7 +475,7 @@ export function ManagerCustomerCarePanel({
                 {/* Current Manager Reply (If exists) */}
                 {hasManagerReply && !isExpanded && (
                   <div style={{
-                    background: '#eff6ff',
+                    background: "#f4f5f2",
                     border: '1px solid #bfdbfe',
                     borderRadius: '12px',
                     padding: '0.85rem 1rem',
@@ -493,7 +493,7 @@ export function ManagerCustomerCarePanel({
                 )}
 
                 {/* Actions Row */}
-                <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid #f4f5f2' }}>
                   <button
                     type="button"
                     onClick={() => {
@@ -509,7 +509,7 @@ export function ManagerCustomerCarePanel({
                       padding: '0.55rem 1rem',
                       borderRadius: '8px',
                       border: 'none',
-                      background: '#3b82f6',
+                      background: "var(--primary)",
                       color: '#ffffff',
                       fontSize: '0.85rem',
                       fontWeight: '700',
@@ -553,14 +553,14 @@ export function ManagerCustomerCarePanel({
                   <div style={{
                     marginTop: '0.5rem',
                     padding: '1rem',
-                    background: '#f8fafc',
+                    background: '#f8f9f6',
                     borderRadius: '12px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #ccd3c7',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.75rem'
                   }}>
-                    <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#0f172a' }}>
+                    <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#252927' }}>
                       Nội dung phản hồi cho khách hàng:
                     </label>
                     <textarea
@@ -572,7 +572,7 @@ export function ManagerCustomerCarePanel({
                         width: '100%',
                         padding: '0.65rem 0.85rem',
                         borderRadius: '10px',
-                        border: '1px solid #cbd5e1',
+                        border: '1px solid #ccd3c7',
                         fontSize: '0.875rem',
                         resize: 'vertical',
                         boxSizing: 'border-box'
@@ -590,7 +590,7 @@ export function ManagerCustomerCarePanel({
                           padding: '0.55rem 1.1rem',
                           borderRadius: '8px',
                           border: 'none',
-                          background: '#3b82f6',
+                          background: "var(--primary)",
                           color: '#ffffff',
                           fontSize: '0.85rem',
                           fontWeight: '700',
@@ -619,10 +619,10 @@ export function ManagerCustomerCarePanel({
           gap: '1rem',
           marginTop: '1.5rem',
           paddingTop: '1.25rem',
-          borderTop: '1px solid #e2e8f0',
+          borderTop: '1px solid #e2e4df',
           flexWrap: 'wrap'
         }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+          <div style={{ fontSize: '0.85rem', color: '#69736a' }}>
             Hiển thị <strong>{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredItems.length)}</strong> trên <strong>{filteredItems.length}</strong> đánh giá
           </div>
 
@@ -637,9 +637,9 @@ export function ManagerCustomerCarePanel({
                 gap: '0.25rem',
                 padding: '0.45rem 0.85rem',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid #ccd3c7',
                 background: '#ffffff',
-                color: safePage === 1 ? '#cbd5e1' : '#334155',
+                color: safePage === 1 ? '#ccd3c7' : '#414743',
                 fontSize: '0.825rem',
                 fontWeight: '600',
                 cursor: safePage === 1 ? 'not-allowed' : 'pointer'
@@ -662,9 +662,9 @@ export function ManagerCustomerCarePanel({
                 gap: '0.25rem',
                 padding: '0.45rem 0.85rem',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid #ccd3c7',
                 background: '#ffffff',
-                color: safePage === totalPages ? '#cbd5e1' : '#334155',
+                color: safePage === totalPages ? '#ccd3c7' : '#414743',
                 fontSize: '0.825rem',
                 fontWeight: '600',
                 cursor: safePage === totalPages ? 'not-allowed' : 'pointer'

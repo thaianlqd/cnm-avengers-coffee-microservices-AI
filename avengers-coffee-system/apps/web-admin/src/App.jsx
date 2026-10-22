@@ -2,6 +2,7 @@ import { WorkspaceSidebar, WorkspaceSearch } from './components/console/Workspac
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 import './App.css'
 import './Console.css'
+import './Workspace.css'
 import { DashboardSkeleton } from './components/console/DashboardCharts'
 import { WorkspaceErrorBoundary } from './components/console/WorkspaceErrorBoundary'
 import {
@@ -31,9 +32,8 @@ const ManagerWorkforcePanel = lazy(() => import('./features/manager-dashboard/co
 const ManagerEmployeePanel = lazy(() => import('./features/manager-dashboard/components/ManagerEmployeePanel').then(module => ({ default: module.ManagerEmployeePanel })))
 const ManagerCustomerCarePanel = lazy(() => import('./features/manager-dashboard/components/ManagerCustomerCarePanel').then(module => ({ default: module.ManagerCustomerCarePanel })))
 import { StaffWorkShiftsPanel } from './features/staff-dashboard/components/StaffWorkShiftsPanel'
-import StaffDeliveryPanel from './features/staff-dashboard/features_thaian/StaffDeliveryPanel'
+import StaffDeliveryPanel from './features/staff-dashboard/components/StaffDeliveryPanel'
 const AdminSystemConsole = lazy(() => import('./features/actor-admin/components/AdminSystemConsole').then(module => ({ default: module.AdminSystemConsole })))
-import { AdminSatelliteKioskPanel } from './features/actor-admin/components/AdminSatelliteKioskPanel'
 import {
   Bike,
   Search,
@@ -54,14 +54,15 @@ import {
   BarChart3,
   ChevronDown,
   ChevronRight
-} from 'lucide-react'
+} from './components/console/WorkspaceIcons'
 const ManagerShipperPanel = lazy(() => import('./features/manager-dashboard/components/ManagerShipperPanel').then(module => ({ default: module.ManagerShipperPanel })))
 import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
 import StaffInbox from './features/admin-dashboard/components/StaffInbox'
 const TableManagementPanel = lazy(() => import('./features/admin-dashboard/components/TableManagementPanel').then(module => ({ default: module.TableManagementPanel })))
 import { AUTH_INVALID_EVENT } from './lib/adminFetch'
-const AccountCenterPanel = lazy(() => import('./features/shared/components/AccountCenterPanel').then(module => ({ default: module.AccountCenterPanel })))
+import { LayoutGrid as FiGrid, ShoppingBag as FiShoppingBag, Monitor as FiMonitor, Truck as FiTruck, MapPin as FiMapPin, Clock as FiClock, Coffee as FiCoffee, FileText as FiFileText, Calendar as FiCalendar, MessageSquare as FiMessageSquare, CheckCircle2 as FiCheckCircle, UsersIcon as FiUsers, BarChart2 as FiBarChart2 } from './components/console/WorkspaceIcons'
 import { AdminNotificationBell } from './features/shared/components/AdminNotificationBell'
+import { TopbarUserDropdown } from './features/shared/components/UserProfileModals'
 const NewsPanel = lazy(() => import('./features/shared/components/NewsPanel').then(module => ({ default: module.NewsPanel })))
 const FranchisePanel = lazy(() => import('./features/franchise/FranchisePanel').then(module => ({ default: module.FranchisePanel })))
 import { KioskComboReceiver } from './features/staff-dashboard/components/KioskComboReceiver'
@@ -188,26 +189,24 @@ function AppContent() {
   const isKioskStaff = userRole === DASHBOARD_ROLES.KIOSK_STAFF
   const operationalGroups = [
     { label: 'Vận hành & bán hàng', items: [
-      ...(!isKioskStaff ? [{ id: 'overview', label: 'Tổng quan', icon: LayoutGrid }] : []),
-      { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag }, { id: 'pos', label: 'Bán hàng POS', icon: Monitor },
-      ...(!isKioskStaff ? [{ id: 'delivery', label: 'Giao hàng', icon: Bike }, { id: 'table-management', label: 'Bàn & khu vực', icon: Store }] : []),
-      { id: 'shift', label: 'Chốt ca', icon: Clock },
-      ...(isKioskStaff ? [{ id: 'kiosk-combo', label: 'Nhận combo nguyên liệu', icon: Store }] : []),
+      ...(!isKioskStaff ? [{ id: 'overview', label: 'Tổng quan', icon: FiGrid }] : []),
+      { id: 'orders', label: 'Đơn hàng', icon: FiShoppingBag }, { id: 'pos', label: 'Bán hàng POS', icon: FiMonitor },
+      ...(!isKioskStaff ? [{ id: 'delivery', label: 'Giao hàng', icon: FiTruck }, { id: 'table-management', label: 'Bàn & khu vực', icon: FiMapPin }] : []),
+      { id: 'shift', label: 'Chốt ca', icon: FiClock },
+      ...(isKioskStaff ? [{ id: 'kiosk-combo', label: 'Nhận combo nguyên liệu', icon: FiCoffee }] : []),
     ] },
-    ...(!isKioskStaff ? [{ label: 'Sản phẩm & tin tức', items: [{ id: 'menu', label: 'Thực đơn', icon: Coffee }, { id: 'news', label: 'Tin tức', icon: Newspaper }] }] : []),
+    ...(!isKioskStaff ? [{ label: 'Sản phẩm & tin tức', items: [{ id: 'menu', label: 'Thực đơn', icon: FiCoffee }, { id: 'news', label: 'Tin tức', icon: FiFileText }] }] : []),
     { label: isManager ? 'Nhân sự & chăm sóc khách hàng' : 'Ca làm & cá nhân', items: [
-      { id: 'workforce', label: 'Lịch làm của tôi', icon: Calendar },
-      ...(['STAFF', 'MANAGER'].includes(userRole) ? [{ id: 'messages', label: 'Tin nhắn khách hàng', icon: MessageSquare }] : []),
+      { id: 'workforce', label: 'Lịch làm của tôi', icon: FiCalendar },
+      ...(['STAFF', 'MANAGER'].includes(userRole) ? [{ id: 'messages', label: 'Tin nhắn khách hàng', icon: FiMessageSquare }] : []),
       ...(isManager ? [
-        { id: 'shift-approval', label: 'Duyệt chốt ca', icon: CheckCircle2 },
-        { id: 'employee-manage', label: 'Nhân viên', icon: Users },
-        { id: 'workforce-manage', label: 'Lịch làm nhân viên', icon: Calendar },
-        { id: 'shipper-manage', label: 'Nhân viên giao hàng', icon: Truck },
-        { id: 'customer-care', label: 'Đánh giá khách hàng', icon: MessageSquare },
-        { id: 'survey-manage', label: 'Khảo sát', icon: BarChart3 },
-        { id: 'satellite-kiosk', label: 'Kiosk vệ tinh', icon: Store },
+        { id: 'shift-approval', label: 'Duyệt chốt ca', icon: FiCheckCircle },
+        { id: 'employee-manage', label: 'Nhân viên', icon: FiUsers },
+        { id: 'workforce-manage', label: 'Lịch làm nhân viên', icon: FiCalendar },
+        { id: 'shipper-manage', label: 'Nhân viên giao hàng', icon: FiTruck },
+        { id: 'customer-care', label: 'Đánh giá khách hàng', icon: FiMessageSquare },
+        { id: 'survey-manage', label: 'Khảo sát', icon: FiBarChart2 },
       ] : []),
-      { id: 'account', label: 'Hồ sơ & bảo mật', icon: UserCheck },
     ] },
   ]
   useEffect(() => { consoleMainRef.current?.scrollTo({ top: 0, behavior: 'instant' }) }, [activeTab])
@@ -282,7 +281,7 @@ function AppContent() {
     return <FranchiseStaffPortal session={session} onLogout={logout} />
   }
 
-  // Role ACCOUNTANT → Giao diện quản lý nhượng quyền + kế toán
+  // Role ACCOUNTANT → Giao diện quản lý nhượng quyền
   if (isAccountant) {
     return <AccountantFranchiseShell session={session} onLogout={logout} />
   }
@@ -309,14 +308,15 @@ function AppContent() {
       <WorkspaceSidebar groups={operationalGroups} activeTab={activeTab} onSelect={setActiveTab} session={session} label={isManager ? 'Quản lý cửa hàng' : 'Nhân viên cửa hàng'} onLogout={logout} />
 
       <main ref={consoleMainRef} className="content-area console-main">
-        <header className="content-header" style={{ padding: '1rem 1.75rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <header className="content-header" style={{ padding: '1rem 1.75rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e2e4df', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="content-header-title">
-            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>Trung tâm vận hành cửa hàng</h1>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8125rem', color: '#64748b' }}>Xin chào <strong>{session.user?.tenDangNhap || session.user?.email || 'nhan vien'}</strong>, cơ sở {branchName}.</p>
+            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#252927' }}>Trung tâm vận hành cửa hàng</h1>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8125rem', color: '#69736a' }}>Xin chào <strong>{session.user?.tenDangNhap || session.user?.email || 'nhan vien'}</strong>, cơ sở {branchName}.</p>
           </div>
           <div className="header-right-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <WorkspaceSearch items={operationalGroups.flatMap(group => group.items.map(item => ({ ...item, group: group.label })))} onSelect={setActiveTab} />
             <AdminNotificationBell session={session} />
+            <TopbarUserDropdown session={session} onLogout={logout} />
           </div>
         </header>
 
@@ -355,8 +355,6 @@ function AppContent() {
         )}
 
         {activeTab === 'news' && <NewsPanel />}
-
-        {activeTab === 'satellite-kiosk' && <AdminSatelliteKioskPanel session={session} />}
 
         {activeTab === 'kiosk-combo' && isKioskStaff && <KioskComboReceiver session={session} />}
 
@@ -526,7 +524,7 @@ function AppContent() {
         )}
 
         {activeTab === 'messages' && ['STAFF', 'MANAGER'].includes(userRole) && <StaffInbox key={session?.user?.id || session?.user?.maNguoiDung || session?.user?.tenDangNhap} session={session} />}
-        {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}
+
         </Suspense></div></WorkspaceErrorBoundary>
       </main>
         {['STAFF', 'MANAGER'].includes(userRole) && <AdminChatWidget session={session} onOpenInbox={() => setActiveTab('messages')} hidden={activeTab === 'messages'} />}

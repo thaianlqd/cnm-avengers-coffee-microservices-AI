@@ -816,6 +816,9 @@ class AgentTests(unittest.TestCase):
             {f["evidence_id"].split(":")[1] for f in first_five},
             {"quantity_sold", "product_revenue", "revenue"},
         )
+        self.assertEqual(narrative["executive_summary"], first_five[0]["finding"])
+        self.assertEqual(narrative["conclusions"], [])
+        self.assertEqual(narrative["recommendations"], [])
 
     def test_distribution_and_correlation_observational(self):
         a, _ = fixture_artifact(

@@ -1,7 +1,7 @@
-import { selectAgentTurn, agentTurnFailure } from '../../../web-customer/src/components/agentTurn.js'
-import { agentProducts, pendingCheckout, isCheckoutConfirmation } from '../../../web-customer/src/components/agentContract.js'
-import { qrPaymentFromCheckout } from '../../../web-customer/src/components/chatWidgetActions.js'
-import { walletTopupRequest, createWalletTopup, latestWalletTopupOffer, latestWalletTopup } from '../../../web-customer/src/components/walletTopup.js'
+import { selectAgentTurn, agentTurnFailure } from '../../../web-customer/src/components/chat/agentTurn.js'
+import { agentProducts, pendingCheckout, isCheckoutConfirmation } from '../../../web-customer/src/components/chat/agentContract.js'
+import { qrPaymentFromCheckout } from '../../../web-customer/src/components/chat/chatWidgetActions.js'
+import { walletTopupRequest, createWalletTopup, latestWalletTopupOffer, latestWalletTopup } from '../../../web-customer/src/components/wallet/walletTopup.js'
 
 // No intent inference here: the same Agent owns products/options/cart/checkout as web.
 export function createAgentConversation({ client, storage, owner, createId, onChange = () => {}, onMutation = () => {}, navigate = () => {} }) {

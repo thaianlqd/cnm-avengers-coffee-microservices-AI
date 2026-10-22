@@ -1,3 +1,5 @@
+import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
+import { Calendar as WorkspaceSymbolCalendar } from '../../../components/console/WorkspaceIcons'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   Calendar,
@@ -21,8 +23,9 @@ import {
   FileText,
   ListChecks,
   Plus
-} from 'lucide-react'
+} from '../../../components/console/WorkspaceIcons'
 import { WorkforceCalendar, getInitialWeekStart } from '../../staff-dashboard/components/WorkforceCalendar'
+import SmartSelect from '../../../components/console/SmartSelect'
 import {
   calcWorkedHours,
   formatMinutesLabel,
@@ -107,6 +110,8 @@ export function ManagerWorkforcePanel({
   const [selectedShift, setSelectedShift] = useState(null)
   const [activeTab, setActiveTab] = useState(TABS.MANAGE)
   const [taskDraft, setTaskDraft] = useState('')
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createError, setCreateError] = useState('')
   const [attendanceDraft, setAttendanceDraft] = useState({
     status: 'ASSIGNED',
     checkInAt: '',
@@ -296,9 +301,9 @@ export function ManagerWorkforcePanel({
   return (
     <div className="panel-container workspace-workforce" style={{
       padding: '1.75rem',
-      background: '#f8fafc',
+      background: '#f8f9f6',
       borderRadius: '20px',
-      border: '1px solid #e2e8f0',
+      border: '1px solid #e2e4df',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)'
     }}>
       {/* Header */}
@@ -325,10 +330,10 @@ export function ManagerWorkforcePanel({
             <Users size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#252927' }}>
               Quản lý Lịch Làm Nhân Sự
             </h2>
-            <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
+            <span style={{ fontSize: '0.825rem', color: '#69736a' }}>
               Phân công ca làm việc, duyệt đăng ký ca từ nhân viên và kiểm soát chấm công toàn quán
             </span>
           </div>
@@ -342,7 +347,7 @@ export function ManagerWorkforcePanel({
         background: '#ffffff',
         padding: '0.35rem',
         borderRadius: '12px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid #e2e4df',
         marginBottom: '1.5rem'
       }}>
         <button
@@ -353,8 +358,8 @@ export function ManagerWorkforcePanel({
             padding: '0.65rem 1rem',
             borderRadius: '9px',
             border: 'none',
-            background: activeTab === TABS.MANAGE ? '#3b82f6' : 'transparent',
-            color: activeTab === TABS.MANAGE ? '#ffffff' : '#64748b',
+            background: activeTab === TABS.MANAGE ? "var(--primary)" : 'transparent',
+            color: activeTab === TABS.MANAGE ? '#ffffff' : '#69736a',
             fontWeight: activeTab === TABS.MANAGE ? '700' : '500',
             fontSize: '0.875rem',
             cursor: 'pointer',
@@ -376,8 +381,8 @@ export function ManagerWorkforcePanel({
             padding: '0.65rem 1rem',
             borderRadius: '9px',
             border: 'none',
-            background: activeTab === TABS.APPROVE ? '#3b82f6' : 'transparent',
-            color: activeTab === TABS.APPROVE ? '#ffffff' : '#64748b',
+            background: activeTab === TABS.APPROVE ? "var(--primary)" : 'transparent',
+            color: activeTab === TABS.APPROVE ? '#ffffff' : '#69736a',
             fontWeight: activeTab === TABS.APPROVE ? '700' : '500',
             fontSize: '0.875rem',
             cursor: 'pointer',
@@ -399,8 +404,8 @@ export function ManagerWorkforcePanel({
             padding: '0.65rem 1rem',
             borderRadius: '9px',
             border: 'none',
-            background: activeTab === TABS.SCHEDULE ? '#3b82f6' : 'transparent',
-            color: activeTab === TABS.SCHEDULE ? '#ffffff' : '#64748b',
+            background: activeTab === TABS.SCHEDULE ? "var(--primary)" : 'transparent',
+            color: activeTab === TABS.SCHEDULE ? '#ffffff' : '#69736a',
             fontWeight: activeTab === TABS.SCHEDULE ? '700' : '500',
             fontSize: '0.875rem',
             cursor: 'pointer',
@@ -419,12 +424,13 @@ export function ManagerWorkforcePanel({
       {activeTab === TABS.MANAGE && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Form phân ca */}
-          <form className="workspace-form"
-            onSubmit={onCreateWorkShift}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button type="button" className="workspace-primary-button" onClick={() => { setCreateError(''); setCreateOpen(true) }}><Calendar size={18} />Phân ca mới</button></div>
+          {createOpen && <WorkspaceDialog title="Phân ca làm việc" busy={creatingWorkShift} onClose={() => setCreateOpen(false)}><form className="workspace-form"
+            onSubmit={async event => { setCreateError(''); try { const result = await onCreateWorkShift(event); if (result?.ok) setCreateOpen(false); else if (result?.error) setCreateError(result.error) } catch (error) { setCreateError(error.message || 'Không thể tạo lịch làm việc.') } }}
             style={{
               background: '#ffffff',
               borderRadius: '16px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #e2e4df',
               padding: '1.5rem',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
               display: 'flex',
@@ -432,46 +438,35 @@ export function ManagerWorkforcePanel({
               gap: '1.25rem'
             }}
           >
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <PlusCircle size={18} color="#3b82f6" /> Thêm lịch làm mới cho nhân viên
             </h3>
 
+{createError && <p className="workspace-form-error" role="alert">{createError}</p>}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem' }}>
               <div>
-                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                   Nhân viên được chọn
                 </label>
-                <select
+                <SmartSelect
+                  label="Tìm nhân viên để xếp ca"
+                  placeholder="Gõ tên hoặc tài khoản nhân viên"
                   value={workShiftForm.staff_username}
-                  onChange={(e) => {
-                    const nextUser = assignableStaffOptions.find((item) => resolveUsername(item) === e.target.value)
+                  onChange={(username) => {
+                    const nextUser = assignableStaffOptions.find((item) => resolveUsername(item) === username)
                     setWorkShiftForm((prev) => ({
                       ...prev,
-                      staff_username: e.target.value,
-                      staff_name: nextUser?.ho_ten || e.target.value,
+                      staff_username: username,
+                      staff_name: nextUser?.ho_ten || username,
                     }))
                   }}
                   disabled={!assignableStaffOptions.length}
-                  style={{
-                    width: '100%',
-                    padding: '0.55rem 0.75rem',
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '0.875rem',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  {!assignableStaffOptions.length && <option value="">Chưa có nhân viên trong hệ thống</option>}
-                  {assignableStaffOptions.map((item) => (
-                    <option key={item.ma_nguoi_dung} value={resolveUsername(item)}>
-                      {(item.ho_ten || resolveUsername(item))} ({String(item.vai_tro || '').toUpperCase()})
-                    </option>
-                  ))}
-                </select>
+                  options={assignableStaffOptions.map(item => ({ value: resolveUsername(item), label: `${item.ho_ten || resolveUsername(item)} (${String(item.vai_tro || '').toUpperCase()})`, keywords: item.email }))}
+                />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                   Ngày làm việc
                 </label>
                 <input
@@ -483,7 +478,7 @@ export function ManagerWorkforcePanel({
                     width: '100%',
                     padding: '0.55rem 0.75rem',
                     borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #ccd3c7',
                     fontSize: '0.875rem',
                     boxSizing: 'border-box'
                   }}
@@ -491,7 +486,7 @@ export function ManagerWorkforcePanel({
               </div>
 
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                   Khung ca làm (Chọn 1 hoặc nhiều ca trong ngày)
                 </label>
                 <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
@@ -505,9 +500,9 @@ export function ManagerWorkforcePanel({
                         style={{
                           padding: '0.5rem 0.85rem',
                           borderRadius: '8px',
-                          border: isSelected ? '1px solid #3b82f6' : '1px solid #cbd5e1',
-                          background: isSelected ? '#eff6ff' : '#ffffff',
-                          color: isSelected ? '#1d4ed8' : '#475569',
+                          border: isSelected ? "1px solid var(--primary)" : '1px solid #ccd3c7',
+                          background: isSelected ? "#f4f5f2" : '#ffffff',
+                          color: isSelected ? "var(--primary)" : '#596255',
                           fontWeight: isSelected ? '700' : '500',
                           fontSize: '0.85rem',
                           cursor: 'pointer',
@@ -525,7 +520,7 @@ export function ManagerWorkforcePanel({
               </div>
 
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
+                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                   Ghi chú phân công
                 </label>
                 <input
@@ -537,7 +532,7 @@ export function ManagerWorkforcePanel({
                     width: '100%',
                     padding: '0.55rem 0.75rem',
                     borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #ccd3c7',
                     fontSize: '0.875rem',
                     boxSizing: 'border-box'
                   }}
@@ -545,7 +540,7 @@ export function ManagerWorkforcePanel({
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="workspace-editor-actions"><button type="button" className="workspace-secondary-button" disabled={creatingWorkShift} onClick={() => setCreateOpen(false)}>Hủy</button>
               <button
                 type="submit"
                 disabled={creatingWorkShift || !workShiftForm.staff_username || !selectedShiftCodes.length}
@@ -556,7 +551,7 @@ export function ManagerWorkforcePanel({
                   padding: '0.65rem 1.25rem',
                   borderRadius: '10px',
                   border: 'none',
-                  background: '#3b82f6',
+                  background: "var(--primary)",
                   color: '#ffffff',
                   fontSize: '0.875rem',
                   fontWeight: '700',
@@ -568,20 +563,20 @@ export function ManagerWorkforcePanel({
                 {creatingWorkShift ? 'Đang tạo lịch...' : 'Tạo lịch làm việc'}
               </button>
             </div>
-          </form>
+          </form></WorkspaceDialog>}
 
           {/* Checklist Mẫu */}
           <div style={{
             background: '#ffffff',
             borderRadius: '16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid #e2e4df',
             padding: '1.5rem',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)'
           }}>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <ListChecks size={18} color="var(--primary)" /> Phân công công việc (Checklist ca)
             </h3>
-            <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#64748b' }}>
+            <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#69736a' }}>
               Chọn các công việc mẫu bên dưới để gắn nhanh vào ghi chú lịch làm đang tạo:
             </p>
 
@@ -594,9 +589,9 @@ export function ManagerWorkforcePanel({
                   style={{
                     padding: '0.4rem 0.75rem',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    background: '#f8fafc',
-                    color: '#334155',
+                    border: '1px solid #ccd3c7',
+                    background: '#f8f9f6',
+                    color: '#414743',
                     fontSize: '0.8rem',
                     fontWeight: '600',
                     cursor: 'pointer'
@@ -616,7 +611,7 @@ export function ManagerWorkforcePanel({
                 width: '100%',
                 padding: '0.65rem',
                 borderRadius: '10px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid #ccd3c7',
                 fontSize: '0.85rem',
                 marginBottom: '1rem',
                 boxSizing: 'border-box'
@@ -651,8 +646,8 @@ export function ManagerWorkforcePanel({
                 onClick={() => setTaskDraft('')}
                 style={{
                   background: '#ffffff',
-                  color: '#475569',
-                  border: '1px solid #cbd5e1',
+                  color: '#596255',
+                  border: '1px solid #ccd3c7',
                   borderRadius: '8px',
                   padding: '0.55rem 1rem',
                   fontSize: '0.85rem',
@@ -672,11 +667,11 @@ export function ManagerWorkforcePanel({
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e2e4df',
           padding: '1.5rem',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)'
         }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <UserCheck size={18} color="#3b82f6" /> Phê duyệt nguyện vọng ca từ Nhân viên
           </h3>
 
@@ -689,22 +684,22 @@ export function ManagerWorkforcePanel({
                 }
 
                 return (
-                  <div key={item.ma_ca_lam_viec} style={{ background: '#fffbe6', padding: '1.15rem', borderRadius: '14px', border: '1px solid #fde68a', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  <div key={item.ma_ca_lam_viec} style={{ background: "#f4f5f2", padding: '1.15rem', borderRadius: '14px', border: '1px solid #fde68a', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong style={{ fontSize: '1rem', color: '#1e293b' }}>
+                      <strong style={{ fontSize: '1rem', color: '#30382e' }}>
                         {item.staff_name || item.staff_username}
                       </strong>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', background: '#fef3c7', color: '#b45309', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
+                      <span className="workspace-inline-label" style={{ fontSize: '0.75rem', fontWeight: '700', background: "#f4f5f2", color: '#b45309', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
                         Chờ duyệt
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '600' }}>
-                      📅 {item.ngay_lam_viec} • {item.ten_ca} ({item.gio_bat_dau} - {item.gio_ket_thuc})
+                    <div style={{ fontSize: '0.85rem', color: '#596255', fontWeight: '600' }}>
+                      <WorkspaceSymbolCalendar size="1.1em" aria-hidden="true" /> {item.ngay_lam_viec} • {item.ten_ca} ({item.gio_bat_dau} - {item.gio_ket_thuc})
                     </div>
 
                     {item.note && (
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', background: '#ffffff', padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid #fef3c7' }}>
+                      <div style={{ fontSize: '0.8rem', color: '#69736a', background: '#ffffff', padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid #fef3c7' }}>
                         Ghi chú staff: {item.note}
                       </div>
                     )}
@@ -717,7 +712,7 @@ export function ManagerWorkforcePanel({
                         [item.ma_ca_lam_viec]: { ...draft, review_note: e.target.value },
                       }))}
                       placeholder="Ghi chú phản hồi cho nhân viên..."
-                      style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.825rem', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.825rem', boxSizing: 'border-box' }}
                     />
 
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
@@ -730,7 +725,7 @@ export function ManagerWorkforcePanel({
                         })}
                         disabled={handlingShiftRequestId === String(item.ma_ca_lam_viec)}
                         style={{
-                          background: '#3b82f6',
+                          background: "var(--primary)",
                           color: '#ffffff',
                           border: 'none',
                           padding: '0.45rem 0.85rem',
@@ -775,8 +770,8 @@ export function ManagerWorkforcePanel({
               })}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1', color: '#64748b' }}>
-              <UserCheck size={36} color="#94a3b8" style={{ marginBottom: '0.5rem' }} />
+            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8f9f6', borderRadius: '12px', border: '1px dashed #ccd3c7', color: '#69736a' }}>
+              <UserCheck size={36} color="#85907d" style={{ marginBottom: '0.5rem' }} />
               <p style={{ margin: 0, fontSize: '0.9rem' }}>Hiện chưa có yêu cầu đăng ký ca nào cần phê duyệt.</p>
             </div>
           )}
@@ -791,7 +786,7 @@ export function ManagerWorkforcePanel({
             background: '#ffffff',
             padding: '0.85rem 1.25rem',
             borderRadius: '14px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid #e2e4df',
             marginBottom: '1.25rem',
             display: 'flex',
             justifyContent: 'space-between',
@@ -801,22 +796,12 @@ export function ManagerWorkforcePanel({
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Users size={18} color="#3b82f6" />
-              <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#374151' }}>Xem lịch làm theo Nhân viên:</span>
-              <select
-                value={selectedStaffFilter}
-                onChange={(e) => setSelectedStaffFilter(e.target.value)}
-                style={{ padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}
-              >
-                <option value="ALL">Tất cả nhân sự ({scheduleFilterOptions.length})</option>
-                {scheduleFilterOptions.map((item) => (
-                  <option key={item.ma_nguoi_dung} value={resolveUsername(item)}>
-                    {(item.ho_ten || resolveUsername(item))} ({String(item.vai_tro || '').toUpperCase()})
-                  </option>
-                ))}
-              </select>
+              <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#414743' }}>Xem lịch làm theo Nhân viên:</span>
+              <SmartSelect label="Lọc lịch theo nhân viên" value={selectedStaffFilter} onChange={setSelectedStaffFilter}
+                options={[{ value: 'ALL', label: `Tất cả nhân sự (${scheduleFilterOptions.length})` }, ...scheduleFilterOptions.map(item => ({ value: resolveUsername(item), label: `${item.ho_ten || resolveUsername(item)} (${String(item.vai_tro || '').toUpperCase()})`, keywords: item.email }))]} />
             </div>
 
-            <span style={{ fontSize: '0.825rem', color: '#2563eb', fontWeight: '700', background: '#eff6ff', padding: '0.35rem 0.75rem', borderRadius: '9999px' }}>
+            <span className="workspace-inline-label" style={{ fontSize: '0.825rem', color: '#2563eb', fontWeight: '700', background: "#f4f5f2", padding: '0.35rem 0.75rem', borderRadius: '9999px' }}>
               {calendarItems.length} ca làm đã xếp
             </span>
           </div>
@@ -835,23 +820,23 @@ export function ManagerWorkforcePanel({
           <div style={{
             background: '#ffffff',
             borderRadius: '16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid #e2e4df',
             padding: '1.5rem',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
             marginTop: '1.25rem'
           }}>
             {!selectedShiftDetails ? (
-              <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem', fontStyle: 'italic', textAlign: 'center' }}>
+              <p style={{ margin: 0, color: '#69736a', fontSize: '0.9rem', fontStyle: 'italic', textAlign: 'center' }}>
                 Nhấp chọn một ô ca làm trên bảng lịch để xem thông tin chi tiết, điều chỉnh giờ chấm công hoặc xóa lịch ca.
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f4f5f2', paddingBottom: '0.75rem' }}>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#0f172a' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#252927' }}>
                       {selectedShiftDetails.staff_name || selectedShiftDetails.staff_username}
                     </h3>
-                    <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>
+                    <span style={{ fontSize: '0.85rem', color: '#69736a', fontWeight: '600' }}>
                       {selectedShiftDetails.ngay_lam_viec} • {selectedShiftDetails.ten_ca} ({selectedShiftDetails.gio_bat_dau} - {selectedShiftDetails.gio_ket_thuc})
                     </span>
                   </div>
@@ -861,7 +846,7 @@ export function ManagerWorkforcePanel({
                     onClick={() => onDeleteWorkShift(selectedShiftDetails.ma_ca_lam_viec)}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
                     style={{
-                      background: '#fef2f2',
+                      background: "#f4f5f2",
                       color: '#ef4444',
                       border: '1px solid #fecaca',
                       padding: '0.45rem 0.85rem',
@@ -881,14 +866,14 @@ export function ManagerWorkforcePanel({
                 {/* Edit Form */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0.85rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.25rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
                       Trạng thái chấm công
                     </label>
                     <select
                       value={normalizeAttendanceStatus(attendanceDraft.status)}
                       onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, status: e.target.value }))}
                       disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
-                      style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                      style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.85rem' }}
                     >
                       <option value="ASSIGNED">Đã xếp lịch (Chưa điểm danh)</option>
                       <option value="PRESENT">Có mặt</option>
@@ -898,7 +883,7 @@ export function ManagerWorkforcePanel({
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.25rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
                       Giờ Check-in
                     </label>
                     <input
@@ -906,12 +891,12 @@ export function ManagerWorkforcePanel({
                       value={attendanceDraft.checkInAt}
                       onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, checkInAt: e.target.value }))}
                       disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
-                      style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                      style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.85rem' }}
                     />
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.25rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
                       Giờ Check-out
                     </label>
                     <input
@@ -919,7 +904,7 @@ export function ManagerWorkforcePanel({
                       value={attendanceDraft.checkOutAt}
                       onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, checkOutAt: e.target.value }))}
                       disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
-                      style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                      style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.85rem' }}
                     />
                   </div>
                 </div>
@@ -930,7 +915,7 @@ export function ManagerWorkforcePanel({
                     onClick={luuChamCongChiTiet}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
                     style={{
-                      background: '#3b82f6',
+                      background: "var(--primary)",
                       color: '#ffffff',
                       border: 'none',
                       padding: '0.55rem 1.1rem',

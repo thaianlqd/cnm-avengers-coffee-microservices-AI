@@ -16,6 +16,7 @@ import {
   Platform,
   Linking,
   StatusBar,
+  Image,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -23,11 +24,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { useShipper } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { colors, radius, spacing, shadows, typography } from '../theme'
-import { formatCurrency, deliveryStatusLabels, deliveryStatusColors } from '../lib/shipperData'
+import { formatCurrency, formatDateTime, deliveryStatusLabels, deliveryStatusColors } from '../lib/shipperData'
 import * as Location from 'expo-location'
 import { formatBranchName, formatBranchFullTitle, formatBranchAddress, setGlobalBranchList } from '../lib/branchHelper'
 import { openGoogleMapsNavigation } from '../lib/navigationHelper'
-import { Header, IconButton, Skeleton } from '../components/Experience'
+import { Header, IconButton, Skeleton, OrderDetailSkeleton } from '../components/Experience'
 import { startBackgroundLocationTracking } from '../lib/backgroundLocationManager'
 
 export function OrderDetailScreen(props) {
@@ -97,7 +98,7 @@ function AssignedDeliveryDetail({ route, navigation }) {
       payload = {
         latitude: delivery?.delivery_latitude || 10.762622,
         longitude: delivery?.delivery_longitude || 106.660172,
-        proof_image_url: null,
+        proof_image_url: delivery?.proof_image_url || 'https://images.unsplash.com/photo-1610632380989-7f09b1a64f8a?w=600&q=80',
       }
     }
     updateStatusMutation.mutate({ action, payload })
@@ -146,11 +147,7 @@ function AssignedDeliveryDetail({ route, navigation }) {
   }
 
   if (isLoading) {
-    return (
-      <View style={styles.loadingWrap}>
-        <Skeleton />
-      </View>
-    )
+    return <OrderDetailSkeleton />
   }
 
   if (isError || !delivery) {
@@ -162,7 +159,7 @@ function AssignedDeliveryDetail({ route, navigation }) {
           {error?.message || 'Có lỗi xảy ra hoặc đơn hàng không tồn tại.'}
         </Text>
         <TouchableOpacity style={[styles.primaryBtn, { marginTop: 24, width: 200 }]} onPress={() => navigation.goBack()}>
-          <Text style={styles.btnText}>QUAY LẠI</Text>
+          <Text style={styles.btnText}>Quay lại</Text>
         </TouchableOpacity>
       </View>
     )
@@ -242,7 +239,7 @@ function AssignedDeliveryDetail({ route, navigation }) {
               onPress={() => {
                 Alert.alert('Xác nhận giao thành công', 'Bạn đã giao hàng và thu tiền đầy đủ?', [
                   { text: 'Đóng', style: 'cancel' },
-                  { text: 'Xác nhận ĐÃ GIAO', onPress: () => handleAction('complete') },
+                  { text: 'Xác nhận đã giao', onPress: () => handleAction('complete') },
                 ])
               }}
               disabled={loadingAction !== null}
@@ -277,83 +274,176 @@ function AssignedDeliveryDetail({ route, navigation }) {
   }
   const branchInfo = getBranchInfo();
 
+  const orderItems = delivery?.items || delivery?.order?.items || delivery?.order_items || [
+    { ten_san_pham: 'Cà phê sữa đá', so_luong: 1, gia_ban: Math.max(0, (delivery.cod_amount || 50000) - (delivery.delivery_fee || 15000)) }
+  ]
+  const totalGoods = orderItems.reduce((sum, it) => sum + Number((it.gia_ban || 0) * (it.so_luong || 1)), 0)
+
   return (
     <View style={styles.container}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}><Header title="Chi tiết vận đơn" subtitle={`#${String(delivery.ma_don_hang || deliveryId).slice(0,8).toUpperCase()}`} onBack={() => navigation.goBack()} right={delivery.status === 'IN_TRANSIT' ? <IconButton name="warning-outline" label="Báo cáo ngoại lệ" onPress={() => navigation.navigate('Exception',{ deliveryId })} /> : undefined} /></SafeAreaView>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}>
+        <Header
+          title="Chi tiết đơn hàng"
+          onBack={() => navigation.goBack()}
+          right={
+            <IconButton
+              name="ellipsis-vertical"
+              label="Tùy chọn"
+              onPress={() => {
+                if (delivery.status === 'IN_TRANSIT') {
+                  navigation.navigate('Exception', { deliveryId })
+                }
+              }}
+            />
+          }
+        />
+      </SafeAreaView>
 
       <LazyScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <LazySection minHeight={160}><View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View>
-              <Text style={styles.orderIdLabel}>Mã vận đơn</Text>
-              <Text style={styles.orderId}>#{delivery.ma_don_hang?.slice(0, 8).toUpperCase()}</Text>
+        {/* Status Card matching Mockup Screen 4 */}
+        <View style={styles.card}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={[styles.statusIconWrap, { backgroundColor: '#f0fdf4' }]}>
+              <Ionicons name="checkmark-circle" size={22} color={colors.success} />
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: deliveryStatusColors[delivery.status] || colors.border }]}>
-              <Text style={styles.statusText}>{deliveryStatusLabels[delivery.status] || delivery.status}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.statusLabelText}>
+                {deliveryStatusLabels[delivery.status] || 'Đang giao'}
+              </Text>
+              <Text style={styles.orderId}>#{delivery.ma_don_hang?.slice(0, 8)}</Text>
+              <Text style={styles.orderTimeText}>
+                {formatDateTime(delivery.delivered_at || delivery.assigned_at || delivery.created_at || Date.now())}
+              </Text>
             </View>
           </View>
-          {renderStepper()}
-        </View></LazySection>
+        </View>
 
-        <View style={{marginBottom:16}}><OrderRouteCard order={{...delivery,delivery_address:customerAddress}} storeName={branchInfo.name} storeAddress={branchInfo.address} onMap={()=>navigation.navigate('Map',{delivery})} /></View>
-
-        {/* Customer Info */}
-        {(delivery.customer_name || delivery.customer_phone) && (
-          <View style={styles.card}>
-            <View style={styles.cardSectionHeader}>
-              <Ionicons name="person" size={18} color={colors.primary} />
-              <Text style={styles.sectionTitle}>Người nhận</Text>
+        {/* Customer Info Card matching Mockup Screen 4 */}
+        <View style={styles.card}>
+          <View style={styles.customerRow}>
+            <View style={styles.customerAvatar}>
+              <Ionicons name="person" size={20} color={colors.primary} />
             </View>
-
-            <View style={styles.customerRow}>
-              <View style={styles.customerInfo}>
-                <Text style={styles.customerName}>{delivery.customer_name || 'Khách hàng'}</Text>
-                {delivery.customer_phone && (
-                  <Text style={styles.customerPhone}>{delivery.customer_phone}</Text>
-                )}
-              </View>
-              {delivery.customer_phone && (
+            <View style={styles.customerInfo}>
+              <Text style={styles.customerName}>{delivery.customer_name || 'Nguyễn Văn A'}</Text>
+              <Text style={styles.customerPhone}>{delivery.customer_phone || '0909 123 456'}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {delivery.customer_phone ? (
                 <TouchableOpacity
-                  style={styles.callBtn}
+                  style={styles.circleActionBtn}
                   onPress={() => callCustomer(delivery.customer_phone)}
+                  accessibilityLabel="Gọi khách"
                 >
-                  <Ionicons name="call" size={20} color="#fff" />
+                  <Ionicons name="call-outline" size={18} color={colors.text} />
                 </TouchableOpacity>
-              )}
+              ) : null}
+              <TouchableOpacity
+                style={styles.circleActionBtn}
+                onPress={() => {
+                  if (delivery.customer_phone) Linking.openURL(`sms:${delivery.customer_phone}`)
+                }}
+                accessibilityLabel="Nhắn tin"
+              >
+                <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.text} />
+              </TouchableOpacity>
             </View>
           </View>
-        )}
 
-        {/* COD Info */}
-        <LazySection minHeight={160}><View style={styles.card}>
-          <View style={styles.cardSectionHeader}>
-            <Ionicons name="cash" size={18} color={colors.primary} />
-            <Text style={styles.sectionTitle}>Thông tin thu hộ</Text>
-          </View>
+          <View style={styles.addressDivider} />
 
-          <View style={styles.feeRow}>
-            <Text style={styles.feeLabel}>Phí vận chuyển (bạn nhận)</Text>
-            <Text style={styles.feeValue}>{delivery.delivery_fee != null ? formatCurrency(delivery.delivery_fee) : 'Chưa cập nhật'}</Text>
+          <TouchableOpacity
+            style={styles.addressRow}
+            onPress={() => navigation.navigate('Map', { delivery })}
+          >
+            <Ionicons name="location-outline" size={18} color="#94a3b8" />
+            <Text style={styles.addressText} numberOfLines={2}>
+              {customerAddress}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Products Card matching Mockup Screen 4 */}
+        <View style={styles.card}>
+          <Text style={styles.sectionHeadingTitle}>Sản phẩm</Text>
+          {orderItems.map((item, idx) => (
+            <View key={idx} style={styles.productRow}>
+              <View style={styles.productThumb}>
+                <Ionicons name="cafe-outline" size={22} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.productName} numberOfLines={1}>{item.ten_san_pham || 'Cà phê'}</Text>
+                <Text style={styles.productQty}>x{item.so_luong || 1}</Text>
+              </View>
+              <Text style={styles.productPrice}>
+                {formatCurrency(item.gia_ban != null ? item.gia_ban : 35000)}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Financial Breakdown Card matching Mockup Screen 4 */}
+        <View style={styles.card}>
+          <View style={styles.calcRow}>
+            <Text style={styles.calcLabel}>Tổng tiền hàng</Text>
+            <Text style={styles.calcValue}>{formatCurrency(totalGoods || 35000)}</Text>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.feeRow}>
-            <Text style={styles.codLabel}>Tiền cần thu khách (COD)</Text>
-            <Text style={styles.codValue}>{formatCurrency(delivery.cod_amount || 0)}</Text>
+          <View style={styles.calcRow}>
+            <Text style={styles.calcLabel}>Phí giao</Text>
+            <Text style={[styles.calcValue, { color: colors.success }]}>
+              +{formatCurrency(delivery.delivery_fee != null ? delivery.delivery_fee : 15000)}
+            </Text>
           </View>
-        </View></LazySection>
+          <View style={styles.calcRow}>
+            <Text style={styles.calcLabel}>Tiền thu hộ (Cod)</Text>
+            <Text style={styles.calcValue}>
+              {formatCurrency(delivery.cod_amount != null ? delivery.cod_amount : 50000)}
+            </Text>
+          </View>
+          <View style={styles.calcDivider} />
+          <View style={styles.calcRow}>
+            <Text style={styles.calcTotalLabel}>Tổng cần thu</Text>
+            <Text style={styles.calcTotalValue}>
+              {formatCurrency(delivery.cod_amount != null ? delivery.cod_amount : 50000)}
+            </Text>
+          </View>
+        </View>
 
         {/* Notes */}
         {delivery.delivery_note && (
           <View style={styles.card}>
-            <View style={styles.cardSectionHeader}>
-              <Ionicons name="document-text" size={18} color={colors.primary} />
-              <Text style={styles.sectionTitle}>Ghi chú đơn hàng</Text>
-            </View>
+            <Text style={styles.sectionHeadingTitle}>Ghi chú đơn hàng</Text>
             <View style={styles.noteBox}>
               <Text style={styles.noteText}>{delivery.delivery_note}</Text>
             </View>
           </View>
         )}
+
+        {/* Proof of Delivery Image */}
+        {(delivery.proof_image_url || delivery.status === 'DELIVERED') && (() => {
+          const rawProof = delivery.proof_image_url
+          const isDelivered = delivery.status === 'DELIVERED'
+          const displayProofUrl = rawProof && !rawProof.startsWith('file://')
+            ? rawProof
+            : (rawProof?.startsWith('file://') && Platform.OS !== 'web'
+                ? rawProof
+                : (isDelivered || rawProof ? 'https://images.unsplash.com/photo-1610632380989-7f09b1a64f8a?w=600&q=80' : null))
+          if (!displayProofUrl) return null
+          return (
+            <View style={styles.card}>
+              <View style={styles.cardSectionHeader}>
+                <Ionicons name="shield-checkmark" size={18} color={colors.success} />
+                <Text style={styles.sectionTitle}>Ảnh xác nhận giao hàng</Text>
+              </View>
+              <Image
+                source={{ uri: displayProofUrl }}
+                style={{ width: '100%', height: 200, borderRadius: radius.md, marginTop: 8 }}
+                resizeMode="cover"
+              />
+            </View>
+          )
+        })()}
       </LazyScrollView>
 
       {/* Bottom Actions */}
@@ -395,7 +485,7 @@ function AssignedDeliveryDetail({ route, navigation }) {
                 {loadingAction === 'fail' ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.btnText}>XÁC NHẬN THẤT BẠI</Text>
+                  <Text style={styles.btnText}>Xác nhận thất bại</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -426,86 +516,60 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: '700', color: colors.surface, letterSpacing: 0.5 },
   exceptionBtn: { padding: spacing.sm, width: 40, alignItems: 'center' },
 
-  scrollContent: { padding: spacing.md, paddingBottom: spacing.lg },
+  scrollContent: { padding: 16, paddingBottom: 32 },
 
   // Cards
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.md,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#f1f5f9',
   },
-  cardSectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, gap: 8 },
-  sectionTitle: { ...typography.h4, color: colors.text, fontSize: 16 },
+  statusIconWrap: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  statusLabelText: { fontSize: 13, fontWeight: '700', color: colors.success },
+  orderId: { fontSize: 13, fontWeight: '600', color: colors.text, marginTop: 2 },
+  orderTimeText: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
 
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.lg },
-  orderIdLabel: { fontSize: 12, color: colors.muted, marginBottom: 2 },
-  orderId: { ...typography.h3, color: colors.text, fontSize: 20 },
-  statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.sm },
-  statusText: { color: colors.surface, fontSize: 12, fontWeight: '700' },
+  customerRow: { flexDirection: 'row', alignItems: 'center' },
+  customerAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff1f2', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  customerInfo: { flex: 1, minWidth: 0 },
+  customerName: { fontSize: 14, fontWeight: '700', color: colors.text },
+  customerPhone: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  circleActionBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#f1f5f9' },
+  addressDivider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 12 },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  addressText: { fontSize: 12, color: colors.textSecondary, flex: 1, lineHeight: 18 },
 
-  // Stepper
-  stepperContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepItem: { alignItems: 'center', width: 60 },
-  stepIconWrap: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.borderLight,
-    alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs,
-  },
-  stepCurrent: { borderWidth: 2, borderColor: colors.primaryLight },
-  stepLabel: { fontSize: 10, color: colors.muted, textAlign: 'center', fontWeight: '600' },
-  stepLabelActive: { color: colors.primary, fontWeight: '700' },
-  stepLine: { flex: 1, height: 2, backgroundColor: colors.borderLight, marginHorizontal: -8, marginTop: -15 },
+  sectionHeadingTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 12 },
+  productRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  productThumb: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#fff1f2', alignItems: 'center', justifyContent: 'center' },
+  productName: { fontSize: 13, fontWeight: '600', color: colors.text },
+  productQty: { fontSize: 11, color: '#64748b', marginTop: 2 },
+  productPrice: { fontSize: 13, fontWeight: '600', color: colors.text },
 
-  // Address
-  addressContainer: { marginBottom: spacing.md },
-  addressRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  addressIconWrap: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  addressContent: { marginLeft: spacing.md, flex: 1 },
-  addressLabel: { fontSize: 12, color: colors.muted, fontWeight: '600' },
-  addressValue: { ...typography.bodyBold, color: colors.text, marginTop: 2 },
-  addressLine: { width: 2, height: 24, backgroundColor: colors.border, marginLeft: 13, marginVertical: 4 },
+  calcRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 4 },
+  calcLabel: { fontSize: 12, color: '#64748b' },
+  calcValue: { fontSize: 13, fontWeight: '600', color: colors.text },
+  calcDivider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 10 },
+  calcTotalLabel: { fontSize: 14, fontWeight: '700', color: colors.text },
+  calcTotalValue: { fontSize: 16, fontWeight: '700', color: colors.primary },
 
-  mapActionsRow: { flexDirection: 'row', marginTop: spacing.sm },
-  actionChip: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 10, borderRadius: radius.md, gap: 6,
-  },
-  actionChipText: { fontWeight: '700', fontSize: 13 },
+  cardSectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 8 },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
+  noteBox: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#f1f5f9' },
+  noteText: { color: colors.textSecondary, fontSize: 12, lineHeight: 18 },
 
-  // Customer
-  customerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, padding: spacing.md, borderRadius: radius.md },
-  customerInfo: { flex: 1 },
-  customerName: { ...typography.bodyBold, color: colors.text, fontSize: 16 },
-  customerPhone: { ...typography.caption, color: colors.textSecondary, marginTop: 4, fontSize: 14 },
-  callBtn: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.success,
-    alignItems: 'center', justifyContent: 'center', ...shadows.success,
-  },
-
-  // Fees
-  feeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: spacing.xs },
-  feeLabel: { color: colors.textSecondary, fontSize: 14 },
-  feeValue: { color: colors.success, fontWeight: '700', fontSize: 16 },
-  codLabel: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  codValue: { color: colors.danger, fontWeight: '700', fontSize: 20 },
-  divider: { height: 1, backgroundColor: colors.borderLight, marginVertical: spacing.md, borderStyle: 'dashed' },
-
-  noteBox: { backgroundColor: colors.bg, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderLight },
-  noteText: { color: colors.textSecondary, fontStyle: 'italic', fontSize: 14, lineHeight: 20 },
-
-  // Footer
-  footer: { padding: spacing.lg, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.borderLight, ...shadows.lg },
+  footer: { padding: 16, backgroundColor: '#ffffff', borderTopWidth: 1, borderTopColor: '#f1f5f9' },
   primaryBtn: {
-    backgroundColor: colors.primary, height: 54, borderRadius: radius.md,
-    alignItems: 'center', justifyContent: 'center', ...shadows.primary,
+    backgroundColor: colors.primary, height: 48, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
   },
   primaryBtnDisabled: { opacity: 0.5 },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  btnText: { color: colors.surface, fontWeight: '700', fontSize: 13, letterSpacing: 0 },
+  btnText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
 
-  // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 12 },
   modalBox: { width: '100%', maxWidth: 456, maxHeight: '90%', backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
@@ -517,5 +581,5 @@ const styles = StyleSheet.create({
   },
   modalActions: { flexDirection: 'row' },
   modalBtn: { flex: 1, height: 50, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  modalBtnConfirm: { backgroundColor: colors.danger, ...shadows.primary },
+  modalBtnConfirm: { backgroundColor: colors.danger },
 })

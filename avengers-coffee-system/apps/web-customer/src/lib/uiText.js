@@ -10,7 +10,7 @@ export function uiText(source,values={}) {
  if(typeof source!=='string')return source;
  const english=(i18n.resolvedLanguage||i18n.language||'vi').startsWith('en');
  let result=english ? translations.get(normalize(source)) || source : source;
- if(english && source.trim()===source.trim().toUpperCase())result=result.toUpperCase();
+ if(result.trim().length > 7 && result.trim() === result.trim().toUpperCase() && /[A-ZÀ-Ỹ]/.test(result)) { const value=result.trim(); result=value[0]+value.slice(1).toLocaleLowerCase(english ? 'en' : 'vi'); }
  if(english && result!==source) result=(source.match(/^\s*/)?.[0]||'')+result+(source.match(/\s*$/)?.[0]||'');
  return result.replace(/\{\{(\w+)\}\}/g,(_,key)=>String(values[key]??''));
 }

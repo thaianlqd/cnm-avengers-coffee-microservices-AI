@@ -1,5 +1,5 @@
 import { money, number } from "../../components/console/chartModel";
-import { Store, Package, Wallet, CircleAlert } from "lucide-react";
+import { Store, Package, Wallet, CircleAlert } from '../../components/console/WorkspaceIcons';
 import {
   Chart,
   Metric,

@@ -1,3 +1,4 @@
+import { verifyShipperPassword } from './shipper-auth';
 import { ShipperService } from './shipper.service';
 describe('Store-owned shipper management', () => {
   let service:ShipperService, repo:any;
@@ -11,7 +12,7 @@ describe('Store-owned shipper management', () => {
   });
   test('new account persists the entered password and stays unavailable until explicitly ready', async () => {
     const result:any = await service.createShipper({username:'new',full_name:'New',password:'new-secret',branch_code:'d9',vehicle_type:'MOTORBIKE'});
-    expect(result.password).toBe('new-secret'); expect(result.branch_code).toBe('D9'); expect(result.status).toBe('INACTIVE');
+    expect(result.password).not.toBe('new-secret'); expect(verifyShipperPassword('new-secret', result.password)).toBe(true); expect(result.branch_code).toBe('D9'); expect(result.status).toBe('INACTIVE');
   });
   test.each(['KSK_1','missing',''])('rejects kiosk or invalid branch %s before save', async branch_code => {
     await expect(service.createShipper({username:'new',password:'new-secret',branch_code})).rejects.toThrow();

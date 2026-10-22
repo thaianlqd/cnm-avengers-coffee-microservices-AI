@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react'
-import { ChevronLeft, ChevronRight, Calendar, User, Clock, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, User, Clock, CheckCircle2, AlertTriangle, ShieldCheck } from '../../../components/console/WorkspaceIcons'
 import { getAttendanceInsight, getAttendanceToneClass, getMonday, toDateOnlyLocal } from '../../workforce/attendance'
 
 const DAY_LABELS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật']
@@ -54,7 +54,7 @@ export function WorkforceCalendar({
     <section style={{
       background: '#ffffff',
       borderRadius: '16px',
-      border: '1px solid #e2e8f0',
+      border: '1px solid #e2e4df',
       padding: '1.25rem',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
       marginBottom: '1.25rem'
@@ -68,13 +68,13 @@ export function WorkforceCalendar({
         gap: '0.85rem',
         marginBottom: '1.25rem',
         paddingBottom: '0.85rem',
-        borderBottom: '1px solid #f1f5f9'
+        borderBottom: '1px solid #f4f5f2'
       }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <Calendar size={20} color="#3b82f6" /> Lịch làm việc theo tuần
           </h3>
-          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>
+          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#69736a', fontWeight: '600' }}>
             Thời gian: <strong>{formatWeekRange(weekStart)}</strong>
           </p>
         </div>
@@ -89,9 +89,9 @@ export function WorkforceCalendar({
               gap: '0.25rem',
               padding: '0.45rem 0.8rem',
               borderRadius: '8px',
-              border: '1px solid #cbd5e1',
+              border: '1px solid #ccd3c7',
               background: '#ffffff',
-              color: '#334155',
+              color: '#414743',
               fontSize: '0.825rem',
               fontWeight: '600',
               cursor: 'pointer'
@@ -129,9 +129,9 @@ export function WorkforceCalendar({
               gap: '0.25rem',
               padding: '0.45rem 0.8rem',
               borderRadius: '8px',
-              border: '1px solid #cbd5e1',
+              border: '1px solid #ccd3c7',
               background: '#ffffff',
-              color: '#334155',
+              color: '#414743',
               fontSize: '0.825rem',
               fontWeight: '600',
               cursor: 'pointer'
@@ -147,18 +147,18 @@ export function WorkforceCalendar({
         display: 'grid',
         gridTemplateColumns: '110px repeat(7, minmax(130px, 1fr))',
         gap: '1px',
-        background: '#e2e8f0',
+        background: "#f4f5f2",
         borderRadius: '12px',
         overflow: 'hidden',
-        border: '1px solid #e2e8f0'
+        border: '1px solid #e2e4df'
       }}>
         {/* Header corner */}
         <div style={{
-          background: '#f8fafc',
+          background: '#f8f9f6',
           padding: '0.75rem',
           fontSize: '0.825rem',
           fontWeight: '700',
-          color: '#475569',
+          color: '#596255',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'
@@ -173,17 +173,17 @@ export function WorkforceCalendar({
             <div
               key={toDateOnlyLocal(day)}
               style={{
-                background: isToday ? '#eff6ff' : '#f8fafc',
+                background: isToday ? "#f4f5f2" : '#f8f9f6',
                 padding: '0.75rem 0.5rem',
                 textAlign: 'center',
                 borderBottom: '2px solid',
                 borderColor: isToday ? '#3b82f6' : 'transparent'
               }}
             >
-              <strong style={{ display: 'block', fontSize: '0.85rem', color: isToday ? '#1d4ed8' : '#1e293b' }}>
+              <strong style={{ display: 'block', fontSize: '0.85rem', color: isToday ? '#1d4ed8' : '#30382e' }}>
                 {DAY_LABELS[index]}
               </strong>
-              <span style={{ fontSize: '0.75rem', color: isToday ? '#2563eb' : '#64748b', fontWeight: '600' }}>
+              <span style={{ fontSize: '0.75rem', color: isToday ? '#2563eb' : '#69736a', fontWeight: '600' }}>
                 {formatDayHeader(day)}
               </span>
             </div>
@@ -201,10 +201,10 @@ export function WorkforceCalendar({
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              borderRight: '1px solid #e2e8f0'
+              borderRight: '1px solid #e2e4df'
             }}>
-              <strong style={{ fontSize: '0.85rem', color: '#0f172a' }}>{SLOT_LABEL[slot]}</strong>
-              <span style={{ fontSize: '0.7rem', color: '#64748b', textAlign: 'center', marginTop: '0.15rem' }}>
+              <strong style={{ fontSize: '0.85rem', color: '#252927' }}>{SLOT_LABEL[slot]}</strong>
+              <span style={{ fontSize: '0.7rem', color: '#69736a', textAlign: 'center', marginTop: '0.15rem' }}>
                 {slot === 'SANG' ? '07:00 - 12:00' : slot === 'CHIEU' ? '12:00 - 17:00' : '17:00 - 22:00'}
               </span>
             </div>
@@ -227,7 +227,7 @@ export function WorkforceCalendar({
                   }}
                 >
                   {cellItems.length === 0 ? (
-                    <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontStyle: 'italic', textAlign: 'center', margin: 'auto' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#ccd3c7', fontStyle: 'italic', textAlign: 'center', margin: 'auto' }}>
                       Trống
                     </span>
                   ) : (
@@ -245,8 +245,8 @@ export function WorkforceCalendar({
                             textAlign: 'left',
                             padding: '0.5rem 0.6rem',
                             borderRadius: '8px',
-                            border: isSelected ? '2px solid #3b82f6' : '1px solid #cbd5e1',
-                            background: isSelected ? '#eff6ff' : '#f8fafc',
+                            border: isSelected ? "2px solid var(--primary)" : '1px solid #ccd3c7',
+                            background: isSelected ? "#f4f5f2" : '#f8f9f6',
                             cursor: 'pointer',
                             display: 'flex',
                             flexDirection: 'column',
@@ -255,17 +255,17 @@ export function WorkforceCalendar({
                             transition: 'all 0.2s ease'
                           }}
                         >
-                          <strong style={{ fontSize: '0.8rem', color: '#0f172a', lineHeight: 1.2 }}>
+                          <strong style={{ fontSize: '0.8rem', color: '#252927', lineHeight: 1.2 }}>
                             {mode === 'manager' ? item.staff_name || item.staff_username : item.ten_ca}
                           </strong>
 
                           {mode === 'manager' && (
-                            <span style={{ fontSize: '0.7rem', color: '#475569' }}>
+                            <span style={{ fontSize: '0.7rem', color: '#596255' }}>
                               {item.staff_username} • {roleLabel(item)}
                             </span>
                           )}
 
-                          <span style={{ fontSize: '0.725rem', color: '#64748b', fontWeight: '500' }}>
+                          <span style={{ fontSize: '0.725rem', color: '#69736a', fontWeight: '500' }}>
                             {item.gio_bat_dau} - {item.gio_ket_thuc}
                           </span>
 
@@ -274,7 +274,7 @@ export function WorkforceCalendar({
                             fontWeight: '700',
                             padding: '0.1rem 0.4rem',
                             borderRadius: '4px',
-                            background: insight.isLate || insight.leftEarly ? '#fef3c7' : '#dbeafe',
+                            background: insight.isLate || insight.leftEarly ? "#f4f5f2" : "#f4f5f2",
                             color: insight.isLate || insight.leftEarly ? '#b45309' : '#1d4ed8',
                             width: 'fit-content'
                           }}>

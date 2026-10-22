@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MagnifyingGlassIcon, ChevronDownIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ChevronDownIcon, ArrowRightIcon } from '../../components/common/icons';
 
 const FAQ = [
   { id: 'points', category: 'member', vi: ['Làm thế nào để đổi quà hoặc voucher từ điểm thưởng?', 'Mở mục Hội viên hoặc Vòng quay may mắn trong trang cá nhân để xem điểm khả dụng và các phần quà. Voucher đã nhận được lưu trong kho ưu đãi của bạn.'], en: ['How can I redeem points for rewards or vouchers?', 'Open Membership or Lucky Wheel from your account to see available points and rewards. Your received vouchers are saved in your offers.'] },
@@ -21,7 +21,7 @@ export default function Support({ onNavigate }) {
   return <div className="support-page">
     <section className="support-hero">
       <div className="support-hero-copy">
-        <p className="editorial-eyebrow">AVENGERS COFFEE / {copy('HỖ TRỢ', 'SUPPORT')}</p>
+        <p className="editorial-eyebrow">Avengers coffee / {copy('HỖ TRỢ', 'SUPPORT')}</p>
         <h1>{copy('Bạn cần hỗ trợ gì?', 'How can we help?')}</h1>
         <p>{copy('Tìm câu trả lời hoặc trò chuyện với đội ngũ của chúng tôi.', 'Find an answer or talk to our team.')}</p>
         <label className="support-search"><MagnifyingGlassIcon />

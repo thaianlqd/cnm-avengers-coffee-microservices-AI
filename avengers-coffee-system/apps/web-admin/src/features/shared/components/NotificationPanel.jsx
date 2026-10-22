@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import { Bell, Check, CheckCheck, ChevronLeft, ChevronRight, X, RefreshCw } from 'lucide-react'
+import { Bell, Check, CheckCheck, ChevronLeft, ChevronRight, X, RefreshCw } from '../../../components/console/WorkspaceIcons'
 export default function NotificationPanel({ anchorRef, id, state, pageItems, unreadCount, markingAll, markingId, markAllRead, markOneRead, onRetry, page, totalPages, setPage, formatText, formatTime, onClose }) {
   const panel = useRef(null)
   useLayoutEffect(() => {

@@ -22,6 +22,8 @@ class GlobalExceptionFilter implements ExceptionFilter {
       new Date().toISOString(),
       exception instanceof Error ? exception.name : 'Error',
       status,
+      (exception as any)?.message,
+      (exception as any)?.stack,
     );
     if (exception instanceof HttpException) {
       const detail = exception.getResponse();
@@ -44,6 +46,9 @@ async function bootstrap() {
       app.useWebSocketAdapter(socketAdapter);
     }
     app.enableCors();
+    const express = require('express');
+    app.use(express.json({ limit: '50mb' }));
+    app.use(express.urlencoded({ extended: true, limit: '50mb' }));
     app.useGlobalFilters(new GlobalExceptionFilter());
 
     const port = Number(process.env.PORT ?? 3005);

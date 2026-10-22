@@ -3,7 +3,7 @@ import React from 'react';
 
 export const SupportButtons = ({ onNavigate }) => (
   <section className="py-16 bg-white text-center px-6">
-    <h2 className="text-[22px] font-black uppercase tracking-wide text-[#1a1a1a] mb-10">{ui("Hỗ Trợ Thẻ Avengers Coffee")}</h2>
+    <h2 className="text-[22px] font-semibold  tracking-wide text-[#1a1a1a] mb-10">{ui("Hỗ Trợ Thẻ Avengers Coffee")}</h2>
     <div className="flex flex-wrap gap-4 justify-center">
       {[
         { id: 've-the', label: 'Về Thẻ Avengers Coffee' },
