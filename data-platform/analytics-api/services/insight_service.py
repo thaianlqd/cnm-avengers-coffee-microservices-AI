@@ -220,7 +220,9 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                         "ranking",
                         "leader",
                         {"value": v, "entity": entity},
-                        (f"{entity} thấp nhất trong {ranking_label(a.plan.ranking)}{suffix}: {fmt(v)} {unit} theo {label.lower()}."
+                        (f"{batch[0]['rank_tie_count']} đối tượng đồng hạng tại {fmt(v)} {unit} theo {label.lower()}; thứ tự mã không chứng minh vượt trội."
+                         if a.plan.ranking and getattr(a.plan.ranking,'tie_census',False) and batch[0].get('rank_tie_count',1)>1 else
+                         f"{entity} thấp nhất trong {ranking_label(a.plan.ranking)}{suffix}: {fmt(v)} {unit} theo {label.lower()}."
                          if a.plan.ranking and a.plan.ranking.direction == 'ASC' else
                          f"{entity} đứng đầu xếp hạng{suffix}: {fmt(v)} {unit} theo {label.lower()}."),
                         partition,
@@ -228,6 +230,7 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                     if len(values) >= 2:
                         gap = abs(values[0] - values[1])
                         relative = gap / abs(values[1]) * 100 if values[1] else None
+                        gap_unit='điểm %' if unit=='%' and getattr(a.plan.ranking,'tie_census',False) else unit
                         add(
                             a,
                             metric,
@@ -238,8 +241,9 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                                 "relative_gap_pct": relative,
                                 "top1": values[0],
                                 "top2": values[1],
+                                **({'gap_unit':gap_unit} if gap_unit!=unit else {}),
                             },
-                            f"Chênh lệch hạng 1 và hạng 2{suffix} là {fmt(gap)} {unit}"
+                            f"Chênh lệch hạng 1 và hạng 2{suffix} là {fmt(gap)} {gap_unit}"
                             + (
                                 f" ({fmt(relative)}% so với hạng 2)."
                                 if relative is not None

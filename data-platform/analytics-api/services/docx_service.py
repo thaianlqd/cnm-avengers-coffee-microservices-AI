@@ -142,6 +142,8 @@ def _clean_val(val: Any, fallback: Any = None, card: Any = None) -> str:
         return _clean_val(fallback) if fallback is not None else "—"
     try:
         f = float(s.replace(",", ""))
+        if isinstance(card, dict) and card.get('unit') in {'%', 'điểm %'}:
+            return f"{f:,.2f}".rstrip('0').rstrip('.')
         if f.is_integer() and abs(f) >= 100:
             return f"{int(f):,}"
     except (ValueError, TypeError):
@@ -779,6 +781,21 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
             }.get(chart.get("chart_type", ""), "Biểu đồ trực quan")
 
             r_ch_t = p_ch.add_run(f"Biểu đồ {c_idx}: {chart.get('title')} — {c_type_label}")
+            if chart.get('view_ref') and chart.get('caption'):
+                caption = doc.add_paragraph(str(chart['caption']) + ' · Chế độ riêng của biểu đồ; KPI và kết luận giữ phạm vi báo cáo.')
+                caption.paragraph_format.keep_with_next = True
+            if (chart.get('ranking_census') or {}).get('note'):
+                doc.add_paragraph(str(chart['ranking_census']['note']))
+            exposures=[r for r in chart.get('data',[]) if r.get('denominator') is not None]
+            if exposures:
+                doc.add_paragraph('Tử số / mẫu số; cùng tỷ lệ chưa chứng minh độ ổn định hoặc khác biệt thống kê.')
+                table=doc.add_table(rows=1,cols=2)
+                table.rows[0].cells[0].text='Đối tượng'
+                table.rows[0].cells[1].text='Tử số / mẫu số'
+                for row in exposures:
+                    cells=table.add_row().cells
+                    cells[0].text=str(row.get('label',''))
+                    cells[1].text=f"{row.get('numerator','—')} / {row['denominator']}"
             r_ch_t.font.name = "Calibri"
             r_ch_t.font.bold = True
             r_ch_t.font.size = Pt(10)
@@ -1041,6 +1058,12 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
             paragraph.paragraph_format.keep_with_next = True
     # Keep short finding/insight rows together across Word pages.
     for table in doc.tables:
+        if len(table.rows)>1:
+            header=table.rows[0]
+            header._tr.get_or_add_trPr().append(parse_xml(f'<w:tblHeader {nsdecls("w")}/>'))
+            for cell in header.cells:
+                for paragraph in cell.paragraphs:
+                    paragraph.paragraph_format.keep_with_next=True
         for row in table.rows:
             row._tr.get_or_add_trPr().append(parse_xml(f'<w:cantSplit {nsdecls("w")}/>'))
     # Output to in-memory bytes

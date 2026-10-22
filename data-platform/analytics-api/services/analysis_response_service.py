@@ -75,6 +75,15 @@ def restore_report_presentation(report, artifacts, catalog):
     restored=[]
     for chart in report.get('charts',[]):
         current=rebuilt.get(chart['id'])
+        if chart.get('view_modes'):
+            # A view-mode chart shows its default projection; chart_checks below re-derives every variant.
+            if current is None or current.get('query_id')!=chart.get('query_id'):
+                raise AnalysisError('quality_metadata','Stored chart no longer matches approved artifact rendering')
+            default=next((v for v in chart['view_modes'].get('variants',[]) if v.get('id')==chart.get('view_ref')),None)
+            if default is None:
+                raise AnalysisError('quality_metadata','Stored view mode is missing')
+            restored.append({**current,**chart,'data':default['payload'].get('data')})
+            continue
         if (current is None or current.get('query_id')!=chart.get('query_id') or
             current.get('chart_type')!=chart.get('chart_type') or current.get('metrics')!=chart.get('metrics')):
             raise AnalysisError('quality_metadata','Stored chart no longer matches approved artifact rendering')
@@ -86,7 +95,7 @@ def restore_report_presentation(report, artifacts, catalog):
         report.setdefault(key,value)
     report['charts']=restored
     from services.analysis_quality_service import chart_checks
-    if any(not check['valid'] for check in chart_checks(report['charts'],hydrated,evidence)):
+    if any(not check['valid'] for check in chart_checks(report['charts'],hydrated,evidence,view_catalog=catalog)):
         raise AnalysisError('quality_metadata','Restored chart does not match full artifact')
     bound_response(report, c)
     return report

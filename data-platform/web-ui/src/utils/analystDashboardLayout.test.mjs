@@ -2,6 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dashboardCharts, dashboardPrimaryCharts, dashboardHighlights, initialChartType, chartAccent, compositionData, trendComparison, dashboardFindings, chartExplanation, reportHeading } from './analystDashboardLayout.mjs';
 
+test('server pair KPI cards outrank supporting extrema and trend highlights', () => {
+  const pair=[{kind:'comparison_view',label:'A',value:300,unit:'VND'},
+    {kind:'comparison_view',label:'B',value:700,unit:'VND'},
+    {kind:'comparison_view',label:'Chênh lệch tuyệt đối',value:-400,unit:'VND'}];
+  const report={kpi_cards:pair,evidence:[{feature:'group_comparison',scope_ref:'supporting',metric:'revenue',unit:'VND',values:{largest_value:999999}}]};
+  assert.deepEqual(dashboardHighlights(report),pair);
+});
+
 test('certified whole-scope composition diversifies payment dashboards without changing groups, values or selection references',()=>{
   const data=[{label:'QR',value:30,entity_ref:{filters:{method:'qr'}}},{label:'Cash',value:70,entity_ref:{filters:{method:'cash'}}}];
   const chart={id:'methods',metric:'payments',scope_ref:'q',chart_type:'bar',selection:'complete',purpose:'Cơ cấu giao dịch',data};

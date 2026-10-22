@@ -11,6 +11,13 @@ from datetime import date
 from services.insight_service import trend_bucket_coverage, fact_reference
 
 CAUSAL_TERMS = ("do đó", "vì vậy", "nguyên nhân là", "dẫn đến", "gây ra", "bởi vì")
+# Version 2 (comparison workspace): multi-series facts name their series, member views state per-member
+# facts, ties are reported as ties and a single total is a total. Charts without ``insight_version`` (saved
+# before V2) are re-verified with the original wording.
+# V3 distinguishes changes in a percentage measure (percentage points) from
+# relative percent change, including a single time series. V1/V2 saved wording
+# remains reproducible under its recorded version.
+INSIGHT_VERSION = 3
 
 
 def _num(value, digits=1):
@@ -46,9 +53,29 @@ def _label(row, dims, catalog):
     named = [d for d in dims if not (d.endswith("_id") and len(dims) > 1)]  # identity codes are not business labels
     for d in named or dims:
         value = row.get(d)
+        if value is None:
+            parts.append("Chưa ghi nhận"); continue
         labels = catalog.registry["dimensions"].get(d, {}).get("value_labels", {})
         parts.append(str(labels.get(str(value), value)))
     return " / ".join(parts) or "Toàn phạm vi"
+
+
+def _period_text(value, granularity):
+    """Short bucket label by cadence (T01/2027, Q1/2027, 2027, tuần 04/01/2027, 10/01/2027)."""
+    text = str(value or "")[:10]
+    try:
+        d = date.fromisoformat(text)
+    except ValueError:
+        return text
+    if granularity == "month":
+        return f"tháng {d.month:02d}/{d.year}"
+    if granularity == "quarter":
+        return f"quý {(d.month - 1) // 3 + 1}/{d.year}"
+    if granularity == "year":
+        return f"năm {d.year}"
+    if granularity == "week":
+        return f"tuần bắt đầu {d.day:02d}/{d.month:02d}/{d.year}"
+    return f"ngày {d.day:02d}/{d.month:02d}/{d.year}"
 
 
 def _fact(text, value, unit, query_id, metric, key):
@@ -67,7 +94,9 @@ def _breaches(signal, value):
 def insight(chart, artifact, catalog, reference=None, mission_id=None):
     """Insight block for one chart from its query's validated rows."""
     metric = chart.get("metric") or (chart.get("metrics") or [None])[0]
-    meta = catalog.registry["metrics"].get(metric, {})
+    # The executed artifact owns the measure definition it was computed with (a share projection is a
+    # percentage, not the catalog's VND measure); plain artifacts carry the catalog definition unchanged.
+    meta = (getattr(getattr(artifact, "grounded", None), "metrics", None) or {}).get(metric) or catalog.registry["metrics"].get(metric, {})
     unit, name = meta.get("unit", ""), meta.get("business_name", metric)
     qid = artifact.query.id
     dims = [d for d in artifact.plan.dimensions if d in catalog.registry["dimensions"]
@@ -96,6 +125,18 @@ def insight(chart, artifact, catalog, reference=None, mission_id=None):
                 "key_facts": [], "interpretation": "", "caveats": ["Phạm vi không có quan sát; giá trị thiếu không được coi là 0."],
                 "next_checks": [], "how_to_read": "", "source": {"query_id": qid, "metric": metric, "rows": 0}}
     kind = artifact.plan.kind
+    v2 = (chart.get("insight_version") or 1) >= 2
+    v3 = (chart.get("insight_version") or 1) >= 3
+    difference_unit = 'điểm %' if v3 and unit == '%' else unit
+    def difference_text(value):
+        return f"{_num(value)} điểm %" if v3 and unit == '%' else fmt(value, unit if unit != '%' else 'điểm %')
+    companions = {catalog.registry["dimensions"].get(d, {}).get("identity") for d in dims} - {None}
+    shown_dims = [d for d in dims if d not in companions] if v2 else dims  # labels/nouns; evidence keys keep every dim
+    granularity_text = artifact.plan.granularity or "month"
+    def when(row):
+        return _period_text(row.get("period"), granularity_text) if v2 else str(row.get("period"))[:10]
+    if v2 and chart.get("view_note"):
+        caveats.append(chart["view_note"])
     time_dims = [d for d in dims if d == "period"] or (["period"] if "period" in rows[0] else [])
     if chart.get("chart_type") == "scatter" and len(chart.get("metrics", [])) >= 2:
         mx, my = chart["metrics"][:2]
@@ -137,51 +178,146 @@ def insight(chart, artifact, catalog, reference=None, mission_id=None):
         complete = [r for r in lead if not flags.get(str(r.get("period")))]
         shows = f"Diễn biến {name.lower()} qua {len({str(r.get('period')) for r in series})} kỳ" + (
             f", chia theo {len(groups)} nhóm." if len(groups) > 1 else ".")
+        series_dims = [d for d in dims if d != "period"]
+        if v2 and len(groups) > 1:
+            # Every drawn series is a different population: name it; never let one line stand for the chart.
+            ranked = sorted(groups.items(), key=lambda kv: (-sum(x[metric] for x in kv[1]), kv[0]))
+            for key, members in ranked[:3]:
+                done = [r for r in members if not flags.get(str(r.get("period")))]
+                label = _label(members[0], series_dims, catalog)
+                if len(done) < 2:
+                    continue
+                first, last = done[0], done[-1]
+                change = last[metric] - first[metric]
+                pct = change / abs(first[metric]) * 100 if first[metric] else None
+                direction = "tăng" if change > 0 else "giảm" if change < 0 else "không đổi"
+                fact = _fact(f"{label}: từ {when(first)} đến kỳ đầy đủ gần nhất {when(last)} {direction} "
+                             f"{difference_text(abs(change))}" + (f" ({'+' if pct >= 0 else ''}{_num(pct)}%)" if pct is not None and unit != "%" else "") + ".",
+                             change, difference_unit, qid, metric, f"{key}@{str(last['period'])[:10]}")
+                fact["calc"] = {"kind": "change", "query_id": qid, "metric": metric, "group_key": key, "dims": series_dims,
+                                "first_bucket": str(first["period"])[:10], "last_bucket": str(last["period"])[:10],
+                                "direction": direction, "pct": None if pct is None else round(pct, 6)}
+                facts.append(fact)
+            if not facts:
+                caveats.append("Chưa nhóm nào có ít nhất hai kỳ đầy đủ để nêu xu hướng; xem từng điểm trên biểu đồ.")
+            directions = {f["calc"]["direction"] for f in facts if f.get("calc")}
+            group_prefix = (f"{len(facts)}/{len(groups)} nhóm có đủ kỳ so sánh đều" if v3 and len(facts) < len(groups) else "Các nhóm đều")
+            interpretation = (f"{group_prefix} {directions.pop()} giữa kỳ đầu và kỳ đầy đủ gần nhất." if len(directions) == 1
+                              else "Các nhóm biến động khác chiều; đọc từng đường riêng.") if directions else ""
+            caveats.append("Mỗi đường là một nhóm riêng; không cộng các đường của chỉ số tỷ lệ/trung bình.")
+            if len(groups) > 3:
+                caveats.append(f"Nhận định nêu 3/{len(groups)} nhóm lớn nhất; xem bảng dữ liệu cho các nhóm còn lại.")
+            complete = []
         if len(complete) >= 2:
             first, last = complete[0], complete[-1]
             change = last[metric] - first[metric]
             pct = change / abs(first[metric]) * 100 if first[metric] else None
             direction = "tăng" if change > 0 else "giảm" if change < 0 else "không đổi"
-            change_fact = _fact(f"Từ kỳ {str(first['period'])[:10]} đến kỳ đầy đủ gần nhất {str(last['period'])[:10]}: {direction} "
-                               f"{fmt(abs(change), unit)}" + (f" ({'+' if pct >= 0 else ''}{_num(pct)}%)" if pct is not None and unit != "%" else ""),
-                               change, unit, qid, metric, f"{lead_key}@{str(last['period'])[:10]}")
+            prefix = (_label(lead[0], series_dims, catalog) + ": ") if v2 and series_dims else ""
+            head = (f"{prefix}Từ {when(first)} đến kỳ đầy đủ gần nhất {when(last)}: {direction} " if v2 else
+                    f"Từ kỳ {str(first['period'])[:10]} đến kỳ đầy đủ gần nhất {str(last['period'])[:10]}: {direction} ")
+            change_fact = _fact(head + (difference_text(abs(change)) if v3 else fmt(abs(change), unit)) + (f" ({'+' if pct >= 0 else ''}{_num(pct)}%)" if pct is not None and unit != "%" else ""),
+                               change, difference_unit, qid, metric, f"{lead_key}@{str(last['period'])[:10]}")
             change_fact["calc"] = {"kind": "change", "query_id": qid, "metric": metric, "group_key": lead_key, "dims": [d for d in dims if d != "period"],
                                    "first_bucket": str(first["period"])[:10], "last_bucket": str(last["period"])[:10],
                                    "direction": direction, "pct": None if pct is None else round(pct, 6)}
             facts.append(change_fact)
             interpretation = f"{name} {direction} giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn."
-        peak = max(complete or lead, key=lambda r: r[metric])
-        facts.append(_fact(f"Kỳ cao nhất: {str(peak['period'])[:10]} với {fmt(peak[metric], unit)}.", peak[metric], unit, qid, metric,
-                           f"{lead_key}@{str(peak['period'])[:10]}"))
+        if not (v2 and len(groups) > 1):
+            peak = max(complete or lead, key=lambda r: r[metric])
+            values = [r[metric] for r in (complete or lead)]
+            if v2 and len(values) > 1 and max(values) == min(values):
+                facts.append(_fact(f"Mọi kỳ có cùng giá trị {fmt(peak[metric], unit)}; không có kỳ cao nhất riêng.", peak[metric], unit, qid, metric,
+                                   f"{lead_key}@{str(peak['period'])[:10]}"))
+            else:
+                prefix = (_label(lead[0], series_dims, catalog) + ": ") if v2 and series_dims else ""
+                facts.append(_fact(f"{prefix}Kỳ cao nhất: {when(peak)} với {fmt(peak[metric], unit)}.", peak[metric], unit, qid, metric,
+                                   f"{lead_key}@{str(peak['period'])[:10]}"))
         partial = [p for p, f in flags.items() if f]
         if partial:
             caveats.append(f"{len(partial)} kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ.")
         if len(groups) > 1:
             caveats.append("Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.")
+    elif v2 and not dims and len(rows) == 1:
+        shows = f"Tổng {name.lower()} của phạm vi đang xem."
+        facts.append(_fact(f"Tổng {name.lower()}: {fmt(rows[0][metric], unit)}.", rows[0][metric], unit, qid, metric, "all"))
+    elif v2 and chart.get("member_axis") in shown_dims and len(shown_dims) == 2:
+        # Member comparison over a breakdown: one fact per member, shares inside that member (never across members).
+        axis = chart["member_axis"]
+        other = [d for d in shown_dims if d != axis]
+        members = {}
+        for r in rows:
+            members.setdefault(str(r.get(axis)), []).append(r)
+        shows = f"{name} theo {catalog.registry['dimensions'][other[0]]['business_name'].lower()}, tách riêng {len(members)} đối tượng."
+        share_ok = meta.get("additive") and all(r[metric] >= 0 for r in rows)
+        for key, group in sorted(members.items(), key=lambda kv: (-sum(x[metric] for x in kv[1]), kv[0]))[:3]:
+            ordered = sorted(group, key=lambda r: (-r[metric], _key(r, dims)))
+            top = ordered[0]
+            ties = [r for r in ordered if r[metric] == top[metric]]
+            member_total = sum(r[metric] for r in group)
+            pct = top[metric] / member_total * 100 if share_ok and member_total else None
+            who = _label(top, [axis], catalog)
+            if len(ties) > 1:
+                text = (f"{who}: {len(ties)} nhóm đồng hạng cao nhất ({', '.join(_label(r, other, catalog) for r in ties[:4])}) "
+                        f"cùng {fmt(top[metric], unit)}.")
+            else:
+                text = (f"{who}: cao nhất là {_label(top, other, catalog)} với {fmt(top[metric], unit)}"
+                        + (f" ({_num(pct)}% của {who})" if pct is not None else "") + ".")
+            fact = _fact(text, top[metric], unit, qid, metric, _key(top, dims))
+            if pct is not None:
+                fact["calc"] = {"kind": "member_share", "query_id": qid, "metric": metric, "dims": list(dims), "axis": axis,
+                                "key": _key(top, dims), "member": key, "pct": round(pct, 6)}
+            facts.append(fact)
+        caveats.append("Tỷ trọng trong nhận định tính trên tổng của từng đối tượng, không trên tổng chung.")
+        if meta.get("aggregation_semantics") in {"ratio", "average"}:
+            caveats.append("Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.")
     else:
-        ordered = sorted(rows, key=lambda r: -r[metric])
+        ordered = sorted(rows, key=lambda r: (-r[metric], _key(r, dims)) if v2 else -r[metric])
         top, bottom = ordered[0], ordered[-1]
         total = sum(r[metric] for r in ordered) if meta.get("additive") else None
-        noun = " / ".join(catalog.registry["dimensions"][d]["business_name"].lower() for d in dims) or "nhóm"
-        shows = f"{name} của {len(ordered)} {noun}" + (", xếp từ cao đến thấp." if len(ordered) > 1 else ".")
-        facts.append(_fact(f"Cao nhất: {_label(top, dims, catalog)} với {fmt(top[metric], unit)}"
-                           + (f" ({_num(top[metric] / total * 100)}% tổng)" if total else "") + ".",
-                           top[metric], unit, qid, metric, _key(top, dims)))
-        if len(ordered) >= 2:
+        noun = " / ".join(catalog.registry["dimensions"][d]["business_name"].lower() for d in shown_dims) or "nhóm"
+        shows = f"{name} của {len(ordered)} {noun}" + (", xếp từ cao đến thấp." if not v3 and len(ordered) > 1 else ".")
+        ties = [r for r in ordered if r[metric] == top[metric]] if v2 else [top]
+        if v2 and len(ordered) == 1:
+            # One observed group is not a ranking: no "highest / 100%" claim.
+            facts.append(_fact(f"Chỉ có 1 {noun} có dữ liệu: {_label(top, dims, catalog)} với {fmt(top[metric], unit)}.",
+                               top[metric], unit, qid, metric, _key(top, dims)))
+            ties = []
+        if len(ties) > 1:
+            # Equal values are a tie, never a winner chosen by sort order (I4: UUID tiebreak ≠ superiority).
+            everyone = len(ties) == len(ordered)
+            facts.append({"text": ((f"Tất cả {len(ordered)} {noun} bằng nhau ở {fmt(top[metric], unit)}; không có nhóm cao nhất riêng."
+                                   if everyone else f"{len(ties)}/{len(ordered)} {noun} đồng hạng cao nhất với {fmt(top[metric], unit)}"
+                                   + f" ({', '.join(_label(r, dims, catalog) for r in ties[:4])}{'…' if len(ties) > 4 else ''}).")),
+                          "value": top[metric], "unit": unit, "evidence_ref": f"{qid}:{metric}:tie_group",
+                          "calc": {"kind": "tie_group", "query_id": qid, "metric": metric, "value": top[metric], "count": len(ties), "total": len(ordered)}})
+            if everyone:
+                interpretation = "Không có chênh lệch giữa các nhóm trong phạm vi đang xem."
+        if len(ties) == 1 and len(ordered) > 1 or not v2 and len(ties) == 1:
+            facts.append(_fact(f"Cao nhất: {_label(top, dims, catalog)} với {fmt(top[metric], unit)}"
+                               + (f" ({_num(top[metric] / total * 100)}% tổng)" if total else "") + ".",
+                               top[metric], unit, qid, metric, _key(top, dims)))
+        if len(ordered) >= 2 and len(ties) < len(ordered):
             second = ordered[1]
             gap = top[metric] - second[metric]
             if len(ordered) == 2:
                 pct = gap / abs(second[metric]) * 100 if second[metric] else None
-                gap_fact = _fact(f"{_label(top, dims, catalog)} cao hơn {_label(second, dims, catalog)} {fmt(gap, unit if unit != '%' else 'điểm %')}"
+                gap_fact = _fact(f"{_label(top, dims, catalog)} cao hơn {_label(second, dims, catalog)} {difference_text(gap)}"
                                    + (f" ({'+' if pct >= 0 else ''}{_num(pct)}%)" if pct is not None and unit != "%" else "") + " trong phạm vi đã chọn.",
-                                   gap, unit, qid, metric, f"{_key(top, dims)}-{_key(second, dims)}")
+                                   gap, difference_unit, qid, metric, f"{_key(top, dims)}-{_key(second, dims)}")
                 gap_fact["calc"] = {"kind": "gap", "query_id": qid, "metric": metric, "dims": list(dims),
                                     "a": _key(top, dims), "b": _key(second, dims), "pct": None if pct is None or unit == "%" else round(pct, 6)}
                 facts.append(gap_fact)
             else:
-                facts.append(_fact(f"Thấp nhất: {_label(bottom, dims, catalog)} với {fmt(bottom[metric], unit)}.",
-                                   bottom[metric], unit, qid, metric, _key(bottom, dims)))
-        if total and len(ordered) > 2:
+                lows = [r for r in ordered if r[metric] == bottom[metric]] if v2 else [bottom]
+                if len(lows) > 1:
+                    facts.append({"text": f"{len(lows)}/{len(ordered)} {noun} đồng hạng thấp nhất với {fmt(bottom[metric], unit)}.",
+                                  "value": bottom[metric], "unit": unit, "evidence_ref": f"{qid}:{metric}:tie_group_low",
+                                  "calc": {"kind": "tie_group", "query_id": qid, "metric": metric, "value": bottom[metric], "count": len(lows), "total": len(ordered)}})
+                else:
+                    facts.append(_fact(f"Thấp nhất: {_label(bottom, dims, catalog)} với {fmt(bottom[metric], unit)}.",
+                                       bottom[metric], unit, qid, metric, _key(bottom, dims)))
+        if total and len(ordered) > (3 if v3 else 2):
             share = sum(r[metric] for r in ordered[:3]) / total * 100
             interpretation = f"Ba nhóm dẫn đầu chiếm {_num(share)}% tổng {name.lower()} của phạm vi."
         elif len(ordered) > 1:
@@ -211,12 +347,22 @@ def insight(chart, artifact, catalog, reference=None, mission_id=None):
     if chart.get("scope_note"):
         # I01/G06: the population of this view (ranked cohort vs. whole-scope benchmark) leads the caveats.
         caveats.insert(0, chart["scope_note"])
+    read_by_type = {"line": "Trục ngang là thời gian; điểm mờ/dấu * là kỳ chưa đủ ngày.",
+                   "area": "Trục ngang là thời gian; điểm mờ/dấu * là kỳ chưa đủ ngày.",
+                   "donut": "Mỗi phần là tỷ trọng của nhóm trong tổng phạm vi.",
+                   "scatter": "Mỗi điểm là một đơn vị quan sát; trục ngang và dọc là hai chỉ số."}
+    if v3:
+        read_by_type.update(
+            multi_line="Mỗi đường có tên trong chú giải là một nhóm; so sánh cùng kỳ. Ẩn đường chỉ đổi hình vẽ, không đổi số liệu hay nhận định.",
+            multiline="Mỗi đường có tên trong chú giải là một nhóm; so sánh cùng kỳ. Ẩn đường chỉ đổi hình vẽ, không đổi số liệu hay nhận định.",
+            heatmap="Mỗi ô giao giữa nhãn hàng và cột là một giá trị; đọc đơn vị và thang màu, bấm hoặc rê chuột để xem chi tiết.",
+            grouped_bar="Các cột cùng nhóm đặt cạnh nhau để so sánh; màu và chú giải xác định đối tượng, nhãn nêu đơn vị.",
+            stacked_100="Mỗi cột là 100% của kỳ/nhóm đang xem; màu là tỷ trọng thành phần, không phải doanh thu tuyệt đối.",
+            kpi="Giá trị tổng hợp của phạm vi đang xem; đọc chú thích chế độ và đơn vị.",
+            table="Đọc từng hàng theo nhãn nhóm, cột chỉ số và đơn vị; ô thiếu không phải số 0.")
     return {"chart_id": chart.get("id"), "why_relevant": why, "what_it_shows": shows, "key_facts": facts[:4],
             "interpretation": interpretation, "caveats": list(dict.fromkeys(caveats)), "next_checks": next_checks,
-            "how_to_read": {"line": "Trục ngang là thời gian; điểm mờ/dấu * là kỳ chưa đủ ngày.",
-                            "area": "Trục ngang là thời gian; điểm mờ/dấu * là kỳ chưa đủ ngày.",
-                            "donut": "Mỗi phần là tỷ trọng của nhóm trong tổng phạm vi.",
-                            "scatter": "Mỗi điểm là một đơn vị quan sát; trục ngang và dọc là hai chỉ số."}.get(
+            "how_to_read": read_by_type.get(
                 chart.get("chart_type"), "Thanh dài hơn là giá trị lớn hơn; nhãn hiển thị đơn vị của chỉ số."),
             "definition": meta.get("business_definition") or meta.get("description"),
             "source": {"query_id": qid, "metric": metric, "rows": len(rows)},
@@ -226,6 +372,7 @@ def insight(chart, artifact, catalog, reference=None, mission_id=None):
 def chart_insights(charts, artifacts, catalog, reference=None, mission_id=None):
     out = []
     for chart in charts:
+        chart["insight_version"] = INSIGHT_VERSION
         ref = (chart.get("scope_refs") or [chart.get("scope_ref")])[0]
         artifact = artifacts.get(ref)
         if artifact:
@@ -296,6 +443,18 @@ def recompute(calc, artifacts):
         direction = "tăng" if change > 0 else "giảm" if change < 0 else "không đổi"
         return {"value": change, "direction": direction,
                 "pct": None if calc.get("pct") is None or not first[metric] else round(change / abs(first[metric]) * 100, 6)}
+    if kind == "tie_group":
+        values = [r[metric] for r in rows if isinstance(r.get(metric), (int, float))]
+        # The fact states the tied value (metric unit); the tie size and population are re-counted from the rows.
+        count = sum(1 for v in values if v == calc["value"])
+        return {"value": calc["value"] if count else None, "count": count, "total": len(values)}
+    if kind == "member_share":
+        row = _row(rows, dims, calc["key"])
+        group = [r for r in rows if str(r.get(calc["axis"])) == calc["member"] and isinstance(r.get(metric), (int, float))]
+        total = sum(r[metric] for r in group)
+        if not row or not isinstance(row.get(metric), (int, float)) or str(row.get(calc["axis"])) != calc["member"] or not total:
+            return None
+        return {"value": row[metric], "pct": round(row[metric] / total * 100, 6)}
     if kind == "threshold_breaches":
         op, t = calc["operator"], calc["threshold"]
         values = [r[metric] for r in rows if isinstance(r.get(metric), (int, float))]
@@ -341,8 +500,10 @@ def verify_insights(insights, artifacts, tolerance=1e-6, catalog=None):
                     ok = _num_ok(calc["pct"], got.get("pct"), 1e-4)
                 if ok and calc.get("kind") in {"pearson", "pair_pearson"}:
                     ok = got["n"] == calc.get("n")
-                if ok and calc.get("kind") == "threshold_breaches":
+                if ok and calc.get("kind") in {"threshold_breaches", "tie_group"}:
                     ok = got["total"] == calc.get("total")
+                if ok and calc.get("kind") == "tie_group":
+                    ok = got["count"] == calc.get("count")
                 if ok:
                     matched += 1
                 else:
@@ -380,6 +541,14 @@ def short_answer(charts, limit=3):
     return out[:limit]
 
 
+def gap_label(a, b):
+    return f"Chênh lệch: {a} − {b}"
+
+
+def pct_gap_label(a, b):
+    return f"{a} so với {b} (%)"
+
+
 def compare_cards(charts, artifacts, catalog, mission_id, evidence=None):
     """Compare mission KPI strip (§15): A, B, absolute gap, percentage gap — from verified rows only."""
     if mission_id != "compare":
@@ -399,10 +568,11 @@ def compare_cards(charts, artifacts, catalog, mission_id, evidence=None):
         cards = [{"label": _label(r, dims, catalog), "value": r[metric], "unit": unit, "metric": metric, "scope_ref": qid,
                   "evidence_ref": f"{qid}:{metric}:{_key(r, dims)}"} for r in (a, b)]
         gap = a[metric] - b[metric]
-        cards.append({"label": "Chênh lệch tuyệt đối", "value": gap, "unit": "điểm %" if unit == "%" else unit, "metric": metric,
+        # Name the pair and the baseline (B.6.2): "−21,9%" without who-vs-whom is not an answer.
+        cards.append({"label": "Chênh lệch tuyệt đối", "sub_text": gap_label(cards[0]["label"], cards[1]["label"]), "value": gap, "unit": "điểm %" if unit == "%" else unit, "metric": metric,
                       "scope_ref": qid, "evidence_ref": f"{qid}:{metric}:{_key(a, dims)}-{_key(b, dims)}"})
         if unit != "%" and b[metric]:
-            cards.append({"label": "Chênh lệch %", "value": gap / abs(b[metric]) * 100, "unit": "%", "metric": metric,
+            cards.append({"label": "Chênh lệch %", "sub_text": pct_gap_label(cards[0]["label"], cards[1]["label"]), "value": gap / abs(b[metric]) * 100, "unit": "%", "metric": metric,
                           "scope_ref": qid, "evidence_ref": f"{qid}:{metric}:{_key(a, dims)}-{_key(b, dims)}"})
         if evidence is not None:
             fact = next((e for e in evidence if e['scope_ref'] == qid and e['metric'] == metric

@@ -12,6 +12,8 @@ import { KpiStrip } from '../workspace/KpiStrip';
 import { FollowUpChips } from '../workspace/FollowUpChips';
 import { ForecastPanel } from '../ForecastPanel';
 import { ChartInsight, ChartSource } from './ChartInsight';
+import { ChartViewControls } from './ChartViewControls';
+import { activeViewChart, defaultViewState, reportWithViewChoice } from '../../utils/chartViewModes.mjs';
 import { VerificationPanel } from './VerificationPanel';
 import { queueWorkspaceFilter, workspaceRevisionInput, workspaceRevisionController } from '../../utils/workspaceInteraction.mjs';
 
@@ -84,13 +86,17 @@ const WorkspaceFilters: React.FC<{report: any; onPublish: (report: any) => void;
 const ChartData: React.FC<{ chart: any }> = ({ chart }) => {
   const [open, setOpen] = useState(false);
   return <details className="text-xs text-slate-600" onToggle={e => setOpen(e.currentTarget.open)}><summary data-chart-data className="cursor-pointer">Xem dữ liệu</summary>
-    {open && <table className="mt-1 text-[11px]"><tbody>{chart.data.slice(0, 50).map((r: any, i: number) => <tr key={i}><td className="pr-3 py-0.5">{businessCategory(r.label)}</td><td className="text-right tabular-nums">{formatChartValue(r.value, chart.unit ? ` ${chart.unit}` : '')}</td></tr>)}</tbody></table>}
+    {open && <table className="mt-1 text-[11px]">{chart.series?.length > 0 && <thead><tr><th className="pr-3 text-left font-medium">{chart.x_label || ''}</th>{chart.series.map((s: any) => <th key={s.key} className="pr-3 text-right font-medium">{s.label}</th>)}</tr></thead>}<tbody>{chart.data.slice(0, 50).map((r: any, i: number) => <tr key={i}><td className="pr-3 py-0.5">{businessCategory(r.label)}</td>{chart.series?.length > 0 ? chart.series.map((s: any) => <td key={s.key} className="pr-3 text-right tabular-nums">{r[s.key] == null ? '—' : formatChartValue(r[s.key], chart.unit ? ` ${chart.unit}` : '')}</td>) : <td className="text-right tabular-nums">{formatChartValue(r.value, chart.unit ? ` ${chart.unit}` : '')}</td>}</tr>)}</tbody></table>}
   </details>;
 };
 
-const ChartCard: React.FC<{ chart: any; placement: ChartGridPlacement; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; definition?: string; onInspect?: (chart: any, row: any) => void; interaction?: any; onSelect?: (selection:any)=>void }> = ({ chart, placement, editing, onChartTypeChange, definition, onInspect, interaction, onSelect }) => {
+const ChartCard: React.FC<{ chart: any; placement: ChartGridPlacement; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; definition?: string; onInspect?: (chart: any, row: any) => void; interaction?: any; memberInteraction?: any; onViewChange?: (id: string, state: any) => void; onSelect?: (selection:any)=>void }> = ({ chart: reportChart, placement, editing, onChartTypeChange, definition, onInspect, interaction, memberInteraction, onViewChange, onSelect }) => {
+  // Local view state (Chỉ biểu đồ này): selects a server-verified variant; data, caption and insight switch together.
+  const [view, setView] = useState<any>(() => defaultViewState(reportChart.view_modes, reportChart.view_ref));
+  useEffect(() => setView(defaultViewState(reportChart.view_modes, reportChart.view_ref)), [reportChart.id, reportChart.view_ref, reportChart.view_modes?.default_variant]);
+  const chart = reportChart.view_modes ? activeViewChart(reportChart, view) : reportChart;
   const [type, setType] = useState(initialChartType(chart));
-  useEffect(() => setType(initialChartType(chart)), [chart.id, chart.chart_type, chart.query_id]);
+  useEffect(() => setType(initialChartType(chart)), [chart.id, chart.chart_type, chart.query_id, chart.view_ref]);
   const accent = chartAccent(chart);
   // Two-group comparison: deterministic difference from the verified chart rows.
   const difference = !chart.series && ['bar', 'horizontal_bar'].includes(type) && chart.data?.length === 2 && !['Top N', 'Bottom N'].includes(chart.selection) ? groupDifference(chart.data, 'label', 'value', chart.unit) : null;
@@ -113,6 +119,14 @@ const ChartCard: React.FC<{ chart: any; placement: ChartGridPlacement; editing?:
         </div>
       </details>
     </div>
+    {reportChart.view_modes && view && <ChartViewControls chart={reportChart} state={view} onChange={state => { setView(state); onViewChange?.(reportChart.id, state); }} disabled={editing}
+      onApplyReport={memberInteraction && onSelect ? (memberKey: string) => { const option = memberInteraction.options?.find((o: any) => o.selection?.values?.[0]?.value === memberKey); if (option) onSelect(option.selection); } : undefined} />}
+    {chart.ranking_census?.note && <p data-ranking-ties role="note" className="my-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">{chart.ranking_census.note}</p>}
+    {chart.data?.some((r: any) => r.denominator != null) && <details data-chart-exposure open={Boolean(chart.ranking_census)} className="my-2 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-600">
+      <summary className="cursor-pointer font-medium">Tử số / mẫu số theo từng đối tượng</summary>
+      <p className="mt-1">Cùng tỷ lệ có thể dựa trên số mẫu khác nhau. Tỷ lệ quan sát chưa chứng minh độ ổn định hoặc khác biệt thống kê.</p>
+      <div className="max-h-52 overflow-auto"><table className="mt-1 w-full"><thead><tr><th className="text-left">Đối tượng</th><th className="text-right">Giá trị</th><th className="text-right">Tử số / mẫu số</th></tr></thead><tbody>{chart.data.filter((r: any) => r.denominator != null).map((r: any, i: number) => <tr key={i}><td className="py-1 pr-3 break-all">{businessCategory(r.label)}</td><td className="text-right px-2 tabular-nums">{formatChartValue(r.value, chart.unit ? ` ${chart.unit}` : '')}</td><td className="text-right tabular-nums">{r.numerator == null ? '—' : formatChartValue(r.numerator)} / {formatChartValue(r.denominator)}</td></tr>)}</tbody></table></div>
+    </details>}
     <div data-chart-viewport className="dashboard-chart-viewport flex flex-col justify-center min-w-0"><div className="w-full"><AnalystChart chart={{ ...chart, chart_type: type, accent_color: accent }} onInspect={onInspect ? row => onInspect(chart, row) : undefined} /></div></div>
     <div data-chart-footer className="min-w-0"><div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-100 pt-2">
     {interaction && onSelect && <select aria-label={`Lọc nhóm từ ${conciseChartTitle(chart)}`} value="" disabled={editing || interaction.selection_behavior!=='population_filter'}
@@ -141,10 +155,10 @@ const ChartCard: React.FC<{ chart: any; placement: ChartGridPlacement; editing?:
   </article>;
 };
 
-export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean; dashboardLayout?: boolean; definitions?: Record<string, string>; onInspect?: (chart: any, row: any) => void; interactions?:any[]; onSelect?:(selection:any)=>void }> = ({ charts = [], onChartTypeChange, editing = false, compact = false, definitions = {}, onInspect, interactions, onSelect }) => {
+export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean; dashboardLayout?: boolean; definitions?: Record<string, string>; onInspect?: (chart: any, row: any) => void; interactions?:any[]; onViewChange?: (id: string, state: any) => void; onSelect?:(selection:any)=>void }> = ({ charts = [], onChartTypeChange, editing = false, compact = false, definitions = {}, onInspect, interactions, onViewChange, onSelect }) => {
   const [columns, setColumns] = useState(3);
   const renderGrid = (items: any[]) => <DashboardChartGrid charts={items} maxColumns={columns}>
-    {(chart, placement) => <ChartCard key={chart.id || placement.index} chart={chart} placement={placement} editing={editing} onChartTypeChange={onChartTypeChange} definition={definitions[chart.metric]} onInspect={onInspect} interaction={interactions?.find(c=>c.chart_id===chart.id)} onSelect={onSelect} />}
+    {(chart, placement) => <ChartCard key={chart.id || placement.index} chart={chart} placement={placement} editing={editing} onChartTypeChange={onChartTypeChange} definition={definitions[chart.metric]} onViewChange={onViewChange} onInspect={onInspect} interaction={interactions?.find(c=>c.chart_id===chart.id)} memberInteraction={chart.view_modes ? interactions?.find(c=>c.dimension_id===chart.view_modes.axis_dimension_id && c.selection_behavior==='population_filter') : undefined} onSelect={onSelect} />}
   </DashboardChartGrid>;
   return <div className="space-y-3" data-analyst-views>
     {charts.length > 1 && <nav aria-label="Bố cục biểu đồ" className="flex flex-wrap items-center justify-end gap-1 text-[11px] text-slate-500"><span className="mr-2">Bố cục</span>{[[3,'Tự động · 2–3 ô'],[2,'Hai ô mỗi hàng'],[1,'Toàn chiều rộng']].map(([value,label])=><button key={value} type="button" aria-pressed={columns===value} onClick={()=>setColumns(Number(value))} className={`rounded-lg border px-2.5 py-1.5 ${columns===value?'border-blue-200 bg-blue-50 text-blue-700':'border-slate-200 bg-white'}`}>{label}</button>)}</nav>}
@@ -242,6 +256,11 @@ export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChart
     {tab === 'report' && <div id="report-panel-report" role="tabpanel" aria-labelledby="report-tab-report" className="space-y-3">
     <KpiStrip cards={kpiStrip(highlights, report)} />
     <div data-report-notes className="flex flex-wrap gap-2">
+    {(report.comparison_frames || []).filter((f: any) => f.selection).map((f: any) => <details key={f.id} data-selection-receipt open className="rounded-xl border border-indigo-200 bg-indigo-50/40 px-3 py-2 text-xs">
+      <summary className="cursor-pointer font-medium text-indigo-900">Cách chọn nhóm: {f.selection.summary}</summary>
+      <p className="mt-1 text-slate-600">{f.selection.formula}. Mỗi nhóm cần ít nhất {f.selection.min_complete_buckets} kỳ đầy đủ; kỳ chưa đủ ngày không tính.{Object.keys(f.selection.excluded || {}).length ? ` Bị loại: ${Object.entries(f.selection.excluded).map(([k, v]) => `${v} (${({ missing_buckets: 'thiếu kỳ', insufficient_history: 'lịch sử ngắn', non_positive_mean: 'trung bình ≤ 0', non_positive_baseline: 'kỳ đầu ≤ 0' } as any)[k] || k})`).join(', ')}.` : ''}{f.selection.boundary_ties?.length ? ` Đồng hạng ở ngưỡng: ${f.selection.boundary_ties.length} nhóm.` : ''}</p>
+      <table className="mt-1 text-[11px]"><thead><tr><th className="pr-3 text-left">{f.axis_label}</th><th className="pr-3 text-right">{f.selection.score_label}</th></tr></thead><tbody>{f.selection.eligible.slice(0, 10).map((e: any) => <tr key={e.key} className={f.selection.selected.includes(e.key) ? 'font-semibold' : ''}><td className="pr-3">{e.label}</td><td className="pr-3 text-right tabular-nums">{e.score.toLocaleString('vi-VN', { maximumFractionDigits: 4 })}</td></tr>)}</tbody></table>
+    </details>)}
     {!!report.short_answer?.length && <details data-short-answer className="open:w-full rounded-xl border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-xs"><summary className="cursor-pointer font-medium text-emerald-900">Trả lời ngắn</summary>
       <ul className="mt-2 space-y-1 text-xs text-slate-700 leading-relaxed">{report.short_answer.map((t: string, i: number) => <li key={i}>{t}</li>)}</ul></details>}
 
@@ -269,6 +288,7 @@ export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChart
     <div id="analysis-chart-panel" role={tabs.length > 1 ? 'tabpanel' : undefined} aria-labelledby={tabs.length > 1 ? `chart-tab-${activeTab.id}` : undefined} className="space-y-4">
     {(view === 'forecast' || (view === 'all' && report.analysis_mission === 'forecast')) && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
     {view !== 'forecast' && <AnalystViews charts={visibleCharts} compact dashboardLayout={curated} editing={editing || workspaceBusy} onChartTypeChange={onChartTypeChange} definitions={definitions}
+      onViewChange={onReportChange ? (id, state) => onReportChange(reportWithViewChoice(report, id, state)) : undefined}
       interactions={onReportChange ? report.interaction_contract?.charts : undefined} onSelect={s=>setSelection({...s})}
       onInspect={(chart, row) => { inspectTrigger.current = document.activeElement as HTMLElement; setInspect({ chart, row }); }} />}
     {view === 'all' && forecasts && report.analysis_mission !== 'forecast' && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
@@ -302,6 +322,7 @@ export const ReportWorkspace: React.FC<{ report: any; editing?: boolean; onChart
     <AnalystEvidence report={report} />
     </div>}
     {tab === 'export' && <div id="report-panel-export" role="tabpanel" aria-labelledby="report-tab-export" className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 text-xs text-slate-600">
+      <p>Chế độ xem đã chọn của từng biểu đồ được giữ khi lưu và xuất. KPI và kết luận toàn báo cáo vẫn theo phạm vi báo cáo; bộ lọc cục bộ chỉ đổi biểu đồ tương ứng.</p>
       <p>Bản Word gồm câu hỏi, phạm vi, thời gian, KPI, nhận định có bằng chứng, biểu đồ liên quan kèm nhận định và các giới hạn; chi tiết kiểm chứng nằm ở phụ lục.</p>
       <p>Báo cáo lưu kèm dấu vân tay danh mục, phiên bản kiểm chứng, định nghĩa chỉ số và ánh xạ biểu đồ → yêu cầu để xem lại về sau.</p>
       <div className="flex flex-wrap gap-2">{onSave && <button type="button" onClick={onSave} className="rounded-lg bg-slate-900 px-3 py-2 font-semibold text-white">Lưu báo cáo</button>}

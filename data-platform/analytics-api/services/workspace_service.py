@@ -287,6 +287,9 @@ def metric_capabilities(catalog, profiles, executable):
             examples = [e for p2 in profiles.values() for l in p2["analytical_lenses"] if metric in l["metric_refs"]
                         for e in l.get("example_intents", [])[:1]]
             forecast = m.get("forecast") or {}
+            from services.selection_service import criterion_catalog,check as selection_check
+            criteria=[c for c in criterion_catalog() if m.get('time_column') and
+                      selection_check({'criterion':c['id']},m) is None]
             from services.semantic_preflight_contract import metric_capability
             out[metric] = {
                 "capability": metric_capability(metric, m),
@@ -302,6 +305,7 @@ def metric_capabilities(catalog, profiles, executable):
                 "definition": m.get("business_definition") or m.get("business_meaning") or m.get("description"),
                 "dimensions": _labels(r, "dimensions", dims),
                 "examples": list(dict.fromkeys(examples))[:2],
+                "selection_criteria":criteria,
             }
     return out
 

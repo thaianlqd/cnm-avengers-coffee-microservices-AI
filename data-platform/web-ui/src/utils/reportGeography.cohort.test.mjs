@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rankedCohort, cohortSummary, inCohort } from './reportGeography.mjs';
+import { rankedCohort, cohortSummary, inCohort, geographicCharts } from './reportGeography.mjs';
+
+test('local single/total chart view cannot retarget the report map or remove its approved metric', () => {
+  const approved={x_field:'city',metric:'aov',chart_type:'bar',data:[{label:'A',value:100},{label:'B',value:200}]};
+  const chart={id:'pair',...approved,view_modes:{default_variant:'compare',variants:[{id:'compare',payload:approved}]}};
+  const local={...chart,x_field:null,chart_type:'kpi',data:[{label:'Tổng',value:150}],view_ref:'total'};
+  assert.deepEqual(geographicCharts({charts:[local]}).map(c=>[c.id,c.metric,c.data]),
+                   geographicCharts({charts:[chart]}).map(c=>[c.id,c.metric,c.data]));
+});
 
 const report = { charts: [{ x_field: 'city', selection: 'Bottom N', ranking_limit: 2, data: [{ label: 'Ninh Thuận', value: 1 }, { label: 'Trà Vinh', value: 2 }] }] };
 const provinces = [{ label: 'Ninh Thuận', revenue: 100, orders: 2, valid_orders:2, store_count: 1 }, { label: 'Trà Vinh', revenue: 300, orders: 2, valid_orders:2, store_count: 2 },

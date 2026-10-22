@@ -5,16 +5,18 @@ Ngày cập nhật: **22/10/2026**. Đây là **file chính duy nhất để đ�
 **Trạng thái hiện tại:**
 
 - **Reliability đợt trước:** DONE trong corpus/phạm vi đã nghiệm thu, policy33. Đây là kết quả lịch sử, không chứng nhận mọi câu hỏi mới hay tính năng mới.
-- **Cải thiện toàn Trợ lý AI:** **PLANNED / CHƯA TRIỂN KHAI / CHƯA NGHIỆM THU**. Gồm chế độ So sánh/Tổng gộp/Xem riêng, filter cục bộ/toàn báo cáo, giữ member qua các view, selection→comparison, semantic state/clarification và structured logs.
-- Có **56 kịch bản dự kiến** (48 core + 8 bổ sung), tất cả NOT_RUN. Chưa sửa code sản phẩm hoặc gọi thêm LLM trong các lượt lập PLAN/chẩn đoán gần đây.
+- **Cải thiện toàn Trợ lý AI:** **IN_PROGRESS / ĐÃ TRIỂN KHAI MỘT PHẦN / CHƯA NGHIỆM THU**. Bản giao thực thi mới nhất là **[mục H](#claude-execution-plan)**; checkpoint thực tế tại H.15. Các mục PLANNED/NOT_RUN phía dưới là đặc tả gốc, chưa tự động được coi là đạt.
+- Có **56 kịch bản nền dự kiến** (48 core + 8 bổ sung); cần đối chiếu bằng chứng từng yêu cầu. Live cuối của Claude 32/40 chưa đạt; không dùng kết quả reliability lịch sử để chứng nhận code mới.
+- **Quyền live mới từ người dùng ngày22/10, khoảng14:00:** Claude được dùng API key/runtime hiện có để live test và phát sinh phí trong scope công việc; không bị giới hạn bởi campaign12/36sends lịch sử. Xem phạm vi, ledger và cách tối ưu tại H.10.
 
-Đọc để triển khai: **A → B → C**. Đọc kết quả và giới hạn nghiệm thu cũ: **D**. **E–F** giữ lịch sử, mặc định thu gọn; các checkpoint IN_PROGRESS bên trong là trạng thái ở thời điểm cũ, không thay trạng thái trên.
+**Claude bắt đầu ở H, dùng A để cập nhật checklist; tra B–C khi cần chi tiết contract.** H là chỉ dẫn thực thi mới nhất, mở rộng và ưu tiên hơn các giới hạn công việc/quyền live cũ của phần PLAN. Không cần đọc lại toàn bộ lịch sử để bắt đầu. D–G là bằng chứng và giới hạn lịch sử, không phải chứng nhận source sau triển khai. E–F mặc định thu gọn.
 
 ## Mục lục
 
 - [A. Checklist công việc mới](#current-checklist)
 - [B. PLAN chính: so sánh và tương tác biểu đồ](#comparison-plan)
 - [C. Bổ sung: hiểu yêu cầu, chọn nhóm, hỏi lại và logs](#meaning-selection)
+- [H. PLAN giao Claude: hiểu input → bài toán → biểu đồ → nghiệm thu độc lập](#claude-execution-plan)
 - [D. Nghiệm thu reliability đợt trước](#historical-acceptance)
 - [E. Qualification lịch sử](#historical-qualification)
 - [F. GOALS/checkpoint reliability lịch sử](#historical-reliability-goals)
@@ -28,7 +30,7 @@ Khi thực thi, cập nhật checklist/trạng thái của phần công việc m
 
 ## A. Checklist công việc mới — chưa triển khai
 
-Ngày22/10/2026 · **PLANNED / IMPLEMENTATION_NOT_STARTED**.
+Ngày22/10/2026 · **IN_PROGRESS** (Claude bắt đầu thực thi22/10; checkpoint đang hoạt động ở [H.15](#claude-active-checkpoint)).
 
 Mục tiêu: mọi bài toán giữ đúng mục đích phân tích, có chế độ So sánh/Tổng gộp/Xem riêng và lọc theo đối tượng khi hợp lệ; data, KPI, lời giải thích và export cùng view semantics. Thực hiện qua engine/contract/UI dùng chung, không vá câu HCM/ĐàNẵng.
 
@@ -44,6 +46,8 @@ Mục tiêu: mọi bài toán giữ đúng mục đích phân tích, có chế �
 - [ ] CW07 — Dynamic capabilityinventory, grammar/coverage/reasons; noncity, domains/classes/missions/depths.
 - [ ] CW08 — Regression/security/property/raworacle/browser/performance/buildhash.
 - [ ] CW09 — Full qualificationJSON/MD/manualdemo +limits; chỉ DONE sau toàncriticalgates.
+
+**Mở rộng bắt buộc từ14:00:** thực hiện [H](#claude-execution-plan) trong cùng goal: semantic input/context và operator composition; tỷ lệ/exposure/đồng hạng; controls và analytical usefulness; audit cơ chế chấm điểm với oracle độc lập; live/transfer/negative tests được phép. Không đóng CW09 chỉ vì comparison toggles đã hoạt động. Phases là thứ tự phụ thuộc nội bộ; không kết thúc mỗi phase để chờ user bảo làm tiếp.
 
 ### Checkpoint lập kế hoạch
 
@@ -370,7 +374,7 @@ Chỉ đóng DONE khi **đồng thời**:
 7. **Coverage:** ma trận48scenario và expansion thực chạy có receipts; mọiskip/unsupported/partial ghi rõ; không lấy48/48 để khẳng định mọi tổ hợp.
 8. **UI/Word:** browser thật/allbreakpoints/keyboard và nativeexport QA đạt; screenshot không thay raworacle, cũng không dùng raworacle thay UIQA.
 9. **Regression/performance:** related + finalbackend/web/typecheck; test-only corrections giải thíchgiữhistoricalattempts; sốđo môi trường tươngứng; build/hash/runtimekhớp.
-10. **LLM:** chuyểnmode/filter/insight0provider. Chỉ thử free-text provider nếu parsercontract thay và thực sự cần; lập riêng frozenpayload/denominator/ceiling+permission. Quyền campaign12 cũ **không tự cho phép campaign mới**, không retryđểthayđỏbằngxanh. Offline đủ cho các toggles deterministic.
+10. **LLM:** chuyểnmode/filter/insight0provider khi không đổi nghĩa cần diễn giải. Kiểm free-text/meaning bằng live theo **quyền mới H.10**, có frozen qualification inputs, ledger, accounting và tiêu chí dừng; không cần hỏi lại quyền campaign đã được user cấp. Không retry để thay đỏ bằng xanh. Offline đủ cho các toggles deterministic; không dùng offline để giả đã kiểm model live.
 11. **Bàn giao:** finalJSON+MD có sourcehash/bundle/image, before/after, query/callledger, caseIDs, currentviewexport và manualdemo, giới hạn thật. Newscope còncriticalred thì NOT_QUALIFIED; không mượn DONE cũ.
 
 ### 12. Demo bắt buộc và hướng tiếp tục
@@ -523,6 +527,361 @@ Trace phải ghi được cả failure trước session creation, link request/p
 
 Áp dụng tại CW00 thiết kế observability, CW01 contract, CW03 failure lifecycle, CW05 diagnostic presentation, CW08 kiểm trace/privacy. Không dùng generic error “không hiểu” để che mất phase và meaning draft thực; cũng không coi model tự nói “đã hiểu” là evidence thực thi đúng. Đây là bổ sung thiết kế, chưa sửa instrumentation sản phẩm.
 
+
+<a id="claude-execution-plan"></a>
+
+## H. PLAN thực thi giao Claude — hiểu input, phân tích đúng, biểu đồ có ích và kiểm chứng độc lập
+
+**Bản yêu cầu mới nhất: 22/10/2026, khoảng14:00, Asia/Ho_Chi_Minh. Trạng thái: PLANNED / IMPLEMENTATION_NOT_STARTED.** Người viết PLAN chưa triển khai các mục dưới đây. Claude nhận nhiệm vụ phải kiểm working tree/runtime thực tế trước khi tiếp tục; không coi mô tả hiện trạng là source hash còn hiệu lực mãi.
+
+### H.0. Một mục tiêu và một tài liệu
+
+Mục tiêu: với input tự nhiên trong phạm vi dữ liệu được phép, LLM có đủ context để diễn giải đúng ý định; server giúp biến ý định thành bài toán có thể thực thi, tính đúng dữ liệu, chọn biểu đồ sát câu hỏi và cung cấp thao tác để người dùng xem sâu. Mỗi số, lời giải thích, bộ lọc, trạng thái lưu và export phải cùng nghĩa. Mở rộng phạm vi bài toán bằng các primitive dùng chung, không bằng danh sách câu mẫu trả lời sẵn.
+
+**Chỉ một goal thực thi xuyên suốt, dùng checklist CW00–CW09 tại A, mở rộng theo H.** Xong một dependency/milestone thì tiếp mục sau trong cùng nhiệm vụ. Không gửi final “xong phase1, bạn có muốn phase2 không”, không tự dừng sau khi có PLAN/UI demo. Cập nhật ngắn trong lúc tiếp tục làm; chỉ nghiệm thu DONE khi H.12 đạt. Nếu context/công cụ gián đoạn, lưu checkpoint trong chính file này rồi tiếp tục; gián đoạn không phải DONE. Blocker thật phải nêu bằng chứng và phần còn thiếu, không hứa đã hoàn thành.
+
+Đây là **yêu cầu về kết quả và các bất biến kiến trúc**, không bắt Claude giữ nguyên mọi tên class/endpoint hoặc lựa chọn triển khai gợi ý ở B–C. Claude phải tự đọc code, lập luận thiết kế hợp lý, thay phần thiết kế không phù hợp bằng phương án tốt hơn có lý do và tests. Không dựng engine song song, không viết lại toàn bộ nền tảng chỉ để thêm nút; tái sử dụng phần đã đúng và loại bỏ các đường nghĩa mâu thuẫn.
+
+H ưu tiên hơn phần PLAN cũ khi khác về phạm vi, live test và nhịp thực thi. D–F là lịch sử không được viết lại để làm đẹp kết quả. Chỉ sửa file MD tổng hợp này để cập nhật PLAN/checklist/checkpoint/nghiệm thu; code/tests/JSON/ảnh/log phục vụ triển khai được tạo đúng thư mục chức năng, không phát sinh thêm nhiều PLAN/GOALS/ACCEPTANCE.md. Không đọc lại hàng trăm dòng lịch sử mỗi lần cần một lệnh.
+
+### H.1. Hiện trạng đã có bằng chứng, không suy đoán
+
+| Thành phần | Đã có / đã kiểm | Khoảng trống phải giải quyết chung |
+|---|---|---|
+| Free text và nhiệm vụ có cấu trúc | Canonical metrics/dimensions, input integrity, semantic preflight, hybrid planner, resolver, readonly compiler, bounded repair | Candidate aliases có lúc thành nhiều obligations; keyword recognition chưa chứng minh hiểu quan hệ, criterion hay đủ khả năng thực thi. Không để preflight chặn mọi ý nghĩa ngoài các câu mẫu. |
+| Phạm vi/ranking | Policy33 đã có cohort-scoped query, weighted ratio, immutable artifacts, ownership/revision; ca shipper mới giữ đúng Top5 | Cần member/composite selection, tie/exposure/uncertainty semantics, phân biệt fixed cohort và rerank từng kỳ; không mặc định mọi chart đã có đủ thông tin so sánh. |
+| Supporting views | Có expansion, visual grammar, nhiều depth/lens | Có chart đúng scope nhưng mất trục so sánh; quantity/coverage của chart chưa phản ánh usefulness. |
+| Renderer và controls | Có chart types, layout, pagination, legend, drill/filter chờ toàn report | Chưa có hợp đồng thống nhất So sánh/Tổng gộp/Riêng; local/global khó phân biệt; zoom/legend không thay thế lọc có ngữ nghĩa. |
+| Narratives/KPI | Facts có refs, verifier có kiểm số/grounding, một số metric được quản trị | Nhận định rawVND gắn với chart%, subgroup bị thiếu tên; maxstore/maxcell lẫn vào strip; highest/lowest khi đồng hạng tạo kết luận ít giá trị. |
+| Quality scoring | Có deterministic verifier, `accuracy_assessment=not_measured`, trust dimensions, legacy weighted mode | `chart_checks` tái dùng grammar/renderer sản phẩm: hữu ích để kiểm consistency nhưng có thể cùng sai với sản phẩm. Không dùng self-consistency hoặc điểm tổng làm ground truth cho mức hiểu input/usefulness. |
+| Catalog/UI quảng bá | Ảnh “Hỏi được gì” hiện16nhóm/50chỉ số; catalog local tại lúc lập H có109metric,65dimension,41subject,8mission | Đây là các lớp/denominator khác nhau, không mặc định109metric đều public. Cần inventory actual advertised/authorized/implemented, truy nguyên vì sao public ít hơn registry. Không đóng băng các số này vào code. |
+| Regression lịch sử | Policy33 hữu hạn đã nghiệm thu; pipeline API/web đang có nhiều thay đổi trong working tree | Recheck source/image/bundle/runtime. Không reset thay đổi có sẵn, không dùng historical pass làm chứng nhận source mới. |
+
+**Bốn incident đại diện cho các lớp lỗi, không phải bốn nhánh cần vá:**
+
+1. HCM/ĐàNẵng lúc11:30: đúng tổng1.805.747.500đ và scope, nhưng chart phụ gộp hai thành phố; KPI−21,9% là riêng loại cửa hàng chính. Bằng chứng đầy đủ tại B và evaluation tương ứng.
+2. “So sánh doanh thu bán hàng của2tỉnh có doanh thu ổn định nhất” lúc12:10: `no_progress` sau2calls; diagnostics có nhiều revenue variants không được yêu cầu. Chưa có raw model draft để nói chính xác model nghĩ gì; thiếu typed selection criterion/clarification path là vấn đề đã xác định. Xem C.
+3. Kiosk so với cửa hàng chính HCM lúc12:28: G ghi đầy đủ. Main1.490.749.500đ, tổng kiosk64.910.000đ; ba subtype đúng số nhưng primary answer chọn hai cực trị thay cho union kiosk↔main. Stacked100 đúng marks% nhưng nhận định rawVND. Main410điểm so với kiosk19điểm: tổng22,97lần, bình quân theo danh mục hiện tại chỉ chênh6,43%; chưa điều chỉnh ngày hoạt động/chi phí.
+4. Top5shipper lúc13:44, session `b06d1472-2dfe-46da-b0d2-12ad381b06fe`, revision1:6resultsets,58chartvalues,8factvalues đã kiểm khớp raw hiện có. Tập được chọn có7/7,5/5,14/14,39/39,2/2, tổng67/67=100%;136trong288shipper có terminal trips cùng100%. SQL tiebreak UUID_ASC, không phải vượt trội nghiệp vụ. Có người79/79cũng100% không được chọn. Chart44điểm bán chỉ xét67chuyến của5shipper,28điểm chỉ có1chuyến; trend9tháng đều100%, khối lượng12,7,7,8,4,9,9,6,5. Conclusion vẫn có action “chỉ số có sự biến động” dù tỷ lệ không đổi. Top5 không phải toàn hệ thống: toàn registered terminal population7.519/7.854=95,73%.
+
+Kiểm shipper trước đây chỉ lưu ở `/private/tmp/shipper-output-audit-20261022-b06/`, có thể mất. Facts trên được ghi ở đây để Claude không lệ thuộc thư mục tạm. Khi triển khai phải tạo fixture tái hiện và fresh read-only oracle; nếu session TTL hết thì giữ incident lịch sử, tạo request mới có ledger, không tuyên bố đã đọc lại bản cũ. Epoch đã đổi giữa report và raw audit; số khớp không là chứng minh cùng historical transaction.
+
+### H.2. Ranh giới trách nhiệm: LLM hiểu nghĩa, server hỗ trợ và kiểm thực thi
+
+```mermaid
+flowchart TD
+    U[Input và ngữ cảnh hội thoại được phép] --> I[Chuẩn hóa kỹ thuật, giữ ý nghĩa và provenance]
+    I --> C[Context builder: catalog, capability, entities, thời gian]
+    C --> L[LLM: diễn giải yêu cầu và đề xuất graph phân tích]
+    L --> S[Semantic contract và kiểm capability / ambiguity]
+    S --> Q[Hỏi rõ phần thiếu hoặc nêu giới hạn chính xác]
+    Q --> S
+    S --> R[Resolver / readonly compiler / execution / artifacts]
+    R --> V[View planner: mục đích, member, grain, mẫu số, controls]
+    V --> P[Publication guard: data, claims, state, authority]
+    P --> UI[Biểu đồ tương tác, bảng, nguồn, lưu và export]
+    UI --> V
+    I -. truy vết có cấu trúc .-> T[Trace có quyền truy cập và redaction]
+    L -. bản diễn giải công khai .-> T
+    S -. quyết định và lý do .-> T
+```
+
+- **LLM:** hiểu paraphrase/typo/quan hệ/ý định, phân biệt câu hỏi chính với ngữ cảnh; đề xuất requirements/dependencies, members/selector, baseline/time và mục đích từng view. Có thể đề xuất vài phương án hợp lệ, nhưng phải chốt một interpretation hoặc needs_input theo contract. Không cần/không lưu chain-of-thought.
+- **Server:** cung cấp ngữ cảnh đúng và bounded; xác nhận entity/capability/formula/grain/joins/time/ACL; compile và tính; sở hữu IDs/artifacts/selection/claims/state. Không dùng model để cộng số, đoán số thiếu, tự dựng lịch sử hay quyết định quyền truy cập.
+- **View planner/renderer:** map mục đích phân tích và shape dữ liệu sang cách trình bày phù hợp, controls thực thi được, disclosure đúng. Model không cần quyết định pixel, màu theo index hay SQL cho một lần đổi chart.
+- **Verifier:** bảo vệ publication bằng các luật rõ. Nó có thể bắt sai contract/số liệu, không có quyền tự đổi input thành câu dễ hơn để lấy điểm cao.
+- **Independent evaluator:** kiểm từ input/ground truth/warehouse và thao tác thực tế; không gọi kết quả “độc lập” nếu chỉ chạy lại production renderer/claim generator.
+
+Không chọn một cực đoan “mọi thứ do LLM tự làm” hoặc “LLM chỉ nhắc lại keyword mà server đã hardcode”. Phân biệt rõ: lexical aliases/business definitions/versioned capabilities là cấu hình có kiểm chứng; nhánh theo nguyên câu, tên tỉnh, ID incident, số tiền fixture, người dùng/test ID để chọn đáp án là không chấp nhận.
+
+### H.3. Làm cho LLM hiểu đầu vào tốt hơn trên mọi entry mode
+
+Claude phải xem đường đi thực trong `input_integrity_service`, `request_anchors`, `semantic_candidate_service`, `semantic_preflight_contract`, `one_shot_context`, planners/resolver; chỉnh ở lớp sở hữu semantics, không chỉ tăng regex trong UI.
+
+**Context builder dùng chung:**
+
+1. Giữ nguyên input và refs trong session có quyền; chỉ normalize Unicode/space/typo khi không đổi nghĩa. Tách raw input khỏi canonical interpretation; trace được từng normalization quan trọng. “Kisok” phải resolve được bằng cơ chế alias/entity thích hợp, không cần full-sentence override.
+2. Cấp cho model metric definitions, unit, numerator/denominator, valid statuses, subject/grain, joins, clock/as_of, historical capability, dimensions và operators tương thích. Không gửi toàn bộ109metric/65dimension mọi lần; retrieval theo ngữ nghĩa+catalog, giữ alternatives khi thật sự mơ hồ và hỗ trợ mở rộng retrieval bounded nếu query hợp lệ chưa tìm thấy.
+3. Có dữ liệu freshness/completeness/missingness và entity references được phép. Không nhầm “không có trong tập ứng viên retrieval đầu” thành “không có dữ liệu/không hỗ trợ”. Cache context theo catalog/schema/access fingerprint; không dùng cache khác quyền.
+4. Ngữ cảnh follow-up phải mang report meaning, applied scope/time, selected cohort/view và phần user đang nhắc tới. “Hai tỉnh đó”, “chỉ kiosk”, “so sánh cùng kỳ”, “không lấy giao hàng”, “giữ bộ lọc, đổi sang số đơn” phải giải nghĩa trong context. Không đưa dữ liệu phiên khác hay coi draft filter chưa áp dụng là scope đã commit.
+5. Few-shot nếu cần phải ngắn, đa domain/metric class, gồm answer/clarify/unsupported; examples hướng cấu trúc reasoning/output, không cung cấp câu mẫu để match đáp án. Holdout không đưa vào prompt/retrieval cache dùng huấn chỉnh.
+
+**Output semantics tối thiểu, có thể mở rộng contract hiện có:**
+
+```text
+MeaningEnvelope
+  decision: analyze | needs_input | unsupported | insufficient_data
+  requirements[]: goal, operators, metric_refs, entity_refs, base_scope, time_refs
+  dependencies[]: aggregate -> feature -> selection -> comparison -> view
+  comparison: member definitions, baseline, overlap/alignment policy
+  selection: criterion_ref, exposure/history eligibility, tie_policy, fixed_or_dynamic
+  chart_intentions[]: question_answered, analytical_role, required_axes, value_mode
+  assumptions[]: field, source(default|user|context), value_ref, visible_explanation
+  unresolved[]: field, reason, bounded_options, preserves_known_fields
+```
+
+Các field/ID trên là ngữ nghĩa dự kiến, không bắt buộc thêm schema song song. Model chỉ đề xuất IDs thuộc catalog/capability hoặc unresolved; server cấp authoritative IDs sau resolution. Mọi requirement có provenance từ user/context/explicit structured choice hoặc supporting policy. Supporting không được biến thành điều người dùng đã yêu cầu.
+
+**Meaning ledger / đủ hay chưa đủ:**
+
+- Kiểm input→proposed→normalized→resolved, còn thiếu/đã đổi gì. Không lấy đủ JSON fields làm chứng minh đúng ý người dùng. Canonical revenue đã rõ không bị broaden thành item/payment/store revenue vì alias cùng từ “doanh thu”.
+- Không suy mọi filter hai giá trị là compare; không bỏ comparator khi model biểu diễn bằng aggregate. Composite “các kiosk” có thể là union nhượng quyền+vệ tinh; giữ subtype tùy chọn và bộc lộ định nghĩa nhóm cho user.
+- “Ổn định nhất”, “hiệu quả nhất”, “tốt nhất” có thể cần criterion/exposure/window. Cung cấp lựa chọn có định nghĩa và giải thích ngắn; không âm thầm thay thành doanh thu cao nhất. Không hỏi lại những field đã rõ.
+- Sử dụng mặc định khi hợp lý và có thể giải thích (ví dụ câu không có thời gian dùng scope mặc định được UI công bố). Những mặc định thay đổi bản chất chọn người thắng, mẫu số hoặc “ổn định” phải thể hiện rõ/chọn theo policy được quản trị, hoặc hỏi khi thiếu quyết định thực sự.
+- Clarification là outcome đúng cho ambiguity thật; trả lời clarification đi qua cùng validator, merge vào meaning cũ. Invalid provider structure mới là bounded repair; không đốt repair khi thiếu thông tin chỉ user quyết định.
+- Đo first-pass interpretation, clarification precision, false-unsupported và semantic drift sau refinement riêng; không dùng một số “hiểu input” tự model cho điểm.
+
+### H.4. Mở rộng bài toán bằng operator/capability dùng chung
+
+**Mở rộng trong scope dữ liệu, không hứa mọi câu hỏi đều trả lời được.** Trước sửa, inventory theo domain/subject, public metric, operator/family, metric class, grain/clock, entry mode, lifecycle và authority. Chỉ quảng bá khả năng có đường resolve→execute→view→claim thực. Một subject thiếu lịch sử không thể làm forecast bằng cách vẽ snapshot thành time series.
+
+| Họ bài toán cần xem xét xuyên domain đủ điều kiện | Primitive / dữ liệu bắt buộc | Output có ích |
+|---|---|---|
+| Tổng quan và chẩn đoán quy mô | aggregate + scope/time + base counts | KPI tổng đúng định nghĩa, một vài breakdown liên quan và nguồn |
+| So sánh đối tượng/kỳ/nhóm gộp | canonical members/composites, baseline, alignment | A/B, gap, trend/member, composition within-member, drill có kiểm soát |
+| Ranking Top/Bottom N, từng nhóm | eligible population, rank metric, N, partition, ties | Rank/tie rõ, exposure, full candidate population summary và chosen cohort |
+| Xu hướng, tăng/giảm, cùng kỳ | comparable complete buckets, calendar, baseline | Level và change, partial/missing rõ, không bịa zero |
+| Chọn nhóm rồi phân tích/so sánh | feature/score registry → selector → fixed cohort | Growth/stability/rate/breach-count khi dữ liệu và định nghĩa đủ |
+| Tỷ lệ, AOV, distinct, cơ cấu | đúng numerator/denominator/identity union | Rate kèm số gốc, mẫu số và loại share; không cộng tỷ lệ |
+| Tương tác hai chiều, phân khúc | compatible join/grain/axes | Cross-tab/grouped/facet và normalization có nghĩa |
+| Risk, ngưỡng, ngoại lệ | governed signal/reference, exposure, history nếu cần | Breaches cùng mức hỗ trợ, không gọi ngưỡng mặc định là đánh giá rủi ro toàn diện |
+| Forecast và quan hệ/driver | capability hiện có, đủ history/sample, fit/backtest | Prediction intervals/limitations hoặc correlation, không khẳng định nguyên nhân |
+
+Yêu cầu triển khai mới gồm primitive còn thiếu nhưng có thể tính từ dữ liệu hiện tại: composite member unions; selection theo growth/stability có definition/eligibility hợp lệ; ranking tie/exposure policy; active-view normalization/claims. Không giải quyết bằng việc ẩn toàn bộ nhóm tính năng khó. Nếu primitive thực sự thiếu nguồn thì ghi unsupported chính xác và nêu loại dữ liệu thiếu; capability nào đã quảng bá phải chạy đúng hoặc gỡ lời hứa và ghi gap, không lấy unsupported làm cách tăng pass cho positive cases.
+
+Criterion registry phải có formula/version, unit/direction, compatible metric classes, window/cadence, min history/exposure, zero/negative/null/missingness, ties và provenance. Growth và stability dùng cùng selection interface nhưng công thức riêng có kiểm chứng; CV không là nghĩa duy nhất của ổn định. Claude tự chọn quy ước hợp lý, ghi lý do, cung cấp semantics rõ và test edges; không để model viết expression tùy ý rồi thực thi.
+
+Đổi tên tỉnh→sản phẩm/store, đổi metric sang một metric tương thích, đổi N/window không cần thêm production branch. Graph composition phải giới hạn fanout/rows/time và không nhân query Cartesian. `actual<N`, không đủ điều kiện, denominator0, overlap members, label trùng và access hẹp là các outcome có hợp đồng, không chọn member ngoài scope để lấp chỗ.
+
+### H.5. Ranking, tỷ lệ, đồng hạng và độ mạnh của bằng chứng
+
+Đây là chính sách chung cho delivery, cancellation, promotion/conversion, ratings và mọi rate/ranking đủ điều kiện; không thêm rule theo chữ “shipper”.
+
+- Mỗi tỷ lệ trình bày được numerator, denominator, population/status/time và source; giữ components theo grouping. Toàn cohort phải sum numerator/sum denominator trên đúng quần thể, không avg rates; distinct có luật union riêng.
+- Tách **display_position**, **statistical rank/tie_group**, **deterministic tiebreak** và **business criterion**. UUID ổn định có thể dùng để pagination/tái lập, không là lý do người đứng đầu tốt hơn. Hiện được số đồng hạng và “đang chọn5trong136người cùng100%” theo dữ liệu thực, không hardcode5/136.
+- Tỷ lệ thô2/2 và39/39 bằng nhau về point estimate nhưng khác lượng bằng chứng. Hiển thị `2/2 · 100%`, không chỉ thanh100%. Tooltip/table/chi tiết có exposure; người dùng xem được toàn nhóm đồng hạng hoặc lọc lượng quan sát.
+- Không âm thầm thêm minimum trips hoặc xếp hạng theo confidence bound khi user hỏi tỷ lệ thô. Có thể cung cấp chế độ “Tỷ lệ quan sát”, “Đủ lượng quan sát” hoặc “Ước lượng có xét độ bất định” nếu method được quản trị; label/formula/order/selection phải đổi tương ứng và user biết đây là thước đo khác.
+- Claude đánh giá phương pháp uncertainty thích hợp cho từng metric (ví dụ binomial intervals khi giả định hợp lệ), tham khảo nguồn phương pháp gốc khi cần. Không vẽ confidence nếu assumptions không đúng; không dùng một thuật toán cho mọi metric và gọi là “chính xác nhất”. Không dùng n nhỏ để tuyên bố ổn định hoặc tốt nhất trong tương lai.
+- Fixed cohort chọn trên toàn kỳ giữ đúng members khi nhìn theo tháng/chi nhánh. “Top từng tháng” là query khác. Nêu selection window, observation window và selection bias: đã chọn cohort100% toàn kỳ thì trend100% không là phát hiện độc lập mạnh.
+- Nếu tất cả bằng nhau: nhận định đồng hạng/không có chênh lệch, tránh “cao nhất/thấp nhất” tạo phân biệt giả. Nếu rate không đổi nhưng volume đổi: nói đúng mỗi chỉ số; không phát action từ template “có biến động” khi không có evidence.
+- Branch chart trong fixed driver cohort không đại diện toàn branch. Header/tooltip/facts nói rõ “các chuyến của nhóm đang chọn tại điểm bán”; local member filtering phải giữ mẫu số nhất quán, không rớt cohort theo join phụ.
+- Threshold như<90% được ghi là rule version/configuration. Màu xanh chỉ nói chưa chạm rule, không là chứng nhận tổng thể hay độ tin cậy thống kê. Kiểm color semantics cho metric higher/lower/contextual, không gắn green cho mọi số lớn.
+
+### H.6. Biểu đồ phải trả lời câu hỏi và thao tác được
+
+**Ưu tiên primary answer trước, supporting sau.** “Có nhiều biểu đồ” không bằng “trả lời đúng câu hỏi”. Mỗi logical view lưu `question_answered`, `member_axis`, `measure/transform`, `grain`, `population/denominator`, `time`, `role`, `source_refs`, `available_interactions`. Không đủ shape/definition thì dùng bảng rõ hoặc typed limit, không chuyển thành chart khác rồi vẫn ghi đã trả lời.
+
+| Mục đích | Cách trình bày mặc định cần cân nhắc | Thao tác có ích |
+|---|---|---|
+| Compare category/member | Grouped bar/dot hoặc small multiples, cùng metric/scale rõ | Chọn member, baseline, total/single, absolute/share hợp lệ |
+| Compare trend | Member lines hoặc facets, màu member ổn định | Khoảng thời gian/granularity được hỗ trợ, index có baseline, xem riêng, tooltip có giá trị gốc |
+| Composition giữa members | Grouped/100% stacked hoặc facets theo member | % trong member ↔ absolute ↔ % toàn scope, label mẫu số |
+| Ranking | Horizontal bar/dot + table cho tên dài/nhiều nhóm | Search, sort theo criterion, đồng hạng, exposure filter, xem tiếp; không rerank do pagination |
+| Rate/support | Rate kèm numerator/denominator, table/dot và interval khi hợp lệ | Xem sample size, eligible population, method/threshold, đối chiếu volume |
+| Cross-tab | Matrix/heatmap khi hai axes có ý nghĩa | Absolute ↔ row-share ↔ column-share, chọn axes/members hợp lệ, drill ô bằng keys |
+| Forecast/actual | Actual/forecast phân biệt, interval và reference point | Horizon hợp lệ, history/details/backtest, không đổi giả thành data observed |
+| Snapshot/map/high cardinality | As_of view/map/table và bounded drill | Entity search, detail, scope rõ, missing coordinates/no-data disclosure |
+
+Không bắt mọi chart có cùng toàn bộ nút. Server cấp capability phù hợp từng view; control hiện rõ khi dùng được, lý do ngắn khi không dùng được. Tránh thanh công cụ dày đặc che plot; advanced options ở “Tùy chọn”, các thao tác chính ở header. Không để một chart trống nhiều khoảng trắng trong khi nhãn hoặc mẫu số lại không đọc được.
+
+**Tương tác chung cần hoàn thành:**
+
+1. **So sánh / Tổng gộp / Xem riêng**, có member selector, default bám intent. Logical view không đổi câu hỏi ngầm khi đổi presentation.
+2. **Local filter vs apply whole report** có nhãn, pending/applying/applied rõ. Click thanh/điểm/ô có thể chọn để xem chi tiết/lọc cục bộ; không tự commit toàn report. Có “Áp dụng toàn báo cáo” và “Đặt lại chart”.
+3. **Xem dữ liệu và nguồn:** mở bảng đầy đủ có paging/search, canonical IDs ẩn sau display label hợp lệ, tử/mẫu/đơn vị/kỳ/phạm vi/definition, lineage. Không suy số từ preview bị cắt; download data phải theo current authorized view và có nhãn.
+4. **Drill/facet:** đi từ nhóm→member/detail được server cấp, giữ breadcrumb/undo/reset. Không drill vào cấp nguồn không có hoặc làm lộ PII. Không mặc định phân tích địa chỉ thật từ tên store.
+5. **Legend, zoom, brush, sort:** phân biệt highlight/hide với filter. Hiding series không tự đổi tổng/mẫu số; semantic subset phải đi view resolver và đổi labels/claims. Zoom chỉ đổi khung nhìn, không âm thầm chọn quần thể mới.
+6. **Tooltip/microcopy:** có member, kỳ, giá trị, unit, raw components nếu rate; date format ngắn theo cadence và full date khi hover, số tiền thống nhất, tránh ISO chồng nhau hoặc `676338k` không dễ đọc. Caption sort/type phải khớp actual renderer.
+7. **Đọc và truy cập:** responsive1280/1440/1920/mobile390, label dài, contrast, keyboard/focus, empty/loading/error; màu ổn định theo identity, không chỉ dựa màu để phân biệt. Click/touch controls đủ rõ; chart có table equivalent.
+8. **State đúng:** data+KPI+insight+source atomic theo view fingerprint; rapid changes hủy/ignore stale result. Filter/switch không gọi LLM khi đủ contract; không đổi epoch ngầm. Saved/reopen/preview/Word giữ đúng currentview và hiển thị mode/filter/mẫu số/caveats.
+
+**Chọn chart có kiểm chứng:** Claude phải sửa visual grammar/planner/expansion chung để xét intent, cardinality, skew, sparsity, sample/exposure, units và comparison member, không theo domain label. Skew lớn có thể cần facets/index/ratio/table; không tự log-scale hoặc cắt trục mà không nhãn. Khi không có sự khác biệt, ưu tiên lời giải thích+table/volume thay vì nhiều chart100% lặp thông điệp. Count coverage theo analytical questions, không theo số charttypes/modes.
+
+**Claims theo active view:** chuyển VND→share thì recompute share facts/percentage points; raw revenue claim chỉ xuất hiện như context có label riêng. ChartTop20 không gọi điểm thấp nhất của429 là “thấp nhất trên biểu đồ” khi không vẽ nó. Multi-series phải nêu member, baseline, period. Conclusion chính theo report; local insight theo chart; currentview export tái tạo bằng artifact refs có quyền. Không dùng narrative model tự đánh giá là “đã sát bài toán”.
+
+### H.7. Chấm điểm trung thực, không lấy hệ thống tự chấm làm đáp án
+
+**Claude phải audit cách chấm hiện tại rồi thiết kế cách đo tốt hơn, không chỉ thay trọng số để số đẹp.** Đọc `analysis_quality_service.py`, `analysis_quality_contract.py`, `verification_score.py`, reconciliation/provenance services và consumers UI/Word. Hiện đã phân biệt accuracy chưa đo và evidence checks ở một số đường; giữ phần đúng đó. `chart_checks` có reuse production renderer/grammar, vì thế nó kiểm consistency tốt nhưng không độc lập với lỗi của cùng grammar. Chưa có bằng chứng thì không kết luận mọi score hiện có là giả; cũng không lấy score cao để bác bỏ các incident đã kiểm.
+
+Tách ít nhất các trục sau, mỗi trục có denominator, evidence và `measured/not_measured/not_applicable`:
+
+| Trục đo | Nguồn đối chứng | Không được suy thành |
+|---|---|---|
+| Hiểu yêu cầu | Human-auditable intent specification/acceptable alternatives từ input và context, case frozen | Model tự nói đã hiểu hoặc đủ JSON fields |
+| Đúng dữ liệu | Independent fixture/raw read-only oracle, exact keys/components/formulas | Recompile cùng SQL/query generator rồi cùng ra một số |
+| Giữ scope/authority | Identity/ACL/cohort/epoch/revision negative controls | Title/filter chip ghi đúng là đủ |
+| Đúng claims | Recompute theo active view, member/denominator/baseline/unit và actual marks | Fact có một evidence_id là đúng mọi ngữ cảnh |
+| Đúng mục đích và dễ đọc | Frozen task rubric + thao tác/UI thực + task-completion evidence | Đủ6chart, chart đẹp hoặc renderer support là đã hữu ích |
+| Coverage/capability | Advertised inventory và outcome đúng từng capability | Nhiều chart hoặc nhiều metric trong registry là support thực |
+| Độ tin cậy thống kê | Method calibration khi có ground truth phù hợp, sample/assumptions rõ | Điểm verification là xác suất LLM đúng |
+
+- Ưu tiên trạng thái kiểm chứng và breakdown thay “độ chính xác99%”. Nếu giữ điểm tổng cho legacy, công khai công thức/phạm vi, không gọi là accuracy/confidence và không cho nó che hard failures. Thiếu oracle thì `not_measured`, không tự cho100 hoặc dùng điểm model tự đánh giá.
+- Scope sai, mẫu số sai, chart%/claimVND, không trả lời primary requirement, quyền sai, stale/forged data hoặc unsupported numeric claim là **hard fail**, không được bù bằng các phần UI đẹp/coverage cao. Phải ngăn publication sai hoặc trả trạng thái partial/failure trung thực.
+- Xây independent evaluation harness ngoài code sinh sản phẩm: fixture nhỏ tính tay và oracle Python/SQL độc lập; không import production chart renderer/compiler/claim generator để tạo expected answer. Có thể dùng schema/definitions làm input công khai, nhưng expected aggregates/selection/view transforms phải tính khác đường. Self-consistency checks giữ vai trò lớp kiểm bổ sung.
+- **Calibration bằng deliberate mutations:** tráo member, lệch numerator/denominator, sai cohort/epoch, nhầm share vs absolute, đổi baseline, đảo Top/Bottom, giấu ties, đưa fact ngoài visible population, fake source proof, ungrounded action, stale insight, unknown capability và forged view ID. Mutated report phải bị đúng check phát hiện, không còn được “verified/high confidence”. Có valid variants để tránh verifier chỉ biết từ chối mọi output.
+- Nếu dùng LLM-as-judge cho relevance/readability: rubric frozen, không cho xem self-score/case pass label, xáo thứ tự, cho quyền abstain và lý do gắn evidence. Ưu tiên reviewer/model độc lập nếu có; cùng model/tác nhân tự review phải công khai dependency, không gọi blind independent. Model judge chỉ bổ sung cho exact checks và UI task evidence, không là oracle dữ liệu hoặc điều kiện duy nhất để DONE.
+- Thử judge trên cả bản cố ý sai lẫn đúng và đối chiếu rubric bằng review cụ thể. Không chọn judge/weights vì nó cho source mới điểm cao hơn. Không có một “chấm điểm chính xác nhất” phổ quát; Claude phải giải thích điều gì đã đo, sai số/giới hạn và vì sao phương pháp phù hợp.
+- Báo cáo từng dimension, first-pass và after-repair, successful completion và correct abstention riêng; không lấy số kiểm tra nội bộ lớn làm denominator tăng accuracy. Khi có measured rate thì ghi n/N, sampling design và uncertainty hợp lý; 9/9 không chứng minh xác suất đúng>=95% trên mọi câu hỏi.
+
+### H.8. Trình tự làm nội bộ, phạm vi code và deliverables
+
+Giữ CW00–CW09 làm dependency order, không phải10lần xin user làm tiếp. Claude có quyền thay cách chia module/phase để đạt mục tiêu; checklist dưới đây là deliverables phải có:
+
+| Checklist | Deliverables mở rộng bắt buộc | Bằng chứng đầu ra |
+|---|---|---|
+| CW00 | Recheck source/runtime; inventory public/capabilities; input journey tracing; freeze incidents, evaluator/rubric/fixture; red tests cho lớp lỗi | Baseline hash/diff, capability coverage map, expected meaning independent, failures trước sửa |
+| CW01 | Một meaning/state contract và view authority; assumptions/clarification/member/selector/tie/exposure; design decisions có lý do | Schema roundtrip, adapter parity, method/default policy, owner/forgery controls |
+| CW02 | Context retrieval + semantic planning/resolution; operator composition/selection engine và metric algebra | Paraphrase/typo/context cases, graph validation, raw oracle, transfer giữa domains |
+| CW03 | Lifecycle/context trace; bounded repair; local/global view resolve/cache; atomic publication | Trace trước/sau normalization, no-progress handling, request/call ledger, race/stale/ACL tests |
+| CW04 | Shared chart controls/defaults, member-aware views, tie/rate/exposure readability, table/detail/drill | Browser actions và screenshots ở breakpoints; task completion cùng exact results |
+| CW05 | Active-view claims/KPI/answer; self-score audit; independent verifier calibration | Mutation catch rate, raw%/VND controls, tie/scope/subgroup facts, measured/not_measured thật |
+| CW06 | Saved/reopen/map/global state; preview/export view đúng | Server-owned view replay, export content/visual QA, refreshed permissions |
+| CW07 | Capability/operator expansion, “Hỏi được gì”/examples/guided parity, truthful limits | Inventory advertised→implemented→verified; eligible domains không bị branch riêng |
+| CW08 | Full regression/eval/property/negative/performance; build và serving source khớp | Test manifests, environments, source/image/bundle hashes, no drift; failures giữ nguyên |
+| CW09 | Frozen live qualification + transfer; real UI tasks; final evidence review và DONE audit | Per-case outcomes/all attempts, independent oracle/UX receipts, final summary tại chính file này |
+
+**Lớp code cần đọc/chỉnh có chọn lọc:** B.7 vẫn là map chính. Thêm input/context/planner modules tại H.3, `semantic_catalog`/capability manifest/validation, `analyst_clarification`, `derived_chart_service`, scoring/reconciliation tại H.7. Không mặc định phải chỉnh mọi file được nêu; chỉ chỉnh lớp sở hữu lỗi, kiểm tất cả consumers chịu ảnh hưởng. Kiểm metadata/index/cache policy version khi contract đổi.
+
+Giữ parameterized/readonly/AST/scope checks, TTL/owner/capacity, artifact immutability và query budgets. Không reset/stash/clean/restore tree, không commit/push. Không sửa business source, I13 hay migration để output đẹp. Nếu phát hiện schema migration thật sự bắt buộc, chuẩn bị thiết kế/SQL cụ thể rồi xử lý theo quy tắc repo; các thay đổi thường lệ trong app/metadata/tests/view contract đã thuộc nhiệm vụ thực thi, không hỏi duyệt từng phase.
+
+### H.9. Corpus và ma trận đánh giá: kiểm tổng thể, tránh học thuộc demo
+
+56scenario đang có là **baseline planned**, không giữ cố định làm corpus duy nhất. Claude tạo manifest mở rộng máy đọc được khi triển khai; mọi case mới ban đầu NOT_RUN. Không hardcode hiện tại16nhóm/50metric/109registry items hoặc55tỉnh thành giới hạn universal.
+
+**Lớp đánh giá tối thiểu:**
+
+1. **Deterministic fixture và property:** mọi primitive/operator mới, mỗi metric class, scope/clock/view transform, tie/exposure và lifecycle. Fixtures có thành viên ngoài scope rất lớn, rate mẫu số rất lệch, shared identity, duplicate label, null/zero/negative/empty/singleton, missing/partial buckets. Tăng dữ liệu ngoài selected cohort không đổi fixed view.
+2. **Semantics corpus:** explicit/grouped/composite/time compare; ranking ties/per-group/Bottom; trend/growth/stability selection; rates/AOV/distinct; risk/forecast/relationship khi eligible; negation/exclusion; typo/paraphrase; câu nhiều yêu cầu; follow-up và sửa một field giữ fields còn lại. Ground truth cho phép nhiều plan hợp lệ, không exact-match văn bản/SQL khi semantics tương đương.
+3. **Transfer controls:** đổi member names/N/window/entities/domains, thêm irrelevant/out-of-scope data, tăng cardinality/skew, cùng ý định từ free text/guided/preset/refinement/saved. Kiểm cấu trúc/meaning invariants, không chỉ snapshot expected title. Public scenarios đã dùng tune không gọi blind holdout.
+4. **Adversarial/negative:** forbidden mutations/ACL/injection/invalid contracts, payload yêu cầu bịa dữ liệu, thiếu quyền, chưa có lịch sử/definition, ambiguity thật, provider timeout/no-progress. Cần đúng failure classification; positive hợp lệ không được từ chối hàng loạt.
+5. **Live model qualification:** ít nhất **40 user requests đã đóng băng cho một qualification batch cuối**:24answerable phủ nhiều họ bài toán/domain/metric classes,8ambiguity/unsupported/insufficient-data có expected outcome,8transfer mới không trùng câu demo. Có thể tăng khi inventory còn thiếu đại diện. Không yêu cầu mọi case gọi provider: ghi rõ deterministic0call và thực sự exercised LLM; tập positive live phải có>=20request thực sự qua model, không đủ thì bổ sung manifest trước chạy. Đây là floor coverage, không trần quyền dùng API.
+6. **Real browser task completion:** mở report, hiểu đối tượng/đơn vị/mẫu số; chuyển compare/total/single; lọc member/baseline; xem data/detail/nguồn; drill và back; rapid switch; global apply; save/reopen; export. Kiểm data/claims/revision sau từng thao tác và UI/keyboard/mobile; screenshot không thay API/SQL oracle. Ưu tiên task trên skew/rate/tie/sparse, không chỉ rich additive chart.
+
+**Rubric frozen trước final qualification:**
+
+- 100%critical correctness/authority controls và published numeric/view/claim invariants phải đạt. Positive reports không được coi “pass” nếu sai primary question dù HTTPcompleted.
+- Semantic/end-to-end accepted outcomes>=95% trên batch frozen, **answerable completion>=95%** trên positive set; correct clarification/refusal có denominator riêng. Lỗi ambiguity phải được giữ trong tổng outcomes, không chỉ báo accuracy trên những report còn lại.
+- Live positive first-pass semantic acceptance>=95%; repair effectiveness/cost tách riêng. Nếu cần repair để đạt đúng cuối thì ghi first-pass fail, không lấy final pass thay first-pass. Không đổi ngưỡng sau khi thấy đỏ; cần chỉnh metric/ngưỡng phải có lý do nghiệp vụ độc lập và rerun manifest mới, giữ lịch sử.
+- No unresolved known critical product defect trong toàn advertised scope và incidents chuyển bài toán. Đạt95%trên40ca không cho phép giữ một lỗi đã biết gây scope sai, metric sai hoặc claim sai.
+- 100%mandatory chart interaction tasks + lifecycle negative controls đạt, measured UI/readability rubric có bằng chứng từng tiêu chí. Không lấy điểm judge trung bình bù một nút lọc không hoạt động hoặc mất member.
+- Calibration mutations critical phải bị bắt100%, valid controls được chấp nhận; báo false reject rate. Chỉ kiểm mutations đã enumerate, không tuyên bố bắt mọi sai sót có thể có.
+
+Tách development/replay khỏi final/transfer. Nếu đã xem failed transfer để sửa, case đó trở thành regression; ghi contamination và bổ sung transfer mới trước batch cuối khi đo khả năng chuyển bài toán. Nếu không có người/cơ chế giữ kín raw holdout thì ghi “frozen transfer”, **không gọi blind**. Không sinh expected meaning bằng chính production prompt rồi cho output đó làm chuẩn.
+
+Quản trị failures: giữ mọi attempt/model/context/source hash; sửa nguyên nhân chung rồi chạy targeted recheck và một final batch đầy đủ sau freeze. Không rerun cùng request đến khi tình cờ pass rồi chỉ chọn lượt xanh. Infra retry có rule và ledger riêng, timeout/error vẫn xuất hiện trong kết quả lượt gốc. Không biến toàn bộ case khó thành unsupported để đạt95%.
+
+<a id="claude-live-authority"></a>
+
+### H.10. Quyền live API mới và tối ưu token/chi phí
+
+**Người dùng đã cấp quyền tại yêu cầu lập PLAN này:** Claude được dùng API key và provider runtime đã cấu hình của dự án để live test/đánh giá/sửa cho đến khi hoàn thành scope, có thể phát sinh phí; được mở campaign mới và chạy lại sau thay đổi có lý do. **Không còn trần campaign12/36physical sends của lần nghiệm thu lịch sử cho công việc mới này. Không cần hỏi lại “có cho live test không” hoặc chờ user xác nhận từng phase/batch trong scope đã cấp.** Đây không phải lệnh live ngay lúc chỉ đang soạn PLAN.
+
+Runtime được nạp key bằng cơ chế secret hiện có; không in/copy key vào chat, prompt, Markdown, logs, Git hoặc shell output; không sửa secret/.env để tiện thử. Chỉ gửi dữ liệu/context được phép theo ACL và pipeline hiện có; metadata/catalog/schema và mẫu/aggregate được policy cho phép, không raw PII hay password/token. User cấp quyền test API không biến key hoặc dữ liệu nhạy cảm thành nội dung prompt. Không tự mở provider/service ngoài cấu hình dự án chỉ để tăng số lần thử.
+
+**Quyền rộng nhưng thực thi có chủ đích:**
+
+- Mỗi live batch có mục tiêu/case manifest/payload/context-policy/model-config version, expected outcomes, request IDs. Có run/session/source/image/bundle hashes, logical requests, physical sends, repairs/retries/timeouts, tokens in/out và latency. Ước phí chỉ khi có đơn giá kiểm chứng, nếu không báo usage chứ không đoán hóa đơn.
+- Giữ per-request timeout/repair/no-progress/call budgets hữu hạn, không mở vòng agent vô hạn. Nếu sửa budget runtime vì yêu cầu kiến trúc, nêu lý do và tests; quyền nhiều campaign không là lý do bỏ per-turn guard hoặc quay secondary key để né lỗi/quota.
+- Đầu tiên dùng offline fixtures, captured drafts/sanitized traces và mock transport để bắt lỗi deterministic; live smoke nhỏ kiểm schema/context/transport; sửa nguyên nhân rồi chạy qualification frozen. Không chạy model để kiểm mỗi lần switch chart/filter khi server đã đủ nghĩa.
+- Context retrieval bounded, prompt cache nếu provider/runtime hỗ trợ, reuse immutable artifacts, cache theo đúng authority/version; không gửi toàn bộ catalog/rows mỗi call. Không cắt mất numerator/denominator, time, scope hay comparator để tiết kiệm tokens.
+- Không model fanout cho từng chart/insight hoặc gọi model lần nữa chỉ để tự chấm “đã hiểu”. Nếu narrative LLM có giá trị thật, chỉ dùng dữ liệu verified/claims có refs và validate trước publication; không đưa model vào đường interaction thuần deterministic.
+- Không đổi model sang loại rẻ hơn chỉ vì ít token khi ngữ nghĩa quan trọng bị suy giảm; chọn bằng measured quality/cost/latency trên development set, chốt config trước final. Không đổi model/context giữa các ca final rồi gộp như cùng điều kiện.
+- Serial hoặc bounded concurrency theo quota/tài nguyên thực. Tách live/browser/warehouse check khỏi full regression nặng; campaign trước đã timeout do tranh CPU. Dừng vòng retry không tiến triển, chẩn đoán transport vs meaning đúng tầng, tiếp việc độc lập còn làm được.
+- Cho phép rerun sau fix/config change có evidence, giữ attempt cũ và denominator; không tuyển một lượt may mắn để báo DONE. Khi source đổi, invalidate đúng artifacts/context/cache, không dùng cache cũ làm fresh live proof.
+
+**Tiết kiệm token của chính Claude:** đọc H→A, tra B/C và file code liên quan theo `rg`; đọc đoạn lỗi thay cat mọi log; log chi tiết ra evidence, chat chỉ counts/failures/decisions. Dùng runner ngắn hiện có khi phù hợp, nhưng kiểm nơi chạy: `.claude/scripts/dp-test.sh` có nhánh exec vào serving API, không dùng full regression trên serving0,5CPU. Chọn container test cô lập cùng image/process-per-module; bảo toàn exit codes và summary, không giấu failure khi rút log.
+
+Chạy targeted tests sau thay đổi liên quan; full backend/web/typecheck/build/E2E và frozen final evaluation sau source freeze. Không chạy lại toàn bộ sau mỗi sửa CSS, cũng không bỏ final qualification để tiết kiệm. Checkpoint ghi file refs/hashes/cases còn đỏ/bước tiếp theo để resume không đọc lại từ đầu. Tối ưu là bỏ lặp thừa, không giảm tiêu chuẩn hoàn thành.
+
+### H.11. Verification môi trường, thao tác và bằng chứng
+
+- Đọc quy tắc repo/`.claude/rules/data-platform.md`, `package.json`, runners hiện có. Counts/baseline trong rules có thể cũ hơn policy33; tự xác minh, không miễn trừ test đỏ chỉ vì được gọi baseline từ tháng trước.
+- Offline `AI_OFFLINE=1`, stores/env cô lập; runtime env Redis/provider có thể làm test cũ fail giả. Dùng runner đã chuẩn hóa/process/module khi phù hợp; đừng dùng discover trực tiếp với serving env rồi sửa product để hợp test env sai.
+- Web hiện có `npm run typecheck`, `npm run build`, `node --test src/utils/*.test.mjs`, `npm run test:e2e`; không có lint script. Sau sửa, build đúng API/web services và kiểm actual served bundle/API policy/source hashes; local build pass không chứng minh localhost đã cập nhật.
+- Docker compose rebuild có thể restart dependencies; không rebuild giữa full test hoặc campaign live. Không `down -v`, không xóa volumes/dữ liệu. Giữ login hoạt động, không chạy thử tải nặng làm người dùng tưởng login hỏng.
+- Independent warehouse checks READ ONLY/timeout/rollback và exact group keys, counts, denominator, joins; capture epoch trước/sau. Không cùng snapshot thì nói rõ; khi bắt buộc consistent refresh thì dùng authoritative revision mới, không ghép số epoch khác.
+- Capture toàn artifact đủ trang, không chỉ preview15/50/200rows. API reads phải qua ownership/revision, không bypass kết quả vì có container access. Verify saved/export recheck quyền hiện tại và render actual docx/pages khi cần; XML-only chưa là visual QA.
+- Evidence mới có run manifest, input/expected meaning có quyền, parsed/normalized/resolved trace đã redaction, query refs, all attempts, numerical oracle, chart/control actions, screenshots/export, source/runtime hashes và method limitations. Trace chứa output ngữ nghĩa công khai có schema, không chain-of-thought/secret.
+- Khi chỉ có công cụ browser native thì dùng nó đúng quy tắc; test runner automated theo capabilities của môi trường. Không giả đã click/chụp UI khi chỉ đọc JSON. Ghi rõ các dimension NOT_RUN/NOT_MEASURED và ảnh hưởng gate.
+
+<a id="claude-done-gates"></a>
+
+### H.12. Điều kiện DONE cho toàn goal mới
+
+Claude phải tự audit lần cuối theo bảng này, không đánh dấu xong vì đã chạy đủ phases hoặc tự cho điểm99/100:
+
+| Gate | Điều kiện bắt buộc |
+|---|---|
+| Input meaning | Context/semantic contract giữ đúng yêu cầu, relations/negation/follow-up/composites/selectors; valid clarify/unsupported tách transport/schema error; measured rubric H.9 đạt |
+| Systemwide capability | Inventory actual advertised có resolve→execute→view→claim; operator mới dùng chung, transfer giữa domains; không incident-specific code; gaps nguồn thật ghi rõ |
+| Primary answer | Report trả lời đúng member/criterion/time của user trước supporting; không tráo pair↔extrema hoặc metric variants; không bịa future/causality |
+| Numerics/scope | Independent exact oracle cho critical keys/ratios/AOV/distinct/selection/overlap, authority/epoch; không unresolved critical mismatch |
+| Ranking/rate evidence | Ties/exposure/selection window/fixed-vs-dynamic rõ, numerator/denominator xem được; không biến UUID order thành superiority hoặc2/2 thành stability proof |
+| Chart usefulness | Defaults bám analytical question; hỗ trợ tương tác đúng capability; skew/sparse/tie/labels/dates/readability được kiểm bằng task evidence, không filler đếm chart |
+| Interaction/lifecycle | Local/global/member/baseline/filter/drill/reset/table/source/rapidrace/saved/reopen/export đúng state, data và claims atomic; không provider call thừa |
+| Narrative/KPI | Active-view unit/denominator/baseline/member/period/selection đúng; share/pp và VND tách; không còn các lớp lỗi incidents hoặc template action thiếu evidence |
+| Evaluation honesty | Independent harness + mutation calibration, no self-score as accuracy; methods/counts/limits/correct abstention/false refusals công khai, không hạ gate/cherry-pick |
+| Live/runtime | H.9 frozen batch/transfer đạt thresholds, all attempts/accounting được giữ; browser/server bản thực tế đúng hash và free-text thực có model được đo riêng |
+| Regression/resources | Final appropriate backend/web/typecheck/build/browser/Word/performance đạt trên môi trường ghi rõ, không live tranh full regression, không known regression chưa giải quyết |
+| Handoff | Một MD này có checklist checked theo evidence, architecture decisions, testcase/run refs, final results, user demo và honest limits; không còn việc critical trong scope phải nhờ user bảo làm tiếp |
+
+**DONE = hoàn thành và nghiệm thu scope hữu hạn đã khai báo, không là “LLM hiểu100%mọi ngôn ngữ/mọi bài toán”.** Nếu thiếu API/quota/nguồn/công cụ thật sự, làm hết việc độc lập rồi ghi NOT_QUALIFIED/blocker cụ thể; không tự chấm DONE, không báo tiến độước lượng99%thay kết quả gate. Nếu có thể sửa/test tiếp trong quyền đã cấp thì tiếp tục, không biến mọi lần test đỏ thành blocker phải hỏi user.
+
+### H.13. Cách cập nhật và bàn giao, không tốn lượt hỏi lại
+
+Khi bắt đầu Claude đổi goal mới sang IN_PROGRESS trong A/H và ghi checkpoint ngắn. Sau mỗi milestone cập nhật checkbox có evidence, giữ một checkpoint đang hoạt động: source/build, completed, failures/unknowns, commands/run refs, next action, live usage. Không lặp nguyên log và không tạo file MD cho mỗi phase. Có thể có JSON manifests/logs/tests mới để kiểm chứng, không phải tài liệu PLAN cạnh tranh.
+
+Khi đạt H.12, điền phần nghiệm thu goal mới **trong file này**, tách khỏi reliability lịch sử: problem→behavior mới, architecture decisions, methods/independence, numerator/denominator từng gate, source/runtime identity, remaining limitations khôngcritical, live sends/tokens và demo thao tác ngắn. Final chat tóm tắt kết quả và link file; không cần đọc lại mọi phase.
+
+### H.14. Prompt giao Claude
+
+```text
+Đọc mục H và checklist A của data-platform/AI_DATA_ANALYST_TONG_HOP_20261022.md; tra B–C và bằng chứng lịch sử khi cần. Đây là lệnh thực thi toàn bộ goal mới đến DONE theo H.12, không phải yêu cầu lập lại PLAN hoặc chỉ làm phase đầu.
+
+Hãy kiểm code/runtime hiện có rồi tự thiết kế, triển khai và kiểm chứng kiến trúc chung cho toàn tab Trợ lý AI: giúp LLM hiểu input/ngữ cảnh/quan hệ bài toán; server hỗ trợ catalog/capability/selection/query; biểu đồ sát câu hỏi, trực quan, có controls xem sâu; KPI/nhận định/lưu/export cùng nghĩa. Mở rộng các bài toán đủ điều kiện dữ liệu bằng primitives dùng chung, không hardcode theo câu mẫu/địa phương/test.
+
+Audit cơ chế chấm điểm, dùng oracle và đánh giá độc lập theo H.7–H.9; không lấy self-score làm accuracy, không hạ chuẩn/chọn lượt xanh để báo xong. Tôi cho phép dùng API key/runtime hiện có để live test và phát sinh phí trong scope theo H.10; đây là quyền mới, không bị giới hạn campaign12/36sends cũ, không hỏi lại từng batch/phase. Giữ secret/PII và guardrails hiện có.
+
+Tối ưu token/chi phí, dùng targeted checks rồi final regression/live/UI qualification; đừng bỏ kiểm chứng để tiết kiệm. Tiếp tục qua các milestone, chỉ cập nhật tiến độ ngắn và checkpoint trong một MD này; không dừng để hỏi làm phase tiếp. Không reset/commit/push hay sửa dữ liệu nguồn/schema ngoài quyền. Chỉ báo DONE khi đủ gates và có bằng chứng trên bản đang phục vụ; nếu blocker thật thì ghi rõ phần chưa đạt và bằng chứng, không tuyên bố đã xong.
+```
+
+<a id="claude-active-checkpoint"></a>
+
+### H.15. Checkpoint thực thi đang hoạt động (Claude)
+
+**Codex tiếp tục sau hạ tải (22/10, đang thực thi):** sửa định danh canonical whole-scope total để optional supporting bị bỏ không đổi ID của total đã chạy; giữ verifier so toàn bộ trường thực thi. Test AOV cohort đã xanh; cập nhật oracle test cho chiều giờ thực sự được planner chọn, và kỳ vọng cột mẫu số AOV (Hà Nội1 đơn hợp lệ/2 đơn tổng, không coi như cùng mẫu số). Policy cache mới `2026-10-22.comparison-workspace.34`.
+
+- `backend-last-fixes/manifest.json`: **14/14 đạt** cho cohort rollup, ranked-rate evidence và Word. Lượt `backend-rollup-fix/` trước đó giữ nguyên: test hybrid timeout300s khi0,5CPU; runner hiện cho ghi rõ timeout900s/module, không nới per-request/provider timeout của sản phẩm.
+- Full regression **r4** chạy tuần tự0,5CPU/1,5GiB trên snapshot bất biến; tại checkpoint39 module/899 test đã chạy, có lỗi tải5/10job và p95 dưới quota này. Đợi đủ kết quả, rồi kiểm riêng `test_analysis_jobs`, `test_final_hardening_v33`, `test_workspace_v31` trên container2CPU rảnh, giữ mọi kết quả quota0,5CPU. Không tự coi đỏ hiệu năng là lỗi có sẵn hoặc pass.
+- Kiểm ảnh Word phát hiện cần giữ caption với hình và làm tròn KPI% khi hiển thị; đã sửa. InsightV3 phân biệt `%` với `điểm %`, hướng dẫn theo loại chart, không khẳng định chart đang xếp giảm khi member order khác, không suy mọi series cùng chiều nếu series thiếu kỳ. V1/V2 saved wording vẫn được dựng theo version cũ. Legend có thông báo đangẩn, chỉ đổi hình vẽ; số liệu/mẫu số/claims giữ nguyên.
+- Snapshot cuối **r5** và exact delta từr4 tại `execution/final-freeze-r5.json`; chỉ file product backend `chart_insight_service.py` đổi sau r4, các file khác là evaluator/tests. Đã xếp lượt kiểm lại toàn bộ vùng ảnh hưởng (`backend-final-r5/`) **sau khi r4 thoát**, chưa có kết quả. Web cần chạy lại typecheck/unit/E2E107test dự kiến/build và kiểm bundle phục vụ sau thay đổi legend. Không ghi counts dự kiến thành pass.
+- Frozen live manifest **v2**, 48câu (40answerable +8negative, gồm8fresh transfer T09–T16) **CHƯA CHẠY**. Đã bổ sung đáp án ngữ nghĩa do người viết rubric xác định từ input trước lượt final: metric/time/dimensions/TopBottom/exclusion/baseline; calibration có validcontrol + mutations. Public semantic trace + redacted model/usage/attempts được lưu, numeric oracle giữ cả expected/shown và epoch vector quan sát. Evaluator thay đổi không phải model hiểu tốt hơn; không dùng self-verification thay independent accuracy.
+- Còn: hoàn tất full/delta/performance, sinh lại Word+fixtures và render từng trang, web+served source checks, frozen live, UI thật, cập nhật ma trận CW00–CW09 và H.12 trong chính MD này. **IN_PROGRESS; không dừng ở checkpoint hoặc báo DONE khi chưa đạt gates.**
+
+**Ưu tiên tài nguyên theo yêu cầu người dùng, 22/10 khoảng18:54:** chỉ điều chỉnh runtime, không sửa code sản phẩm/compose/dữ liệu ở bước này. Lượt regression r2 đã tự kết thúc và container tự gỡ; giữ nguyên toàn bộ log/manifest. E2E cuối đã kết thúc **104 đạt, 2 bỏ qua**, browser/dev server kiểm thử đã thoát. Lượt r3 còn chạy được giới hạn **0,5 CPU, CPU shares128** (`pedantic_noether`); giữ trần RAM1,5GiB để tránh OOM, RAM dùng thực tế khoảng165MiB tại lúc đo. Đóng cửa sổ thống kê Docker Desktop, engine và các dịch vụ vẫn chạy. Ba mẫu sau điều chỉnh: tổng CPU container **121,17% /185,31% /126,77%**, tổng RAM **3.973,5 /4.055,4 /4.030,1MiB**; đây là mẫu tức thời, không phải benchmark kiểm soát. RAM nền vẫn khoảng3,9GiB, chưa thể tuyên bố giảm mạnh RAM của stack; không restart/hạ heap Kafka, MinIO, Airflow vì có thể ảnh hưởng luồng dữ liệu. Web `:8501/` và API `:8502/health` đềuHTTP200. Bằng chứng: `evaluation/comparison-workspace-20261022/execution/resource-adjustment-20261022.json`.
+
+**Không chạy thêm regression/build/live đồng thời để giữ tải thấp.** Khi tiếp tục PLAN, ưu tiên đọc log và sửa trước khi chạy lại tuần tự; không dùng kết quả latency dưới giới hạn0,5 CPU để nghiệm thu hiệu năng. r3 mới hoàn tất38 module tại checkpoint tài nguyên, có lỗi `tests.test_cohort_rollups_20261021` và `tests.test_comparison_score_v282`, cần điều tra; chưa DONE. Không mất source đang sửa hoặc bằng chứng các lượt trước.
+
+**Codex tiếp nhận 22/10, khoảng 17:45–18:10:** còn IN_PROGRESS. Attachment bàn giao xác nhận final-run-2 =32/40, không đạt; P09/P17/T03/T04 lỗi sản phẩm, T05–T08 bị provider_rate_limited. Giữ nguyên ledger cũ tại `analytics-api/evaluation/cw-live/`.
+
+- Đã sửa lớp chung: kiểm time anchors trước mọi selection query; grouping/trend giữ thêm comparison member axis; binding scope truyền cả lens planner và provenance replay; không chấp nhận Top N model tự thêm cho comparison có nhóm xác định. Smoke live `codex-recovery-smoke-1.json`: P09/T03/T04 đạt, P17 còn mất member ở supporting; sau sửa propagation, `codex-recovery-smoke-2.json`: P17 đạt 1 logical/1 HTTP call. Đây là development recovery, không phải final qualification.
+- Đã bổ sung server replay `chart_view_choices`: client chỉ gửi variant ID, lấy dữ liệu/facts từ owned session đã rehydrate, giữ revision/permission checks; saved/reopen/Word theo mode đang chọn. Có negative controls forged/cross-chart ID, owner khác, stale revision và client rows giả. UI lưu choices qua consumer chính AnalyticsView; report KPI/conclusion giữ report scope và được ghi rõ.
+- Selection không tin `selected_keys/entity_dimension_id/cadence` từ provider (kể cả delta); lịch đầy đủ giữ kỳ thiếu cho toàn bộ nhóm, all-time dùng observed envelope thay vì bịa thêm lịch sử ở hai đầu. Bộ targeted CW+semantic-repair đạt54/54 trước các kiểm bổ sung tiếp theo. Cần kiểm lại sau mọi thay đổi cuối.
+- Browser Chrome installed (qua `PW_CHROMIUM`) view-mode7/7 đạt: compare/total/single/share/reset, rapid switch/keyboard/global pending, 4breakpoints. Lần chạy đầu thiếu Playwright browser executable là lỗi môi trường, không phải pass sản phẩm. Full regression snapshot `codex-cw-regression-20261022-r1` đang chạy, evidence bền tại `evaluation/comparison-workspace-20261022/execution/backend-regression-r1/`; chưa có kết quả cuối. Không chạy live cùng full regression.
+- Còn phải hoàn tất: audit identity trùng tên/selection; đưa ties/exposure ra UI+Word và kiểm; final regression/web build/E2E; freeze live manifest với transfer mới và oracle độc lập; real serving/Word visualQA; ma trận evidence CW00–CW09 và các gates H.12. **Chưa DONE, không dùng số phần trăm tiến độ.**
+
+**IN_PROGRESS — chưa nghiệm thu.** Cập nhật ngắn sau mỗi milestone; log chi tiết ở `evaluation/comparison-workspace-20261022/execution/`.
+
+- 22/10 · CW00 bắt đầu: HEAD `0a6131fa`; 432 source hash khớp planning-baseline (drift0, missing0). Container data stack đang chạy. Baseline backend chạy trong container cô lập (cùng image, `--network none`, 2CPU/1,5GiB) — kết quả ghi bên dưới khi xong.
+
+- 22/10 · **M1 (CW00–CW03 phần comparison) xong ở mức offline**: module mới `services/view_mode_service.py` (ComparisonFrame từ nghĩa đã duyệt: `analysis_kind=comparison`/`group_gap`/mission compare + member có tên; filter IN đơn thuần KHÔNG là compare). Lens planner giữ trục member (`analysis_expansion_service._member_axis`), mix_shift/cross_tab bị loại có lý do `member_axis_incompatible`. View modes So sánh/Tổng gộp/Xem riêng (+% trong đối tượng/% tổng) là projection của artifact đầy đủ theo luật metric (sum; ratio/average = Σtử/Σmẫu; distinct ⇒ unavailable). Chart giữ `query_id` gốc, `view_ref` = projection đang hiển thị; verifier (`verify_view_chart`, quality `chart_checks`, saved restore) dựng lại MỌI variant từ artifact. Insight `INSIGHT_VERSION=2` (báo cáo cũ giữ cách kiểm cũ): nêu tên từng chuỗi, fact theo member, đồng hạng, nhóm duy nhất không gọi "cao nhất", ngày theo cadence, NULL="Chưa ghi nhận"; KPI chênh lệch nêu rõ cặp.
+- Bằng chứng: `tests/test_comparison_workspace_cw.py` (fixture+oracle độc lập `evals/comparison_fixture.py`, harness `tests/cw_harness.py`): 10/10 pass trên tree mới; cùng test trên `git archive HEAD` → 3 FAIL + 14 ERROR (đỏ trước sửa). Mutation 9/9 bị bắt, control hợp lệ được chấp nhận. Baseline full suite lần 1 bị nhiễm (mount working tree đang sửa) → bỏ, chạy lại trên bản HEAD xuất riêng.
+- Tiếp theo: so regression full; UI controls; ranking tie/exposure; selection criterion (ổn định/tăng trưởng); composite kiosk; live+browser qualification.
+
+- 22/10 · **M2**: selection→cohort (`services/selection_service.py`: registry stability=CV pop/growth/volatility, ≥3 kỳ đầy đủ, thiếu kỳ ≠ 0, tie ở ngưỡng, `insufficient_data` không fallback; chạy 1 truy vấn read-only lúc đề xuất, receipt duyệt cùng proposal, hiển thị "Cách chọn nhóm"). Nhóm gộp (kiosk = union theo `value_groups`/scope cohorts). Ranking `tie_census` (đếm đồng hạng + quần thể trước LIMIT; báo cáo cũ giữ SQL cũ) + n/N cho tỷ lệ/trung bình được xếp hạng/so sánh. Sửa hiểu input chung: alias chiều nằm trong nhãn giá trị ("chi nhánh chính") không thành trục; "N tỉnh … nhất" là tiêu chí, không là tên tỉnh; hỏi lại giữ N đã nêu + lựa chọn tiêu chí có định nghĩa (0 repair). UI: `ChartViewControls` + `utils/chartViewModes.mjs` (4 test). CW tests 17/17.
+
+- 22/10 · **M3 (live dev + hồi quy)**: live dev 40 câu (`analytics-api/evaluation/cw-live/dev-run-1..5.json`, giữ mọi attempt; dev ≠ nghiệm thu) lộ các nguyên nhân CHUNG, mỗi cái có test offline tái hiện: (1) tử/mẫu số đi kèm làm lệch lens → `lens_metric_incompatible` (chỉ thêm khi cùng subject+lens); (2) enum nhỏ trong metadata thật ghi `cardinality_hint` là số; (3) model tự gắn tiêu chí chọn nhóm → tiêu chí phải có căn cứ trong câu (`criterion_anchored`, cả ở repair); ngược lại câu nêu đúng 1 tiêu chí mà draft xếp theo giá trị → server khôi phục selection; (4) "số đơn hợp lệ" (metric `component_only`) = metric được hỏi + bộ lọc nghiệp vụ của nó (`component_twin`), không đổi chính sách catalog; (5) bảng chéo có lọc đúng cặp so sánh nhưng thiếu trục → repair nhắm `dimension_ids`; (6) tử/mẫu số không thành chart riêng (trừ lens exposure), chấm độ phủ dùng cùng luật; (7) chart nhiều chỉ số/xếp hạng không bị view mode ghi đè; (8) verifier so `ranking_census`; fact đồng hạng mang giá trị+đơn vị chỉ số; nhãn KPI chuẩn giữ nguyên, tên cặp ở `sub_text`; (9) schema+hướng dẫn selection chỉ gửi model khi câu có tiêu chí (ngân sách context cũ giữ nguyên). Lỗi của BỘ KIỂM được ghi rõ: oracle P16 cắt 30/9 trong khi "năm 2026" chạy đến ngày tham chiếu (sửa manifest, ghi chú tại case).
+- Bằng chứng giữa chừng: CW 33/33; 13 module từng hồi quy 214/214; full suite snapshot 1735 test còn 3 lỗi thật (đã sửa: 2 test CW phụ thuộc store bị runner reset, 1 heatmap bị coi là so sánh) + 5 lỗi do snapshot thiếu `evaluation/`. web-ui rebuild, bundle :8501 có `data-view-controls`/"Chỉ biểu đồ này"/`data-selection-receipt`; e2e 102 pass/2 skip; e2e view modes 7/7 trên fixture sinh lại từ bản đóng băng. Đang chạy: full suite lần cuối → batch live cuối 40 câu.
 
 <a id="historical-acceptance"></a>
 

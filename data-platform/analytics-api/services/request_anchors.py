@@ -79,7 +79,9 @@ def request_anchors(question, catalog, ui):
             if definition.get("lifecycle", {}).get("status") == "deprecated":
                 continue
             broad = {value_text(a) for a in definition.get("non_anchor_aliases", [])}
-            for alias in [id, definition["business_name"], *definition.get("aliases", [])]:
+            # "Số đơn hợp lệ (HOAN_THANH + DANG_GIAO)": the name before a definitional parenthesis is how users say it.
+            short = re.sub(r"\s*\([^)]*\)\s*$", "", definition["business_name"])
+            for alias in [id, definition["business_name"], short, *definition.get("aliases", [])]:
                 if value_text(alias) in broad:
                     continue
                 vocabulary.setdefault(value_text(alias), set()).add(id)
@@ -111,6 +113,21 @@ def request_anchors(question, catalog, ui):
     output['dimensions'] = [d for d in output['dimensions'] if not any(
         m['start'] <= d['start'] and d['end'] <= m['end'] and m['end']-m['start'] > d['end']-d['start']
         for m in output['metrics'])]
+    # A dimension alias inside a longer governed VALUE label/alias ("chi nhánh" in "chi nhánh chính",
+    # a store-type value) names a value of another axis, not a grouping axis to require.
+    value_vocabulary = {}
+    for id, definition in r['dimensions'].items():
+        phrases = list((definition.get('value_labels') or {}).values())
+        aliases = definition.get('value_aliases') or {}
+        phrases += [a for v in (aliases.values() if isinstance(aliases, dict) else []) for a in (v if isinstance(v, list) else [v])]
+        phrases += [a for g in definition.get('value_groups') or [] for a in g.get('aliases') or []]
+        for phrase in phrases:
+            if isinstance(phrase, str) and len(value_text(phrase)) >= 3:
+                value_vocabulary.setdefault(value_text(phrase), set()).add(id)
+    value_mentions = exact_mentions(text, value_vocabulary)
+    output['dimensions'] = [d for d in output['dimensions'] if not any(
+        v['start'] <= d['start'] and d['end'] <= v['end'] and v['end']-v['start'] > d['end']-d['start']
+        for v in value_mentions)]
     # Qualified catalog-definition mentions have a different coverage role
     # from grouping axes. This finite metadata lexicon applies to ALL dimensions;
     # it neither selects an analytical subject nor generates a query.
@@ -864,11 +881,18 @@ def verify_anchors(anchors, requirements, reference, catalog):
         result=set(dimensions)
         identities={catalog.registry['dimensions'].get(d,{}).get('identity') for d in result}
         return result-identities
+    compared={b.get('comparison_dimension') for b in (anchors.get('scope_resolution') or {}).get('bindings',[])
+              if b.get('comparison') and b.get('comparison_dimension')}
+    def matches_grain(dimensions, expected):
+        # The comparison member is an additional axis, not a replacement for the requested breakdown.
+        actual=axes(dimensions)
+        expected=axes(expected)
+        return actual==expected or (bool(actual & compared) and actual-compared==expected-compared)
     for binding in anchors.get('clause_bindings', []):
         candidates = set(binding['metric_candidates'])
         eligible=[req for req in requested if not req.ranking and req.analysis_kind!='trend' and
             any(covers(req,m) for m in candidates)]
-        if not any(axes(req.dimension_ids)=={binding['dimension_id']} for req in eligible):
+        if not any(matches_grain(req.dimension_ids,[binding['dimension_id']]) for req in eligible):
             wrong=[req for req in eligible if binding['dimension_id'] in req.dimension_ids]
             if wrong:
                 issues.extend(dict(requirement_id=req.id,field='dimension_ids',code='explicit_grouping_grain_mismatch',
@@ -892,7 +916,8 @@ def verify_anchors(anchors, requirements, reference, catalog):
     for binding in anchors.get('trend_bindings', []):
         eligible=[req for req in requested if req.analysis_kind=='trend' and
             req.granularity==binding['granularity'] and any(covers(req,m) for m in binding['metric_candidates'])]
-        if eligible and not any(axes(req.dimension_ids)==axes(binding['dimension_ids']) for req in eligible):
+        # A governed cohort comparison ("của A và B") adds its member axis to the stated trend grain, never replaces it.
+        if eligible and not any(matches_grain(req.dimension_ids,binding['dimension_ids']) for req in eligible):
             issues.extend(dict(requirement_id=req.id,field='dimension_ids',code='explicit_trend_grain_mismatch',
                 expected=binding['dimension_ids']) for req in eligible)
     if not anchors['ui'].get('required_period'):
@@ -923,6 +948,16 @@ def verify_anchors(anchors, requirements, reference, catalog):
                     any(f.dimension == expected['dimension'] and f.operator in {'eq', 'in'} and
                         (f.value if isinstance(f.value, list) else [f.value]) == [expected['value']]
                         for f in req.filters) for expected in coverage['filters']) for req in requested):
+                    represented.add(metric)
+            # A component-only count named by the user ("số đơn hợp lệ") is represented by its requestable twin
+            # plus exactly the component's governed business filters (analytical_resolver.component_twin).
+            from services.analytical_resolver import component_twin
+            for metric in catalog.registry['metrics']:
+                found = component_twin(catalog.registry, metric)
+                if found and any(found[0] in req.metric_ids and all(any(
+                        f.dimension == b['dimension'] and sorted(map(str, f.value if isinstance(f.value, list) else [f.value]))
+                        == sorted(map(str, b['value'] if isinstance(b['value'], list) else [b['value']])) for f in req.filters)
+                        for b in found[1]) for req in requested):
                     represented.add(metric)
         if kind == "dimensions":
             represented.update(catalog.registry['dimensions'][d]['identity'] for r in requirements

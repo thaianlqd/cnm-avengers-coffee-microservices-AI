@@ -398,6 +398,10 @@ def validate(question, catalog, *, anchors=None, lookup=None, context=None):
         exact = next((v for v in value_spans if v['start'] == start), None)
         if exact: end = max(end, exact['end'])
         tail = text[start:end].strip()
+        # "2 tỉnh hiệu quả nhất", "3 cửa hàng tăng trưởng nhanh nhất": a superlative after the head is a selection
+        # criterion for the semantic layer (selection / clarification), not an entity name to look up.
+        if not exact and re.search(r'(?:^|\s)(?:nhất|nhat)$', tail):
+            continue
         if not explicit and presentation and re.match(_pattern(presentation),text[start:]):continue
         # A dimension noun may introduce an instruction or another analytic
         # population, rather than an entity name. Only unquoted, non-filter

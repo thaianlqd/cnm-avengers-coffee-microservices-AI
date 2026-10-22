@@ -16,7 +16,13 @@ export function locateGeography(label, dimension) {
 export function geographicCharts(report) {
   // One geographic dimension. Series keyed by another category are not geographic observations.
   // Grouped METRIC series can be viewed individually without summing or averaging them.
-  return (report.charts || []).filter(chart => ['city','reporting_region'].includes(chart.x_field)
+  // Local chart choices never change the report-wide map. Its metric candidates use the approved default.
+  const reportCharts=(report.charts || []).map(chart => {
+    const modes=chart.view_modes;
+    const base=modes?.variants?.find(v=>v.id===modes.default_variant);
+    return base ? {...chart,...base.payload,view_ref:base.id,insight:base.insight} : chart;
+  });
+  return reportCharts.filter(chart => ['city','reporting_region'].includes(chart.x_field)
     && !chart.series_field && !chart.value_transform && chart.chart_type !== 'stacked_100')
     .flatMap(chart => chart.series?.length
       ? (chart.metrics?.length === chart.series.length ? chart.series : []).map((series, index) => ({ ...chart,

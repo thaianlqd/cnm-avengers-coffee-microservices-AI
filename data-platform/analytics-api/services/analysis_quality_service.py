@@ -76,7 +76,7 @@ def restore_artifacts(report, catalog):
     return prepared
 
 
-def chart_checks(charts, artifacts, evidence=()):
+def chart_checks(charts, artifacts, evidence=(), view_catalog=None):
     """Reuse production visual grammar and renderer, including exact numerical data."""
     from services.derived_chart_service import contribution_charts, pair_charts, driver_charts
     expected_derived={c['semantic_view_key']:c for build in (contribution_charts,pair_charts,driver_charts) for c in build(artifacts,evidence)}
@@ -93,6 +93,21 @@ def chart_checks(charts, artifacts, evidence=()):
                 bindings=[(q,m) for q in scopes if q in artifacts for m in chart.get('metrics',[]) if m in artifacts[q].plan.metrics]
                 checks.append(dict(valid=valid,reason=None if valid else 'derived_chart_mismatch',
                     query_id=chart.get('query_id'),scope_refs=scopes,metrics=chart.get('metrics',[]),covered_pairs=bindings))
+                continue
+            if chart.get('view_modes') or chart.get('view_ref'):
+                # Server view modes: every variant is re-derived from the stored base artifact (view_mode_service).
+                from services.view_mode_service import verify_view_chart
+                ref = chart.get('query_id') or chart['scope_ref']
+                valid = bool(view_catalog) and verify_view_chart(chart, artifacts, view_catalog)[0]
+                # One projection may feed one chart per metric; a duplicate is the same view of the same metrics/grammar.
+                identity = ('view', chart.get('view_ref'), tuple(chart.get('metrics') or []), chart.get('chart_type'),
+                            chart.get('x_field'), chart.get('series_field'))
+                if identity in identities:
+                    valid = False
+                identities.add(identity)
+                checks.append({'valid': valid, 'reason': None if valid else 'chart_data_mismatch', 'query_id': ref,
+                               'scope_refs': chart.get('scope_refs') or [ref], 'metrics': chart.get('metrics', []),
+                               'covered_pairs': [(ref, m) for m in chart.get('metrics', []) if ref in artifacts and m in artifacts[ref].plan.metrics]})
                 continue
             ref = chart.get('query_id') or chart['scope_ref']
             if chart.get('scope_ref', ref) != ref:
@@ -114,7 +129,7 @@ def chart_checks(charts, artifacts, evidence=()):
                                  if c.get('query_id', c.get('scope_ref')) == ref and set(c.get('scope_refs', [])) == set(scopes))
                             if v.compare_query_ids else render(v, a, 0))
                 for key in ('data', 'metrics', 'unit', 'selection', 'series', 'series_keys', 'y_unit',
-                            'ranking_metric','ranking_metric_label','ranking_direction','ranking_limit',
+                            'ranking_metric','ranking_metric_label','ranking_direction','ranking_limit','ranking_census',
                             'ranking_per_group','ranking_note','category_fields','x_label'):
                     # Older one-axis charts already encode their entire grain
                     # in x_field. New tuple/partition metadata is mandatory only
@@ -360,6 +375,11 @@ def assess_report(report, catalog, *, artifacts=None):
         block = chart.get('insight')
         if block is None and context.get('version') != '2.8':
             continue
+        if chart.get('view_modes') or chart.get('view_ref'):
+            from services.view_mode_service import verify_view_chart
+            claims += verify_view_chart(chart, artifacts, catalog, date.fromisoformat(context['reference_date']),
+                                        report.get('analysis_mission'))[1]
+            continue
         try:
             source = (chart.get('scope_refs') or [chart.get('scope_ref')])[0]
             clean = {k:v for k,v in chart.items() if k != 'insight'}
@@ -368,7 +388,17 @@ def assess_report(report, catalog, *, artifacts=None):
             claims.append(block == expected)
         except (KeyError, ValueError, TypeError, IndexError):
             claims.append(False)
+    for frame in report.get('comparison_frames') or []:
+        if frame.get('selection'):
+            # A computed cohort is a claim too: re-derive it from the stored selection-query rows.
+            from services.selection_service import verify_selection
+            claims.append(verify_selection(frame['selection'], [m['key'] for m in frame['members']], catalog.registry))
     for card in report.get('kpi_cards', []):
+        if card.get('kind')=='comparison_view':
+            from services.view_mode_service import comparison_view_cards
+            # chart_checks below independently reconstructs each default from its immutable query artifact.
+            claims.append(card in comparison_view_cards(report.get('charts',[])))
+            continue
         e = canonical.get(card.get('evidence_id'), {})
         if card.get('value_field'):
             values = e.get('values', {})
@@ -379,6 +409,13 @@ def assess_report(report, catalog, *, artifacts=None):
             if values.get('smallest_value') and unit != '%':
                 fields['relative_gap_pct'] = ('Chênh lệch %', values['gap'] / abs(values['smallest_value']) * 100, '%')
             expected = fields.get(card['value_field'])
+            if expected is not None and card['value_field'] in {'gap', 'relative_gap_pct'}:
+                # V2 cards name the pair; reports saved before keep their generic label.
+                from services.chart_insight_service import gap_label, pct_gap_label
+                named = (gap_label if card['value_field'] == 'gap' else pct_gap_label)(
+                    str(values.get('largest')), str(values.get('smallest')))
+                if card.get('label') == named:
+                    expected = (named, *expected[1:])
             claims.append(card.get('evidence_id') in valid_refs and e.get('feature') == 'group_comparison'
                 and values.get('observed_groups') == 2 and expected is not None
                 and (card.get('label'), card.get('value'), card.get('unit')) == expected
@@ -388,7 +425,7 @@ def assess_report(report, catalog, *, artifacts=None):
         label = {'scalar':'Giá trị trong phạm vi','top_gap':'Chênh lệch hạng 1–2','selected_total':selected_total_label(e),
                  'change':'Thay đổi giữa hai kỳ quan sát','concentration':'Tỷ trọng lớn nhất'}.get(e.get('feature'))
         claims.append(card.get('evidence_id') in valid_refs and field is not None and card.get('value') == e.get('values', {}).get(field)
-                      and card.get('unit') == ('%' if e.get('feature') == 'concentration' else e.get('unit'))
+                      and card.get('unit') == ('%' if e.get('feature') == 'concentration' else e.get('values',{}).get('gap_unit',e.get('unit')))
                       and card.get('label') == label and card.get('metric') == e.get('metric') and card.get('scope_ref') == e.get('scope_ref'))
     for finding in report.get('key_findings', []):
         e = canonical.get(finding.get('evidence_id'), {})
@@ -416,10 +453,12 @@ def assess_report(report, catalog, *, artifacts=None):
         expected_conclusion,expected_answers,expected_bindings=conclusion_from_report(report,artifacts,catalog,list(canonical.values()))
         claims += [report['conclusion']==expected_conclusion, report.get('short_answer')==expected_answers,
                    report.get('answer_requirements')==expected_bindings]
-    charts = chart_checks(report.get('charts', []), artifacts, list(canonical.values()))
-    from services.dashboard_planner_service import pinned_by_scope
+    charts = chart_checks(report.get('charts', []), artifacts, list(canonical.values()), view_catalog=catalog)
+    from services.dashboard_planner_service import pinned_by_scope, exposure_companions
+    # Exposure companions are shown as n/N inside their rate's chart (same artifact), not as charts of their own.
     applicable = [(id,m) for id,a in artifacts.items() if a.query.role == 'requested' and (a.plan.dimensions or a.plan.kind == 'trend')
-                  and a.plan.kind != 'detail' and not pinned_by_scope(a, artifacts) for m in a.plan.metrics]  # a scope-fixed grouping is a KPI
+                  and a.plan.kind != 'detail' and not pinned_by_scope(a, artifacts) for m in a.plan.metrics
+                  if m not in exposure_companions(a)]  # a scope-fixed grouping is a KPI
     capacity_tables = {v['query_id'] for v in report.get('dashboard_plan',{}).get('omitted_visuals',[])
                        if v['reason'] in {'chart_point_budget','chart_payload_budget','category_budget','series_budget'}}
     table_pairs = {(t['query_id'],m) for t in report.get('dashboard_plan',{}).get('tables',[]) for m in t.get('metrics',[])

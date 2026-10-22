@@ -754,6 +754,7 @@ export const AnalyticsView: React.FC = () => {
         created_by: 'Trợ lý AI Data Platform',
         module_config: {
           status: 'success',
+          chart_view_choices: generatedReport.chart_view_choices,
           outcome: generatedReport.outcome,
           analysis_components: generatedReport.analysis_components,
           semantic_intent: generatedReport.semantic_intent,
@@ -1252,7 +1253,7 @@ export const AnalyticsView: React.FC = () => {
               </button>
 
               <button
-                onClick={() => rep.id && isFromSavedList ? handleDownloadSavedDocx(rep.id, rep.title) : handleExportDocx(rep)}
+                onClick={() => rep.id && isFromSavedList && !rep.chart_view_choices ? handleDownloadSavedDocx(rep.id, rep.title) : handleExportDocx(rep)}
                 disabled={isExportingDocx}
                 title="Xuất tải file báo cáo định dạng Word"
                 className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"

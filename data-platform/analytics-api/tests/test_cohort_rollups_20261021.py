@@ -66,6 +66,7 @@ class CohortRollupTests(DepthReportMixin, f.unittest.TestCase):
                             'store_type': stores[order['co_so_ma']]['loai_diem_ban'],
                             'order_type': order['loai_don_hang'],
                             'order_status': order['trang_thai_don_hang'],
+                            'hour': int(order['ngay_tao'][11:13]),
                             'payment_method': order['phuong_thuc_thanh_toan']}[dimension])
                     return tuple(keys)
 

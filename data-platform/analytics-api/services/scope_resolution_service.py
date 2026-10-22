@@ -97,19 +97,31 @@ def scope_issues(resolution, requirements, catalog, ui=None):
             present=[f for f in req.filters if f.dimension==dimension]
             actual=set(v for f in present for v in (f.value if isinstance(f.value,list) else [f.value]))
             grouped_comparison=bool(binding and binding['comparison'] and (binding.get('comparison_dimension') in req.dimension_ids or req.supporting_for) and actual==set(binding['members']))
+            # A server-computed selection owns exactly the members it materialized (never model-supplied values).
+            parent=next((r for r in requirements if r.id==req.supporting_for),None) if req.supporting_for else None
+            selection=getattr(req,'selection',None) or getattr(parent,'selection',None)
+            if selection is not None and selection.selected_keys and not expected and set(selection.selected_keys)==actual \
+                    and selection.entity_dimension_id==dimension:
+                continue
             valid=all(f.operator in {'eq','in'} for f in present) and (actual in cohorts or grouped_comparison)
             if not valid:
                 issues.append(dict(requirement_id=req.id,field='filters',code='scope_membership_mismatch',expected=[sorted(c) for c in cohorts]))
-                missing_comparison_axis = (not req.dimension_ids and
-                    (req.analysis_kind == 'comparison' or 'group_gap' in req.derived_features))
+                compares = req.analysis_kind == 'comparison' or 'group_gap' in req.derived_features
+                # A trend of compared cohorts ("theo tháng của A và B") is one line per member: it needs the member axis too.
+                missing_comparison_axis = not req.dimension_ids and (compares or req.analysis_kind == 'trend')
+                # "theo phương thức thanh toán giữa A và B": a breakdown axis plus the cohorts' own axis (kept second).
+                # The governed scope already says the members are compared (binding.comparison), whatever kind the draft used.
+                breakdown_without_axis = (bool(req.dimension_ids) and binding and binding.get('comparison_dimension')
+                    and binding['comparison_dimension'] not in req.dimension_ids and actual == set(binding['members']))
                 if (binding and binding['comparison'] and binding.get('comparison_dimension')
-                        and (dimension in req.dimension_ids or missing_comparison_axis)):
+                        and (dimension in req.dimension_ids or missing_comparison_axis or breakdown_without_axis)):
                     # A geographic cohort comparison may need BOTH the scope
                     # and its grouping repaired. Freeze metrics/time, not the
                     # wrong OR missing axis of an unapproved comparison draft.
                     # Independent scalar cohorts do not authorize this change.
                     issues.append(dict(requirement_id=req.id,field='dimension_ids',code='scope_cohort_axis_mismatch',
-                        expected=[binding['comparison_dimension']]))
+                        expected=[binding['comparison_dimension'], *req.dimension_ids] if breakdown_without_axis
+                                 else [binding['comparison_dimension']]))
             represented.extend(cohorts if grouped_comparison else [actual])
         if binding and binding['comparison'] and any(c not in represented for c in cohorts):
             issues.append(dict(requirement_id=None,field='filters',code='scope_cohort_missing',expected=[sorted(c) for c in cohorts]))
@@ -132,7 +144,8 @@ def scope_repair_patches(resolution, previous, issues):
         if 'filters' in fields:
             filters=[f.model_dump(mode='json') for f in req.filters]
             for binding in resolution.get('bindings',[]):
-                if binding.get('comparison') and not axis:continue
+                # A comparison scope is patched only on a requirement that (now) groups by the comparison axis.
+                if binding.get('comparison') and not axis and binding.get('comparison_dimension') not in req.dimension_ids:continue
                 dimension=binding['dimension']
                 filters=[f for f in filters if f['dimension']!=dimension]
                 filters.append(dict(dimension=dimension,operator='in',value=binding['members']))

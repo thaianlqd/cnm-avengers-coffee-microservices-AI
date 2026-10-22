@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from services.one_shot_planner import OneShotPlanner
 from services.one_shot_context import body_sizes
 from services.analysis_catalog import AnalysisError
+from services.analysis_contract import Filter
 from services.analysis_intent import AnalysisIntentEnvelope, IntentRequirement, AnalysisIntentDelta, apply_delta, intent_tool, repair_tool
 from services.analytical_resolver import AnalyticalResolver, ResolutionIssues, digest, requirement_meaning
 from services.request_anchors import request_anchors, verify_anchors, refinement_anchors
@@ -32,9 +33,12 @@ SYSTEM += " No optional features for dashboard count. Top N entity goes in dimen
 SYSTEM += " Bind each clause's metrics and grouping. scalar=whole scope; selected_total=ranking metric only."
 SYSTEM += " Concept without candidate metric: decision unsupported. Vague superlative (tốt nhất, ngon nhất) without metric: clarification metric_ambiguous."
 SYSTEM += " Future forecast of one metric: forecast{horizon,unit}; time=history window; never output values; not in forecast_capabilities=unsupported."
+# Appended only when the question names a selection criterion (token budget of ordinary questions unchanged).
+SELECTION_SYSTEM = (" Members picked by a criterion (ổn định/biến động/tăng trưởng nhất): selection{criterion,limit}, entity in dimension_ids,"
+                    " no filter on it; other criteria: needs_input ambiguous_criterion. Named members: filter in + group_gap.")
 SYSTEM += " Only an explicit two-period scalar comparison uses comparison_time=baseline ISO range, time=target, aggregate; no cadence/change features. A single date window has no comparison_time."
 SYSTEM += " driver_delta is supported observational decomposition of additive changes by group, never causal; aggregate, time=current period, server computes the baseline."
-SYSTEM += " For broad or multi-faceted questions, synthesize into 3-5 core strategic requirements (maximum 6). Never generate more than 6 requirements. Pair each metric only with its compatible dimensions. Group complementary metrics with the same population and grouping into a single requirement rather than fragmenting into separate single-metric requirements."
+SYSTEM += " Broad questions: maximum 6 core requirements. Bundle complementary metrics only at compatible population/grouping; server adds supporting views."
 REPAIR_SYSTEM += " Each named target must include its corrected fields, never id alone. expected is authoritative for grouping/ranking/time/filter mismatches. Copy required_scope_patches verbatim for those fields; do not reinterpret already-resolved scope or repeat your rejected filters. Remove unrequested conflicting optional features instead of adding work; retain protected_features. Empty dimension_ids means a whole-scope time trend."
 
 
@@ -252,6 +256,18 @@ class HybridAnalystPlanner(OneShotPlanner):
         if not isinstance(calls,list) or len(calls)!=1 or not isinstance(calls[0],dict) or calls[0].get("name")!=expected or not isinstance(calls[0].get("arguments"),dict):
             raise ResolutionIssues([{"requirement_id":None,"field":"envelope","code":"invalid_intent_envelope"}])
         raw = deepcopy(calls[0]["arguments"])
+        # SkipJsonSchema hides server fields from the tool schema but does not reject them on input.
+        # Provider output (including deltas) can name a criterion, never a preselected cohort or cadence.
+        def strip_selection_authority(value):
+            if isinstance(value,dict):
+                selection=value.get('selection')
+                if isinstance(selection,dict):
+                    for key in ('selected_keys','entity_dimension_id','cadence'):
+                        selection.pop(key,None)
+                for child in value.values():strip_selection_authority(child)
+            elif isinstance(value,list):
+                for child in value:strip_selection_authority(child)
+        strip_selection_authority(raw)
         # Advisory presentation labels from old adapters carry no authority.
         for field in ("breadth", "analysis_breadth"):
             raw.pop(field, None)
@@ -368,6 +384,16 @@ class HybridAnalystPlanner(OneShotPlanner):
         global_features = {f for i in issues if i.get('requirement_id') is None and
                            i['field']=='derived_features' for f in i.get('candidate_ids',[])}
         old={r.id:r for r in previous.requirements}
+        from services.selection_service import criterion_anchored
+        for r in returned.requirements:
+            prior=old.get(r.id)
+            if (prior and prior.selection and prior.selection.selected_keys and r.selection
+                    and (r.selection.criterion,r.selection.limit)==(prior.selection.criterion,prior.selection.limit)):
+                r.selection=prior.selection.model_copy(deep=True)
+            # A repair cannot introduce a selection criterion the user never named (same rule as apply_selections).
+            if r.selection is not None and not r.selection.selected_keys and getattr(self,'prompt_text',None) is not None \
+                    and not criterion_anchored(r.selection.criterion,self.prompt_text):
+                r.selection=None
         updates={r.id:r for r in returned.requirements}
         # apply_delta invalidates generated views when their parent changes.
         # They must be regenerated from the validated parent, not demanded in a
@@ -592,7 +618,11 @@ class HybridAnalystPlanner(OneShotPlanner):
             "Clarify only genuinely missing meaning; keep unavailable definitions explicit. "
             "A removed feature must lose its feature_metrics entry."
         )
-        tools=[intent_tool(delta=refinement)]
+        from services.selection_service import any_criterion_cue
+        offers_selection=any_criterion_cue(prompt)
+        if offers_selection:
+            system+=SELECTION_SYSTEM
+        tools=[intent_tool(delta=refinement,selection=offers_selection)]
         if refinement:
             # Ground feedback independently of the original request. Otherwise
             # the protected original packet can make a new place look absent.
@@ -632,6 +662,155 @@ class HybridAnalystPlanner(OneShotPlanner):
             raise AnalysisError("one_shot_context_budget_exceeded","Required meaning context cannot fit")
         return payload, system, tools, maximum
 
+    SCOPE_CODES={'scope_membership_mismatch','scope_cohort_missing','scope_cohort_axis_mismatch'}
+
+    def apply_governed_scope(self, intent, context):
+        """Scope bindings are server-resolved facts: when every scope issue has a complete metadata patch, apply it here
+        instead of asking the model to copy it (live: the copy changed untargeted fields and was rejected)."""
+        from services.scope_resolution_service import scope_issues, scope_repair_patches
+        resolution=self.anchors.get('scope_resolution') or {}
+        if not resolution.get('bindings') or self.diagnostics.get('semantic_repair_count',0):
+            # First draft only: a repair that drifts scope stays a rejected change (authority invariant), never auto-fixed.
+            return intent
+        ui=self.anchors.get('ui')
+        issues=scope_issues(resolution,intent.requirements,self.catalog,ui)
+        if not issues or any(i['code'] not in self.SCOPE_CODES for i in issues):
+            return intent
+        patches=scope_repair_patches(resolution,intent,issues)
+        if not patches:
+            return intent
+        patched=intent.model_copy(deep=True)
+        by_id={r.id:r for r in patched.requirements}
+        for p in patches:
+            req=by_id.get(p['id'])
+            if req is None or req.supporting_for:
+                return intent
+            data=req.model_dump(mode='json',exclude_none=True)
+            data.update({k:v for k,v in p.items() if k!='id'})
+            by_id[p['id']]=IntentRequirement.model_validate(data)
+        patched.requirements=[by_id[r.id] for r in patched.requirements]
+        if scope_issues(resolution,patched.requirements,self.catalog,ui):
+            return intent  # incomplete: the targeted model repair explains it
+        self.diagnostics.setdefault('semantic_normalizations',[]).append({'rule':'server_scope_patch','requirement_ids':[p['id'] for p in patches]})
+        return patched
+
+    def apply_selections(self, intent, resolver, prompt=None):
+        """Materialize computed member selections (criterion → fixed cohort) before resolution.
+
+        One bounded read-only trend query per selection through the normal compiler/executor; the scores are
+        computed by the server kernel. Unsupported criteria or too few eligible members are typed outcomes,
+        never a fallback to another ranking."""
+        from services import selection_service as sel
+        from services.analysis_intent import IntentSelection
+        receipts=self.diagnostics.setdefault('selections',[])
+        cued=[c for c in sel.CRITERIA if prompt is not None and sel.criterion_anchored(c,prompt)]
+        if any(r.selection or (cued and r.ranking) for r in intent.requirements):
+            # Selection executes a query even during proposal. Validate every anchored time window
+            # before the first query; otherwise a wrong model window becomes false "insufficient data".
+            time_issues=[i for i in verify_anchors(self.anchors,intent.requirements,self.reference,self.catalog)
+                         if i['field'] in {'time','comparison_time','granularity'}]
+            if time_issues:
+                raise ResolutionIssues(time_issues)
+        for req in intent.requirements:
+            comparison_bindings=[b for b in (self.anchors.get('scope_resolution') or {}).get('bindings',[])
+                                 if b.get('comparison') and b.get('comparison_dimension') in req.dimension_ids]
+            if (req.ranking and not req.ranking.per_group and not self.anchors.get('rankings')
+                    and comparison_bindings and not req.selection and not cued and not req.supporting_for):
+                # A bounded named comparison must not lose members to a model-invented Top N.
+                # Explicit user rankings retain their ranking semantics.
+                req.ranking=None
+                req.analysis_kind='comparison'
+                req.derived_features=[f for f in req.derived_features if f not in {'top_gap','leader'}]
+                if 'group_gap' not in req.derived_features:
+                    req.derived_features.append('group_gap')
+                req.feature_metrics={k:v for k,v in req.feature_metrics.items() if k in req.derived_features}
+                self.diagnostics.setdefault('semantic_normalizations',[]).append(
+                    {'rule':'named_comparison_not_model_ranking','requirement_id':req.id})
+            # The user named exactly one governed criterion but the draft ranks by the raw value ("2 tỉnh biến động
+            # nhiều nhất" → Top 2 doanh thu): a value ranking is not that criterion, so the server restores it.
+            if (len(cued)==1 and req.selection is None and req.ranking and not req.ranking.per_group and not req.supporting_for
+                    and req.availability=='requested' and len(req.dimension_ids)==1
+                    and (req.ranking.metric_id or (req.metric_ids[0] if len(req.metric_ids)==1 else None)) in req.metric_ids):
+                metric=req.ranking.metric_id or req.metric_ids[0]
+                req.selection=IntentSelection(criterion=cued[0],limit=req.ranking.limit)
+                req.ranking=None;req.analysis_kind='comparison';req.metric_ids=[metric]
+                req.derived_features=['group_gap'];req.feature_metrics={'group_gap':[metric]}
+                self.diagnostics.setdefault('semantic_normalizations',[]).append({'rule':'criterion_ranking_to_selection','requirement_id':req.id,'criterion':cued[0]})
+            named=[f for f in req.filters if req.dimension_ids==[f.dimension] and f.operator=='in' and isinstance(f.value,list)]
+            if (req.selection is None and req.ranking and not req.ranking.per_group and not req.supporting_for and named
+                    and req.availability=='requested' and 2<=len(set(map(str,named[0].value)))<=6
+                    and req.ranking.limit<len(set(map(str,named[0].value)))):
+                # "A hay B cao hơn" drafted as Top 1 among the named members would hide the member the user asked about:
+                # a ranking inside an explicit member list is that list's comparison (leader/gap stay in the facts).
+                metric=req.ranking.metric_id or (req.metric_ids[0] if len(req.metric_ids)==1 else None)
+                if metric in req.metric_ids:
+                    req.ranking=None;req.analysis_kind='comparison';req.metric_ids=[metric]
+                    req.derived_features=['group_gap'];req.feature_metrics={'group_gap':[metric]}
+                    self.diagnostics.setdefault('semantic_normalizations',[]).append({'rule':'member_ranking_to_comparison','requirement_id':req.id})
+            spec=req.selection
+            if spec is None or spec.selected_keys or req.availability!='requested':
+                continue
+            if prompt is not None and not sel.criterion_anchored(spec.criterion,prompt):
+                # The criterion is the user's, never the model's: an unasked selection is dropped, the rest of the meaning stays.
+                req.selection=None
+                self.diagnostics.setdefault('semantic_normalizations',[]).append({'rule':'selection_criterion_unanchored','requirement_id':req.id})
+                continue
+            metric=req.metric_ids[0] if req.metric_ids else None
+            entity=spec.entity_dimension_id or (req.dimension_ids[0] if req.dimension_ids else None)
+            meta=self.catalog.registry['metrics'].get(metric,{})
+            reason=sel.check(spec.model_dump(),meta) if metric and entity in self.catalog.registry['dimensions'] else 'selection_entity_missing'
+            if reason:
+                raise AnalysisError('selection_unsupported','Tiêu chí chọn nhóm chưa được hỗ trợ cho chỉ số/đối tượng này. '
+                    'Các tiêu chí có định nghĩa: '+'; '.join(c['label']+' — '+c['formula'] for c in sel.criterion_catalog()))
+            cadence=spec.cadence or sel.DEFAULT_CADENCE
+            data=sel.selection_requirement(req.model_copy(update={'selection':spec.model_copy(update={'entity_dimension_id':entity})}),cadence)
+            probe=AnalysisIntentEnvelope(decision='analyze',requirements=[IntentRequirement.model_validate(data)])
+            ops=resolver.resolve(probe)['operations']
+            requested=[o for o in ops if o['role']=='requested']
+            if len(requested)!=1:
+                raise AnalysisError('selection_unsupported','Không lập được truy vấn chọn nhóm theo kỳ cho chỉ số này.')
+            op=dict(requested[0],id='q_sel_'+digest([req.id,spec.model_dump(mode='json')])[:20])
+            self.ground_values(op)
+            prepared={op['id']:self.queries.prepare(op)}
+            # The cohort must exist before the user approves the comparison: this ONE bounded selection query
+            # executes (same compiler, AST/ACL guard and READ ONLY executor) even in a proposal turn.
+            was_proposal=self.queries.proposal
+            self.queries.proposal=False
+            try:
+                active,_=self.queries.run_batch(prepared)
+            finally:
+                self.queries.proposal=was_proposal
+            artifact=active[op['id']]
+            self.queries.artifacts.pop(op['id'],None) if isinstance(getattr(self.queries,'artifacts',None),dict) else None
+            period=dict(artifact.grounded.period or {})
+            if not period.get('end') or str(period['end'])[:10]>self.reference.isoformat():
+                period['end']=self.reference.isoformat()
+            from services.insight_service import trend_bucket_coverage
+            complete=lambda b: bool(b) and not trend_bucket_coverage(b,cadence,period)['partial']
+            key_dimension,labels=sel.entity_keys(artifact.result['rows'],entity,self.catalog.registry)
+            expected_buckets=sel.calendar_buckets(artifact.result['rows'],cadence,period,complete)
+            receipt=sel.select(artifact.result['rows'],key_dimension,metric,spec.criterion,spec.limit,complete,labels,expected_buckets)
+            receipt['calendar_policy']='complete-calendar-v1'
+            receipt['identity_policy']='canonical-entity-v1'
+            receipt.update(requirement_id=req.id,metric_id=metric,entity_dimension_id=entity,cadence=cadence,
+                           window=dict(start=period.get('start'),end=period.get('end')),as_of=artifact.observed_at,
+                           query_signature=artifact.signature,result_ref=artifact.result_ref,eligible=receipt['eligible'][:50])
+            receipts.append(receipt)
+            if receipt['status']!='ok':
+                raise AnalysisError('insufficient_data',f"Chỉ có {len(receipt['selected'])} nhóm đủ điều kiện cho tiêu chí "
+                    f"{receipt['criterion_label'].lower()} (cần {spec.limit}, mỗi nhóm cần ít nhất {sel.MIN_COMPLETE_BUCKETS} kỳ đầy đủ liên tiếp).")
+            # Values come from the server's own executed result: already grounded (like required_filters).
+            self.semantic.resolved.setdefault(key_dimension,set()).update(receipt['selected'])
+            req.filters=[f for f in req.filters if f.dimension!=key_dimension]+[Filter(dimension=key_dimension,operator='in',value=list(receipt['selected']))]
+            req.dimension_ids=list(dict.fromkeys([entity,*req.dimension_ids]))
+            if req.analysis_kind in (None,'ranking'):
+                req.analysis_kind='aggregate'
+            req.ranking=None
+            if 'group_gap' not in req.derived_features and len(receipt['selected'])>=2:
+                req.derived_features=[*req.derived_features,'group_gap']
+            req.selection=spec.model_copy(update={'entity_dimension_id':entity,'cadence':cadence,'selected_keys':list(receipt['selected'])})
+        return intent
+
     def _compile_resolved(self, resolved, context):
         compiled=time.perf_counter()
         self.turn.budget.remaining()
@@ -664,13 +843,15 @@ class HybridAnalystPlanner(OneShotPlanner):
         logger.info("[AnalystPlanningTurn] %s",json.dumps({k:self.diagnostics.get(k) for k in ("request_id","provider_call_count","provider_call_reasons","primary_call_count","semantic_repair_count","targeted_resolution_count","transport_retry_count","semantic_stop_reason","capability_status","detailed_domain_ids","total_context_chars","repair_context_chars","schema_chars","resolver_latency_ms","compiler_latency_ms","planning_latency_ms","terminal_error")}))
 
     def run(self, prompt, context=None):
-        started=time.perf_counter();context=dict(context or {})
+        started=time.perf_counter();context=dict(context or {});self.prompt_text=prompt
         from services.analysis_expansion_service import FIXED_GROUPING_POLICY
         context['fixed_grouping_policy']=FIXED_GROUPING_POLICY
         self.diagnostics['fixed_grouping_policy']=FIXED_GROUPING_POLICY
         self.turn.budget.start_deadline()
         resolver=AnalyticalResolver(self.catalog,self.reference,context)
         refinement, original, initial, history, grounding_started = self._prepare_grounding(prompt, context, resolver)
+        # The same governed comparison binding must reach supporting-lens planning as chart rendering.
+        context['scope_resolution']=self.anchors.get('scope_resolution') or {}
         accepted_delta = None
         self.semantic.discovered.update(resolver.index.references)
         # Selected-scope members were already grounded server-side (exact lookup);
@@ -859,6 +1040,8 @@ class HybridAnalystPlanner(OneShotPlanner):
                                 self.ground_values(data)
                             req.filters = IntentRequirement.model_validate(data).filters
                     try:
+                        intent=self.apply_governed_scope(intent,context)
+                        intent=self.apply_selections(intent,resolver,getattr(self,'prompt_text',None))
                         resolved=resolver.resolve(intent)
                     except ResolutionIssues as error:
                         # Report independent coverage gaps with the resolver
@@ -1068,10 +1251,11 @@ class HybridAnalystPlanner(OneShotPlanner):
                         # Keep the delta protocol and complete baseline through
                         # recovery. A full-envelope retry loses untouched meaning
                         # when the primary delta cannot be parsed/applied.
-                        tools=[intent_tool(delta=True)]
+                        from services.selection_service import any_criterion_cue
+                        tools=[intent_tool(delta=True,selection=any_criterion_cue(prompt))]
                         system=("Repair the semantic DELTA only. Return submit_analysis_delta against current_intent; "
                             "preserve every untouched field. Repeated updates must agree. "
-                            "Do not return a full intent or an empty requirement. "+SYSTEM)
+                            "Do not return a full intent or an empty requirement. "+SYSTEM+(SELECTION_SYSTEM if any_criterion_cue(prompt) else ""))
                         payload['current_intent']=AnalysisIntentEnvelope.model_validate(context['semantic_intent']).model_dump(
                             mode='json',exclude_none=True,exclude_defaults=True)
                         payload['rejected_delta']=raw
@@ -1128,6 +1312,12 @@ class HybridAnalystPlanner(OneShotPlanner):
             if not resolved["operations"]:
                 states={c["state"] for c in resolved["coverage"]}
                 code="historical_metric_unavailable" if "INSUFFICIENT_DATA" in states else "clarification" if "NEEDS_INPUT" in states else "unsupported_metric"
+                if any(c.get("reason")=="ambiguous_criterion" for c in resolved["coverage"]):
+                    # Known fields stay; only the criterion is asked, with governed definitions (C.5 step 3).
+                    from services.selection_service import criterion_catalog
+                    raise AnalysisError("clarification","Cần chọn tiêu chí để chọn nhóm: "+"; ".join(
+                        f"{c['label']} — {c['formula']}" for c in criterion_catalog()),
+                        choices=[dict(id=c['id'],label=c['label'],description=c['formula'],followup=c['phrase']) for c in criterion_catalog()])
                 raise AnalysisError(code,"No executable requested capability")
             prepared = self._compile_resolved(resolved, context)
             self.resolved=resolved

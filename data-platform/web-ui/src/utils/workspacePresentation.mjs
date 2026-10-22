@@ -133,7 +133,7 @@ export function capabilityGroups(capabilities, search = '') {
   return (capabilities?.domains || []).map(d => ({
     id: d.id, label: d.label, purpose: d.purpose, caveats: d.caveats || [],
     metrics: (d.metrics || []).filter(m => match(d.label) || match(m.label) || match(m.definition) || (m.dimensions || []).some(x => match(x.label)))
-      .map(m => ({ ...m, badges: [m.historical ? 'Có xu hướng' : 'Hiện tại', ...(m.forecastable ? ['Dự báo được'] : []),
+      .map(m => ({ ...m, selection_criteria: m.selection_criteria || (capabilities?.metrics || []).find(x => x.id === m.id)?.selection_criteria || [], badges: [m.historical ? 'Có xu hướng' : 'Hiện tại', ...(m.forecastable ? ['Dự báo được'] : []),
         ...((capabilities?.risk_signals || []).some(s => s.metric === m.id) ? ['Tín hiệu rủi ro'] : []),
         ...(m.dimensions && !m.dimensions.length ? ['Chỉ toàn phạm vi'] : []),
         ...additivityBadges(m.capability)] })),

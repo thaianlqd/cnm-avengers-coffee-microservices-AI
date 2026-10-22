@@ -2,7 +2,8 @@
 from copy import deepcopy
 from services.error_taxonomy import AnalysisError, ResolutionIssues
 from typing import Literal, Optional
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_serializer
+from pydantic.json_schema import SkipJsonSchema
 from services.analysis_contract import Contract, Filter, TimeSpec
 from services.analyst_contract import Granularity, Operation
 
@@ -24,6 +25,15 @@ class IntentRanking(Contract):
 class IntentForecast(Contract):
     horizon: int = Field(ge=1, le=366)
     unit: Literal["day", "week", "month"]
+
+
+class IntentSelection(Contract):
+    criterion: Literal["stability", "growth", "volatility"]
+    limit: int = Field(ge=1, le=20)
+    # Server-owned (cohort materialization); kept out of the model-facing schema.
+    entity_dimension_id: SkipJsonSchema[Optional[str]] = None
+    cadence: SkipJsonSchema[Optional[Granularity]] = None
+    selected_keys: SkipJsonSchema[list[str]] = Field(default_factory=list, max_length=20)
 
 
 class IntentRequirement(Contract):
@@ -51,9 +61,18 @@ class IntentRequirement(Contract):
     feature_metrics: dict[DerivedFeature, list[str]] = Field(default_factory=dict, max_length=10,
         description='Targets only ACTIVE derived_features within metric_ids.')
     forecast: Optional[IntentForecast] = None
+    # Omitted from dumps when absent: fingerprints of intents saved before selection existed stay identical.
+    selection: Optional[IntentSelection] = None
     availability: Literal["requested", "needs_input", "unsupported", "insufficient_data"] = "requested"
     reason: Optional[Literal["historical_data_unavailable", "metric_unavailable",
                              "definition_unavailable", "ambiguous_criterion"]] = None
+
+    @model_serializer(mode="wrap")
+    def _omit_absent_selection(self, handler):
+        data = handler(self)
+        if isinstance(data, dict) and data.get("selection") is None:
+            data.pop("selection", None)
+        return data
 
     @field_validator("goal", mode="before")
     @classmethod
@@ -148,7 +167,7 @@ def apply_delta(intent, raw):
     return AnalysisIntentEnvelope(decision="analyze",requirements=list(requirements.values()))
 
 
-def intent_tool(delta=False):
+def intent_tool(delta=False, selection=False):
     from services.agent_provider import gemini_tool_schema
     model = AnalysisIntentDelta if delta else AnalysisIntentEnvelope
     tool = {"name": "submit_analysis_delta" if delta else "submit_analysis_intent",
@@ -201,6 +220,20 @@ def intent_tool(delta=False):
         # omitted values and local validation checks the complete result.
         patch = tool['parameters']['properties']['changes']['items']['properties']['changes']
         patch['properties']['ranking'].pop('required', None)
+    if not selection:
+        # Computed member selection is offered only when the question names a governed criterion
+        # (selection_service.criterion_anchored): ordinary questions do not pay its schema tokens.
+        def drop(value):
+            if isinstance(value, dict):
+                props = value.get('properties')
+                if isinstance(props, dict):
+                    props.pop('selection', None)
+                for v in value.values():
+                    drop(v)
+            elif isinstance(value, list):
+                for v in value:
+                    drop(v)
+        drop(tool['parameters'])
     return tool
 
 

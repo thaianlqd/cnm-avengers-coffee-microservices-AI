@@ -9,6 +9,7 @@ from collections import OrderedDict
 from threading import Lock
 from services.analysis_catalog import AnalysisError
 from services.analysis_intent import AnalysisIntentEnvelope
+from services.analysis_contract import Filter
 from services.analysis_contract import TimeSpec
 from services.domain_intelligence_service import DomainIntelligence
 from services.semantic_manifest_service import build_manifest, manifest_references
@@ -139,7 +140,7 @@ from services.error_taxonomy import ResolutionIssues
 
 # Bump whenever resolution/binding rules change: cached plans from an older rule set
 # must be re-planned, not replayed into a verifier that rebuilds them differently (G07).
-PLAN_POLICY_VERSION = "2026-10-22.cohort-scope.33"
+PLAN_POLICY_VERSION = "2026-10-22.comparison-workspace.34"
 
 FEATURE_SHAPES = {"scalar":{"aggregate"}, "leader":{"ranking"}, "top_gap":{"ranking"}, "selected_total":{"ranking"},
     "change":{"trend"}, "change_pct":{"trend"}, "concentration":{"distribution"},
@@ -166,6 +167,23 @@ def drop_unrequested_feature_conflicts(intent, anchors):
             changes.append(dict(requirement_id=req.id, field='derived_features',
                                 rule='unrequested_feature_shape_conflict', previous=bad, value=[]))
     return result, changes
+
+
+def component_twin(registry, metric_id):
+    """(twin, filters) when a component-only metric is exactly a requestable metric plus governed business filters.
+
+    "Số đơn hợp lệ" = Số lượng đơn with order_status IN (HOAN_THANH, DANG_GIAO): same source, expression, grain and
+    time column. The component itself stays non-requestable; the user's meaning is kept as a visible filter."""
+    metrics = registry["metrics"]
+    m = metrics.get(metric_id) or {}
+    filters = m.get("business_filters") or []
+    if not m.get("component_only") or not filters:
+        return None
+    same = ("source", "expression", "grain", "time_column", "aggregation_semantics")
+    twins = sorted((k for k, w in metrics.items() if not w.get("component_only") and not w.get("business_filters")
+                    and w.get("lifecycle", {}).get("status") != "deprecated" and all(w.get(f) == m.get(f) for f in same)),
+                   key=lambda k: (-len(metrics[k].get("aliases") or []), k))
+    return (twins[0], filters) if twins else None
 
 
 class AnalyticalResolver:
@@ -204,12 +222,35 @@ class AnalyticalResolver:
             raise ResolutionIssues([self.issue(req, 'time', 'invalid_time_shape',
                 required_fields=list(required))]) from None
 
+    def component_twin(self, metric_id):
+        return component_twin(self.catalog.registry, metric_id)
+
+    def component_as_filtered_twin(self, req):
+        for metric in list(req.metric_ids):
+            found = self.component_twin(metric)
+            if not found:
+                continue
+            twin, filters = found
+            norm = lambda v: sorted(map(str, v)) if isinstance(v, list) else [str(v)]
+            same_dim = [f for f in req.filters if f.dimension in {b["dimension"] for b in filters}]
+            if any(not any(f.dimension == b["dimension"] and norm(f.value) == norm(b["value"]) for b in filters) for f in same_dim):
+                continue  # a conflicting status filter: the normal unknown_semantic_id path explains it
+            filters = [b for b in filters if not any(f.dimension == b["dimension"] for f in same_dim)]
+            req.metric_ids = sorted({twin if m == metric else m for m in req.metric_ids})
+            req.feature_metrics = {f: sorted({twin if m == metric else m for m in ms}) for f, ms in req.feature_metrics.items()}
+            if req.ranking and req.ranking.metric_id == metric:
+                req.ranking.metric_id = twin
+            req.filters = [*req.filters, *[Filter.model_validate(b) for b in filters]]
+        return req
+
     def normalize(self, req):
         req = req.model_copy(deep=True)
         req.metric_ids = sorted(set(req.metric_ids))
         req.dimension_ids = sorted(set(req.dimension_ids))
         req.derived_features = sorted(set(req.derived_features))
         req.feature_metrics={f:sorted(set(ms)) for f,ms in req.feature_metrics.items()}
+        if not req.supporting_for:
+            req = self.component_as_filtered_twin(req)
         # Catalog metric IDs are aggregations. A table of SUM/COUNT/AVG by a
         # business axis is an aggregate, even if the model calls it detail.
         # Pure row projections still use the strict detail path below.
@@ -582,19 +623,32 @@ class AnalyticalResolver:
             op = {"id":"q_"+digest([base,subset])[:24], "subject":subject,"operation":req.analysis_kind,
                   "metrics":list(subset),"group_by":req.dimension_ids,"filters":[f.model_dump(mode="json") for f in req.filters],
                   "time":time,"role":"requested"}
+            evidence_metrics = self.exposure_companions(req, subset, subject, possible)
+            if evidence_metrics:
+                # H.5/B.5.2: a ranked or compared rate/average carries its numerator/denominator so every
+                # group shows its evidence (n/N) and member totals are recomputed, never averaged.
+                op["metrics"] = list(subset) + evidence_metrics
             if lens:
-                op["lens_id"] = lens
+                allowed=(self.index.lenses[lens].get('blueprint') or {}).get('allowed_metric_refs',[])
+                if not evidence_metrics or set(op['metrics'])<=set(allowed):
+                    op["lens_id"] = lens
             if req.granularity:
                 op["granularity"] = req.granularity
             if req.ranking:
                 op["ranking"] = {"metric":req.ranking.metric_id,"direction":"DESC" if req.ranking.direction=="top" else "ASC",
-                                 "top_n":req.ranking.limit,"per_group":req.ranking.per_group}
+                                 "top_n":req.ranking.limit,"per_group":req.ranking.per_group,
+                                 **({"tie_census":True} if not req.ranking.per_group else {})}
             operations.append(op)
             # Non-additive grouped metrics need their canonical whole-scope aggregate,
             # never an average/sum of group rates or distinct counts.
             if req.analysis_kind in {'aggregate','distribution'} and req.dimension_ids and not req.ranking and 'group_gap' not in req.derived_features and any(
                     not self.catalog.registry['metrics'][m].get('additive') for m in subset):
-                total={**op,'id':'q_'+digest([base,subset,'whole_scope'])[:24],'operation':'aggregate','group_by':[]}
+                # Several supporting breakdowns share the same canonical total. Its
+                # identity must survive dropping an optional sibling: hashing that
+                # sibling's grouping made replay rename an already executed total.
+                total_meaning = dict(subject=subject, metrics=sorted(op['metrics']),
+                    filters=base['filters'], time=time, supporting_for=req.supporting_for)
+                total={**op,'id':'q_'+digest([total_meaning,'whole_scope'])[:24],'operation':'aggregate','group_by':[]}
                 total.pop('lens_id',None);total.pop('granularity',None)
                 operations.append(total)
             for feature in req.derived_features:
@@ -762,6 +816,30 @@ class AnalyticalResolver:
         # size, e.g. every Risk Watch signal with totals; model plans keep 8.
         from services.mission_contract_service import guided_operation_capacity
         return guided_operation_capacity(self.catalog.registry, self.ui)
+
+    def exposure_companions(self, req, subset, subject, possible):
+        if not (req.ranking or req.analysis_kind == "ranking" or req.analysis_kind == "comparison" or "group_gap" in req.derived_features):
+            return []
+        registry = self.catalog.registry["metrics"]
+        extra = []
+        for m in subset:
+            meta = registry.get(m, {})
+            if meta.get("aggregation_semantics") not in {"ratio", "average"}:
+                continue
+            c = meta.get("components") or {}
+            extra += [x for x in (c.get("numerator_metric"), c.get("denominator_metric") or c.get("exposure_metric")) if x]
+        extra = [m for m in dict.fromkeys(extra) if m not in subset]
+        if not extra:
+            return []
+        # Numerator and denominator intentionally have different conditional populations. The generic
+        # multi-metric candidate rule rejects that difference, so validate only these metadata-declared
+        # components against the same canonical subject, scope dimensions and observation clock.
+        dimensions=set(req.dimension_ids+[f.dimension for f in req.filters])
+        clocks={registry[m].get('time_column') for m in subset}
+        compatible=all(m in self.index.metrics and subject in self.index.metrics[m]['subjects']
+                       and dimensions<=set(self.index.metrics[m]['dimensions'])
+                       and registry[m].get('time_column') in clocks for m in extra)
+        return extra if compatible else []
 
     def resolve(self, intent):
         op_cap = self.capacity

@@ -52,7 +52,7 @@ export function useReportActions() {
     saveReport: (payload: unknown) => post('save', '/api/reports/saved', payload,
       async response => response.json(), 'Không thể lưu báo cáo'),
     exportDocx: (report: any, options: { saveToDb: boolean; filename?: string; current?: () => boolean }) =>
-      post('docx', '/api/reports/export-docx', { report_data: report, save_to_db: options.saveToDb },
+      post('docx', '/api/reports/export-docx', { report_data: { ...report, ...(report.id ? { saved_report_id: report.id } : {}) }, save_to_db: options.saveToDb },
         (response, signal) => download(response, signal, String(report.title || 'Bao_Cao_Phan_Tich_AI'), options.filename, options.current), 'Không thể xuất tài liệu Word'),
   };
 }

@@ -1,0 +1,347 @@
+{
+ "manifest_version": "cw-live-1",
+ "runs": [
+  {
+   "started_at": "2026-10-22T10:48:28.615125+00:00",
+   "cases": [
+    {
+     "id": "P09",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": true,
+      "view_modes": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 5798,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 4651,
+     "output_tokens": 112,
+     "request_id": "a0836a707a754103862d259e0d10b512",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "2389bfd4-9a95-44a9-bb71-e390db95f050",
+     "trace": null
+    },
+    {
+     "id": "P17",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": false,
+      "view_modes": true
+     },
+     "passed": false,
+     "first_pass": false,
+     "detail": {
+      "frames": [
+       {
+        "axis": "city",
+        "members": [
+         "Cần Thơ",
+         "Đà Nẵng"
+        ]
+       }
+      ],
+      "charts": [
+       {
+        "role": "primary",
+        "dims": [
+         "city",
+         "payment_method"
+        ],
+        "type": "grouped_bar",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [],
+        "type": "area",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "order_type"
+        ],
+        "type": "donut",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "store",
+         "store_id"
+        ],
+        "type": "horizontal_bar",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "store_type"
+        ],
+        "type": "multi_line",
+        "metric": "revenue"
+       }
+      ]
+     },
+     "phase": "generate",
+     "latency_ms": 3185,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3616,
+     "output_tokens": 126,
+     "request_id": "8298c96f4f86416a9f3d2092971819d3",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "cross_tab",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "payment_method",
+          "city"
+         ],
+         "derived_features": [
+          "contribution_share"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "3d363e8f-e7a8-4e6b-b64c-21474b6de67b",
+     "trace": null
+    },
+    {
+     "id": "T03",
+     "set": "transfer",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "composite": true,
+      "supporting_keep_axis": true,
+      "view_modes": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 4343,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 4679,
+     "output_tokens": 184,
+     "request_id": "adcdf3e033ec4ecbb3fc51dbb801b220",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "store_revenue"
+         ],
+         "dimension_ids": [
+          "city",
+          "store_type"
+         ],
+         "derived_features": [
+          "group_gap",
+          "contribution_share"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "eq",
+           "value_kind": "str"
+          },
+          {
+           "dimension": "store_type",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "aff0a5d9-13c4-47bd-aabd-602bac0fff9d",
+     "trace": null
+    },
+    {
+     "id": "T04",
+     "set": "transfer",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "selection_criterion": true
+     },
+     "passed": true,
+     "first_pass": false,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 5367,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 2,
+     "http_attempts": 2,
+     "repairs": 1,
+     "input_tokens": 8364,
+     "output_tokens": 205,
+     "request_id": "350932b675dd4990afd40865acbaad46",
+     "contract_issues": null,
+     "issues": [
+      [
+       {
+        "requirement_id": "req_1",
+        "field": "time",
+        "code": "explicit_metric_time_mismatch",
+        "expected": {
+         "kind": "range",
+         "start": "2026-01-01",
+         "end": "2026-09-30"
+        }
+       },
+       {
+        "requirement_id": "req_1",
+        "field": "time",
+        "code": "explicit_time_missing",
+        "expected": {
+         "kind": "range",
+         "start": "2026-01-01",
+         "end": "2026-09-30"
+        }
+       }
+      ]
+     ],
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": {
+          "limit": 3,
+          "direction": "top",
+          "metric_id": "store_revenue"
+         },
+         "analysis_kind": "ranking",
+         "metric_ids": [
+          "store_revenue"
+         ],
+         "dimension_ids": [
+          "store"
+         ],
+         "derived_features": [],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "eq",
+           "value_kind": "str"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "phase": "repair",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": null,
+         "ranking": null,
+         "analysis_kind": null,
+         "metric_ids": [],
+         "dimension_ids": [],
+         "derived_features": [],
+         "filters": []
+        }
+       ]
+      }
+     ],
+     "session_id": "d2ed8710-75b6-4b0d-90ef-97bb2e510fd8",
+     "trace": null
+    }
+   ],
+   "finished_at": "2026-10-22T10:48:47.330398+00:00"
+  }
+ ]
+}

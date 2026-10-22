@@ -202,6 +202,7 @@ def build_plans(grounded, catalog):
                 + dimensions
                 + metrics
                 + (["rank_position"] if rank and rank.per_group else [])
+                + (list(TIE_CENSUS) if rank and not rank.per_group and rank.tie_census else [])
             )
             orders = (
                 [{"field": d, "direction": "ASC"} for d in rank.per_group]
@@ -436,6 +437,13 @@ def compile_sql(plan, grounded, catalog):
                     + tie
                 )
             )
+        elif plan.ranking.tie_census:
+            # Window counts run over the complete aggregated population BEFORE the Top N limit.
+            projected = (["period"] if plan.kind == "trend" else []) + plan.dimensions + plan.metrics
+            fields = ", ".join(_ident(f) for f in projected)
+            metric = _ident(plan.ranking.metric)
+            query = (f"WITH aggregate_rows AS ({query}) SELECT {fields}, COUNT(*) OVER (PARTITION BY {metric}) AS rank_tie_count, "
+                     f"COUNT(*) OVER () AS rank_population_count FROM aggregate_rows ORDER BY " + ", ".join([order] + tie))
         else:
             query += " ORDER BY " + ", ".join([order] + tie)
     elif plan.kind == "trend":
@@ -649,6 +657,9 @@ def validate_sql(sql, plan, grounded, catalog):
         )
 
 
+TIE_CENSUS = ('rank_tie_count', 'rank_population_count')
+
+
 def validate_results(result, plan, grounded, catalog):
     errors = []
     rows = result.get("rows", [])
@@ -657,6 +668,7 @@ def validate_results(result, plan, grounded, catalog):
         + plan.metrics
         + (["period"] if plan.kind == "trend" else [])
         + (["rank_position"] if plan.ranking and plan.ranking.per_group else [])
+        + (list(TIE_CENSUS) if plan.ranking and not plan.ranking.per_group and plan.ranking.tie_census else [])
     )
     if result.get("truncated") or len(rows) > plan.row_limit:
         errors.append("Result population exceeds the supported row contract")
@@ -783,6 +795,15 @@ def validate_results(result, plan, grounded, catalog):
                 r.get("rank_position") for r in batch
             ] != list(range(1, len(batch) + 1)):
                 errors.append("Invalid per-group rank positions")
+            if plan.ranking.tie_census and not plan.ranking.per_group:
+                counts = [r.get("rank_tie_count") for r in batch]
+                population = {r.get("rank_population_count") for r in batch}
+                if (len(population) > 1 or any(not isinstance(c, int) or c < 1 for c in counts)
+                        or any(not isinstance(p, int) or p < len(batch) for p in population)
+                        or any(counts[i] != counts[j] for i in range(len(batch)) for j in range(len(batch))
+                               if values[i] == values[j])
+                        or any(c < sum(1 for v in values if v == values[i]) for i, c in enumerate(counts))):
+                    errors.append("Invalid ranking tie census")
     if plan.kind == "trend":
         values = [str(r.get("period")) for r in rows]
         if values != sorted(values):

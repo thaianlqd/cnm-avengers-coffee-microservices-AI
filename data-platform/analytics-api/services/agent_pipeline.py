@@ -217,7 +217,10 @@ class AnalysisPipeline:
                 self.semantic_info.update(failure_stage='PRECHECK', capability_decision=decision['decision'], capability_codes=codes)
                 category = next((preflight_service.CODE_ERROR[c] for c in codes if c in preflight_service.CODE_ERROR),
                     'unsupported_metric' if decision['decision'] == 'UNSUPPORTED' else 'clarification')
-                raise AnalysisError(category, decision['message'])
+                # Typed options of the blocking findings travel with the error (UI/API show choices, not prose only).
+                choices = [fix for f in pf.get('findings', []) if f.get('level') == 'block' for fix in f.get('fixes', [])
+                           if isinstance(fix, dict)]
+                raise AnalysisError(category, decision['message'], choices=choices)
         if getattr(request, "input_mode", "free_text") == "guided":
             mission = require_mission(catalog.registry, request.analysis_mission)
             if not mission or not request.guided_contract:
@@ -523,6 +526,7 @@ class AnalysisPipeline:
             session.contract_version = "2.8"
             if self.semantic_info.get('server_supporting_expansion'):
                 session.ui_constraints.update(
+                    scope_resolution=deepcopy((self.semantic_info.get('request_anchors') or {}).get('scope_resolution') or {}),
                     server_supporting_expansion=self.semantic_info['server_supporting_expansion'],
                     minimum_visuals=self.semantic_info.get('minimum_visuals',session.ui_constraints.get('minimum_visuals',0)),
                     omitted_supporting_ids=self.semantic_info.get('omitted_supporting_ids', []))
@@ -645,6 +649,7 @@ class AnalysisPipeline:
         artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
         check_request_deadline()
         context.update(server_supporting_expansion=self.semantic_info.get('server_supporting_expansion'),
+            scope_resolution=deepcopy((self.semantic_info.get('request_anchors') or {}).get('scope_resolution') or {}),
             fixed_grouping_policy=self.semantic_info.get('fixed_grouping_policy'),
             depth_selection_origin=self.semantic_info.get('depth_selection_origin'), requested_depth=self.semantic_info.get('requested_depth'),
             minimum_visuals=self.semantic_info.get('minimum_visuals',0),
@@ -722,6 +727,10 @@ class AnalysisPipeline:
             "diagnostics": self.diagnostics(catalog, {"proposal": "passed"}),
         }
         session.diagnostics = deepcopy(response["diagnostics"])
+        if self.semantic_info.get("selections"):
+            # Approved together with the proposal: the user sees which members a criterion chose, and why.
+            session.diagnostics["selections"] = deepcopy(self.semantic_info["selections"])
+            response["proposal"]["selections"] = deepcopy(self.semantic_info["selections"])
         from services.session_service import save_session
         check_request_deadline()
         save_session(session)
@@ -1119,6 +1128,28 @@ class AnalysisPipeline:
         # built only from verified, evidence-referenced facts of primary charts.
         from services.chart_insight_service import chart_insights
         insights = chart_insights(dashboard["charts"], artifacts, catalog, reference, mission_hint)
+        # Comparison reports: server-owned So sánh / Tổng gộp / Xem riêng projections of the complete artifacts
+        # (0 provider calls, 0 queries on switch); each mode carries its own data, caption and insight.
+        from services.view_mode_service import report_frames, attach_view_modes, view_insights
+        anchors = self.semantic_info.get("request_anchors") or (session.diagnostics or {}).get("request_anchors") or {}
+        comparison_frames = report_frames(self.semantic_info.get("semantic_intent") or session.semantic_intent, artifacts,
+                                          catalog.registry, mission_hint, anchors.get("scope_resolution"),
+                                          getattr(session, "original_prompt", None))
+        view_decisions = attach_view_modes(dashboard["charts"], artifacts, catalog, reference, mission_hint, comparison_frames)
+        insights = [c["insight"] for c in dashboard["charts"] if c.get("insight")]
+        selections = self.semantic_info.get("selections") or (session.diagnostics or {}).get("selections") or []
+        from services.selection_service import describe as describe_selection
+        for frame in comparison_frames:
+            receipt = next((r for r in selections if r.get("requirement_id") == frame["requirement_id"]), None)
+            if receipt:
+                frame["selection"] = dict(summary=describe_selection(receipt), **{k: receipt[k] for k in (
+                    "criterion", "criterion_label", "criterion_version", "score_label", "formula", "best", "buckets", "selected",
+                    "selected_labels", "excluded", "boundary_ties", "min_complete_buckets", "cadence", "window", "as_of", "eligible",
+                    "limit", "metric_id", "entity_dimension_id", "result_ref", "calendar_policy", "identity_policy") if k in receipt})
+            if frame.get("missing_members"):
+                labels = ", ".join(m["label"] for m in frame["members"] if m["key"] in frame["missing_members"])
+                self.semantic_info.setdefault("limitations", []).append({"reason": "requested_member_without_data",
+                    "message": f"Không có dữ liệu cho {labels} trong phạm vi đã chọn; so sánh chỉ gồm đối tượng có dữ liệu."})
         from services.chart_insight_service import compare_cards, short_answer as build_short_answer
         short_answer = build_short_answer(dashboard["charts"])
         from services.view_requirement_service import view_coverage
@@ -1134,8 +1165,12 @@ class AnalysisPipeline:
             # A report that cannot show a required view is never a complete success.
             self.semantic_info.setdefault("limitations", []).append(
                 {"reason": "required_view_missing", "message": f"Chưa có góc nhìn bắt buộc ({missing['kind']}) cho yêu cầu {missing['requirement_id']}: {missing['reason']}."})
-        cards = compare_cards(dashboard["charts"], artifacts, catalog, mission_hint, evidence=evidence)
-        if cards:
+        from services.view_mode_service import comparison_view_cards
+        view_cards=comparison_view_cards(dashboard['charts'])
+        cards = view_cards or compare_cards(dashboard["charts"], artifacts, catalog, mission_hint, evidence=evidence)
+        if view_cards:
+            dashboard['kpi_cards']=view_cards
+        elif cards:
             dashboard["kpi_cards"] = cards + [k for k in dashboard.get("kpi_cards", []) if k.get("label") != "Thay đổi giữa hai kỳ quan sát"]
         from services.analytical_capacity_planner import AnalyticalCapacityContract
         from services.result_artifact_store import artifact_store, fingerprint, serialized
@@ -1223,6 +1258,8 @@ class AnalysisPipeline:
                 "plan":"passed","sql_semantics":"passed","security":"passed",
                 "results":"passed","dashboard":"passed","insights":"passed"}))
         response["analysis_coverage"] = deepcopy(coverage_view)
+        response["comparison_frames"] = deepcopy(comparison_frames)
+        response.setdefault("diagnostics", {})["view_mode_decisions"] = view_decisions
         from services.analysis_quality_service import assess_report, report_limitations
         from services.analysis_coverage_service import canonical_components
         declared = self.semantic_info.get("analysis_components") or (session.analysis_components if session.coverage_origin == "declared" else [])
@@ -1354,6 +1391,7 @@ class AnalysisPipeline:
         response["quality_assessment"] = assess_report(response, catalog, artifacts=artifacts)
         from services import verification_reconciliation_service as verification
         from services.chart_insight_service import verify_insights
+        from services.view_mode_service import view_projections, view_insights
         structural = verification.reconcile(artifacts, catalog, runner=None)
         relevance_check = chart_relevance_service.verify(response["charts"], artifacts, catalog, mission_id=mission_hint,
                                                          coverage=coverage_map) if coverage_map else {"total": 0, "passed": 0, "charts": []}
@@ -1361,7 +1399,8 @@ class AnalysisPipeline:
         canonical_conclusion=conclusion_from_report(response,artifacts,catalog)[0]
         response["verification"] = verification.verification_report(
             reconciliation=structural, relevance=relevance_check,
-            grounding_result=verification.grounding(safe_plan["claims"], evidence, verify_insights(insights, artifacts, catalog=catalog)),
+            grounding_result=verification.grounding(safe_plan["claims"], evidence, verify_insights(insights + view_insights(response["charts"]),
+                {**artifacts, **view_projections(response["charts"], artifacts, catalog.registry)}, catalog=catalog)),
             forecasts=forecasts, requirement_coverage=coverage_map, internal_score=response["quality_assessment"].get("score"),
             conclusion_check=verification.verify_conclusion(response.get("conclusion"), evidence, forecasts, expected=canonical_conclusion),
             view_coverage=response.get("view_coverage"))

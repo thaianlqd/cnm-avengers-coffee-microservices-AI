@@ -220,11 +220,29 @@ def defaults(artifacts, include_composition=False, skip=()):
     return visuals
 
 
+def without_companion_visuals(visuals, artifacts):
+    """Exposure companions (n/N of a rate/average in the same query) are evidence inside that chart: never their own
+    bar, nor a 'relationship' with the rate they mechanically define."""
+    return [v for v in visuals if v.query_id not in artifacts or v.compare_query_ids
+            or not set(v.metrics) & exposure_companions(artifacts[v.query_id])]
+
+
+def exposure_companions(a):
+    metrics = a.grounded.metrics
+    out = set()
+    for m in a.plan.metrics:
+        c = metrics.get(m, {}).get("components") or {}
+        if metrics.get(m, {}).get("aggregation_semantics") in {"ratio", "average"}:
+            out |= {x for x in (c.get("numerator_metric"), c.get("denominator_metric"), c.get("exposure_metric"))
+                    if x and x in a.plan.metrics and x != m and metrics.get(x, {}).get("component_only")}
+    return out
+
+
 # ------------------------------------------------------------------------------------------ analytical lenses (FINAL P3)
 ROLE_RANK = {"core": 0, "diagnostic": 1, "extended": 2}
 LENS_PRIORITY = {"core": 90, "diagnostic": 80, "extended": 70}
 LENS_PURPOSE = {"line": "trend", "multi_line": "trend", "stacked_100": "distribution", "bars": "comparison", "donut": "distribution",
-                "heatmap": "comparison", "scatter": "relationship"}
+                "heatmap": "comparison", "scatter": "relationship", "member_bars": "comparison", "member_lines": "trend"}
 
 
 def lens_index(coverage):
@@ -280,9 +298,17 @@ def lens_visual(lens, spec, a):
         # the complete total; a donut would collapse almost everything into "Khác". Same artifact, same numbers.
         many = len(a.result["rows"]) > 8 and lens.get("kind") == "contribution"
         return DashboardVisual(chart_type="pareto" if many else "donut", x_field=visible[0], **fields)
+    member = lens.get("member_axis")
+    if form == "member_bars" and member in visible and len(visible) == 2:
+        other = next(d for d in visible if d != member)
+        return DashboardVisual(chart_type="grouped_bar", x_field=other, series_field=member, **{**fields, "purpose": "comparison"})
+    if form == "member_bars" and member in visible and len(visible) == 1:
+        return DashboardVisual(chart_type="bar", x_field=member, **{**fields, "purpose": "comparison"})
+    if form == "member_lines" and member in visible and len(visible) in (1, 2):
+        return DashboardVisual(chart_type="multi_line", x_field="period", series_field=member, **{**fields, "purpose": "trend"})
     if form == "heatmap" and len(visible) == 2:
         return DashboardVisual(chart_type="heatmap", x_field=visible[0], series_field=visible[1], **fields)
-    if form == "scatter" and len(visible) == 1 and len(metrics) == 2:
+    if form == "scatter" and (len(visible) == 1 or member in visible and len(visible) == 2) and len(metrics) == 2:
         return DashboardVisual(chart_type="scatter", x_field=metrics[0], **fields)
     return None
 
@@ -292,10 +318,15 @@ def lens_reason(lens, spec, a, min_groups):
     rows, form = a.result["rows"], spec["form"]
     if not rows:
         return "no_rows"
-    if form in {"line", "multi_line", "stacked_100"}:
+    if form in {"line", "multi_line", "stacked_100", "member_lines"}:
         if len({str(r.get("period"))[:10] for r in rows}) < min_groups.get("trend", 2):
             return "insufficient_periods"
-        if form in {"multi_line", "stacked_100"} and len({tuple(r.get(d) for d in visible_dimensions(a)) for r in rows}) < min_groups.get("segmented_trend", 2):
+        if form in {"multi_line", "stacked_100", "member_lines"} and len({tuple(r.get(d) for d in visible_dimensions(a)) for r in rows}) < min_groups.get("segmented_trend", 2):
+            return "singleton"
+    elif form == "member_bars":
+        member = lens.get("member_axis")
+        others = [d for d in visible_dimensions(a) if d != member]
+        if len(rows) < 2 or others and len({str(r.get(others[0])) for r in rows}) < 2:
             return "singleton"
     elif form in {"bars", "donut"}:
         if len(rows) < min_groups.get("segment" if form == "bars" else "composition", 2):
@@ -372,6 +403,46 @@ def comparison_reason(v, artifacts):
     return None
 
 
+def exposure_fields(row, meta):
+    """Numerator/denominator behind one rate or average (2/2 · 100% is not 39/39 · 100%)."""
+    components = meta.get("components") or {}
+    num = components.get("numerator_metric")
+    den = components.get("denominator_metric") or components.get("exposure_metric")
+    if meta.get("aggregation_semantics") not in {"ratio", "average"} or not den or not number(row.get(den)):
+        return {}
+    out = {"denominator": row[den]}
+    if num and number(row.get(num)):
+        out["numerator"] = row[num]
+    return out
+
+
+def ranking_census(a):
+    """Selected-vs-eligible and ties at the Top/Bottom N boundary, from counts computed before the limit (H.5).
+
+    Display position and deterministic tiebreak are not business superiority: when the boundary value is shared by
+    more eligible rows than were selected, the report says so with the actual counts."""
+    rank = a.plan.ranking
+    rows = a.result.get("rows", [])
+    if not rank or rank.per_group or not getattr(rank, "tie_census", False) or not rows or "rank_tie_count" not in rows[0]:
+        return None
+    metric = rank.metric
+    boundary = rows[-1].get(metric)
+    shown = sum(1 for r in rows if r.get(metric) == boundary)
+    tied = rows[-1]["rank_tie_count"]
+    population = rows[0]["rank_population_count"]
+    census = dict(selected=len(rows), eligible_population=population, boundary_value=boundary,
+                  boundary_tie_count=tied, boundary_shown=shown, top_tie_count=rows[0]["rank_tie_count"])
+    noun = " / ".join(a.grounded.dimensions[d]["business_name"].lower() for d in visible_dimensions(a)) or "nhóm"
+    unit = a.grounded.metrics.get(metric, {}).get("unit", "")
+    from services.chart_insight_service import fmt
+    if tied > shown:
+        census["note"] = (f"Ngưỡng {ranking_label(rank)}: {tied} {noun} cùng {fmt(boundary, unit)}, đang hiển thị {shown}; "
+                          f"thứ tự trong nhóm đồng hạng theo mã định danh, không phải vượt trội. Quần thể đủ điều kiện: {population}.")
+    else:
+        census["note"] = f"Chọn {len(rows)} trong {population} {noun} đủ điều kiện."
+    return census
+
+
 def population_label(a):
     return (
         "; ".join(
@@ -438,8 +509,9 @@ def chart_reason(v, a, max_categories, max_series):
         ):
             return "requires_ordered_time"
         if visible and (
-            len(visible) != 1
-            or v.series_field != visible[0]
+            len(visible) not in (1, 2)
+            or v.series_field not in visible
+            or len(visible) == 2 and v.series_field != visible[0]
             or v.chart_type != "multi_line"
         ):
             return "requires_partition_series"
@@ -485,6 +557,13 @@ def chart_reason(v, a, max_categories, max_series):
             or any(r[v.metrics[0]] < 0 for r in rows)
         ):
             return "invalid_part_to_whole"
+    elif v.chart_type == "grouped_bar" and v.series_field:
+        # Member comparison over a breakdown: x = breakdown, one series per member (B.2.3).
+        if (len(visible) != 2 or v.series_field not in visible or v.x_field not in visible or v.x_field == v.series_field
+                or len(v.metrics) != 1 or p.ranking or p.explicit_limit):
+            return "requires_two_dimension_complete_grid"
+        if len({(display(r, v.x_field), display(r, v.series_field)) for r in rows}) != len(rows):
+            return "duplicate_category"
     elif v.chart_type in ("bar", "horizontal_bar", "grouped_bar", "donut"):
         if not visible or v.x_field != visible[0] or v.series_field or (
             len(visible) != 1 and v.chart_type not in {'bar', 'horizontal_bar'}
@@ -594,6 +673,11 @@ def render(v, a, index, max_categories=100):
         if a.plan.ranking.per_group:
             output['ranking_note'] = 'Xếp hạng riêng trong từng nhóm: ' + ' / '.join(
                 a.grounded.dimensions[d]['business_name'] for d in a.plan.ranking.per_group)
+        census = ranking_census(a)
+        if census:
+            output.update(ranking_census=census)
+            if census.get("note"):
+                output["ranking_note"] = (output.get("ranking_note", "") + " " + census["note"]).strip()
         output["title"] = f"{ranking_label(a.plan.ranking)} — " + output["title"]
         if metric != a.plan.ranking.metric:
             output["title"] += " trong tập xếp hạng theo " + a.grounded.metrics[a.plan.ranking.metric]["business_name"]
@@ -667,8 +751,11 @@ def render(v, a, index, max_categories=100):
         v.chart_type in ("multi_line", "stacked_bar", "stacked_100")
         or v.chart_type == "grouped_bar"
     ):
+        extra = [d for d in visible_dimensions(a) if d not in (v.x_field, v.series_field)] if v.series_field else []
+        def series_name(row):
+            return " · ".join([display(row, v.series_field), *(display(row, d) for d in extra)])
         names = (
-            list(dict.fromkeys(display(r,v.series_field) for r in rows))
+            list(dict.fromkeys(series_name(r) for r in rows))
             if v.series_field
             else v.metrics
         )
@@ -679,7 +766,7 @@ def render(v, a, index, max_categories=100):
                 display(row,v.x_field), {"label": display(row,v.x_field)}
             )
             if v.series_field:
-                record[keys[display(row,v.series_field)]] = row[metric]
+                record[keys[series_name(row)]] = row[metric]
             else:
                 for m in v.metrics:
                     record[keys[m]] = row[m]
@@ -715,6 +802,8 @@ def render(v, a, index, max_categories=100):
                    if v.chart_type in {'bar', 'horizontal_bar'} and a.plan.kind != 'trend' and a.plan.dimensions
                    and len(a.plan.dimensions) <= 8 and all(dimension in r for dimension in a.plan.dimensions) else {}),
                 **({'rank_position': r['rank_position']} if a.plan.ranking and a.plan.ranking.per_group else {}),
+                **({'tie_count': r['rank_tie_count']} if 'rank_tie_count' in r else {}),
+                **exposure_fields(r, meta),
             }
             for i, r in enumerate(rows)
         ]
@@ -754,10 +843,14 @@ def build_dashboard(
             if v.query_id not in table_only
             and any((v.query_id, m) not in represented for m in v.metrics)
         ]
-    proposals += lens_proposals
+    # Governed lenses (e.g. exposure_rate) may chart a denominator on purpose; default/plan visuals never do.
+    proposals = without_companion_visuals(proposals, artifacts) + lens_proposals
     charts = []
     from services.derived_chart_service import contribution_charts, pair_charts, driver_charts
     derived_views = contribution_charts(artifacts, evidence) + pair_charts(artifacts, evidence) + driver_charts(artifacts, evidence)
+    # Same companion rule for derived views: a rate's own n/N is not a separate share/pair/driver chart.
+    derived_views = [c for c in derived_views if not any(set(c.get("metrics") or []) & exposure_companions(artifacts[q])
+                                                         for q in (c.get("scope_refs") or [c.get("query_id")]) if q in artifacts)]
     requested_derived = sum(c['role'] == 'requested' for c in derived_views)
     omitted = []
     seen = {}
@@ -944,7 +1037,7 @@ def build_dashboard(
                         "concentration": "Tỷ trọng lớn nhất",
                     }[e["feature"]],
                     "value": e["values"][field],
-                    "unit": "%" if e["feature"] == "concentration" else e["unit"],
+                    "unit": "%" if e["feature"] == "concentration" else e['values'].get('gap_unit',e["unit"]),
                     "metric": e["metric"],
                     "scope_ref": e["scope_ref"],
                     "evidence_id": e["id"],

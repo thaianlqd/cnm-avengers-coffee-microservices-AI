@@ -656,9 +656,18 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
             cvague = _vocabulary_hits(ctext, ws.get("vague_quality_terms", []))
             crank = bool(anchors.get("rankings"))
             if "compare" in csig and cvague and not crank and len(cmetrics) <= 1:
+                # Ask only what is missing (H.3): keep a stated N; offer governed criteria, never assume "highest".
+                from services.selection_service import criterion_catalog
+                count = re.search(r"(?:^|\s)(\d{1,2})\s", ctext)
+                ctext_original = question or ''
+                options = [{"label": f"{c['label']} — {c['formula']}", "kind": "advice", "criterion": c["id"],
+                            "followup": ctext_original.replace(cvague[0], c["phrase"]) if cvague[0] in ctext_original else c["phrase"]}
+                           for c in criterion_catalog()]
+                options.append({"label": "Hoặc nêu rõ chỉ số xếp hạng, ví dụ: Top N theo doanh thu", "kind": "advice"})
                 findings.append(finding("block", "cohort_criterion_needed",
-                    f"“{cvague[0]}” cần tiêu chí đo lường và số lượng nhóm (N) để xác định nhóm so sánh.",
-                    [{"label": "Nêu rõ: Top 3 theo doanh thu", "kind": "advice"}], term=cvague[0]))
+                    (f"“{cvague[0]}” chưa có định nghĩa đo lường; hãy chọn tiêu chí để chọn {count.group(1)} nhóm."
+                     if count else f"“{cvague[0]}” cần tiêu chí đo lường và số lượng nhóm (N) để xác định nhóm so sánh."),
+                    options, term=cvague[0], known_count=int(count.group(1)) if count else None))
                 state = state or "NEEDS_INPUT"
             if "relationship" in csig and len(cmetrics) == 1 and cdims:
                 findings.append(finding("block", "association_category_variable",

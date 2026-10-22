@@ -13,6 +13,8 @@ const timeTick = (label: string, crossYear: boolean) => /^\d{4}-\d{2}-\d{2}/.tes
 
 // Keep labels at a readable size while the plot fills its card without growing taller.
 const PLOT_HEIGHT = 214;
+const SeriesVisibilityNote: React.FC<{ labels: string[] }> = ({ labels }) => labels.length ?
+  <p data-series-visibility role="status" className="text-xs text-slate-500 mb-2">Đang ẩn trên hình: {labels.join(', ')}. Số liệu, mẫu số và nhận định giữ nguyên; dùng “Xem riêng” để đổi phạm vi biểu đồ.</p> : null;
 function usePlotWidth() {
   const ref = useRef<SVGSVGElement>(null);
   const [width, setWidth] = useState(620);
@@ -43,7 +45,8 @@ export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: bo
   const span = high - low || 1, y = (value: number) => (PLOT_HEIGHT - 38) - (value - low) / span * (PLOT_HEIGHT - 62);
   const slot = (plotWidth-left-20) / visible.length;
   return <div className="w-full min-w-0">
-    <div className="flex flex-wrap gap-2 text-xs mb-3">{(series.length > 1 ? series : []).map(s => <button key={s.key} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} aria-pressed={!hidden[s.key]} style={{ color: s.color }}>{s.label}</button>)}</div>
+    <div className="flex flex-wrap gap-2 text-xs mb-3">{(series.length > 1 ? series : []).map(s => <button key={s.key} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} aria-pressed={!hidden[s.key]} className={hidden[s.key] ? 'opacity-50 line-through' : ''} style={{ color: s.color }}>{s.label}</button>)}</div>
+    <SeriesVisibilityNote labels={series.filter(s => hidden[s.key]).map(s => s.label)} />
     <svg ref={ref} viewBox={`0 0 ${plotWidth} ${PLOT_HEIGHT}`} style={{ height: PLOT_HEIGHT }} role="img" aria-label={stacked ? 'Biểu đồ cột chồng' : 'Biểu đồ cột nhóm'} className="w-full">
       <line x1={left} x2={plotWidth - 18} y1={y(0)} y2={y(0)} stroke="#cbd5e1" />
       {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1={left} x2={plotWidth - 18} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 6" /><text data-y-tick x={left-12} y={y(v)+4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
@@ -127,6 +130,7 @@ export const ParetoChart: React.FC<{ data: any[]; populationCount?: number; disp
 
 export const AnalystChart: React.FC<{ chart: any; onInspect?: (row: any) => void }> = ({ chart, onInspect }) => {
   const data = (chart.data || []).map((r: any, i: number) => ({ ...r, color: r.color || categoryColor(r.label, i), label: r.label == null ? r.label : businessCategory(r.label) })), unit = chart.unit || '', color = chart.accent_color || '#2563eb';
+  if (chart.chart_type === 'kpi') return <div data-view-kpi className="py-6 text-center"><p className="text-3xl font-semibold tabular-nums text-slate-900">{formatChartValue(chart.data?.[0]?.value, unit ? ` ${unit}` : '')}</p><p className="mt-1 text-xs text-slate-500">{chart.caption || chart.data?.[0]?.label}</p></div>;
   if (['grouped_bar', 'stacked_bar', 'stacked_100'].includes(chart.chart_type)) return <SeriesBarChart data={data} series={chart.series || []} stacked={chart.chart_type !== 'grouped_bar'} percentage={chart.chart_type === 'stacked_100'} unit={unit} />;
   if (chart.chart_type === 'pareto') return <ParetoChart data={data} populationCount={chart.population_count} displayedCount={chart.displayed_count} />;
   if (chart.chart_type === 'scatter') return <ScatterChart data={data} xLabel={chart.x_label} yLabel={chart.y_label} xUnit={unit} yUnit={chart.y_unit} />;
@@ -153,7 +157,8 @@ export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: stri
   const coverage = data.map(r => bucketCoverage(r.label, granularity, period));
   const periodNote = (i: number) => coverage[i]?.partial ? ` · Kỳ chưa đủ ngày: ${[coverage[i].start, period?.start].filter(Boolean).sort().slice(-1)[0]} → ${[coverage[i].end, period?.end].filter(Boolean).sort()[0]}` : '';
   const pathFor=(indices:number[],key:string)=>monotonePath(indices.map(i=>({x:x(i),y:y(data[i][key])})));
-  return <div className="time-series-chart w-full relative" onMouseLeave={()=>setHover(null)}><div className="time-series-legend">{(series.length > 1 ? series : []).map(s => <button key={s.key} aria-pressed={!hidden[s.key]} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })}><i style={{background:s.color}}/>{s.label}</button>)}</div>
+  return <div className="time-series-chart w-full relative" onMouseLeave={()=>setHover(null)}><div className="time-series-legend">{(series.length > 1 ? series : []).map(s => <button key={s.key} aria-pressed={!hidden[s.key]} className={hidden[s.key] ? 'opacity-50 line-through' : ''} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })}><i style={{background:s.color}}/>{s.label}</button>)}</div>
+    <SeriesVisibilityNote labels={series.filter(s => hidden[s.key]).map(s => s.label)} />
     <svg ref={ref} viewBox={`0 0 ${plotWidth} ${PLOT_HEIGHT}`} style={{ height: PLOT_HEIGHT }} role="img" aria-label="Biểu đồ theo thời gian" className="w-full" onPointerMove={event=>{const bounds=event.currentTarget.getBoundingClientRect(),pointer=(event.clientX-bounds.left)*plotWidth/bounds.width;setHover(positions.reduce((best:number,_:number,i:number)=>Math.abs(x(i)-pointer)<Math.abs(x(best)-pointer)?i:best,0));}}>
       <defs>{active.map((s,i)=><linearGradient key={s.key} id={`${gradient}-${i}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={s.color||'#2563eb'} stopOpacity=".18"/><stop offset="100%" stopColor={s.color||'#2563eb'} stopOpacity=".015"/></linearGradient>)}</defs>
       {ticks.map((v, i) => <g key={i}><line x1={left} x2={plotWidth - 18} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 6" /><text data-y-tick x={left-12} y={y(v)+4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
@@ -1295,6 +1300,7 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
         </div>
       )}
 
+      <SeriesVisibilityNote labels={seriesList.filter(s => hiddenSeries[s]).map(s => seriesLabels[s] || s)} />
       {/* SVG Canvas */}
       <div className="relative w-full overflow-hidden">
         <svg

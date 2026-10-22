@@ -104,6 +104,8 @@ export function dashboardChartTabs(charts = []) {
 }
 
 export function dashboardHighlights(report = {}) {
+  const comparisonCards = (report.kpi_cards || []).filter(c => c.kind === 'comparison_view' && Number.isFinite(c.value));
+  if (comparisonCards.length) return comparisonCards.slice(0, 4);
   // Whole-scope values answer the question before local maxima. Never sum
   // grouped averages, or turn a group's scalar into a whole-scope KPI.
   const scalarCards = (report.evidence || []).filter(e => e.feature === 'scalar'

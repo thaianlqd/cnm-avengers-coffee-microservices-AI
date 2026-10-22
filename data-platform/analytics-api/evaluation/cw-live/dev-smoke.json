@@ -1,0 +1,286 @@
+{
+ "manifest_version": "cw-live-1",
+ "runs": [
+  {
+   "started_at": "2026-10-22T08:09:01.492108+00:00",
+   "cases": [
+    {
+     "id": "P01",
+     "set": "positive",
+     "outcome": "error",
+     "checks": {
+      "outcome": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "phase": "propose",
+     "latency_ms": 6342,
+     "error_category": "semantic_resolution_failed",
+     "error_message": "Semantic interpretation needs targeted recovery",
+     "logical_calls": 2,
+     "http_attempts": 2,
+     "repairs": 1,
+     "input_tokens": 8416,
+     "output_tokens": 333,
+     "request_id": "56fc9e36718644f6aec2ac1f34631905",
+     "session_id": null,
+     "trace": null
+    },
+    {
+     "id": "P07",
+     "set": "positive",
+     "outcome": "error",
+     "checks": {
+      "outcome": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "phase": "propose",
+     "latency_ms": 22314,
+     "error_category": "semantic_resolution_failed",
+     "error_message": "Semantic interpretation needs targeted recovery",
+     "logical_calls": 2,
+     "http_attempts": 3,
+     "repairs": 1,
+     "input_tokens": 8078,
+     "output_tokens": 350,
+     "request_id": "9b4a2d640b5f404fb73b9b6324c88b96",
+     "session_id": null,
+     "trace": null
+    },
+    {
+     "id": "N01",
+     "set": "negative",
+     "outcome": "clarification",
+     "checks": {
+      "outcome": true,
+      "choices": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "phase": "propose",
+     "latency_ms": 163,
+     "error_category": "clarification",
+     "error_message": "“hiệu quả nhất” chưa có định nghĩa đo lường; hãy chọn tiêu chí để chọn 2 nhóm.",
+     "logical_calls": 0,
+     "http_attempts": 0,
+     "repairs": 0,
+     "input_tokens": null,
+     "output_tokens": null,
+     "request_id": "585d0ff5c56340709310dfa6204f5f14",
+     "session_id": null,
+     "trace": null
+    }
+   ],
+   "finished_at": "2026-10-22T08:09:30.334127+00:00"
+  },
+  {
+   "started_at": "2026-10-22T08:09:45.917096+00:00",
+   "cases": [
+    {
+     "id": "P01",
+     "set": "positive",
+     "outcome": "error",
+     "checks": {
+      "outcome": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "phase": "propose",
+     "latency_ms": 23933,
+     "error_category": "semantic_resolution_failed",
+     "error_message": "Semantic interpretation needs targeted recovery",
+     "logical_calls": 2,
+     "http_attempts": 3,
+     "repairs": 1,
+     "input_tokens": 8417,
+     "output_tokens": 387,
+     "request_id": "78f52e4aec784ec586d76529ef86e7be",
+     "issues": [
+      [
+       {
+        "requirement_id": null,
+        "field": "time",
+        "code": "explicit_time_missing",
+        "expected": {
+         "kind": "month",
+         "month": 1
+        }
+       },
+       {
+        "requirement_id": null,
+        "field": "time",
+        "code": "explicit_time_missing",
+        "expected": {
+         "kind": "month",
+         "year": 2026,
+         "month": 9
+        }
+       }
+      ],
+      [
+       {
+        "requirement_id": null,
+        "field": "time",
+        "code": "explicit_time_missing",
+        "expected": {
+         "kind": "month",
+         "month": 1
+        }
+       },
+       {
+        "requirement_id": null,
+        "field": "time",
+        "code": "explicit_time_missing",
+        "expected": {
+         "kind": "month",
+         "year": 2026,
+         "month": 9
+        }
+       }
+      ]
+     ],
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "r_391552c099c101b131feaf24",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "phase": "repair",
+       "requirements": [
+        {
+         "requirement_id": "repair_add_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": null,
+     "trace": null
+    }
+   ],
+   "finished_at": "2026-10-22T08:10:09.932045+00:00"
+  },
+  {
+   "started_at": "2026-10-22T08:10:51.711113+00:00",
+   "cases": [
+    {
+     "id": "P01",
+     "set": "positive",
+     "outcome": "error",
+     "checks": {
+      "outcome": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "phase": "propose",
+     "latency_ms": 22726,
+     "error_category": "provider_timeout",
+     "error_message": "Provider interpretation unavailable",
+     "logical_calls": 1,
+     "http_attempts": 2,
+     "repairs": 0,
+     "input_tokens": null,
+     "output_tokens": null,
+     "request_id": "a8e5261f2cbc43aaa2e46de9e0c3050a",
+     "issues": null,
+     "draft_shapes": null,
+     "session_id": null,
+     "trace": null
+    },
+    {
+     "id": "P07",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "selection_criterion": true,
+      "selection_oracle": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "phase": "generate",
+     "latency_ms": 4069,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3621,
+     "output_tokens": 156,
+     "request_id": "006df355050441698dbb4ffb84e45273",
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "stable_cities_revenue_comparison",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": []
+        }
+       ]
+      }
+     ],
+     "session_id": "fb1684c0-c63a-4a69-a3df-93b05515b71b",
+     "trace": null
+    }
+   ],
+   "finished_at": "2026-10-22T08:11:18.604173+00:00"
+  }
+ ]
+}

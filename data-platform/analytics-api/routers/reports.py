@@ -43,6 +43,20 @@ def _audit(action,report_id=None):
 def _authoritative_report(data,permission='reports.export'):
     principal=_principal(permission)
     if principal is None: return data
+    if data.get('saved_report_id'):
+        # Reopened reports retain their own stored snapshot after the transient analysis session expires.
+        # get_saved_report applies the current owner/access predicate and re-verifies artifacts/claims.
+        stored=get_saved_report(data['saved_report_id'])
+        response=deepcopy(stored.get('module_config') or {})
+        if data.get('revision') is not None and data['revision']!=response.get('revision'):
+            raise HTTPException(409,'Revision của báo cáo lưu không còn khớp.')
+        if data.get('chart_view_choices') is not None:
+            from services.view_mode_service import apply_view_choices
+            try:response=apply_view_choices(response,data['chart_view_choices'])
+            except AnalysisError as error:raise HTTPException(409,str(error)) from None
+        from services.access_policy import current_principal
+        current_principal(required=True)
+        return response
     from services.session_service import get_session
     session=get_session(data.get('session_id',''))
     if not session or session.owner_id!=principal.bound_owner or not session.report_response:
@@ -63,6 +77,12 @@ def _authoritative_report(data,permission='reports.export'):
         raise HTTPException(409,'Dữ liệu báo cáo không còn đủ để lưu hoặc xuất; hãy chạy lại phân tích.') from None
     from services.access_policy import current_principal
     current_principal(required=True)  # Revocation while reading artifacts cannot publish/export.
+    if data.get('chart_view_choices') is not None:
+        from services.view_mode_service import apply_view_choices
+        try:
+            response=apply_view_choices(response,data['chart_view_choices'])
+        except AnalysisError as error:
+            raise HTTPException(409,str(error)) from None
     return response
 
 

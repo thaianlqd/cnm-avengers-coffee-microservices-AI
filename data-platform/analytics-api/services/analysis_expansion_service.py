@@ -246,6 +246,7 @@ class _Planner:
         self.shapes, self.lenses, self.decisions = {}, [], []
         self.used_axes, self.used_cross, self.segment_axes, self.requested_axes = set(), set(), [], []
         self.pool = self._axis_pool()
+        self.member = self._member_axis(mission_id)
         mission = next((m for m in self.registry.get('analysis_missions', []) if m['id'] == mission_id), None)
         rule = ((mission or {}).get('input_contract') or {}).get('supporting')
         self.mission_kinds = set(rule.get('kinds', [])) if rule else None
@@ -306,6 +307,31 @@ class _Planner:
                 pool.append(dim)
         return pool
 
+    def _member_axis(self, mission_id):
+        """Comparison member axis kept by every supporting lens (B.5.1), or None.
+
+        Derived from the approved meaning only (comparison kind / group_gap / compare mission over named members);
+        a relationship seed (``tag``) and an unknown-size member set never pivot the lenses."""
+        from services.view_mode_service import member_axis, MAX_MEMBERS
+        if self.tag or not self.metric:
+            return None
+        found = member_axis(self.req, self.registry, mission_id, set(self.index.metrics.get(self.metric, {}).get('dimensions', [])),
+                            scope_resolution=self.r.ui.get('scope_resolution'))
+        if not found:
+            return None
+        dim, members, evidence = found
+        self.decisions.append(dict(kind='member_axis', axis=dim, status='planned', members=len(members), evidence=evidence))
+        return dict(dimension=dim, members=members, count=min(len(members), MAX_MEMBERS))
+
+    def _member_capacity(self, axes):
+        cells = self.member['count']
+        for dim in axes:
+            card = self._card(dim)
+            if card is None:
+                return _hierarchical(self.registry, self.member['dimension'], dim)  # nested entity: one member per row
+            cells *= card
+        return cells <= self.policy.get('max_member_cells', 64)
+
     def _periods(self, granularity):
         from services.analytical_capacity_planner import period_count
         from services.time_resolution_service import resolve_time
@@ -328,6 +354,13 @@ class _Planner:
 
     # -- shapes: (analysis_kind, axes) → one requirement; many lenses may read one shape
     def shape(self, kind, axes, metrics, granularity=None):
+        if self.member and kind != 'cross_tab' and self.member['dimension'] not in axes and self._member_capacity(axes):
+            # Comparison report: every supporting lens keeps the member axis so it can be read per member,
+            # as their total or for one member (server view modes). Components travel with the measure so a
+            # total of a ratio/average is recomputed from summed parts, never averaged.
+            from services.view_mode_service import required_metrics
+            axes = [self.member['dimension'], *axes]
+            metrics = required_metrics(metrics, self.registry)
         key = (kind, tuple(axes))
         if key not in self.shapes:
             from services.analytical_resolver import digest
@@ -523,6 +556,24 @@ class _Planner:
                     show=[dict(form='stacked_100', metrics=[self.metric])])
 
     COSTLY_ONLY = {'trend', 'segmented_trend'}  # always need their own query; never reserves
+    # A mix-over-time or a second free axis cannot also carry the member axis legibly; they are not
+    # replaced by a silent union chart in a comparison report (typed decision instead).
+    MEMBER_INCOMPATIBLE = {'mix_shift', 'cross_tab'}
+    MEMBER_FORMS = {'line': 'multi_line', 'bars': 'member_bars', 'donut': 'member_bars', 'multi_line': 'member_lines', 'scatter': 'scatter'}
+
+    def _member_lens(self, lens, role, snapshot):
+        shape = next((s for s in self.shapes.values() if s.id == lens['shape']), None)
+        axis = self.member['dimension']
+        if shape is None or axis not in shape.dimension_ids:
+            # Too many member × group cells for a legible view: no union chart is presented as a comparison.
+            self.used_axes, self.segment_axes, self.used_cross, self.shapes = snapshot
+            return self._reject(lens['kind'], role, 'capacity_limited', axis=axis)
+        lens['shape_key'] = [lens['shape_key'][0], list(shape.dimension_ids)]
+        lens['member_axis'] = axis
+        lens['default_value_mode'] = 'member_share' if lens['kind'] in {'composition', 'contribution'} else 'absolute'
+        lens['show'] = [dict(spec, form=self.MEMBER_FORMS.get(spec['form'], spec['form'])) for spec in lens['show']]
+        lens['question'] = lens['question'].rstrip('?') + f" — so sánh giữa các {self._label(axis).lower()} đã chọn?"
+        return lens
     FACTORIES = {'mix_shift': 'lens_mix_shift', 'trend': 'lens_trend', 'composition': 'lens_composition', 'segment': 'lens_segment', 'cross_tab': 'lens_cross_tab',
                  'exposure_rate': 'lens_exposure_rate', 'contribution': 'lens_contribution', 'segmented_trend': 'lens_segmented_trend'}
 
@@ -544,7 +595,12 @@ class _Planner:
                     self._reject(kind, role, 'mission_grammar')
                     continue
                 snapshot = (set(self.used_axes), list(self.segment_axes), set(self.used_cross), dict(self.shapes))
+                if self.member and kind in self.MEMBER_INCOMPATIBLE:
+                    self._reject(kind, role, 'member_axis_incompatible', axis=self.member['dimension'])
+                    continue
                 lens = getattr(self, self.FACTORIES[kind])(role)
+                if lens is not None and self.member:
+                    lens = self._member_lens(lens, role, snapshot)
                 if lens is None:
                     continue
                 lens['base_id'] = lens['id']
