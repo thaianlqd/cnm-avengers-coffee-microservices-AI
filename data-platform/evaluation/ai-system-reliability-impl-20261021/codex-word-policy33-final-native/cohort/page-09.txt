@@ -1,0 +1,32 @@
+AVENGERS COFFEE SUPPLY CHAIN & BI PLATFORM DỮ LIỆU TẦNG SILVER LAKE
+07 Doanh thu đạt đỉnh 400 VND ở 2026-09-29T00
+00:00; thấp nhất 100 VND ở 2026-09-01T00:00:00. Phạm vi: trong Bottom 2 của xếp hạng chính.
+Mang đi chiếm tỷ trọng lớn nhất (57.14%) trong doanh thu của phạm vi đã chọn; tỷ trọng nhỏ nhất là
+08
+14.29%. Phạm vi
+trong Bottom 2 của xếp hạng chính.
+Trong 2 nhóm quan sát đã trả về, doanh thu cao nhất ở Quán B (400 VND), thấp nhất ở Quán A (300
+09
+VND); chênh lệch là 100 VND. Phạm vi
+trong Bottom 2 của xếp hạng chính.
+10 Doanh thu (KIOSK)
+chỉ có một kỳ quan sát, chưa đủ để so sánh biến động. Phạm vi: trong Bottom 2 của xếp hạng chính.
+11 Tổng doanh thu của 2 mục trong xếp hạng
+700 VND; đây là tổng của tập Bottom N đã trả về.
+12 Doanh thu (STORE) đạt đỉnh 200 VND ở 2026-09-15T00
+00:00; thấp nhất 100 VND ở 2026-09-01T00:00:00. Phạm vi: trong Bottom 2 của xếp hạng chính.
+KẾT LUẬN PHÂN TÍCH
+Hồ Chí Minh thấp nhất trong Bottom 2: 300 VND theo doanh thu.
+Phát hiện có bằng chứng
+• Hồ Chí Minh thấp nhất trong Bottom 2: 300 VND theo doanh thu.
+• Doanh thu thay đổi từ 100 thành 400 VND giữa kỳ 2026-09-01 và 2026-09-29 (300%). Phạm vi: trong Bottom 2
+của xếp hạng chính.
+• Tổng doanh thu: 700 VND trong phạm vi đã chọn (3 nhóm có dữ liệu). Phạm vi: trong Bottom 2 của xếp hạng
+chính.
+Lưu ý
+• Một góc nhìn hỗ trợ chưa thực thi được.
+• Nguồn Đơn hàng chi tiết và doanh thu: quan sát đến chưa rõ; Độ đầy đủ dữ liệu nguồn chưa được chứng
+minh; MIN/MAX không chứng minh nguồn đầy đủ.
+Tài liệu nội bộ bảo mật • Bản quyền thuộc Avengers Coffee Data
+Platform
+Định dạng chuẩn Microsoft Word (.docx)

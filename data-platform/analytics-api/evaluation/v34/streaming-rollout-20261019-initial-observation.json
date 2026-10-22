@@ -1,0 +1,50 @@
+{
+  "checkpoints": [
+    {
+      "stream_id": "order-items-events",
+      "generation": 51,
+      "last_success_age_seconds": 1.383178,
+      "completeness": "unknown",
+      "page_pending": true
+    },
+    {
+      "stream_id": "orders-events",
+      "generation": 51,
+      "last_success_age_seconds": 1.875209,
+      "completeness": "unknown",
+      "page_pending": true
+    },
+    {
+      "stream_id": "shipper-events",
+      "generation": 51,
+      "last_success_age_seconds": 1.37495,
+      "completeness": "unknown",
+      "page_pending": false
+    }
+  ],
+  "v34_projection": [
+    {
+      "topic": "order-items-events",
+      "records": 5701,
+      "max_partition_offset": 646956
+    },
+    {
+      "topic": "orders-events",
+      "records": 6313,
+      "max_partition_offset": 355558
+    },
+    {
+      "topic": "shipper-events",
+      "records": 5836,
+      "max_partition_offset": 67266
+    }
+  ],
+  "permissions": {
+    "business_column_read": true,
+    "private_customer_column_read": false,
+    "source_truncate": false,
+    "source_update": false,
+    "event_insert": true
+  },
+  "source_fact_dml": false
+}

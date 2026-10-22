@@ -1,0 +1,347 @@
+{
+  "count": 55,
+  "cases": [
+    {
+      "city": "An Giang",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Bắc Giang",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Bạc Liêu",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Bắc Ninh",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Bà Rịa - Vũng Tàu",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Bến Tre",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Bình Định",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Bình Dương",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Bình Phước",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Bình Thuận",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Cà Mau",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Cần Thơ",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Đắk Lắk",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Đà Nẵng",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Điện Biên",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Đồng Nai",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Đồng Tháp",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Gia Lai",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Hải Dương",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Hải Phòng",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Hà Nam",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Hà Nội",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Hà Tĩnh",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Hậu Giang",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Hòa Bình",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Hồ Chí Minh",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Hưng Yên",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Khánh Hòa",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Kiên Giang",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Lâm Đồng",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Lạng Sơn",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Lào Cai",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Long An",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Nam Định",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Nghệ An",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Ninh Bình",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Ninh Thuận",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Phú Thọ",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Phú Yên",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Quảng Bình",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Quảng Nam",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Quảng Ngãi",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Quảng Ninh",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Quảng Trị",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Sóc Trăng",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Tây Ninh",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Thái Bình",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Thái Nguyên",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Thanh Hóa",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Thừa Thiên - Huế",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Tiền Giang",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Trà Vinh",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Tuyên Quang",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Vĩnh Long",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    },
+    {
+      "city": "Vĩnh Phúc",
+      "preflight": "READY",
+      "fixture_revenue": 137,
+      "provider_calls": 0
+    }
+  ],
+  "source_observed_generations": {
+    "status": "observed",
+    "sources": [
+      {
+        "dataset_id": "replica.identity.chi_nhanh",
+        "generation": 627,
+        "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+      }
+    ],
+    "fingerprint": "dde0b50efd776107e102133b79b9b9abc651338b4be4a31b573460493833d6db",
+    "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+  }
+}

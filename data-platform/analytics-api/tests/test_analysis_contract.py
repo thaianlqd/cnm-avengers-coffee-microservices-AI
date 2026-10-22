@@ -199,8 +199,10 @@ class OfflineTests(unittest.TestCase):
             )
         overlay = deepcopy(self.catalog.overlay)
         overlay["silver_tables"]["silver.chi_tiet_don_hang"]["joins"] = []
-        cat = AnalysisCatalog(physical_metadata(), overlay)
+        # V3.0: the order-line time column now requires the declared join, so
+        # the broken registry is rejected at load time, before any planning.
         with self.assertRaises(AnalysisError):
+            cat = AnalysisCatalog(physical_metadata(), overlay)
             build_plans(cat.ground(self.spec), cat)
 
     def test_schema_fingerprint_stable_and_structural_changes_invalidate(self):

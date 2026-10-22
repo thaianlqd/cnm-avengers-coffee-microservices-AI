@@ -1,0 +1,105 @@
+{
+  "observed_at": "2026-10-19T02:59:37.178151+00:00",
+  "offset_reset": false,
+  "partitions": [
+    {
+      "topic": "orders-events",
+      "partition": 0,
+      "committed_next_offset": 352190,
+      "end_offset": 360312,
+      "lag": 8122,
+      "bronze_checksum_verified": true,
+      "event_id": "1d82077563a0caf146044eb9e954c94e803cdd10bbffac35885704e76dbceed9",
+      "sample_offset": 352189,
+      "producer_version": "3.4.0"
+    },
+    {
+      "topic": "orders-events",
+      "partition": 1,
+      "committed_next_offset": 359852,
+      "end_offset": 366931,
+      "lag": 7079,
+      "bronze_checksum_verified": true,
+      "event_id": "23ab760fec1f4e068a111bfa77926ef8f5b4e087673f62faf8f9c991d4c3e63a",
+      "sample_offset": 359851,
+      "producer_version": "3.4.0"
+    },
+    {
+      "topic": "orders-events",
+      "partition": 2,
+      "committed_next_offset": 354050,
+      "end_offset": 362156,
+      "lag": 8106,
+      "bronze_checksum_verified": true,
+      "event_id": "7c794de0778ed3447ce90b0d8711db0c91dcfdc06c1b3792de78d8711ff08eff",
+      "sample_offset": 354049,
+      "producer_version": "3.4.0"
+    },
+    {
+      "topic": "order-items-events",
+      "partition": 0,
+      "committed_next_offset": 637252,
+      "end_offset": 654973,
+      "lag": 17721,
+      "bronze_checksum_verified": true,
+      "event_id": "e5a5375cce4ac347839a4d049f54b26a5ec2c792ddd3913143d7db95e6a277bf",
+      "sample_offset": 637251,
+      "producer_version": "3.4.0"
+    },
+    {
+      "topic": "order-items-events",
+      "partition": 1,
+      "committed_next_offset": 651211,
+      "end_offset": 669008,
+      "lag": 17797,
+      "bronze_checksum_verified": true,
+      "event_id": "9201dfc30286dc1a6f7b4edbea09c53438a26a7ecfa5575b111ede1684b4b30b",
+      "sample_offset": 651210,
+      "producer_version": "3.4.0"
+    },
+    {
+      "topic": "order-items-events",
+      "partition": 2,
+      "committed_next_offset": 635981,
+      "end_offset": 654616,
+      "lag": 18635,
+      "bronze_checksum_verified": true,
+      "event_id": "6c30cf86784c3061b4b1994a777a716bd853c3ce00e6c093b1f6cbd716af1c2a",
+      "sample_offset": 635980,
+      "producer_version": "3.4.0"
+    },
+    {
+      "topic": "shipper-events",
+      "partition": 0,
+      "committed_next_offset": 66439,
+      "end_offset": 66439,
+      "lag": 0,
+      "bronze_checksum_verified": true,
+      "event_id": "0162f1582cd98b67494aef3384e1f62a602a9f5b76594f3ac0f35584827d9aca",
+      "sample_offset": 66438,
+      "producer_version": "3.4.0"
+    },
+    {
+      "topic": "shipper-events",
+      "partition": 1,
+      "committed_next_offset": 68072,
+      "end_offset": 68072,
+      "lag": 0,
+      "bronze_checksum_verified": true,
+      "event_id": "376ea6ed51901c035fc177873291ee6bd116a222302af9c7258d2da13cfb65da",
+      "sample_offset": 68071,
+      "producer_version": "3.4.0"
+    },
+    {
+      "topic": "shipper-events",
+      "partition": 2,
+      "committed_next_offset": 66071,
+      "end_offset": 66071,
+      "lag": 0,
+      "bronze_checksum_verified": true,
+      "event_id": "c3aab40eabce6b54228aef1aed304c1adc209408bc5423ed74001eb455e903f4",
+      "sample_offset": 66070,
+      "producer_version": "3.4.0"
+    }
+  ]
+}

@@ -1,0 +1,2705 @@
+{
+  "mode": "offline_authored_reference",
+  "case_count": 120,
+  "compiled_intents": 83,
+  "passed": 120,
+  "failed": 0,
+  "reference_sha256": "8b6f9164fde3a3dad0b43c27c6da75c2d8e137b561abefd975afbc55605aaefa",
+  "rows": [
+    {
+      "id": "V34-001",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_602f0652f8a664d07e01a958",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "9a468123ce6b74302c72ddc8f421e60cd46274b3a0b25dd727b0e2a59d9b9630"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-002",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_602f0652f8a664d07e01a958",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "9a468123ce6b74302c72ddc8f421e60cd46274b3a0b25dd727b0e2a59d9b9630"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-003",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_17b4104e49afca52c024a4c7",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "f8a14d03a7fdf46382a705232bc9217b7b32f2901ab7b3821961f6a71df22dc6"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-004",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_9056f9d3c088e5213a8e96da",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "8bc949716a20eeffcd7f1f3936072f0539c52eab61de00e095f42d91ad7e2c66"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-005",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_a3336b580633dc15a3025b17",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "2d5e71ccc6f2c6d68336f9897d7fa58a0c8dbaf896ff30047fa117c5e2730f6f"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-006",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_cf29a885241f73f1e69e9bc1",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "83793ea47ff25b24367bdd26a27a7b18ff29e9af32b0c4af5b426759eacb54ff"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-007",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_de5cf4877a5303bc0e7bfa20",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "d54e4fb486cc137126ef9c8f676de879169e033b73f315417a8c417b6f292b22"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-008",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_86804b5e9c504961eabf6a62",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3bd27710a7017764d40951b70765959731ed1797c0361fbead512b40aa680e52"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-009",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_30745dc8f9967d82dc5e07da",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "end_exclusive": "2026-08-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c12744c9019f8fe70a6a500e1a4c5b68a0586b20408f27d9e22e4516b6c78daa"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-010",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_3f0169d02cf6ebbc4e7ad7ac",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3bd5444caac75bf49b31331e5b1a527568f340d528eb56212d4dccf9dd8e9be0"
+        },
+        {
+          "query_id": "q_43150a946bf39506d6df56f8",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "416bb4ad807aee318396e20930bdc862454470600f6d868c460c8eed83e99e5f"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-011",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-012",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-013",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-014",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-015",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-016",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-017",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-018",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-019",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_15681032c463f9180a382c1c",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "45f473dad6e090ba8ae29ddbe2b44e437fd04e2de185ae1b52d9de20f22a8b21"
+        },
+        {
+          "query_id": "q_ed9abc11fd73876480079fa6",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [
+            "order_type"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "e8080d6e7ec367988c94151dc818cb6cc421ee8af1789ad4430ae7e2146a60f1"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-020",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_3032dc49979daf1fbe0d0033",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3f23452181804c0fb64db07b8ace6773dc9dc6643934db28a375a8340c2e622f"
+        },
+        {
+          "query_id": "q_7ca411ce5fd69a76f4637ce0",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "db606a88289e19df15f84095b0cce98b88039e09ef4be6f5853466d47ea72900"
+        },
+        {
+          "query_id": "q_cf29a885241f73f1e69e9bc1",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "83793ea47ff25b24367bdd26a27a7b18ff29e9af32b0c4af5b426759eacb54ff"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-021",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_063c6ca1e140aeacc6cf8c30",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "end_exclusive": "2026-08-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "8d79b57bc2ae0ce2f68f2faff239ce8218bc85a309fc047bdb3960a1cc0c8313"
+        },
+        {
+          "query_id": "q_0f94c5c14d056474f0600285",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "end_exclusive": "2026-08-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "2ce696559fb4e7e6e034b484457194ee4678eab8571d0b341fdf1846993fe018"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-022",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_01fed96ecb7e4bfa6f888876",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "f85bcc42f071d3baecf24881b525a55d1b2d26efd7ebdb69f308c9c32ce0d813"
+        },
+        {
+          "query_id": "q_e74b704c7916b3498a822c75",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3014fe41856431fd4efb3698ec445f6337dc784f1610f9594e44c11b6e861aba"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-023",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_5054145dfaeb76d6678d6f1d",
+          "metrics": [
+            "aov",
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "f64de6215fbcfe8830f3c21f0307ff6e7a82efed2dd44bb89cff888a53162807"
+        },
+        {
+          "query_id": "q_98018192fa5c419d4bf5199b",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3bd27710a7017764d40951b70765959731ed1797c0361fbead512b40aa680e52"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-024",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_51ced6a7379228da6afe4961",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "a0bbd98de005dc8b33f6f293c17a45b5b919ed6eebe9bab8338d882617f9a05e"
+        },
+        {
+          "query_id": "q_8562877f3c1125e2202da590",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "order_type"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "ee67a9f87bbe0c906875dbbadf5b64d5676b0339e47ba57b30723138e74e63ba"
+        },
+        {
+          "query_id": "q_a57feb6b67b956e5284f56b3",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3f23452181804c0fb64db07b8ace6773dc9dc6643934db28a375a8340c2e622f"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-025",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_36d8867ba10be3c0ba1ac157",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c8588eff99fd36d85a9b3c731cd18893be55d8e23eb5bf373521c176beaf59c6"
+        },
+        {
+          "query_id": "q_429d3d16b05887a39d398ce0",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "10e6b207972c7490ea6e9acfb29852c129868b80c6657bad6f687c13e36d91c3"
+        },
+        {
+          "query_id": "q_76826442b56314d2562dc3fe",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "86054c7aa397a8483ff71f3a11927b603e326b88c9901fd7907f96e05f92d122"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-026",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_4e4e0f02a7a3970fb7ef0164",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "a427899bfb3b501d316833c4aace57945a585d68ebb8fa423feb782fc07d787c"
+        },
+        {
+          "query_id": "q_f8904dcd56c740f4a84d8e06",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "924d60ae48f39ee2b916ce84ddb303d0481ae1f6aa1ee9ea33b9c0d68fe6791b"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-027",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-028",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-029",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-030",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-031",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-032",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-033",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-034",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-035",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_ebe182251b1baf4e3dcbef4c",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c7aaeafe2788bf4366335a974c812d9f26792d59a541dc62ba9dc338a6689a89"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-036",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_0d22bd923ad204969fe09dcc",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "f8572ed6634dabe0eeafb2cb2967a9fc888eb98aca35959ca6017d9968f3c98d"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-037",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_75fb97041e661f044c47d3de",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "92de62d29b88c45b8bee097ad5aed130daa034d63e6c24a58f1f5da874a1c79d"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-038",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_eb60d56627331bd09d246e77",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "ae54a06bfac46cda4c3925dbb017db298721c35e2df8785f1a06b061f80e2860"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-039",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_b56dd103133b7d914bb83e5a",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c63885d409ef9cd4d46d73de6ee62399e1bd4d18ae7eeea630b90fe52d83bbb3"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-040",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_c245a5e35db3f9eca5257034",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "5e4a67b7b399b0bd7b50867b0b8882a2a905c3997ebbc3a0180f0654e509cc7b"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-041",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_a8b0734e34dc6c24b0a5614f",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "end_exclusive": "2026-08-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "b21019ecfaf01b0099568955ac4944020d149e48177fb33a76442ff059a5ecdb"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-042",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_05d22b1d63f28031e347f785",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "b77e1fcc48af17875be132da4f18f1da0889cf0ae39b344895a077712d7704c7"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-043",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_ee879d8146cb0dd818aeadf2",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "8ffced25eb7ec1d32428a1441927ff951eea69147d6b0da7f710ef83cfe16748"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-044",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_3f38194b65e48a25e6eb2811",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "d3bf576dc30c168ff7242ed079e1e21a461db4770c91fecc95a44b6ef655b931"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-045",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_f60e7ac214dd07097c62d42e",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "ee70b33193b04c839888bc415db2b8b2b8329b82dd33b1211d6be693aac401af"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-046",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_95e3cd3d9cdf1786f5bfcb87",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "reporting_region",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "dedcd960bc758f6f5d19542f0443e119e714d7c9a38cd2b21e1a30ea3ce4f452"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-047",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_602f0652f8a664d07e01a958",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "9a468123ce6b74302c72ddc8f421e60cd46274b3a0b25dd727b0e2a59d9b9630"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-048",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_cf29a885241f73f1e69e9bc1",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "83793ea47ff25b24367bdd26a27a7b18ff29e9af32b0c4af5b426759eacb54ff"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-049",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_59177921c0779b731cd8078c",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "end_exclusive": "2026-08-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "fc27fe0614cd56cf9d36f025772f1a4eec88a7ba1f497b82d0d16e217c897add"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-050",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_84e4813f93f249a5cf8e5c75",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "416bb4ad807aee318396e20930bdc862454470600f6d868c460c8eed83e99e5f"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-051",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_dafdc0a6a8e9a2c6c6239809",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-10-03",
+            "end": "2026-10-16",
+            "end_exclusive": "2026-10-17",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "f1bd1d5036c98e053c90b78c5a2e478b4964951b70bd19fed1ce71bcd5da8222"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-052",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_1ea2730a9cb04e0be162aed9",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-17",
+            "end": "2026-10-16",
+            "end_exclusive": "2026-10-17",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "66df917373f4262188956dcbdcfbc7bc63e93d4979b7f2b196ed3d2f2a813d92"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-053",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_96b61d4b4a8f0d2e23586f03",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-15",
+            "end_exclusive": "2026-09-16",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "caa6371ed2e8fcfdad597cf98968e2941be3071a7ad4268b934ad773f18b4519"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-054",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_274d974035c56dcd0f39e3c8",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-15",
+            "end": "2026-09-15",
+            "end_exclusive": "2026-09-16",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "da8aaf139616dfc971d62f527ef5851bff50ff118c69542c3954b5c12b1e998b"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-055",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_d7b095a748dde1dd80a62cc7",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2025-01-01",
+            "end": "2025-12-31",
+            "end_exclusive": "2026-01-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "e98bf308160fe41992254f15e64372de6454453d475cb6f30316f25b17d2af93"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-056",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_84e4813f93f249a5cf8e5c75",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "416bb4ad807aee318396e20930bdc862454470600f6d868c460c8eed83e99e5f"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-057",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_2d717b7f08afb592e900a97b",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "edb062846b4e76ae3a10d62491c0ecaa315e7a60f29c98c8e3d8cf6049fc51b2"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-058",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_a7d1b375d7a3cfcec87b0a10",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "4b1aab2f950059ae2d50da6b4b2317fe49c5646b2b28e1ca7c47952bbdcd9810"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-059",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_7d005d4eef97196edf535756",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "72229dc03df149ef07eef7afae764034d3133183ac1f9dfc2642c15bd38d4e62"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-060",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_cd6614d9fbb129701490b0ba",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "dimensions": [
+            "product"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "77e0e856801a1df1bc15dfa2ba23da733c403c50522a3a3bcb4fc5715de085a1"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-061",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_e843e1ac36ab211206ec6851",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "order_type"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "end_exclusive": "2026-08-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "01b2ca2509ab7bb18e2423a9263241c7d9780643247d70cee4c48b8d960e2af2"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-062",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_3f57187a5c185dca0ebd5203",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "reporting_region",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3b1aeb65500e12ec805bc8ba1fff69159797c9a5cbc1cb5ab7357286f11c4782"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-063",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_c6035634adea2a127eb79d3a",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "7de0d50b8f978b3e0b3f4b1a5c2e438606c96618e5916f9cdf826a89b223ce1d"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-064",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_865ab3290c9cbcb6fcb7d8cb",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "db75d6f06d640944cdcfd42823814398acaf1967c7a1e73e5a2238c49184c3a6"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-065",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_602f0652f8a664d07e01a958",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "9a468123ce6b74302c72ddc8f421e60cd46274b3a0b25dd727b0e2a59d9b9630"
+        },
+        {
+          "query_id": "q_cf29a885241f73f1e69e9bc1",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "83793ea47ff25b24367bdd26a27a7b18ff29e9af32b0c4af5b426759eacb54ff"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-066",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_3032dc49979daf1fbe0d0033",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3f23452181804c0fb64db07b8ace6773dc9dc6643934db28a375a8340c2e622f"
+        },
+        {
+          "query_id": "q_7ca411ce5fd69a76f4637ce0",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "db606a88289e19df15f84095b0cce98b88039e09ef4be6f5853466d47ea72900"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-067",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_898f218205fa43676d78e742",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "order_type"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "fbdbadde692ca25154ed5e920a277dc53fcf3138b28eb4b7fc03b56bbaa73e09"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-068",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_947c43c50da5822e08c3684f",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "reporting_region"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "b05f9a6cb22d068f24f70cd145f6642ce7e892d9a7d6cf082a36302304fc8843"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-069",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_265045b0a4f6b24bfffdfff9",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "8c0f45247f8876318be094f0e1d6809f05342a047552d27d6e9a37d647b11b1c"
+        },
+        {
+          "query_id": "q_3965f2541855804d131ba941",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "a8b9e63d054c43950d8d79c96d6318f281f6a82a244007275d4fd13dfe9e5cf7"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-070",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_58fdee622f1543a52c025322",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c59cfbc643286a9c993d8612678a4ee1358871062df34cf8120e572b16a6b865"
+        },
+        {
+          "query_id": "q_ef40c08007f7c6439dd1bc2d",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "f5537b896871458a0028e9aca007a77199e8e890e4ab44906a14bf9040465c87"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-071",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_bb6a33900ab8afe6bb5c670d",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "25836727e5333b73331e01aa82d538296f442b39672066bd93c234ac6525c68d"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-072",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_01fed96ecb7e4bfa6f888876",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "f85bcc42f071d3baecf24881b525a55d1b2d26efd7ebdb69f308c9c32ce0d813"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-073",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_b58297aa6b75a4b854003ccc",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-01-01",
+            "end": "2026-12-31",
+            "end_exclusive": "2027-01-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "18f89cc004a193cfb4cf5657db8fc306f11f8e081e805d70c85783cfc220e91c"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-074",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_615117d18c45dd42e8f382a2",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-19",
+            "end": "2026-10-16",
+            "end_exclusive": "2026-10-17",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "09df8d484032f3ba444a6cc8c28da164ec3c50ae64965d5f2e440845f78a5e15"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-075",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_b913253112a341d84a678746",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3c62f8dedefa03720877d64a04e807e5d1e4cb3c1db7a2eda89b57dc11e6d5b3"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-076",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-077",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_fdef553792b874509572c9b8",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "all_time",
+            "start": null,
+            "end": null,
+            "end_exclusive": null,
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "1c7afbce834d057300d61aca93273f6fd6fe97c8774b57b8ff36902df6029f92"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-078",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_949ec708db18893b50cb924d",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "all_time",
+            "start": null,
+            "end": null,
+            "end_exclusive": null,
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "860b752c31b883718b963f52a2175ecc641e65075e446c1f1eb27211e8628da2"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-079",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_4bd92815a787cbcb2e5106a0",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "all_time",
+            "start": null,
+            "end": null,
+            "end_exclusive": null,
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c5b66c77e8b6b6955ca9d44ea08744e29e2aa3d41333899dcbaf187c0b3b0ef9"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-080",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_a3066103c26ca3463b16a979",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "all_time",
+            "start": null,
+            "end": null,
+            "end_exclusive": null,
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "1c7afbce834d057300d61aca93273f6fd6fe97c8774b57b8ff36902df6029f92"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-081",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-082",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-083",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-084",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-085",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-086",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-087",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_2cca02f5d2621655cd976809",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "fda187feceeff32a7c27c88ccc12056c9b4a087f192a03210ca8489def7161c7"
+        },
+        {
+          "query_id": "q_a923d479d52f37eab01e07c3",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "e140819cf894328f59b506592ea6408d502a4ba9f3f53037a5f894c846ca28b5"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-088",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_398b36d706480ec02d7d9f2e",
+          "metrics": [
+            "late_shift_rate"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "1175d3879bd4ba6da70288732f34d93ad7f0c03622cc5c9fcb623ba1a80b689b"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-089",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_2b9fabd638f93abe49d9da30",
+          "metrics": [
+            "delivery_success_rate"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "fec6e98b35810a28afb81fc5bc018b838879576b94a6bab2c843da50bfac091f"
+        },
+        {
+          "query_id": "q_9330ad7fd0c3dbc3eb5fe4b2",
+          "metrics": [
+            "delivery_success_rate"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "2a928447b85cf73e8354854d1370de97489679c4aac871a31942b5dae74a224b"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-090",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_b4299c81bbd6e96e9915527d",
+          "metrics": [
+            "large_cash_discrepancy_shift_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "b8e103b0d1bdafdda85ddbb4b73a74b4e49b4226701c72e8685c7792e2b39195"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-091",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_374931a62ea0a834d2644834",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [
+            "store_id",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "583c99fb120da485f96d35e7eb3e64dcbf33c4071864b99ab6b65af2e84a2d91"
+        },
+        {
+          "query_id": "q_3e121ed62aeb0b9b177591d5",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store_id",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c3745ad0420c8aa945a3c3a14232c0ba177a9b72839b457e0f163b1548afb094"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-092",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_1fa6ee929e2402b1672458b1",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [
+            "store_id",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "b2a21464382efa3cef75ccc5727274ff0ab972bf89ef29715b2caf039e0c4b1d"
+        },
+        {
+          "query_id": "q_4aaafbf2a59b2798aeeaa2df",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store_id",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c40e26f3fbf5f5244d6d398016a8758c14ec2c57d8ddeb95d2591c4637ef416f"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-093",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-094",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-095",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_374931a62ea0a834d2644834",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [
+            "store_id",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "583c99fb120da485f96d35e7eb3e64dcbf33c4071864b99ab6b65af2e84a2d91"
+        },
+        {
+          "query_id": "q_3e121ed62aeb0b9b177591d5",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store_id",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c3745ad0420c8aa945a3c3a14232c0ba177a9b72839b457e0f163b1548afb094"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-096",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_30a4437b8528f20fe563acdc",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [
+            "store_id",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "end_exclusive": "2026-08-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "d8bff8ccd961ad2adf63247bbfd0a8b431c8615295b2b4d09e938d9c7c5bc152"
+        },
+        {
+          "query_id": "q_df73dcc092aafdea262ce834",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store_id",
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "end_exclusive": "2026-08-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "b4a20f410fb63ca5a5af1c4ba602b66ebed43377dd22bf0ecefed69cf2630de6"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-097",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_ab903f7b54a1902c5f656c79",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3bd27710a7017764d40951b70765959731ed1797c0361fbead512b40aa680e52"
+        },
+        {
+          "query_id": "q_b168d7cc42833a029db82520",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "83793ea47ff25b24367bdd26a27a7b18ff29e9af32b0c4af5b426759eacb54ff"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-098",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_62a42fb0af472371605afaa7",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "28622def3f2e209ce2c9d88c15b726a94668eade2dae27c1b5e1ea1e6a862056"
+        },
+        {
+          "query_id": "q_b8593ea763d1f0f7395802d5",
+          "metrics": [
+            "aov",
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "437eb87451b38e4e4f8717c345cf7ca24bef472339b7921fba788d12ff276bb4"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-099",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_2860a6bf0f45232b9b0087a0",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "a0bbd98de005dc8b33f6f293c17a45b5b919ed6eebe9bab8338d882617f9a05e"
+        },
+        {
+          "query_id": "q_2f01efd9f39ea52c7b580292",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "e140819cf894328f59b506592ea6408d502a4ba9f3f53037a5f894c846ca28b5"
+        },
+        {
+          "query_id": "q_77ec5125d7615659ad438ad1",
+          "metrics": [
+            "order_cancellation_rate"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "be1825679f3c71ba60cfdacbb676f3d8c1a6144ceaed55087c02b7a439173096"
+        },
+        {
+          "query_id": "q_e194e034805731d54115f3bd",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3f23452181804c0fb64db07b8ace6773dc9dc6643934db28a375a8340c2e622f"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-100",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_b48e70ffdf935cc7415183be",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "83793ea47ff25b24367bdd26a27a7b18ff29e9af32b0c4af5b426759eacb54ff"
+        },
+        {
+          "query_id": "q_fc761b0db4aca63fbafa42ca",
+          "metrics": [
+            "order_completion_rate"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "b7ec0939314882d14eaec93aae49cfcde50a43f71c22ae1438287a3b5bc3c944"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-101",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_29afa5dc3cb416fbf67379f2",
+          "metrics": [
+            "product_revenue",
+            "quantity_sold"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-07-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "5d2bce272a996f1b8c200de6d3a71fde331e338603ba2f54f82e59e1ab585357"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-102",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_629bf1d5922593384c2576e2",
+          "metrics": [
+            "late_shift_rate"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "1175d3879bd4ba6da70288732f34d93ad7f0c03622cc5c9fcb623ba1a80b689b"
+        },
+        {
+          "query_id": "q_b5bcffe133801422ad35b99d",
+          "metrics": [
+            "late_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "01d40b09a4167cc973a50a80e2d7b2f793d10e8d0b632479cdc961330526e658"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-103",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-104",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-105",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-106",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-107",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_cf29a885241f73f1e69e9bc1",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "83793ea47ff25b24367bdd26a27a7b18ff29e9af32b0c4af5b426759eacb54ff"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-108",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_17b4104e49afca52c024a4c7",
+          "metrics": [
+            "order_count"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "f8a14d03a7fdf46382a705232bc9217b7b32f2901ab7b3821961f6a71df22dc6"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-109",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_ecfbfb41c884c62be7085ec4",
+          "metrics": [
+            "aov"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "3f23452181804c0fb64db07b8ace6773dc9dc6643934db28a375a8340c2e622f"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-110",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_ebe182251b1baf4e3dcbef4c",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "c7aaeafe2788bf4366335a974c812d9f26792d59a541dc62ba9dc338a6689a89"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-111",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_05d22b1d63f28031e347f785",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "b77e1fcc48af17875be132da4f18f1da0889cf0ae39b344895a077712d7704c7"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-112",
+      "ok": true,
+      "failures": [],
+      "compiled": [
+        {
+          "query_id": "q_2d717b7f08afb592e900a97b",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "period": {
+            "mode": "custom",
+            "start": "2026-08-01",
+            "end": "2026-08-31",
+            "end_exclusive": "2026-09-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "sql_sha256": "edb062846b4e76ae3a10d62491c0ecaa315e7a60f29c98c8e3d8cf6049fc51b2"
+        }
+      ],
+      "stage": "resolver_compiler"
+    },
+    {
+      "id": "V34-113",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-114",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-115",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-116",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "input_terminal"
+    },
+    {
+      "id": "V34-117",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "request_boundary"
+    },
+    {
+      "id": "V34-118",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "request_boundary"
+    },
+    {
+      "id": "V34-119",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "request_boundary"
+    },
+    {
+      "id": "V34-120",
+      "ok": true,
+      "failures": [],
+      "compiled": [],
+      "stage": "request_boundary"
+    }
+  ],
+  "claim": "Authored expected meanings compiled through production resolver/validators; not LLM understanding accuracy"
+}

@@ -32,15 +32,19 @@ def expanded():
 
 
 class OverviewDashboardTests(f.unittest.TestCase):
-    setUp=f.HybridTests.setUp
+    def setUp(self):
+        f.HybridTests.setUp(self)
+        from services import provider_credential_router
+        provider_credential_router.reset_for_tests()
+        self.addCleanup(provider_credential_router.reset_for_tests)
     pipeline=f.HybridTests.pipeline
     request=f.HybridTests.request
 
     def test_slow_primary_finishes_without_a_manual_retry(self):
         clock=[100.0]
         def post(*args, **kwargs):
-            self.assertGreaterEqual(kwargs['timeout'].read_timeout, 12)
-            clock[0] += 12
+            self.assertGreaterEqual(kwargs['timeout'].read_timeout, 9)   # V3.3: one attempt is capped at 12 s (10 s read)
+            clock[0] += 11
             return Mock(ok=True,json=Mock(return_value={'candidates':[{'content':{'parts':[{'text':json.dumps(recorded())}]}}]}))
         with patch.dict(f.os.environ,{'AI_OFFLINE':'0','GEMINI_API_STYLE':'native','DATA_ANALYST_INTENT_TRANSPORT':'json'}), \
              patch.object(llm_service,'GEMINI_API_KEY','fixture'),patch.object(llm_service,'GEMINI_MODELS',['fixture']), \
@@ -75,7 +79,9 @@ class OverviewDashboardTests(f.unittest.TestCase):
         f.approve(request,proposal);report=p.generate(request)
         self.assertEqual(report['outcome'],'SUCCESS');self.assertEqual(p.provider.call_count,1)
         self.assertEqual(len(report['analytical_queries']),8)
-        self.assertGreaterEqual(len(report['charts']),6)
+        # FINAL 2026-10-19: tiny fixture; every planned lens is drawn or rejected with a typed data/capacity reason.
+        self.assertGreaterEqual(len(report['charts']),5)
+        self.assertTrue(all(o.get('reason') for o in report['dashboard_plan']['omitted_visuals'] if o.get('lens_id')))
         self.assertGreaterEqual(len({c['chart_type'] for c in report['charts']}),3)
         self.assertEqual(verify_saved_report(report,self.catalog),report['quality_assessment'])
         self.assertEqual(report['quality_assessment']['score'],90)
@@ -99,4 +105,6 @@ class OverviewDashboardTests(f.unittest.TestCase):
         data['requirements'][0]['metric_ids']=['revenue','order_count']
         p=self.pipeline(f.scripted(data,data,data))
         with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D))
-        p.executor.assert_not_called();self.assertEqual(p.provider.call_count,3)
+        # V3.0: an identical repair is no progress; stop before a third call.
+        p.executor.assert_not_called();self.assertEqual(p.provider.call_count,2)
+        self.assertEqual(p.semantic_info['semantic_stop_reason'],'no_progress')

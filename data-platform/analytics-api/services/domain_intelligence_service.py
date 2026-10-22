@@ -5,6 +5,7 @@ time. The single model decision and existing compiler own those boundaries.
 """
 
 import re
+import unicodedata
 from collections import OrderedDict
 from copy import deepcopy
 from threading import Lock
@@ -63,6 +64,9 @@ class DomainProfile(Contract):
     health_signals: List[HealthSignal] = Field(default_factory=list, max_length=8)
     diagnostic_dimensions: List[str] = Field(default_factory=list, max_length=8)
     drilldown_hierarchies: List[List[str]] = Field(default_factory=list, max_length=4)
+    # Ordered business axes the server lens planner may segment this domain by (FINAL plan P1). Per-metric
+    # compatibility, pinned filters and cardinality are still checked at planning time.
+    lens_axes: List[str] = Field(default_factory=list, max_length=12)
     comparison_semantics: List[Baseline] = Field(default_factory=list, max_length=5)
     related_domains: List[str] = Field(default_factory=list, max_length=12)
     supporting_analysis_capabilities: List[str] = Field(default_factory=list, max_length=12)
@@ -79,6 +83,21 @@ def validate_profiles(registry):
         notes = metadata.get("model_caveat_notes", metadata.get("caveat_labels", {}))
         if set(notes) != set(metadata.get("caveat_labels", {})) or any(not isinstance(v, str) or not 1 <= len(v) <= 160 for v in notes.values()):
             raise ValueError("Invalid model caveat notes")
+        retired = {m for m, d in registry["metrics"].items() if d.get("lifecycle", {}).get("status") == "deprecated"}
+        offered = [m for p in metadata["profiles"].values() for m in p["metric_refs"]]
+        offered += [m for t in registry.get("workspace", {}).get("dashboard_templates", []) for q in t.get("requirements", []) for m in q.get("metric_ids", [])]
+        offered += [s.get("metric") for s in registry.get("risk_signals", [])]
+        if retired & set(offered):
+            raise ValueError("Retired metric offered as an active capability")
+        for concept in metadata.get("topic_concepts", []):
+            targets = concept["targets"]
+            if any(not isinstance(t.get("followup_object", ""), str) for t in targets):
+                raise ValueError("Invalid topic follow-up")
+            if not concept["id"] or not concept["terms"] or not targets or len({t["domain_id"] for t in targets}) != len(targets):
+                raise ValueError("Invalid topic concept")
+            subjects = {s for t in targets for s in t["object_subjects"]} | set(concept.get("context_subjects", []))
+            if not {t["domain_id"] for t in targets} <= metadata["profiles"].keys() or not subjects <= registry["subjects"].keys():
+                raise ValueError("Unknown topic concept reference")
         for edge in metadata.get("business_relationships", []):
             if edge.get("from_domain") not in profiles or edge.get("to_domain") not in profiles or edge.get("population_relation") != "related" or not edge.get("meaning") or not edge.get("invalid_uses"):
                 raise ValueError("Invalid business relationship")
@@ -114,6 +133,8 @@ def validate_profiles(registry):
                     raise ValueError("Snapshot lens cannot offer history")
                 if lens.supports_distribution and any(not registry["metrics"][m].get("additive") for m in lens.metric_refs):
                     raise ValueError("Non-additive composition")
+            if len(p.lens_axes) != len(set(p.lens_axes)) or not set(p.lens_axes) <= registry["dimensions"].keys():
+                raise ValueError("Invalid lens axes")
             for path in p.drilldown_hierarchies:
                 if len(path) < 2 or len(path) != len(set(path)) or not set(path) <= dims:
                     raise ValueError("Invalid drilldown")
@@ -143,7 +164,9 @@ class DomainIntelligence:
             if key in _cache:
                 _cache.move_to_end(key)
                 return deepcopy(_cache[key])
-        manifest, _ = build_manifest(self.catalog, max_chars=20000)
+        # Availability is physical/semantic, not a prompt budget: a bounded
+        # manifest would silently drop whole domains as the catalog grows.
+        manifest, _ = build_manifest(self.catalog, max_chars=2_000_000)
         metrics = {m[0] for m in manifest["metrics"]}
         dims = {d[0] for d in manifest["dimensions"]}
         subjects = {s[0] for s in manifest["subjects"]}
@@ -211,7 +234,13 @@ class DomainIntelligence:
         return False
 
     def domain_for(self, subject):
-        return next((p for p in self.available().values() if subject in p["primary_subjects"]), None)
+        # Read path used per chart/operation: copy only the matching profile, not every profile (FINAL P7 profiling).
+        key = (self.catalog.fingerprint, "profiles")
+        with _lock:
+            cached = _cache.get(key)
+        profiles = cached if cached is not None else self.available()
+        found = next((p for p in profiles.values() if subject in p["primary_subjects"]), None)
+        return deepcopy(found) if found is not None else None
 
     def validate_lens(self, query):
         if not query.lens_id:
@@ -229,7 +258,20 @@ class DomainIntelligence:
             raise ToolContractError([issue("operation", "lens_operation_incompatible")])
         validate_materialized(query, lens)
 
-    def capabilities(self):
+    def capabilities(self, coverage=None):
+        from services.access_policy import active_principal,current_principal
+        principal=current_principal(required=True) if active_principal.get() is not None else None
+        if principal is not None:
+            coverage=deepcopy(coverage or {})
+            coverage['facts']={name:value for name,value in coverage.get('facts',{}).items() if principal.permits('analytics.read',name)}
+            if coverage.get('data_health'):
+                health=coverage['data_health']
+                health['datasets']={}
+                health['views']={name:value for name,value in health.get('views',{}).items() if principal.permits('analytics.read',name)}
+            if not principal.national:
+                coverage['overall']={'min_date':None,'max_date':None}
+                coverage['facts']={}
+                coverage['bounds_basis']='Account scope bounds not measured; no global bounds assumed'
         profiles = self.available()
         scope_types = []
         for id, d in self.catalog.registry["dimensions"].items():
@@ -242,11 +284,54 @@ class DomainIntelligence:
             if not any(id in p["dimension_refs"] for p in profiles.values()):
                 continue
             scope_types.append({"id": id, "label": d["business_name"], "values": dimension_values(self.catalog, id)[:50], "searchable": d.get("value_grounding", {}).get("mode") == "lookup"})
-        return {"status": "ready", "version": "2.7", "fingerprint": self.catalog.fingerprint,
-                "domains": [{"id": id, "label": p["business_label"], "historical": any(self.catalog.registry["metrics"][m].get("time_column") for m in p["metric_refs"]), "caveats": [self.catalog.registry["domain_intelligence"]["caveat_labels"][c] for c in p["business_caveats"]]} for id, p in profiles.items()],
-                "analysis_depths": [{"id": "focused", "label": "Tập trung"}, {"id": "deep", "label": "Phân tích sâu"}, {"id": "comprehensive", "label": "Phân tích toàn diện"}],
+        if principal is not None and not principal.national:
+            scope_types=[{**scope,'values':list(principal.store_ids)[:50],'searchable':True}
+                         for scope in scope_types if scope['id']=='store_id']
+        r = self.catalog.registry
+
+        def executable(metric):
+            m = r["metrics"][metric]
+            try:
+                self.catalog.check_expression(m["expression"])
+                return m["source"] in self.catalog.tables
+            except AnalysisError:
+                return False
+
+        def describe(id, p):
+            # Generated from governed metadata only; never a separate UI list.
+            metrics = [m for m in p["metric_refs"] if executable(m)]
+            tables = self.catalog.overlay["silver_tables"]
+            freshness = sorted({tables[r["subjects"][s]["source"]].get("freshness", {}).get("mode", "unknown")
+                                for s in p["primary_subjects"] if s in r["subjects"]})
+            return {"id": id, "label": p["business_label"], "purpose": p["short_business_purpose"],
+                    "historical": any(r["metrics"][m].get("time_column") for m in p["metric_refs"]),
+                    "caveats": [r["domain_intelligence"]["caveat_labels"][c] for c in p["business_caveats"]],
+                    "metrics": [{"id": m, "label": r["metrics"][m]["business_name"], "unit": r["metrics"][m]["unit"],
+                                 "historical": bool(r["metrics"][m].get("time_column")),
+                                 "forecastable": bool(r["metrics"][m].get("forecast", {}).get("forecastable"))} for m in metrics],
+                    "operations": sorted({o for l in p["analytical_lenses"] if l.get("blueprint") for o in l["blueprint"]["allowed_operations"]}),
+                    "example_questions": [l["example_intents"][0] for l in p["analytical_lenses"] if l.get("example_intents")][:3],
+                    "freshness": freshness}
+        from services.workspace_service import workspace_capabilities
+        # V3.1 Analyst Workspace metadata (missions, limits, coverage, unsupported,
+        # risk signals, per-metric UI metadata), all derived from the registry.
+        workspace = workspace_capabilities(self, profiles, executable, coverage)
+        by_id = {m["id"]: m for m in workspace["metrics"]}
+        domains = [describe(id, p) for id, p in profiles.items()]
+        for d in domains:
+            d["metrics"] = [{**m, **{k: v for k, v in by_id.get(m["id"], {}).items() if k not in m}} for m in d["metrics"]]
+        result={"status": "ready", "version": "3.0", "fingerprint": self.catalog.fingerprint,
+                "semantic_fingerprint": self.catalog.semantic_fingerprint,
+                "governance_contract_version": self.catalog.overlay.get('governance', {}).get('contract_version'),
+                "registry_fingerprint": getattr(self.catalog, "registry_fingerprint", None),
+                "domains": domains,
+                "analysis_depths": depth_options(self.catalog),
                 "time_presets": [{"id": id, "label": label} for id, label in TIME_PRESETS.items()],
-                "scope_types": scope_types}
+                "scope_types": scope_types, **workspace}
+        if principal is not None:
+            result['authorized_scope']={'national':principal.national,'store_ids':list(principal.store_ids),
+                'policy_version':principal.policy_version,'policy_fingerprint':principal.access_fingerprint}
+        return result
 
     def directory(self, profiles):
         # Aliases are used locally by retrieval; subjects/caveats live in packs.
@@ -369,7 +454,9 @@ class DomainIntelligence:
                 continue
             candidate = {"id": id, "priority": 2, "score": strength, "match_category": category, "protected": category != "lens_example_match"}
             if id not in direct or (strength, -categories.index(category)) > (direct[id]["score"], -categories.index(direct[id]["match_category"])):
-                direct[id] = candidate
+                direct[id] = {**candidate, "spans": direct.get(id, {}).get("spans", [])}
+            direct[id]["spans"] = sorted(set(direct[id]["spans"]) | {(start, end)})
+        self.resolve_topics(question, question_text, profiles, direct, matches)
         if domain in profiles:
             direct[domain] = {"id": domain, "priority": 1, "score": 0, "match_category": "selected_by_ui", "protected": True}
         candidates = dict(direct)
@@ -378,8 +465,14 @@ class DomainIntelligence:
                 candidates[id] = {"id": id, "priority": 3, "score": 1, "match_category": "previous_subject", "protected": False}
         order = lambda c: (c["priority"], -c["score"], c["id"])
         if not candidates and profiles:
-            terms = set(question_text.split()) - stop
-            scores = [(len(terms & set(value_text(p["business_label"]).split())), id) for id, p in profiles.items()]
+            # Accented questions compare accented words: "hôm qua" is not "quà",
+            # "mang đi" is not "mạng lưới" once diacritics are folded away.
+            raw = unicodedata.normalize("NFC", str(question)).lower()
+            marked = value_text(raw) != re.sub(r"[^\w]+", " ", raw).strip()
+            words = (lambda v: set(re.sub(r"[^\w]+", " ", unicodedata.normalize("NFC", str(v)).lower()).split())) if marked else (lambda v: set(value_text(v).split()))
+            multi = {w for phrase in stop if ' ' in phrase for w in phrase.split()}
+            terms = {t for t in words(question) if value_text(t) not in stop and value_text(t) not in multi}
+            scores = [(len(terms & words(p["business_label"])), id) for id, p in profiles.items()]
             for score, id in sorted(scores, key=lambda v: (-v[0], v[1]))[:3]:
                 candidates[id] = {"id": id, "priority": 3, "score": score, "match_category": "catalog_candidate", "protected": False}
         if candidates and depth != "focused":
@@ -389,6 +482,108 @@ class DomainIntelligence:
                     if id not in candidates:
                         candidates[id] = {"id": id, "priority": 3 if i == 0 else 4, "score": 0, "match_category": "related_domain", "protected": False}
         return sorted(candidates.values(), key=order)
+
+    def resolve_topics(self, question, question_text, profiles, direct, matches):
+        """Analytical topic + object entity selects the topic domain (PLAN 20/10 §4.1).
+
+        "đánh giá của khách hàng về sản phẩm" is about product reviews: the
+        customer is the reviewer and the product the object, so those entity
+        mentions become context instead of protected subjects. A topic word
+        directly followed by an evaluated measure ("đánh giá doanh thu") is the
+        verb "evaluate", not customer feedback. A topic without an object keeps
+        every target as an explicit ambiguity rather than guessing.
+        """
+        r = self.catalog.registry
+        if not r["domain_intelligence"].get("topic_concepts"):
+            return
+        raw = unicodedata.normalize("NFC", str(question))
+        accented = re.sub(r"[^\w]+", " ", raw.lower()).strip()
+        # Accented questions match accented forms ("trả" is not "trà"); plain
+        # questions fall back to folded matching. Both share offsets when NFC.
+        marked = accented != question_text and len(accented) == len(question_text)
+        text = accented if marked else question_text
+        source = raw.lower() if marked else normalize(raw)
+        spans = [m.span() for m in re.finditer(r"\S+", text)]
+        for concept in self.topic_vocabulary(profiles, marked):
+            # Clause bounds are found on the raw text (punctuation is folded
+            # away) and mapped to token offsets shared by every folded form.
+            bounds, last, index = [], 0, 0
+            for m in [*concept["separators"].finditer(source), None]:
+                n = len(value_text(source[last:m.start() if m else None]).split())
+                if n and index + n <= len(spans):
+                    bounds.append((spans[index][0], spans[index + n - 1][1]))
+                index += n + (len(value_text(m.group()).split()) if m else 0)
+                last = m.end() if m else last
+            topic_clauses, plain_clause = [], False
+            for a, b in bounds:
+                clause = text[a:b]
+                if any(not concept["blockers"].match(clause[m.end():].lstrip()) for m in concept["terms"].finditer(clause)):
+                    topic_clauses.append((a, b, [id for id, pattern in concept["targets"] if pattern.search(clause)]))
+                elif topic_clauses and concept["continuation"].search(clause) and any(p.search(clause) for _, p in concept["targets"]):
+                    # "..., còn quán thì sao": an elliptical follow-up keeps the topic.
+                    topic_clauses.append((a, b, [id for id, pattern in concept["targets"] if pattern.search(clause)]))
+                elif set(clause.split()) - concept["stop"]:
+                    plain_clause = True
+            if not topic_clauses:
+                continue
+            # Objects outside the topic clause belong to other clauses' questions
+            # ("đánh giá ..., hiệu suất chi nhánh"); without one, ask instead.
+            resolved = {d for _, _, objects in topic_clauses for d in objects}
+            inside = lambda s, e: any(a <= s and e <= b for a, b, _ in topic_clauses)
+            objects = {d for id in resolved for d in concept["object_domains"][id]}
+            for id in list(direct):
+                if id in resolved or direct[id]["match_category"] == "selected_by_ui":
+                    continue
+                found = [(s, e) for s, e, _, owner, _ in matches if owner == id]
+                if found and all(inside(s, e) for s, e in found) and (id in concept["context"] or id in objects and not plain_clause):
+                    direct[id] = {**direct[id], "priority": 3, "match_category": "topic_context", "protected": False}
+            for id, _ in concept["targets"]:
+                if resolved and id in resolved:
+                    direct[id] = {"id": id, "priority": 2, "score": max(2, direct.get(id, {}).get("score", 0)),
+                                  "match_category": "topic_concept_match", "protected": True, "topic_id": concept["id"]}
+                elif not resolved and id not in direct:
+                    direct[id] = {"id": id, "priority": 3, "score": 1, "match_category": "topic_ambiguous",
+                                  "protected": False, "topic_id": concept["id"]}
+
+    def topic_vocabulary(self, profiles, marked):
+        """Compiled topic patterns, built once per catalog fingerprint (preflight hot path)."""
+        key = (self.catalog.fingerprint, "topic_vocabulary", tuple(sorted(profiles)), marked)
+        with _lock:
+            cached = _cache.get(key)
+        if cached is not None:
+            return cached
+        r = self.catalog.registry
+        fold = (lambda v: re.sub(r"[^\w]+", " ", unicodedata.normalize("NFC", str(v)).lower()).strip()) if marked else value_text
+        def pattern(phrases, anchored=False):
+            body = "|".join(re.escape(p) for p in sorted({p for p in phrases if p}, key=len, reverse=True)) or r"(?!)"
+            return re.compile(("" if anchored else r"(?<!\w)") + "(?:" + body + r")(?!\w)")
+        subject_aliases = lambda subjects: [fold(a) for s in subjects for a in [r["subjects"][s]["business_name"], *r["subjects"][s].get("aliases", [])]]
+        stop = set(map(value_text, r["interpretation"].get("retrieval_stopwords", [])))
+        out = []
+        for concept in r["domain_intelligence"].get("topic_concepts", []):
+            targets = [t for t in concept["targets"] if t["domain_id"] in profiles]
+            if not targets:
+                continue
+            target_metrics = {m for t in targets for m in profiles[t["domain_id"]]["metric_refs"]}
+            blockers = [fold(v) for v in concept.get("evaluative_objects", [])]
+            blockers += [fold(a) for m, meta in r["metrics"].items() if m not in target_metrics
+                         for a in [meta["business_name"], *meta.get("aliases", [])] if len(fold(a)) >= 3]
+            words = {w for s in concept.get("clause_separators", []) for w in (s.lower(), value_text(s)) if w.strip()}
+            out.append({
+                "id": concept["id"], "terms": pattern(fold(t) for t in concept["terms"]), "blockers": pattern(blockers, anchored=True),
+                "separators": re.compile("|".join(re.escape(w) if not w[0].isalnum() else r"(?<!\w)" + re.escape(w) + r"(?!\w)" for w in sorted(words)) or r"(?!)"),
+                "targets": [(t["domain_id"], pattern(subject_aliases(t["object_subjects"]))) for t in targets],
+                "object_domains": {t["domain_id"]: {id for id, p in profiles.items() if set(p["primary_subjects"]) & set(t["object_subjects"]) and id != t["domain_id"]}
+                                   for t in targets},
+                "context": {id for id, p in profiles.items() if set(p["primary_subjects"]) & set(concept.get("context_subjects", []))},
+                "stop": stop | {fold(t) for t in concept["terms"]},
+                "continuation": pattern(fold(t) for t in concept.get("continuation_markers", [])),
+            })
+        with _lock:
+            _cache[key] = out
+            while len(_cache) > 64:
+                _cache.popitem(last=False)
+        return out
 
     def context(self, question, domain, depth, references, previous_subjects=(), max_chars=None, candidates=None, blueprints=False):
         profiles = self.available()
@@ -427,6 +622,9 @@ class DomainIntelligence:
         if max_chars is not None and len(compact(packs)) > maximum:
             raise AnalysisError("one_shot_context_budget_exceeded", "Explicit domain knowledge cannot fit")
         knowledge["omitted_pack_ids"] = omitted
+        # Only caveats that a delivered pack cites; the whole vocabulary grows with the catalog.
+        used = {c for pack in knowledge["packs"] for c in pack.get("caveats", [])}
+        knowledge["caveat_meanings"] = {k: v for k, v in knowledge["caveat_meanings"].items() if k in used}
         return knowledge
 
     @staticmethod
@@ -471,8 +669,31 @@ TIME_PRESETS = {"auto": "Tự động", "today": "Hôm nay", "7d": "7 ngày qua"
                 "current_month": "Tháng này", "previous_month": "Tháng trước", "current_quarter": "Quý này",
                 "previous_quarter": "Quý trước", "all_time": "Toàn bộ thời gian", "custom": "Tùy chọn"}
 
+def depth_options(catalog):
+    """What each depth really adds, worded from the governed lens policy (single source for 4/6/8)."""
+    from services.analysis_expansion_service import dashboard_policy
+    labels = {"focused": "Tập trung", "deep": "Phân tích sâu", "comprehensive": "Phân tích toàn diện"}
+    adds = {"core": "{n} góc nhìn cốt lõi (diễn biến, cơ cấu, so sánh giữa các nhóm)",
+            "diagnostic": "thêm {n} góc nhìn chẩn đoán (tương tác hai chiều, quy mô so với tỷ lệ)",
+            "extended": "thêm {n} góc nhìn mở rộng (diễn biến theo nhóm, mức đóng góp)"}
+    out = []
+    for id, label in labels.items():
+        p = dashboard_policy(catalog, id)
+        targets = p.get("view_targets") or {}
+        parts = [adds[role].format(n=n) for role, n in targets.items() if n] or ["chỉ các góc nhìn trả lời trực tiếp câu hỏi"]
+        out.append({"id": id, "label": label, "minimum_views": p["minimum_views"], "target_views": p["target_views"],
+                    "view_targets": targets,
+                    "max_supporting_operations": p.get("max_supporting_operations"),
+                    "max_segment_dimensions": p.get("max_segment_dimensions", 0),
+                    "description": label + ": tối đa " + "; ".join(parts)
+                    + ". Chỉ hiện góc nhìn có dữ liệu thật; thiếu dữ liệu sẽ được nêu rõ."})
+    return out
+
+
+# Context-pack budgets (prompt size) are NOT chart budgets. ``target_views`` mirrors the governed lens policy
+# (dashboard_policy.lens_policy.view_targets → 4/6/8) and is kept here only for older readers of this table.
 DEPTH_POLICIES = {
-    "focused": {"supports": 1, "packs": 1, "domain_chars": 1800, "body_chars": 24000, "target_views": [2, 4]},
-    "deep": {"supports": 6, "packs": 2, "domain_chars": 3500, "body_chars": 24000, "target_views": [4, 6]},
-    "comprehensive": {"supports": 7, "packs": 8, "domain_chars": 8000, "body_chars": 24000, "target_views": [6, 8]},
+    "focused": {"supports": 1, "packs": 1, "domain_chars": 1800, "body_chars": 24000, "target_views": [4, 4]},
+    "deep": {"supports": 6, "packs": 2, "domain_chars": 3500, "body_chars": 24000, "target_views": [6, 6]},
+    "comprehensive": {"supports": 7, "packs": 8, "domain_chars": 8000, "body_chars": 24000, "target_views": [8, 8]},
 }

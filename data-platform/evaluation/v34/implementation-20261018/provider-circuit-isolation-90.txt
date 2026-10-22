@@ -1,0 +1,43 @@
+.................Native provider failed provider=gemini model=primary http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.13 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.45 quota_scopes=[] retry_after_seconds=None
+.......{"event":"analysis_failure","action":"propose","request_id":null,"job_id":null,"exception_type":"ToolContractError","sqlstates":[],"locations":[{"file":"routers/ai.py","line":154,"function":"_invoke"},{"file":"services/agent_pipeline.py","line":451,"function":"propose"},{"file":"services/agent_pipeline.py","line":471,"function":"_propose"},{"file":"services/one_shot_planner.py","line":497,"function":"run"},{"file":"services/one_shot_planner.py","line":355,"function":"accept_response"},{"file":"services/one_shot_planner.py","line":215,"function":"accept_plan"},{"file":"services/one_shot_planner.py","line":70,"function":"fail_contract"}]}
+Analysis rejected request_id=305015133a414f07916f3e9fc12a898f action=propose category=invalid_analysis_contract stage=None provider_calls=1 root_issue_count=0 issue_count=1
+.............Native provider failed provider=gemini model=primary http_status=400 category=provider_bad_request reason=None provider_status=None schema_keywords=[] latency_ms=1.31 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=400 category=provider_bad_request reason=None provider_status=None schema_keywords=[] latency_ms=1.2 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=401 category=provider_auth reason=None provider_status=None schema_keywords=[] latency_ms=1.18 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=401 category=provider_auth reason=None provider_status=None schema_keywords=[] latency_ms=1.09 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=403 category=provider_access_denied reason=None provider_status=None schema_keywords=[] latency_ms=1.29 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=403 category=provider_access_denied reason=None provider_status=None schema_keywords=[] latency_ms=1.21 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=404 category=provider_model_not_found reason=None provider_status=None schema_keywords=[] latency_ms=1.17 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=404 category=provider_model_not_found reason=None provider_status=None schema_keywords=[] latency_ms=1.07 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=429 category=provider_rate_limited reason=quota_or_rate_limit provider_status=None schema_keywords=[] latency_ms=1.05 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=429 category=provider_rate_limited reason=quota_or_rate_limit provider_status=None schema_keywords=[] latency_ms=1.09 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=500 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=1.14 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=500 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=1.41 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=500 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.98 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=500 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=1.42 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=1.89 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=1.01 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=1.02 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.99 quota_scopes=[] retry_after_seconds=None
+......................Native provider failed provider=gemini model=primary http_status=None category=provider_timeout reason=None provider_status=None schema_keywords=[] latency_ms=1.1 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=None category=provider_timeout reason=None provider_status=None schema_keywords=[] latency_ms=2.05 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=None category=provider_connection reason=None provider_status=None schema_keywords=[] latency_ms=1.37 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=primary http_status=None category=provider_connection reason=None provider_status=None schema_keywords=[] latency_ms=1.28 quota_scopes=[] retry_after_seconds=None
+..........Native provider failed provider=gemini model=fixture http_status=None category=provider_timeout reason=None provider_status=None schema_keywords=[] latency_ms=23000.0 quota_scopes=[] retry_after_seconds=None
+............Native provider failed provider=gemini model=fixture http_status=429 category=provider_rate_limited reason=quota_or_rate_limit provider_status=None schema_keywords=[] latency_ms=0.17 quota_scopes=[] retry_after_seconds=None
+.Native provider failed provider=gemini model=fixture http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.16 quota_scopes=[] retry_after_seconds=None
+.Native provider failed provider=gemini model=fixture http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.11 quota_scopes=[] retry_after_seconds=None
+.Native provider failed provider=gemini model=fixture http_status=400 category=provider_bad_request reason=None provider_status=None schema_keywords=[] latency_ms=0.09 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=fixture http_status=401 category=provider_auth reason=None provider_status=None schema_keywords=[] latency_ms=0.09 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=fixture http_status=403 category=provider_access_denied reason=None provider_status=None schema_keywords=[] latency_ms=0.1 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=fixture http_status=404 category=provider_model_not_found reason=None provider_status=None schema_keywords=[] latency_ms=0.1 quota_scopes=[] retry_after_seconds=None
+.Native provider failed provider=gemini model=fixture http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.1 quota_scopes=[] retry_after_seconds=None
+Native provider failed provider=gemini model=fixture http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.07 quota_scopes=[] retry_after_seconds=None
+.Native provider failed provider=gemini model=fixture http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.23 quota_scopes=[] retry_after_seconds=None
+...Native provider failed provider=gemini model=fixture http_status=503 category=provider_http reason=None provider_status=None schema_keywords=[] latency_ms=0.17 quota_scopes=[] retry_after_seconds=None
+.
+----------------------------------------------------------------------
+Ran 90 tests in 60.333s
+
+OK

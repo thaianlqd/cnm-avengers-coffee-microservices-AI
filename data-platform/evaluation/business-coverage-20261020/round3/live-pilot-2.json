@@ -1,0 +1,185 @@
+{
+ "prior_ledger": 539,
+ "final_ledger": 548,
+ "physical_sends": 9,
+ "actual_http": 9,
+ "tokens": {
+  "input": 31839,
+  "output": 845
+ },
+ "cases": 8,
+ "executed": 8,
+ "first_pass": 3,
+ "holdout_first_pass": 1,
+ "holdout_executed": 5,
+ "mandatory_failed": [
+  "BC-REV-003",
+  "BC-REV-013"
+ ],
+ "rows": [
+  {
+   "id": "BC-REV-003",
+   "group": "B01",
+   "holdout": true,
+   "status": "error",
+   "analysis_state": "UNDERSTANDING_FAILURE",
+   "error_category": "semantic_resolution_failed",
+   "error_type": "ResolutionIssues",
+   "frames": [
+    "agent_pipeline.py:479",
+    "agent_pipeline.py:544",
+    "hybrid_analyst_planner.py:867"
+   ],
+   "issue_codes": [
+    "clarification_required"
+   ],
+   "latency_ms": 6412,
+   "physical_http": 2,
+   "tokens": 6816,
+   "first_pass": false
+  },
+  {
+   "id": "BC-REV-007",
+   "group": "B01",
+   "holdout": false,
+   "status": "needs_clarification",
+   "analysis_state": "SUPPORTED_BUT_NEEDS_CLARIFICATION",
+   "error_category": "subject_ambiguous",
+   "error_type": "AnalysisError",
+   "frames": [
+    "hybrid_analyst_planner.py:568",
+    "hybrid_analyst_planner.py:483",
+    "hybrid_analyst_planner.py:155"
+   ],
+   "issue_codes": [],
+   "latency_ms": 1298,
+   "physical_http": 0,
+   "tokens": 0,
+   "first_pass": true
+  },
+  {
+   "id": "BC-REV-013",
+   "group": "B01",
+   "holdout": false,
+   "status": "error",
+   "analysis_state": "UNDERSTANDING_FAILURE",
+   "error_category": "semantic_contract_drift",
+   "error_type": "ResolutionIssues",
+   "frames": [
+    "agent_pipeline.py:479",
+    "agent_pipeline.py:544",
+    "hybrid_analyst_planner.py:867"
+   ],
+   "issue_codes": [
+    "explicit_metrics_missing"
+   ],
+   "latency_ms": 3992,
+   "physical_http": 2,
+   "tokens": 8769,
+   "first_pass": false
+  },
+  {
+   "id": "BC-B09-004",
+   "group": "B09",
+   "holdout": true,
+   "proposal_status": "proposal_ready",
+   "status": "error",
+   "analysis_state": "SYSTEM_FAILURE",
+   "error_category": "internal",
+   "error_type": "UndefinedTable",
+   "frames": [
+    "contextlib.py:137",
+    "query_execution_batch.py:168",
+    "extras.py:236"
+   ],
+   "issue_codes": [],
+   "latency_ms": 4193,
+   "physical_http": 1,
+   "tokens": 2959,
+   "first_pass": false
+  },
+  {
+   "id": "BC-B24-004",
+   "group": "B24",
+   "holdout": true,
+   "status": "error",
+   "analysis_state": "UNDERSTANDING_FAILURE",
+   "error_category": "semantic_intent_invalid",
+   "error_type": "ResolutionIssues",
+   "frames": [
+    "agent_pipeline.py:479",
+    "agent_pipeline.py:544",
+    "hybrid_analyst_planner.py:867"
+   ],
+   "issue_codes": [
+    "untargeted_field_changed"
+   ],
+   "latency_ms": 3706,
+   "physical_http": 2,
+   "tokens": 7579,
+   "first_pass": false
+  },
+  {
+   "id": "BC-B03-005",
+   "group": "B03",
+   "holdout": true,
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "requested": [
+    {
+     "metrics": [
+      "paused_sale_positions"
+     ],
+     "group_by": [
+      "store"
+     ]
+    }
+   ],
+   "charts": 4,
+   "latency_ms": 4977,
+   "physical_http": 1,
+   "tokens": 3527,
+   "first_pass": true
+  },
+  {
+   "id": "BC-B27-005",
+   "group": "B27",
+   "holdout": true,
+   "proposal_status": "proposal_ready",
+   "status": "error",
+   "analysis_state": "SYSTEM_FAILURE",
+   "error_category": "internal",
+   "error_type": "UndefinedTable",
+   "frames": [
+    "contextlib.py:137",
+    "query_execution_batch.py:168",
+    "extras.py:236"
+   ],
+   "issue_codes": [],
+   "latency_ms": 3594,
+   "physical_http": 1,
+   "tokens": 3034,
+   "first_pass": false
+  },
+  {
+   "id": "BC-B03-003",
+   "group": "B03",
+   "holdout": false,
+   "status": "needs_clarification",
+   "analysis_state": "UNSUPPORTED_CAPABILITY",
+   "error_category": "unsupported_metric",
+   "error_type": "AnalysisError",
+   "frames": [
+    "agent_pipeline.py:479",
+    "agent_pipeline.py:535",
+    "agent_pipeline.py:171"
+   ],
+   "issue_codes": [],
+   "latency_ms": 510,
+   "physical_http": 0,
+   "tokens": 0,
+   "first_pass": true
+  }
+ ]
+}

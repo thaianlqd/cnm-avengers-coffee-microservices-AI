@@ -16,12 +16,18 @@ class SemanticRecoveryBoundaries(f.unittest.TestCase):
 
     def test_provider_time_grammar_is_complete_in_primary_delta_and_repair(self):
         from services.analysis_intent import repair_tool
-        for tool, path in [(intent_tool(), ('requirements','items')),
-                           (intent_tool(delta=True), ('changes','items')),
-                           (repair_tool([dict(requirement_id='r1',field='time',code='invalid_time_shape')]), ('requirements','items'))]:
+        tools = [intent_tool(), intent_tool(delta=True),
+                 repair_tool([dict(requirement_id='r1',field='time',code='invalid_time_shape')])]
+        for tool, path in zip(tools, [('requirements','items'), ('changes','items'), ('requirements','items')]):
             item = tool['parameters']['properties'][path[0]][path[1]]['properties']
             time = item['changes']['properties']['time'] if path[0]=='changes' else item['time']
-            branches = {b['properties']['kind']['enum'][0]: b for b in time['anyOf']}
+            top = time['anyOf']
+            nulls = [b for b in top if b.get('type') == 'null']
+            top = [x for b in top if b.get('type') != 'null' for x in (b.get('anyOf') or [b])]
+            # explicit null = "clear this optional field"; only the repair grammar may offer it
+            self.assertEqual(len(nulls), 1 if path == ('requirements','items') and tool is tools[2] else 0, path)
+            branches = {b['properties']['kind']['enum'][0]: b for b in top}
+            self.assertEqual(len(branches), 7)
             self.assertEqual(branches['relative']['required'], ['kind','mode'])
             self.assertNotIn('custom', branches['relative']['properties']['mode']['enum'])
             self.assertEqual(branches['range']['required'], ['kind','start','end'])

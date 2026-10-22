@@ -1,0 +1,551 @@
+{
+  "v33_cases": {
+    "passed": 33,
+    "total": 33,
+    "rate": 1.0
+  },
+  "v33_rows": [
+    {
+      "id": "IN-14a",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "blocking_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-14b",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "blocking_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-14c",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_horizon_exceeded"
+      ],
+      "blocking_codes": [
+        "forecast_horizon_exceeded"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-14d",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "blocking_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-16",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_scope_unsupported"
+      ],
+      "blocking_codes": [
+        "forecast_scope_unsupported"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-16b",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_scope_unsupported"
+      ],
+      "blocking_codes": [
+        "forecast_scope_unsupported"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-14e",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_metric_unsupported"
+      ],
+      "blocking_codes": [
+        "forecast_metric_unsupported"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-15",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-15b",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-17",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "risk_signal_required"
+      ],
+      "blocking_codes": [
+        "risk_signal_required"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-11",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "trend_range_too_short"
+      ],
+      "blocking_codes": [
+        "trend_range_too_short"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-1",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-2",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-01",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "unrecognized_question"
+      ],
+      "blocking_codes": [
+        "unrecognized_question"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-01b",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "unrecognized_question"
+      ],
+      "blocking_codes": [
+        "unrecognized_question"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-02",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "metric_needed"
+      ],
+      "blocking_codes": [
+        "metric_needed"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-03",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "mission_mismatch"
+      ],
+      "blocking_codes": [
+        "mission_mismatch"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-04",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "cohort_criterion_needed"
+      ],
+      "blocking_codes": [
+        "cohort_criterion_needed"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-05",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "compare_mixed_units"
+      ],
+      "blocking_codes": [
+        "compare_mixed_units"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-06",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "unsupported_predicate"
+      ],
+      "blocking_codes": [
+        "unsupported_predicate"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-09",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "composition_non_additive"
+      ],
+      "blocking_codes": [
+        "composition_non_additive"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-10",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "composition_non_additive"
+      ],
+      "blocking_codes": [
+        "composition_non_additive"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-21",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "association_category_variable"
+      ],
+      "blocking_codes": [
+        "association_category_variable"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "unsupported_predicate"
+      ],
+      "blocking_codes": [
+        "unsupported_predicate"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-3",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-4",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-5",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-6",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35b",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35c",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "composition_non_additive"
+      ],
+      "blocking_codes": [
+        "composition_non_additive"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35d",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35e",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-7",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    }
+  ],
+  "mode": "offline",
+  "measures_natural_language_understanding": false,
+  "generated_at": "2026-10-18T00:43:58.321724+00:00",
+  "registry_fingerprint": "c2805207d50c4480360cdfb5e6e145283426e6bdc31dc61146741f237810d12a",
+  "case_count": 146,
+  "dataset_errors": [],
+  "categories": [
+    "ambiguous",
+    "cash_reconciliation",
+    "comparison",
+    "cross_domain",
+    "delivery",
+    "distribution",
+    "favorites",
+    "filters",
+    "followup",
+    "forecast",
+    "forecast_unsupported",
+    "informal",
+    "inventory",
+    "multi_dimension",
+    "orders_quality",
+    "out_of_scope",
+    "promotions",
+    "ranking",
+    "relative_time",
+    "restricted",
+    "reviews",
+    "shifts",
+    "simple",
+    "surveys",
+    "time_coverage",
+    "trend",
+    "typo",
+    "unsupported",
+    "weekday"
+  ],
+  "retrieval_domain": {
+    "passed": 113,
+    "total": 113,
+    "rate": 1.0
+  },
+  "retrieval_metric": {
+    "passed": 113,
+    "total": 113,
+    "rate": 1.0
+  },
+  "regression_retrieval": {
+    "passed": 6,
+    "total": 6,
+    "rate": 1.0
+  },
+  "compile_level2": {
+    "passed": 108,
+    "total": 108,
+    "rate": 1.0
+  },
+  "forecast_capability_rejections": {
+    "passed": 6,
+    "total": 6,
+    "rate": 1.0
+  },
+  "max_context_chars": 12364,
+  "preflight_expectations": {
+    "passed": 17,
+    "total": 17,
+    "rate": 1.0
+  },
+  "unsupported_preflight": {
+    "passed": 5,
+    "total": 5,
+    "rate": 1.0
+  },
+  "failures": [],
+  "by_version": {
+    "3.0": {
+      "case_count": 113,
+      "retrieval_domain": {
+        "passed": 88,
+        "total": 88,
+        "rate": 1.0
+      },
+      "retrieval_metric": {
+        "passed": 88,
+        "total": 88,
+        "rate": 1.0
+      },
+      "compile_level2": {
+        "passed": 83,
+        "total": 83,
+        "rate": 1.0
+      },
+      "forecast_capability_rejections": {
+        "passed": 3,
+        "total": 3,
+        "rate": 1.0
+      }
+    },
+    "3.1": {
+      "case_count": 33,
+      "retrieval_domain": {
+        "passed": 25,
+        "total": 25,
+        "rate": 1.0
+      },
+      "retrieval_metric": {
+        "passed": 25,
+        "total": 25,
+        "rate": 1.0
+      },
+      "compile_level2": {
+        "passed": 25,
+        "total": 25,
+        "rate": 1.0
+      },
+      "forecast_capability_rejections": {
+        "passed": 3,
+        "total": 3,
+        "rate": 1.0
+      }
+    }
+  }
+}

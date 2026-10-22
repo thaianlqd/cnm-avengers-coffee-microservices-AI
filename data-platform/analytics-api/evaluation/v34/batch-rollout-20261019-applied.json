@@ -1,0 +1,21 @@
+{
+  "group": "avengers_batch_runner",
+  "login": "avengers_dp_batch",
+  "bronze_source_sha256": null,
+  "source_tables": [
+    "orders.chi_tiet_don_hang",
+    "orders.customer_wallet_transaction",
+    "orders.delivery_tracking",
+    "orders.don_hang",
+    "orders.shipper_delivery"
+  ],
+  "grant_sql": "GRANT USAGE ON SCHEMA orders, analytics TO \"avengers_batch_runner\";\nGRANT SELECT ON \"orders\".\"chi_tiet_don_hang\" TO \"avengers_batch_runner\";\nGRANT SELECT ON \"orders\".\"customer_wallet_transaction\" TO \"avengers_batch_runner\";\nGRANT SELECT ON \"orders\".\"delivery_tracking\" TO \"avengers_batch_runner\";\nGRANT SELECT ON \"orders\".\"don_hang\" TO \"avengers_batch_runner\";\nGRANT SELECT ON \"orders\".\"shipper_delivery\" TO \"avengers_batch_runner\";\nGRANT SELECT ON analytics.ingestion_checkpoints TO \"avengers_batch_runner\";\nGRANT SELECT, INSERT ON analytics.pipeline_runs, analytics.gold_dataset_versions TO \"avengers_batch_runner\";\nGRANT SELECT, INSERT, UPDATE ON analytics.pipeline_publications TO \"avengers_batch_runner\";\n",
+  "new_limited_login": true,
+  "profile_scope": "spark-jobs batch only; never mounted into API/Kafka/data-sync",
+  "ddl": false,
+  "truncate": false,
+  "silver_gold_table_dml": false,
+  "worker_activation": false,
+  "source_database_grants": false,
+  "applied": true
+}

@@ -4,6 +4,13 @@ from services.agent_pipeline import AnalysisPipeline
 
 
 def safe_failure(error, provider_calls=None, layer_diagnostics=None):
+    validation = getattr(error, 'input_validation', None)
+    if validation:
+        from services.semantic_preflight_contract import decision_from_findings
+        layer_diagnostics = dict(layer_diagnostics or {}, failure_stage='INPUT_INTEGRITY',
+            capability=decision_from_findings(validation['findings']).model_dump(mode='json'),
+            input_validation_fingerprint=validation['fingerprint'], input_policy_version=validation['version'],
+            input_reason_codes=[f['code'] for f in validation['findings']], lookup_queries=validation['lookup_queries'])
     category = getattr(error, "category", "internal")
     structured = getattr(error, "clarification", None)
     clarification_categories = {
@@ -46,7 +53,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         'idempotency_conflict': 'Mã tác vụ đã gắn với một câu hỏi khác. Hãy bắt đầu câu hỏi mới.',
         'invalid_job_key': 'Yêu cầu chưa có mã tác vụ hợp lệ.',
         'resolver_internal': 'Máy chủ gặp lỗi xử lý kế hoạch phân tích. Câu hỏi được giữ nguyên; hệ thống chưa chạy truy vấn báo cáo. Cần kiểm tra lỗi bộ phân giải trên máy chủ.',
-        'planning_timeout': 'Hệ thống chưa hoàn tất lập kế hoạch trong giới hạn 30 giây. Đây là lỗi xử lý hoặc thời gian phản hồi của hệ thống; câu hỏi được giữ nguyên và chưa cần bổ sung thông tin.',
+        'planning_timeout': 'Hệ thống chưa hoàn tất lập kế hoạch trong giới hạn 40 giây. Đây là lỗi xử lý hoặc thời gian phản hồi của hệ thống; câu hỏi được giữ nguyên và chưa cần bổ sung thông tin.',
         'capacity_requires_choice': 'Phạm vi và nhịp thời gian yêu cầu vượt dung lượng thực thi. Chọn khoảng thời gian ngắn hơn, ít nhóm hơn hoặc nhịp tuần/tháng; hệ thống chưa thay đổi yêu cầu của bạn.',
         'artifact_store_unavailable': 'Kho kết quả phân tích chưa sẵn sàng. Dữ liệu lớn chưa được lưu vào phiên; cần khôi phục kho kết quả.',
         'artifact_expired': 'Kết quả phân tích đã hết hạn lưu trữ. Hãy làm mới báo cáo để lấy dữ liệu hiện tại.',
@@ -70,10 +77,13 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "approval_required": "Vui lòng lập và xác nhận kế hoạch phân tích trước khi thực thi.",
         "invalid_analysis_contract": "AI đã trả lời nhưng kế hoạch phân tích chưa hợp lệ. Vui lòng thử lập lại kế hoạch.",
         "max_tokens_exceeded": "Kế hoạch phân tích vượt quá giới hạn token đầu ra của AI. Hãy thu gọn câu hỏi hoặc chia nhỏ bài toán để hệ thống tạo báo cáo.",
-        "provider_call_budget_exceeded": "Hệ thống đã chặn lượt gọi AI vượt giới hạn của yêu cầu này. Bạn có thể chủ động lập lại kế hoạch.",
+        "provider_call_budget_exceeded": "Hệ thống đã dùng hết số lượt diễn giải cho câu hỏi này mà chưa ánh xạ được yêu cầu; gửi lại nguyên câu sẽ không giúp ích. Hãy diễn đạt lại chỉ số, phạm vi hoặc thời gian.",
+        "provider_transport_nested": "Kết nối tới dịch vụ AI bị gián đoạn trong lúc diễn giải. Vui lòng thử lại.",
+        "semantic_resolution_failed": "Hệ thống đã dừng diễn giải vì lượt sửa không tiến triển; chưa chạy truy vấn nào. Hãy diễn đạt lại chỉ số, phạm vi hoặc thời gian, hoặc chọn một phân tích được hỗ trợ.",
         "one_shot_context_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ ngữ cảnh dữ liệu để lập kế hoạch. Vui lòng thử lại.",
         "semantic_manifest_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ danh mục dữ liệu trong dung lượng lập kế hoạch hiện tại.",
         "context_configuration": "Giới hạn ngữ cảnh trên máy chủ chưa hợp lệ.",
+        "provider_forbidden": "Dashboard này chỉ dùng dữ liệu phân tích có sẵn; dịch vụ AI không được phép gọi tại đây.",
         "provider_policy": "Cấu hình AI chưa đáp ứng giới hạn số lượt gọi cho mỗi yêu cầu. Vui lòng kiểm tra cấu hình máy chủ.",
         "dashboard_contract": "Loại biểu đồ này chưa phù hợp với kết quả hiện tại. Báo cáo đã duyệt được giữ nguyên.",
         "duplicate_invalid_tool_call": "AI lặp lại một kế hoạch chưa hợp lệ; hệ thống đã dừng lượt sửa. Vui lòng lập lại kế hoạch.",
@@ -81,7 +91,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "execution": "Truy vấn phân tích chưa thực thi thành công. Vui lòng thử lại sau.",
         "quality_verification": "Nguồn gốc hoặc phạm vi báo cáo chưa vượt qua kiểm chứng độc lập. Hệ thống chưa tạo báo cáo hoàn chỉnh.",
         "result_contract": "Kết quả dữ liệu chưa vượt qua kiểm chứng nên chưa thể tạo báo cáo.",
-        "unsupported_metric": "Chỉ số yêu cầu chưa có định nghĩa trong danh mục dữ liệu hiện tại.",
+        "unsupported_metric": "Hiện dữ liệu phân tích chưa hỗ trợ chỉ số này: chỉ số yêu cầu chưa có định nghĩa trong danh mục dữ liệu hiện tại.",
         "forecast_unsupported": "Dữ liệu và phương pháp hiện có chưa hỗ trợ dự báo. Bạn có thể yêu cầu xu hướng quan sát của các kỳ đã có dữ liệu.",
         "metric_ambiguous": "Cần chọn chỉ số đánh giá, chẳng hạn doanh thu, số đơn hoặc điểm đánh giá theo dữ liệu khả dụng.",
         "filter_value_unknown": "Giá trị lọc chưa có trong dữ liệu. Hãy kiểm tra tên thành phố, chi nhánh hoặc đối tượng trong phạm vi yêu cầu.",
@@ -107,6 +117,11 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "unsupported": "Yêu cầu này chưa thể phân tích bằng các chỉ số và quan hệ dữ liệu hiện có.",
         "clarification": "Có một phần phạm vi phân tích cần xác nhận. Vui lòng làm rõ yêu cầu.",
         "not_analytical_request": "Chưa có yêu cầu phân tích dữ liệu trong nội dung bạn nhập. Hãy nêu điều muốn tìm hiểu, ví dụ: Doanh thu theo chi nhánh trong 30 ngày gần nhất.",
+        "unrecognized_question": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi. Hãy nêu chỉ số hoặc đối tượng cần phân tích.",
+        "mission_mismatch": "Câu hỏi thuộc một nhiệm vụ phân tích khác với nhiệm vụ đang chọn. Hãy chuyển nhiệm vụ hoặc viết lại câu hỏi.",
+        "guided_contract_invalid": "Cấu hình phân tích đã chọn chưa khớp danh mục dữ liệu được quản trị. Hãy chọn lại chỉ số, chiều hoặc phạm vi; hệ thống không gọi AI để đoán.",
+        "analysis_mission_unknown": "Nhiệm vụ phân tích không hợp lệ. Hãy chọn lại nhiệm vụ.",
+        "semantic_contract_drift": "Diễn giải chưa khớp danh mục dữ liệu: AI chọn chỉ số khác với chỉ số đã nhận diện chắc chắn trong câu hỏi. Hệ thống dừng thay vì tự đoán; hãy nêu rõ chỉ số cần dùng.",
         "semantic_intent_invalid": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
         "stale_approval": "Kế hoạch hoặc phiên bản đã thay đổi. Vui lòng duyệt lại đề xuất hiện tại.",
         "session_storage": "Kho phiên phân tích chưa sẵn sàng. Hệ thống chưa thực thi kế hoạch.",
@@ -177,8 +192,12 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
               'result_contract':'RESULT_VALIDATION', 'execution':'SQL_EXECUTION',
               'quality_verification':'QUALITY_VERIFICATION', 'dashboard_contract':'DASHBOARD_PLANNING',
               'semantic_intent_invalid':'SEMANTIC_INTENT', 'provider_invalid_json':'PROVIDER_FORMAT'}
+    from services.error_taxonomy import classify, is_provider_transport, analysis_stage
+    typed = classify(category, layer_diagnostics)
+    if category in {"provider_rate_limited", "provider_daily_quota"} and (layer_diagnostics or {}).get("credential_failover_used"):
+        message = "Dịch vụ AI đang giới hạn quota trên cả thông tin xác thực chính và dự phòng. Câu hỏi chưa được diễn giải; hãy thử lại sau."
     stage = (layer_diagnostics or {}).get('failure_stage') or stages.get(category) or (
-        'PROVIDER_TRANSPORT' if category.startswith('provider_') else 'PLAN_VALIDATION')
+        'PROVIDER_TRANSPORT' if is_provider_transport(category) else 'PLAN_VALIDATION')
     actions = {'capacity_requires_choice':'ask_scope_or_granularity_choice',
                'artifact_store_unavailable':'restore_storage_without_semantic_retry',
                'artifact_expired':'refresh_approved_query', 'artifact_integrity':'reject_artifact_and_refresh',
@@ -191,12 +210,23 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
     known['provider_attempt_count'] = len(provider_calls or [])
     if structured and structured.get('known_interpretation'):
         known['interpretation'] = structured['known_interpretation']
+    capability=(layer_diagnostics or {}).get('capability')
+    if isinstance(capability,dict) and capability.get('decision')!='READY':
+        message=capability.get('message') or message
+        outcome='UNSUPPORTED' if capability['decision']=='UNSUPPORTED' else 'NEEDS_INPUT'
     return {
+        "decision": capability.get("decision") if isinstance(capability,dict) else None,
+        "capability": capability,
+        "actions": capability.get('actions',[]) if isinstance(capability,dict) else [],
         "outcome": outcome,
+        "analysis_stage": analysis_stage(typed["error_type"]),
+        "error_type": typed["error_type"],
+        "analysis_state": typed["analysis_state"],
+        "retryable": typed["retryable"],
         "quality_assessment": not_scored(message),
         "issue": issue,
         "status": (
-            "needs_clarification" if category in clarification_categories or population_overflow else "error"
+            "needs_clarification" if category in clarification_categories or population_overflow or (capability or {}).get("decision") in {"CLARIFY","REDIRECT"} else "error"
         ),
         "question": message,
         "message": message,
@@ -207,8 +237,8 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             structured.get("known_interpretation") if structured else None
         ),
         "diagnostics": {
-            "provider_status": "failed" if category.startswith("provider_") else "success" if any(a.get("status") == "success" for a in provider_calls or []) else "not_started",
-            "provider_error_category": category if category.startswith("provider_") else None,
+            "provider_status": "failed" if is_provider_transport(category) else "success" if any(a.get("status") == "success" for a in provider_calls or []) else "not_started",
+            "provider_error_category": category if is_provider_transport(category) else None,
             "agent_contract_status": "invalid" if category in {"invalid_analysis_contract", "duplicate_invalid_tool_call", "analysis_spec_invalid"} else "valid",
             "agent_contract_error": category if category in {"invalid_analysis_contract", "duplicate_invalid_tool_call", "analysis_spec_invalid"} else None,
             "semantic_status": "unsupported" if category.startswith("unsupported") else "clarification" if category in clarification_categories else "not_started",
@@ -232,7 +262,9 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "charts": [],
         'failure': dict(stage=stage, code=category, user_impact=outcome,
             what_is_known=known, what_failed=category,
-            retry_helps=category in {'provider_timeout','provider_connection','provider_http','provider_rate_limited'},
+            retry_helps=typed['retryable'], error_type=typed['error_type'], analysis_state=typed['analysis_state'],
+            analysis_stage=analysis_stage(typed['error_type']),
+            guidance=dict(title=typed['title'], description=typed['description'], next_action=typed['next_action']),
             needs_user_input=outcome=='NEEDS_INPUT', recommended_server_action=actions.get(category,
                 'request_clarification' if outcome=='NEEDS_INPUT' else 'inspect_failed_stage')),
     }

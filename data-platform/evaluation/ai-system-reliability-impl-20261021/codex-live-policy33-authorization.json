@@ -1,0 +1,9 @@
+{
+  "initial_auto_review": "rejected before process creation; no provider request executed",
+  "reason": "Explicit outbound Gemini payload/destination/cost approval required",
+  "user_confirmation": "Cho phép gửi và phát sinh phí trong giới hạn trên",
+  "approved_payload": "Fixed12 from codex-qualification-policy33-live-20261022-manifest.json plus runtime-permitted catalog/schema/value samples; no rawPII, APIkeys or passwords in prompt content",
+  "destination": "Google Gemini API",
+  "physical_http_ceiling": 36,
+  "scope": "One bounded qualification replay; no blind campaign reruns"
+}

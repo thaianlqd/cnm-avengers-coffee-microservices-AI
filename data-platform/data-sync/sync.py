@@ -1,6 +1,6 @@
 """
 Avengers Coffee - Data Sync Service (ETL)
-Tự động sync TOÀN BỘ bảng từ Supabase (production) sang postgres-analytics (local).
+Production dùng contract/governed ingestion; legacy bên dưới chỉ dành cho migration/test được cấu hình rõ.
 
 Cơ chế:
   1. Quét information_schema.tables → phát hiện TẤT CẢ bảng trong các schema
@@ -13,6 +13,7 @@ import os
 import sys
 import time
 import logging
+import json
 from datetime import datetime, timezone
 
 import psycopg2
@@ -58,22 +59,49 @@ TIMESTAMP_COLUMNS = [
 ]
 
 
+def governed_ingestion_enabled():
+    """Validated entry boundary; legacy is explicit non-production compatibility."""
+    environment = os.getenv('DATA_ANALYST_ENV', '').strip().lower()
+    flag = os.getenv('DATA_PLATFORM_GOVERNED_INGESTION', '').strip()
+    allowed = {'production', 'prod', 'staging', 'development', 'test'}
+    production = {'production', 'prod', 'staging'}
+    equivalent = environment in production or any(
+        os.getenv(name, '').strip().lower() in production
+        for name in ('NODE_ENV', 'APP_ENV', 'ENVIRONMENT'))
+    if environment not in allowed or flag not in {'0', '1'} or (equivalent and flag != '1'):
+        raise ValueError('Invalid ingestion configuration; production requires governed ingestion')
+    return flag == '1'
+
+
+def require_legacy_ingestion():
+    if governed_ingestion_enabled():
+        raise ValueError('Invalid ingestion configuration; legacy is non-production compatibility only')
+
+
 def get_source_conn():
     """Kết nối đến Supabase (production DB)."""
-    return psycopg2.connect(
+    governed_ingestion_enabled()
+    conn = psycopg2.connect(
         host=SOURCE_DB_HOST, port=SOURCE_DB_PORT,
         user=SOURCE_DB_USER, password=SOURCE_DB_PASSWORD,
         dbname=SOURCE_DB_NAME, sslmode=SOURCE_DB_SSLMODE,
         connect_timeout=30,
-        options="-c statement_timeout=120000",
+        options="-c statement_timeout=30000 -c default_transaction_read_only=on",
     )
+    conn.set_session(readonly=True, isolation_level='REPEATABLE READ')
+    return conn
 
 
 def get_target_conn():
     """Kết nối đến postgres-analytics (local)."""
+    credentials=None
+    if governed_ingestion_enabled():
+        from pipeline_runtime import private_database_profile
+        credentials=private_database_profile()
     return psycopg2.connect(
         host=TARGET_DB_HOST, port=TARGET_DB_PORT,
-        user=TARGET_DB_USER, password=TARGET_DB_PASSWORD,
+        user=credentials[0] if credentials else TARGET_DB_USER,
+        password=credentials[1] if credentials else TARGET_DB_PASSWORD,
         dbname=TARGET_DB_NAME, sslmode="disable",
         connect_timeout=15,
     )
@@ -253,6 +281,7 @@ def ensure_target_table(source_conn, target_conn, schema, table):
 
 def sync_table_full(source_conn, target_conn, schema, table):
     """Full sync: copy toàn bộ dữ liệu từ source sang target."""
+    require_legacy_ingestion()  # Never available on the governed production path.
     start_time = time.time()
 
     # Đọc toàn bộ dữ liệu từ source
@@ -300,6 +329,7 @@ def sync_table_full(source_conn, target_conn, schema, table):
 
 def sync_table_incremental(source_conn, target_conn, schema, table, ts_col, last_sync):
     """Incremental sync: chỉ copy dữ liệu mới/cập nhật."""
+    require_legacy_ingestion()  # Never available on the governed production path.
     start_time = time.time()
 
     # Evolve the target first so a new source column can be inserted in this cycle.
@@ -371,7 +401,7 @@ def sync_table_incremental(source_conn, target_conn, schema, table, ts_col, last
     return len(rows)
 
 
-def update_sync_metadata(target_conn, schema, table, rows, duration_ms, sync_type):
+def update_sync_metadata(target_conn, schema, table, rows, duration_ms, sync_type, *, commit=True):
     """Cập nhật bảng sync_metadata."""
     with target_conn.cursor() as cur:
         cur.execute("""
@@ -386,11 +416,285 @@ def update_sync_metadata(target_conn, schema, table, rows, duration_ms, sync_typ
                 error_message = NULL
         """, (schema, table, rows, duration_ms, sync_type,
               rows, duration_ms, sync_type))
-    target_conn.commit()
+    if commit:
+        target_conn.commit()
 
 
-def run_sync_cycle(source_conn, target_conn):
+def load_data_contracts():
+    from pathlib import Path
+    path = Path(os.getenv('DATA_PLATFORM_DATA_CONTRACTS_PATH',
+                          str(Path(__file__).resolve().parent.parent / 'metadata/data_contracts.json')))
+    document = json.loads(path.read_text())
+    if document.get('version') != '3.4.0' or not document.get('datasets'):
+        raise ValueError('Governed data contracts are unavailable')
+    return document['datasets']
+
+
+def ensure_target_contract(target_conn, contract):
+    """Only reviewed columns/types may be created; never evolve from SELECT *."""
+    from pipeline_runtime import quote_identifier, quote_table, PipelineContractError
+    schema, table = contract['target_table'].split('.')
+    if not table_exists_in_target(target_conn, schema, table):
+        columns = []
+        for name, definition in contract['columns'].items():
+            kind = map_postgres_type(definition['data_type'], definition['udt_name'])
+            columns.append(quote_identifier(name)+' '+kind+('' if definition['nullable'] else ' NOT NULL'))
+        if contract['primary_key']:
+            columns.append('PRIMARY KEY ('+', '.join(quote_identifier(k) for k in contract['primary_key'])+')')
+        with target_conn.cursor() as cursor:
+            cursor.execute('CREATE SCHEMA IF NOT EXISTS '+quote_identifier(schema))
+            cursor.execute('CREATE TABLE '+quote_table(contract['target_table'])+' ('+', '.join(columns)+')')
+    else:
+        actual = {row[0]: row for row in get_table_columns(target_conn, schema, table)}
+        if get_primary_keys(target_conn, schema, table) != contract['primary_key']:
+            raise PipelineContractError('Target primary key needs explicit migration')
+        for name, definition in contract['columns'].items():
+            kind = map_postgres_type(definition['data_type'], definition['udt_name'])
+            if name in actual:
+                if map_postgres_type(actual[name][1], actual[name][2]) != kind:
+                    raise PipelineContractError('Target column type needs explicit migration')
+                continue
+            if not definition['nullable']:
+                raise PipelineContractError('New required target column needs explicit migration/backfill')
+            with target_conn.cursor() as cursor:
+                cursor.execute('ALTER TABLE '+quote_table(contract['target_table'])+' ADD COLUMN '+quote_identifier(name)+' '+kind)
+    target_conn.commit()  # Schema phase precedes the fenced data/checkpoint transaction.
+
+
+def _proof_order(contract):
+    from pipeline_runtime import quote_identifier
+    return ', '.join(quote_identifier(name) + (' COLLATE "C"' if
+        contract['columns'][name]['data_type'] in {'text', 'character varying', 'character'} else '')
+        for name in contract['primary_key'])
+
+
+def _measure_projection(connection, contract, *, upper, source_timezone, deadline,
+                        source=False, period=None):
+    """Bounded server-cursor scan in the caller's existing transaction/snapshot."""
+    from uuid import uuid4
+    from pipeline_runtime import (ProjectionEvidence, source_projection, target_projection,
+        quote_table, period_predicate, attach_reference_evidence, reference_observations)
+    evidence = ProjectionEvidence(contract, source_upper_bound=upper, source_timezone=source_timezone)
+    projection, params = source_projection(contract) if source else (target_projection(contract), [])
+    table = contract['source_table'] if source else contract['target_table']
+    predicate, bounds = period_predicate(contract, period, target=not source) if period else ('', [])
+    statement = 'SELECT '+projection+' FROM '+quote_table(table)+' r'
+    if predicate:
+        statement += ' WHERE '+predicate
+    statement += ' ORDER BY '+_proof_order(contract)
+    with connection.cursor(name='v35_proof_'+uuid4().hex,
+                           cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+        cursor.itersize = BATCH_SIZE
+        cursor.execute(statement, params+bounds)
+        while True:
+            if time.monotonic() >= deadline:
+                raise TimeoutError('Governed source snapshot deadline exhausted')
+            rows = cursor.fetchmany(BATCH_SIZE)
+            if not rows:
+                break
+            for row in rows:
+                evidence.observe(row)
+    return attach_reference_evidence(contract, evidence.summary(),
+        reference_observations(connection, contract, table=table, where_sql=predicate, parameters=bounds))
+
+
+PARITY_SECONDS = 20  # per-table bound for the optional incremental parity proof
+PARITY_RESERVE_SECONDS = 120  # cycle time kept for the remaining loads
+PARITY_MAX_ROWS = 20000  # larger replicas are proven by the periodic full reconcile instead
+
+
+def sync_table_governed(source_conn, target_conn, contract, *, deadline=None, force_full=False):
+    """Bounded replica update with real update clocks, overlap and periodic repair.
+
+    Created-only tables use full snapshots. Data, legacy observation metadata and
+    fenced source checkpoint commit together. Full replacement remains atomic.
+    No claim of source completeness is inferred from the source clock.
+    """
+    from datetime import timedelta
+    import time as monotonic_clock
+    from uuid import uuid4
+    from zoneinfo import ZoneInfo
+    from pipeline_runtime import (validate_data_contract, source_projection, quote_identifier,
+                                  quote_table, read_checkpoint, advance_checkpoint, PipelineContractError,
+                                  ProjectionEvidence, attach_reference_evidence, reference_observations,
+                                  snapshot_certificate, closed_period_certificate, load_evidence)
+    snapshot_started = datetime.now(timezone.utc)
+    started = monotonic_clock.monotonic()
+    deadline = started + 180 if deadline is None else deadline
+    if started >= deadline:
+        raise TimeoutError('Governed source snapshot deadline exhausted')
+    with source_conn.cursor() as cursor:
+        cursor.execute('SET LOCAL statement_timeout = %s', (max(1, min(30000, int((deadline-started)*1000))),))
+    source_schema, source_table = contract['source_table'].split('.')
+    metadata = get_table_columns(source_conn, source_schema, source_table)
+    actual = {name: {'data_type': kind, 'udt_name': udt, 'nullable': nullable == 'YES'}
+              for name, kind, udt, nullable, _default in metadata}
+    validated = validate_data_contract(contract, actual, get_primary_keys(source_conn, source_schema, source_table))
+    ensure_target_contract(target_conn, contract)
+    target_schema, target_table = contract['target_table'].split('.')
+    columns = list(contract['columns'])
+    names = ', '.join(quote_identifier(name) for name in columns)
+    insert = 'INSERT INTO '+quote_table(contract['target_table'])+' ('+names+') VALUES %s'
+    keys = contract['primary_key']
+    if keys:
+        updates = [name for name in columns if name not in keys]
+        insert += ' ON CONFLICT ('+', '.join(quote_identifier(k) for k in keys)+') '
+        insert += ('DO UPDATE SET '+', '.join(quote_identifier(n)+'=EXCLUDED.'+quote_identifier(n) for n in updates)
+                   if updates else 'DO NOTHING')
+    projection, params = source_projection(contract)
+    source_cursor = None
+    try:
+        with target_conn.cursor() as cursor:
+            cursor.execute("SET LOCAL lock_timeout='3s'")
+            cursor.execute("SET LOCAL statement_timeout='30s'")
+        checkpoint = read_checkpoint(target_conn, contract['dataset_id'])
+        with source_conn.cursor() as cursor:
+            cursor.execute("SELECT clock_timestamp(), current_setting('TimeZone')")
+            upper, source_timezone = cursor.fetchone()
+        full_at = checkpoint.get('last_full_reconcile_at')
+        full = (force_full or contract['mode'] == 'full_snapshot' or checkpoint['cursor_time'] is None or not full_at
+                or (datetime.now(timezone.utc)-full_at).total_seconds() >= contract['full_reconcile_seconds'])
+        clock = contract.get('update_clock')
+        source_zone = ZoneInfo(source_timezone)
+        naive_clock = bool(clock and contract['columns'][clock]['data_type'] == 'timestamp without time zone')
+        def source_time(value):
+            return value.astimezone(source_zone).replace(tzinfo=None) if naive_clock else value
+        sql = 'SELECT '+projection+' FROM '+quote_table(contract['source_table'])
+        if not full:
+            lower = checkpoint['cursor_time']-timedelta(seconds=contract['overlap_seconds'])
+            sql += ' WHERE '+quote_identifier(clock)+' >= %s AND '+quote_identifier(clock)+' <= %s'
+            params += [source_time(lower), source_time(upper)]
+        ordering = list(dict.fromkeys(([clock] if clock else [])+keys))
+        if ordering:
+            sql += ' ORDER BY '+(_proof_order(contract) if full else
+                                 ', '.join(quote_identifier(name) for name in ordering))
+        source_evidence = ProjectionEvidence(contract, source_upper_bound=upper, source_timezone=source_timezone) if full else None
+        stage_table = None
+        if full:
+            # Fetch into a session-local table before changing the committed replica.
+            # TRUNCATE holds ACCESS EXCLUSIVE for remote I/O and proof scans; that
+            # made ordinary BI readers fail their bounded lock timeout every cycle.
+            stage_table = quote_identifier('v35_replica_stage_'+uuid4().hex)
+            with target_conn.cursor() as cursor:
+                cursor.execute('CREATE TEMP TABLE '+stage_table+' (LIKE '+
+                    quote_table(contract['target_table'])+' INCLUDING ALL) ON COMMIT DROP')
+            batch_insert = 'INSERT INTO '+stage_table+' ('+names+') VALUES %s'
+        else:
+            batch_insert = insert
+        source_cursor = source_conn.cursor(name='v34_'+uuid4().hex, cursor_factory=psycopg2.extras.RealDictCursor)
+        source_cursor.itersize = BATCH_SIZE
+        source_cursor.execute(sql, params)
+        rows_written, last_row = 0, None
+        while True:
+            if monotonic_clock.monotonic() >= deadline:
+                raise TimeoutError('Governed source snapshot deadline exhausted')
+            rows = source_cursor.fetchmany(BATCH_SIZE)
+            if not rows:
+                break
+            values = [[adapt_value(row[name]) for name in columns] for row in rows]
+            with target_conn.cursor() as cursor:
+                psycopg2.extras.execute_values(cursor, batch_insert, values, page_size=min(BATCH_SIZE, 1000))
+            rows_written += len(rows)
+            for row in rows:
+                if source_evidence is not None:
+                    source_evidence.observe(row)
+                if last_row is None or not clock or row[clock] >= last_row[clock]:
+                    last_row = row
+        source_cursor.close()
+        source_cursor = None
+        position = last_row.get(clock) if last_row and clock else checkpoint['cursor_time']
+        if position is not None and position.tzinfo is None:
+            position = position.replace(tzinfo=source_zone)
+        if position is not None and position > upper:
+            raise PipelineContractError('Source update clock is ahead of the source snapshot bound')
+        if not full and checkpoint['cursor_time'] is not None:
+            position = max(position, checkpoint['cursor_time'])
+        cursor_keys = [str(last_row[k]) for k in keys] if last_row and clock else checkpoint['cursor_keys']
+        if full:
+            target_table = quote_table(contract['target_table'])
+            # Ordinary row writes are MVCC-safe: readers retain the old committed
+            # generation throughout publication and validation. Unchanged rows
+            # retain their tuple versions, avoiding a full rewrite every 5 minutes.
+            with target_conn.cursor() as cursor:
+                if keys:
+                    match = ' AND '.join('replica.'+quote_identifier(k)+'=staged.'+quote_identifier(k) for k in keys)
+                    cursor.execute('DELETE FROM '+target_table+' AS replica WHERE NOT EXISTS '
+                        '(SELECT 1 FROM '+stage_table+' AS staged WHERE '+match+')')
+                else:
+                    cursor.execute('DELETE FROM '+target_table)
+                publish = 'INSERT INTO '+target_table+' AS replica ('+names+') SELECT '+names+' FROM '+stage_table+' WHERE TRUE'
+                if keys:
+                    publish += ' ON CONFLICT ('+', '.join(quote_identifier(k) for k in keys)+') '
+                    if updates:
+                        publish += 'DO UPDATE SET '+', '.join(quote_identifier(n)+'=EXCLUDED.'+quote_identifier(n) for n in updates)
+                        # json has no equality operator (42883); compare its exact text instead.
+                        cast = lambda n: '::text' if contract['columns'][n]['data_type'] == 'json' else ''
+                        publish += ' WHERE ('+', '.join('replica.'+quote_identifier(n)+cast(n) for n in updates)+') IS DISTINCT FROM ('
+                        publish += ', '.join('EXCLUDED.'+quote_identifier(n)+cast(n) for n in updates)+')'
+                    else:
+                        publish += 'DO NOTHING'
+                cursor.execute(publish)
+        target_evidence = _measure_projection(target_conn, contract, upper=upper,
+            source_timezone=source_timezone, deadline=deadline)
+        arguments = dict(generation=checkpoint['generation']+1,
+            schema_fingerprint=validated['schema_fingerprint'], source_upper_bound=upper,
+            snapshot_started_at=snapshot_started)
+        snapshot, periods = None, []
+        if full:
+            observed = attach_reference_evidence(contract, source_evidence.summary(),
+                reference_observations(source_conn, contract, table=contract['source_table']))
+            if observed != target_evidence:
+                raise PipelineContractError('Source and target projection parity failed')
+            if target_evidence['quality']['status'] in {'passed', 'empty_measured'}:
+                snapshot = snapshot_certificate(contract, observed, target_evidence, **arguments)
+        elif (contract.get('incremental_parity_proof', True) and target_evidence.get('rows', 0) <= PARITY_MAX_ROWS
+              and deadline-monotonic_clock.monotonic() > PARITY_RESERVE_SECONDS):
+            # Completeness is never inferred from the cursor: the whole source
+            # projection is measured in the same source snapshot and must equal
+            # the published target. A missed delete or late row leaves it unknown.
+            # The proof is optional and bounded: it never fails or starves the load.
+            try:
+                observed = _measure_projection(source_conn, contract, upper=upper, source_timezone=source_timezone,
+                    deadline=min(deadline, monotonic_clock.monotonic()+PARITY_SECONDS), source=True)
+            except TimeoutError:
+                observed = None
+            if observed == target_evidence and target_evidence['quality']['status'] in {'passed', 'empty_measured'}:
+                snapshot = snapshot_certificate(contract, observed, target_evidence, **arguments)
+        for period in contract.get('closed_periods', []):
+            if not period.get('enabled'):
+                continue
+            source_period = _measure_projection(source_conn, contract, upper=upper,
+                source_timezone=source_timezone, deadline=deadline, source=True, period=period)
+            target_period = _measure_projection(target_conn, contract, upper=upper,
+                source_timezone=source_timezone, deadline=deadline, period=period)
+            if source_period == target_period and target_period['quality']['status'] in {'passed', 'empty_measured'}:
+                periods.append(closed_period_certificate(contract, source_period, target_period,
+                    period_id=period['id'], **arguments))
+        evidence = load_evidence(contract, target_evidence, snapshot=snapshot, closed_periods=periods,
+            previous=checkpoint.get('certificate'), generation=arguments['generation'],
+            schema_fingerprint=arguments['schema_fingerprint'])
+        advance_checkpoint(target_conn, contract['dataset_id'], cursor_time=position, cursor_keys=cursor_keys,
+            source_upper_bound=upper, schema_fingerprint=validated['schema_fingerprint'], observed_rows=rows_written,
+            expected_generation=checkpoint['generation'], full_reconcile=full, evidence=evidence, contract=contract)
+        elapsed = int((monotonic_clock.monotonic()-started)*1000)
+        update_sync_metadata(target_conn, target_schema, target_table, rows_written, elapsed,
+                             'governed_full' if full else 'governed_incremental', commit=False)
+        target_conn.commit()
+        return rows_written
+    except Exception:
+        target_conn.rollback()
+        raise
+    finally:
+        if source_cursor is not None:
+            try:
+                source_cursor.close()
+            except Exception:
+                pass  # Preserve the original error/rollback classification.
+
+
+def run_sync_cycle(source_conn, target_conn, *, force_reconcile=False, progress=None):
     """Chạy 1 vòng sync toàn bộ bảng."""
+    governed = governed_ingestion_enabled()
     cycle_start = time.time()
 
     # Ghi log bắt đầu
@@ -404,12 +708,30 @@ def run_sync_cycle(source_conn, target_conn):
 
     # Phát hiện tất cả bảng
     tables = discover_tables(source_conn)
+    contracts = load_data_contracts() if governed else None
+    if governed:
+        # Only source tables required by the approved analytical contracts.
+        # Missing required sources become explicit failures, never silent skips.
+        from pipeline_runtime import extraction_order
+        tables = [tuple(name.split('.')) for name in extraction_order(contracts)]
+    cycle_deadline = time.monotonic() + 240  # of a 300s cadence; optional parity proofs stop 120s before it
     total_rows = 0
     synced_tables = 0
     errors = []
 
-    for schema, table in tables:
+    for index, (schema, table) in enumerate(tables):
+        if progress: progress(index, len(tables))
         try:
+            if governed:
+                with target_conn.cursor() as cursor:
+                    cursor.execute('INSERT INTO analytics.ingestion_checkpoints(dataset_id,last_attempt_at) '
+                        'VALUES (%s,clock_timestamp()) ON CONFLICT(dataset_id) DO UPDATE SET last_attempt_at=clock_timestamp()',
+                        (contracts[schema+'.'+table]['dataset_id'],))
+                target_conn.commit()
+                rows = sync_table_governed(source_conn, target_conn, contracts[schema+'.'+table], deadline=cycle_deadline, force_full=force_reconcile)
+                total_rows += rows
+                synced_tables += 1
+                continue
             columns = get_table_columns(source_conn, schema, table)
             ts_col = find_timestamp_column(columns)
             exists = table_exists_in_target(target_conn, schema, table)
@@ -435,19 +757,27 @@ def run_sync_cycle(source_conn, target_conn):
             synced_tables += 1
 
         except Exception as e:
-            error_msg = f"{schema}.{table}: {str(e)[:200]}"
+            target_conn.rollback()
+            source_conn.rollback()
+            # Database errors may contain rejected row/credential values. Keep
+            # classification and source identity, never the raw exception text.
+            error_msg = f"{schema}.{table}: {getattr(e, 'pgcode', None) or type(e).__name__}"
             errors.append(error_msg)
             logger.warning(f"  Loi sync {error_msg}")
             # Ghi lỗi vào metadata (KHÔNG cập nhật last_synced_at để chu kỳ sau tự sync lại)
             try:
                 with target_conn.cursor() as cur:
+                    if governed:
+                        cur.execute('UPDATE analytics.ingestion_checkpoints SET error_code=%s '
+                            'WHERE dataset_id=%s', (getattr(e,'pgcode',None) or type(e).__name__,
+                                                  contracts[schema+'.'+table]['dataset_id']))
                     cur.execute("""
                         INSERT INTO public.sync_metadata
                             (schema_name, table_name, error_message)
                         VALUES (%s, %s, %s)
                         ON CONFLICT (schema_name, table_name) DO UPDATE SET
                             error_message = %s
-                    """, (schema, table, str(e)[:500], str(e)[:500]))
+                    """, (schema, table, error_msg, error_msg))
                 target_conn.commit()
             except Exception:
                 target_conn.rollback()
@@ -470,367 +800,26 @@ def run_sync_cycle(source_conn, target_conn):
         f"{total_rows} rows, {duration:.1f}s, trang thai: {status} ==="
     )
 
-    # Tự động tạo và cập nhật các View tầng Silver & Gold ngay sau khi sync
-    create_warehouse_views(target_conn)
+    # Governed replicas use the separately reviewed/deployed Silver views.
+    # Their least-privilege login never evolves tables/views at cycle end.
+    if not governed:
+        create_warehouse_views(target_conn)
+    return {'total_tables':len(tables),'synced_tables':synced_tables,'failed_tables':len(errors),
+            'rows_written':total_rows,'duration_seconds':round(duration,1),
+            'failures':[{'source':e.rsplit(': ',1)[0],'code':e.rsplit(': ',1)[-1]} for e in errors[:50]]}
 
 
-WAREHOUSE_VIEWS = [
-    (
-        "gold.stores_overview",
-        """
-        CREATE OR REPLACE VIEW gold.stores_overview AS
-        SELECT
-            cn.ma_chi_nhanh AS store_code,
-            cn.ten_chi_nhanh AS store_name,
-            COALESCE(cn.thanh_pho, 'TP.HCM') AS city,
-            COALESCE(cn.dia_chi, 'Đang cập nhật') AS address,
-            CASE 
-                WHEN cn.trang_thai = 'ACTIVE' THEN 'Hoạt động'
-                ELSE 'Bảo trì'
-            END AS status,
-            COUNT(o.ma_don_hang) AS total_orders,
-            COALESCE(SUM(o.tong_tien) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0) AS total_revenue,
-            COALESCE(ROUND(AVG(o.tong_tien) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0), 0) AS aov
-        FROM identity.chi_nhanh cn
-        LEFT JOIN orders.don_hang o ON cn.ma_chi_nhanh = o.co_so_ma
-        GROUP BY cn.ma_chi_nhanh, cn.ten_chi_nhanh, cn.thanh_pho, cn.dia_chi, cn.trang_thai;
-        """,
-    ),
-    (
-        "gold.menu_overview",
-        """
-        CREATE OR REPLACE VIEW gold.menu_overview AS
-        SELECT
-            sp.ma_san_pham AS product_id,
-            sp.ten_san_pham AS product_name,
-            COALESCE(dm.ten_danh_muc, 'Cà phê') AS category_name,
-            sp.gia_ban AS price,
-            COALESCE(SUM(ct.so_luong), 0) AS total_sold,
-            COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS total_revenue
-        FROM menu.san_pham sp
-        LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
-        LEFT JOIN orders.chi_tiet_don_hang ct ON sp.ma_san_pham = ct.ma_san_pham
-        GROUP BY sp.ma_san_pham, sp.ten_san_pham, dm.ten_danh_muc, sp.gia_ban;
-        """,
-    ),
-    (
-        "silver.don_hang",
-        """
-        CREATE OR REPLACE VIEW silver.don_hang AS
-        SELECT 
-            ma_don_hang,
-            ma_nguoi_dung,
-            co_so_ma,
-            tong_tien,
-            phuong_thuc_thanh_toan,
-            trang_thai_thanh_toan,
-            trang_thai_don_hang,
-            loai_don_hang,
-            ma_voucher,
-            so_tien_giam,
-            ten_khach_hang,
-            dia_chi_giao_hang,
-            ngay_tao,
-            ngay_cap_nhat
-        FROM orders.don_hang;
-        """,
-    ),
-    (
-        "silver.chi_tiet_don_hang",
-        """
-        CREATE OR REPLACE VIEW silver.chi_tiet_don_hang AS
-        SELECT 
-            ct.id,
-            ct.ma_don_hang,
-            ct.ma_san_pham,
-            ct.ten_san_pham,
-            ct.gia_ban,
-            ct.so_luong,
-            ct.kich_co,
-            ct.luong_da,
-            ct.do_ngot,
-            ct.toppings,
-            (ct.gia_ban * ct.so_luong) AS thanh_tien
-        FROM orders.chi_tiet_don_hang ct;
-        """,
-    ),
-    (
-        "silver.san_pham",
-        """
-        CREATE OR REPLACE VIEW silver.san_pham AS
-        SELECT 
-            sp.ma_san_pham,
-            sp.ten_san_pham,
-            sp.gia_ban,
-            sp.gia_niem_yet,
-            sp.trang_thai,
-            sp.ma_danh_muc,
-            COALESCE(dm.ten_danh_muc, 'Khác') AS ten_danh_muc,
-            sp.la_hot,
-            sp.la_moi
-        FROM menu.san_pham sp
-        LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc;
-        """,
-    ),
-    (
-        "silver.danh_muc",
-        """
-        CREATE OR REPLACE VIEW silver.danh_muc AS
-        SELECT 
-            ma_danh_muc,
-            ten_danh_muc,
-            hinh_anh_icon,
-            ma_danh_muc_cha,
-            cap_bac
-        FROM menu.danh_muc;
-        """,
-    ),
-    (
-        "silver.nguoi_dung",
-        """
-        CREATE OR REPLACE VIEW silver.nguoi_dung AS
-        SELECT 
-            ma_nguoi_dung,
-            ho_ten,
-            so_dien_thoai,
-            email,
-            vai_tro,
-            trang_thai,
-            diem_loyalty,
-            tong_chi_tieu,
-            ngay_tao
-        FROM identity.nguoi_dung;
-        """,
-    ),
-    (
-        "silver.chi_nhanh",
-        """
-        CREATE OR REPLACE VIEW silver.chi_nhanh AS
-        SELECT 
-            ma_chi_nhanh,
-            ten_chi_nhanh,
-            dia_chi,
-            thanh_pho,
-            so_dien_thoai,
-            trang_thai,
-            loai_diem_ban,
-            gio_mo_cua,
-            gio_dong_cua
-        FROM identity.chi_nhanh;
-        """,
-    ),
-    (
-        "silver.giao_dich_thanh_toan",
-        """
-        CREATE OR REPLACE VIEW silver.giao_dich_thanh_toan AS
-        SELECT 
-            ma_giao_dich,
-            ma_don_hang,
-            cong_thanh_toan,
-            so_tien,
-            trang_thai,
-            ngay_tao
-        FROM orders.giao_dich_thanh_toan;
-        """,
-    ),
-    (
-        "silver.shipper",
-        """
-        CREATE OR REPLACE VIEW silver.shipper AS
-        SELECT 
-            id AS ma_shipper,
-            full_name AS ho_ten,
-            phone AS so_dien_thoai,
-            vehicle_plate AS bien_so_xe,
-            status AS trang_thai,
-            vehicle_type AS loai_xe,
-            total_deliveries AS tong_chuyen_giao,
-            rating AS diem_danh_gia
-        FROM orders.shipper;
-        """,
-    ),
-    (
-        "silver.ton_kho_san_pham",
-        """
-        CREATE OR REPLACE VIEW silver.ton_kho_san_pham AS
-        SELECT 
-            tk.id,
-            tk.co_so_ma,
-            tk.ma_san_pham,
-            sp.ten_san_pham,
-            tk.so_luong_ton,
-            tk.muc_canh_bao,
-            tk.dang_kinh_doanh,
-            tk.cap_nhat_luc
-        FROM inventory.ton_kho_san_pham tk
-        LEFT JOIN menu.san_pham sp ON tk.ma_san_pham = sp.ma_san_pham;
-        """,
-    ),
-    (
-        "silver.khuyen_mai",
-        """
-        CREATE OR REPLACE VIEW silver.khuyen_mai AS
-        SELECT 
-            COALESCE(v.ma_voucher, km.ma_khuyen_mai) AS ma_khuyen_mai,
-            COALESCE(km.ten_khuyen_mai, v.ten_voucher, v.ma_voucher, km.ma_khuyen_mai) AS ten_khuyen_mai,
-            COALESCE(km.mo_ta, v.mo_ta) AS mo_ta,
-            COALESCE(km.loai_khuyen_mai, v.loai) AS loai_khuyen_mai,
-            COALESCE(km.gia_tri, v.gia_tri, 0) AS gia_tri,
-            COALESCE(km.giam_toi_da, v.giam_toi_da, 0) AS giam_toi_da,
-            COALESCE(km.gia_tri_don_toi_thieu, v.don_hang_toi_thieu, 0) AS don_hang_toi_thieu,
-            COALESCE(km.so_luong_da_dung, v.luot_da_dung, 0) AS luot_da_dung,
-            COALESCE(km.trang_thai, v.trang_thai, 'ACTIVE') AS trang_thai,
-            COALESCE(v.ngay_bat_dau, km.ngay_bat_dau) AS ngay_bat_dau,
-            COALESCE(v.han_su_dung, km.ngay_ket_thuc) AS ngay_ket_thuc
-        FROM orders.voucher v
-        FULL OUTER JOIN identity.khuyen_mai km ON v.ma_voucher = km.ma_khuyen_mai;
-        """,
-    ),
-    (
-        "silver.voucher",
-        """
-        CREATE OR REPLACE VIEW silver.voucher AS
-        SELECT * FROM silver.khuyen_mai;
-        """,
-    ),
-    (
-        "silver.danh_gia_san_pham",
-        """
-        CREATE OR REPLACE VIEW silver.danh_gia_san_pham AS
-        SELECT 
-            dg.id,
-            dg.ma_san_pham,
-            COALESCE(sp.ten_san_pham, dg.ma_san_pham) AS ten_san_pham,
-            dg.ma_nguoi_dung,
-            dg.so_sao,
-            dg.binh_luan,
-            dg.ma_don_hang,
-            dg.ngay_tao,
-            dg.phan_hoi_quan_ly
-        FROM orders.danh_gia_san_pham dg
-        LEFT JOIN menu.san_pham sp ON dg.ma_san_pham = sp.ma_san_pham::text;
-        """,
-    ),
-    (
-        "silver.danh_gia_chi_nhanh",
-        """
-        CREATE OR REPLACE VIEW silver.danh_gia_chi_nhanh AS
-        SELECT 
-            dg.id,
-            dg.ma_chi_nhanh,
-            COALESCE(cn.ten_chi_nhanh, dg.ten_chi_nhanh, dg.ma_chi_nhanh) AS ten_chi_nhanh,
-            dg.ma_nguoi_dung,
-            dg.diem_tong_quan AS so_sao,
-            dg.nhan_xet,
-            dg.ma_don_hang,
-            dg.ngay_tao
-        FROM orders.danh_gia_chi_nhanh dg
-        LEFT JOIN identity.chi_nhanh cn ON dg.ma_chi_nhanh = cn.ma_chi_nhanh;
-        """,
-    ),
-    (
-        "silver.ca_lam_viec_nhan_vien",
-        """
-        CREATE OR REPLACE VIEW silver.ca_lam_viec_nhan_vien AS
-        SELECT 
-            ma_ca_lam_viec,
-            staff_name,
-            staff_username,
-            ngay_lam_viec,
-            ten_ca,
-            gio_bat_dau,
-            gio_ket_thuc,
-            trang_thai_cham_cong,
-            check_in_at,
-            check_out_at,
-            co_so_ma,
-            note
-        FROM orders.ca_lam_viec_nhan_vien;
-        """,
-    ),
-    (
-        "silver.ca_doi_soat",
-        """
-        CREATE OR REPLACE VIEW silver.ca_doi_soat AS
-        SELECT 
-            ma_ca,
-            co_so_ma,
-            ten_nhan_vien,
-            thoi_gian_bat_dau,
-            thoi_gian_ket_thuc,
-            tien_dau_ca,
-            tien_cuoi_ca,
-            tien_mat_he_thong,
-            doanh_thu_he_thong,
-            tien_mat_ky_vong,
-            chenh_lech,
-            tong_don,
-            tong_don_tien_mat,
-            trang_thai_phe_duyet,
-            ghi_chu,
-            ngay_tao
-        FROM orders.ca_doi_soat;
-        """,
-    ),
-    (
-        "silver.yeu_thich_san_pham",
-        """
-        CREATE OR REPLACE VIEW silver.yeu_thich_san_pham AS
-        SELECT 
-            yt.id,
-            yt.ma_nguoi_dung,
-            yt.ma_san_pham,
-            COALESCE(sp.ten_san_pham, yt.ten_san_pham) AS ten_san_pham,
-            COALESCE(sp.gia_ban, yt.gia_ban) AS gia_ban,
-            yt.danh_muc,
-            yt.ngay_tao
-        FROM orders.yeu_thich_san_pham yt
-        LEFT JOIN menu.san_pham sp ON yt.ma_san_pham = sp.ma_san_pham::text;
-        """,
-    ),
-    (
-        "silver.khao_sat_phan_hoi",
-        """
-        CREATE OR REPLACE VIEW silver.khao_sat_phan_hoi AS
-        SELECT 
-            id,
-            ma_bieu_mau,
-            ma_nguoi_dung,
-            ma_don_hang,
-            co_so_ma,
-            tra_loi,
-            trang_thai_voucher,
-            ngay_tao
-        FROM orders.khao_sat_phan_hoi;
-        """,
-    ),
-    (
-        "silver.bien_the_san_pham",
-        """
-        CREATE OR REPLACE VIEW silver.bien_the_san_pham AS
-        SELECT 
-            bt.id,
-            bt.ma_san_pham,
-            sp.ten_san_pham,
-            bt.ma_thuoc_tinh,
-            bt.gia_tri,
-            bt.phu_thu
-        FROM menu.bien_the_san_pham bt
-        LEFT JOIN menu.san_pham sp ON bt.ma_san_pham = sp.ma_san_pham;
-        """,
-    ),
-    (
-        "silver.khu_vuc",
-        """
-        CREATE OR REPLACE VIEW silver.khu_vuc AS
-        SELECT 
-            ma_khu_vuc,
-            ten_khu_vuc,
-            mo_ta
-        FROM identity.khu_vuc;
-        """,
-    ),
-]
+def _load_warehouse_views():
+    import json
+    from pathlib import Path
+    path = Path(os.getenv('DATA_PLATFORM_DATA_CONTRACTS_PATH', str(Path(__file__).resolve().parents[1] / 'metadata/data_contracts.json'))).parent / 'warehouse_views.json'
+    registry = json.loads(path.read_text())
+    if registry.get('version') != '3.4.0':
+        raise ValueError('Reviewed warehouse view registry required')
+    return [(v['name'], v['sql']) for v in registry['views'] if 'sync' in v['consumers']]
+
+
+WAREHOUSE_VIEWS = _load_warehouse_views()
 
 
 def create_warehouse_views(target_conn):
@@ -878,7 +867,7 @@ def wait_for_target_db():
             logger.info("postgres-analytics san sang!")
             return True
         except Exception as e:
-            logger.info(f"Doi postgres-analytics ({attempt + 1}/30): {e}")
+            logger.info("Doi postgres-analytics (%s/30): %s", attempt+1, type(e).__name__)
             time.sleep(5)
     return False
 
@@ -892,12 +881,24 @@ def wait_for_source_db():
             logger.info("Supabase (source) ket noi thanh cong!")
             return True
         except Exception as e:
-            logger.info(f"Doi Supabase ({attempt + 1}/20): {e}")
+            logger.info("Doi Supabase (%s/20): %s", attempt+1, type(e).__name__)
             time.sleep(10)
     return False
 
 
+def next_sync_slot(previous, now, interval):
+    """Monotonic fixed cadence, no catch-up burst or concurrent cycles."""
+    import math
+    if interval <= 0:
+        raise ValueError('Positive sync interval required')
+    candidate = previous+interval
+    return candidate if candidate >= now else candidate+math.ceil((now-candidate)/interval)*interval
+
+
 def main():
+    if governed_ingestion_enabled():
+        from pipeline_runtime import private_database_profile
+        private_database_profile()  # Provision explicitly before any source/target I/O.
     logger.info("=== Avengers Coffee Data Sync Starting ===")
     logger.info(f"Source: {SOURCE_DB_HOST}:{SOURCE_DB_PORT}/{SOURCE_DB_NAME}")
     logger.info(f"Target: {TARGET_DB_HOST}:{TARGET_DB_PORT}/{TARGET_DB_NAME}")
@@ -913,30 +914,52 @@ def main():
         logger.error("Khong the ket noi Supabase. Thoat.")
         sys.exit(1)
 
-    # Vòng lặp sync
+    # One worker owns scheduled and manual cycles; they never overlap.
+    from uuid import uuid4
+    import threading
+    from sync_control import write as control_write, claim, finish
+    control_enabled=bool(os.getenv('DATA_PLATFORM_SYNC_CONTROL_DIR'))
+    worker_id=uuid4().hex
+    observation={'worker_id':worker_id,'phase':'idle','completed_tables':0,'total_tables':0}
+    def heartbeat():
+        while True:
+            try:control_write('worker',{**observation,'heartbeat':time.time()})
+            except Exception:logger.warning('Sync control heartbeat unavailable')
+            time.sleep(5)
+    if control_enabled:
+        control_write('worker',{**observation,'heartbeat':time.time()})
+        threading.Thread(target=heartbeat,daemon=True,name='sync-control-heartbeat').start()
+    def progress(done,total):observation.update(completed_tables=done,total_tables=total)
+    slot = time.monotonic()
     while True:
+        operation=None
+        if control_enabled:
+            try:operation=claim(worker_id)
+            except Exception:logger.warning('Sync control mailbox unavailable; scheduled ingestion remains active')
+        if operation is None and time.monotonic()<slot:
+            time.sleep(min(2,slot-time.monotonic()))
+            continue
+        source_conn = target_conn = None
+        observation.update(phase='manual' if operation else 'scheduled',completed_tables=0)
         try:
             source_conn = get_source_conn()
             target_conn = get_target_conn()
-
-            run_sync_cycle(source_conn, target_conn)
-
-            source_conn.close()
-            target_conn.close()
-
-        except Exception as e:
-            logger.error(f"Loi vong sync: {e}")
-            try:
-                source_conn.close()
-            except Exception:
-                pass
-            try:
-                target_conn.close()
-            except Exception:
-                pass
-
-        logger.info(f"Doi {SYNC_INTERVAL}s cho vong sync tiep theo...")
-        time.sleep(SYNC_INTERVAL)
+            result=run_sync_cycle(source_conn,target_conn,force_reconcile=bool(operation),progress=progress)
+            observation.update(completed_tables=result['total_tables'])
+            if operation:finish(operation,result)
+        except Exception as error:
+            code=getattr(error,'pgcode',None) or type(error).__name__
+            logger.error('Loi vong sync: %s',code)
+            if operation:
+                try:finish(operation,error_code=code)
+                except Exception:logger.warning('Sync operation result could not be persisted')
+        finally:
+            observation.update(phase='idle')
+            for connection in (source_conn,target_conn):
+                if connection is not None:
+                    try:connection.close()
+                    except Exception:pass
+        slot=next_sync_slot(slot,time.monotonic(),SYNC_INTERVAL)
 
 
 if __name__ == "__main__":

@@ -1,36 +1,44 @@
 import React from 'react';
 import { AnalysisMeaning } from './AnalysisMeaning';
-import { analysisFailureTitle, analysisFailureActions } from '../utils/analysisPresentation.mjs';
+import { analysisFailureTitle, analysisFailureActions, analysisFailureTone, analysisFailureReference, analysisFailureStage } from '../utils/analysisPresentation.mjs';
 
 /** Normal users see business labels; internal IDs stay in API diagnostics. */
 export const AnalysisClarification: React.FC<{
   response: any;
   onChoice?: (answer: string) => void;
+  onAction?: (action: any) => void;
   onEdit?: () => void;
   onRetry?: () => void;
   onUpdate?: () => void;
   onSnapshot?: (answer: string) => void;
   onModule?: (module: any) => void;
-}> = ({ response, onChoice, onEdit, onRetry, onUpdate, onModule, onSnapshot }) => {
+}> = ({ response, onChoice, onEdit, onRetry, onUpdate, onModule, onSnapshot, onAction }) => {
   const clarification = response?.clarification;
   const choices = (clarification?.choices || response?.options || []).filter(
     (choice: any) => choice && typeof choice === 'object' && typeof choice.label === 'string'
   );
   const issue = response?.issue;
   const failed = response?.status === 'error';
+  const alert = analysisFailureTone(response) === 'alert';
   const actions = analysisFailureActions(response);
+  const reference = analysisFailureReference(response);
+  const stage = analysisFailureStage(response);
+  const unsupported = response?.analysis_state === 'UNSUPPORTED_CAPABILITY';
   return (
-    <section role={failed ? 'alert' : 'status'} className={`rounded-2xl border p-6 space-y-3 ${failed ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'}`}>
+    <section role={alert ? 'alert' : 'status'} className={`rounded-2xl border p-6 space-y-3 ${alert ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'}`}>
       <h3 className="text-sm font-semibold text-slate-800">{issue?.title || analysisFailureTitle(response)}</h3>
       <p className="text-sm text-slate-700">{clarification?.user_message || response?.message || 'Hệ thống chưa thể diễn giải yêu cầu lúc này. Vui lòng thử lại.'}</p>
+      {stage && <p data-failure-stage className="text-[11px] font-medium text-slate-500">Giai đoạn: {stage}</p>}
       {issue?.what_is_known?.length > 0 && <div className="text-xs"><strong>Đã nhận diện:</strong> {issue.what_is_known.join(' · ')}</div>}
       {issue?.what_is_missing?.filter((text: string) => text !== (clarification?.user_message || response.message)).map((text: string, index: number) => <p key={index} className="text-xs"><strong>{failed || response.outcome === 'SYSTEM_ERROR' || issue.category === 'PLANNING_CAPACITY' ? 'Thông tin:' : 'Cần bổ sung:'}</strong> {text}</p>)}
       {issue?.recovery_summary && <p className="text-xs text-slate-600">{issue.recovery_summary}</p>}
       {issue?.resolution_guidance && <p className="text-xs text-slate-700"><strong>Cách xử lý:</strong> {issue.resolution_guidance}</p>}
+      {unsupported && issue?.suggested_actions?.some((action: any) => action.type === 'followup') && <p className="text-xs font-semibold text-slate-700">Phân tích liên quan đang được hỗ trợ:</p>}
       {issue?.suggested_actions?.filter((action: any) => action.type === 'followup').map((action: any, index: number) => <button type="button" key={index} disabled={!onChoice} onClick={() => onChoice?.(action.followup)} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}
       {issue?.suggested_actions?.filter((action: any) => action.type === 'snapshot').map((action: any, index: number) => <button type="button" key={index} disabled={!onSnapshot} onClick={() => onSnapshot?.(action.followup)} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}
       {issue?.suggested_actions?.filter((action: any) => action.type === 'select_module').map((action: any, index: number) => <button type="button" key={index} disabled={!onModule} onClick={() => onModule?.({ module_id: action.module_id, name: action.label, compatibility: 'ready' })} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}
       {issue?.suggested_actions?.some((action: any) => action.type === 'update_module') && (onUpdate || onEdit) && <button type="button" onClick={onUpdate || onEdit} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">Cập nhật bài toán</button>}
+      {!!response?.actions?.length && <div data-capability-actions className="flex flex-wrap gap-2">{response.actions.map((action: any,i: number) => action.kind === 'advice' ? <p key={i} className="text-xs">{action.label}</p> : <button key={i} type="button" disabled={!onAction} onClick={() => onAction?.(action)} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}</div>}
       {clarification?.known_interpretation && <AnalysisMeaning interpretation={clarification.known_interpretation} />}
       {!issue && choices.length > 0 && <div className="flex flex-wrap gap-2">{choices.map((choice: any, index: number) => (
         <button type="button" key={index} onClick={() => onChoice?.(choice.followup || choice.label)} disabled={!onChoice}
@@ -39,7 +47,8 @@ export const AnalysisClarification: React.FC<{
         </button>
       ))}</div>}
       {actions.edit && onEdit && <button type="button" onClick={onEdit} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Chỉnh sửa câu hỏi</button>}
-      {actions.retry && onRetry && <button type="button" onClick={onRetry} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Thử lại khi hệ thống sẵn sàng</button>}
+      {actions.retry && onRetry && <button type="button" onClick={onRetry} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">{issue?.suggested_actions?.find((a: any) => a.type === 'retry')?.label || 'Thử lại khi hệ thống sẵn sàng'}</button>}
+      {reference && <p className="text-[11px] text-slate-500">Mã tham chiếu kỹ thuật: <code>{reference}</code></p>}
     </section>
   );
 };

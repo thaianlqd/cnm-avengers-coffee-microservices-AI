@@ -1,0 +1,1382 @@
+[
+  {
+    "id": "L01",
+    "question": "Doanh thu 30 ngày gần nhất theo tuần",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "revenue_trend",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "trend",
+          "filters": [],
+          "time": {
+            "kind": "rolling",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": 30,
+            "unit": "day"
+          },
+          "ranking": null,
+          "granularity": "week",
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L02",
+    "question": "Top 5 chi nhánh có doanh thu cao nhất tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_1",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "ranking",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": {
+            "direction": "top",
+            "limit": 5,
+            "metric_id": "revenue",
+            "per_group": []
+          },
+          "granularity": null,
+          "derived_features": [
+            "selected_total"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L03",
+    "question": "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "revenue_comparison_city_m9_2026",
+          "goal": "So sánh doanh thu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "group_gap"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L04",
+    "question": "Cơ cấu doanh thu theo kênh bán tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "revenue_channel_mix",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "order_type"
+          ],
+          "analysis_kind": "distribution",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "contribution_share"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L05",
+    "question": "Số đơn theo trạng thái trong 30 ngày gần nhất",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_order_status_distribution",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "order_count"
+          ],
+          "dimension_ids": [
+            "order_status"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "rolling",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": 30,
+            "unit": "day"
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L06",
+    "question": "Tỷ lệ hủy đơn theo chi nhánh quý trước",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_1",
+          "goal": "Tỷ lệ hủy đơn theo chi nhánh quý trước",
+          "domain_id": "orders",
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "order_cancellation_rate"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "relative",
+            "mode": "previous_quarter",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L07",
+    "question": "Giá trị đơn trung bình theo thành phố tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_0",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": "orders",
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "aov"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L08",
+    "question": "Top 10 sản phẩm bán chạy nhất 30 ngày gần nhất",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_1",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "quantity_sold"
+          ],
+          "dimension_ids": [
+            "product"
+          ],
+          "analysis_kind": "ranking",
+          "filters": [],
+          "time": {
+            "kind": "rolling",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": 30,
+            "unit": "day"
+          },
+          "ranking": {
+            "direction": "top",
+            "limit": 10,
+            "metric_id": "quantity_sold",
+            "per_group": []
+          },
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L10",
+    "question": "Tỷ lệ giao thành công theo shipper trong 30 ngày gần nhất",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_1",
+          "goal": "Tỷ lệ giao thành công theo shipper trong 30 ngày gần nhất",
+          "domain_id": "delivery",
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "delivery_success_rate"
+          ],
+          "dimension_ids": [
+            "driver_id"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "rolling",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": 30,
+            "unit": "day"
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L11",
+    "question": "Điểm đánh giá trung bình theo chi nhánh tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "repair_add_1",
+          "goal": "Điểm đánh giá trung bình theo chi nhánh tháng 9 năm 2026",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "avg_store_rating"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L12",
+    "question": "Dự báo doanh thu 3 tháng tới",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_1",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "trend",
+          "filters": [],
+          "time": {
+            "kind": "relative",
+            "mode": "current_year",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": "month",
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": {
+            "horizon": 3,
+            "unit": "month"
+          },
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L13",
+    "question": "Số khách hàng mua hàng theo tháng trong 6 tháng gần nhất",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_1",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "customer_count"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "trend",
+          "filters": [],
+          "time": {
+            "kind": "rolling",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": 6,
+            "unit": "month"
+          },
+          "ranking": null,
+          "granularity": "month",
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L14",
+    "question": "Hiệu quả khuyến mãi: số đơn áp dụng khuyến mãi và tổng tiền giảm giá tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_2",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "discount_amount",
+            "voucher_order_count"
+          ],
+          "dimension_ids": [
+            "promotion"
+          ],
+          "analysis_kind": "ranking",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": {
+            "direction": "top",
+            "limit": 10,
+            "metric_id": "discount_amount",
+            "per_group": []
+          },
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "req_1",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": "promotions",
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "discount_amount",
+            "voucher_order_count"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "scalar"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L18",
+    "question": "So sánh hai chi nhánh",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "store_comparison_orders",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "store_order_count"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "relative",
+            "mode": "all_time",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "group_gap"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "store_comparison_aov",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "store_aov"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "relative",
+            "mode": "all_time",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "group_gap"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "store_comparison_revenue",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "store_revenue"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "relative",
+            "mode": "all_time",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "group_gap"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "store_comparison_customers",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "purchasing_customer_count"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "relative",
+            "mode": "all_time",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "group_gap"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L20",
+    "question": "Vì sao doanh thu tháng 9 năm 2026 thay đổi",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "req_2",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "ranking",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": {
+            "direction": "top",
+            "limit": 5,
+            "metric_id": "revenue",
+            "per_group": []
+          },
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "req_1",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "trend",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": "month",
+          "derived_features": [
+            "change",
+            "change_pct"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "req_3",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "analysis_kind": "ranking",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": {
+            "direction": "top",
+            "limit": 5,
+            "metric_id": "revenue",
+            "per_group": []
+          },
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "req_4",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "payment_method"
+          ],
+          "analysis_kind": "ranking",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": {
+            "direction": "top",
+            "limit": 5,
+            "metric_id": "revenue",
+            "per_group": []
+          },
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L21",
+    "question": "Dự báo doanh thu 3 tháng tới, độ chính xác tối thiểu 95%",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "revenue_forecast",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "trend",
+          "filters": [],
+          "time": {
+            "kind": "relative",
+            "mode": "current_month",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": "month",
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": {
+            "horizon": 3,
+            "unit": "month"
+          },
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L22",
+    "question": "Doanh thu theo tuần trong 8 tuần gần nhất",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "revenue_trend_8w",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "trend",
+          "filters": [],
+          "time": {
+            "kind": "relative",
+            "mode": "all_time",
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": "week",
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L23",
+    "question": "Doanh thu các chi nhánh miền Nam tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "store_revenue_south_sept_2026",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "store"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L24",
+    "question": "Doanh thu theo miền tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "repair_add_1",
+          "goal": "Phân tích yêu cầu",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "reporting_region"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L25",
+    "question": "Doanh thu miền Bắc tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "kpi_22b0dcee03eaf40b",
+          "goal": "Chỉ số tổng trong cùng phạm vi",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "scalar"
+          ],
+          "feature_metrics": {
+            "scalar": [
+              "revenue"
+            ]
+          },
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        },
+        {
+          "id": "revenue_north_sep2026",
+          "goal": "Doanh thu miền Bắc tháng 9 năm 2026",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L26",
+    "question": "Doanh thu miền Trung tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "central_revenue_sep_2026",
+          "goal": "Doanh thu miền Trung tháng 9 năm 2026",
+          "domain_id": null,
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Khánh Hòa",
+                "Lâm Đồng",
+                "Nghệ An",
+                "Thanh Hóa",
+                "Thừa Thiên - Huế",
+                "Đà Nẵng"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [
+            "scalar"
+          ],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  },
+  {
+    "id": "L28",
+    "question": "Doanh thu miền Nam và Hà Nội tháng 9 năm 2026",
+    "intent": {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "id": "repair_add_1",
+          "goal": "Doanh thu miền Nam và Hà Nội tháng 9 năm 2026",
+          "domain_id": "",
+          "lens_hint": null,
+          "supporting_for": null,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "analysis_kind": "aggregate",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          "time": {
+            "kind": "month",
+            "mode": null,
+            "year": 2026,
+            "month": 9,
+            "quarter": null,
+            "day": null,
+            "start": null,
+            "end": null,
+            "amount": null,
+            "unit": null
+          },
+          "ranking": null,
+          "granularity": null,
+          "derived_features": [],
+          "feature_metrics": {},
+          "forecast": null,
+          "availability": "requested",
+          "reason": null
+        }
+      ],
+      "clarification": null
+    },
+    "normalized_capture": true
+  }
+]

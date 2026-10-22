@@ -1,0 +1,64 @@
+{
+  "status": "PLANNED_NOT_EXECUTED",
+  "base_scenarios": 48,
+  "additional_scenarios": 8,
+  "total_planned_scenarios": 56,
+  "cases": [
+    {
+      "id": "S01",
+      "scenario": "Canonical alias xuất hiện hai lần",
+      "required_assertions": "revenue đủ; candidate siblings không thành nhiều obligations; explicit nhiều metric vẫn giữ",
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "S02",
+      "scenario": "Clarification hợp lệ khi criterion/time thiếu",
+      "required_assertions": "giữ canonical metric, entity và count; chỉ hỏi missing semantics; không ép executable intent hoặc repair vòng lặp",
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "S03",
+      "scenario": "Criterion chưa support",
+      "required_assertions": "preflight/runtime typed unsupported nhất quán; không giả READY_TO_EXECUTE, không bỏ chữ ổn định để chạy Top revenue",
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "S04",
+      "scenario": "Score numeric/eligibility",
+      "required_assertions": "CV/stddev theo definition đã chọn; minhistory/exposure/missing/zero/mean0/negative đúng policy, no invented eligibility",
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "S05",
+      "scenario": "Chuyển bài toán sang sản phẩm/store/tăng trưởng",
+      "required_assertions": "generic selector→frame, không city-specific branch; tăng trưởng không bị coi là stability",
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "S06",
+      "scenario": "Tie/null/actual<N/partial periods",
+      "required_assertions": "stable keys/scores đúng raw oracle và tie policy; thiếu2member báo insufficient; không lấy partialmonth làm full",
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "S07",
+      "scenario": "Selection lineage qua mode/refine/export",
+      "required_assertions": "same selected keys khi local compare/total/single; thay criterion/window mới revision; outside scope invariant",
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "S08",
+      "scenario": "Security và diagnostics",
+      "required_assertions": "reject rawSQL/expression/member injection; clarifyerror alternatives đúng nghĩa; ledger bounded/no secret/no retries mù",
+      "status": "NOT_RUN",
+      "receipt": null
+    }
+  ]
+}

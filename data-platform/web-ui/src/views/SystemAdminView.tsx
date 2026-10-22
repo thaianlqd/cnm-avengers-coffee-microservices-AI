@@ -1,204 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
+import { DataCoverageBar } from '../components/workspace/DataCoverageBar';
+import { Pagination, usePagination } from '../components/Pagination';
 
+const tabs = [['users','Tài khoản'],['roles','Vai trò & Quyền'],['sources','Nguồn & đồng bộ'],['logs','Nhật ký đồng bộ'],['connections','Hạ tầng kết nối']];
 export const SystemAdminView: React.FC = () => {
-  const { users, roles, systemLogs, fetchSystem, showToast } = usePlatformStore();
-  const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'logs' | 'connections'>('users');
-
-  useEffect(() => {
-    fetchSystem();
-  }, [fetchSystem]);
-
-  const defaultUsers = users.length > 0 ? users : [
-    { id: 1, username: 'analytics_admin', full_name: 'Nguyễn Văn A', role: 'Quản trị viên', status: 'Hoạt động', email: 'admin@platform.local' },
-    { id: 2, username: 'data_analyst', full_name: 'Trần Thị B', role: 'Chuyên viên dữ liệu', status: 'Hoạt động', email: 'analyst@platform.local' },
-    { id: 3, username: 'bi_viewer', full_name: 'Lê Văn C', role: 'Người xem', status: 'Hoạt động', email: 'viewer@platform.local' },
-  ];
-
-  const defaultRoles = roles.length > 0 ? roles : [
-    { role: 'Quản trị viên', users_count: 1, description: 'Toàn quyền cấu hình kết nối, ETL và truy vấn kho dữ liệu' },
-    { role: 'Chuyên viên dữ liệu', users_count: 3, description: 'Truy vấn Data Warehouse, tạo báo cáo và xuất CSV' },
-    { role: 'Người xem', users_count: 5, description: 'Xem dashboard tổng quan và báo cáo trực quan' },
-  ];
-
-  const connections = [
-    { name: 'PostgreSQL Analytics', host: 'postgres-analytics:5432', port: '5434', status: 'Đang kết nối', latency: '4ms' },
-    { name: 'MinIO S3 Storage', host: 'minio:9000', port: '9000', status: 'Đang kết nối', latency: '6ms' },
-    { name: 'Apache Kafka Broker', host: 'kafka:9092', port: '9092', status: 'Đang kết nối', latency: '2ms' },
-    { name: 'Apache Airflow', host: 'avengers_airflow:8080', port: '8083', status: 'Sẵn sàng', latency: '8ms' },
-  ];
-
-  return (
-    <div className="space-y-6 pb-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-1">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 tracking-tight">
-            Quản trị hệ thống
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Quản lý tài khoản, phân quyền truy cập và kiểm toán hạ tầng dữ liệu
-          </p>
-        </div>
-
-        <div className="text-xs font-medium text-slate-500">
-          {defaultRoles.length} vai trò hệ thống
-        </div>
-      </div>
-
-      {/* Sub Tabs: Apple Segmented Navigation */}
-      <div className="bg-slate-200/70 p-1 rounded-2xl inline-flex space-x-1 border border-slate-200/90">
-        {[
-          { id: 'users', label: 'Tài khoản' },
-          { id: 'roles', label: 'Vai trò & Quyền' },
-          { id: 'logs', label: 'Nhật ký đồng bộ' },
-          { id: 'connections', label: 'Hạ tầng kết nối' },
-        ].map((tab) => {
-          const isCurrent = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                isCurrent
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Users Table */}
-      {activeTab === 'users' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-medium border-b border-slate-100">
-              <tr>
-                <th className="px-5 py-3">#</th>
-                <th className="px-5 py-3">Tài khoản</th>
-                <th className="px-5 py-3">Họ và tên</th>
-                <th className="px-5 py-3">Vai trò</th>
-                <th className="px-5 py-3">Email</th>
-                <th className="px-5 py-3">Trạng thái</th>
-                <th className="px-5 py-3 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {defaultUsers.map((u, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="px-5 py-3.5 text-slate-400 font-mono text-[11px]">{idx + 1}</td>
-                  <td className="px-5 py-3.5 font-mono font-medium text-slate-900">{u.username}</td>
-                  <td className="px-5 py-3.5 text-slate-700">{u.full_name}</td>
-                  <td className="px-5 py-3.5 text-slate-600 font-medium">
-                    {u.role}
-                  </td>
-                  <td className="px-5 py-3.5 text-slate-400 font-mono">{u.email}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="inline-flex items-center gap-1.5 text-xs text-slate-700 font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      {u.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <button
-                      onClick={() => showToast(`Quyền hạn của ${u.username}: Truy cập tầng Gold Marts và xuất báo cáo`, 'info')}
-                      className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                    >
-                      Xem quyền
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Roles Grid */}
-      {activeTab === 'roles' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {defaultRoles.map((r, idx) => (
-            <div key={idx} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="font-semibold text-slate-900 text-sm">{r.role}</h3>
-                  <span className="text-xs text-slate-400 font-medium">
-                    {r.users_count} thành viên
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-3 leading-relaxed">{r.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Logs Table */}
-      {activeTab === 'logs' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-medium border-b border-slate-100">
-              <tr>
-                <th className="px-5 py-3">Thời gian</th>
-                <th className="px-5 py-3">Tác nhân</th>
-                <th className="px-5 py-3">Hành động</th>
-                <th className="px-5 py-3">Trạng thái</th>
-                <th className="px-5 py-3 text-right">Thời lượng</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {(systemLogs.length > 0 ? systemLogs : [
-                { time: '28-09 08:40', user: 'data_sync', action: 'Đồng bộ 61 bảng, 1.2M dòng dữ liệu', status: 'Hoàn tất', duration_seconds: 18 },
-                { time: '28-09 08:35', user: 'airflow', action: 'Chạy DAG avengers_daily_pipeline', status: 'Hoàn tất', duration_seconds: 142 },
-                { time: '28-09 08:20', user: 'kafka_consumer', action: 'Xả buffer 50 sự kiện', status: 'Hoàn tất', duration_seconds: 2 },
-              ]).map((log, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="px-5 py-3 text-slate-400 font-mono">{log.time}</td>
-                  <td className="px-5 py-3 font-mono font-medium text-slate-700">{log.user}</td>
-                  <td className="px-5 py-3 text-slate-600">{log.action}</td>
-                  <td className="px-5 py-3">
-                    <span className="inline-flex items-center gap-1.5 text-xs text-slate-700 font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-right font-medium text-slate-600">{log.duration_seconds}s</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Connections Grid */}
-      {activeTab === 'connections' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {connections.map((c, idx) => (
-            <div key={idx} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="font-semibold text-slate-900 text-sm">{c.name}</span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  {c.status}
-                </span>
-              </div>
-              <div className="mt-3.5 space-y-2 text-xs text-slate-500">
-                <div className="flex justify-between">
-                  <span>Địa chỉ máy chủ</span>
-                  <span className="font-mono text-slate-700">{c.host}:{c.port}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Độ trễ phản hồi</span>
-                  <span className="font-medium text-slate-700">{c.latency}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  const { users, roles, systemLogs, fetchSystem, isLoadingSystem, dataErrors } = usePlatformStore();
+  const [tab, setTab] = useState('users');
+  const [capabilities,setCapabilities]=useState<any>(null);
+  useEffect(()=>{const c=new AbortController();fetch('/api/ai/capabilities',{signal:c.signal}).then(r=>r.ok?r.json():null).then(setCapabilities).catch(()=>{});return()=>c.abort();},[]);
+  const [search, setSearch] = useState('');
+  useEffect(() => { fetchSystem(); }, [fetchSystem]);
+  const match = (...values: unknown[]) => values.some(value => String(value ?? '').toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi').trim()));
+  const userPage = usePagination(users.filter(u=>match(u.username,u.full_name,u.role,u.status)),10,tab+search);
+  const rolePage = usePagination(roles.filter(r=>match(r.role,r.description)),10,tab+search);
+  const logPage = usePagination(systemLogs.filter(l=>match(l.time,l.user,l.action,l.status)),10,tab+search);
+  const pagination = tab==='users'?userPage:tab==='roles'?rolePage:logPage;
+  const statusClass = (value: string) => ['Hoạt động', 'Thành công'].includes(value) ? 'text-blue-700' : /Thất bại|Ngừng|Khóa/.test(value) ? 'text-red-700' : 'text-slate-600';
+  const isList=['users','roles','logs'].includes(tab);
+  const ready = !isLoadingSystem && !dataErrors.system;
+  const label = tabs.find(([id])=>id===tab)![1];
+  return <section className="space-y-5 pb-8" data-system-admin>
+    <div><p className="text-[11px] font-semibold tracking-widest text-blue-600">DATA PLATFORM / ADMINISTRATION</p><h1 className="mt-2 text-2xl font-semibold tracking-tight">Quản trị hệ thống</h1><p className="mt-2 text-sm leading-6 text-slate-500">Vai trò Data Platform và phiên hiện tại đã được xác thực. Chưa kết nối danh bạ Identity; số lượng tài khoản chưa được đo.</p></div>
+    <div role="tablist" aria-label="Quản trị hệ thống" className="flex flex-wrap gap-2">{tabs.map(([id,title]) =>
+      <button key={id} type="button" role="tab" id={`system-tab-${id}`} aria-controls="system-content" aria-selected={tab===id} className={`rounded-xl border px-4 py-2.5 text-xs font-medium focus-visible:outline-blue-600 ${tab===id?'border-blue-200 bg-blue-50 text-blue-700':'border-slate-200 bg-white text-slate-600 hover:border-blue-200'}`} onClick={()=>{setTab(id);setSearch('');}}>{title}</button>)}</div>
+    <section id="system-content" role="tabpanel" aria-labelledby={`system-tab-${tab}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      {isList && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4"><div><h2 className="text-sm font-semibold text-slate-800">{label}</h2><p className="mt-1 text-[11px] text-slate-500">Phân trang trên dữ liệu máy chủ đã trả về; không tự tải thêm hoặc làm mới nền.</p></div><input aria-label={`Tìm ${label.toLocaleLowerCase('vi')}`} type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Tìm trong danh sách…" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-blue-500 sm:w-64"/></div>}
+      {isLoadingSystem && isList && <p role="status" className="p-6 text-sm text-slate-500">Đang tải thông tin quản trị…</p>}
+      {dataErrors.system && isList && <p role="alert" className="p-6 text-sm text-red-700">{dataErrors.system}</p>}
+      {ready && isList && pagination.total===0 && <p role="status" className="p-8 text-center text-sm text-slate-500">{search?'Không có kết quả phù hợp.':tab==='logs'?'Chưa có nhật ký đồng bộ.':tab==='roles'?'Chưa có dữ liệu vai trò.':'Không có tài khoản trong dữ liệu được trả về.'}</p>}
+      {ready && tab==='users' && userPage.total>0 && <div className="overflow-x-auto"><table className="admin-data-table"><thead><tr><th>Tài khoản</th><th>Nguồn xác thực</th><th>Vai trò</th><th>Trạng thái</th></tr></thead><tbody>{userPage.items.map(u=><tr key={u.id}><td className="font-medium">{u.username}</td><td>{u.full_name}</td><td>{u.role}</td><td className={statusClass(u.status)}>{u.status}</td></tr>)}</tbody></table></div>}
+      {ready && tab==='roles' && <div className="divide-y divide-slate-100 px-5">{rolePage.items.map((r,i)=><article key={i} className="py-4"><strong className="text-sm text-slate-800">{r.role}</strong><p className="mt-1 text-xs leading-6 text-slate-500">{r.users_count == null ? 'Chưa có số lượng tài khoản' : `${r.users_count} tài khoản`} — {r.description}</p></article>)}</div>}
+      {ready && tab==='logs' && logPage.total>0 && <div className="overflow-x-auto"><table className="admin-data-table"><thead><tr><th>Thời gian</th><th>Tác nhân</th><th>Hành động</th><th>Trạng thái</th><th>Thời lượng</th></tr></thead><tbody>{logPage.items.map((log,i)=><tr key={logPage.offset+i}><td className="whitespace-nowrap">{log.time}</td><td className="font-mono text-[11px]">{log.user}</td><td className="min-w-64">{log.action}</td><td className={`whitespace-nowrap ${statusClass(log.status)}`}>{log.status}</td><td>{log.duration_seconds==null?'Chưa đo':`${log.duration_seconds}s`}</td></tr>)}</tbody></table></div>}
+      {ready && isList && <Pagination {...pagination} label={`Phân trang ${label.toLocaleLowerCase('vi')}`} noun={tab==='logs'?'nhật ký':'mục'} />}
+      {tab==='sources'&&<div className="p-4"><h2 className="mb-3 text-sm font-semibold">Nguồn dữ liệu & đối soát</h2><DataCoverageBar capabilities={capabilities} onCoverage={coverage=>setCapabilities((c:any)=>({...c,data_coverage:coverage}))}/></div>}
+      {tab==='connections' && <div className="p-6"><p role="status" className="text-sm text-slate-700">Chưa đo trạng thái và độ trễ kết nối hạ tầng.</p><p className="mt-2 text-xs text-slate-500">PostgreSQL Analytics · MinIO · Kafka · Airflow</p></div>}
+    </section>
+  </section>;
 };

@@ -6,12 +6,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 USER airflow
-COPY requirements.txt /tmp/
+COPY airflow/requirements.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY entrypoint.sh /entrypoint.sh
+COPY airflow/entrypoint.sh /entrypoint.sh
 USER root
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 USER airflow
+
+COPY pipeline-common/ /opt/pipeline-common/
+COPY metadata/ /opt/data-platform-metadata/
+ENV PYTHONPATH=/opt/pipeline-common DATA_PLATFORM_DATA_CONTRACTS_PATH=/opt/data-platform-metadata/data_contracts.json
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -1,0 +1,50 @@
+{
+  "observed_at": "2026-10-19T13:37:23.471013+00:00",
+  "candidate_head": "eda390b84c90ef37d0081bcd16de84098d07d605",
+  "candidate_worktree": "uncommitted V35 changes",
+  "applicable_branch_rules": [],
+  "recent_runs": [
+    {
+      "conclusion": "success",
+      "created_at": "2026-10-19T05:26:12Z",
+      "head_sha": "eda390b84c90ef37d0081bcd16de84098d07d605",
+      "html_url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39204546690",
+      "id": 39204546690,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-10-19T05:26:12Z",
+      "head_sha": "eda390b84c90ef37d0081bcd16de84098d07d605",
+      "html_url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39204546631",
+      "id": 39204546631,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-10-18T02:05:11Z",
+      "head_sha": "f9a1a6ff8d3c88e1bc9954c134d7cef8bdcd050b",
+      "html_url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39088812330",
+      "id": 39088812330,
+      "status": "completed"
+    }
+  ],
+  "status": "pending_current_candidate_commit_and_required_checks",
+  "git_writes": 0,
+  "workflow_triggers": 0,
+  "required_checks_configuration": "No applicable rules returned; repository admin action remains required",
+  "required_check_names_proposed": [
+    "DP source and evidence / Gitleaks",
+    "DP backend / semantic offline",
+    "DP web / types / build / mocked browser",
+    "DP browser / actual HTTP fixture (zero external I/O)",
+    "DP V35 / two processes / load / faults / 15min soak",
+    "DP pipeline / PostgreSQL / MinIO / Kafka fixtures"
+  ],
+  "actions_remaining": [
+    "User commits and pushes the reviewed working tree; agent performs no Git writes",
+    "Run all six Data Platform jobs on the resulting candidate SHA",
+    "Repository admin configures actual required checks/rules, then verifies the applicable rules endpoint",
+    "Bind final release manifest to candidate SHA and successful job/artifact IDs"
+  ]
+}

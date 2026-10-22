@@ -1,0 +1,1076 @@
+{
+  "basis": "Governed metadata declarations, not independent execution proof. Runtime available list and tests still required.",
+  "domain_count": 26,
+  "public_metric_count": 97,
+  "metrics": [
+    {
+      "metric_id": "active_franchise_contract_count",
+      "label": "Hợp đồng nhượng quyền hiệu lực",
+      "unit": "hợp đồng",
+      "metric_class": "conditional_count",
+      "historical": false,
+      "domains": [
+        "franchise_network"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "anonymous_order_count",
+      "label": "Đơn không gắn tài khoản",
+      "unit": "đơn",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "orders"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "aov",
+      "label": "Giá trị đơn trung bình",
+      "unit": "VND",
+      "metric_class": "average",
+      "historical": true,
+      "domains": [
+        "orders"
+      ],
+      "declared_projection": "weighted_components"
+    },
+    {
+      "metric_id": "article_view_total",
+      "label": "Lượt xem bài viết tích lũy",
+      "unit": "lượt",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "news_content"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "avg_delivery_minutes",
+      "label": "Thời gian giao trung bình",
+      "unit": "phút",
+      "metric_class": "average",
+      "historical": true,
+      "domains": [
+        "delivery"
+      ],
+      "declared_projection": "unavailable_non_additive"
+    },
+    {
+      "metric_id": "avg_product_rating",
+      "label": "Điểm đánh giá trung bình",
+      "unit": "điểm",
+      "metric_class": "average",
+      "historical": true,
+      "domains": [
+        "product_reviews"
+      ],
+      "declared_projection": "unavailable_non_additive"
+    },
+    {
+      "metric_id": "avg_store_rating",
+      "label": "Điểm phục vụ trung bình",
+      "unit": "điểm",
+      "metric_class": "average",
+      "historical": true,
+      "domains": [
+        "store_reviews"
+      ],
+      "declared_projection": "unavailable_non_additive"
+    },
+    {
+      "metric_id": "avg_survey_score",
+      "label": "Điểm khảo sát trung bình",
+      "unit": "điểm",
+      "metric_class": "average",
+      "historical": true,
+      "domains": [
+        "survey_answers"
+      ],
+      "declared_projection": "unavailable_non_additive"
+    },
+    {
+      "metric_id": "cod_pending_remit_amount",
+      "label": "Tiền COD chờ xác nhận",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "shipper_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "cod_remitted_amount",
+      "label": "Tiền COD đã nộp",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "shipper_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "combo_order_count",
+      "label": "Số đơn mua combo",
+      "unit": "đơn",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "combo_order_value",
+      "label": "Giá trị đơn mua combo",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "combo_units_ordered",
+      "label": "Số combo đã đặt",
+      "unit": "combo",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "customer_count",
+      "label": "Số khách",
+      "unit": "khách",
+      "metric_class": "distinct_count",
+      "historical": true,
+      "domains": [
+        "customers"
+      ],
+      "declared_projection": "unavailable_distinct_union"
+    },
+    {
+      "metric_id": "customer_wallet_balance",
+      "label": "Số dư ví khách hiện tại",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "customer_wallet"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "debt_late_fee_amount",
+      "label": "Phí phạt trễ hạn",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "debt_outstanding_amount",
+      "label": "Công nợ chưa thanh toán",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "debt_overdue_amount",
+      "label": "Công nợ quá hạn",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "delivered_count",
+      "label": "Số chuyến giao thành công",
+      "unit": "lượt",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "delivery"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "delivery_count",
+      "label": "Số chuyến giao",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "delivery"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "delivery_driver_key_conflict_count",
+      "label": "Chuyến giao lệch khóa tài xế",
+      "unit": "chuyến",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "delivery"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "delivery_exception_count",
+      "label": "Số ngoại lệ giao hàng",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "shipper_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "delivery_success_rate",
+      "label": "Tỷ lệ giao thành công",
+      "unit": "%",
+      "metric_class": "ratio",
+      "historical": true,
+      "domains": [
+        "delivery"
+      ],
+      "declared_projection": "weighted_components"
+    },
+    {
+      "metric_id": "discount_amount",
+      "label": "Tổng tiền đã giảm giá",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "promotions"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "driver_rating",
+      "label": "Điểm hồ sơ tài xế",
+      "unit": "điểm",
+      "metric_class": "average",
+      "historical": false,
+      "domains": [
+        "delivery"
+      ],
+      "declared_projection": "unavailable_non_additive"
+    },
+    {
+      "metric_id": "failed_or_cancelled_delivery_count",
+      "label": "Số chuyến không thành công",
+      "unit": "lượt",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "delivery"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "favorite_count",
+      "label": "Số lượt thả tim yêu thích",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "wishlist_favorites"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "franchise_application_count",
+      "label": "Số hồ sơ nhượng quyền",
+      "unit": "hồ sơ",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "franchise_network"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "franchise_approved_count",
+      "label": "Hồ sơ nhượng quyền đã duyệt",
+      "unit": "hồ sơ",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "franchise_network"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "franchise_cashbook_amount",
+      "label": "Số tiền thu chi nhượng quyền",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "gift_card_issued_count",
+      "label": "Số thẻ quà phát hành",
+      "unit": "thẻ",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "gift_cards"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "gift_card_issued_value",
+      "label": "Mệnh giá thẻ quà phát hành",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "gift_cards"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "gift_card_outstanding_balance",
+      "label": "Số dư thẻ quà chưa dùng",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "gift_cards"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "gift_card_redeemed_count",
+      "label": "Số thẻ quà đã đổi",
+      "unit": "thẻ",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "gift_cards"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "hourly_orders",
+      "label": "Số đơn theo giờ",
+      "unit": "đơn",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "hourly"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "item_revenue",
+      "label": "Doanh thu món",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "order_items"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "kiosk_cash_difference",
+      "label": "Chênh lệch tiền mặt ca kiosk",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "kiosk_operations"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "kiosk_count",
+      "label": "Số kiosk trong danh mục",
+      "unit": "kiosk",
+      "metric_class": "count",
+      "historical": false,
+      "domains": [
+        "franchise_network"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "kiosk_price_above_list_count",
+      "label": "Giá kiosk cao hơn niêm yết",
+      "unit": "cấu hình",
+      "metric_class": "conditional_count",
+      "historical": false,
+      "domains": [
+        "kiosk_operations"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "kiosk_price_override_count",
+      "label": "Số giá riêng tại kiosk",
+      "unit": "cấu hình",
+      "metric_class": "count",
+      "historical": false,
+      "domains": [
+        "kiosk_operations"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "kiosk_reconciliation_count",
+      "label": "Số kỳ đối soát kiosk",
+      "unit": "kỳ",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "kiosk_red_alert_count",
+      "label": "Đối soát kiosk cảnh báo đỏ",
+      "unit": "kỳ",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "kiosk_shift_count",
+      "label": "Số ca kiosk",
+      "unit": "ca",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "kiosk_operations"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "kiosk_shift_revenue",
+      "label": "Doanh thu ca kiosk",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "kiosk_operations"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "large_cash_discrepancy_shift_count",
+      "label": "Số ca lệch tiền lớn",
+      "unit": "ca",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "cashier_reconciliation"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "late_count",
+      "label": "Số ca đi trễ",
+      "unit": "lượt",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "staff_shifts"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "late_shift_rate",
+      "label": "Tỷ lệ ca đi trễ",
+      "unit": "%",
+      "metric_class": "ratio",
+      "historical": true,
+      "domains": [
+        "staff_shifts"
+      ],
+      "declared_projection": "weighted_components"
+    },
+    {
+      "metric_id": "loyalty_points_awarded",
+      "label": "Điểm loyalty đã thưởng",
+      "unit": "điểm",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "loyalty_awards"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "order_cancellation_rate",
+      "label": "Tỷ lệ hủy đơn",
+      "unit": "%",
+      "metric_class": "ratio",
+      "historical": true,
+      "domains": [
+        "orders"
+      ],
+      "declared_projection": "weighted_components"
+    },
+    {
+      "metric_id": "order_completion_rate",
+      "label": "Tỷ lệ hoàn thành đơn",
+      "unit": "%",
+      "metric_class": "ratio",
+      "historical": true,
+      "domains": [
+        "orders"
+      ],
+      "declared_projection": "weighted_components"
+    },
+    {
+      "metric_id": "order_count",
+      "label": "Số lượng đơn",
+      "unit": "đơn",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "orders"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "owner_debt_payment_amount",
+      "label": "Chủ kiosk trả công nợ qua ví",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "owner_wallet_topup_amount",
+      "label": "Tiền chủ kiosk nạp ví",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "paused_sale_positions",
+      "label": "Vị trí tạm ngưng bán",
+      "unit": "vị trí",
+      "metric_class": "conditional_count",
+      "historical": false,
+      "domains": [
+        "inventory"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "payment_count",
+      "label": "Số giao dịch",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "payments"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "payment_revenue",
+      "label": "Doanh thu thanh toán",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "payments"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "product_revenue",
+      "label": "Doanh thu sản phẩm",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "products"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "promotion_redemption_count",
+      "label": "Lượt sử dụng khuyến mãi",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "promotions"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "public_store_review_count",
+      "label": "Số đánh giá chi nhánh công khai",
+      "unit": "lượt",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "store_reviews"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "published_article_count",
+      "label": "Số bài viết đã xuất bản",
+      "unit": "bài",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "news_content"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "purchasing_customer_count",
+      "label": "Số khách mua hàng",
+      "unit": "khách",
+      "metric_class": "distinct_count",
+      "historical": true,
+      "domains": [
+        "orders",
+        "stores"
+      ],
+      "declared_projection": "unavailable_distinct_union"
+    },
+    {
+      "metric_id": "quantity_sold",
+      "label": "Số lượng sản phẩm bán",
+      "unit": "sản phẩm",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "order_items",
+        "products"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "reconciled_shifts",
+      "label": "Số ca đã đối soát",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "cashier_reconciliation"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "revenue",
+      "label": "Doanh thu",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "orders"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "review_count",
+      "label": "Số lượt đánh giá",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "product_reviews"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "royalty_billed_amount",
+      "label": "Royalty phải thu",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "royalty_paid_amount",
+      "label": "Royalty đã thanh toán",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "franchise_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "sale_positions",
+      "label": "Vị trí bán đã cấu hình",
+      "unit": "vị trí",
+      "metric_class": "count",
+      "historical": false,
+      "domains": [
+        "inventory"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "settled_payment_amount",
+      "label": "Tiền thanh toán thành công",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "payments"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "shift_count",
+      "label": "Tổng số ca làm",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "staff_shifts"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "shipper_cod_holding",
+      "label": "COD shipper đang giữ",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "shipper_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "shipper_wallet_balance",
+      "label": "Số dư ví shipper",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "shipper_finance"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "store_aov",
+      "label": "AOV chi nhánh",
+      "unit": "VND",
+      "metric_class": "average",
+      "historical": true,
+      "domains": [
+        "stores"
+      ],
+      "declared_projection": "unavailable_non_additive"
+    },
+    {
+      "metric_id": "store_order_count",
+      "label": "Số đơn chi nhánh",
+      "unit": "đơn",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "stores"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "store_revenue",
+      "label": "Doanh thu chi nhánh",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "stores"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "store_review_count",
+      "label": "Số lượt đánh giá quán",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "store_reviews"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "support_conversation_count",
+      "label": "Số hội thoại CSKH",
+      "unit": "hội thoại",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "customer_care"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "support_message_count",
+      "label": "Số tin nhắn CSKH",
+      "unit": "tin",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "customer_care"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "support_unread_customer_messages",
+      "label": "Tin khách chưa đọc",
+      "unit": "tin",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "customer_care"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "survey_answer_count",
+      "label": "Số lượt chọn trả lời khảo sát",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "survey_answers"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "survey_respondent_count",
+      "label": "Số phiếu trả lời khảo sát",
+      "unit": "phiếu",
+      "metric_class": "distinct_count",
+      "historical": true,
+      "domains": [
+        "survey_answers"
+      ],
+      "declared_projection": "unavailable_distinct_union"
+    },
+    {
+      "metric_id": "survey_response_count",
+      "label": "Số lượt phản hồi khảo sát",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "customer_surveys"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "system_cash_revenue",
+      "label": "Doanh thu tiền mặt hệ thống",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "cashier_reconciliation"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "tier_upgrade_count",
+      "label": "Số lần lên hạng",
+      "unit": "lượt",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "loyalty_awards"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "topping_selection_count",
+      "label": "Lượt chọn topping",
+      "unit": "lượt",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "order_items"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "total_cash_difference",
+      "label": "Tổng tiền chênh lệch",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "cashier_reconciliation"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "total_deliveries",
+      "label": "Tổng chuyến giao",
+      "unit": "lượt",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "delivery"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "total_spent",
+      "label": "Tổng chi tiêu tích lũy",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": false,
+      "domains": [
+        "customers"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "unmapped_kiosk_count",
+      "label": "Kiosk chưa khớp điểm bán",
+      "unit": "kiosk",
+      "metric_class": "conditional_count",
+      "historical": false,
+      "domains": [
+        "franchise_network"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "unsettled_payment_count",
+      "label": "Giao dịch chưa thanh toán",
+      "unit": "giao dịch",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "payments"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "voucher_order_count",
+      "label": "Số đơn áp dụng khuyến mãi",
+      "unit": "đơn",
+      "metric_class": "count",
+      "historical": true,
+      "domains": [
+        "promotions"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "voucher_revenue",
+      "label": "Doanh thu đơn có khuyến mãi",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "promotions"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "wallet_pending_topup_count",
+      "label": "Lượt nạp ví đang chờ",
+      "unit": "lượt",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "customer_wallet"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "wallet_refund_amount",
+      "label": "Tiền hoàn vào ví",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "customer_wallet"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "wallet_spend_amount",
+      "label": "Chi tiêu bằng ví",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "customer_wallet"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "wallet_topup_amount",
+      "label": "Tiền nạp ví thành công",
+      "unit": "VND",
+      "metric_class": "sum",
+      "historical": true,
+      "domains": [
+        "customer_wallet"
+      ],
+      "declared_projection": "additive"
+    },
+    {
+      "metric_id": "wallet_unreferenced_payment_count",
+      "label": "Thanh toán ví thiếu tham chiếu",
+      "unit": "lượt",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "domains": [
+        "customer_wallet"
+      ],
+      "declared_projection": "additive"
+    }
+  ]
+}

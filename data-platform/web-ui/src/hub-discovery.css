@@ -1,0 +1,85 @@
+.geographic-report-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
+.map-control { font-size: 12px; line-height: 1.4; font-weight: 500; min-height: 30px; min-width: 30px; padding: 4px 9px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; color: #475569; box-shadow: 0 1px 2px #0f172a06; }
+.map-control:hover { border-color: #93c5fd; color: #1d4ed8; }
+.map-control:disabled { opacity: .35; cursor: default; }
+.map-control:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.geographic-map-point:focus-visible .map-point-focus { stroke: #1e40af; stroke-width: 3px; }
+@media (min-width: 1024px) {
+  .geographic-report-grid { grid-template-columns: minmax(0, 1.45fr) minmax(280px, 1fr); }
+}
+
+/* Detailed geographic workspace: the map gets the larger canvas. */
+@media (min-width: 1024px) { .geographic-report-grid { grid-template-columns:minmax(0,2.15fr) minmax(270px,1fr); } }
+.province-map-toolbar { display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #e2e8f0;background:#f8fafc;font-size:10px;color:#64748b; }
+.province-map-toolbar label { display:flex;align-items:center;gap:6px; }
+.province-map-toolbar select { max-width:130px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;background:white;color:#334155;font-size:11px; }
+.province-map-toolbar select:disabled { opacity:.5; }
+.province-opacity input { width:70px;accent-color:#2563eb; }
+.province-label-toggle input { accent-color:#2563eb; }
+.province-map-frame { height:560px;position:relative;isolation:isolate;overflow:hidden;background:#eef4f8; }
+.province-map-frame:fullscreen { width:100vw;height:100dvh;background:#eef4f8; }
+.province-map-native,.province-map-fallback { position:absolute;inset:0;height:100%;width:100%; }
+.province-map-fallback-hidden { visibility:hidden;pointer-events:none; }
+.province-basemap-state { position:absolute;top:10px;left:10px;max-width:calc(100% - 20px);border:1px solid #dbeafe;border-radius:8px;background:#ffffffeb;padding:5px 8px;font-size:9px;color:#64748b;pointer-events:none;z-index:1; }
+.province-map-legend { padding:12px 16px;border-top:1px solid #e2e8f0;background:white; }
+.province-tooltip { padding:3px;font-family:inherit;font-size:11px;line-height:1.6; }
+.province-tooltip strong { color:#0f172a; }.province-tooltip p { color:#1d4ed8;margin-top:3px; }.province-tooltip small { display:block;color:#64748b;font-size:9px; }
+.province-map-frame .maplibregl-ctrl-attrib { font-size:9px;max-width:95%;background:#ffffffdf; }
+@media (max-width:639px) { .province-map-frame {height:450px;} .province-map-toolbar{padding:10px;gap:8px;} .province-map-toolbar .ml-auto{margin-left:0;width:100%;} }
+
+/* Geographic business workspace: province -> complete store ranking -> store. */
+.geo-network-overview{padding:16px 20px;border-bottom:1px solid #eff6ff;background:linear-gradient(110deg,#f8fbff,#fff)}
+.geo-business-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.geo-business-kpis>div{padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;min-width:0}
+.geo-business-kpis span{display:block;font-size:10px;color:#64748b;line-height:1.5}
+.geo-business-kpis strong{display:block;margin-top:6px;font-size:clamp(17px,1.2vw,21px);letter-spacing:-.035em;color:#0f172a;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.geo-business-panel{padding:22px 20px;border-top:1px solid #dbeafe;background:#fff;scroll-margin-top:85px}
+.geo-branch-workspace{display:grid;grid-template-columns:minmax(0,2.5fr) minmax(230px,1fr);gap:20px;margin-top:22px}
+.geo-store-filters{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.geo-store-filters input,.geo-store-filters select{border:1px solid #e2e8f0;border-radius:9px;background:#fff;padding:8px 10px;font-size:11px;min-width:0;color:#475569}
+.geo-store-filters input{flex:1;min-width:155px}
+.geo-store-table{width:100%;border-collapse:collapse;font-size:11px;text-align:left}
+.geo-store-table th{padding:10px;background:#f8fafc;font-size:10px;font-weight:500;color:#64748b;white-space:nowrap}
+.geo-store-table td{padding:13px 10px;border-top:1px solid #f1f5f9;vertical-align:middle}
+.geo-store-table tbody tr:hover{background:#f8fbff}.geo-store-table tr.geo-store-selected{background:#eff6ff}
+.geo-store-table th:first-child,.geo-store-table td:first-child{width:38px;text-align:center}
+.geo-store-table input{accent-color:#2563eb}
+.geo-resource-loading{padding:24px;border-radius:12px;background:#f8fafc;font-size:12px;color:#64748b;margin-top:16px}
+.geo-resource-error{padding:12px 20px;background:#fffbeb;color:#92400e;font-size:12px;line-height:1.7}
+@media(max-width:1180px){.geo-branch-workspace{grid-template-columns:minmax(0,1fr)}.geo-branch-workspace aside{display:none}}
+@media(max-width:640px){.geo-business-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.geo-business-kpis>div{padding:10px}.geo-business-panel{padding:16px 12px}.geo-network-overview{padding:14px 12px}.geo-business-kpis strong{font-size:19px}.geo-store-filters input{flex-basis:100%}}
+.geo-branch-workspace aside{align-self:start}
+
+/* Street map controls and store cards share the console's blue/white palette. */
+.province-map-frame .maplibregl-ctrl-group{border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 4px 14px #0f172a14;overflow:hidden}
+.province-map-frame .maplibregl-ctrl-group button{width:36px;height:36px}
+.province-map-frame .store-map-popup .maplibregl-popup-content{padding:0;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 8px 28px #0f172a26;overflow:hidden}
+.province-map-frame .store-map-popup .maplibregl-popup-close-button{right:8px;top:8px;border-radius:50%;width:25px;height:25px;background:#f1f5f9;font-size:19px;color:#64748b}
+.store-map-card{min-width:250px;padding:18px;font-family:inherit;color:#0f172a}
+.store-map-card-type{display:inline-block;margin-right:20px;padding:4px 7px;border-radius:6px;background:#eff6ff;font-size:9px;font-weight:600;color:#2563eb}
+.store-map-card>strong{display:block;margin-top:10px;max-width:245px;font-size:14px;line-height:1.45;font-weight:650}
+.store-map-card-city{margin-top:4px;font-size:11px;color:#64748b}
+.store-map-card-metrics{display:grid;grid-template-columns:1fr 1fr;gap:13px 18px;margin-top:14px;padding-top:13px;border-top:1px solid #f1f5f9}
+.store-map-card-metrics>div:first-child{grid-column:1/-1}.store-map-card-metrics dt{font-size:10px;color:#64748b}
+.store-map-card-metrics dd{margin-top:3px;font-size:12px;font-weight:600;color:#0f172a}.store-map-card-metrics>div:first-child dd{font-size:19px;letter-spacing:-.035em;color:#1d4ed8}
+.store-map-card-action{display:block;margin-top:16px;width:100%;padding:10px 12px;border-radius:9px;background:#2563eb;font-size:11px;font-weight:600;color:#fff}
+.store-map-card-action:hover{background:#1d4ed8}.store-map-card-action:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
+
+/* Two visual tasks: compare provinces, or explore real stores. */
+.geo-map-commandbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 18px;background:#fff;border-bottom:1px solid #edf1f6}
+.geo-map-view-switch{display:flex;gap:3px;padding:4px;background:#f1f5f9;border:1px solid #e8edf4;border-radius:12px}
+.geo-map-view-switch button{padding:9px 13px;border-radius:8px;font-size:11px;font-weight:500;color:#64748b;white-space:nowrap}
+.geo-map-view-switch button[aria-pressed=true]{background:white;color:#1d4ed8;box-shadow:0 1px 5px #0f172a12}
+.geo-map-commandbar>label{display:flex;align-items:center;gap:8px;font-size:10px;color:#94a3b8}.geo-map-commandbar select{max-width:155px;background:#fff;border:1px solid #e2e8f0;border-radius:9px;padding:8px;font-size:11px;color:#475569}
+.geo-map-appearance{background:#fff;border-bottom:1px solid #edf1f6}.geo-map-appearance>summary{cursor:pointer;padding:10px 20px;font-size:11px;font-weight:500;color:#475569;list-style-position:inside}.geo-map-appearance>summary span{margin-left:12px;font-size:10px;font-weight:400;color:#94a3b8}.geo-map-appearance[open]>summary{color:#2563eb}.geo-map-appearance .province-map-toolbar{border-top:1px solid #f1f5f9;border-bottom:0;background:#fafcff}
+.store-map-toolbar{background:#fff;padding:12px 18px;gap:12px}.store-map-toolbar>.min-w-0{max-width:560px}.geo-map-location-count{margin-left:auto;font-size:10px;color:#94a3b8}
+.geo-map-sidebar{background:#fcfdff}.geo-map-sidebar>[role=status]{background:#fff;border-color:#e2e8f0;border-radius:14px;padding:16px}.geo-map-sidebar>[role=status]>p:first-child{font-size:10px;font-weight:500;color:#64748b}.geo-map-sidebar>[role=status]>p:nth-child(2){font-size:20px;letter-spacing:-.025em;margin-top:7px;font-weight:650;color:#172554}
+.geo-map-sidebar [data-province-quick-detail]{padding:15px;border-color:#e8edf4;border-radius:14px;background:#fff}.geo-map-sidebar [data-province-quick-detail] button:not(:last-child){padding-top:12px;padding-bottom:12px}
+.geo-map-sidebar [data-selected-map-store]{background:#fff;border-color:#bfdbfe;border-radius:15px;padding:17px;box-shadow:0 5px 18px #2563eb07}.geo-map-sidebar [data-selected-map-store]>h3{font-size:15px;line-height:1.5}.geo-map-clear-store{width:24px;height:24px;border-radius:7px;background:#f1f5f9;color:#64748b;font-size:17px;line-height:1}
+.geo-map-view-hint{margin-top:18px;padding-top:14px;border-top:1px solid #e8edf4;font-size:10px;line-height:1.8;color:#94a3b8}
+.province-hover-popup .maplibregl-popup-content{padding:10px 12px;border:1px solid #e2e8f0;border-radius:11px;box-shadow:0 4px 15px #0f172a12}.province-hover-popup .province-tooltip small{margin-top:5px}.province-hover-popup{pointer-events:none}
+@media(max-width:639px){.geo-map-commandbar{padding:10px;gap:9px}.geo-map-view-switch{width:100%}.geo-map-view-switch button{flex:1}.geo-map-commandbar .ml-auto{margin-left:0!important}.geo-map-commandbar>label{flex:1}.geo-map-appearance>summary span{display:none}.geo-map-location-count{margin-left:0;width:100%}.geo-map-sidebar{padding:16px}}
+.geo-map-commandbar{position:relative}.geo-map-commandbar>.geo-map-appearance{position:static;border:0;background:transparent}
+.geo-map-commandbar>.geo-map-appearance>summary{padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;background:white;font-size:10px;list-style:none;white-space:nowrap}
+.geo-map-commandbar>.geo-map-appearance>summary::before{content:'☷';margin-right:6px;font-size:12px;color:#64748b}.geo-map-commandbar>.geo-map-appearance>summary span{display:none}
+.geo-map-commandbar>.geo-map-appearance>.province-map-toolbar{position:absolute;right:12px;top:calc(100% + 8px);z-index:55;max-width:620px;width:calc(100% - 24px);padding:16px;border:1px solid #dbe3ee;border-radius:13px;background:white;box-shadow:0 12px 35px #0f172a1f}

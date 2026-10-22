@@ -1,6 +1,8 @@
 """Production single-shot qualification. Transport and warehouse are forbidden."""
 
 import json
+from tests.archive_planner import historical_catalog
+from tests.gate_fixtures import interpreted_input
 import os
 import unittest
 from copy import deepcopy
@@ -65,10 +67,14 @@ def deep_domain_queries(subject):
             ("distribution", ["payment_count"], ["payment_status"]),
             ("cross_tab", ["payment_count"], ["payment_gateway", "payment_status"])],
         "inventory": [
-            ("aggregate", ["stock_quantity", "low_stock_count"], ["product"]),
-            ("aggregate", ["stock_quantity", "low_stock_count"], ["store"]),
-            ("cross_tab", ["stock_quantity"], ["product", "store"]),
-            ("cross_tab", ["low_stock_count"], ["product", "store"])],
+            # PLAN 20/10 §3.1: retail availability replaced physical stock quantity.
+            # Same-unit availability counts share one chart, so six views need six questions.
+            ("aggregate", ["sale_positions", "paused_sale_positions"], ["store"]),
+            ("aggregate", ["sale_positions"], ["category"]),
+            ("aggregate", ["paused_sale_positions"], ["city"]),
+            ("distribution", ["paused_sale_positions"], ["store"]),
+            ("cross_tab", ["sale_positions"], ["product", "store"]),
+            ("cross_tab", ["paused_sale_positions"], ["product", "store"])],
         "customers": [
             ("aggregate", ["customer_count"], ["customer_role"]),
             ("trend", ["customer_count"], []),
@@ -91,12 +97,15 @@ def deep_domain_queries(subject):
 
 class OneShotTests(unittest.TestCase):
     def setUp(self):
+        from services import provider_credential_router
+        provider_credential_router.reset_for_tests()
+        self.addCleanup(provider_credential_router.reset_for_tests)
         for name in ("requests.sessions.Session.request", "psycopg2.connect"):
             guard = patch(name, side_effect=AssertionError("External calls forbidden"))
             guard.start(); self.addCleanup(guard.stop)
-        config = patch.dict(os.environ, {"DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "10000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
+        config = patch.dict(os.environ, {"DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "14000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
         config.start(); self.addCleanup(config.stop)
-        self.catalog = AnalysisCatalog(physical_metadata())
+        self.catalog = historical_catalog(AnalysisCatalog(physical_metadata()))  # archived one-shot scope
 
     def pipeline(self, provider=None, executor=None):
         return AnalysisPipeline(metadata_loader=physical_metadata, provider=provider or scripted(decision()),
@@ -119,7 +128,7 @@ class OneShotTests(unittest.TestCase):
         return failure
 
     def test_simple_ranking_one_call_zero_proposal_sql_and_structural_defaults(self):
-        for prompt in (self.request().prompt, "Unseen business wording Z731"):
+        for prompt in (self.request().prompt, "Hoạt động kinh doanh: Unseen business wording Z731"):
             p = self.pipeline(); response = p.propose(self.request(prompt))
             self.assertEqual(response["status"], "proposal_ready")
             q = response["proposal"]["analytical_queries"][0]
@@ -133,7 +142,8 @@ class OneShotTests(unittest.TestCase):
 
     def test_deep_sales_six_views_preserve_city_scope_and_one_call(self):
         queries = deep_sales_queries(); p = self.pipeline(scripted(decision(queries)), fixture_executor(queries))
-        req = AiTextToReportRequest(prompt="So sánh bán hàng giữa hai thành phố", reference_date=REFERENCE)
+        # V3.3 requires a metric and named cohorts before interpreting comparisons.
+        req = AiTextToReportRequest(prompt="So sánh doanh thu giữa Hà Nội và Hồ Chí Minh", reference_date=REFERENCE)
         proposal = p.propose(req); req.session_id = proposal["session_id"]
         self.assertEqual(proposal["diagnostics"]["analysis_depth"], "deep")
         self.assertEqual(proposal["diagnostics"]["supporting_operation_count"], 5)
@@ -156,7 +166,7 @@ class OneShotTests(unittest.TestCase):
 
     def test_deep_report_refinement_reuses_all_six_results_in_one_call(self):
         queries = deep_sales_queries(); p = self.pipeline(scripted(decision(queries)), fixture_executor(queries))
-        req = AiTextToReportRequest(prompt="Deep comparison", reference_date=REFERENCE)
+        req = AiTextToReportRequest(prompt="Hoạt động kinh doanh: Deep comparison", reference_date=REFERENCE)
         req.session_id = p.propose(req)["session_id"]; report = p.generate(req)
         provider = scripted(decision(requested_operations=[{"id": "next", "replaces": "main", "changed_fields": []}]))
         p.provider = provider
@@ -172,7 +182,7 @@ class OneShotTests(unittest.TestCase):
         for replace_supports in (True, False):
             with self.subTest(replace_supports=replace_supports):
                 p = self.pipeline(scripted(decision(old)), fixture_executor([*old, *updated]))
-                req = AiTextToReportRequest(prompt="Deep comparison", reference_date=REFERENCE)
+                req = AiTextToReportRequest(prompt="Hoạt động kinh doanh: Deep comparison", reference_date=REFERENCE)
                 req.session_id = p.propose(req)["session_id"]; report = p.generate(req)
                 changes = [{"id": q["id"], "replaces": prior["id"], "changed_fields": ["filters"], "filters": filters,
                             **({"role": "supporting"} if prior.get("role") == "supporting" else {})}
@@ -185,11 +195,11 @@ class OneShotTests(unittest.TestCase):
 
     def test_deep_policy_is_generic_and_focused_remains_available(self):
         for subject, metric in (("products", "quantity_sold"), ("payments", "payment_count"),
-                                ("customers", "customer_count"), ("inventory", "stock_quantity"),
+                                ("customers", "customer_count"), ("inventory", "paused_sale_positions"),
                                 ("staff_shifts", "shift_count"), ("promotions", "discount_amount")):
             q = {"id": "main", "subject": subject, "operation": "aggregate", "metrics": [metric]}
             p = self.pipeline(scripted(decision(requested_operations=[q])))
-            req = AiTextToReportRequest(prompt="Unseen generic analytical wording", reference_date=REFERENCE)
+            req = AiTextToReportRequest(prompt="Hoạt động kinh doanh: Unseen generic analytical wording", reference_date=REFERENCE)
             r = p.propose(req)
             context = json.loads(p.provider.requests[0]["messages"][0]["content"])
             self.assertEqual(context["ui"]["analysis_depth"], "deep")
@@ -205,7 +215,7 @@ class OneShotTests(unittest.TestCase):
             with self.subTest(subject=subject):
                 queries = deep_domain_queries(subject)
                 p = self.pipeline(scripted(decision(queries)), fixture_executor(queries))
-                req = AiTextToReportRequest(prompt="Generic deep domain exploration", reference_date=REFERENCE)
+                req = AiTextToReportRequest(prompt="Hoạt động kinh doanh: Generic deep domain exploration", reference_date=REFERENCE)
                 proposal = p.propose(req); req.session_id = proposal["session_id"]
                 self.assertEqual(proposal["diagnostics"]["omitted_supporting_operation_count"], 0)
                 p.executor.assert_not_called(); report = p.generate(req)
@@ -219,7 +229,7 @@ class OneShotTests(unittest.TestCase):
         main = {**queries[0], "time": period}
         snapshot = {**queries[-1], "time": period}
         p = self.pipeline(scripted(decision([main, snapshot])))
-        req = AiTextToReportRequest(prompt="Historical customer activity", reference_date=REFERENCE)
+        req = AiTextToReportRequest(prompt="Hoạt động kinh doanh: Historical customer activity", reference_date=REFERENCE)
         r = p.propose(req)
         self.assertEqual(r["diagnostics"]["omitted_supporting_operation_count"], 1)
         p.executor.assert_not_called(); self.assertEqual(p.provider.call_count, 1)
@@ -229,7 +239,7 @@ class OneShotTests(unittest.TestCase):
         for update in ({"population_relation": "same"}, {"filters": []}, {"time": {"kind": "relative", "mode": "previous_month"}},
                        {"subject": "customers", "metrics": ["customer_count"], "group_by": []}):
             p = self.pipeline(scripted(decision([queries[0], {**queries[2], **update}])))
-            req = AiTextToReportRequest(prompt="Generic deep investigation", reference_date=REFERENCE)
+            req = AiTextToReportRequest(prompt="Hoạt động kinh doanh: Generic deep investigation", reference_date=REFERENCE)
             r = p.propose(req)
             self.assertEqual(r["diagnostics"]["omitted_supporting_operation_count"], 1)
             self.assertEqual(r["diagnostics"]["requested_operation_count"], 1)
@@ -241,7 +251,7 @@ class OneShotTests(unittest.TestCase):
         excess = {**queries[1], "id": "excess", "granularity": "year"}
         all_queries = [*queries, extra, excess]
         p = self.pipeline(scripted(decision(all_queries)), fixture_executor(all_queries))
-        req = AiTextToReportRequest(prompt="Deep fixture", reference_date=REFERENCE)
+        req = AiTextToReportRequest(prompt="Hoạt động kinh doanh: Deep fixture", reference_date=REFERENCE)
         r = p.propose(req); self.assertEqual(r["diagnostics"]["supporting_operation_count"], 6)
         self.assertEqual(r["diagnostics"]["omitted_supporting_operation_count"], 1)
         req.session_id = r["session_id"]; report = p.generate(req)
@@ -304,7 +314,9 @@ class OneShotTests(unittest.TestCase):
 
     def test_clarification_is_valid_planning_with_zero_sql(self):
         p = self.pipeline(scripted({"decision_type": "clarification", "clarification": {"reason": "metric_ambiguous", "subject": "orders", "known_query": {"subject": "orders", "group_by": ["city"]}, "missing_fields": ["metrics"]}}))
-        with self.assertRaises(AnalysisError) as caught: p.propose(self.request("Thành phố nào tốt nhất?"))
+        # V3.3: this vague question is stopped by the deterministic gate before any provider call; this unit targets the
+        # provider-DECLARED clarification path, so the early gate is disabled for it only (parity covered in test_final_hardening_v33).
+        with interpreted_input(), self.assertRaises(AnalysisError) as caught: p.propose(self.request("Thành phố nào tốt nhất?"))
         r = safe_failure(caught.exception, p.calls, p.semantic_info)
         self.assertEqual(r["status"], "needs_clarification")
         self.assertTrue(r["clarification"]["choices"])
@@ -313,7 +325,7 @@ class OneShotTests(unittest.TestCase):
 
     def test_unsupported_is_valid_planning_with_zero_sql(self):
         p = self.pipeline(scripted({"decision_type": "unsupported", "clarification": {"reason": "forecast_unsupported", "subject": "products"}}))
-        with self.assertRaises(AnalysisError) as caught: p.propose(self.request("Dự báo"))
+        with interpreted_input(), self.assertRaises(AnalysisError) as caught: p.propose(self.request("Dự báo"))
         r = safe_failure(caught.exception, p.calls, p.semantic_info)
         self.assertEqual(r["diagnostics"]["semantic_status"], "unsupported")
         self.assertEqual(r["diagnostics"]["agent_contract_status"], "valid")
@@ -450,7 +462,7 @@ class OneShotTests(unittest.TestCase):
             self.assertNotIn(old, raw)
         self.assertEqual(len(request["messages"]), 1)
         manifest = json.loads(request["messages"][0]["content"])["manifest"]
-        self.assertEqual(len(manifest["subjects"]), 16)
+        self.assertEqual(len(manifest["subjects"]), 18)  # V3.0: + delivery_assignments fact; V3.1: + promotion_redemptions
         self.assertTrue(manifest["complete"])
         self.assertLessEqual(r["diagnostics"]["total_context_chars"], 24000)
         self.assertIsNone(r["diagnostics"]["input_tokens"])
@@ -496,7 +508,7 @@ class OneShotTests(unittest.TestCase):
         p = self.pipeline(scripted(decision(requested_operations=[{"id": "new", "subject": "products", "operation": "aggregate", "metrics": ["new_volume"], "group_by": ["new_group"]}])))
         p.catalog = lambda: catalog
         p._active_catalog = catalog
-        self.assertEqual(p.propose(self.request("New words"))["status"], "proposal_ready")
+        self.assertEqual(p.propose(self.request("Hoạt động kinh doanh: New words"))["status"], "proposal_ready")
 
     def test_manifest_sharding_is_bounded_coherent_and_never_prompt_specific(self):
         value, _ = build_manifest(self.catalog, max_chars=5000)
@@ -529,7 +541,7 @@ class OneShotTests(unittest.TestCase):
 
     def test_complex_six_operations_seven_charts_one_planning_call(self):
         queries = rich_queries(); p = self.pipeline(scripted(decision(queries)), fixture_executor(queries))
-        req = self.request("Multi-part fixture"); proposal = p.propose(req); req.session_id = proposal["session_id"]
+        req = self.request("Hoạt động kinh doanh: Multi-part fixture"); proposal = p.propose(req); req.session_id = proposal["session_id"]
         report = p.generate(req)
         self.assertEqual((len(report["charts"]), p.executor.call_count, p.provider.call_count), (7, 6, 1))
         self.assertGreaterEqual(len(set(c["chart_type"] for c in report["charts"])), 4)
@@ -596,7 +608,7 @@ class OneShotTests(unittest.TestCase):
             q = {"id": "main", "subject": s[0], "operation": "aggregate", "metrics": s[3][:1]} if s[3] else {"id": "main", "subject": s[0], "operation": "detail", "detail_fields": s[5][:1]}
             with self.subTest(subject=s[0]):
                 p = self.pipeline(scripted(decision(requested_operations=[q])))
-                self.assertEqual(p.propose(self.request("Generic subject request"))["status"], "proposal_ready")
+                self.assertEqual(p.propose(self.request("Hoạt động kinh doanh: Generic subject request"))["status"], "proposal_ready")
                 self.assertEqual(p.provider.call_count, 1)
 
     def test_support_inherits_parent_scope_and_rejects_explicit_conflict(self):
@@ -609,7 +621,7 @@ class OneShotTests(unittest.TestCase):
 
     def test_selected_enum_alias_is_grounded_without_prompt_routing_or_lookup(self):
         value = decision(requested_operations=[{**simple_query(), "filters": [{"dimension": "city", "value": "HCM"}]}])
-        p = self.pipeline(scripted(value)); r = p.propose(self.request("Unseen wording"))
+        p = self.pipeline(scripted(value)); r = p.propose(self.request("Hoạt động kinh doanh: Unseen wording"))
         self.assertEqual(r["proposal"]["analytical_queries"][0]["filters"][0]["value"], "Hồ Chí Minh")
         p.value_lookup.assert_not_called()
 
@@ -617,7 +629,7 @@ class OneShotTests(unittest.TestCase):
         q = {"id": "main", "subject": "products", "operation": "aggregate", "metrics": ["quantity_sold"], "filters": [{"dimension": "store", "value": "Synthetic branch"}]}
         p = self.pipeline(scripted(decision(requested_operations=[q])))
         p.value_lookup.return_value = ["Synthetic branch"]
-        r = p.propose(self.request("Unseen wording"))
+        r = p.propose(self.request("Hoạt động kinh doanh: Unseen wording"))
         self.assertEqual(r["diagnostics"]["value_lookup_count"], 1)
         self.assertEqual(p.value_lookup.call_args.kwargs["limit"], 8)
         p.executor.assert_not_called()
@@ -651,7 +663,7 @@ class OneShotTests(unittest.TestCase):
         self.assertEqual(d["agent_contract_status"], "valid")
         self.assertEqual(d["semantic_status"], "clarification")
         self.assertEqual(d["clarification_dimension"], "city")
-        self.assertIn("Thành phố", r["message"])
+        self.assertIn("Tỉnh/thành trong dữ liệu", r["message"])
         self.assertTrue(r["clarification"]["choices"])
         self.assertNotIn("PRIVATE_UNKNOWN", compact(r))
         self.assertEqual(r["interpretation"]["time_range"]["start"], "2026-09-01")
@@ -777,27 +789,36 @@ class OneShotTests(unittest.TestCase):
         p = self.pipeline(Mock(return_value=response)); d = p.propose(self.request())["diagnostics"]
         self.assertEqual((d["input_tokens"], d["cumulative_planning_input_tokens"], d["output_tokens"]), (1234, 1234, 234))
 
-    def test_native_transport_failure_never_retries_or_falls_back(self):
+    def test_native_transport_failure_recovers_once_only_for_transient_5xx_and_never_falls_back(self):
         from services import llm_service
         for status in (400, 401, 403, 404, 429, 500, 503):
             for style in ("native", "openai"):
+                # Independent wire fixtures, not repeated requests under the same quota fault.
+                from services import provider_credential_router
+                provider_credential_router.reset_for_tests()
                 response = Mock(ok=False, status_code=status, headers={})
                 response.json.return_value = {"error": {"message": "redacted"}}
                 with patch.dict(os.environ, {"AI_OFFLINE": "0", "AI_AGENT_GROQ_FALLBACK": "1", "GEMINI_API_STYLE": style}), patch.object(llm_service, "GEMINI_API_KEY", "fixture"), patch.object(llm_service, "GEMINI_MODELS", ["primary", "fallback"]), patch.object(llm_service, "GROQ_API_KEY", "fixture"), patch("services.agent_provider.requests.post", return_value=response) as post:
                     native = NativeAgentProvider(); d = {}; budget = ProviderBudget(d)
                     answer = native(system="", messages=[{"role": "user", "content": "fixture"}], tools=[decision_tool()], call_budget=budget)
-                    self.assertEqual(post.call_count, 1); self.assertEqual(len(answer["attempts"]), 1)
+                    # V3.3 transport policy: only a transient 5xx earns ONE same-payload recovery inside
+                    # this logical call; client/auth/quota errors and every model/provider hop never retry.
+                    expected = 2 if status in (500, 503) else 1
+                    self.assertEqual(post.call_count, expected); self.assertEqual(len(answer["attempts"]), expected)
+                    self.assertEqual(d["provider_physical_attempts"], expected)
                     with self.assertRaises(AnalysisError) as caught: native(system="", messages=[], tools=[], call_budget=budget)
                     self.assertEqual(caught.exception.category, "provider_call_budget_exceeded")
-                    self.assertEqual(post.call_count, 1)
+                    self.assertEqual(post.call_count, expected)
 
     def test_timeout_and_connection_failure_use_one_transport_attempt(self):
         import requests
         from services import llm_service
         for error in (requests.exceptions.Timeout(), requests.exceptions.ConnectionError()):
             with patch.dict(os.environ, {"AI_OFFLINE": "0"}), patch.object(llm_service, "GEMINI_API_KEY", "fixture"), patch.object(llm_service, "GEMINI_MODELS", ["primary", "secondary"]), patch("services.agent_provider.requests.post", side_effect=error) as post:
-                answer = NativeAgentProvider()(system="", messages=[], tools=[decision_tool()])
-                self.assertEqual(len(answer["attempts"]), 1); self.assertEqual(post.call_count, 1)
+                answer = NativeAgentProvider()(system="", messages=[], tools=[decision_tool()], call_budget=ProviderBudget({}))
+                # An early transport failure recovers once with the same credential/model/payload; never a model hop.
+                self.assertEqual(len(answer["attempts"]), 2); self.assertEqual(post.call_count, 2)
+                self.assertTrue(answer["attempts"][1].get("transport_resend")); self.assertEqual({a["model"] for a in answer["attempts"]}, {"primary"})
 
     def test_native_wire_success_uses_one_attempt_with_reported_tokens(self):
         from services import llm_service
@@ -821,7 +842,7 @@ class OneShotTests(unittest.TestCase):
             native = NativeAgentProvider()
             native(system="", messages=[], tools=[])
             with self.assertRaises(AnalysisError): native(system="", messages=[], tools=[])
-            self.assertEqual(post.call_count, 1)
+            self.assertEqual(post.call_count, 2)  # one logical call = first attempt + one transport recovery; re-entry gets no new allowance
 
     def test_budget_at_native_boundary_rejects_oversized_actual_payload_before_http(self):
         from services import llm_service

@@ -1,0 +1,6 @@
+== web-ui tests (log: /tmp/v33-followup-resume/typed-web/web.log)
+# tests 165
+# pass 165
+# fail 0
+typecheck PASS
+build PASS

@@ -1,0 +1,1305 @@
+{
+ "prior_ledger": 496,
+ "final_ledger": 510,
+ "physical_sends": 14,
+ "ceiling": 510,
+ "rows": [
+  {
+   "id": "L01",
+   "depth": "focused",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 4,
+    "total": 4,
+    "summary": "Số liệu đã kiểm chứng · 4/4 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 0,
+     "extended": 0
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 0,
+     "extended": 0
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "focused",
+    "family": "kpi"
+   },
+   "charts": [
+    [
+     "line",
+     "trend",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "donut",
+     "composition:order_status",
+     [
+      "terminal_order_count"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:store",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "bar",
+     "segment:order_type",
+     [
+      "order_cancellation_rate"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "order_cancellation_rate"
+     ],
+     "group_by": [],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": [
+      {
+       "dimension": "city",
+       "operator": "eq",
+       "value": "Hồ Chí Minh"
+      }
+     ]
+    }
+   ],
+   "operations": 6,
+   "forecasts": 0,
+   "short_answer": [
+    "Tỷ lệ hủy đơn: 4.68 % trong phạm vi đã chọn."
+   ],
+   "conclusion": "Tỷ lệ hủy đơn: 4.68 % trong phạm vi đã chọn.",
+   "latency_ms": 3376,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L02",
+   "depth": "deep",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 6,
+    "total": 6,
+    "summary": "Số liệu đã kiểm chứng · 6/6 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "deep",
+    "family": "kpi"
+   },
+   "charts": [
+    [
+     "line",
+     "trend",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "donut",
+     "composition:order_status",
+     [
+      "terminal_order_count"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:store",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "bar",
+     "segment:order_type",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "heatmap",
+     "cross_tab:order_type:payment_method",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "scatter",
+     "exposure_rate:order_type",
+     [
+      "terminal_order_count",
+      "order_cancellation_rate"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "order_cancellation_rate"
+     ],
+     "group_by": [],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": [
+      {
+       "dimension": "city",
+       "operator": "eq",
+       "value": "Hồ Chí Minh"
+      }
+     ]
+    }
+   ],
+   "operations": 7,
+   "forecasts": 0,
+   "short_answer": [
+    "Tỷ lệ hủy đơn: 4.68 % trong phạm vi đã chọn."
+   ],
+   "conclusion": "Tỷ lệ hủy đơn: 4.68 % trong phạm vi đã chọn.",
+   "latency_ms": 3016,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L03",
+   "depth": "comprehensive",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 8,
+    "total": 8,
+    "summary": "Số liệu đã kiểm chứng · 8/8 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 2
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 2
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "comprehensive",
+    "family": "kpi"
+   },
+   "charts": [
+    [
+     "line",
+     "trend",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "donut",
+     "composition:order_status",
+     [
+      "terminal_order_count"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:store",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "bar",
+     "segment:order_type",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "heatmap",
+     "cross_tab:order_type:payment_method",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "scatter",
+     "exposure_rate:order_type",
+     [
+      "terminal_order_count",
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "pareto",
+     "contribution:store",
+     [
+      "cancelled_terminal_order_count"
+     ]
+    ],
+    [
+     "donut",
+     "contribution:order_type",
+     [
+      "cancelled_terminal_order_count"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "order_cancellation_rate"
+     ],
+     "group_by": [
+      "city"
+     ],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": [
+      {
+       "dimension": "city",
+       "operator": "eq",
+       "value": "Hồ Chí Minh"
+      }
+     ]
+    },
+    {
+     "metrics": [
+      "order_cancellation_rate"
+     ],
+     "group_by": [],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": [
+      {
+       "dimension": "city",
+       "operator": "eq",
+       "value": "Hồ Chí Minh"
+      }
+     ]
+    }
+   ],
+   "operations": 8,
+   "forecasts": 0,
+   "short_answer": [
+    "Tỷ lệ hủy đơn: 4.68 % trong phạm vi đã chọn."
+   ],
+   "conclusion": "Tỷ lệ hủy đơn: 4.68 % trong phạm vi đã chọn.",
+   "latency_ms": 3275,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L04",
+   "depth": "deep",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 6,
+    "total": 6,
+    "summary": "Số liệu đã kiểm chứng · 6/6 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "deep",
+    "family": "overview"
+   },
+   "charts": [
+    [
+     "horizontal_bar",
+     null,
+     [
+      "store_revenue"
+     ]
+    ],
+    [
+     "area",
+     "trend",
+     [
+      "store_revenue"
+     ]
+    ],
+    [
+     "donut",
+     "composition:store_type",
+     [
+      "store_revenue"
+     ]
+    ],
+    [
+     "bar",
+     "segment:order_type",
+     [
+      "store_revenue"
+     ]
+    ],
+    [
+     "heatmap",
+     "cross_tab:order_type:store_type",
+     [
+      "store_revenue"
+     ]
+    ],
+    [
+     "multi_line",
+     "segmented_trend:store_type",
+     [
+      "store_revenue"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "store_revenue"
+     ],
+     "group_by": [
+      "store"
+     ],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    }
+   ],
+   "operations": 6,
+   "forecasts": 0,
+   "short_answer": [
+    "Tổng doanh thu chi nhánh: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu)."
+   ],
+   "conclusion": "Tổng doanh thu chi nhánh: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu).",
+   "latency_ms": 3085,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L05",
+   "depth": "comprehensive",
+   "status": "error",
+   "analysis_state": "PROVIDER_FAILURE",
+   "error_category": "provider_timeout",
+   "latency_ms": 21356,
+   "physical_http": 2,
+   "logical_calls": 1
+  },
+  {
+   "id": "L06",
+   "depth": "deep",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 6,
+    "total": 6,
+    "summary": "Số liệu đã kiểm chứng · 6/6 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "deep",
+    "family": "overview"
+   },
+   "charts": [
+    [
+     "bar",
+     null,
+     [
+      "aov"
+     ]
+    ],
+    [
+     "line",
+     "trend",
+     [
+      "aov"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:store",
+     [
+      "aov"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:payment_method",
+     [
+      "aov"
+     ]
+    ],
+    [
+     "heatmap",
+     "cross_tab:order_type:payment_method",
+     [
+      "aov"
+     ]
+    ],
+    [
+     "scatter",
+     "exposure_rate:payment_method",
+     [
+      "valid_order_count",
+      "aov"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "aov"
+     ],
+     "group_by": [
+      "order_type"
+     ],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    },
+    {
+     "metrics": [
+      "aov"
+     ],
+     "group_by": [],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    }
+   ],
+   "operations": 7,
+   "forecasts": 0,
+   "short_answer": [
+    "Giá trị đơn trung bình: 113,362.18 VND trong phạm vi đã chọn."
+   ],
+   "conclusion": "Giá trị đơn trung bình: 113,362.18 VND trong phạm vi đã chọn.",
+   "latency_ms": 3109,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L07",
+   "depth": "deep",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 6,
+    "total": 6,
+    "summary": "Số liệu đã kiểm chứng · 6/6 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "deep",
+    "family": "kpi"
+   },
+   "charts": [
+    [
+     "line",
+     "trend",
+     [
+      "delivery_success_rate"
+     ]
+    ],
+    [
+     "donut",
+     "composition:delivery_status",
+     [
+      "terminal_delivery_count"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:driver_id",
+     [
+      "delivery_success_rate"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:store",
+     [
+      "delivery_success_rate"
+     ]
+    ],
+    [
+     "scatter",
+     "exposure_rate:driver_id",
+     [
+      "terminal_delivery_count",
+      "delivery_success_rate"
+     ]
+    ],
+    [
+     "pareto",
+     "contribution:driver_id",
+     [
+      "delivered_terminal_count"
+     ]
+    ]
+   ],
+   "rejected": [
+    [
+     "cross_tab:order_type:payment_method",
+     "singleton"
+    ]
+   ],
+   "requested": [
+    {
+     "metrics": [
+      "delivery_success_rate"
+     ],
+     "group_by": [],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    }
+   ],
+   "operations": 7,
+   "forecasts": 0,
+   "short_answer": [
+    "Tỷ lệ giao thành công: 95.8 % trong phạm vi đã chọn."
+   ],
+   "conclusion": "Tỷ lệ giao thành công: 95.8 % trong phạm vi đã chọn.",
+   "latency_ms": 3809,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L08",
+   "depth": "deep",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 6,
+    "total": 6,
+    "summary": "Số liệu đã kiểm chứng · 6/6 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "deep",
+    "family": "composition"
+   },
+   "charts": [
+    [
+     "bar",
+     null,
+     [
+      "stock_quantity"
+     ]
+    ],
+    [
+     "donut",
+     "composition:store",
+     [
+      "stock_quantity"
+     ]
+    ],
+    [
+     "bar",
+     "segment:store_type",
+     [
+      "stock_quantity"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:product",
+     [
+      "stock_quantity"
+     ]
+    ],
+    [
+     "heatmap",
+     "cross_tab:store_type:city",
+     [
+      "stock_quantity"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:city",
+     [
+      "stock_quantity"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     null,
+     [
+      "stock_quantity"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "stock_quantity"
+     ],
+     "group_by": [],
+     "time": {
+      "kind": "relative",
+      "mode": "all_time",
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": null,
+      "end": null,
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    },
+    {
+     "metrics": [
+      "stock_quantity"
+     ],
+     "group_by": [
+      "category"
+     ],
+     "time": {
+      "kind": "relative",
+      "mode": "all_time",
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": null,
+      "end": null,
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    }
+   ],
+   "operations": 7,
+   "forecasts": 0,
+   "short_answer": [
+    "Số lượng tồn kho: 394,395 đơn vị trong phạm vi đã chọn."
+   ],
+   "conclusion": "Số lượng tồn kho: 394,395 đơn vị trong phạm vi đã chọn.",
+   "latency_ms": 2584,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L09",
+   "depth": "deep",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 6,
+    "total": 6,
+    "summary": "Số liệu đã kiểm chứng · 6/6 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "deep",
+    "family": "kpi"
+   },
+   "charts": [
+    [
+     "line",
+     "trend",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "donut",
+     "composition:order_status",
+     [
+      "terminal_order_count"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:store",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "bar",
+     "segment:order_type",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "heatmap",
+     "cross_tab:order_type:payment_method",
+     [
+      "order_cancellation_rate"
+     ]
+    ],
+    [
+     "scatter",
+     "exposure_rate:order_type",
+     [
+      "terminal_order_count",
+      "order_cancellation_rate"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "order_cancellation_rate"
+     ],
+     "group_by": [],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": [
+      {
+       "dimension": "city",
+       "operator": "eq",
+       "value": "Hà Nội"
+      }
+     ]
+    }
+   ],
+   "operations": 7,
+   "forecasts": 0,
+   "short_answer": [
+    "Tỷ lệ hủy đơn: 4.61 % trong phạm vi đã chọn."
+   ],
+   "conclusion": "Tỷ lệ hủy đơn: 4.61 % trong phạm vi đã chọn.",
+   "latency_ms": 6787,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L10",
+   "depth": "comprehensive",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 8,
+    "total": 8,
+    "summary": "Số liệu đã kiểm chứng · 8/8 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 2
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 2
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "comprehensive",
+    "family": "overview"
+   },
+   "charts": [
+    [
+     "horizontal_bar",
+     null,
+     [
+      "late_shift_rate"
+     ]
+    ],
+    [
+     "line",
+     "trend",
+     [
+      "late_shift_rate"
+     ]
+    ],
+    [
+     "donut",
+     "composition:attendance_status",
+     [
+      "terminal_shift_count"
+     ]
+    ],
+    [
+     "bar",
+     "segment:shift_name",
+     [
+      "late_shift_rate"
+     ]
+    ],
+    [
+     "heatmap",
+     "cross_tab:store_type:city",
+     [
+      "late_shift_rate"
+     ]
+    ],
+    [
+     "scatter",
+     "exposure_rate:store",
+     [
+      "terminal_shift_count",
+      "late_shift_rate"
+     ]
+    ],
+    [
+     "pareto",
+     "contribution:store",
+     [
+      "late_terminal_shift_count"
+     ]
+    ],
+    [
+     "donut",
+     "contribution:shift_name",
+     [
+      "late_terminal_shift_count"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "late_shift_rate"
+     ],
+     "group_by": [],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    },
+    {
+     "metrics": [
+      "late_shift_rate"
+     ],
+     "group_by": [
+      "store"
+     ],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    }
+   ],
+   "operations": 8,
+   "forecasts": 0,
+   "short_answer": [
+    "Tỷ lệ ca đi trễ: 7.16 % trong phạm vi đã chọn."
+   ],
+   "conclusion": "Tỷ lệ ca đi trễ: 7.16 % trong phạm vi đã chọn.",
+   "latency_ms": 6309,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L11",
+   "depth": "deep",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 6,
+    "total": 6,
+    "summary": "Số liệu đã kiểm chứng · 6/6 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 0
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "deep",
+    "family": "comparison"
+   },
+   "charts": [
+    [
+     "bar",
+     null,
+     [
+      "revenue"
+     ]
+    ],
+    [
+     "donut",
+     "composition:order_type",
+     [
+      "revenue"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:store",
+     [
+      "revenue"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:payment_method",
+     [
+      "revenue"
+     ]
+    ],
+    [
+     "heatmap",
+     "cross_tab:city:payment_method",
+     [
+      "revenue"
+     ]
+    ],
+    [
+     "bar",
+     "segment:store_type",
+     [
+      "revenue"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "revenue"
+     ],
+     "group_by": [
+      "city"
+     ],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": [
+      {
+       "dimension": "city",
+       "operator": "in",
+       "value": [
+        "Hồ Chí Minh",
+        "Hà Nội"
+       ]
+      }
+     ]
+    }
+   ],
+   "operations": 6,
+   "forecasts": 0,
+   "short_answer": [
+    "Trong 2 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh (154,577,000 VND), thấp nhất ở Hà Nội (96,171,000 VND); chênh lệch là 58,406,000 VND."
+   ],
+   "conclusion": "Trong 2 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh (154,577,000 VND), thấp nhất ở Hà Nội (96,171,000 VND); chênh lệch là 58,406,000 VND.",
+   "latency_ms": 11453,
+   "physical_http": 1,
+   "logical_calls": 1
+  },
+  {
+   "id": "L12",
+   "depth": "focused",
+   "status": "error",
+   "analysis_state": "PROVIDER_FAILURE",
+   "error_category": "provider_timeout",
+   "latency_ms": 20568,
+   "physical_http": 2,
+   "logical_calls": 1
+  }
+ ]
+}

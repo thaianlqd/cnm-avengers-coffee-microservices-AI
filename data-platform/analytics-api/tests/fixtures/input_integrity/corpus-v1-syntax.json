@@ -1,0 +1,1526 @@
+{
+  "version": "1",
+  "scope": "Input integrity gate only; READY does not certify capability, SQL correctness or source health.",
+  "cases": [
+    {
+      "id": "geography-01",
+      "family": "geography",
+      "question": "Doanh thu tỉnh Hà Nội",
+      "can_submit": true
+    },
+    {
+      "id": "geography-02",
+      "family": "geography",
+      "question": "Doanh thu tỉnh Đà Nẵng tháng 9 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "geography-03",
+      "family": "geography",
+      "question": "Doanh thu tại Hồ Chí Minh",
+      "can_submit": true
+    },
+    {
+      "id": "geography-04",
+      "family": "geography",
+      "question": "Số đơn tại Cần Thơ",
+      "can_submit": true
+    },
+    {
+      "id": "geography-05",
+      "family": "geography",
+      "question": "Doanh thu theo tỉnh",
+      "can_submit": true
+    },
+    {
+      "id": "geography-06",
+      "family": "geography",
+      "question": "So sánh doanh thu Hà Nội với Hồ Chí Minh",
+      "can_submit": true
+    },
+    {
+      "id": "geography-07",
+      "family": "geography",
+      "question": "Doanh thu miền Nam",
+      "can_submit": true
+    },
+    {
+      "id": "geography-08",
+      "family": "geography",
+      "question": "Doanh thu các chi nhánh miền Bắc",
+      "can_submit": true
+    },
+    {
+      "id": "geography-09",
+      "family": "geography",
+      "question": "Doanh thu tỉnh Hà Nội và Đà Nẵng",
+      "can_submit": true
+    },
+    {
+      "id": "geography-10",
+      "family": "geography",
+      "question": "Doanh thu Hà Nội với nhé :v",
+      "can_submit": true
+    },
+    {
+      "id": "geography-11",
+      "family": "geography",
+      "question": "Doanh thu tỉnh Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "geography-12",
+      "family": "geography",
+      "question": "Doanh thu tại Qzxn tháng 9 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "geography-13",
+      "family": "geography",
+      "question": "Doanh thu Hà Nội và Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "geography-14",
+      "family": "geography",
+      "question": "Doanh thu miền Nam trừ tỉnh Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "geography-15",
+      "family": "geography",
+      "question": "Doanh thu tỉnh Hà Nội hoặc Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "geography-16",
+      "family": "geography",
+      "question": "Doanh thu tại tỉnh",
+      "can_submit": false
+    },
+    {
+      "id": "geography-17",
+      "family": "geography",
+      "question": "Doanh thu thành phố Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "geography-18",
+      "family": "geography",
+      "question": "Doanh thu tỉnh Hà Nội và",
+      "can_submit": false
+    },
+    {
+      "id": "geography-19",
+      "family": "geography",
+      "question": "Doanh thu Hà Nội trừ Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "geography-20",
+      "family": "geography",
+      "question": "Doanh thu tỉnh Qzxn và tỉnh Hà Nội",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-01",
+      "family": "calendar",
+      "question": "Doanh thu tháng 1 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-02",
+      "family": "calendar",
+      "question": "Doanh thu tháng 12 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-03",
+      "family": "calendar",
+      "question": "Doanh thu quý 1 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-04",
+      "family": "calendar",
+      "question": "Doanh thu quý 4 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-05",
+      "family": "calendar",
+      "question": "Doanh thu ngày 29/02/2024",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-06",
+      "family": "calendar",
+      "question": "Doanh thu ngày 28/02/2026",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-07",
+      "family": "calendar",
+      "question": "Doanh thu từ 2026-01-01 đến 2026-12-31",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-08",
+      "family": "calendar",
+      "question": "So sánh doanh thu tháng 9 năm 2026 với tháng 10 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-09",
+      "family": "calendar",
+      "question": "Doanh thu theo tuần trong 3 tháng gần nhất",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-10",
+      "family": "calendar",
+      "question": "Dự báo doanh thu 3 tháng tới",
+      "can_submit": true
+    },
+    {
+      "id": "calendar-11",
+      "family": "calendar",
+      "question": "Doanh thu tháng 0 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-12",
+      "family": "calendar",
+      "question": "Doanh thu tháng 13 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-13",
+      "family": "calendar",
+      "question": "Doanh thu quý 0 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-14",
+      "family": "calendar",
+      "question": "Doanh thu quý 5 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-15",
+      "family": "calendar",
+      "question": "Doanh thu tháng -1 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-16",
+      "family": "calendar",
+      "question": "Doanh thu quý -2 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-17",
+      "family": "calendar",
+      "question": "Doanh thu ngày 31/02/2026",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-18",
+      "family": "calendar",
+      "question": "Doanh thu ngày 2026-02-29",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-19",
+      "family": "calendar",
+      "question": "Doanh thu từ 2026-12-31 đến 2026-01-01",
+      "can_submit": false
+    },
+    {
+      "id": "calendar-20",
+      "family": "calendar",
+      "question": "Doanh thu tháng 1 năm 2026 tháng 2 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-01",
+      "family": "ranking",
+      "question": "Top 1 chi nhánh theo doanh thu",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-02",
+      "family": "ranking",
+      "question": "Top 5 sản phẩm theo doanh thu",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-03",
+      "family": "ranking",
+      "question": "Bottom 10 chi nhánh theo doanh thu",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-04",
+      "family": "ranking",
+      "question": "Top 20 điểm bán theo số đơn",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-05",
+      "family": "ranking",
+      "question": "Top 100 cửa hàng theo doanh thu",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-06",
+      "family": "ranking",
+      "question": "Top 3 sản phẩm theo số lượng",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-07",
+      "family": "ranking",
+      "question": "Xếp hạng chi nhánh theo doanh thu",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-08",
+      "family": "ranking",
+      "question": "Top 5 chi nhánh theo doanh thu trong mỗi miền",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-09",
+      "family": "ranking",
+      "question": "Bottom 1 sản phẩm theo số lượng",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-10",
+      "family": "ranking",
+      "question": "Top 7 chi nhánh theo doanh thu tại Hà Nội",
+      "can_submit": true
+    },
+    {
+      "id": "ranking-11",
+      "family": "ranking",
+      "question": "Top -1 chi nhánh theo doanh thu",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-12",
+      "family": "ranking",
+      "question": "Top 0 chi nhánh theo doanh thu",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-13",
+      "family": "ranking",
+      "question": "Top 101 chi nhánh theo doanh thu",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-14",
+      "family": "ranking",
+      "question": "Top 2.5 chi nhánh theo doanh thu",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-15",
+      "family": "ranking",
+      "question": "Bottom -9 sản phẩm theo số lượng",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-16",
+      "family": "ranking",
+      "question": "Bottom 0 sản phẩm theo số lượng",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-17",
+      "family": "ranking",
+      "question": "Top −5 chi nhánh theo doanh thu",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-18",
+      "family": "ranking",
+      "question": "Top –4 chi nhánh theo doanh thu",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-19",
+      "family": "ranking",
+      "question": "Top 1,5 chi nhánh theo doanh thu",
+      "can_submit": false
+    },
+    {
+      "id": "ranking-20",
+      "family": "ranking",
+      "question": "Top 99999999999999999999999 chi nhánh theo doanh thu",
+      "can_submit": false
+    },
+    {
+      "id": "stores-01",
+      "family": "stores",
+      "question": "Doanh thu theo chi nhánh",
+      "can_submit": true
+    },
+    {
+      "id": "stores-02",
+      "family": "stores",
+      "question": "Số đơn theo cửa hàng",
+      "can_submit": true
+    },
+    {
+      "id": "stores-03",
+      "family": "stores",
+      "question": "Doanh thu các chi nhánh tại Hà Nội",
+      "can_submit": true
+    },
+    {
+      "id": "stores-04",
+      "family": "stores",
+      "question": "Doanh thu các điểm bán tại Đà Nẵng",
+      "can_submit": true
+    },
+    {
+      "id": "stores-05",
+      "family": "stores",
+      "question": "Doanh thu chi nhánh chính",
+      "can_submit": true
+    },
+    {
+      "id": "stores-06",
+      "family": "stores",
+      "question": "Doanh thu kiosk nhượng quyền",
+      "can_submit": true
+    },
+    {
+      "id": "stores-07",
+      "family": "stores",
+      "question": "Doanh thu kiosk vệ tinh",
+      "can_submit": true
+    },
+    {
+      "id": "stores-08",
+      "family": "stores",
+      "question": "Doanh thu theo loại điểm bán",
+      "can_submit": true
+    },
+    {
+      "id": "stores-09",
+      "family": "stores",
+      "question": "So sánh doanh thu theo loại cửa hàng",
+      "can_submit": true
+    },
+    {
+      "id": "stores-10",
+      "family": "stores",
+      "question": "Top 5 cửa hàng theo doanh thu tháng 9 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "stores-11",
+      "family": "stores",
+      "question": "Doanh thu cửa hàng Quán Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "stores-12",
+      "family": "stores",
+      "question": "Doanh thu chi nhánh Quán Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "stores-13",
+      "family": "stores",
+      "question": "Doanh thu tại cửa hàng",
+      "can_submit": false
+    },
+    {
+      "id": "stores-14",
+      "family": "stores",
+      "question": "Doanh thu mã chi nhánh Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "stores-15",
+      "family": "stores",
+      "question": "Doanh thu cửa hàng Quán Qzxn và Quán Zbvn",
+      "can_submit": false
+    },
+    {
+      "id": "stores-16",
+      "family": "stores",
+      "question": "Doanh thu trừ cửa hàng Quán Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "stores-17",
+      "family": "stores",
+      "question": "Doanh thu loại điểm bán Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "stores-18",
+      "family": "stores",
+      "question": "Doanh thu loại cửa hàng Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "stores-19",
+      "family": "stores",
+      "question": "Doanh thu tại chi nhánh Qzxn tháng 9 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "stores-20",
+      "family": "stores",
+      "question": "Doanh thu cửa hàng Qzxn hoặc cửa hàng Zbvn",
+      "can_submit": false
+    },
+    {
+      "id": "products-01",
+      "family": "products",
+      "question": "Doanh thu theo sản phẩm",
+      "can_submit": true
+    },
+    {
+      "id": "products-02",
+      "family": "products",
+      "question": "Số lượng bán theo sản phẩm",
+      "can_submit": true
+    },
+    {
+      "id": "products-03",
+      "family": "products",
+      "question": "Doanh thu sản phẩm theo danh mục",
+      "can_submit": true
+    },
+    {
+      "id": "products-04",
+      "family": "products",
+      "question": "Top 5 sản phẩm theo số lượng bán",
+      "can_submit": true
+    },
+    {
+      "id": "products-05",
+      "family": "products",
+      "question": "Doanh thu món theo tuần",
+      "can_submit": true
+    },
+    {
+      "id": "products-06",
+      "family": "products",
+      "question": "Số lượng topping theo sản phẩm",
+      "can_submit": true
+    },
+    {
+      "id": "products-07",
+      "family": "products",
+      "question": "Doanh thu theo size ly",
+      "can_submit": true
+    },
+    {
+      "id": "products-08",
+      "family": "products",
+      "question": "Doanh thu theo lượng đá",
+      "can_submit": true
+    },
+    {
+      "id": "products-09",
+      "family": "products",
+      "question": "Doanh thu theo độ ngọt",
+      "can_submit": true
+    },
+    {
+      "id": "products-10",
+      "family": "products",
+      "question": "Doanh thu theo danh mục tại Hà Nội",
+      "can_submit": true
+    },
+    {
+      "id": "products-11",
+      "family": "products",
+      "question": "Doanh thu sản phẩm Cốc Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "products-12",
+      "family": "products",
+      "question": "Doanh thu mã sản phẩm Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "products-13",
+      "family": "products",
+      "question": "Doanh thu danh mục Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "products-14",
+      "family": "products",
+      "question": "Doanh thu topping Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "products-15",
+      "family": "products",
+      "question": "Doanh thu size ly Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "products-16",
+      "family": "products",
+      "question": "Doanh thu lượng đá Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "products-17",
+      "family": "products",
+      "question": "Doanh thu độ ngọt Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "products-18",
+      "family": "products",
+      "question": "Doanh thu sản phẩm Cốc Qzxn và Cốc Zbvn",
+      "can_submit": false
+    },
+    {
+      "id": "products-19",
+      "family": "products",
+      "question": "Doanh thu tại sản phẩm",
+      "can_submit": false
+    },
+    {
+      "id": "products-20",
+      "family": "products",
+      "question": "Doanh thu kích cỡ ly Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-01",
+      "family": "payments",
+      "question": "Số giao dịch theo phương thức thanh toán",
+      "can_submit": true
+    },
+    {
+      "id": "payments-02",
+      "family": "payments",
+      "question": "Doanh thu thanh toán theo trạng thái giao dịch",
+      "can_submit": true
+    },
+    {
+      "id": "payments-03",
+      "family": "payments",
+      "question": "Số đơn trạng thái HOAN_THANH",
+      "can_submit": true
+    },
+    {
+      "id": "payments-04",
+      "family": "payments",
+      "question": "Số đơn trạng thái đã hủy",
+      "can_submit": true
+    },
+    {
+      "id": "payments-05",
+      "family": "payments",
+      "question": "Doanh thu phương thức thanh toán TIEN_MAT",
+      "can_submit": true
+    },
+    {
+      "id": "payments-06",
+      "family": "payments",
+      "question": "Doanh thu phương thức thanh toán VNPAY",
+      "can_submit": true
+    },
+    {
+      "id": "payments-07",
+      "family": "payments",
+      "question": "Doanh thu theo hình thức nhận hàng",
+      "can_submit": true
+    },
+    {
+      "id": "payments-08",
+      "family": "payments",
+      "question": "Doanh thu theo cổng thanh toán",
+      "can_submit": true
+    },
+    {
+      "id": "payments-09",
+      "family": "payments",
+      "question": "Doanh thu thanh toán tháng 9 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "payments-10",
+      "family": "payments",
+      "question": "Số giao dịch theo trạng thái thanh toán",
+      "can_submit": true
+    },
+    {
+      "id": "payments-11",
+      "family": "payments",
+      "question": "Doanh thu phương thức thanh toán Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-12",
+      "family": "payments",
+      "question": "Doanh thu thanh toán bằng Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-13",
+      "family": "payments",
+      "question": "Số đơn trạng thái Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-14",
+      "family": "payments",
+      "question": "Số giao dịch trạng thái giao dịch Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-15",
+      "family": "payments",
+      "question": "Doanh thu cổng thanh toán Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-16",
+      "family": "payments",
+      "question": "Doanh thu trạng thái thanh toán Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-17",
+      "family": "payments",
+      "question": "Doanh thu hình thức nhận hàng Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-18",
+      "family": "payments",
+      "question": "Doanh thu giao bằng Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-19",
+      "family": "payments",
+      "question": "Doanh thu loại đơn Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "payments-20",
+      "family": "payments",
+      "question": "Số đơn trạng thái đơn Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-01",
+      "family": "promotions_customers",
+      "question": "Số đơn dùng voucher và tổng tiền giảm tháng 9 năm 2026",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-02",
+      "family": "promotions_customers",
+      "question": "Doanh thu theo khuyến mãi",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-03",
+      "family": "promotions_customers",
+      "question": "Số đơn dùng voucher",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-04",
+      "family": "promotions_customers",
+      "question": "Số khách theo vai trò",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-05",
+      "family": "promotions_customers",
+      "question": "Doanh thu theo mã khách hàng",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-06",
+      "family": "promotions_customers",
+      "question": "Doanh thu đơn có khuyến mãi",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-07",
+      "family": "promotions_customers",
+      "question": "Số khách đăng ký theo tháng",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-08",
+      "family": "promotions_customers",
+      "question": "Doanh thu theo mã khuyến mãi",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-09",
+      "family": "promotions_customers",
+      "question": "Số lượt sử dụng khuyến mãi theo tuần",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-10",
+      "family": "promotions_customers",
+      "question": "Chi tiêu tích lũy theo vai trò",
+      "can_submit": true
+    },
+    {
+      "id": "promotions_customers-11",
+      "family": "promotions_customers",
+      "question": "Doanh thu voucher Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-12",
+      "family": "promotions_customers",
+      "question": "Doanh thu mã voucher Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-13",
+      "family": "promotions_customers",
+      "question": "Doanh thu khuyến mãi Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-14",
+      "family": "promotions_customers",
+      "question": "Doanh thu vai trò Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-15",
+      "family": "promotions_customers",
+      "question": "Doanh thu mã khách hàng Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-16",
+      "family": "promotions_customers",
+      "question": "Doanh thu coupon Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-17",
+      "family": "promotions_customers",
+      "question": "Doanh thu chương trình khuyến mãi đã dùng Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-18",
+      "family": "promotions_customers",
+      "question": "Doanh thu mã khuyến mãi đã dùng Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-19",
+      "family": "promotions_customers",
+      "question": "Doanh thu vai trò người gửi tin Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "promotions_customers-20",
+      "family": "promotions_customers",
+      "question": "Doanh thu tại khuyến mãi",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-01",
+      "family": "franchise",
+      "question": "Doanh thu kiosk nhượng quyền theo tỉnh",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-02",
+      "family": "franchise",
+      "question": "Doanh thu theo loại kiosk",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-03",
+      "family": "franchise",
+      "question": "Doanh thu theo gói kiosk",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-04",
+      "family": "franchise",
+      "question": "Số hồ sơ theo trạng thái hồ sơ",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-05",
+      "family": "franchise",
+      "question": "Doanh thu theo combo nguyên liệu",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-06",
+      "family": "franchise",
+      "question": "Công nợ theo trạng thái công nợ",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-07",
+      "family": "franchise",
+      "question": "Royalty theo trạng thái royalty",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-08",
+      "family": "franchise",
+      "question": "Doanh thu theo trạng thái ca kiosk",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-09",
+      "family": "franchise",
+      "question": "Doanh thu theo loại giao dịch ví chủ kiosk",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-10",
+      "family": "franchise",
+      "question": "Doanh thu theo mức cảnh báo đối soát",
+      "can_submit": true
+    },
+    {
+      "id": "franchise-11",
+      "family": "franchise",
+      "question": "Doanh thu loại kiosk Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-12",
+      "family": "franchise",
+      "question": "Doanh thu gói kiosk Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-13",
+      "family": "franchise",
+      "question": "Số hồ sơ trạng thái hồ sơ Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-14",
+      "family": "franchise",
+      "question": "Doanh thu combo nguyên liệu Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-15",
+      "family": "franchise",
+      "question": "Doanh thu loại công nợ Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-16",
+      "family": "franchise",
+      "question": "Doanh thu trạng thái công nợ Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-17",
+      "family": "franchise",
+      "question": "Doanh thu trạng thái royalty Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-18",
+      "family": "franchise",
+      "question": "Doanh thu trạng thái ca kiosk Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-19",
+      "family": "franchise",
+      "question": "Doanh thu loại giao dịch ví chủ kiosk Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "franchise-20",
+      "family": "franchise",
+      "question": "Doanh thu mức cảnh báo đối soát Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-01",
+      "family": "operations",
+      "question": "Số đơn theo trạng thái giao hàng",
+      "can_submit": true
+    },
+    {
+      "id": "operations-02",
+      "family": "operations",
+      "question": "Số đơn theo trạng thái nộp COD",
+      "can_submit": true
+    },
+    {
+      "id": "operations-03",
+      "family": "operations",
+      "question": "Doanh thu theo ca làm",
+      "can_submit": true
+    },
+    {
+      "id": "operations-04",
+      "family": "operations",
+      "question": "Số đơn theo trạng thái chấm công",
+      "can_submit": true
+    },
+    {
+      "id": "operations-05",
+      "family": "operations",
+      "question": "Số hội thoại theo trạng thái hội thoại",
+      "can_submit": true
+    },
+    {
+      "id": "operations-06",
+      "family": "operations",
+      "question": "Doanh thu theo danh mục bài viết",
+      "can_submit": true
+    },
+    {
+      "id": "operations-07",
+      "family": "operations",
+      "question": "Số đơn theo trạng thái thẻ quà",
+      "can_submit": true
+    },
+    {
+      "id": "operations-08",
+      "family": "operations",
+      "question": "Doanh thu theo loại ngoại lệ giao hàng",
+      "can_submit": true
+    },
+    {
+      "id": "operations-09",
+      "family": "operations",
+      "question": "Số giao dịch theo loại giao dịch ví",
+      "can_submit": true
+    },
+    {
+      "id": "operations-10",
+      "family": "operations",
+      "question": "Số đơn theo trạng thái giao dịch ví",
+      "can_submit": true
+    },
+    {
+      "id": "operations-11",
+      "family": "operations",
+      "question": "Số đơn trạng thái giao hàng Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-12",
+      "family": "operations",
+      "question": "Số đơn trạng thái nộp COD Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-13",
+      "family": "operations",
+      "question": "Doanh thu ca làm Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-14",
+      "family": "operations",
+      "question": "Số đơn trạng thái chấm công Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-15",
+      "family": "operations",
+      "question": "Số hội thoại trạng thái hội thoại Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-16",
+      "family": "operations",
+      "question": "Doanh thu danh mục bài viết Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-17",
+      "family": "operations",
+      "question": "Số đơn trạng thái thẻ quà Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-18",
+      "family": "operations",
+      "question": "Doanh thu loại ngoại lệ giao hàng Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-19",
+      "family": "operations",
+      "question": "Số giao dịch loại giao dịch ví Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "operations-20",
+      "family": "operations",
+      "question": "Số đơn trạng thái giao dịch ví Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-01",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu lớn hơn -500000",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-02",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu tăng hơn 150%",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-03",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu > -100000",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-04",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu >= 100000",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-05",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu < 2.5",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-06",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu <= 1000000",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-07",
+      "family": "numeric_and_residual",
+      "question": "Giá trị đơn > 0",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-08",
+      "family": "numeric_and_residual",
+      "question": "Số đơn > 10",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-09",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu như thế nào",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-10",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu hiện tại",
+      "can_submit": true
+    },
+    {
+      "id": "numeric_and_residual-11",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu > Qzxn tháng 9 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-12",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu >= Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-13",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu < Qzxn tháng 1 năm 2026",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-14",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu <= Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-15",
+      "family": "numeric_and_residual",
+      "question": "Giá trị đơn > Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-16",
+      "family": "numeric_and_residual",
+      "question": "Số đơn > Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-17",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu abcxyz",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-18",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu Qzxn Zbvn",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-19",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu tại Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "numeric_and_residual-20",
+      "family": "numeric_and_residual",
+      "question": "Doanh thu tại",
+      "can_submit": false
+    },
+    {
+      "id": "language-01",
+      "family": "language",
+      "question": "b ơi xem giúp doanh thu Hà Nội tháng 9 năm 2026 với nhé :v",
+      "can_submit": true
+    },
+    {
+      "id": "language-02",
+      "family": "language",
+      "question": "doanh thu theo tinh",
+      "can_submit": true
+    },
+    {
+      "id": "language-03",
+      "family": "language",
+      "question": "doanh thu tai TP.HCM",
+      "can_submit": true
+    },
+    {
+      "id": "language-04",
+      "family": "language",
+      "question": "doanh thu Ha Noi va Ho Chi Minh",
+      "can_submit": true
+    },
+    {
+      "id": "language-05",
+      "family": "language",
+      "question": "Doanh thu tháng 9 năm 2026 😊",
+      "can_submit": true
+    },
+    {
+      "id": "language-06",
+      "family": "language",
+      "question": "DOANH THU TỈNH HÀ NỘI",
+      "can_submit": true
+    },
+    {
+      "id": "language-07",
+      "family": "language",
+      "question": "Doanh thu\n theo tỉnh",
+      "can_submit": true
+    },
+    {
+      "id": "language-08",
+      "family": "language",
+      "question": "Doanh thu   theo   chi nhánh",
+      "can_submit": true
+    },
+    {
+      "id": "language-09",
+      "family": "language",
+      "question": "Bạn xem doanh thu Hà Nội giúp tôi nhé",
+      "can_submit": true
+    },
+    {
+      "id": "language-10",
+      "family": "language",
+      "question": "Doanh thu tháng 9 năm 2026 👨‍👩‍👧‍👦",
+      "can_submit": true
+    },
+    {
+      "id": "language-11",
+      "family": "language",
+      "question": "abcxyz",
+      "can_submit": false
+    },
+    {
+      "id": "language-12",
+      "family": "language",
+      "question": "abcxyz qzxnv",
+      "can_submit": false
+    },
+    {
+      "id": "language-13",
+      "family": "language",
+      "question": "doanh thu tinh Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "language-14",
+      "family": "language",
+      "question": "doanh thu tai Qzxn thang 9 nam 2026",
+      "can_submit": false
+    },
+    {
+      "id": "language-15",
+      "family": "language",
+      "question": "doanh thu phuong thuc thanh toan Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "language-16",
+      "family": "language",
+      "question": "doanh thu cua hang Quan Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "language-17",
+      "family": "language",
+      "question": "doanh thu san pham Coc Qzxn",
+      "can_submit": false
+    },
+    {
+      "id": "language-18",
+      "family": "language",
+      "question": "Doanh thu thành phố Qzxn tháng 9",
+      "can_submit": false
+    },
+    {
+      "id": "language-19",
+      "family": "language",
+      "question": "Doanh thu tỉnh Qzxn 😀",
+      "can_submit": false
+    },
+    {
+      "id": "language-20",
+      "family": "language",
+      "question": "DOANH THU TỈNH QZXN",
+      "can_submit": false
+    },
+    {
+      "id": "refinement-01",
+      "family": "refinement",
+      "question": "Chỉ lọc Hà Nội",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-02",
+      "family": "refinement",
+      "question": "Nhóm theo tỉnh/thành",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-03",
+      "family": "refinement",
+      "question": "Đổi sang donut",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-04",
+      "family": "refinement",
+      "question": "Giữ nguyên chỉ số và thời gian, chỉ phân tích các chi nhánh tại Hà Nội",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-05",
+      "family": "refinement",
+      "question": "Chỉ xem tháng 9 năm 2026",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-06",
+      "family": "refinement",
+      "question": "Đổi biểu đồ cột sang thanh ngang",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-07",
+      "family": "refinement",
+      "question": "Nhóm theo phương thức thanh toán",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-08",
+      "family": "refinement",
+      "question": "Top 5 chi nhánh",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-09",
+      "family": "refinement",
+      "question": "Doanh thu theo tuần",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-10",
+      "family": "refinement",
+      "question": "Chỉ lọc Hồ Chí Minh",
+      "can_submit": true,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-11",
+      "family": "refinement",
+      "question": "Chỉ lọc tỉnh Qzxn",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-12",
+      "family": "refinement",
+      "question": "Chỉ lọc Qzxn tháng 9 năm 2026",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-13",
+      "family": "refinement",
+      "question": "Nhóm theo Qzxn",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-14",
+      "family": "refinement",
+      "question": "dsfdsfsd qzxnv",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-15",
+      "family": "refinement",
+      "question": "Đổi sang Qzxn",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-16",
+      "family": "refinement",
+      "question": "Chỉ xem tháng 13 năm 2026",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-17",
+      "family": "refinement",
+      "question": "Top -5 chi nhánh",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-18",
+      "family": "refinement",
+      "question": "Chỉ lọc cửa hàng Quán Qzxn",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-19",
+      "family": "refinement",
+      "question": "Chỉ lọc loại kiosk Qzxn",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    },
+    {
+      "id": "refinement-20",
+      "family": "refinement",
+      "question": "Chỉ lọc Hà Nội và Qzxn",
+      "can_submit": false,
+      "context": {
+        "mode": "refinement",
+        "revision": 1
+      }
+    }
+  ]
+}

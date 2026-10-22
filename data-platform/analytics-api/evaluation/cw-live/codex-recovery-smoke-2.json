@@ -1,0 +1,96 @@
+{
+ "manifest_version": "cw-live-1",
+ "runs": [
+  {
+   "started_at": "2026-10-22T10:56:31.999634+00:00",
+   "cases": [
+    {
+     "id": "P17",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": true,
+      "view_modes": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 6327,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3806,
+     "output_tokens": 251,
+     "request_id": "fdeceb4939a14e6a927388164b48fc7c",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "r_5aa1557aab1a7e2dca531ebf",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "cross_tab",
+         "metric_ids": [
+          "payment_revenue"
+         ],
+         "dimension_ids": [
+          "city",
+          "payment_method"
+         ],
+         "derived_features": [
+          "contribution_share"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        },
+        {
+         "requirement_id": "revenue_cross_tab_city_payment_method",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "cross_tab",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "city",
+          "payment_method"
+         ],
+         "derived_features": [
+          "contribution_share"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "1c675498-c5a1-42fa-9a67-e72080a007af",
+     "trace": null
+    }
+   ],
+   "finished_at": "2026-10-22T10:56:38.332703+00:00"
+  }
+ ]
+}

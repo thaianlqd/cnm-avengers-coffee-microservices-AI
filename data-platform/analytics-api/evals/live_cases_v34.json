@@ -1,0 +1,601 @@
+{
+  "version": "3.4",
+  "note": "Frozen before V3.4 paid tuning. First 29 cases byte-equivalent as parsed objects to V3.3. All44 mandatory, 40useful,4clarify; no cherry-picked release. Row authorization tested separately at deterministic/API boundaries. Statistical anomaly remains unavailable without completeness evidence.",
+  "reference_date": "2026-10-18",
+  "mandatory_cases": 44,
+  "useful_cases": 40,
+  "minimum_useful_passed": 38,
+  "required_improvements": [
+    "L03"
+  ],
+  "minimum_full_run_reservations": 60,
+  "semantic": [
+    {
+      "id": "L01",
+      "group": "happy",
+      "q": "Doanh thu 30 ngày gần nhất theo tuần",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L02",
+      "group": "happy",
+      "q": "Top 5 chi nhánh có doanh thu cao nhất tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L03",
+      "group": "happy",
+      "q": "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L04",
+      "group": "happy",
+      "q": "Cơ cấu doanh thu theo kênh bán tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L05",
+      "group": "happy",
+      "q": "Số đơn theo trạng thái trong 30 ngày gần nhất",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "order_count"
+        ]
+      ]
+    },
+    {
+      "id": "L06",
+      "group": "happy",
+      "q": "Tỷ lệ hủy đơn theo chi nhánh quý trước",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "order_cancellation_rate"
+        ]
+      ]
+    },
+    {
+      "id": "L07",
+      "group": "happy",
+      "q": "Giá trị đơn trung bình theo thành phố tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "aov",
+          "store_aov"
+        ]
+      ]
+    },
+    {
+      "id": "L08",
+      "group": "happy",
+      "q": "Top 10 sản phẩm bán chạy nhất 30 ngày gần nhất",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "quantity_sold"
+        ]
+      ]
+    },
+    {
+      "id": "L09",
+      "group": "happy",
+      "q": "Doanh thu theo phương thức thanh toán tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "payment_revenue",
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L10",
+      "group": "happy",
+      "q": "Tỷ lệ giao thành công theo shipper trong 30 ngày gần nhất",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "delivery_success_rate"
+        ]
+      ]
+    },
+    {
+      "id": "L11",
+      "group": "happy",
+      "q": "Điểm đánh giá trung bình theo chi nhánh tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "avg_store_rating"
+        ]
+      ]
+    },
+    {
+      "id": "L12",
+      "group": "happy",
+      "q": "Dự báo doanh thu 3 tháng tới",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L13",
+      "group": "happy",
+      "q": "Số khách hàng mua hàng theo tháng trong 6 tháng gần nhất",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "purchasing_customer_count"
+        ]
+      ]
+    },
+    {
+      "id": "L14",
+      "group": "happy",
+      "q": "Hiệu quả khuyến mãi: số đơn áp dụng khuyến mãi và tổng tiền giảm giá tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "voucher_order_count"
+        ],
+        [
+          "discount_amount"
+        ]
+      ]
+    },
+    {
+      "id": "L15",
+      "group": "ambiguity",
+      "q": "Chi nhánh nào ngon nhất?",
+      "expect": "clarify"
+    },
+    {
+      "id": "L16",
+      "group": "ambiguity",
+      "q": "Cho tôi xem tình hình tháng 9",
+      "expect": "clarify"
+    },
+    {
+      "id": "L17",
+      "group": "ambiguity",
+      "q": "Khách hàng như thế nào",
+      "expect": "clarify"
+    },
+    {
+      "id": "L18",
+      "group": "ambiguity",
+      "q": "So sánh hai chi nhánh",
+      "expect": "clarify"
+    },
+    {
+      "id": "L19",
+      "group": "association",
+      "q": "Doanh thu cao có làm tỷ lệ hủy thấp đi không",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ],
+        [
+          "order_cancellation_rate"
+        ]
+      ]
+    },
+    {
+      "id": "L20",
+      "group": "driver",
+      "q": "Vì sao doanh thu tháng 9 năm 2026 thay đổi",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L21",
+      "group": "expectation",
+      "q": "Dự báo doanh thu 3 tháng tới, độ chính xác tối thiểu 95%",
+      "expect": "useful_no_guarantee",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L22",
+      "group": "recovery",
+      "q": "Doanh thu theo tuần trong 8 tuần gần nhất",
+      "expect": "useful",
+      "inject_transport_failure": "503_then_success",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L23",
+      "group": "geography",
+      "q": "Doanh thu các chi nhánh miền Nam tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "store_revenue",
+          "revenue"
+        ]
+      ],
+      "scope_members": [
+        "Hồ Chí Minh",
+        "Cần Thơ",
+        "Bình Dương",
+        "Đồng Nai",
+        "Bà Rịa - Vũng Tàu",
+        "Kiên Giang"
+      ]
+    },
+    {
+      "id": "L24",
+      "group": "geography",
+      "q": "Doanh thu theo miền tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue"
+      ],
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L25",
+      "group": "geography",
+      "q": "Doanh thu miền Bắc tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ],
+      "scope_members": [
+        "Hà Nội",
+        "Hải Phòng",
+        "Bắc Ninh",
+        "Quảng Ninh"
+      ]
+    },
+    {
+      "id": "L26",
+      "group": "geography",
+      "q": "Doanh thu miền Trung tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ],
+      "scope_members": [
+        "Đà Nẵng",
+        "Nghệ An",
+        "Thanh Hóa",
+        "Thừa Thiên - Huế",
+        "Khánh Hòa",
+        "Lâm Đồng"
+      ]
+    },
+    {
+      "id": "L27",
+      "group": "geography",
+      "q": "Doanh thu miền Nam trừ HCM tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ],
+      "scope_members": [
+        "Cần Thơ",
+        "Bình Dương",
+        "Đồng Nai",
+        "Bà Rịa - Vũng Tàu",
+        "Kiên Giang"
+      ]
+    },
+    {
+      "id": "L28",
+      "group": "geography",
+      "q": "Doanh thu miền Nam và Hà Nội tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ],
+      "scope_members": [
+        "Hồ Chí Minh",
+        "Cần Thơ",
+        "Bình Dương",
+        "Đồng Nai",
+        "Bà Rịa - Vũng Tàu",
+        "Kiên Giang",
+        "Hà Nội"
+      ]
+    },
+    {
+      "id": "L29",
+      "group": "geography",
+      "q": "So sánh doanh thu miền Bắc với miền Nam tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L30",
+      "group": "no_diacritics",
+      "q": "doanh thu thang 9 nam 2026 theo thanh pho",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    {
+      "id": "L31",
+      "group": "multi_clause",
+      "q": "Trong tháng 9 năm 2026, cho tôi doanh thu, tổng số đơn và giá trị đơn trung bình; giữ rõ mẫu số của AOV.",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue",
+        "order_count",
+        "aov"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    {
+      "id": "L32",
+      "group": "bottom_ranking",
+      "q": "Top 3 thành phố có doanh thu thấp nhất tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    {
+      "id": "L33",
+      "group": "explicit_dates",
+      "q": "Doanh thu từ ngày 10/09/2026 đến hết ngày 20/09/2026",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-10",
+        "end": "2026-09-20"
+      }
+    },
+    {
+      "id": "L34",
+      "group": "daily_trend",
+      "q": "Doanh thu theo ngày trong tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    {
+      "id": "L35",
+      "group": "population",
+      "q": "Tổng số đơn và tỷ lệ hủy đơn trong tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_ids": [
+        "order_count",
+        "order_cancellation_rate"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    {
+      "id": "L36",
+      "group": "scope_rate",
+      "q": "Đơn hàng tại Đà Nẵng tháng 9 năm 2026: tổng số đơn và tỷ lệ hủy.",
+      "expect": "useful",
+      "metric_ids": [
+        "order_count",
+        "order_cancellation_rate"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "scope_members": [
+        "Đà Nẵng"
+      ]
+    },
+    {
+      "id": "L37",
+      "group": "scope_multiple_metrics",
+      "q": "Doanh thu và số đơn của Hà Nội tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue",
+        "order_count"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "scope_members": [
+        "Hà Nội"
+      ]
+    },
+    {
+      "id": "L38",
+      "group": "product_ranking",
+      "q": "Top 3 sản phẩm theo số lượng bán tháng 9 năm 2026, kèm doanh thu sản phẩm",
+      "expect": "useful",
+      "metric_ids": [
+        "quantity_sold",
+        "product_revenue"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    {
+      "id": "L39",
+      "group": "distinct_population",
+      "q": "Số khách mua hàng riêng biệt tại Hồ Chí Minh trong tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_ids": [
+        "purchasing_customer_count"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "scope_members": [
+        "Hồ Chí Minh"
+      ]
+    },
+    {
+      "id": "L40",
+      "group": "channel_paraphrase",
+      "q": "Cơ cấu doanh thu tháng 9 năm 2026 theo hình thức đặt hàng",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    {
+      "id": "L41",
+      "group": "period_comparison",
+      "q": "So sánh doanh thu tháng 8 với tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim"
+    },
+    {
+      "id": "L42",
+      "group": "association_caveat",
+      "q": "Doanh thu và tỷ lệ hủy đơn theo chi nhánh có liên hệ thế nào trong tháng 9 năm 2026? Chỉ phân tích tương quan, không kết luận nguyên nhân.",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue",
+        "order_cancellation_rate"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    {
+      "id": "L43",
+      "group": "risk_ranking",
+      "q": "Top 5 chi nhánh có tỷ lệ hủy đơn cao nhất tháng 9 năm 2026, kèm số đơn để xem quy mô.",
+      "expect": "useful",
+      "metric_ids": [
+        "order_cancellation_rate",
+        "order_count"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    {
+      "id": "L44",
+      "group": "promotion_scope",
+      "q": "Tổng tiền giảm giá và số đơn sử dụng voucher tại Hà Nội tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_ids": [
+        "discount_amount",
+        "voucher_order_count"
+      ],
+      "eligibility": "Historical non-PII aggregate on existing governed sources; completeness disclosed as unknown; no robust anomaly/forecast calibration claim",
+      "expected_period": {
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "scope_members": [
+        "Hà Nội"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "size_bytes": 42922,
+  "sha256": "8ce3c30920c779802eecb5fe7f4822208b243d43178664fb5294a8405fa1a02c",
+  "revenue_440072000_present": true,
+  "conclusion_present": true,
+  "completeness_caveat_present": true,
+  "verification_present": true,
+  "rendered_layout": "not_measured: workspace dependency loader/bundled LibreOffice unavailable in this session; no fallback to desktop LibreOffice",
+  "docx_text_tail": "UẬN & KHUYẾN NGHỊ HÀNH ĐỘNG KẾT LUẬN TỰ ĐỘNG ['Chỉ số phản ánh nhịp độ vận hành thực tế qua các mốc thời gian; là căn cứ quan trọng để dự báo biến động kế tiếp.', 'Cơ cấu tỷ trọng phản ánh rõ mức độ đóng góp của từng cấu phần trong toàn bộ phạm vi dữ liệu đã kiểm chứng.'] KHUYẾN NGHỊ CHO DATA PLATFORM [{'text': 'Chỉ số có sự biến động qua các kỳ: Cần tiếp tục theo dõi các kỳ tương đương để dự báo chu kỳ nhu cầu và chủ động phân bổ nguồn lực.', 'evidence_id': 'q_f60fcf601f12324ee4e766c6:revenue:change:6230060e3b', 'action': 'monitor_variation'}]"
+}

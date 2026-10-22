@@ -1,0 +1,6 @@
+.........................................................................................Result rejected source=execution operation=ranking rows=1 limit=5 rules=projection_columns,projection_rows,sensitive_field dimensions=product,product_id granularity=day
+................................
+----------------------------------------------------------------------
+Ran 121 tests in 73.589s
+
+OK

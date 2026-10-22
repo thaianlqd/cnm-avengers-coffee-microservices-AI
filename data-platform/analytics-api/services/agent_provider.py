@@ -482,10 +482,14 @@ class NativeAgentProvider:
             self.gemini_compat_calls[call["id"]] = saved
 
     def __call__(self, *, system, messages, tools, call_budget=None):
-        from services.provider_budget import ProviderBudget
+        from services.provider_budget import ProviderBudget, DETERMINISTIC_RESERVE
 
         if not self.legacy_policy:
             call_budget = call_budget or self.default_budget
+            if self.primary_failed:
+                # Re-entry after a failed logical call needs an explicit reset(); it never earns a new allowance.
+                from services.analysis_catalog import AnalysisError as _Exhausted
+                raise _Exhausted("provider_call_budget_exceeded", "Provider allowance exhausted")
         attempts = []
         # Interpretation can need longer than a chat turn. Keep retries under
         # the existing per-turn budget and leave legacy transports unchanged.
@@ -507,10 +511,18 @@ class NativeAgentProvider:
             if self.gemini_model
             else list(dict.fromkeys(llm_service.GEMINI_MODELS))[:3]
         )
+        # V3.2 credential pool (production policy only): primary Data Platform
+        # credential, plus at most one bounded failover to an injected secondary.
+        from services import provider_credential_router as credentials
+        slots = credentials.credential_plan() if not self.legacy_policy else [("primary", llm_service.GEMINI_API_KEY)]
+        first_slot, first_key = slots[0] if slots else ("primary", llm_service.GEMINI_API_KEY)
+        secondary = next((k for slot, k in slots if slot == "secondary" and slot != first_slot), None)
         providers = deque(
-            ("gemini", llm_service.GEMINI_API_KEY, m, i)
+            ("gemini", first_key, m, i)
             for i, m in enumerate(gemini_models)
         )
+        slot_of = {}
+        failover_used = False
         if self.legacy_policy and os.getenv("AI_AGENT_GROQ_FALLBACK", "1").lower() in ("1", "true", "yes"):
             providers.append(
                 ("groq", llm_service.GROQ_API_KEY, "openai/gpt-oss-120b", 0)
@@ -518,15 +530,25 @@ class NativeAgentProvider:
         transient_retried = False
         while providers:
             provider, key, model, index = providers.popleft()
-            if not key or not model or (provider == "gemini" and self.primary_failed):
+            failover = slot_of.pop((provider, model, index, "failover"), False)
+            resend = slot_of.pop((provider, model, index, "resend"), False)
+            same_call = failover or resend  # recovery inside one logical call never consumes a new allowance
+            if not key or not model or (provider == "gemini" and self.primary_failed and not failover):
                 continue
-            started = time.perf_counter()
+            started = time.monotonic()
             attempt = {
                 "provider": provider,
                 "model": model,
                 "status": "failed",
                 "tokens": {"input": None, "output": None},
             }
+            if provider == "gemini" and not self.legacy_policy:
+                # Slot names only; key values/identifiers never leave this scope.
+                attempt["credential_slot"] = "secondary" if failover else first_slot
+                if failover:
+                    attempt["credential_failover"] = True
+            if resend:
+                attempt["transport_resend"] = True
             try:
                 if provider == "gemini" and self.gemini_api_style == "openai":
                     payload = self._gemini_compat_body(system, messages, tools, model)
@@ -537,7 +559,11 @@ class NativeAgentProvider:
                         )
                     )
                     if call_budget:
-                        call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
+                        if same_call:
+                            call_budget.remaining(reserve=DETERMINISTIC_RESERVE)  # same logical call: deadline only, no new allowance
+                        else:
+                            call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
+                        call_budget.record_physical(payload)
                         timeout=call_budget.http_timeout() or timeout
                     response = requests.post(
                         "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
@@ -557,7 +583,11 @@ class NativeAgentProvider:
                         )
                     )
                     if call_budget:
-                        call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
+                        if same_call:
+                            call_budget.remaining(reserve=DETERMINISTIC_RESERVE)  # same logical call: deadline only, no new allowance
+                        else:
+                            call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
+                        call_budget.record_physical(payload)
                         timeout=call_budget.http_timeout() or timeout
                     response = requests.post(
                         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
@@ -567,7 +597,11 @@ class NativeAgentProvider:
                     )
                 else:
                     if call_budget:
-                        call_budget.consume()
+                        if same_call:
+                            call_budget.remaining(reserve=DETERMINISTIC_RESERVE)
+                        else:
+                            call_budget.consume()
+                        call_budget.record_physical()
                     response = requests.post(
                         "https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {key}"},
@@ -594,6 +628,8 @@ class NativeAgentProvider:
                 if not response.ok:
                     attempt.update(http_failure(response))
                     raise RuntimeError("transport")
+                if provider=='gemini' and not self.legacy_policy:
+                    credentials.record_success(attempt.get('credential_slot'))
                 body = response.json()
                 if provider == "gemini" and self.gemini_api_style == "native":
                     parts = body["candidates"][0]["content"]["parts"]
@@ -661,7 +697,7 @@ class NativeAgentProvider:
                 attempt["status"] = "success"
                 if provider == "gemini":
                     self.gemini_model = model
-                attempt["latency_ms"] = round((time.perf_counter() - started) * 1000, 2)
+                attempt["latency_ms"] = round((time.monotonic() - started) * 1000, 2)
                 attempts.append(attempt)
                 from services.provider_health_service import observe_attempt
                 observe_attempt(attempt)
@@ -678,7 +714,7 @@ class NativeAgentProvider:
                 if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded", "planning_timeout", "max_tokens_exceeded"}:
                     raise
                 attempt.setdefault("error_category", "provider_unavailable")
-            attempt["latency_ms"] = round((time.perf_counter() - started) * 1000, 2)
+            attempt["latency_ms"] = round((time.monotonic() - started) * 1000, 2)
             attempts.append(attempt)
             from services.provider_health_service import observe_attempt
             observe_attempt(attempt)
@@ -695,11 +731,34 @@ class NativeAgentProvider:
                 attempt.get("quota_scopes", []),
                 attempt.get("retry_after_seconds"),
             )
+            if provider == "gemini" and not self.legacy_policy:
+                credentials.record_failure(attempt.get("credential_slot"), attempt)
+                if (secondary and not failover_used and credentials.eligible(attempt)
+                        and (call_budget is None or call_budget.claim_recovery())):
+                    # One credential failover for the SAME request/model. Not a
+                    # semantic repair, not a model hop; never a third attempt.
+                    failover_used = True
+                    credentials.record_failover()
+                    slot_of[(provider, model, index, "failover")] = True
+                    providers.appendleft((provider, secondary, model, index))
+                    continue
+                if failover:
+                    # Both credentials failed: typed provider failure immediately.
+                    self.primary_failed = True
+                    break
             if provider == "gemini":
-                if attempt.get("http_status") == 503 and not transient_retried:
-                    # Retry the same signed continuation once. No model hop,
-                    # recursive retry, new agent round or analytical execution.
+                if self.legacy_policy:
+                    if attempt.get("http_status") == 503 and not transient_retried and not failover_used:
+                        transient_retried = True
+                        providers.appendleft((provider, key, model, index))
+                        time.sleep(0.5)
+                        continue
+                elif (call_budget is not None and not transient_retried and not failover_used and not failover
+                        and call_budget.transport_retry_allowed(attempt, 0.5, same_call=True) and call_budget.claim_recovery()):
+                    # V3.3: the transport layer is the single owner of recovery. Resend the SAME
+                    # payload/credential/model once within this logical call; the planner never retries.
                     transient_retried = True
+                    slot_of[(provider, model, index, "resend")] = True
                     providers.appendleft((provider, key, model, index))
                     time.sleep(0.5)
                     continue
@@ -707,6 +766,7 @@ class NativeAgentProvider:
                     attempt["error_category"]
                     in {"provider_model_not_found", "provider_daily_quota", "provider_http"}
                     and not self.gemini_model
+                    and self.legacy_policy  # V3.3: the production transport never hops models
                     and index + 1 < len(gemini_models)
                 )
                 if retry_configured_model:

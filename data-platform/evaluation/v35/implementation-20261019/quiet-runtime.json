@@ -1,0 +1,149 @@
+{
+  "version": "3.5.0",
+  "observed_at": "2026-10-19T12:07:42.176369+00:00",
+  "aggregate_cpu_percent": 46.11,
+  "cpu_basis": "Docker 100 percent = one logical CPU; single local sample",
+  "samples": [
+    {
+      "container": "avengers_analytics_web",
+      "cpu_percent": 0.0,
+      "memory": "11.66MiB / 7.748GiB"
+    },
+    {
+      "container": "avengers_minio",
+      "cpu_percent": 19.77,
+      "memory": "715.8MiB / 768MiB"
+    },
+    {
+      "container": "avengers_kafka_producer",
+      "cpu_percent": 0.06,
+      "memory": "14MiB / 256MiB"
+    },
+    {
+      "container": "avengers_data_sync",
+      "cpu_percent": 0.0,
+      "memory": "55.32MiB / 384MiB"
+    },
+    {
+      "container": "avengers_kafka_consumer",
+      "cpu_percent": 15.37,
+      "memory": "72.79MiB / 384MiB"
+    },
+    {
+      "container": "avengers_analytics_api",
+      "cpu_percent": 0.12,
+      "memory": "251.7MiB / 1GiB"
+    },
+    {
+      "container": "avengers_analytics_redis",
+      "cpu_percent": 1.83,
+      "memory": "21.54MiB / 7.748GiB"
+    },
+    {
+      "container": "avengers_web_admin",
+      "cpu_percent": 2.0,
+      "memory": "177.2MiB / 512MiB"
+    },
+    {
+      "container": "avengers_web_customer",
+      "cpu_percent": 3.17,
+      "memory": "172MiB / 512MiB"
+    },
+    {
+      "container": "avengers_api_gateway",
+      "cpu_percent": 0.0,
+      "memory": "26.46MiB / 384MiB"
+    },
+    {
+      "container": "avengers_identity_service",
+      "cpu_percent": 0.0,
+      "memory": "31.6MiB / 256MiB"
+    },
+    {
+      "container": "avengers_menu_service",
+      "cpu_percent": 0.0,
+      "memory": "22.07MiB / 256MiB"
+    },
+    {
+      "container": "avengers_news_service",
+      "cpu_percent": 0.0,
+      "memory": "19.82MiB / 256MiB"
+    },
+    {
+      "container": "avengers_inventory_service",
+      "cpu_percent": 0.0,
+      "memory": "25.53MiB / 256MiB"
+    },
+    {
+      "container": "avengers_order_service",
+      "cpu_percent": 0.0,
+      "memory": "34.43MiB / 384MiB"
+    },
+    {
+      "container": "avengers_ai_service",
+      "cpu_percent": 0.09,
+      "memory": "100.7MiB / 1GiB"
+    },
+    {
+      "container": "avengers_db",
+      "cpu_percent": 0.0,
+      "memory": "22.57MiB / 7.748GiB"
+    },
+    {
+      "container": "avengers_redis",
+      "cpu_percent": 0.38,
+      "memory": "9.941MiB / 128MiB"
+    },
+    {
+      "container": "avengers_mq",
+      "cpu_percent": 0.12,
+      "memory": "107.6MiB / 512MiB"
+    },
+    {
+      "container": "avengers_kafka",
+      "cpu_percent": 2.06,
+      "memory": "579.6MiB / 7.748GiB"
+    },
+    {
+      "container": "avengers_analytics_db",
+      "cpu_percent": 1.06,
+      "memory": "186.1MiB / 7.748GiB"
+    },
+    {
+      "container": "avengers_zookeeper",
+      "cpu_percent": 0.08,
+      "memory": "152MiB / 7.748GiB"
+    }
+  ],
+  "caps": {
+    "analytics-api": {
+      "cpu": 0.5,
+      "memory_mib": 1024
+    },
+    "minio": {
+      "cpu": 0.2,
+      "memory_mib": 768
+    },
+    "kafka-consumer": {
+      "cpu": 0.15,
+      "memory_mib": 384
+    },
+    "kafka-producer": {
+      "cpu": 0.1,
+      "memory_mib": 256
+    },
+    "data-sync": {
+      "cpu": 0.2,
+      "memory_mib": 384
+    }
+  },
+  "stopped": [
+    "two API fixtures",
+    "fixture postgres",
+    "fixture redis"
+  ],
+  "limitations": [
+    "Kafka drains more slowly under lower CPU caps",
+    "No throughput/SLO claim from one CPU sample"
+  ]
+}

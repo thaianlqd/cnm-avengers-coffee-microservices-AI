@@ -1,0 +1,50 @@
+{
+  "event": "soak_complete",
+  "status": "passed",
+  "duration_seconds": 900.109,
+  "sample_interval_seconds": 5,
+  "instances": [
+    {
+      "instance": "v35-fixture-api-a",
+      "pid": 1,
+      "redis_db": 15,
+      "session_backend": "redis",
+      "artifact_backend": "redis",
+      "physical_http": 0
+    },
+    {
+      "instance": "v35-fixture-api-b",
+      "pid": 1,
+      "redis_db": 15,
+      "session_backend": "redis",
+      "artifact_backend": "redis",
+      "physical_http": 0
+    }
+  ],
+  "eligible_operations": 1543,
+  "outcomes": {
+    "completed": 1543,
+    "failed": 0
+  },
+  "request_counter_deltas": {
+    "http://127.0.0.1:18881": 793,
+    "http://127.0.0.1:18882": 750
+  },
+  "expected_request_counts": {
+    "http://127.0.0.1:18881": 793,
+    "http://127.0.0.1:18882": 750
+  },
+  "p95_ms": 29.635499999130843,
+  "p99_ms": 55.40437599847792,
+  "controlled_jobs": 60,
+  "jobs_with_request_context": 60,
+  "external_http": 0,
+  "physical_provider_sends": 0,
+  "shared_gauge_aggregation": "max; never summed",
+  "errors": [],
+  "limitations": [
+    "Local isolated fixture measurement; not a production SLO",
+    "Source freshness and worker restarts captured separately",
+    "No deployed multi-API traffic claim"
+  ]
+}

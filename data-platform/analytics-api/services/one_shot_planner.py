@@ -274,9 +274,9 @@ class OneShotPlanner:
                 visuals.append(visual)
         except (ValueError, TypeError, KeyError) as error:
             self.fail_contract(error)
-        from services.agent_pipeline import AnalysisPipeline
+        from services.request_anchors import enforce_ui
         try:
-            AnalysisPipeline.enforce_ui(prepared, getattr(self.queries, "ui_context", {}) or {})
+            enforce_ui(prepared, getattr(self.queries, "ui_context", {}) or {})
         except AnalysisError as error:
             error.planning_scope_conflict = True
             raise

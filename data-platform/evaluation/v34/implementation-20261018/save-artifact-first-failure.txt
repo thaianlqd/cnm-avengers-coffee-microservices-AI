@@ -1,0 +1,30 @@
+....F....E
+======================================================================
+ERROR: test_analysis_modules (unittest.loader._FailedTest.test_analysis_modules)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_analysis_modules
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/loader.py", line 162, in loadTestsFromName
+    module = __import__(module_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tests.test_analysis_modules'
+
+
+======================================================================
+FAIL: test_save_rehydrates_server_summary_chart_data_without_client_rows_or_new_execution (tests.test_v34_semantic_repair.CohortRepairTests.test_save_rehydrates_server_summary_chart_data_without_client_rows_or_new_execution)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_semantic_repair.py", line 116, in test_save_rehydrates_server_summary_chart_data_without_client_rows_or_new_execution
+    self.assertEqual(saved['charts'],report['charts'])
+AssertionError: Lists differ: [{'id[1154 chars]hiếu'}] != [{'id[1154 chars]hiếu', 'requirement_id': 'comparison_revenue_h[2969 chars]e}}}]
+
+First differing element 0:
+{'id'[1153 chars]hiếu'}
+{'id'[1153 chars]hiếu', 'requirement_id': 'comparison_revenue_h[2968 chars]ne}}}
+
+Diff is 9122 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 10 tests in 5.412s
+
+FAILED (failures=1, errors=1)

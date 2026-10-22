@@ -1,0 +1,223 @@
+{
+  "observed_at": "2026-10-19T03:15:05.038671+00:00",
+  "history": {
+    "tables": 23,
+    "rows": 191917,
+    "status": "success"
+  },
+  "checkpoints": [
+    {
+      "dataset_id": "replica.identity.chi_nhanh",
+      "generation": 1,
+      "observed_rows": 1215,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 68.377371,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.identity.khu_vuc",
+      "generation": 1,
+      "observed_rows": 8,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 67.97409,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.identity.khuyen_mai",
+      "generation": 1,
+      "observed_rows": 38,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 67.57063,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.identity.khuyen_mai_su_dung",
+      "generation": 1,
+      "observed_rows": 4013,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 66.996405,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.identity.nguoi_dung",
+      "generation": 1,
+      "observed_rows": 342,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 66.525058,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.inventory.ton_kho_san_pham",
+      "generation": 1,
+      "observed_rows": 3232,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 66.013318,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.menu.bien_the_san_pham",
+      "generation": 1,
+      "observed_rows": 1393,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 65.594674,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.menu.danh_muc",
+      "generation": 2,
+      "observed_rows": 23,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 65.220668,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.menu.san_pham",
+      "generation": 1,
+      "observed_rows": 118,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 64.817844,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.ca_doi_soat",
+      "generation": 1,
+      "observed_rows": 4140,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 63.791765,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.ca_lam_viec_nhan_vien",
+      "generation": 1,
+      "observed_rows": 4144,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 62.79239,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.chi_tiet_don_hang",
+      "generation": 1,
+      "observed_rows": 72063,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 56.543654,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.customer_wallet_transaction",
+      "generation": 1,
+      "observed_rows": 112,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 56.126719,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.danh_gia_chi_nhanh",
+      "generation": 1,
+      "observed_rows": 2077,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 55.502858,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.danh_gia_san_pham",
+      "generation": 1,
+      "observed_rows": 3005,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 54.508425,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.delivery_tracking",
+      "generation": 1,
+      "observed_rows": 7875,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 52.696695,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.don_hang",
+      "generation": 1,
+      "observed_rows": 40460,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 45.121118,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.giao_dich_thanh_toan",
+      "generation": 1,
+      "observed_rows": 38843,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 42.026828,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.khao_sat_phan_hoi",
+      "generation": 1,
+      "observed_rows": 12,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 41.63556,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.shipper",
+      "generation": 1,
+      "observed_rows": 301,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 41.224477,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.shipper_delivery",
+      "generation": 1,
+      "observed_rows": 7857,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 38.86668,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.voucher",
+      "generation": 1,
+      "observed_rows": 9,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 38.487775,
+      "schema_hash_length": 64
+    },
+    {
+      "dataset_id": "replica.orders.yeu_thich_san_pham",
+      "generation": 1,
+      "observed_rows": 637,
+      "completeness": "unknown",
+      "error_code": null,
+      "age_seconds": 38.08651,
+      "schema_hash_length": 64
+    }
+  ],
+  "privilege_leaks": {
+    "replica_can_insert_stream": false,
+    "replica_can_update_stream_cursor": false,
+    "kafka_can_truncate_replica": false,
+    "replica_can_create_table": false
+  }
+}

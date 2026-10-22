@@ -1,0 +1,33 @@
+{
+  "note": "Historical record kept (not overwritten): the state BEFORE the completion pass. Superseded by summary.json.",
+  "date": "2026-10-16",
+  "backend": {
+    "tests": 946,
+    "failures": 3,
+    "errors": 1,
+    "failing": [
+      "test_one_shot_v24.test_default_native_budget_blocks_reentry_without_reset",
+      "test_agent_v22.test_distribution_and_correlation_observational",
+      "test_agent_v22.test_native_provider_gemini_signature_and_groq_fallback",
+      "test_one_shot_v24.test_native_transport_failure_never_retries_or_falls_back"
+    ]
+  },
+  "web": {
+    "tests": 156,
+    "fail": 0
+  },
+  "eval_offline": {
+    "cases": 146,
+    "retrieval_domain": "110/113",
+    "retrieval_metric": "109/113",
+    "failures": [
+      "ship_12",
+      "rev_12",
+      "rev_r_02",
+      "v31_rev_01"
+    ]
+  },
+  "live": {
+    "status": "not_run"
+  }
+}

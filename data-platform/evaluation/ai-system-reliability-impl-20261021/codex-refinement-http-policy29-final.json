@@ -1,0 +1,223 @@
+[
+  {
+    "id": "valid",
+    "http_status": 200,
+    "session_id": "0ea8235f-5da0-4344-8190-6b20a859fdfe",
+    "revision": 1,
+    "result": {
+      "can_submit": true,
+      "input_validation": {
+        "version": "1.2.2",
+        "policy_fingerprint": "715a104010bb861f0478faa3541ca9792809942b518c9f9791bca908debf1976",
+        "fingerprint": "705a37ac78f6fd1636223cebc52a1d53ab3a971ba107065938580c14af9c5669",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 60,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "findings": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    "expected_can_submit": true,
+    "passed": true
+  },
+  {
+    "id": "unknown-scope",
+    "http_status": 200,
+    "session_id": "0ea8235f-5da0-4344-8190-6b20a859fdfe",
+    "revision": 1,
+    "result": {
+      "can_submit": false,
+      "input_validation": {
+        "version": "1.2.2",
+        "policy_fingerprint": "715a104010bb861f0478faa3541ca9792809942b518c9f9791bca908debf1976",
+        "fingerprint": "6cb1919f1d0b7604b1cc076753b677e8d6c30835261176da408737dd3201592a",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 37,
+            "slot_ids": [
+              "s1",
+              "s2"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "residual",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_residual_unresolved",
+            "start": 0,
+            "end": 37,
+            "raw": "Chỉ phân tích tỉnh qzxn không tồn tại",
+            "label": "Yêu cầu",
+            "clause_id": "c1"
+          },
+          {
+            "id": "s2",
+            "kind": "entity",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_entity_unresolved",
+            "start": 19,
+            "end": 37,
+            "raw": "qzxn không tồn tại",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [],
+            "lookup_allowed": false,
+            "clause_id": "c1"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_residual_unresolved",
+            "message": "Chưa xác minh được ý nghĩa của “Chỉ phân tích tỉnh qzxn không tồn tại”. Hãy nêu rõ địa bàn, đối tượng hoặc điều kiện cần phân tích.",
+            "slot_id": "s1",
+            "dimension": null,
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              }
+            ]
+          },
+          {
+            "level": "block",
+            "code": "input_entity_unresolved",
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “qzxn không tồn tại”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+            "slot_id": "s2",
+            "dimension": "city",
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hồ Chí Minh",
+                "start": 19,
+                "end": 37,
+                "old_text": "qzxn không tồn tại",
+                "new_text": "Hồ Chí Minh"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hà Nội",
+                "start": 19,
+                "end": 37,
+                "old_text": "qzxn không tồn tại",
+                "new_text": "Hà Nội"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Đà Nẵng",
+                "start": 19,
+                "end": 37,
+                "old_text": "qzxn không tồn tại",
+                "new_text": "Đà Nẵng"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Cần Thơ",
+                "start": 19,
+                "end": 37,
+                "old_text": "qzxn không tồn tại",
+                "new_text": "Cần Thơ"
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_residual_unresolved",
+          "message": "Chưa xác minh được ý nghĩa của “Chỉ phân tích tỉnh qzxn không tồn tại”. Hãy nêu rõ địa bàn, đối tượng hoặc điều kiện cần phân tích.",
+          "slot_id": "s1",
+          "dimension": null,
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            }
+          ]
+        },
+        {
+          "level": "block",
+          "code": "input_entity_unresolved",
+          "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “qzxn không tồn tại”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+          "slot_id": "s2",
+          "dimension": "city",
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hồ Chí Minh",
+              "start": 19,
+              "end": 37,
+              "old_text": "qzxn không tồn tại",
+              "new_text": "Hồ Chí Minh"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hà Nội",
+              "start": 19,
+              "end": 37,
+              "old_text": "qzxn không tồn tại",
+              "new_text": "Hà Nội"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Đà Nẵng",
+              "start": 19,
+              "end": 37,
+              "old_text": "qzxn không tồn tại",
+              "new_text": "Đà Nẵng"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Cần Thơ",
+              "start": 19,
+              "end": 37,
+              "old_text": "qzxn không tồn tại",
+              "new_text": "Cần Thơ"
+            }
+          ]
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    "expected_can_submit": false,
+    "passed": true
+  }
+]

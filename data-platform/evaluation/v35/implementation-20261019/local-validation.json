@@ -1,0 +1,133 @@
+{
+  "version": "3.5.0",
+  "backend": {
+    "status": "passed",
+    "tests": 1299,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "seconds": 737.877,
+    "runner": "tools.run_tests_v29",
+    "mode": "offline/network_none",
+    "cpu_limit": 1,
+    "memory_mib": 1024,
+    "source_stage": "/tmp/v35-backend-accepted-source",
+    "log": "/tmp/v35-final-backend-offline.log",
+    "log_sha256": "bb8a6a1a4e7086317872bfd762f58b85b051e8dc90b2d9588d168e3066cc3e00",
+    "runtime_limits_unchanged": true,
+    "thresholds_changed": false,
+    "source_tree_sha256": "b5070ff5e90d71846dcd011bda62632f7102a2aaeaa3850b50bccfcbf23591c1",
+    "frozen_source_files": 370,
+    "current_source_matches_frozen_run": true
+  },
+  "web": {
+    "tests": 183,
+    "passed": 183,
+    "typecheck": "passed",
+    "build": "passed",
+    "log": "/tmp/v35-compact-web-shipped"
+  },
+  "browser_ui": {
+    "passed": 35,
+    "failed": 0,
+    "seconds": 52.3,
+    "log": "/tmp/v35-compact-browser-shipped/e2e.log",
+    "coverage": "long narrative disclosures, bounded charts, 1680/900/390 widths, BI and AI",
+    "latest_css_validation": "/tmp/v35-rank-compact-after.log"
+  },
+  "browser_api": {
+    "status": "passed",
+    "passed": 4,
+    "failed": 0,
+    "seconds": 11.4,
+    "transport": "temporary fixed-loopback stdio relay into network-none fixture",
+    "scope": "historical before current presentation-only changes"
+  },
+  "offline_eval": {
+    "cases": 146,
+    "retrieval_domain": "113/113",
+    "retrieval_metric": "113/113",
+    "compile_level2": "108/108",
+    "preflight_expectations": "17/17",
+    "unsupported_preflight": "5/5",
+    "forecast_capability_rejections": "6/6",
+    "v33": "33/33",
+    "v34": "120/120",
+    "failures": 0,
+    "current_candidate_run": "semantic-final-offline.json"
+  },
+  "pipeline": {
+    "pg_integration": 27,
+    "worker_certificate_unit": 21,
+    "status": "passed",
+    "broker_minio_batch_integration": 15,
+    "unit": 58,
+    "unit_seconds": 0.709,
+    "unit_log": "/tmp/v35-final-post-gates/pipeline_unit.log"
+  },
+  "provider_http": 0,
+  "remote_ci": "pending_current_candidate_commit",
+  "release_status": "local_verified_release_pending",
+  "browser_total": 39,
+  "metadata_regeneration_check": "passed",
+  "diff_whitespace_check": "passed",
+  "source_secret_scan": "See secret-scan.json for the final frozen-inventory coverage receipt",
+  "backend_previous_pass": {
+    "tests": 1291,
+    "failures": 0,
+    "errors": 0,
+    "status": "passed",
+    "seconds": 708.595,
+    "runner": "tools.run_tests_v29",
+    "mode": "offline"
+  },
+  "backend_affected": {
+    "tests": 29,
+    "status": "passed",
+    "seconds": 9.213,
+    "log": "/tmp/v35-health-current/module.log"
+  },
+  "updated_at": "2026-10-19T13:51:06.242557+00:00",
+  "backend_affected_final_expression": {
+    "tests": 6,
+    "status": "passed",
+    "seconds": 1.415,
+    "log": "/tmp/v35-circuit-final/module.log"
+  },
+  "backend_previous_failed": {
+    "tests": 1296,
+    "failures": 5,
+    "errors": 2,
+    "seconds": 1476.259,
+    "status": "failed_before_readiness_fix",
+    "runner": "tools.run_tests_v29",
+    "mode": "offline",
+    "cpu_limit": 0.5,
+    "log": "/tmp/v35-final-quiet/backend.log",
+    "notes": [
+      "Readiness errors fixed; affected 29 tests passed subsequently.",
+      "Five timing/load failures remain on the CPU-limited full run; no timing threshold was relaxed."
+    ]
+  },
+  "backend_reader_envelope_affected": {
+    "tests": 27,
+    "seconds": 59.815,
+    "status": "passed",
+    "log": "/tmp/v35-reader-envelope-green.log"
+  },
+  "two_api_load_representative": {
+    "profiles": 15,
+    "completed": 111,
+    "expected_429": 24,
+    "status": "passed",
+    "evidence": "two-api-load-profiles-representative.json"
+  },
+  "offline_reference": {
+    "cases": 120,
+    "passed": 120,
+    "failed": 0,
+    "compiled_intents": 83,
+    "evidence": "semantic-reference-final-offline.json",
+    "meaning": "Authored reference meaning through actual resolver/compiler; not new live LLM accuracy"
+  }
+}

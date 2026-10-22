@@ -1,0 +1,3 @@
+== module tests.test_v34_observability tests.test_v34_audit tests.test_query_batch tests.test_v34_job_operations (log: /tmp/v34-telemetry-unique/module.log)
+Ran 22 tests in 1.112s
+OK

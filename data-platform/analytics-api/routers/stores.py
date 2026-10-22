@@ -24,7 +24,7 @@ def fetch_stores_analytics(
                 filter_params = []
 
                 if search and search.strip():
-                    where_clauses.append("(cn.ten_chi_nhanh ILIKE %s OR cn.ma_chi_nhanh ILIKE %s OR cn.dia_chi ILIKE %s)")
+                    where_clauses.append("(cn.ten_chi_nhanh ILIKE %s OR cn.ma_chi_nhanh ILIKE %s OR NULL::text ILIKE %s)")
                     s = f"%{search.strip()}%"
                     filter_params.extend([s, s, s])
                 if city and city != "all":
@@ -40,26 +40,35 @@ def fetch_stores_analytics(
                     where_clauses.append(store_branch_cond)
                     filter_params.extend(branch_params)
 
+                from services.store_location_service import coordinate_projection
+                coordinates,coordinate_group=coordinate_projection(alias='cn')
                 query = f"""
                     SELECT
                         cn.ma_chi_nhanh AS store_code,
                         cn.ten_chi_nhanh AS store_name,
-                        COALESCE(cn.thanh_pho, 'TP.HCM') AS city,
-                        COALESCE(cn.dia_chi, 'Đang cập nhật') AS address,
+                        cn.loai_diem_ban AS store_type,
+                        {coordinates},
+                        COALESCE(cn.thanh_pho, 'Chưa xác định') AS city,
+                        COALESCE(NULL::text, 'Đang cập nhật') AS address,
                         CASE WHEN cn.trang_thai = 'ACTIVE' THEN 'Hoạt động' ELSE 'Bảo trì' END AS status,
                         COUNT(o.ma_don_hang) AS total_orders,
+                        COUNT(o.ma_don_hang) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AS valid_orders,
                         COALESCE(SUM(o.tong_tien) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0) AS total_revenue,
                         COALESCE(ROUND(AVG(o.tong_tien) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0), 0) AS aov
-                    FROM identity.chi_nhanh cn
-                    LEFT JOIN orders.don_hang o ON cn.ma_chi_nhanh = o.co_so_ma AND {date_cond}
+                    FROM silver.chi_nhanh cn
+                    LEFT JOIN silver.don_hang o ON cn.ma_chi_nhanh = o.co_so_ma AND {date_cond}
                     WHERE {' AND '.join(where_clauses)}
-                    GROUP BY cn.ma_chi_nhanh, cn.ten_chi_nhanh, cn.thanh_pho, cn.dia_chi, cn.trang_thai
+                    GROUP BY cn.ma_chi_nhanh, cn.ten_chi_nhanh, cn.thanh_pho, NULL::text, cn.trang_thai, cn.loai_diem_ban{coordinate_group}
                     ORDER BY total_revenue DESC
-                    LIMIT 100;
+                    LIMIT 5001;
                 """
                 cur.execute(query, date_params + filter_params)
                 stores = [dict(r) for r in cur.fetchall()]
+                from services.store_location_service import store_location
+                stores=[{**store,**store_location(store)} for store in stores]
 
+                if len(stores)>5000:
+                    raise HTTPException(503, 'Danh sách cửa hàng vượt giới hạn; hãy thu hẹp bộ lọc.')
                 total_st = len(stores)
                 act_st = sum(1 for s in stores if s["status"] == "Hoạt động")
                 tot_rev = sum(s["total_revenue"] for s in stores)
@@ -90,8 +99,10 @@ def fetch_stores_analytics(
                     "top_stores": top_stores,
                     "revenue_by_city": revenue_by_city
                 }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=503, detail='Nguồn dữ liệu phân tích chưa sẵn sàng.') from None
 
 
 @router.get("/overview")

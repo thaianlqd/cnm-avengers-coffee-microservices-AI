@@ -1,0 +1,169 @@
+{
+  "version": "3.5.0",
+  "status": "LOCAL_VERIFIED_RELEASE_PENDING",
+  "observed_at": "2026-10-19T13:54:36.220390+00:00",
+  "head": "eda390b84c90ef37d0081bcd16de84098d07d605",
+  "candidate": "uncommitted source manifest; remote HEAD CI is not candidate CI",
+  "gates": [
+    {
+      "id": "G00",
+      "status": "PASS",
+      "evidence": [
+        "candidate-manifest.json",
+        "runtime-final-identity.json",
+        "served-ui.json"
+      ]
+    },
+    {
+      "id": "G01",
+      "status": "PASS",
+      "evidence": [
+        "local-validation.json",
+        "semantic-final-offline.json",
+        "semantic-reference-final-offline.json"
+      ]
+    },
+    {
+      "id": "G02",
+      "status": "PASS",
+      "evidence": [
+        "architecture-baseline.json",
+        "architecture-candidate.json",
+        "local-validation.json"
+      ]
+    },
+    {
+      "id": "G03",
+      "status": "PASS",
+      "evidence": [
+        "runtime-final-identity.json",
+        "local-validation.json"
+      ]
+    },
+    {
+      "id": "G04",
+      "status": "PASS",
+      "evidence": [
+        "runtime-final-identity.json",
+        "compact-ui-validation.json"
+      ]
+    },
+    {
+      "id": "G05",
+      "status": "PASS",
+      "evidence": [
+        "replica-mvcc-grants-applied.json",
+        "local-validation.json"
+      ]
+    },
+    {
+      "id": "G06",
+      "status": "PASS",
+      "evidence": [
+        "runtime-post-mvcc-soak.json",
+        "local-validation.json"
+      ]
+    },
+    {
+      "id": "G07",
+      "status": "PASS",
+      "evidence": [
+        "critical-readonly-parity-post-mvcc.json"
+      ]
+    },
+    {
+      "id": "G08",
+      "status": "PASS",
+      "evidence": [
+        "pipeline-broker-validation.json",
+        "cross-path-parity.json",
+        "local-validation.json"
+      ]
+    },
+    {
+      "id": "G09",
+      "status": "PASS",
+      "evidence": [
+        "runtime-post-mvcc-soak.json",
+        "pipeline-broker-validation.json",
+        "stream-bronze-readback.json"
+      ]
+    },
+    {
+      "id": "G10",
+      "status": "PASS",
+      "evidence": [
+        "real-september-risk.json",
+        "local-validation.json"
+      ]
+    },
+    {
+      "id": "G11",
+      "status": "PASS",
+      "evidence": [
+        "operational-soak.json",
+        "runtime-post-mvcc-soak.json"
+      ]
+    },
+    {
+      "id": "G12",
+      "status": "PASS",
+      "evidence": [
+        "two-api-fault-matrix.json",
+        "two-api-reader-pressure-current.json",
+        "two-api-load-profiles-representative.json"
+      ]
+    },
+    {
+      "id": "G13",
+      "status": "PASS",
+      "evidence": [
+        "real-dashboard-current.json",
+        "compact-ui-validation.json",
+        "served-ui.json"
+      ]
+    },
+    {
+      "id": "G14",
+      "status": "PASS",
+      "evidence": [
+        "local-validation.json"
+      ]
+    },
+    {
+      "id": "G15",
+      "status": "PENDING",
+      "evidence": [
+        "remote-release-current.json"
+      ]
+    },
+    {
+      "id": "G16",
+      "status": "PASS",
+      "evidence": [
+        "runtime-final-identity.json",
+        "provider-usage-policy.json"
+      ]
+    },
+    {
+      "id": "G17",
+      "status": "PENDING",
+      "evidence": [
+        "secret-scan.json",
+        "candidate-manifest.json",
+        "remote-release-current.json"
+      ]
+    }
+  ],
+  "pending_reasons": {
+    "G15": "User commit/push and actual required checks/rules; six-job workflow prepared, not claimed remotely executed",
+    "G17": "Final score/release acceptance requires G15; scanner/freeze receipt is linked separately, no automatic score awards"
+  },
+  "limitations": [
+    "Local observation, not cloud HA or production SLO",
+    "Kafka backlog observed decreasing but not caught up",
+    "Historical HTTP/browser/ops evidence has explicit provenance; resource-bound change has affected PostgreSQL revalidation",
+    "No paid semantic rerun; preserved run6 limitations remain",
+    "Word visual QA deferred by user"
+  ]
+}

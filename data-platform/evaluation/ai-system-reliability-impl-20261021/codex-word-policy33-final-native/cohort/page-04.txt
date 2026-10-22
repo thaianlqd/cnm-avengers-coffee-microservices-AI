@@ -1,0 +1,42 @@
+AVENGERS COFFEE SUPPLY CHAIN & BI PLATFORM DỮ LIỆU TẦNG SILVER LAKE
+Mang đi chiếm tỷ trọng lớn
+57.14285714285714 Căn cứ Đơn hàng và doanh thu; phạm vi: các đối tượng của xếp
+nhất (57.14%) trong doanh thu
+hạng chính. Xem bằng chứng và phép tính kèm theo.
+của phạm vi đã chọn; tỷ trọng
+nhỏ nhất là 14.29%. Phạm vi:
+trong Bottom 2 của xếp hạng
+chính.
+Trong 2 nhóm quan sát đã trả
+100 Căn cứ Đơn hàng và doanh thu; phạm vi: các đối tượng của xếp
+về, doanh thu cao nhất ở Quán
+hạng chính. Xem bằng chứng và phép tính kèm theo.
+B (400 VND), thấp nhất ở Quán
+A (300 VND); chênh lệch là 100
+VND. Phạm vi: trong Bottom 2
+của xếp hạng chính.
+Doanh thu (KIOSK): chỉ có một
+— Căn cứ Đơn hàng và doanh thu; phạm vi: các đối tượng của xếp
+kỳ quan sát, chưa đủ để so
+hạng chính. Xem bằng chứng và phép tính kèm theo.
+sánh biến động. Phạm vi: trong
+Bottom 2 của xếp hạng chính.
+Tổng doanh thu của 2 mục
+700 Căn cứ Đơn hàng và doanh thu; phạm vi: tập Bottom N. Xem
+trong xếp hạng: 700 VND; đây
+bằng chứng và phép tính kèm theo.
+là tổng của tập Bottom N đã
+trả về.
+Doanh thu (STORE) đạt đỉnh
+— Căn cứ Đơn hàng và doanh thu; phạm vi: các đối tượng của xếp
+200 VND ở 2026-09-
+hạng chính. Xem bằng chứng và phép tính kèm theo.
+15T00:00:00; thấp nhất 100
+VND ở 2026-09-01T00:00:00.
+Phạm vi: trong Bottom 2 của
+xếp hạng chính.
+IV. TRỰC QUAN HÓA & PHÂN BỔ DỮ LIỆU
+Các góc nhìn trực quan được AI tự động tổng hợp từ dữ liệu giao dịch tầng Silver.
+Tài liệu nội bộ bảo mật • Bản quyền thuộc Avengers Coffee Data
+Platform
+Định dạng chuẩn Microsoft Word (.docx)

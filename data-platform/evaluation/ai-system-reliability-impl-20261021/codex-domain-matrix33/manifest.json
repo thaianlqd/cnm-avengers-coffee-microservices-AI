@@ -1,0 +1,42 @@
+{
+  "domains": {
+    "orders": "revenue",
+    "order_items": "item_revenue",
+    "products": "quantity_sold",
+    "stores": "store_revenue",
+    "customers": "customer_count",
+    "promotions": "promotion_redemption_count",
+    "payments": "payment_count",
+    "delivery": "delivery_count",
+    "inventory": "sale_positions",
+    "product_reviews": "review_count",
+    "store_reviews": "store_review_count",
+    "staff_shifts": "shift_count",
+    "cashier_reconciliation": "reconciled_shifts",
+    "customer_surveys": "survey_response_count",
+    "wishlist_favorites": "favorite_count",
+    "hourly": "hourly_orders",
+    "customer_wallet": "wallet_topup_amount",
+    "gift_cards": "gift_card_issued_count",
+    "shipper_finance": "cod_remitted_amount",
+    "customer_care": "support_conversation_count",
+    "news_content": "published_article_count",
+    "franchise_network": "franchise_application_count",
+    "franchise_finance": "combo_order_count",
+    "kiosk_operations": "kiosk_shift_count",
+    "survey_answers": "survey_answer_count",
+    "loyalty_awards": "loyalty_points_awarded"
+  },
+  "densities": [
+    "rich",
+    "sparse",
+    "empty"
+  ],
+  "depths": [
+    "focused",
+    "deep",
+    "comprehensive"
+  ],
+  "expected_cells": 234,
+  "source_sha256": "eb24ff951dae75999618b16a90cf98cf82463baa353d7df9ec0d6647dff9db0f"
+}

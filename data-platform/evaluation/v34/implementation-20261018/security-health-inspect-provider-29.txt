@@ -1,0 +1,89 @@
+/app/server.py:72: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+/usr/local/lib/python3.11/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  return self.router.on_event(event_type)
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_03f1a294033848c8bc93c28c29712cc4","job_id":null,"duration_ms":0.083}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_60ca0e8930734d44a27b3128d186c2be","job_id":null,"duration_ms":0.034}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_c51ed8bf195c4265908aaa15063a8a9f","job_id":null,"duration_ms":0.034}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_fe0062b25844456cbbc792dabb89751d","job_id":null,"duration_ms":0.033}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_336c3a96b3ea4a899ee3919f14237be1","job_id":null,"duration_ms":0.045}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_ebdb52de2c394ef488071216d3882687","job_id":null,"duration_ms":0.04}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_65310c12113140e0977af75165eb983b","job_id":null,"duration_ms":0.066}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_c009bb0d43b14f9a9f5ea0b3486199fa","job_id":null,"duration_ms":0.061}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_3afac9f674754c5fb7489be41f66c79b","job_id":null,"duration_ms":0.035}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_24010689422445c58de234a0f2446c73","job_id":null,"duration_ms":0.031}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_4c24a63482cb424e94068e8270de4217","job_id":null,"duration_ms":0.023}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_d1473a679d204dcea02e8d61f67635d0","job_id":null,"duration_ms":0.029}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_1896184e28cd4dd6a1fdd10de5af5236","job_id":null,"duration_ms":0.022}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_d66326f6f0e4487dbad452ec761099c0","job_id":null,"duration_ms":0.031}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_6008ef118bbb47d3983f582fe92ecb25","job_id":null,"duration_ms":0.031}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_d1090ef17d5243b2b914ab7b5256772f","job_id":null,"duration_ms":0.029}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_bd261069e3114e49af724c5b97354cba","job_id":null,"duration_ms":0.029}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_c298934f99104ad283785c6f1b58c38f","job_id":null,"duration_ms":0.028}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_74a89af71e2641c99211f93f9db3a976","job_id":null,"duration_ms":0.027}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_13af51761bf24e6a95f4d9fd061a8be0","job_id":null,"duration_ms":0.068}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_b0fc59154e1c4bdd8b093187b29f9313","job_id":null,"duration_ms":0.05}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_02b0a550bf3341169b1c64a36979cbba","job_id":null,"duration_ms":0.045}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_caba70ea9492444fa4ca9dda8099fc3b","job_id":null,"duration_ms":0.025}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_3052dffd6c074fda95437b25bc78b49f","job_id":null,"duration_ms":0.054}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_2e266ad4510b4727bb5dcd765c0f38de","job_id":null,"duration_ms":0.052}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_de0583413bd54e52acf65e8a4fcdd556","job_id":null,"duration_ms":0.063}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_1fbe4d5123fc46b0a4be8a93b0c5b59d","job_id":null,"duration_ms":0.066}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_42befb45cc764a8f9542f221b4c656b6","job_id":null,"duration_ms":0.07}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_80d4b7338b214f8cb647d9489387d4ec","job_id":null,"duration_ms":2.098}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_3b5100f115bd4a069d36087dff3618db","job_id":null,"duration_ms":0.038}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_b1ff23343ddb47b4a19c04caec190beb","job_id":null,"duration_ms":0.187}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_6612ab87c87e4803858487dc8fef9cdf","job_id":null,"duration_ms":0.038}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_d8ddff95646744e7b7e8795ca391f716","job_id":null,"duration_ms":0.031}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_7a2b4b36a7c640058f9801a0ba866800","job_id":null,"duration_ms":0.034}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_e41cd930df8c49b383f7e63bff1b4df5","job_id":null,"duration_ms":0.027}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_2b86f7f21f1f49a4a0e46a3872c95fcb","job_id":null,"duration_ms":0.023}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_f55eebab19dc41a680b9232b3c99dc2a","job_id":null,"duration_ms":0.03}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_a994a28d2f52423d820683ebc6bc7317","job_id":null,"duration_ms":0.039}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_0d7a751a20904e73bb78b9be5ebba005","job_id":null,"duration_ms":0.032}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_f0f04f797bc542b283cb6a920370f6bd","job_id":null,"duration_ms":0.038}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_07076d35483e4c48bd4ef22f50fc47af","job_id":null,"duration_ms":0.059}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_4783c56d230b445783950faae3fa70ca","job_id":null,"duration_ms":0.039}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_b8ec235f256548129a7e7fc44936e3c4","job_id":null,"duration_ms":0.243}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_c56e389c59be4be3ae3178cc57339f2a","job_id":null,"duration_ms":0.142}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_6d1f9b5eb1ce4ff8ab8fb0c5d669dfb6","job_id":null,"duration_ms":0.155}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_6479cf00aa51426a882807038424e9f5","job_id":null,"duration_ms":0.05}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_c4e2aefc9ff8474fb4f1f5da4294cbaa","job_id":null,"duration_ms":0.045}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_7ec3e03189274ee5863e4e6d872b5ed6","job_id":null,"duration_ms":0.031}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_4acf710b368b425bbdd9f890ced0b045","job_id":null,"duration_ms":0.089}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_64429fddf52c485d8f19c858e93ba6ac","job_id":null,"duration_ms":0.026}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_09b12e46240445b2b32368a0d9714259","job_id":null,"duration_ms":0.032}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_b65075ce2caf4ce8be7fe8c0231e5f6b","job_id":null,"duration_ms":0.023}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_5beb9b136efa4a1083bc29c305834355","job_id":null,"duration_ms":0.03}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_8b47391d732d433ebb3b8c0f4d1a9ad5","job_id":null,"duration_ms":0.022}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_7b23b3523a0e45e686f0b343ec4dfb20","job_id":null,"duration_ms":0.028}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_d5b6b4f2aed5416eb22f5d439dcec24d","job_id":null,"duration_ms":0.023}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_710ab9387abc4651817b6398d6b87b4a","job_id":null,"duration_ms":0.028}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_4116da6f0cfd48049ccae6edebca4179","job_id":null,"duration_ms":0.022}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_2594a4b6c7e241e4809f7e80ffafbc03","job_id":null,"duration_ms":0.021}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_ef2c066165254923b219d6640fd16ebd","job_id":null,"duration_ms":0.021}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_f771e88f2ab34779930b03ce82b4f0f6","job_id":null,"duration_ms":0.021}
+09:14:05 [INFO] [analytics.events] {"stage":"request","status":"denied","request_id":"req_c81b1a8f66f3431db3f5f8e147f99caf","job_id":null,"duration_ms":0.022}
+......................09:14:07 [WARNING] [ai-analytics] [DataCoverage] refresh unavailable
+....09:14:07 [INFO] [analytics.events] {"stage":"provider","status":"completed","request_id":null,"job_id":null}
+09:14:07 [INFO] [analytics.events] {"stage":"provider","status":"completed","request_id":null,"job_id":null}
+09:14:07 [INFO] [analytics.events] {"stage":"provider","status":"completed","request_id":null,"job_id":null}
+.09:14:07 [INFO] [analytics.events] {"stage":"provider","status":"completed","request_id":null,"job_id":null,"duration_ms":40}
+09:14:07 [INFO] [analytics.events] {"stage":"provider","status":"failed","request_id":null,"job_id":null,"duration_ms":12000}
+09:14:07 [INFO] [analytics.events] {"stage":"provider","status":"failed","request_id":null,"job_id":null,"duration_ms":100}
+09:14:07 [INFO] [analytics.events] {"stage":"provider","status":"failed","request_id":null,"job_id":null,"duration_ms":500}
+..
+----------------------------------------------------------------------
+Ran 29 tests in 2.298s
+
+OK

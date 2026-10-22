@@ -1,0 +1,1043 @@
+{
+  "outline": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          104.334335,
+          10.486544
+        ],
+        [
+          105.199915,
+          10.88931
+        ],
+        [
+          106.24967,
+          10.961812
+        ],
+        [
+          105.810524,
+          11.567615
+        ],
+        [
+          107.491403,
+          12.337206
+        ],
+        [
+          107.614548,
+          13.535531
+        ],
+        [
+          107.382727,
+          14.202441
+        ],
+        [
+          107.564525,
+          15.202173
+        ],
+        [
+          107.312706,
+          15.908538
+        ],
+        [
+          106.556008,
+          16.604284
+        ],
+        [
+          105.925762,
+          17.485315
+        ],
+        [
+          105.094598,
+          18.666975
+        ],
+        [
+          103.896532,
+          19.265181
+        ],
+        [
+          104.183388,
+          19.624668
+        ],
+        [
+          104.822574,
+          19.886642
+        ],
+        [
+          104.435,
+          20.758733
+        ],
+        [
+          103.203861,
+          20.766562
+        ],
+        [
+          102.754896,
+          21.675137
+        ],
+        [
+          102.170436,
+          22.464753
+        ],
+        [
+          102.706992,
+          22.708795
+        ],
+        [
+          103.504515,
+          22.703757
+        ],
+        [
+          104.476858,
+          22.81915
+        ],
+        [
+          105.329209,
+          23.352063
+        ],
+        [
+          105.811247,
+          22.976892
+        ],
+        [
+          106.725403,
+          22.794268
+        ],
+        [
+          106.567273,
+          22.218205
+        ],
+        [
+          107.04342,
+          21.811899
+        ],
+        [
+          108.05018,
+          21.55238
+        ],
+        [
+          106.715068,
+          20.696851
+        ],
+        [
+          105.881682,
+          19.75205
+        ],
+        [
+          105.662006,
+          19.058165
+        ],
+        [
+          106.426817,
+          18.004121
+        ],
+        [
+          107.361954,
+          16.697457
+        ],
+        [
+          108.269495,
+          16.079742
+        ],
+        [
+          108.877107,
+          15.276691
+        ],
+        [
+          109.33527,
+          13.426028
+        ],
+        [
+          109.200136,
+          11.666859
+        ],
+        [
+          108.36613,
+          11.008321
+        ],
+        [
+          107.220929,
+          10.364484
+        ],
+        [
+          106.405113,
+          9.53084
+        ],
+        [
+          105.158264,
+          8.59976
+        ],
+        [
+          104.795185,
+          9.241038
+        ],
+        [
+          105.076202,
+          9.918491
+        ],
+        [
+          104.334335,
+          10.486544
+        ]
+      ]
+    ]
+  },
+  "cities": [
+    {
+      "label": "Hà Nội",
+      "aliases": [
+        "ha noi",
+        "hà nội",
+        "hn",
+        "hanoi"
+      ],
+      "place": "Hanoi",
+      "geonames_id": "1581130",
+      "coordinates": [
+        105.84117,
+        21.0245
+      ]
+    },
+    {
+      "label": "Hồ Chí Minh",
+      "aliases": [
+        "hcm",
+        "tphcm",
+        "tp.hcm",
+        "tp hcm",
+        "sai gon",
+        "saigon",
+        "ho chi minh",
+        "hồ chí minh",
+        "Thành phố Hồ Chí Minh"
+      ],
+      "place": "Ho Chi Minh City",
+      "geonames_id": "1566083",
+      "coordinates": [
+        106.62965,
+        10.82302
+      ]
+    },
+    {
+      "label": "Đà Nẵng",
+      "aliases": [
+        "da nang",
+        "đà nẵng",
+        "dn",
+        "danang"
+      ],
+      "place": "Da Nang",
+      "geonames_id": "1583992",
+      "coordinates": [
+        108.22083,
+        16.06778
+      ]
+    },
+    {
+      "label": "Cần Thơ",
+      "aliases": [
+        "can tho",
+        "cần thơ",
+        "cantho"
+      ],
+      "place": "Cần Thơ",
+      "geonames_id": "1586203",
+      "coordinates": [
+        105.78825,
+        10.03711
+      ]
+    },
+    {
+      "label": "Hải Phòng",
+      "aliases": [
+        "hai phong",
+        "hải phòng",
+        "haiphong"
+      ],
+      "place": "Haiphong",
+      "geonames_id": "1581298",
+      "coordinates": [
+        106.68345,
+        20.86481
+      ]
+    },
+    {
+      "label": "Nghệ An",
+      "aliases": [
+        "nghe an",
+        "nghệ an"
+      ],
+      "place": "Vinh",
+      "geonames_id": "1562798",
+      "coordinates": [
+        105.69232,
+        18.67337
+      ]
+    },
+    {
+      "label": "Bắc Ninh",
+      "aliases": [
+        "bac ninh",
+        "bắc ninh"
+      ],
+      "place": "Bắc Ninh",
+      "geonames_id": "1591449",
+      "coordinates": [
+        106.07631,
+        21.18608
+      ]
+    },
+    {
+      "label": "Lâm Đồng",
+      "aliases": [
+        "lam dong",
+        "lâm đồng",
+        "da lat",
+        "đà lạt"
+      ],
+      "place": "Ðà Lạt",
+      "geonames_id": "1584071",
+      "coordinates": [
+        108.44193,
+        11.94646
+      ]
+    },
+    {
+      "label": "Bình Dương",
+      "aliases": [
+        "binh duong",
+        "bình dương"
+      ],
+      "place": "Thủ Dầu Một",
+      "geonames_id": "1565022",
+      "coordinates": [
+        106.6519,
+        10.9804
+      ]
+    },
+    {
+      "label": "Đồng Nai",
+      "aliases": [
+        "dong nai",
+        "đồng nai"
+      ],
+      "place": "Biên Hòa",
+      "geonames_id": "1587923",
+      "coordinates": [
+        106.82432,
+        10.94469
+      ]
+    },
+    {
+      "label": "Khánh Hòa",
+      "aliases": [
+        "khanh hoa",
+        "khánh hòa",
+        "nha trang"
+      ],
+      "place": "Nha Trang",
+      "geonames_id": "1572151",
+      "coordinates": [
+        109.19432,
+        12.24507
+      ]
+    },
+    {
+      "label": "Quảng Ninh",
+      "aliases": [
+        "quang ninh",
+        "quảng ninh",
+        "ha long"
+      ],
+      "place": "Hạ Long",
+      "geonames_id": "1580410",
+      "coordinates": [
+        107.07336,
+        20.95045
+      ]
+    },
+    {
+      "label": "Thừa Thiên - Huế",
+      "aliases": [
+        "hue",
+        "huế"
+      ],
+      "place": "Huế",
+      "geonames_id": "1580240",
+      "coordinates": [
+        107.59546,
+        16.4619
+      ]
+    },
+    {
+      "label": "Bà Rịa - Vũng Tàu",
+      "aliases": [
+        "vung tau",
+        "vũng tàu"
+      ],
+      "place": "Vũng Tàu",
+      "geonames_id": "1562414",
+      "coordinates": [
+        107.08426,
+        10.34599
+      ]
+    },
+    {
+      "label": "Thanh Hóa",
+      "aliases": [
+        "thanh hoa",
+        "thanh hóa"
+      ],
+      "place": "Thanh Hóa",
+      "geonames_id": "1566166",
+      "coordinates": [
+        105.76667,
+        19.8
+      ]
+    },
+    {
+      "label": "Kiên Giang",
+      "aliases": [
+        "kien giang",
+        "kiên giang",
+        "phu quoc",
+        "phú quốc"
+      ],
+      "place": "Rạch Giá",
+      "geonames_id": "1568510",
+      "coordinates": [
+        105.08091,
+        10.01245
+      ]
+    },
+    {
+      "label": "An Giang",
+      "aliases": [
+        "Long Xuyen"
+      ],
+      "place": "Long Xuyên",
+      "geonames_id": "1575627",
+      "coordinates": [
+        105.43518,
+        10.38639
+      ]
+    },
+    {
+      "label": "Bắc Giang",
+      "aliases": [
+        "Bac Giang"
+      ],
+      "place": "Bắc Giang",
+      "geonames_id": "1591527",
+      "coordinates": [
+        106.1946,
+        21.27307
+      ]
+    },
+    {
+      "label": "Bắc Kạn",
+      "aliases": [
+        "Bac Kan"
+      ],
+      "place": "Bắc Kạn",
+      "geonames_id": "1591538",
+      "coordinates": [
+        105.83481,
+        22.14701
+      ]
+    },
+    {
+      "label": "Bạc Liêu",
+      "aliases": [
+        "Bac Lieu"
+      ],
+      "place": "Bạc Liêu",
+      "geonames_id": "1591474",
+      "coordinates": [
+        105.72776,
+        9.29414
+      ]
+    },
+    {
+      "label": "Bến Tre",
+      "aliases": [
+        "Ben Tre"
+      ],
+      "place": "Bến Tre",
+      "geonames_id": "1587976",
+      "coordinates": [
+        106.37585,
+        10.24147
+      ]
+    },
+    {
+      "label": "Bình Định",
+      "aliases": [
+        "Qui Nhon"
+      ],
+      "place": "Qui Nhon",
+      "geonames_id": "1568574",
+      "coordinates": [
+        109.22367,
+        13.77648
+      ]
+    },
+    {
+      "label": "Bình Phước",
+      "aliases": [
+        "Dong Xoai"
+      ],
+      "place": "Đồng Xoài",
+      "geonames_id": "1582436",
+      "coordinates": [
+        106.88324,
+        11.53495
+      ]
+    },
+    {
+      "label": "Bình Thuận",
+      "aliases": [
+        "Phan Thiet"
+      ],
+      "place": "Phan Thiết",
+      "geonames_id": "1571058",
+      "coordinates": [
+        108.10208,
+        10.92889
+      ]
+    },
+    {
+      "label": "Cà Mau",
+      "aliases": [
+        "Ca Mau"
+      ],
+      "place": "Cà Mau",
+      "geonames_id": "1586443",
+      "coordinates": [
+        105.15242,
+        9.17682
+      ]
+    },
+    {
+      "label": "Cao Bằng",
+      "aliases": [
+        "Cao Bang"
+      ],
+      "place": "Cao Bằng",
+      "geonames_id": "1586185",
+      "coordinates": [
+        106.25786,
+        22.66568
+      ]
+    },
+    {
+      "label": "Đắk Lắk",
+      "aliases": [
+        "Buon Ma Thuot"
+      ],
+      "place": "Buôn Ma Thuột",
+      "geonames_id": "1586896",
+      "coordinates": [
+        108.03775,
+        12.66747
+      ]
+    },
+    {
+      "label": "Đắk Nông",
+      "aliases": [
+        "Gia Nghia"
+      ],
+      "place": "Gia Nghĩa",
+      "geonames_id": "1581834",
+      "coordinates": [
+        107.69074,
+        12.00423
+      ]
+    },
+    {
+      "label": "Điện Biên",
+      "aliases": [
+        "Dien Bien Phu"
+      ],
+      "place": "Dien Bien Phu",
+      "geonames_id": "1583477",
+      "coordinates": [
+        103.02301,
+        21.38602
+      ]
+    },
+    {
+      "label": "Đồng Tháp",
+      "aliases": [
+        "Cao Lanh"
+      ],
+      "place": "Cao Lãnh",
+      "geonames_id": "1586151",
+      "coordinates": [
+        105.63294,
+        10.46017
+      ]
+    },
+    {
+      "label": "Gia Lai",
+      "aliases": [
+        "Pleiku"
+      ],
+      "place": "Pleiku",
+      "geonames_id": "1569684",
+      "coordinates": [
+        108.0,
+        13.98333
+      ]
+    },
+    {
+      "label": "Hà Giang",
+      "aliases": [
+        "Ha Giang"
+      ],
+      "place": "Hà Giang",
+      "geonames_id": "1581349",
+      "coordinates": [
+        104.98357,
+        22.82333
+      ]
+    },
+    {
+      "label": "Hà Nam",
+      "aliases": [
+        "Phu Ly"
+      ],
+      "place": "Phủ Lý",
+      "geonames_id": "1570449",
+      "coordinates": [
+        105.91221,
+        20.54531
+      ]
+    },
+    {
+      "label": "Hà Tĩnh",
+      "aliases": [
+        "Ha Tinh"
+      ],
+      "place": "Hà Tĩnh",
+      "geonames_id": "1581047",
+      "coordinates": [
+        105.90569,
+        18.34282
+      ]
+    },
+    {
+      "label": "Hải Dương",
+      "aliases": [
+        "Hai Duong"
+      ],
+      "place": "Hải Dương",
+      "geonames_id": "1581326",
+      "coordinates": [
+        106.33302,
+        20.94099
+      ]
+    },
+    {
+      "label": "Hậu Giang",
+      "aliases": [
+        "Vi Thanh"
+      ],
+      "place": "Vị Thanh",
+      "geonames_id": "1562538",
+      "coordinates": [
+        105.47012,
+        9.78449
+      ]
+    },
+    {
+      "label": "Hòa Bình",
+      "aliases": [
+        "Hoa Binh"
+      ],
+      "place": "Hòa Bình",
+      "geonames_id": "1580830",
+      "coordinates": [
+        105.33759,
+        20.81717
+      ]
+    },
+    {
+      "label": "Hưng Yên",
+      "aliases": [
+        "Hung Yen"
+      ],
+      "place": "Hưng Yên",
+      "geonames_id": "1580142",
+      "coordinates": [
+        106.05112,
+        20.64637
+      ]
+    },
+    {
+      "label": "Kon Tum",
+      "aliases": [
+        "Kon Tum"
+      ],
+      "place": "Kon Tum",
+      "geonames_id": "1578500",
+      "coordinates": [
+        108.00759,
+        14.35451
+      ]
+    },
+    {
+      "label": "Lai Châu",
+      "aliases": [
+        "Lai Chau"
+      ],
+      "place": "Lai Châu",
+      "geonames_id": "8456741",
+      "coordinates": [
+        103.45824,
+        22.39644
+      ]
+    },
+    {
+      "label": "Lạng Sơn",
+      "aliases": [
+        "Lang Son"
+      ],
+      "place": "Lạng Sơn",
+      "geonames_id": "1576633",
+      "coordinates": [
+        106.76101,
+        21.85264
+      ]
+    },
+    {
+      "label": "Lào Cai",
+      "aliases": [
+        "Lao Cai"
+      ],
+      "place": "Lào Cai",
+      "geonames_id": "1576303",
+      "coordinates": [
+        103.97066,
+        22.48556
+      ]
+    },
+    {
+      "label": "Long An",
+      "aliases": [
+        "Tan An"
+      ],
+      "place": "Tân An",
+      "geonames_id": "1567069",
+      "coordinates": [
+        106.41366,
+        10.53589
+      ]
+    },
+    {
+      "label": "Nam Định",
+      "aliases": [
+        "Nam Dinh"
+      ],
+      "place": "Nam Định",
+      "geonames_id": "1573517",
+      "coordinates": [
+        106.17729,
+        20.43389
+      ]
+    },
+    {
+      "label": "Ninh Bình",
+      "aliases": [
+        "Ninh Binh"
+      ],
+      "place": "Hoa Lư",
+      "geonames_id": "1571968",
+      "coordinates": [
+        105.97965,
+        20.25809
+      ]
+    },
+    {
+      "label": "Ninh Thuận",
+      "aliases": [
+        "Phan Rang-Thap Cham"
+      ],
+      "place": "Phan Rang-Tháp Chàm",
+      "geonames_id": "1571067",
+      "coordinates": [
+        108.98858,
+        11.56432
+      ]
+    },
+    {
+      "label": "Phú Thọ",
+      "aliases": [
+        "Viet Tri"
+      ],
+      "place": "Việt Trì",
+      "geonames_id": "1562820",
+      "coordinates": [
+        105.40198,
+        21.32274
+      ]
+    },
+    {
+      "label": "Phú Yên",
+      "aliases": [
+        "Tuy Hoa"
+      ],
+      "place": "Tuy Hòa",
+      "geonames_id": "1563281",
+      "coordinates": [
+        109.32094,
+        13.09546
+      ]
+    },
+    {
+      "label": "Quảng Bình",
+      "aliases": [
+        "Dong Hoi"
+      ],
+      "place": "Đồng Hới",
+      "geonames_id": "1582886",
+      "coordinates": [
+        106.62226,
+        17.46885
+      ]
+    },
+    {
+      "label": "Quảng Nam",
+      "aliases": [
+        "Tam Ky"
+      ],
+      "place": "Tam Kỳ",
+      "geonames_id": "1567148",
+      "coordinates": [
+        108.47403,
+        15.57364
+      ]
+    },
+    {
+      "label": "Quảng Ngãi",
+      "aliases": [
+        "Quang Ngai"
+      ],
+      "place": "Quảng Ngãi",
+      "geonames_id": "1568770",
+      "coordinates": [
+        108.79232,
+        15.12047
+      ]
+    },
+    {
+      "label": "Quảng Trị",
+      "aliases": [
+        "Dong Ha"
+      ],
+      "place": "Ðông Hà",
+      "geonames_id": "1582926",
+      "coordinates": [
+        107.10031,
+        16.81625
+      ]
+    },
+    {
+      "label": "Sóc Trăng",
+      "aliases": [
+        "Soc Trang"
+      ],
+      "place": "Sóc Trăng",
+      "geonames_id": "1567788",
+      "coordinates": [
+        105.97193,
+        9.59995
+      ]
+    },
+    {
+      "label": "Sơn La",
+      "aliases": [
+        "Son La"
+      ],
+      "place": "Sơn La",
+      "geonames_id": "1567681",
+      "coordinates": [
+        103.91882,
+        21.3256
+      ]
+    },
+    {
+      "label": "Tây Ninh",
+      "aliases": [
+        "Tay Ninh"
+      ],
+      "place": "Tây Ninh",
+      "geonames_id": "1566559",
+      "coordinates": [
+        106.09828,
+        11.31004
+      ]
+    },
+    {
+      "label": "Thái Bình",
+      "aliases": [
+        "Thai Binh"
+      ],
+      "place": "Thái Bình",
+      "geonames_id": "1566346",
+      "coordinates": [
+        106.34002,
+        20.45
+      ]
+    },
+    {
+      "label": "Thái Nguyên",
+      "aliases": [
+        "Thai Nguyen"
+      ],
+      "place": "Thái Nguyên",
+      "geonames_id": "1566319",
+      "coordinates": [
+        105.84817,
+        21.59422
+      ]
+    },
+    {
+      "label": "Tiền Giang",
+      "aliases": [
+        "My Tho"
+      ],
+      "place": "Mỹ Tho",
+      "geonames_id": "1574023",
+      "coordinates": [
+        106.35996,
+        10.36004
+      ]
+    },
+    {
+      "label": "Trà Vinh",
+      "aliases": [
+        "Tra Vinh"
+      ],
+      "place": "Trà Vinh",
+      "geonames_id": "1563926",
+      "coordinates": [
+        106.34225,
+        9.94719
+      ]
+    },
+    {
+      "label": "Tuyên Quang",
+      "aliases": [
+        "Tuyen Quang"
+      ],
+      "place": "Tuyên Quang",
+      "geonames_id": "1563287",
+      "coordinates": [
+        105.21424,
+        21.82356
+      ]
+    },
+    {
+      "label": "Vĩnh Long",
+      "aliases": [
+        "Vinh Long"
+      ],
+      "place": "Vĩnh Long",
+      "geonames_id": "1562693",
+      "coordinates": [
+        105.9722,
+        10.25369
+      ]
+    },
+    {
+      "label": "Vĩnh Phúc",
+      "aliases": [
+        "Vinh Yen"
+      ],
+      "place": "Vĩnh Yên",
+      "geonames_id": "1562548",
+      "coordinates": [
+        105.60489,
+        21.30891
+      ]
+    },
+    {
+      "label": "Yên Bái",
+      "aliases": [
+        "Yen Bai"
+      ],
+      "place": "Yên Bái",
+      "geonames_id": "1560349",
+      "coordinates": [
+        104.9113,
+        21.72288
+      ]
+    }
+  ],
+  "regions": [
+    {
+      "label": "Miền Bắc",
+      "aliases": [
+        "miền Bắc",
+        "phía Bắc",
+        "northern region",
+        "north Vietnam",
+        "Bắc Bộ"
+      ],
+      "coordinates": [
+        106.41857,
+        21.00646
+      ],
+      "representative": true
+    },
+    {
+      "label": "Miền Trung",
+      "aliases": [
+        "miền Trung",
+        "central Vietnam",
+        "miền Trung và Tây Nguyên",
+        "central region"
+      ],
+      "coordinates": [
+        107.48525,
+        15.86576
+      ],
+      "representative": true
+    },
+    {
+      "label": "Miền Nam",
+      "aliases": [
+        "miền Nam",
+        "phía Nam",
+        "southern region",
+        "south Vietnam",
+        "Nam Bộ"
+      ],
+      "coordinates": [
+        106.34322,
+        10.52394
+      ],
+      "representative": true
+    }
+  ],
+  "reportingMembership": {
+    "Hà Nội": "Miền Bắc",
+    "Hải Phòng": "Miền Bắc",
+    "Bắc Ninh": "Miền Bắc",
+    "Quảng Ninh": "Miền Bắc",
+    "Đà Nẵng": "Miền Trung",
+    "Nghệ An": "Miền Trung",
+    "Thanh Hóa": "Miền Trung",
+    "Thừa Thiên - Huế": "Miền Trung",
+    "Khánh Hòa": "Miền Trung",
+    "Lâm Đồng": "Miền Trung",
+    "Hồ Chí Minh": "Miền Nam",
+    "Cần Thơ": "Miền Nam",
+    "Bình Dương": "Miền Nam",
+    "Đồng Nai": "Miền Nam",
+    "Bà Rịa - Vũng Tàu": "Miền Nam",
+    "Kiên Giang": "Miền Nam"
+  },
+  "reportingMembershipSource": "warehouse_reporting_geography_v1"
+}

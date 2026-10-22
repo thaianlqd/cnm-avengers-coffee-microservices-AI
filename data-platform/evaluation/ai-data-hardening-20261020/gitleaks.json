@@ -1,0 +1,40 @@
+{
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00",
+  "scanner": {
+    "name": "gitleaks",
+    "version": "8.30.1",
+    "image_digest": "sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
+  },
+  "config_sha256": "5f7ecc6da3f18bcfbc773d09b338c584580a34fb81fd4a119c76aa872009a3f6",
+  "command": "dir /scan --config /scan/.github/gitleaks-data-platform.toml --redact=100 --no-banner --exit-code=1 --ignore-gitleaks-allow",
+  "normal": {
+    "exit_code": 0,
+    "findings": 0,
+    "scope": "Full staged current source and nonignored evidence, including final acceptance report and release receipts",
+    "staged_files": 1036
+  },
+  "positive_control": {
+    "expected_exit": 42,
+    "actual_exit": 42,
+    "findings": 2,
+    "rules": [
+      "generic-api-key",
+      "github-pat"
+    ],
+    "tokens": "synthetic inactive only"
+  },
+  "config_allowlist_changes": 0,
+  "credential_rotation_required": false,
+  "logs": [
+    {
+      "name": "dp-hardening-gitleaks-final2.log",
+      "sha256": "45cf778405a832a67b225820b616ac8597c8e928e497201ef884a0db123f61e3"
+    },
+    {
+      "name": "dp-hardening-positive-final.log",
+      "sha256": "98d4511bfbcffdc5586946d4eb8a46417ccee93390735b7968063aa013a1b0e7"
+    }
+  ]
+}

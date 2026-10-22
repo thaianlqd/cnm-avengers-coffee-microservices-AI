@@ -1,17 +1,110 @@
 import uuid
+from copy import deepcopy
 import unicodedata
 import urllib.parse
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
+from pydantic import BaseModel, ConfigDict, Field
 from psycopg2.extras import Json
-from db import get_db_conn
+from db import get_report_writer_conn as get_db_conn
 from common import SavedReportCreate, ReportExportLogCreate
 from services.sql_service import SqlSafetyError, QueryExecutionError, execute_read_only
 from services.docx_service import generate_report_docx
+from services.analysis_catalog import AnalysisError
 
 router = APIRouter(prefix="/api/reports", tags=["Reports Management"])
+
+
+def _principal(permission=None):
+    from services.access_policy import active_principal,current_principal,require_permission
+    if active_principal.get() is None: return None
+    principal=current_principal(required=True)
+    if permission: require_permission(principal,permission)
+    return principal
+
+
+def _owned_where(*,allow_legacy=False):
+    principal=_principal()
+    if principal is None: return '1=1',[]  # Internal compatibility; HTTP middleware authenticates.
+    predicate='(owner_key=%s AND owner_type=\'account\' AND access_policy_fingerprint=%s)'
+    if allow_legacy and principal.permits('reports.legacy'):
+        predicate='('+predicate+" OR (owner_key IS NULL AND owner_type='legacy'))"
+    return predicate,[principal.owner_key,principal.access_fingerprint]
+
+
+def _audit(action,report_id=None):
+    if _principal() is not None:
+        from services.telemetry import audit
+        audit(action,'report',resource_key=report_id)
+
+
+def _authoritative_report(data,permission='reports.export'):
+    principal=_principal(permission)
+    if principal is None: return data
+    if data.get('saved_report_id'):
+        # Reopened reports retain their own stored snapshot after the transient analysis session expires.
+        # get_saved_report applies the current owner/access predicate and re-verifies artifacts/claims.
+        stored=get_saved_report(data['saved_report_id'])
+        response=deepcopy(stored.get('module_config') or {})
+        if data.get('revision') is not None and data['revision']!=response.get('revision'):
+            raise HTTPException(409,'Revision của báo cáo lưu không còn khớp.')
+        if data.get('chart_view_choices') is not None:
+            from services.view_mode_service import apply_view_choices
+            try:response=apply_view_choices(response,data['chart_view_choices'])
+            except AnalysisError as error:raise HTTPException(409,str(error)) from None
+        from services.access_policy import current_principal
+        current_principal(required=True)
+        return response
+    from services.session_service import get_session
+    session=get_session(data.get('session_id',''))
+    if not session or session.owner_id!=principal.bound_owner or not session.report_response:
+        raise HTTPException(404,'Không tìm thấy báo cáo thuộc phiên phân tích được cấp quyền.')
+    if data.get('revision') is not None and data['revision'] != session.revision:
+        raise HTTPException(409,'Bản báo cáo đã thay đổi; không thể thay bản lưu bằng revision mới hơn.')
+    # Always export server-owned results. Client numbers and verification claims
+    # cannot become a new trusted report through this endpoint.
+    # Redis sessions deliberately omit rows/chart data to bound refinement state.
+    # Saving that summary would persist blank charts despite a valid conclusion.
+    from services.analysis_pipeline import AnalysisPipeline
+    from services.analysis_response_service import restore_report_presentation
+    response=deepcopy(session.report_response)
+    try:
+        response=restore_report_presentation(response,session.agent_artifacts,AnalysisPipeline().catalog())
+    except HTTPException:raise
+    except Exception:
+        raise HTTPException(409,'Dữ liệu báo cáo không còn đủ để lưu hoặc xuất; hãy chạy lại phân tích.') from None
+    from services.access_policy import current_principal
+    current_principal(required=True)  # Revocation while reading artifacts cannot publish/export.
+    if data.get('chart_view_choices') is not None:
+        from services.view_mode_service import apply_view_choices
+        try:
+            response=apply_view_choices(response,data['chart_view_choices'])
+        except AnalysisError as error:
+            raise HTTPException(409,str(error)) from None
+    return response
+
+
+def _insert_saved(payload,report_id):
+    principal=_principal('reports.save')
+    _audit('report.save',report_id)
+    columns=['id','title','description','category','query_type','sql_query','visualization_type',
+             'x_key','y_key','ai_summary','created_by','module_config']
+    values=[report_id,payload.title.strip(),payload.description.strip() if payload.description else '',
+        payload.category or 'sales',payload.query_type or 'sql',payload.sql_query.strip(),payload.visualization_type or 'table',
+        payload.x_key,payload.y_key,payload.ai_summary,principal.owner_key if principal else payload.created_by or 'Chuyên viên phân tích',
+        Json(payload.module_config) if payload.module_config is not None else None]
+    if principal:
+        columns+=['owner_key','owner_type','access_policy_fingerprint','semantic_contract_version']
+        values+=[principal.owner_key,'account',principal.access_fingerprint,'3.4.0']
+    with get_db_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute('INSERT INTO analytics.saved_reports ('+','.join(columns)+') VALUES ('+
+                ','.join(['%s']*len(values))+') RETURNING id,title,created_at',values)
+            result=cur.fetchone()
+        conn.commit()
+    return dict(result)
 
 
 def _make_content_disposition(title: str, timestamp: bool = False) -> str:
@@ -28,6 +121,68 @@ def _make_content_disposition(title: str, timestamp: bool = False) -> str:
     return f'attachment; filename="{ascii_filename}"; filename*=UTF-8\'\'{utf8_encoded}'
 
 
+class BIExportRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    kind: Literal['revenue','stores','products','customers']
+    date_range: Literal['today','7days','14days','30days','90days','all'] = '30days'
+    branch: str = Field(default='all',min_length=1,max_length=120)
+
+
+@router.post('/export-data')
+def export_business_data(payload: BIExportRequest):
+    """Generate authorized BI CSV from server data; no client rows or SQL."""
+    import csv
+    import io
+    from services.access_policy import authorize_route,current_principal
+    from services.analytical_capacity_planner import AnalyticalCapacityContract
+    principal=_principal('reports.export')
+    prefix={'revenue':'marts','stores':'stores','products':'products','customers':'customers'}[payload.kind]
+    if principal:authorize_route(principal,'/api/'+prefix+'/overview' if prefix!='marts' else '/api/marts/all','GET')
+    _audit('report.export','bi_'+payload.kind)
+    if payload.kind=='revenue':
+        from routers.marts import get_all_marts
+        rows=get_all_marts(payload.date_range,payload.branch,'all')['revenue_daily']
+        columns=[('date','Ngày'),('total_orders','Đơn hoàn thành/đang giao'),('revenue','Doanh thu (VND)')]
+    elif payload.kind=='stores':
+        from routers.stores import get_stores_overview
+        rows=get_stores_overview(date_range=payload.date_range,branch=payload.branch)['stores']
+        columns=[('store_code','Mã điểm bán'),('store_name','Điểm bán'),('city','Tỉnh/thành'),
+            ('total_orders','Số đơn mọi trạng thái'),('total_revenue','Doanh thu (VND)'),('aov','AOV đơn hợp lệ (VND)')]
+    elif payload.kind=='products':
+        from routers.products import get_products_overview
+        rows=get_products_overview(payload.date_range,payload.branch)['all_products']
+        columns=[('product_id','Mã món'),('product_name','Tên món'),('category_name','Nhóm món'),
+            ('total_sold','Số sản phẩm'),('total_revenue','Giá trị dòng món (VND)')]
+    else:
+        from routers.customers import get_customers_overview
+        rows=get_customers_overview(payload.date_range,payload.branch)['top_customers']
+        columns=[('customer_name','Mã khách ẩn danh (Top15)'),('order_count','Đơn hợp lệ trong kỳ'),('total_spent','Tổng tiền đơn (VND)')]
+    capacity=AnalyticalCapacityContract.from_env().response_bytes
+    if len(rows)>5000:raise HTTPException(413,'Dữ liệu xuất vượt giới hạn; hãy thu hẹp phạm vi.')
+    output=io.StringIO(newline='');writer=csv.writer(output)
+    writer.writerow([label for field,label in columns]+['Kỳ dữ liệu','Phạm vi yêu cầu','Thời điểm xuất (UTC)'])
+    from datetime import timezone
+    observed=datetime.now(timezone.utc).isoformat()
+    def safe(value):
+        # Prevent spreadsheet formulas in text labels. Numbers retain their
+        # signed numeric value; no source contact fields are exported.
+        if isinstance(value,str) and len(value.encode('utf-8'))>4096:raise HTTPException(413,'Nhãn dữ liệu xuất vượt giới hạn.')
+        return "'"+value if isinstance(value,str) and value.lstrip().startswith(('=','+','-','@')) else value
+    for row in rows:
+        writer.writerow([safe(row.get(field)) for field,label in columns]+[payload.date_range,safe(payload.branch),observed])
+        if output.tell()>capacity:raise HTTPException(413,'Tệp vượt giới hạn; hãy thu hẹp phạm vi.')
+    body=('\ufeff'+output.getvalue()).encode('utf-8')
+    if len(body)>capacity:
+        raise HTTPException(413,'Tệp vượt giới hạn; hãy thu hẹp phạm vi.')
+    if principal:
+        current_principal(required=True)
+        from services.telemetry import audit
+        audit('report.export','report',resource_key='bi_'+payload.kind,decision='completed',details={'rows':len(rows)})
+    return Response(body,media_type='text/csv; charset=utf-8',headers={
+        'Content-Disposition':'attachment; filename="du_lieu_'+payload.kind+'.csv"',
+        'Cache-Control':'no-store','X-Export-Row-Count':str(len(rows))})
+
+
 @router.get("/saved")
 def list_saved_reports(
     category: Optional[str] = Query(None),
@@ -36,8 +191,8 @@ def list_saved_reports(
     try:
         with get_db_conn() as conn:
             with conn.cursor() as cur:
-                where_clauses = ["1=1"]
-                params = []
+                owner_clause, params = _owned_where(allow_legacy=True)
+                where_clauses = [owner_clause]
 
                 if category and category != "all":
                     where_clauses.append("category = %s")
@@ -62,11 +217,18 @@ def list_saved_reports(
                 reports = [dict(r) for r in cur.fetchall()]
                 return {"reports": reports, "total": len(reports)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi lấy danh sách báo cáo: {str(e)}")
+        raise HTTPException(status_code=500, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
 
 
 @router.post("/saved")
 def create_saved_report(payload: SavedReportCreate):
+    principal=_principal('reports.save')
+    if principal:
+        if payload.module_config:
+            data=_authoritative_report(payload.module_config,'reports.save')
+            payload=payload.model_copy(update={'module_config':data,'sql_query':data.get('sql_query') or ''})
+        else:
+            _principal('sql.explore')
     from services.report_sql_policy import validate_saved_payload
     try:
         validate_saved_payload(payload)
@@ -74,41 +236,20 @@ def create_saved_report(payload: SavedReportCreate):
         raise HTTPException(400, "SQL báo cáo chưa vượt qua chính sách phân tích và trường nhạy cảm.") from None
     try:
         report_id = f"rpt_{uuid.uuid4().hex[:12]}"
-        with get_db_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO analytics.saved_reports (
-                        id, title, description, category, query_type, sql_query,
-                        visualization_type, x_key, y_key, ai_summary, created_by, module_config
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    RETURNING id, title, created_at;
-                """, (
-                    report_id,
-                    payload.title.strip(),
-                    payload.description.strip() if payload.description else "",
-                    payload.category or "sales",
-                    payload.query_type or "sql",
-                    payload.sql_query.strip(),
-                    payload.visualization_type or "table",
-                    payload.x_key,
-                    payload.y_key,
-                    payload.ai_summary,
-                    payload.created_by or "Chuyên viên phân tích",
-                    Json(payload.module_config) if payload.module_config is not None else None,
-                ))
-                created = cur.fetchone()
-                conn.commit()
-                return {"status": "success", "message": "Đã lưu báo cáo thành công", "report": dict(created)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi lưu báo cáo: {str(e)}")
+        created=_insert_saved(payload,report_id)
+        return {'status':'success','report':created,'id':report_id}
+    except HTTPException: raise
+    except Exception:
+        raise HTTPException(503,'Kho lưu trữ báo cáo chưa sẵn sàng.') from None
 
 
 @router.get("/saved/{report_id}")
 def get_saved_report(report_id: str):
+    owner_clause,owner_params=_owned_where(allow_legacy=True)
     try:
         with get_db_conn() as conn:
             with conn.cursor() as cur:
-                cur.execute("""
+                cur.execute(f"""
                     SELECT 
                         id, title, description, category, query_type,
                         sql_query, visualization_type, x_key, y_key,
@@ -116,24 +257,36 @@ def get_saved_report(report_id: str):
                         TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI') AS created_at,
                         TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI') AS updated_at
                     FROM analytics.saved_reports
-                    WHERE id = %s;
-                """, (report_id,))
+                    WHERE id = %s AND {owner_clause};
+                """, (report_id,*owner_params))
                 row = cur.fetchone()
                 if not row:
                     raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo yêu cầu")
-                return dict(row)
+                stored=dict(row)
+                config=stored.get('module_config')
+                if isinstance(config,dict) and any('data' not in c for c in config.get('charts',[])):
+                    # Repair presentation of summaries saved before this fix only
+                    # while their owned immutable source artifacts still exist.
+                    try:stored['module_config']=_authoritative_report(config,'analytics.read')
+                    except HTTPException as error:
+                        if error.status_code not in {404,409}:raise
+                        stored['presentation_status']='source_artifacts_unavailable'
+                return stored
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi lấy thông tin báo cáo: {str(e)}")
+        raise HTTPException(status_code=500, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
 
 
 @router.delete("/saved/{report_id}")
 def delete_saved_report(report_id: str):
+    owner_clause,owner_params=_owned_where(allow_legacy=False)
+    _principal('reports.save')
+    _audit('report.delete',report_id)
     try:
         with get_db_conn() as conn:
             with conn.cursor() as cur:
-                cur.execute("DELETE FROM analytics.saved_reports WHERE id = %s RETURNING id;", (report_id,))
+                cur.execute("DELETE FROM analytics.saved_reports WHERE id = %s AND "+owner_clause+" RETURNING id;", (report_id,*owner_params))
                 deleted = cur.fetchone()
                 if not deleted:
                     raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo để xóa")
@@ -142,7 +295,68 @@ def delete_saved_report(report_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi xóa báo cáo: {str(e)}")
+        raise HTTPException(status_code=500, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
+
+
+class HubProblemCreate(BaseModel):
+    title: str = Field(min_length=3, max_length=120)
+    category: str = Field(min_length=2, max_length=40)
+    description: str = Field(default='', max_length=300)
+
+
+def _owned_report_config(report_id):
+    owner_clause, owner_params = _owned_where(allow_legacy=False)
+    with get_db_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT id, title, module_config FROM analytics.saved_reports WHERE id = %s AND {owner_clause};",
+                        (report_id, *owner_params))
+            row = cur.fetchone()
+    if not row:
+        raise HTTPException(404, "Không tìm thấy báo cáo yêu cầu")
+    return dict(row)
+
+
+@router.get("/saved/{report_id}/hub-suggestion")
+def hub_problem_suggestion(report_id: str):
+    """Suggest how a verified saved report becomes a hub problem (title, feature group, similar views)."""
+    from services.preflight_service import preflight_catalog
+    from services.hub_problem_service import suggest
+    row = _owned_report_config(report_id)
+    try:
+        return suggest(preflight_catalog(), row.get('module_config') or {}, row.get('title') or '')
+    except AnalysisError:
+        return {'eligible': False, 'reason': 'Báo cáo này chưa có ý nghĩa phân tích đã kiểm chứng để chạy lại không cần AI. Hãy lưu báo cáo từ Trợ lý AI.'}
+
+
+@router.post("/saved/{report_id}/hub")
+def publish_hub_problem(report_id: str, payload: HubProblemCreate):
+    """Publish a verified saved report as a deterministic problem on the Báo cáo & Phân tích hub."""
+    from services.preflight_service import preflight_catalog
+    from services.hub_problem_service import template, CATEGORY
+    from services.workspace_service import dashboard_intent
+    row = _owned_report_config(report_id)
+    catalog = preflight_catalog()
+    try:
+        value = template(catalog, report_id, row.get('module_config') or {}, payload.title, payload.category, payload.description)
+        from services.analysis_intent import AnalysisIntentEnvelope
+        AnalysisIntentEnvelope.model_validate({'decision': 'analyze', 'requirements': value['requirements']})
+        for req in value['requirements']:
+            for metric in req['metric_ids']:
+                if not set(req.get('dimension_ids', [])) <= set(catalog.compatible_dimensions(metric)):
+                    raise AnalysisError('dashboard_unavailable', 'Incompatible grouping')
+    except (AnalysisError, ValueError):
+        raise HTTPException(400, 'Báo cáo này chưa thể thành bài toán dựng sẵn (thiếu góc nhìn hợp lệ).') from None
+    hub_id = f"hub_{uuid.uuid4().hex[:12]}"
+    value['id'] = 'U_' + hub_id
+    try:
+        _insert_saved(SavedReportCreate(title=value['title'], description=value['description'], category=CATEGORY,
+            query_type='hub', sql_query='', visualization_type='dashboard', created_by='Báo cáo & Phân tích',
+            module_config={'hub_template': value, 'source_report_id': report_id}), hub_id)
+    except HTTPException: raise
+    except Exception:
+        raise HTTPException(503, 'Kho lưu trữ báo cáo chưa sẵn sàng.') from None
+    return {'status': 'success', 'dashboard': {k: value[k] for k in ('id', 'version', 'title', 'category', 'description', 'default_time')},
+            'panel_count': len(value['requirements']), 'provider_calls': 0}
 
 
 @router.get("/saved/{report_id}/execute")
@@ -150,16 +364,17 @@ def delete_saved_report(report_id: str):
 @router.get("/saved/{report_id}/run")
 @router.post("/saved/{report_id}/run")
 def run_saved_report(report_id: str, request: Request = None):
+    owner_clause,owner_params=_owned_where(allow_legacy=False)
     from services.report_sql_policy import require_sql_admin, validate_report_sql
     require_sql_admin(request)
     try:
         with get_db_conn() as conn:
             with conn.cursor() as cur:
-                cur.execute("""
+                cur.execute(f"""
                     SELECT id, title, sql_query, visualization_type, x_key, y_key, ai_summary
                     FROM analytics.saved_reports
-                    WHERE id = %s;
-                """, (report_id,))
+                    WHERE id = %s AND {owner_clause};
+                """, (report_id,*owner_params))
                 report = cur.fetchone()
                 if not report:
                     raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo yêu cầu")
@@ -183,9 +398,9 @@ def run_saved_report(report_id: str, request: Request = None):
     except HTTPException:
         raise
     except (SqlSafetyError, QueryExecutionError) as e:
-        raise HTTPException(status_code=400, detail=f"Lỗi thực thi báo cáo: {str(e)}")
+        raise HTTPException(status_code=400, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi thực thi báo cáo: {str(e)}")
+        raise HTTPException(status_code=500, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
 
 
 @router.post("/preview")
@@ -206,7 +421,7 @@ def preview_report_query(payload: dict, request: Request = None):
             "execution_time_ms": result["duration_ms"]
         }
     except (SqlSafetyError, QueryExecutionError) as e:
-        raise HTTPException(status_code=400, detail=f"Lỗi truy vấn dữ liệu: {str(e)}")
+        raise HTTPException(status_code=400, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
 
 
 
@@ -215,7 +430,7 @@ def get_export_logs():
     try:
         with get_db_conn() as conn:
             with conn.cursor() as cur:
-                cur.execute("""
+                cur.execute(f"""
                     SELECT 
                         id, report_title, format, row_count, file_size, status, user_name,
                         TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
@@ -226,7 +441,7 @@ def get_export_logs():
                 logs = [dict(r) for r in cur.fetchall()]
                 return {"logs": logs}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi tải nhật ký xuất: {str(e)}")
+        raise HTTPException(status_code=500, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
 
 
 @router.post("/export-log")
@@ -252,7 +467,7 @@ def log_report_export(payload: ReportExportLogCreate):
                 conn.commit()
                 return {"status": "success", "id": log_id}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi ghi nhật ký: {str(e)}")
+        raise HTTPException(status_code=500, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
 
 
 @router.post("/export-docx")
@@ -261,6 +476,8 @@ def export_report_docx(payload: dict):
     if not report_data:
         raise HTTPException(status_code=400, detail="Không có dữ liệu báo cáo để xuất file DOCX")
     
+    report_data = _authoritative_report(report_data)
+    _audit('report.export')
     report_data = _verified_export(report_data)
     if payload.get("save_to_db", True):
         from services.report_sql_policy import validate_saved_payload
@@ -273,33 +490,10 @@ def export_report_docx(payload: dict):
 
     save_to_db = payload.get("save_to_db", True)
     if save_to_db:
-        try:
-            report_id = f"rpt_{uuid.uuid4().hex[:12]}"
-            with get_db_conn() as conn:
-                with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO analytics.saved_reports (
-                            id, title, description, category, query_type, sql_query,
-                            visualization_type, x_key, y_key, ai_summary, created_by, module_config
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (id) DO NOTHING;
-                    """, (
-                        report_id,
-                        title[:250],
-                        report_data.get("description", "")[:500],
-                        "ai_report",
-                        "sql",
-                        report_data.get("sql_query") or "SELECT 1;",
-                        report_data.get("visualizations", {}).get("trend", "area"),
-                        "label",
-                        "value",
-                        report_data.get("executive_summary") or "",
-                        "Trợ lý AI Data Platform",
-                        Json(report_data)
-                    ))
-                    conn.commit()
-        except Exception as e:
-            pass
+        _insert_saved(SavedReportCreate(title=title[:250],description=report_data.get('description','')[:500],
+            category='ai_report',query_type='sql',sql_query=report_data.get('sql_query') or 'SELECT 1;',
+            visualization_type='table',ai_summary=report_data.get('executive_summary') or '',module_config=report_data),
+            'rpt_'+uuid.uuid4().hex[:12])
 
     buffer = generate_report_docx(report_data)
     return StreamingResponse(
@@ -311,14 +505,17 @@ def export_report_docx(payload: dict):
 
 @router.get("/saved/{report_id}/download-docx")
 def download_saved_report_docx(report_id: str):
+    owner_clause,owner_params=_owned_where(allow_legacy=False)
+    _principal('reports.export')
+    _audit('report.export',report_id)
     try:
         with get_db_conn() as conn:
             with conn.cursor() as cur:
-                cur.execute("""
+                cur.execute(f"""
                     SELECT id, title, description, ai_summary, module_config
                     FROM analytics.saved_reports
-                    WHERE id = %s;
-                """, (report_id,))
+                    WHERE id = %s AND {owner_clause};
+                """, (report_id,*owner_params))
                 row = cur.fetchone()
                 if not row:
                     raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo yêu cầu")
@@ -333,6 +530,8 @@ def download_saved_report_docx(report_id: str):
                 title = report["title"] or "Bao_Cao_Phan_Tich_AI"
                 content_disposition = _make_content_disposition(title, timestamp=False)
 
+                if any('data' not in chart for chart in report_data.get('charts',[])):
+                    report_data=_authoritative_report(report_data,'reports.export')
                 report_data = _verified_export(report_data)
                 buffer = generate_report_docx(report_data)
                 return StreamingResponse(
@@ -343,7 +542,7 @@ def download_saved_report_docx(report_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi xuất báo cáo DOCX: {str(e)}")
+        raise HTTPException(status_code=500, detail="Thao tác báo cáo chưa hoàn tất; vui lòng kiểm tra quyền hoặc trạng thái lưu trữ.")
 
 
 def _verified_export(report_data):
@@ -355,4 +554,7 @@ def _verified_export(report_data):
         data['quality_assessment'] = verify_saved_report(data, AnalysisCatalog(get_local_metadata()))
     except Exception:
         data['quality_assessment'] = not_scored('Danh mục chưa sẵn sàng để kiểm chứng lại báo cáo.')
+    from services.analysis_quality_service import publication_issues
+    if (data.get('analytical_queries') or data.get('quality_context')) and publication_issues(data['quality_assessment']):
+        raise HTTPException(status_code=409, detail='Nhận định hoặc phạm vi báo cáo chưa vượt qua kiểm chứng; hãy chạy lại phân tích trước khi xuất.')
     return data

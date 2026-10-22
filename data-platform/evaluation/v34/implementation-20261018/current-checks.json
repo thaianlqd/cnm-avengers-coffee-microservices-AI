@@ -1,0 +1,38 @@
+{
+  "release_complete": false,
+  "provider_http_new": 0,
+  "global_ledger_readback": 151,
+  "baseline": {
+    "backend": 1063,
+    "web": 165,
+    "eval_old": 146,
+    "eval_v33": 33,
+    "mocked_browser": 12
+  },
+  "affected_tests": {
+    "first_fixes": 121,
+    "forecast": 57,
+    "health": 83,
+    "platform": 13,
+    "catalog_identity_workspace": 121,
+    "pipeline_pure_host": 17
+  },
+  "after_catalog_eval": {
+    "legacy": 146,
+    "v33": 33,
+    "failures": 0
+  },
+  "after_catalog_web_node": {
+    "tests": 165,
+    "failed": 0
+  },
+  "real_source_schema": {
+    "tables": 23,
+    "columns": 339,
+    "business_rows_read": 0
+  },
+  "migration_027_applied": false,
+  "auth_module_wired": false,
+  "pipeline_runtime_wired": false,
+  "schema_contract_sha256": "f5ee47143df1ed2b5d28dbbf7cc334dedfc01dd1dc6cd8bd41d63c403d25a16f"
+}

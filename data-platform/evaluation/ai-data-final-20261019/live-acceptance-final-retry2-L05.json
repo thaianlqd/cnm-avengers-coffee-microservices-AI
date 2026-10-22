@@ -1,0 +1,136 @@
+{
+ "prior_ledger": 514,
+ "final_ledger": 515,
+ "physical_sends": 1,
+ "ceiling": 517,
+ "rows": [
+  {
+   "id": "L05",
+   "depth": "comprehensive",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 8,
+    "total": 8,
+    "summary": "Số liệu đã kiểm chứng · 8/8 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 2
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 2,
+     "extended": 2
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "comprehensive",
+    "family": "ranking"
+   },
+   "charts": [
+    [
+     "horizontal_bar",
+     null,
+     [
+      "quantity_sold"
+     ]
+    ],
+    [
+     "area",
+     "trend",
+     [
+      "quantity_sold"
+     ]
+    ],
+    [
+     "donut",
+     "composition:order_type",
+     [
+      "quantity_sold"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:category",
+     [
+      "quantity_sold"
+     ]
+    ],
+    [
+     "heatmap",
+     "cross_tab:order_type:payment_method",
+     [
+      "quantity_sold"
+     ]
+    ],
+    [
+     "multi_line",
+     "segmented_trend:order_type",
+     [
+      "quantity_sold"
+     ]
+    ],
+    [
+     "stacked_100",
+     "mix_shift:order_type",
+     [
+      "quantity_sold"
+     ]
+    ],
+    [
+     "multi_line",
+     "segmented_trend:payment_method",
+     [
+      "quantity_sold"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "quantity_sold"
+     ],
+     "group_by": [
+      "product"
+     ],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    }
+   ],
+   "operations": 7,
+   "forecasts": 0,
+   "short_answer": [
+    "Bánh Trung Thu Matcha đứng đầu xếp hạng: 106 sản phẩm theo số lượng sản phẩm bán."
+   ],
+   "conclusion": "Bánh Trung Thu Matcha đứng đầu xếp hạng: 106 sản phẩm theo số lượng sản phẩm bán.",
+   "latency_ms": 4010,
+   "physical_http": 1,
+   "logical_calls": 1
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+ Container avengers-v34-fixture-redis-1 Running 
+ Container avengers-v34-fixture-postgres-1 Running 
+ Container avengers-v34-fixture-postgres-1 Waiting 
+ Container avengers-v34-fixture-postgres-1 Healthy 
+ Container avengers-v34-fixture-redis-1 Waiting 
+ Container avengers-v34-fixture-postgres-1 Waiting 
+ Container avengers-v34-fixture-redis-1 Healthy 
+ Container avengers-v34-fixture-postgres-1 Healthy 
+ Container avengers-v34-fixture-api-tests-run-ffa14a866993 Creating 
+ Container avengers-v34-fixture-api-tests-run-ffa14a866993 Created 
+2026-10-19 03:10:55,959 [INFO] data-sync - Phat hien 23 bang trong 6 schema
+2026-10-19 03:10:56,640 [INFO] data-sync - === Sync hoan thanh: 23/23 bang, 1 rows, 0.7s, trang thai: success ===
+.
+----------------------------------------------------------------------
+Ran 1 test in 1.733s
+
+OK

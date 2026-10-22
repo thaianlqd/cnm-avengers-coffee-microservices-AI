@@ -1,0 +1,65 @@
+{
+ "prior_ledger": 611,
+ "final_ledger": 613,
+ "physical_sends": 2,
+ "actual_http": 2,
+ "tokens": {
+  "input": 6721,
+  "output": 256
+ },
+ "cases": 2,
+ "executed": 2,
+ "first_pass": 2,
+ "holdout_first_pass": 2,
+ "holdout_executed": 2,
+ "mandatory_failed": [],
+ "rows": [
+  {
+   "id": "BC-REV-003",
+   "group": "B01",
+   "holdout": true,
+   "proposal_status": "proposal_ready",
+   "partial_scope": false,
+   "status": "success",
+   "verification": "verified",
+   "requested": [
+    {
+     "metrics": [
+      "avg_product_rating",
+      "review_count"
+     ],
+     "group_by": []
+    }
+   ],
+   "charts": 4,
+   "latency_ms": 7107,
+   "physical_http": 1,
+   "tokens": 3077,
+   "first_pass": true
+  },
+  {
+   "id": "BC-B02-006",
+   "group": "B02",
+   "holdout": true,
+   "proposal_status": "proposal_ready",
+   "partial_scope": false,
+   "status": "success",
+   "verification": "verified",
+   "requested": [
+    {
+     "metrics": [
+      "product_revenue"
+     ],
+     "group_by": [
+      "product"
+     ]
+    }
+   ],
+   "charts": 4,
+   "latency_ms": 4832,
+   "physical_http": 1,
+   "tokens": 3900,
+   "first_pass": true
+  }
+ ]
+}

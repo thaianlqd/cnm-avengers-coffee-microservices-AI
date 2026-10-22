@@ -51,6 +51,9 @@ class FakeConnection:
 
 
 class SyncTransactionTests(unittest.TestCase):
+    def setUp(self):
+        self.enterContext(patch.dict("os.environ", {"DATA_ANALYST_ENV":"development", "DATA_PLATFORM_GOVERNED_INGESTION":"0"}))
+
     def test_full_sync_commits_truncate_and_insert_once(self):
         source = FakeConnection(rows=[{"id": 1, "name": "old-safe"}])
         target = FakeConnection()
@@ -93,5 +96,41 @@ class SyncTransactionTests(unittest.TestCase):
         self.assertEqual(events[:2], ["schema", "source-query"])
 
 
+class WarehouseViewTests(unittest.TestCase):
+    def view(self, name):
+        names = [view for view, _ in sync.WAREHOUSE_VIEWS]
+        self.assertEqual(names.count(name), 1)
+        return names.index(name), dict(sync.WAREHOUSE_VIEWS)[name]
+
+    def test_promotion_usage_view_is_aggregate_safe_and_ordered(self):
+        position, ddl = self.view("silver.khuyen_mai_su_dung")
+        # Depends on the silver promotion view, so it must be created after it.
+        self.assertGreater(position, self.view("silver.khuyen_mai")[0])
+        select = ddl.split("FROM", 1)[0].lower()
+        for column in ("ma_su_dung", "ma_khuyen_mai", "ten_khuyen_mai", "co_so_ma", "ngay_su_dung"):
+            self.assertIn(column, select)
+        # Neither the customer link nor the order link is exposed to analytics.
+        for column in ("ma_nguoi_dung", "u.ma_don_hang", "so_dien_thoai", "email", "dia_chi"):
+            self.assertNotIn(column, select)
+        self.assertNotIn("INSERT", ddl.upper()); self.assertNotIn("DELETE", ddl.upper())
+
+    def test_view_definitions_are_read_only_ddl(self):
+        for name, ddl in sync.WAREHOUSE_VIEWS:
+            with self.subTest(view=name):
+                self.assertTrue(ddl.strip().upper().startswith("CREATE OR REPLACE VIEW " + name.upper()))
+                for word in ("DROP ", "TRUNCATE ", "DELETE ", "UPDATE ", "INSERT "):
+                    self.assertNotIn(word, ddl.upper())
+
+
 if __name__ == "__main__":
     unittest.main()
+
+
+class SyncScheduleTests(unittest.TestCase):
+    def test_cycle_duration_does_not_extend_cadence_and_slow_cycles_skip_slots(self):
+        self.assertEqual(sync.next_sync_slot(100, 131, 300), 400)
+        self.assertEqual(sync.next_sync_slot(100, 400, 300), 400)
+        self.assertEqual(sync.next_sync_slot(100, 401, 300), 700)
+        self.assertEqual(sync.next_sync_slot(100, 1101, 300), 1300)
+        with self.assertRaises(ValueError):
+            sync.next_sync_slot(100, 120, 0)

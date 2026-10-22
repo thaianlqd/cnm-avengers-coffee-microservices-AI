@@ -1,0 +1,93 @@
+{
+  "policy": "1.2.1",
+  "offline": {
+    "baseline_cases.json": {
+      "total": 22,
+      "passed": 22,
+      "positive_controls": 5
+    },
+    "corpus.json": {
+      "total": 240,
+      "passed": 240,
+      "positive_controls": 113
+    },
+    "holdout.json": {
+      "total": 60,
+      "passed": 60,
+      "positive_controls": 29
+    }
+  },
+  "physical_boundary": {
+    "provider_http_calls": 0,
+    "warehouse_connections": 0
+  },
+  "runtime_baseline_passed": 22,
+  "secondary_fields": [
+    {
+      "field": "analysis_context",
+      "http": 200,
+      "can_submit": false,
+      "provider_calls": 0,
+      "reason_codes": [
+        "input_entity_unresolved",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ]
+    },
+    {
+      "field": "analysis_expectation",
+      "http": 200,
+      "can_submit": false,
+      "provider_calls": 0,
+      "reason_codes": [
+        "input_entity_unresolved",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ]
+    },
+    {
+      "field": "context",
+      "http": 200,
+      "can_submit": false,
+      "provider_calls": 0,
+      "reason_codes": [
+        "input_entity_unresolved",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ]
+    }
+  ],
+  "backend_regression_tests": 158,
+  "backend_regression_passed": true,
+  "browser_tests": 15,
+  "web_tests": 222,
+  "full_scan": {
+    "policy": "1.2.0",
+    "tests": 1619,
+    "failures": 11,
+    "errors": 15,
+    "passed": false
+  },
+  "all_repository_tests_green": false,
+  "all_plan_gates_passed": false,
+  "provider_live_calls": 0,
+  "source_hashes": {
+    "services/input_integrity_service.py": "5d31a0c6680fec494bc88135877fa930496d5c2d9d27ec62e5da641093757eec",
+    "metadata/input_integrity_policy.json": "fbb82f5681f4f09081cd132bacef17bb1c8f2fbdbe2e9591745ca73964328d5c",
+    "services/preflight_service.py": "7966044c2606ec9b2c78b3d67cf230f233afd41eaeebaba3f85ba7a2ab77919e",
+    "services/agent_pipeline.py": "8c66bec737a003b81624c8edb23a48c87277e68469f92c7ec7bab3888493cceb",
+    "services/analysis_job_service.py": "2cafb9f81dbd5ca3a3cf38ec47d0742ff9a6c50ff5b615372c618e7a9dbfc7ba",
+    "routers/ai.py": "d90fd34edbf7e378c31d0d1e2a90c21847437031ccacff73ce94474fad28c183",
+    "services/analysis_pipeline.py": "95a01cc460fd2128231b6d235c6afb01875d341e87cc3348493ea4797613923b",
+    "services/semantic_preflight_contract.py": "eabcdb07ff2c2d2d74a10295e94be216917013f3ac104d4f550ecd73478f0735",
+    "services/metadata_service.py": "80136cc484b07bfa824775f01460147bcc22a56fd31e56be04fe29b326b04f92",
+    "common.py": "1df2a50681ee68abee66078650e778d49550f72a329b58fcec72cc76640dc531",
+    "route_policy.py": "ab34f5def5988811e5cdeebcb59c6794a70e01b35cb1c9d97065b65e73abaaba",
+    "services/analytical_resolver.py": "3d68eff70191837596afd68b13c583c940e6fe718b6c4f05a5ca60d961598d76",
+    "services/one_shot_context.py": "573f4c0f9d3047fc0484d768e4f724125ccd9d81a2c82cb277d0fb6be8c636fc",
+    "services/hybrid_analyst_planner.py": "65caeb492dec165bb1e39ecdcaeb976f40e3d0069b8a2693cde07955785d3482",
+    "services/analysis_contract.py": "a8835bab0d6479d072a765ca1ca18bd3fa9d30a45a3b10913693cc048e9b8524",
+    "services/analytical_query_service.py": "c948bc3fa34487f3ae51c10d76975a6d471b83afb8b2c5cd56856e72cf8c8995",
+    "services/request_anchors.py": "b4d9a98fa993590fde53fb4d7294e3e4952389cc8841691308243fc50f2e52ab"
+  }
+}

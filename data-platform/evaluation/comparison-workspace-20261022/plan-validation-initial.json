@@ -1,0 +1,47 @@
+{
+  "status": "DOCUMENTS_VALIDATED_IMPLEMENTATION_NOT_STARTED",
+  "validated": "JSON syntax,48 unique NOT_RUN scenarios,relative document links,fixture arithmetic,432 product-source hashes unchanged",
+  "fixture_checks": [
+    {
+      "member": "Alpha",
+      "hand_authored_expected_values_consistent": true
+    },
+    {
+      "member": "Beta",
+      "hand_authored_expected_values_consistent": true
+    },
+    {
+      "member": "union",
+      "hand_authored_expected_values_consistent": true
+    }
+  ],
+  "product_source_drift": [],
+  "new_provider_calls": 0,
+  "implementation_test_results": null,
+  "files": [
+    {
+      "path": "data-platform/AI_DATA_ANALYST_COMPARISON_WORKSPACE_PLAN_20261022.md",
+      "sha256": "56f0f8cb8820e6b759327e23729fba29b2081bd9d6b1c7d2259a9a8a048c2a2d"
+    },
+    {
+      "path": "data-platform/AI_DATA_ANALYST_COMPARISON_WORKSPACE_GOALS_20261022.md",
+      "sha256": "80f8e725354a3a678859f7b0b620036f0020bf74652ba6515f3db950e0fc901b"
+    },
+    {
+      "path": "data-platform/evaluation/comparison-workspace-20261022/planning-baseline.json",
+      "sha256": "394a90f6150eac0e981893df74a0d26f56f3266353dec42d1fbfc14dd8da4fec"
+    },
+    {
+      "path": "data-platform/evaluation/comparison-workspace-20261022/acceptance-cases.json",
+      "sha256": "2198fade530c22a2b627302eafec1b17296b744819c9f84868b3af27608e6170"
+    },
+    {
+      "path": "data-platform/evaluation/comparison-workspace-20261022/independent-fixture-spec.json",
+      "sha256": "aa451168102d78d2b98680889cec65b0b943d24a21ba003415ccd7168f491d4c"
+    },
+    {
+      "path": "data-platform/evaluation/comparison-workspace-20261022/README.md",
+      "sha256": "75467ba982ef06dec2e934cb0b1d97ef3ab88db905f1422d4ddc18ff1c8f0c4f"
+    }
+  ]
+}

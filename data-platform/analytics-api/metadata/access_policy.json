@@ -1,0 +1,6 @@
+{
+  "version": "3.4.0-deny-unassigned",
+  "roles": {},
+  "subjects": {},
+  "deployment_status": "Operator must provide explicitly reviewed role permissions, datasets and account store grants. This artifact grants no account access."
+}

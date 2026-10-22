@@ -1,0 +1,39 @@
+......................[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "KeyError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 677}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "TypeError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 677}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "ValueError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 677}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+.....................................F..........Result rejected source=execution operation=ranking rows=1 limit=5 rules=projection_columns,projection_rows,sensitive_field dimensions=product,product_id granularity=day
+.......F..E.....
+======================================================================
+ERROR: test_semantic_delta_preserves_untouched_meaning_and_reuses_results (tests.test_hybrid_v28.HybridTests.test_semantic_delta_preserves_untouched_meaning_and_reuses_results)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_hybrid_v28.py", line 196, in test_semantic_delta_preserves_untouched_meaning_and_reuses_results
+    refined=p.refine(AiReportRefineRequest(session_id=req.session_id,current_report={'revision':report['revision']},feedback='Top 2'))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 691, in refine
+    ).run(request.feedback, {
+      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 548, in run
+    raise AnalysisError("one_shot_context_budget_exceeded","Required meaning context cannot fit")
+services.analysis_catalog.AnalysisError: Required meaning context cannot fit
+
+======================================================================
+FAIL: test_context_and_schema_reduction (tests.test_hybrid_v28.HybridTests.test_context_and_schema_reduction)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_hybrid_v28.py", line 255, in test_context_and_schema_reduction
+    self.assertLess(len(compact(intent_tool())),len(compact(decision_tool(natural=True,refinement=False)))*0.80)
+AssertionError: 6632 not less than 5124.0
+
+======================================================================
+FAIL: test_refinement_cannot_silently_erase_original_time (tests.test_hybrid_v28.HybridTests.test_refinement_cannot_silently_erase_original_time)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_hybrid_v28.py", line 307, in test_refinement_cannot_silently_erase_original_time
+    self.assertEqual(p.provider.call_count,2)
+AssertionError: 0 != 2
+
+----------------------------------------------------------------------
+Ran 86 tests in 82.546s
+
+FAILED (failures=2, errors=1)

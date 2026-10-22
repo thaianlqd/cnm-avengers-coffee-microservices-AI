@@ -1,0 +1,120 @@
+TAP version 13
+# Subtest: three compact views share a row; five use 2 + 3 without an orphan
+ok 1 - three compact views share a row; five use 2 + 3 without an orphan
+  ---
+  duration_ms: 2.8585
+  ...
+# Subtest: sparse trends do not take space away from long-label Top 10 lists
+ok 2 - sparse trends do not take space away from long-label Top 10 lists
+  ---
+  duration_ms: 0.348208
+  ...
+# Subtest: large matrices and multi-series category plots receive a dedicated full row
+ok 3 - large matrices and multi-series category plots receive a dedicated full row
+  ---
+  duration_ms: 0.367041
+  ...
+# Subtest: every row fills twelve columns at each breakpoint; chart order/data remain intact
+ok 4 - every row fills twelve columns at each breakpoint; chart order/data remain intact
+  ---
+  duration_ms: 14.871083
+  ...
+# Subtest: six realistic assistant charts mix asymmetric pairs, a 30/30/40 row and a full-width matrix
+ok 5 - six realistic assistant charts mix asymmetric pairs, a 30/30/40 row and a full-width matrix
+  ---
+  duration_ms: 0.281625
+  ...
+# Subtest: rejects incomplete gibberish locally without claiming semantic validation
+ok 6 - rejects incomplete gibberish locally without claiming semantic validation
+  ---
+  duration_ms: 1.820875
+  ...
+# Subtest: coverage bar text comes from the cached server snapshot
+ok 7 - coverage bar text comes from the cached server snapshot
+  ---
+  duration_ms: 116.197708
+  ...
+# Subtest: seven product modes: six visible server missions + free form; hidden ones map to a visible mode
+ok 8 - seven product modes: six visible server missions + free form; hidden ones map to a visible mode
+  ---
+  duration_ms: 7.86875
+  ...
+# Subtest: template builder offers only compatible metrics and fills a Vietnamese question
+ok 9 - template builder offers only compatible metrics and fills a Vietnamese question
+  ---
+  duration_ms: 9.340917
+  ...
+# Subtest: suggestion chips are real example questions, filtered by mission
+ok 10 - suggestion chips are real example questions, filtered by mission
+  ---
+  duration_ms: 0.711291
+  ...
+# Subtest: "Hỏi được gì?" lists 16 groups with badges, dimensions, search and unsupported items
+ok 11 - "Hỏi được gì?" lists 16 groups with badges, dimensions, search and unsupported items
+  ---
+  duration_ms: 72.839083
+  ...
+# Subtest: preflight view: understood chips, blocking, warnings and quick fixes
+ok 12 - preflight view: understood chips, blocking, warnings and quick fixes
+  ---
+  duration_ms: 6.215083
+  ...
+# Subtest: preflight client debounces, cancels stale requests and never applies old results
+ok 13 - preflight client debounces, cancels stale requests and never applies old results
+  ---
+  duration_ms: 7.073583
+  ...
+# Subtest: scope panel recognizes scope from the question; depth explains what it adds; no context/expectation
+ok 14 - scope panel recognizes scope from the question; depth explains what it adds; no context/expectation
+  ---
+  duration_ms: 87.836417
+  ...
+# Subtest: comparison difference, mission tab order and KPI strip are deterministic
+ok 15 - comparison difference, mission tab order and KPI strip are deterministic
+  ---
+  duration_ms: 0.785375
+  ...
+# Subtest: risk table renders server traffic lights; no composite score
+ok 16 - risk table renders server traffic lights; no composite score
+  ---
+  duration_ms: 7.482375
+  ...
+# Subtest: forecast panel draws history, forecast and 80% band from server data only
+ok 17 - forecast panel draws history, forecast and 80% band from server data only
+  ---
+  duration_ms: 17.784209
+  ...
+# Subtest: P5: period-scoped KPI labels, order units, incomplete day and ask-AI bridge
+ok 18 - P5: period-scoped KPI labels, order units, incomplete day and ask-AI bridge
+  ---
+  duration_ms: 4.514708
+  ...
+# Subtest: workspace code has no hard-coded capability catalog
+ok 19 - workspace code has no hard-coded capability catalog
+  ---
+  duration_ms: 0.496958
+  ...
+# Subtest: open-ended trend marks the bucket containing the reference date as incomplete
+ok 20 - open-ended trend marks the bucket containing the reference date as incomplete
+  ---
+  duration_ms: 0.389209
+  ...
+# Subtest: result table shows governed value labels (ISO weekday) instead of codes
+ok 21 - result table shows governed value labels (ISO weekday) instead of codes
+  ---
+  duration_ms: 75.816542
+  ...
+# Subtest: V3.3 one-click: primary CTA is "Phân tích", optional "Xem kế hoạch" only when a preview handler exists; view wires both
+ok 22 - V3.3 one-click: primary CTA is "Phân tích", optional "Xem kế hoạch" only when a preview handler exists; view wires both
+  ---
+  duration_ms: 70.966625
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 630.723875

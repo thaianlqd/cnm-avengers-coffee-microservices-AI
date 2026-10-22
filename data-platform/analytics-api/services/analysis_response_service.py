@@ -62,8 +62,140 @@ def restore_report_presentation(report, artifacts, catalog):
     first = next(iter(report['result_sets'].values()))
     report['table_data']['rows'] = first['rows']
     hydrated = restore_artifacts(report, catalog)
-    evidence = analytical_features(hydrated, catalog, report.get('derived_feature_bindings'))
+    evidence = analytical_features(hydrated, catalog, report.get('derived_feature_bindings'), as_of=(report.get('quality_context') or {}).get('reference_date'))
     report['evidence'] = evidence[:c.evidence_preview]
-    report.update(build_dashboard(hydrated, evidence, DashboardPlan.model_validate(report['dashboard_plan_input']), catalog=catalog))
+    from services.dashboard_planner_service import lens_context
+    depth = ((report.get('quality_context') or {}).get('ui_constraints') or {}).get('server_supporting_expansion') or report.get('analysis_breadth')
+    lenses, lens_groups, lens_targets = lens_context(report.get('resolved_requirement_coverage'), catalog, depth)
+    dashboard=build_dashboard(hydrated, evidence, DashboardPlan.model_validate(report['dashboard_plan_input']), catalog=catalog,
+                              lenses=lenses, min_groups=lens_groups, lens_targets=lens_targets)
+    # Saved summaries retain verified view bindings/insights, but omit only data.
+    # Rebuilding presentation must not drop those later pipeline annotations.
+    rebuilt={chart['id']:chart for chart in dashboard['charts']}
+    restored=[]
+    for chart in report.get('charts',[]):
+        current=rebuilt.get(chart['id'])
+        if chart.get('view_modes'):
+            # A view-mode chart shows its default projection; chart_checks below re-derives every variant.
+            if current is None or current.get('query_id')!=chart.get('query_id'):
+                raise AnalysisError('quality_metadata','Stored chart no longer matches approved artifact rendering')
+            default=next((v for v in chart['view_modes'].get('variants',[]) if v.get('id')==chart.get('view_ref')),None)
+            if default is None:
+                raise AnalysisError('quality_metadata','Stored view mode is missing')
+            restored.append({**current,**chart,'data':default['payload'].get('data')})
+            continue
+        if (current is None or current.get('query_id')!=chart.get('query_id') or
+            current.get('chart_type')!=chart.get('chart_type') or current.get('metrics')!=chart.get('metrics')):
+            raise AnalysisError('quality_metadata','Stored chart no longer matches approved artifact rendering')
+        restored.append({**current,**chart,'data':current['data']})
+    dashboard['charts']=restored
+    # Rehydrate presentation only. Replacing existing KPI cards with planner
+    # defaults duplicates facts and changes the saved verifier denominator.
+    for key,value in dashboard.items():
+        report.setdefault(key,value)
+    report['charts']=restored
+    from services.analysis_quality_service import chart_checks
+    if any(not check['valid'] for check in chart_checks(report['charts'],hydrated,evidence,view_catalog=catalog)):
+        raise AnalysisError('quality_metadata','Restored chart does not match full artifact')
     bound_response(report, c)
     return report
+
+
+def assemble_report_payload(*, artifacts, catalog, session, meaning, results, dashboard, narrative,
+        forecasts, mission, insights, view_cov, short_answer, relevance, domain_summary, evidence,
+        semantic_info, planning_mode, diagnostics, refined=False):
+    """Pure presentation assembly; meaning, plans and values are validated upstream."""
+    from datetime import datetime
+    from services.workspace_service import mission_layout, follow_up_questions
+    from services.chart_insight_service import build_conclusion
+    from services.explanation_service import explain_analysis
+    main = next(iter(artifacts.values()))
+    first = results[main.query.id]
+    return {
+        "status": "success",
+        "completion_status": "complete",
+        "pipeline_version": semantic_info.get("pipeline_version", "2.8" if planning_mode == "one_shot" else "2.3"),
+        "prompt": session.original_prompt,
+        "module_provenance": session.module_provenance,
+        "analysis_breadth": semantic_info.get("analysis_depth", session.analysis_depth),
+        "session_id": session.session_id,
+        "revision": session.revision + (1 if session.approved else 0),
+        "title": meaning["subject"],
+        "description": "Phân tích từ các kết quả đã kiểm chứng.",
+        "domain_summary": domain_summary,
+        "analysis_spec": main.grounded.analysis_spec.model_dump(mode="json"),
+        "analysis_specs": {
+            id: a.grounded.analysis_spec.model_dump(mode="json")
+            for id, a in artifacts.items()
+        },
+        "analytical_queries": [
+            a.query.model_dump(mode="json") for a in artifacts.values()
+        ],
+        "grounded_analysis_spec": main.grounded.model_dump(mode="json"),
+        "query_plans": [a.plan.model_dump(mode="json") for a in artifacts.values()],
+        "schema_fingerprint": catalog.fingerprint,
+        "interpretation": meaning,
+        "interpreted_request": meaning,
+        "assumptions": list(
+            dict.fromkeys(
+                s
+                for a in artifacts.values()
+                for s in a.grounded.analysis_spec.assumptions
+            )
+        ),
+        **dashboard,
+        **narrative,
+        "kpis": {},
+        "forecasts": forecasts,
+        "analysis_mission": mission["id"] if mission else None,
+        "mission_layout": mission_layout(mission, dashboard["charts"]),
+        "follow_up_questions": follow_up_questions(artifacts, catalog, mission),
+        "chart_insights": insights,
+        "view_coverage": view_cov,
+        "short_answer": short_answer,
+        "conclusion": build_conclusion(short_answer, narrative, evidence,
+            [v["message"] for v in semantic_info.get("limitations", [])]
+            + (["Không có dữ liệu trong phạm vi yêu cầu."] if not any(a.result["rows"] for a in artifacts.values()) else [])
+            + list(dict.fromkeys(s for a in artifacts.values() for s in a.grounded.analysis_spec.assumptions))
+            + [f"Chưa có góc nhìn bắt buộc cho yêu cầu {v['requirement_id']} ({v['kind']}): {v['reason']}." for v in view_cov if v["required"] and v["status"] == "missing"],
+            follow_up_questions(artifacts, catalog, mission), forecasts=forecasts,
+            chart_caveats=[c for ch in dashboard["charts"] for c in (ch.get("insight") or {}).get("caveats", [])],
+            unanswered=[c.get("goal") or c.get("requirement_id") for c in (semantic_info.get("resolved_requirement_coverage") or [])
+                        if c.get("state") not in {"RESOLVED", None} and (c.get("goal") or c.get("requirement_id"))],
+            cadence_labels=catalog.registry.get("workspace", {}).get("forecast_cadence_labels", {})),
+        "mission_evidence": relevance,
+        "input_mode": semantic_info.get("input_mode", "free_text"),
+        "evidence": evidence,
+        "analysis_explanation": explain_analysis(
+            artifacts, catalog, dashboard["charts"], evidence
+        ),
+        "result_sets": results,
+        "result_contracts": {id: a.contract for id, a in artifacts.items()},
+        "table_data": {
+            "title": meaning["subject"],
+            "columns": first["columns"],
+            "column_labels": first["column_labels"],
+            "rows": first["rows"],
+            "total_rows": first['total_rows'],
+            "query_id": main.query.id,
+            "artifact_ref": main.result_ref,
+        },
+        "sql": {"main": main.sql},
+        "sql_query": main.sql,
+        "sql_by_query": {id: a.sql for id, a in artifacts.items()},
+        "data_warnings": (
+            ["Không có dữ liệu trong phạm vi yêu cầu."]
+            if not any(a.result["rows"] for a in artifacts.values())
+            else []
+        )
+        + [v["message"] for v in semantic_info.get("limitations", [])],
+        "provider": {
+            "planner": "catalog_compiler",
+            "synthesis": "validated_evidence",
+        },
+        "created_at": datetime.now().astimezone().isoformat(),
+        "assistant_reply": (
+            "Đã cập nhật báo cáo theo kế hoạch đã kiểm chứng." if refined else ""
+        ),
+        "diagnostics": diagnostics,
+    }

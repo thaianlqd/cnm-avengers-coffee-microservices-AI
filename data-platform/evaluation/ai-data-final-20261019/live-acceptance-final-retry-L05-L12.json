@@ -1,0 +1,116 @@
+{
+ "prior_ledger": 510,
+ "final_ledger": 514,
+ "physical_sends": 4,
+ "ceiling": 514,
+ "rows": [
+  {
+   "id": "L05",
+   "depth": "comprehensive",
+   "status": "error",
+   "analysis_state": "PROVIDER_FAILURE",
+   "error_category": "provider_timeout",
+   "latency_ms": 21283,
+   "physical_http": 2,
+   "logical_calls": 1
+  },
+  {
+   "id": "L12",
+   "depth": "focused",
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "breadth": {
+    "id": "analysis_breadth_coverage",
+    "label": "Độ bao phủ góc nhìn",
+    "passed": 4,
+    "total": 4,
+    "summary": "Số liệu đã kiểm chứng · 4/4 góc nhìn.",
+    "status": "passed"
+   },
+   "failed_checks": [],
+   "unverified": [
+    "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+    "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+   ],
+   "coverage": {
+    "status": "complete",
+    "gap_kind": null,
+    "counted": {
+     "core": 4,
+     "diagnostic": 0,
+     "extended": 0
+    },
+    "targets": {
+     "core": 4,
+     "diagnostic": 0,
+     "extended": 0
+    },
+    "selection_origin": "explicit",
+    "effective_depth": "focused",
+    "family": "kpi"
+   },
+   "charts": [
+    [
+     "line",
+     "trend",
+     [
+      "purchasing_customer_count"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:store",
+     [
+      "purchasing_customer_count"
+     ]
+    ],
+    [
+     "bar",
+     "segment:order_type",
+     [
+      "purchasing_customer_count"
+     ]
+    ],
+    [
+     "horizontal_bar",
+     "segment:payment_method",
+     [
+      "purchasing_customer_count"
+     ]
+    ]
+   ],
+   "rejected": [],
+   "requested": [
+    {
+     "metrics": [
+      "purchasing_customer_count"
+     ],
+     "group_by": [],
+     "time": {
+      "kind": "range",
+      "mode": null,
+      "year": null,
+      "month": null,
+      "quarter": null,
+      "day": null,
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "amount": null,
+      "unit": null
+     },
+     "filters": []
+    }
+   ],
+   "operations": 5,
+   "forecasts": 0,
+   "short_answer": [
+    "Số khách mua hàng: 318 khách trong phạm vi đã chọn."
+   ],
+   "conclusion": "Số khách mua hàng: 318 khách trong phạm vi đã chọn.",
+   "latency_ms": 14204,
+   "physical_http": 2,
+   "logical_calls": 1
+  }
+ ]
+}

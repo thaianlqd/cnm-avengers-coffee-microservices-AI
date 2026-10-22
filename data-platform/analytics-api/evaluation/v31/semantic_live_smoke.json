@@ -1,0 +1,9 @@
+{
+  "mode": "live",
+  "selection": "smoke",
+  "generated_at": "2026-10-16T06:00:19.332969+00:00",
+  "case_count": 12,
+  "status": "NOT_RUN",
+  "reason": "estimated_calls_exceed_budget",
+  "estimated_calls": 24
+}

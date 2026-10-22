@@ -1,0 +1,370 @@
+{
+  "version": "3.3",
+  "note": "Defined BEFORE any live run. Denominator = every case in `semantic`; failures are never removed afterwards. Expected `useful` = the first click ends in a verified proposal/report that answers the ask; `clarify` = a concrete clarification with choices; `unsupported` = typed unsupported without SQL.",
+  "ceiling_http": 60,
+  "extension_http": 80,
+  "useful_first_click_target": 0.95,
+  "semantic": [
+    {
+      "id": "L01",
+      "group": "happy",
+      "q": "Doanh thu 30 ngày gần nhất theo tuần",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L02",
+      "group": "happy",
+      "q": "Top 5 chi nhánh có doanh thu cao nhất tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L03",
+      "group": "happy",
+      "q": "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L04",
+      "group": "happy",
+      "q": "Cơ cấu doanh thu theo kênh bán tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L05",
+      "group": "happy",
+      "q": "Số đơn theo trạng thái trong 30 ngày gần nhất",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "order_count"
+        ]
+      ]
+    },
+    {
+      "id": "L06",
+      "group": "happy",
+      "q": "Tỷ lệ hủy đơn theo chi nhánh quý trước",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "order_cancellation_rate"
+        ]
+      ]
+    },
+    {
+      "id": "L07",
+      "group": "happy",
+      "q": "Giá trị đơn trung bình theo thành phố tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "aov",
+          "store_aov"
+        ]
+      ]
+    },
+    {
+      "id": "L08",
+      "group": "happy",
+      "q": "Top 10 sản phẩm bán chạy nhất 30 ngày gần nhất",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "quantity_sold"
+        ]
+      ]
+    },
+    {
+      "id": "L09",
+      "group": "happy",
+      "q": "Doanh thu theo phương thức thanh toán tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "payment_revenue",
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L10",
+      "group": "happy",
+      "q": "Tỷ lệ giao thành công theo shipper trong 30 ngày gần nhất",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "delivery_success_rate"
+        ]
+      ]
+    },
+    {
+      "id": "L11",
+      "group": "happy",
+      "q": "Điểm đánh giá trung bình theo chi nhánh tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "avg_store_rating"
+        ]
+      ]
+    },
+    {
+      "id": "L12",
+      "group": "happy",
+      "q": "Dự báo doanh thu 3 tháng tới",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L13",
+      "group": "happy",
+      "q": "Số khách hàng mua hàng theo tháng trong 6 tháng gần nhất",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "purchasing_customer_count"
+        ]
+      ]
+    },
+    {
+      "id": "L14",
+      "group": "happy",
+      "q": "Hiệu quả khuyến mãi: số đơn áp dụng khuyến mãi và tổng tiền giảm giá tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "voucher_order_count"
+        ],
+        [
+          "discount_amount"
+        ]
+      ]
+    },
+    {
+      "id": "L15",
+      "group": "ambiguity",
+      "q": "Chi nhánh nào ngon nhất?",
+      "expect": "clarify"
+    },
+    {
+      "id": "L16",
+      "group": "ambiguity",
+      "q": "Cho tôi xem tình hình tháng 9",
+      "expect": "clarify"
+    },
+    {
+      "id": "L17",
+      "group": "ambiguity",
+      "q": "Khách hàng như thế nào",
+      "expect": "clarify"
+    },
+    {
+      "id": "L18",
+      "group": "ambiguity",
+      "q": "So sánh hai chi nhánh",
+      "expect": "clarify"
+    },
+    {
+      "id": "L19",
+      "group": "association",
+      "q": "Doanh thu cao có làm tỷ lệ hủy thấp đi không",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ],
+        [
+          "order_cancellation_rate"
+        ]
+      ]
+    },
+    {
+      "id": "L20",
+      "group": "driver",
+      "q": "Vì sao doanh thu tháng 9 năm 2026 thay đổi",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L21",
+      "group": "expectation",
+      "q": "Dự báo doanh thu 3 tháng tới, độ chính xác tối thiểu 95%",
+      "expect": "useful_no_guarantee",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L22",
+      "group": "recovery",
+      "q": "Doanh thu theo tuần trong 8 tuần gần nhất",
+      "expect": "useful",
+      "inject_transport_failure": "503_then_success",
+      "metric_groups": [
+        [
+          "revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L23",
+      "group": "geography",
+      "q": "Doanh thu các chi nhánh miền Nam tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "store_revenue",
+          "revenue"
+        ]
+      ],
+      "scope_members": [
+        "Hồ Chí Minh",
+        "Cần Thơ",
+        "Bình Dương",
+        "Đồng Nai",
+        "Bà Rịa - Vũng Tàu",
+        "Kiên Giang"
+      ]
+    },
+    {
+      "id": "L24",
+      "group": "geography",
+      "q": "Doanh thu theo miền tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_ids": [
+        "revenue"
+      ],
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    },
+    {
+      "id": "L25",
+      "group": "geography",
+      "q": "Doanh thu miền Bắc tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ],
+      "scope_members": [
+        "Hà Nội",
+        "Hải Phòng",
+        "Bắc Ninh",
+        "Quảng Ninh"
+      ]
+    },
+    {
+      "id": "L26",
+      "group": "geography",
+      "q": "Doanh thu miền Trung tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ],
+      "scope_members": [
+        "Đà Nẵng",
+        "Nghệ An",
+        "Thanh Hóa",
+        "Thừa Thiên - Huế",
+        "Khánh Hòa",
+        "Lâm Đồng"
+      ]
+    },
+    {
+      "id": "L27",
+      "group": "geography",
+      "q": "Doanh thu miền Nam trừ HCM tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ],
+      "scope_members": [
+        "Cần Thơ",
+        "Bình Dương",
+        "Đồng Nai",
+        "Bà Rịa - Vũng Tàu",
+        "Kiên Giang"
+      ]
+    },
+    {
+      "id": "L28",
+      "group": "geography",
+      "q": "Doanh thu miền Nam và Hà Nội tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ],
+      "scope_members": [
+        "Hồ Chí Minh",
+        "Cần Thơ",
+        "Bình Dương",
+        "Đồng Nai",
+        "Bà Rịa - Vũng Tàu",
+        "Kiên Giang",
+        "Hà Nội"
+      ]
+    },
+    {
+      "id": "L29",
+      "group": "geography",
+      "q": "So sánh doanh thu miền Bắc với miền Nam tháng 9 năm 2026",
+      "expect": "useful",
+      "metric_groups": [
+        [
+          "revenue",
+          "store_revenue"
+        ]
+      ]
+    }
+  ],
+  "deterministic": "evals/semantic_cases_v33.json (0 HTTP, always offline)"
+}

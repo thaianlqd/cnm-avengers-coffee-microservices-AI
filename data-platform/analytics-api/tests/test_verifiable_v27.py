@@ -7,7 +7,7 @@ from datetime import date
 from unittest.mock import Mock, patch
 from common import AiTextToReportRequest, AiReportRefineRequest
 from services.analysis_pipeline import safe_failure
-from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline, archived_catalog_loading, historical_catalog
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
 from services.analysis_quality_service import assess_report, verify_saved_report, not_scored, WEIGHTS
 from services.analysis_coverage_service import canonical_components
@@ -34,7 +34,7 @@ class VerifiableV27Tests(unittest.TestCase):
         for name in ('requests.sessions.Session.request','psycopg2.connect'):
             guard=patch(name,side_effect=AssertionError('External transport forbidden'));guard.start();self.addCleanup(guard.stop)
         config=patch.dict(os.environ,{'AI_OFFLINE':'1','DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN':'2','DATA_ANALYST_ENABLE_CONTRACT_REPAIR':'1'});config.start();self.addCleanup(config.stop)
-        self.catalog=AnalysisCatalog(physical_metadata())
+        self.catalog=historical_catalog(AnalysisCatalog(physical_metadata()))  # reports come from the archived planner scope
 
     def pipeline(self, decision=None, provider=None):
         return AnalysisPipeline(metadata_loader=physical_metadata,provider=provider or scripted(decision or plan()),executor=Mock(return_value=result(ranked_rows(10))),value_lookup=Mock(return_value=[]))
@@ -82,7 +82,7 @@ class VerifiableV27Tests(unittest.TestCase):
         from services.docx_service import generate_report_docx
         from docx import Document
         _,_,r=self.approved();r['quality_assessment']={'score':1}
-        with patch('services.metadata_service.get_local_metadata',return_value=physical_metadata()):
+        with patch('services.metadata_service.get_local_metadata',return_value=physical_metadata()),archived_catalog_loading():
             verified=_verified_export(r)
         self.assertGreaterEqual(verified['quality_assessment']['score'],90)
         text=' '.join(p.text for p in Document(generate_report_docx(verified)).paragraphs)
@@ -179,7 +179,7 @@ class VerifiableV27Tests(unittest.TestCase):
 
     def test_all_metadata_definitions_examples_and_business_links(self):
         r=self.catalog.registry;intel=DomainIntelligence(self.catalog)
-        self.assertEqual(len(intel.available()),16);self.assertEqual(sum(len(p['analytical_lenses']) for p in intel.available().values()),38)
+        self.assertEqual(len(intel.available()),16);self.assertEqual(sum(len(p['analytical_lenses']) for p in intel.available().values()),44)  # V3.0 delivery lenses; V3.1 +4 lenses
         for m in r['metrics'].values():
             for key in ('business_definition','population_definition','aggregation_behavior','additivity_by_dimension','historical_capability','quality_direction','invalid_uses'):self.assertTrue(m.get(key),key)
         self.assertEqual(r['metrics']['aov']['aggregation_semantics'],'average')
@@ -190,9 +190,9 @@ class VerifiableV27Tests(unittest.TestCase):
         self.assertTrue(r['domain_intelligence']['business_relationships'])
 
     def test_unknown_vocabulary_broadens_knowledge_without_authorizing_queries(self):
-        intel=DomainIntelligence(self.catalog);cs=intel.candidates('zzzz unknown vocabulary','auto','focused')
+        intel=DomainIntelligence(self.catalog);cs=intel.candidates('Hoạt động kinh doanh: zzzz unknown vocabulary','auto','focused')
         self.assertGreaterEqual(len(cs),3);self.assertFalse(any(c['protected'] for c in cs))
-        provider=scripted(plan());p=self.pipeline(provider=provider);p.propose(AiTextToReportRequest(question='zzzz unknown vocabulary',reference_date=date(2026,10,7)))
+        provider=scripted(plan());p=self.pipeline(provider=provider);p.propose(AiTextToReportRequest(question='Hoạt động kinh doanh: zzzz unknown vocabulary',reference_date=date(2026,10,7)))
         self.assertEqual(p.semantic_info['retrieval_confidence'],'low');self.assertGreater(p.semantic_info['global_lens_directory_chars'],0)
         p.executor.assert_not_called()
 

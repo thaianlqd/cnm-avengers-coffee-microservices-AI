@@ -1,6 +1,8 @@
 """Thin HTTP boundary for the Data Platform AI analysis contract."""
 
 import logging
+import json
+import math
 import asyncio
 import time
 from threading import Event
@@ -8,9 +10,12 @@ from fastapi import APIRouter, Body, HTTPException, Query, Request, Response
 from services.browser_owner import browser_owner
 from common import (
     AiFeedbackRequest,
+    AiPreflightRequest,
     AiReportRefineRequest,
+    AiRiskWatchRequest,
     AiSummarizeRequest,
     AiTextToReportRequest,
+    AiWorkspaceRevisionRequest,
 )
 from services.analysis_pipeline import AnalysisPipeline, safe_failure
 from services.llm_service import provider_configuration
@@ -30,6 +35,28 @@ from services.legacy_analysis_compat import (
 
 router = APIRouter(prefix="/api/ai", tags=["AI Data Assistant"])
 logger = logging.getLogger("ai-analytics")
+
+
+@router.get('/dashboards')
+def curated_dashboards():
+    from services.preflight_service import preflight_catalog
+    from services.data_coverage_service import peek
+    from services.workspace_service import dashboard_catalog
+    return dashboard_catalog(preflight_catalog(), (peek() or {}).get('data_health'))
+
+
+@router.get('/sessions/{session_id}/geography')
+def geographic_exploration(session_id: str, request: Request, response: Response,
+        revision: int = Query(..., ge=1), city: str | None = Query(None, max_length=160),
+        store: str | None = Query(None, max_length=160)):
+    from services.geography_exploration_service import explore
+    if len(session_id) > 128:
+        raise HTTPException(404, 'Phiên bản đồ không hợp lệ.')
+    try:
+        return explore(session_id, browser_owner(request, response), revision, city, store)
+    except AnalysisError as error:
+        raise HTTPException(422 if error.category in {'query_scope','clarification','capacity_requires_choice','result_contract'} else 503,
+                            safe_failure(error)['message']) from None
 
 
 @router.post('/analysis-jobs', status_code=202)
@@ -78,7 +105,8 @@ def cancel_analysis_job(job_id: str, request: Request, response: Response):
 @router.get('/sessions/{session_id}/results/{query_id}')
 def result_page(session_id: str, query_id: str, request: Request, response: Response,
                 offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200),
-                dimension: str = Query(None), value: str = Query(None)):
+                dimension: str = Query(None), value: str = Query(None),
+                filters: str | None = None, revision: int | None = None):
     """Page/filter immutable approved results; never accept SQL or arbitrary IDs."""
     from services.session_service import get_session
     from services.result_artifact_store import artifact_store
@@ -86,12 +114,28 @@ def result_page(session_id: str, query_id: str, request: Request, response: Resp
     session = get_session(session_id)
     if not session or session.owner_id != owner or not session.approved:
         raise HTTPException(404, 'Phiên phân tích đã hết hạn hoặc không thuộc trình duyệt này.')
+    if revision is not None and revision != session.revision:
+        raise HTTPException(409, 'Báo cáo đã thay đổi; hãy mở lại kết quả hiện tại.')
     artifact = session.agent_artifacts.get(query_id)
     if not artifact or not artifact.result_ref:
         raise HTTPException(404, 'Không tìm thấy kết quả trong kế hoạch đã duyệt.')
     try:
-        filters = {dimension:value} if dimension is not None and value is not None else {}
-        page = artifact_store().page(artifact.result_ref, offset, limit, filters)
+        selected = {dimension:value} if dimension is not None and value is not None else {}
+        if filters is not None:
+            try:
+                if len(filters) > 4096 or selected:
+                    raise ValueError()
+                selected = json.loads(filters)
+                if not isinstance(selected, dict) or not 1 <= len(selected) <= 8:
+                    raise ValueError()
+                for key, item in selected.items():
+                    if not isinstance(key, str) or len(key) > 64 or type(item) not in {str, int, float, type(None)}:
+                        raise ValueError()
+                    if isinstance(item, str) and len(item) > 512 or isinstance(item, float) and not math.isfinite(item):
+                        raise ValueError()
+            except (ValueError, TypeError):
+                raise HTTPException(400, 'Khóa nhóm không hợp lệ.') from None
+        page = artifact_store().page(artifact.result_ref, offset, limit, selected)
         page['revision'] = session.revision
         page['catalog_fingerprint'] = session.schema_fingerprint
         page['resolved_plan_fingerprint'] = session.plan_fingerprint
@@ -101,29 +145,52 @@ def result_page(session_id: str, query_id: str, request: Request, response: Resp
                             safe_failure(error)['message']) from None
 
 
+@router.post('/sessions/{session_id}/reconcile')
+def reconcile_report(session_id: str, request: Request, response: Response):
+    """V3.2 independent oracle for one approved report (read-only, 0 AI calls)."""
+    if not session_id or len(session_id) > 128:
+        raise HTTPException(404, 'Phiên phân tích không hợp lệ.')
+    pipeline = AnalysisPipeline(owner_id=browser_owner(request, response))
+    try:
+        return pipeline.reconcile(session_id)
+    except AnalysisError as error:
+        code = 404 if error.category in {'session', 'ownership'} else 409 if error.category == 'schema_changed' else 503
+        raise HTTPException(code, safe_failure(error)['message']) from None
+
+
 def _invoke(action, payload, owner_id=None):
-    if hasattr(payload, "prompt") and not payload.prompt.strip():
+    if hasattr(payload, "prompt") and not payload.prompt.strip() and not getattr(payload,"dashboard_id",None):
         raise HTTPException(
             status_code=422, detail="Yêu cầu phân tích không được để trống."
         )
     pipeline = AnalysisPipeline(owner_id=owner_id)
     try:
+        from services.access_policy import active_principal,authorize_meaning
+        if active_principal.get() is not None:
+            from services.request_anchors import request_anchors
+            question=getattr(payload,'prompt',None) or getattr(payload,'feedback','')
+            catalog=pipeline.catalog()
+            authorize_meaning(question,catalog,analysis_scope=getattr(payload,'analysis_scope',None),
+                              anchors=request_anchors(question,catalog,{}))
         if action == "generate" and not payload.session_id:
             raise AnalysisError("approval_required", "Approve a server proposal before execution")
         return getattr(pipeline, action)(payload)
+    except HTTPException:
+        raise
     except Exception as error:
+        from services.telemetry import failure_diagnostic
+        failure_diagnostic(error,action=action)
         pipeline.semantic_info['total_ms']=round((time.perf_counter()-pipeline.started)*1000,2)
         failure = safe_failure(error, pipeline.calls, pipeline.semantic_info)
         logger.warning(
-            "Analysis rejected action=%s category=%s stage=%s provider_calls=%s root_contract_issues=%s contract_issues=%s issue_history=%s resolver_diagnostic=%s",
+            "Analysis rejected request_id=%s action=%s category=%s stage=%s provider_calls=%s root_issue_count=%s issue_count=%s",
+            pipeline.semantic_info.get('request_id'),
             action,
             failure["diagnostics"]["error_category"],
             pipeline.semantic_info.get('failure_stage'),
             pipeline.semantic_info.get('provider_call_count',len(pipeline.calls)),
-            pipeline.semantic_info.get('root_contract_issues',[]),
-            pipeline.semantic_info.get("contract_issues", []),
-            pipeline.semantic_info.get('semantic_issue_history',[]),
-            pipeline.semantic_info.get('resolver_diagnostic',{}),
+            len(pipeline.semantic_info.get('root_contract_issues',[])),
+            len(pipeline.semantic_info.get("contract_issues", [])),
         )
         failure["diagnostics"].update(
             {
@@ -156,9 +223,9 @@ def ai_status():
         "planning_mode": "hybrid_verifiable",
         "provider_call_budget": validate_single_shot_policy(),
         "one_click": {"enabled": os.getenv('DATA_ANALYST_ONE_CLICK_ENABLED','1') == '1',
-            "job_deadline_seconds": 45, "workers_per_replica": 4,
+            "job_deadline_seconds": 70, "workers_per_replica": 4,
             "max_active_jobs": 12, "query_concurrency_per_job": 2,
-            "plan_cache_seconds": 300, "minimum_views": 4, "target_views": 5},
+            "plan_cache_seconds": 300, "minimum_views": 0, "target_views": 5},
         "providers": providers,
         "metadata": metadata,
         "sessions": session_stats(),
@@ -167,8 +234,13 @@ def ai_status():
 
 @router.get("/capabilities")
 def ai_capabilities():
+    from services import data_coverage_service
     try:
-        return DomainIntelligence(AnalysisCatalog(get_local_metadata())).capabilities()
+        # Coverage is the cached background snapshot; this request never
+        # queries the warehouse for MIN/MAX bounds.
+        coverage = data_coverage_service.peek() or {"status": "loading", "overall": {"min_date": None, "max_date": None},
+            "facts": {}, "freshness": {"mode": "batch", "label": "Cập nhật theo đợt", "last_sync": None, "stale": None}}
+        return DomainIntelligence(AnalysisCatalog(get_local_metadata())).capabilities(coverage=coverage)
     except AnalysisError as error:
         if error.category == "domain_metadata_invalid":
             raise HTTPException(status_code=503, detail="Danh mục miền dữ liệu chưa hợp lệ.") from None
@@ -177,10 +249,169 @@ def ai_capabilities():
         raise HTTPException(status_code=503, detail="Danh mục dữ liệu chưa sẵn sàng.") from None
 
 
+_preflight_limiter = None
+_risk_limiter = None
+
+
+def _limiter(current, catalog, name, default):
+    from services import preflight_service
+    if current is None:
+        policy = catalog.registry.get("workspace", {}).get(name, {}).get("rate_limit", {})
+        current = preflight_service.RateLimiter(policy.get("requests", default[0]), policy.get("window_seconds", default[1]))
+    return current
+
+
+@router.post("/preflight")
+def ai_preflight(payload: AiPreflightRequest, request: Request = None, response: Response = None):
+    """Deterministic advisory check while typing: 0 provider calls, 0 warehouse queries."""
+    global _preflight_limiter
+    from services import preflight_service
+    from services.input_integrity_service import request_text
+    try:
+        catalog = preflight_service.preflight_catalog()
+    except Exception:
+        raise HTTPException(status_code=503, detail="Danh mục dữ liệu chưa sẵn sàng.") from None
+    _preflight_limiter = _limiter(_preflight_limiter, catalog, "preflight", (40, 10))
+    # Stable, validated per-browser key (origin-checked; a malformed cookie is replaced).
+    if not _preflight_limiter.allow(browser_owner(request, response) or "internal"):
+        raise HTTPException(status_code=429, detail="Kiểm tra câu hỏi quá nhanh; vui lòng thử lại sau giây lát.")
+    return preflight_service.run(request_text(payload), payload.time.model_dump(mode="json") if payload.time else None,
+                                 payload.analysis_scope.model_dump(mode="json") if payload.analysis_scope else None,
+                                 payload.analysis_mission, payload.reference_date, catalog=catalog,
+                                 input_mode=payload.input_mode,
+                                 analysis_depth=payload.analysis_depth,
+                                 guided_contract=payload.guided_contract.model_dump(exclude_none=True) if payload.guided_contract else None)
+
+
+_input_resolution_limiter = None
+
+
+@router.post('/resolve-input')
+def resolve_input(payload: AiPreflightRequest, request: Request = None, response: Response = None):
+    """Explicit bounded entity resolution, never used automatically per key."""
+    from services import preflight_service
+    from services.input_integrity_service import entity_lookup, request_text
+    global _input_resolution_limiter
+    catalog = preflight_service.preflight_catalog()
+    _input_resolution_limiter = _limiter(_input_resolution_limiter, catalog, 'input_resolution', (6,60))
+    if not _input_resolution_limiter.allow(browser_owner(request,response) or 'internal'):
+        raise HTTPException(429, 'Tra cứu tên quá thường xuyên; hãy thử lại sau.')
+    return preflight_service.run(request_text(payload), payload.time.model_dump(mode='json') if payload.time else None,
+        payload.analysis_scope.model_dump(mode='json') if payload.analysis_scope else None,
+        payload.analysis_mission, payload.reference_date, catalog=catalog, input_mode=payload.input_mode, analysis_depth=payload.analysis_depth,
+        guided_contract=payload.guided_contract.model_dump(exclude_none=True) if payload.guided_contract else None,
+        input_lookup=entity_lookup(catalog,resolve=True))
+
+
+@router.post('/refinement-preflight')
+def refinement_preflight(payload: AiReportRefineRequest, request: Request = None, response: Response = None,
+                         resolve_entities: bool = False):
+    from services import preflight_service
+    from services.input_integrity_service import validate, entity_lookup
+    from services.session_service import get_session
+    from services.access_policy import current_principal
+    principal = current_principal(required=True)
+    session = get_session(payload.session_id) if payload.session_id else None
+    owner = browser_owner(request,response)
+    if not session or session.owner_id != owner or not session.approved:
+        raise HTTPException(404, 'Phiên phân tích không khả dụng cho tài khoản này.')
+    if payload.current_report.get('revision') != session.revision:
+        raise HTTPException(409, 'Bản báo cáo đã thay đổi. Hãy tải lại trước khi điều chỉnh.')
+    catalog = preflight_service.preflight_catalog()
+    if catalog.fingerprint != session.schema_fingerprint:
+        raise HTTPException(409, 'Danh mục dữ liệu đã thay đổi. Hãy tạo lại phân tích.')
+    global _input_resolution_limiter
+    if resolve_entities:
+        _input_resolution_limiter = _limiter(_input_resolution_limiter,catalog,'input_resolution',(6,60))
+        if not _input_resolution_limiter.allow(principal.owner_key): raise HTTPException(429,'Tra cứu tên quá thường xuyên.')
+    validation = validate(payload.feedback,catalog,
+        context={'revision':session.revision,'mode':'refinement'}, lookup=entity_lookup(catalog,resolve=resolve_entities))
+    return {'can_submit':validation['can_submit'], 'input_validation':validation, 'findings':validation['findings'],
+            'provider_calls':0,'warehouse_queries':0}
+
+
+@router.post("/risk-watch")
+def ai_risk_watch(payload: AiRiskWatchRequest, request: Request = None, response: Response = None):
+    """Governed risk signals for an explicit user action. Read-only; 0 provider calls."""
+    from services import risk_watch_service
+    from services.analysis_contract import TimeScope
+    from services.analysis_understanding import catalog_today
+    from services.time_resolution_service import parse_time, resolve_time
+    from services.request_anchors import request_anchors
+    from datetime import timedelta
+    global _risk_limiter
+    owner = browser_owner(request, response) or "internal"
+    try:
+        catalog = AnalysisCatalog(get_local_metadata())
+        _risk_limiter = _limiter(_risk_limiter, catalog, "risk_watch", (6, 60))
+        if not _risk_limiter.allow(owner):
+            raise HTTPException(status_code=429, detail="Kiểm tra rủi ro quá thường xuyên; vui lòng thử lại sau.")
+        r = catalog.registry
+        reference = payload.reference_date or catalog_today(r["timezone"])
+        scope = payload.analysis_scope.model_dump(mode="json") if payload.analysis_scope else None
+        if payload.question.strip():
+            from services.preflight_service import run as preflight
+            checked=preflight(payload.question,payload.time.model_dump(mode='json') if payload.time else None,
+                scope,'risk_watch',reference,catalog=catalog,input_mode='guided',
+                guided_contract={'signals':[s['id'] for s in r.get('risk_signals',[])]})
+            if checked['capability']['decision']!='READY':
+                raise HTTPException(422,detail=checked['capability'])
+        ui = payload.time.mode if payload.time else "auto"
+        period = None
+        if ui in {"current_month", "previous_month", "current_quarter", "previous_quarter", "current_year", "previous_year", "all_time"}:
+            period = TimeScope(mode=ui, timezone=r["timezone"])
+        elif ui == "custom":
+            period = TimeScope(mode="custom", start=payload.time.start, end=payload.time.end, timezone=r["timezone"])
+        elif ui in {"today", "7d", "30d"}:
+            days = {"today": 1, "7d": 7, "30d": 30}[ui]
+            period = TimeScope(mode="custom", start=reference - timedelta(days=days - 1), end=reference, timezone=r["timezone"])
+        elif payload.question.strip():
+            # Deterministic metadata grammar only (same as preflight); no model.
+            parts = parse_time(payload.question, r["interpretation"], r["timezone"], reference)["recognized_time_parts"]
+            if parts:
+                period = resolve_time(parts[0], reference, r["timezone"])[0]
+        # Scope resolution is independent of the selected time preset.
+        from services.scope_resolution_service import resolve_scope
+        from services.request_anchors import population_filters
+        anchors = request_anchors(payload.question, catalog, {"required_filters": (scope or {}).get("filters") or []})
+        resolved = anchors['scope_resolution']
+        if resolved['state'] == 'needs_clarification':
+            raise AnalysisError('query_scope', resolved['message'])
+        if not scope or scope.get('mode') == 'auto':
+            filters = population_filters(anchors, catalog)
+            grouped = {}
+            for v in anchors['values']:
+                if r['dimensions'][v['dimension']].get('scope_selectable'):
+                    grouped.setdefault(v['dimension'], set()).add(v['value'])
+            filters += [dict(dimension=d,operator='in',value=sorted(vs)) for d,vs in grouped.items()
+                        if not any(f['dimension']==d for f in filters)]
+            if filters: scope = {'mode':'selected','filters':filters}
+        return risk_watch_service.evaluate(catalog, scope, period, payload.breakdown, reference=reference, lookup=lookup_dimension_values, signal_ids=payload.signals)
+    except AnalysisError as error:   # AnalysisError is a ValueError: it must be classified before the generic value error
+        if error.category == "risk_signal_unknown":
+            raise HTTPException(status_code=422, detail="Tín hiệu rủi ro đã chọn không có trong danh mục được quản trị.") from None
+        if error.category in {"query_scope", "filter_value_unknown"}:
+            raise HTTPException(status_code=422, detail="Phạm vi đã chọn không hợp lệ cho kiểm tra rủi ro.") from None
+        raise HTTPException(status_code=503, detail="Chưa thể tính tín hiệu rủi ro.") from None
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=422, detail="Khoảng thời gian không hợp lệ cho kiểm tra rủi ro.") from None
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=503, detail="Chưa thể tính tín hiệu rủi ro.") from None
+
+
 @router.get("/scope-values")
 def ai_scope_values(dimension: str = Query(min_length=1, max_length=64), search: str = Query(min_length=2, max_length=80)):
     """Explicit picker search, parameterized/read-only; no analytical inference."""
     try:
+        from services.access_policy import active_principal,current_principal
+        if active_principal.get() is not None:
+            principal=current_principal(required=True)
+            if not principal.national:
+                if dimension!='store_id':raise HTTPException(403,'Chỉ có thể tìm mã cửa hàng trong phạm vi được cấp.')
+                values=[value for value in principal.store_ids if search.casefold() in value.casefold()][:8]
+                return {'dimension':dimension,'values':[{'value':v,'label':v} for v in values]}
         catalog = AnalysisCatalog(get_local_metadata())
         scopes = DomainIntelligence(catalog).capabilities()["scope_types"]
         if not any(s["id"] == dimension and s["searchable"] for s in scopes):
@@ -196,7 +427,7 @@ def ai_scope_values(dimension: str = Query(min_length=1, max_length=64), search:
 
 @router.post("/propose-plan")
 async def bounded_propose_plan(payload: AiTextToReportRequest, request: Request = None, response: Response = None):
-    from services.provider_budget import request_deadline, request_cancelled, PLANNING_SECONDS
+    from services.provider_budget import request_deadline, request_cancelled, PLANNING_SECONDS, HTTP_DEADLINE_SECONDS
     owner=browser_owner(request,response)
     token=request_deadline.set(time.monotonic()+PLANNING_SECONDS)
     cancelled=Event()
@@ -205,7 +436,7 @@ async def bounded_propose_plan(payload: AiTextToReportRequest, request: Request 
         # The HTTP deadline also covers catalog I/O and preflight. A timed-out
         # worker cannot start provider work or create a proposal after expiry;
         # proposal planning never executes analytical result queries.
-        return await asyncio.wait_for(asyncio.to_thread(_invoke,'propose',payload,owner),timeout=29)
+        return await asyncio.wait_for(asyncio.to_thread(_invoke,'propose',payload,owner),timeout=HTTP_DEADLINE_SECONDS)
     except asyncio.TimeoutError:
         logger.warning('Analysis planning HTTP deadline exhausted')
         return safe_failure(AnalysisError('planning_timeout','Planning response deadline exhausted'),
@@ -229,6 +460,30 @@ def generate_executive_report(payload: AiTextToReportRequest, request: Request =
 @router.post("/refine-report")
 def refine_report(payload: AiReportRefineRequest, request: Request = None, response: Response = None):
     return _invoke("refine", payload, browser_owner(request, response))
+
+
+@router.post('/workspace-revision')
+async def workspace_revision(payload: AiWorkspaceRevisionRequest, request: Request, response: Response):
+    from services.provider_budget import request_deadline, request_cancelled, PLANNING_SECONDS
+    deadline = time.monotonic() + PLANNING_SECONDS
+    token = request_deadline.set(deadline)
+    cancelled = Event()
+    cancellation_token = request_cancelled.set(cancelled)
+    owner = browser_owner(request, response)
+    worker = asyncio.create_task(asyncio.to_thread(_invoke, 'workspace_revision', payload, owner))
+    try:
+        while not worker.done():
+            await asyncio.wait({worker}, timeout=0.1)
+            if not worker.done() and await request.is_disconnected():
+                raise HTTPException(499, 'Đã dừng chờ revision; kết quả chưa hoàn tất sẽ không được công bố.')
+            if not worker.done() and time.monotonic() >= deadline:
+                return safe_failure(AnalysisError('planning_timeout', 'Workspace revision deadline exhausted'))
+        return worker.result()
+    finally:
+        cancelled.set()
+        worker.cancel()
+        request_cancelled.reset(cancellation_token)
+        request_deadline.reset(token)
 
 
 @router.post("/feedback")

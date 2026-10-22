@@ -81,7 +81,8 @@ class InactiveBindingTests(f.unittest.TestCase):
         raw=observed_shape({'contribution_share':['revenue']});raw['requirements']=raw['requirements'][:1]
         p=self.pipeline(f.scripted(raw,raw,raw))
         with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D))
-        self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+        # V3.0: identical repair answer is no progress (2, not 3 calls).
+        self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
         self.assertIn('explicit_features_missing',{i['code'] for i in p.semantic_info['root_contract_issues']})
 
     def test_resolver_and_approved_report_still_reject_inactive_bindings(self):
@@ -105,5 +106,5 @@ class InactiveBindingTests(f.unittest.TestCase):
         attack=f.envelope({'id':'sales_summary_trend_type','derived_features':[],
             'feature_metrics':{'contribution_share':['revenue']}})
         p=self.pipeline(f.scripted(raw,attack,attack))
-        with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D))
-        self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+        with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D+' Chỉ ra nhóm dẫn đầu theo doanh thu.'))
+        self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()

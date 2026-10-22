@@ -1,0 +1,15 @@
+ Container avengers-v34-fixture-postgres-1 Running 
+ Container avengers-v34-fixture-redis-1 Running 
+ Container avengers-v34-fixture-postgres-1 Waiting 
+ Container avengers-v34-fixture-postgres-1 Healthy 
+ Container avengers-v34-fixture-postgres-1 Waiting 
+ Container avengers-v34-fixture-redis-1 Waiting 
+ Container avengers-v34-fixture-redis-1 Healthy 
+ Container avengers-v34-fixture-postgres-1 Healthy 
+ Container avengers-v34-fixture-api-tests-run-e44d8b47de72 Creating 
+ Container avengers-v34-fixture-api-tests-run-e44d8b47de72 Created 
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.920s
+
+OK

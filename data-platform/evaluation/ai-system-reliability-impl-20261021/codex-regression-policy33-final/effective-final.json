@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "modules": 107,
+  "expected_modules": 107,
+  "unique_tests": 1704,
+  "effective_failures": 0,
+  "effective_errors": 0,
+  "initial_full_run_failures": [
+    "tests.test_agent_v23.V23Tests.test_rich_dashboard_result_reuse_diversity_and_units"
+  ],
+  "rechecked_modules": [
+    "tests.test_agent_v23"
+  ],
+  "rechecks_directory": "rechecks2",
+  "test_only_correction": {
+    "path": "data-platform/analytics-api/tests/test_agent_v23.py",
+    "before_sha256": "096ea90d1bbf53295865bcb78efa3f4889a337f0e482ad5d7e9f9332b1b4f2d4",
+    "after_sha256": "f6ae6a75ba964e661e7667854e6056b5f27fa0f066c136489fef55513b239ed0",
+    "reason": "Replace cosmetic non-repetition with actual scoped-evidence equality plus accepted canonical claim and rejected unsupported causal claim through production grounded_narrative. Legacy archived graph reports intentionally lack modern saved-report verifier metadata.",
+    "attempts": [
+      "original full run:cosmetic assertion failure",
+      "rechecks:first fixture mistakenly used modern saved-report verifier; StopIteration retained",
+      "rechecks2:legacy-compatible production narrative kernel positive/negative controls"
+    ]
+  },
+  "product_source_drift": [],
+  "limits": "Full107module/1704test product-source-frozen run had one obsolete assertion; entire24test module rechecked after strengthening that test. Original failures retained; no production source change after freeze. Not monolithic."
+}

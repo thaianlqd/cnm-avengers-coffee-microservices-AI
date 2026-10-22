@@ -1,0 +1,363 @@
+{
+  "cases": [
+    {
+      "id": "risk-edited",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "Risk covers six signals without provider",
+          "passed": true
+        },
+        {
+          "assertion": "snapshot has current-state chart title",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "risk-explicit-scope",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "Risk covers six signals without provider",
+          "passed": true
+        },
+        {
+          "assertion": "snapshot has current-state chart title",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "risk-followup",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "one correctly directed ranking",
+          "passed": true
+        },
+        {
+          "assertion": "every dependent query explicitly bound to ranked cohort",
+          "passed": true
+        },
+        {
+          "assertion": "Top5 store identities equal independent warehouse oracle",
+          "passed": true
+        },
+        {
+          "assertion": "cohort ratio recomputed from raw numerator/denominator q_517856311a48d910045e4334",
+          "passed": true
+        },
+        {
+          "assertion": "cohort ratio recomputed from raw numerator/denominator q_73da3e91c8598b7d60c5227f",
+          "passed": true
+        },
+        {
+          "assertion": "cohort ratio recomputed from raw numerator/denominator q_962619aa4433bc41bfc1b700",
+          "passed": true
+        },
+        {
+          "assertion": "cohort ratio recomputed from raw numerator/denominator q_9b41fc91c188bd2816a8e406",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "overview-scoped",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "compare",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "both requested comparison members and no others",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "bottom-five",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "one correctly directed ranking",
+          "passed": true
+        },
+        {
+          "assertion": "every dependent query explicitly bound to ranked cohort",
+          "passed": true
+        },
+        {
+          "assertion": "all additive views reconcile with independent selected orders",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "trend-scoped",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "weekly trend requested",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "composition",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "payment-method composition requested",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "forecast",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "three-month revenue forecast requested",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "relationship",
+      "checks": [
+        {
+          "assertion": "unsupported event/snapshot pair blocked before provider/SQL",
+          "passed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "multi-clause",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": false
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "id": "casual",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": false
+        }
+      ],
+      "status": "FAIL"
+    }
+  ],
+  "passed": 10,
+  "total": 12,
+  "arithmetic_basis": "Independent raw SQL observations. Same-generation proof must be reported separately; matching numbers alone do not pin source generation."
+}

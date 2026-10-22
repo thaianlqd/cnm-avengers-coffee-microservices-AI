@@ -1,0 +1,6138 @@
+[
+  {
+    "id": "overview-guided",
+    "payload": {
+      "question": "Tình hình doanh thu tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "overview",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "overview",
+          "label": "Tổng quan"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "overview",
+          "label": "Tổng quan"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "overview",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "b8fc59177cc844960ff7185b5229860c45339338bad5336960f56f53e093703c",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 36,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "overview",
+          "metric": "revenue"
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "overview",
+        "inferred_mission": "overview",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 200.29
+    },
+    "elapsed_seconds": 0.291
+  },
+  {
+    "id": "compare-guided",
+    "payload": {
+      "question": "So sánh doanh thu theo tỉnh/thành giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "compare",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "group_a": "Hồ Chí Minh",
+        "group_b": "Hà Nội"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "input_entity_unresolved",
+            "stage": "static",
+            "blocking": true,
+            "subject": "city",
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “giữa Hồ Chí Minh”. Sửa tên hoặc chọn lại giá trị trước khi phân tích."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "input_entity_unresolved",
+        "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “giữa Hồ Chí Minh”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+        "actions": [
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hồ Chí Minh",
+            "start": 34,
+            "end": 50,
+            "old_text": "giữa Hồ Chí Minh",
+            "new_text": "Hồ Chí Minh",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hà Nội",
+            "start": 34,
+            "end": 50,
+            "old_text": "giữa Hồ Chí Minh",
+            "new_text": "Hà Nội",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Đà Nẵng",
+            "start": 34,
+            "end": 50,
+            "old_text": "giữa Hồ Chí Minh",
+            "new_text": "Đà Nẵng",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Cần Thơ",
+            "start": 34,
+            "end": 50,
+            "old_text": "giữa Hồ Chí Minh",
+            "new_text": "Cần Thơ",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hà Nội",
+              "Hồ Chí Minh"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hà Nội",
+              "Hồ Chí Minh"
+            ],
+            "comparison": true,
+            "cohorts": [
+              {
+                "phrase": "ho chi minh",
+                "members": [
+                  "Hồ Chí Minh"
+                ]
+              },
+              {
+                "phrase": "ha noi",
+                "members": [
+                  "Hà Nội"
+                ]
+              }
+            ],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "e11a97c58b08eeaaa7b9fd703c9454c3eaa843539fe80de376f6d50b7ebcb427",
+        "requested_phrase": "So sánh doanh thu theo tỉnh/thành giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "compare",
+          "label": "So sánh"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "compare",
+          "label": "So sánh"
+        }
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_entity_unresolved",
+          "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “giữa Hồ Chí Minh”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+          "slot_id": "s1",
+          "dimension": "city",
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hồ Chí Minh",
+              "start": 34,
+              "end": 50,
+              "old_text": "giữa Hồ Chí Minh",
+              "new_text": "Hồ Chí Minh"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hà Nội",
+              "start": 34,
+              "end": 50,
+              "old_text": "giữa Hồ Chí Minh",
+              "new_text": "Hà Nội"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Đà Nẵng",
+              "start": 34,
+              "end": 50,
+              "old_text": "giữa Hồ Chí Minh",
+              "new_text": "Đà Nẵng"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Cần Thơ",
+              "start": 34,
+              "end": 50,
+              "old_text": "giữa Hồ Chí Minh",
+              "new_text": "Cần Thơ"
+            }
+          ]
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "compare",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "236c181ee5cdde21eb15ca066afc45b17fca248a0d9855d2b45fa542726b41df",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 77,
+            "slot_ids": [
+              "s1",
+              "s2"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "entity",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_entity_unresolved",
+            "start": 34,
+            "end": 50,
+            "raw": "giữa Hồ Chí Minh",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [],
+            "lookup_allowed": false,
+            "clause_id": "c1"
+          },
+          {
+            "id": "s2",
+            "kind": "entity",
+            "state": "BOUND",
+            "reason": "catalog_alias",
+            "start": 54,
+            "end": 60,
+            "raw": "Hà Nội",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [
+              "Hà Nội"
+            ],
+            "lookup_allowed": false,
+            "clause_id": "c1"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_entity_unresolved",
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “giữa Hồ Chí Minh”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+            "slot_id": "s1",
+            "dimension": "city",
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hồ Chí Minh",
+                "start": 34,
+                "end": 50,
+                "old_text": "giữa Hồ Chí Minh",
+                "new_text": "Hồ Chí Minh"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hà Nội",
+                "start": 34,
+                "end": 50,
+                "old_text": "giữa Hồ Chí Minh",
+                "new_text": "Hà Nội"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Đà Nẵng",
+                "start": 34,
+                "end": 50,
+                "old_text": "giữa Hồ Chí Minh",
+                "new_text": "Đà Nẵng"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Cần Thơ",
+                "start": 34,
+                "end": 50,
+                "old_text": "giữa Hồ Chí Minh",
+                "new_text": "Cần Thơ"
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "compare",
+          "metric": "revenue",
+          "dimension": "city",
+          "group_a": "Hồ Chí Minh",
+          "group_b": "Hà Nội"
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "compare",
+        "inferred_mission": "compare",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 57.52
+    },
+    "elapsed_seconds": 0.141
+  },
+  {
+    "id": "ranking-guided",
+    "payload": {
+      "question": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "ranking",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "n": 5,
+        "direction": "bottom"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        },
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "579930e304d5d9a8e01ce9d44effeb9ec56cf54a0277eb270424ca99b4aa198a",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 65,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "ranking",
+          "metric": "revenue",
+          "dimension": "city",
+          "n": 5,
+          "direction": "bottom"
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "ranking",
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 58.16
+    },
+    "elapsed_seconds": 0.066
+  },
+  {
+    "id": "trend-guided",
+    "payload": {
+      "question": "Xu hướng doanh thu theo tuần tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "trend",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "granularity": "week"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "trend",
+          "label": "Xu hướng"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "trend",
+          "label": "Xu hướng"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "granularity",
+          "time",
+          "trend"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "4189b589bda6118af5b309458be9b2b5bd68dae38530c63ff5aa4a20b32babee",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 45,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "trend",
+          "metric": "revenue",
+          "granularity": "week"
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "trend",
+        "inferred_mission": "trend",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 98.62
+    },
+    "elapsed_seconds": 0.125
+  },
+  {
+    "id": "composition-guided",
+    "payload": {
+      "question": "Cơ cấu doanh thu theo phương thức thanh toán tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "composition",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "payment_method"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "payment_method",
+            "label": "Phương thức thanh toán"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "composition",
+          "label": "Cơ cấu"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "composition",
+          "label": "Cơ cấu"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "payment_method",
+          "revenue",
+          "subject:orders",
+          "subject:payments",
+          "thanh toán"
+        ],
+        "analytical": [
+          "composition",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "a704751ea031b83ae5dee57cb3c583688e961781086945c4b81d44dc440c4737",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 61,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "composition",
+          "metric": "revenue",
+          "dimension": "payment_method"
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "composition",
+        "inferred_mission": "composition",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "payment_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "payment_method"
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 21.46
+    },
+    "elapsed_seconds": 0.069
+  },
+  {
+    "id": "forecast-guided",
+    "payload": {
+      "question": "Dự báo doanh thu 3 tháng tới",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "all_time"
+      },
+      "analysis_mission": "forecast",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "horizon": 3,
+        "cadence": "month"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "warning",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": {
+          "requested": true,
+          "horizon": 3,
+          "unit": "month",
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          }
+        },
+        "mission": {
+          "id": "forecast",
+          "label": "Dự báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "forecast",
+          "label": "Dự báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "warn",
+          "code": "forecast_data_stale",
+          "message": "Dữ liệu đơn hàng chi tiết và doanh thu mới đến 2026-10-18 (cập nhật theo đợt); dự báo bắt đầu từ kỳ hoàn tất gần nhất, các ngày chưa đồng bộ không được coi là doanh số bằng 0.",
+          "fixes": [],
+          "metric": "revenue",
+          "max_date": "2026-10-18"
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "forecast"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "48e17820b778ad2d35d643acc603ae55fd53c676ac134d128a5a9d9802524fad",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 28,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "forecast",
+          "metric": "revenue",
+          "cadence": "month",
+          "horizon": 3
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "forecast",
+        "inferred_mission": "forecast",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": {
+          "requested": true,
+          "horizon": 3,
+          "unit": "month",
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          }
+        },
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 20.41
+    },
+    "elapsed_seconds": 0.128
+  },
+  {
+    "id": "relationship-guided",
+    "payload": {
+      "question": "Liên hệ giữa tổng chuyến giao và điểm hồ sơ tài xế theo mã tài xế tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "relationship",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "total_deliveries",
+        "metric_b": "driver_rating",
+        "dimension": "driver_id"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "warning",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "total_deliveries",
+            "label": "Tổng chuyến giao",
+            "unit": "lượt",
+            "historical": false,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          },
+          {
+            "id": "driver_rating",
+            "label": "Điểm hồ sơ tài xế",
+            "unit": "điểm",
+            "historical": false,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "relationship",
+          "label": "Tương quan"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "relationship",
+          "label": "Tương quan"
+        }
+      },
+      "findings": [
+        {
+          "level": "warn",
+          "code": "snapshot_metric_trend",
+          "message": "Tổng chuyến giao là chỉ số hiện trạng (ảnh chụp), không có lịch sử theo thời gian; hệ thống chỉ trả giá trị hiện tại.",
+          "fixes": [
+            {
+              "label": "Bỏ mốc thời gian / xu hướng",
+              "kind": "advice"
+            }
+          ],
+          "metric": "total_deliveries"
+        },
+        {
+          "level": "warn",
+          "code": "snapshot_metric_trend",
+          "message": "Điểm hồ sơ tài xế là chỉ số hiện trạng (ảnh chụp), không có lịch sử theo thời gian; hệ thống chỉ trả giá trị hiện tại.",
+          "fixes": [
+            {
+              "label": "Bỏ mốc thời gian / xu hướng",
+              "kind": "advice"
+            }
+          ],
+          "metric": "driver_rating"
+        },
+        {
+          "level": "info",
+          "code": "mission_caveat",
+          "message": "Tương quan không phải nhân quả; chỉ mô tả quan hệ quan sát được trong dữ liệu.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "driver_rating",
+          "subject:delivery",
+          "total_deliveries"
+        ],
+        "analytical": [
+          "relationship",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "670e74a74e02203c95d7ffce6a9190e35872d0a1aded209bd49ad567ea091af4",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 82,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "relationship",
+          "metric": "total_deliveries",
+          "dimension": "driver_id",
+          "metric_b": "driver_rating"
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "relationship",
+        "inferred_mission": "relationship",
+        "metric_locks": [],
+        "metrics": [
+          "total_deliveries",
+          "driver_rating"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 99.0
+    },
+    "elapsed_seconds": 0.142
+  },
+  {
+    "id": "risk-free-scoped",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "risk_watch"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "eq",
+            "value": "Hồ Chí Minh"
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh"
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "subject:stores",
+          "vận hành"
+        ],
+        "analytical": [
+          "risk_watch",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "5b46152b81fc2d870f4cc529d49c123a0b1265c2753bdd2b6f7c499be964ef48",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 67,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "risk_watch",
+        "inferred_mission": "risk_watch",
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 101.43
+    },
+    "elapsed_seconds": 0.15
+  },
+  {
+    "id": "risk-guided",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_scope": {
+        "mode": "selected",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh"
+            ]
+          }
+        ]
+      },
+      "analysis_mission": "risk_watch",
+      "input_mode": "guided",
+      "guided_contract": {
+        "signals": [
+          "order_cancellation_high",
+          "delivery_success_low",
+          "cash_discrepancy_high",
+          "late_shift_high",
+          "paused_positions_exist",
+          "store_rating_low"
+        ]
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "Kiểm tra rủi ro vận hành tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        }
+      },
+      "findings": [],
+      "recognition": {
+        "business": [
+          "city",
+          "vận hành"
+        ],
+        "analytical": [
+          "risk_watch",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "6d2a0ec9a6a20d8784962799789528a186aec756361a38637ed134eaeaa4fcb0",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 41,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "risk_watch",
+          "signals": [
+            "order_cancellation_high",
+            "delivery_success_low",
+            "cash_discrepancy_high",
+            "late_shift_high",
+            "paused_positions_exist",
+            "store_rating_low"
+          ]
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "risk_watch",
+        "inferred_mission": "risk_watch",
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 18.39
+    },
+    "elapsed_seconds": 0.062
+  },
+  {
+    "id": "risk-in-ranking-tab",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "ranking"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Yêu cầu chưa phù hợp với nhiệm vụ đang chọn",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "metric_needed",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Cần chọn chỉ số và đối tượng cụ thể để phân tích; với so sánh, hãy nêu rõ các nhóm cần đối chiếu."
+          },
+          {
+            "code": "mission_mismatch",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Câu hỏi là bài toán “Rủi ro & cảnh báo”, nhưng nhiệm vụ đang chọn là “Xếp hạng”."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "metric_needed",
+        "message": "Cần chọn chỉ số và đối tượng cụ thể để phân tích; với so sánh, hãy nêu rõ các nhóm cần đối chiếu.",
+        "actions": [
+          {
+            "label": "Chọn chỉ số trong “Hỏi được gì?”",
+            "kind": "advice",
+            "constraint_code": "metric_needed",
+            "preserves": []
+          },
+          {
+            "label": "Chuyển sang Rủi ro & cảnh báo",
+            "kind": "switch_mission",
+            "mission": "risk_watch",
+            "constraint_code": "mission_mismatch",
+            "patch": {
+              "mission": "risk_watch"
+            },
+            "preserves": [
+              "metric",
+              "time",
+              "scope"
+            ]
+          },
+          {
+            "label": "Viết lại câu hỏi cho Xếp hạng",
+            "kind": "rewrite_for_mission",
+            "mission": "ranking",
+            "constraint_code": "mission_mismatch",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "metric_needed",
+          "message": "Cần chọn chỉ số và đối tượng cụ thể để phân tích; với so sánh, hãy nêu rõ các nhóm cần đối chiếu.",
+          "fixes": [
+            {
+              "label": "Chọn chỉ số trong “Hỏi được gì?”",
+              "kind": "advice"
+            }
+          ],
+          "missing": [
+            "metric"
+          ]
+        },
+        {
+          "level": "block",
+          "code": "mission_mismatch",
+          "message": "Câu hỏi là bài toán “Rủi ro & cảnh báo”, nhưng nhiệm vụ đang chọn là “Xếp hạng”.",
+          "fixes": [
+            {
+              "label": "Chuyển sang Rủi ro & cảnh báo",
+              "kind": "switch_mission",
+              "mission": "risk_watch"
+            },
+            {
+              "label": "Viết lại câu hỏi cho Xếp hạng",
+              "kind": "rewrite_for_mission",
+              "mission": "ranking"
+            }
+          ],
+          "selected": "ranking",
+          "inferred": "risk_watch"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "vận hành"
+        ],
+        "analytical": [
+          "risk_watch",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "536911c185b9db22f7860e73a63b3fd39bb0638224c6a36f78e7f8b4bd074112",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 41,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "ranking",
+        "inferred_mission": "risk_watch",
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 18.15
+    },
+    "elapsed_seconds": 0.047
+  },
+  {
+    "id": "compare-in-ranking-tab",
+    "payload": {
+      "question": "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "ranking"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Yêu cầu chưa phù hợp với nhiệm vụ đang chọn",
+      "can_submit": false,
+      "capability": {
+        "decision": "REDIRECT",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "mission_mismatch",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Câu hỏi là bài toán “So sánh”, nhưng nhiệm vụ đang chọn là “Xếp hạng”."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "mission_mismatch",
+        "message": "Câu hỏi là bài toán “So sánh”, nhưng nhiệm vụ đang chọn là “Xếp hạng”.",
+        "actions": [
+          {
+            "label": "Chuyển sang So sánh",
+            "kind": "switch_mission",
+            "mission": "compare",
+            "constraint_code": "mission_mismatch",
+            "patch": {
+              "mission": "compare"
+            },
+            "preserves": [
+              "metric",
+              "time",
+              "scope"
+            ]
+          },
+          {
+            "label": "Viết lại câu hỏi cho Xếp hạng",
+            "kind": "rewrite_for_mission",
+            "mission": "ranking",
+            "constraint_code": "mission_mismatch",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hà Nội",
+              "Hồ Chí Minh"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hà Nội",
+              "Hồ Chí Minh"
+            ],
+            "comparison": true,
+            "cohorts": [
+              {
+                "phrase": "ho chi minh",
+                "members": [
+                  "Hồ Chí Minh"
+                ]
+              },
+              {
+                "phrase": "ha noi",
+                "members": [
+                  "Hà Nội"
+                ]
+              }
+            ],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "e11a97c58b08eeaaa7b9fd703c9454c3eaa843539fe80de376f6d50b7ebcb427",
+        "requested_phrase": "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "compare",
+          "label": "So sánh"
+        }
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "mission_mismatch",
+          "message": "Câu hỏi là bài toán “So sánh”, nhưng nhiệm vụ đang chọn là “Xếp hạng”.",
+          "fixes": [
+            {
+              "label": "Chuyển sang So sánh",
+              "kind": "switch_mission",
+              "mission": "compare"
+            },
+            {
+              "label": "Viết lại câu hỏi cho Xếp hạng",
+              "kind": "rewrite_for_mission",
+              "mission": "ranking"
+            }
+          ],
+          "selected": "ranking",
+          "inferred": "compare"
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "compare",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "258ad05806d2d11cc5884d7b2cc05c234ad481664cd5f0417a9bf6817688684e",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 56,
+            "slot_ids": [
+              "s1"
+            ],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "entity",
+            "state": "BOUND",
+            "reason": "catalog_alias",
+            "start": 33,
+            "end": 39,
+            "raw": "Hà Nội",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [
+              "Hà Nội"
+            ],
+            "lookup_allowed": false,
+            "clause_id": "c1"
+          }
+        ],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "ranking",
+        "inferred_mission": "compare",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 99.87
+    },
+    "elapsed_seconds": 0.133
+  },
+  {
+    "id": "unknown-city",
+    "payload": {
+      "question": "Phân tích doanh thu tỉnh abcjdsakjd tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "input_entity_unresolved",
+            "stage": "static",
+            "blocking": true,
+            "subject": "city",
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "input_entity_unresolved",
+        "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+        "actions": [
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hồ Chí Minh",
+            "start": 25,
+            "end": 35,
+            "old_text": "abcjdsakjd",
+            "new_text": "Hồ Chí Minh",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hà Nội",
+            "start": 25,
+            "end": 35,
+            "old_text": "abcjdsakjd",
+            "new_text": "Hà Nội",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Đà Nẵng",
+            "start": 25,
+            "end": 35,
+            "old_text": "abcjdsakjd",
+            "new_text": "Đà Nẵng",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Cần Thơ",
+            "start": 25,
+            "end": 35,
+            "old_text": "abcjdsakjd",
+            "new_text": "Cần Thơ",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_entity_unresolved",
+          "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+          "slot_id": "s1",
+          "dimension": "city",
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hồ Chí Minh",
+              "start": 25,
+              "end": 35,
+              "old_text": "abcjdsakjd",
+              "new_text": "Hồ Chí Minh"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hà Nội",
+              "start": 25,
+              "end": 35,
+              "old_text": "abcjdsakjd",
+              "new_text": "Hà Nội"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Đà Nẵng",
+              "start": 25,
+              "end": 35,
+              "old_text": "abcjdsakjd",
+              "new_text": "Đà Nẵng"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Cần Thơ",
+              "start": 25,
+              "end": 35,
+              "old_text": "abcjdsakjd",
+              "new_text": "Cần Thơ"
+            }
+          ]
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "4c5b90dbf4b36fb7ad1387274247911e42bde74094c2d25d62adeb3a727f1f16",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 52,
+            "slot_ids": [
+              "s1"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "entity",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_entity_unresolved",
+            "start": 25,
+            "end": 35,
+            "raw": "abcjdsakjd",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [],
+            "lookup_allowed": false,
+            "clause_id": "c1"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_entity_unresolved",
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+            "slot_id": "s1",
+            "dimension": "city",
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hồ Chí Minh",
+                "start": 25,
+                "end": 35,
+                "old_text": "abcjdsakjd",
+                "new_text": "Hồ Chí Minh"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hà Nội",
+                "start": 25,
+                "end": 35,
+                "old_text": "abcjdsakjd",
+                "new_text": "Hà Nội"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Đà Nẵng",
+                "start": 25,
+                "end": 35,
+                "old_text": "abcjdsakjd",
+                "new_text": "Đà Nẵng"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Cần Thơ",
+                "start": 25,
+                "end": 35,
+                "old_text": "abcjdsakjd",
+                "new_text": "Cần Thơ"
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 112.47
+    },
+    "elapsed_seconds": 0.156
+  },
+  {
+    "id": "unknown-city-risk",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tỉnh abcjdsakjd tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "risk_watch"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "input_entity_unresolved",
+            "stage": "static",
+            "blocking": true,
+            "subject": "city",
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "input_entity_unresolved",
+        "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+        "actions": [
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hồ Chí Minh",
+            "start": 30,
+            "end": 40,
+            "old_text": "abcjdsakjd",
+            "new_text": "Hồ Chí Minh",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hà Nội",
+            "start": 30,
+            "end": 40,
+            "old_text": "abcjdsakjd",
+            "new_text": "Hà Nội",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Đà Nẵng",
+            "start": 30,
+            "end": 40,
+            "old_text": "abcjdsakjd",
+            "new_text": "Đà Nẵng",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Cần Thơ",
+            "start": 30,
+            "end": 40,
+            "old_text": "abcjdsakjd",
+            "new_text": "Cần Thơ",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_entity_unresolved",
+          "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+          "slot_id": "s1",
+          "dimension": "city",
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hồ Chí Minh",
+              "start": 30,
+              "end": 40,
+              "old_text": "abcjdsakjd",
+              "new_text": "Hồ Chí Minh"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hà Nội",
+              "start": 30,
+              "end": 40,
+              "old_text": "abcjdsakjd",
+              "new_text": "Hà Nội"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Đà Nẵng",
+              "start": 30,
+              "end": 40,
+              "old_text": "abcjdsakjd",
+              "new_text": "Đà Nẵng"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Cần Thơ",
+              "start": 30,
+              "end": 40,
+              "old_text": "abcjdsakjd",
+              "new_text": "Cần Thơ"
+            }
+          ]
+        }
+      ],
+      "recognition": {
+        "business": [
+          "vận hành"
+        ],
+        "analytical": [
+          "risk_watch",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "814525b1cca77b5c0f635a3e7fc3c73f1d255fa0b07c55495cfb84f343356252",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 57,
+            "slot_ids": [
+              "s1"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "entity",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_entity_unresolved",
+            "start": 30,
+            "end": 40,
+            "raw": "abcjdsakjd",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [],
+            "lookup_allowed": false,
+            "clause_id": "c1"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_entity_unresolved",
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+            "slot_id": "s1",
+            "dimension": "city",
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hồ Chí Minh",
+                "start": 30,
+                "end": 40,
+                "old_text": "abcjdsakjd",
+                "new_text": "Hồ Chí Minh"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hà Nội",
+                "start": 30,
+                "end": 40,
+                "old_text": "abcjdsakjd",
+                "new_text": "Hà Nội"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Đà Nẵng",
+                "start": 30,
+                "end": 40,
+                "old_text": "abcjdsakjd",
+                "new_text": "Đà Nẵng"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Cần Thơ",
+                "start": 30,
+                "end": 40,
+                "old_text": "abcjdsakjd",
+                "new_text": "Cần Thơ"
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "risk_watch",
+        "inferred_mission": "risk_watch",
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 114.59
+    },
+    "elapsed_seconds": 0.15
+  },
+  {
+    "id": "gibberish",
+    "payload": {
+      "question": "dsfdsfsdfsd",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "BLOCKED",
+      "state_label": "Chưa nhận ra bài toán phân tích",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "unrecognized_question",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi."
+          },
+          {
+            "code": "input_residual_unresolved",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa xác minh được ý nghĩa của “dsfdsfsdfsd”. Hãy nêu rõ địa bàn, đối tượng hoặc điều kiện cần phân tích."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "unrecognized_question",
+        "message": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi.",
+        "actions": [
+          {
+            "label": "Mở “Hỏi được gì?” để chọn chỉ số",
+            "kind": "advice",
+            "constraint_code": "unrecognized_question",
+            "preserves": []
+          },
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_residual_unresolved",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "unrecognized_question",
+          "message": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi.",
+          "fixes": [
+            {
+              "label": "Mở “Hỏi được gì?” để chọn chỉ số",
+              "kind": "advice"
+            }
+          ]
+        },
+        {
+          "level": "block",
+          "code": "input_residual_unresolved",
+          "message": "Chưa xác minh được ý nghĩa của “dsfdsfsdfsd”. Hãy nêu rõ địa bàn, đối tượng hoặc điều kiện cần phân tích.",
+          "slot_id": "s1",
+          "dimension": null,
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            }
+          ]
+        }
+      ],
+      "recognition": {
+        "business": [],
+        "analytical": []
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "d6004b2b330b1d49e05708828aff66f565c4cd094824630d6131007cd26f2aac",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 11,
+            "slot_ids": [
+              "s1"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "residual",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_residual_unresolved",
+            "start": 0,
+            "end": 11,
+            "raw": "dsfdsfsdfsd",
+            "label": "Yêu cầu",
+            "clause_id": "c1"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_residual_unresolved",
+            "message": "Chưa xác minh được ý nghĩa của “dsfdsfsdfsd”. Hãy nêu rõ địa bàn, đối tượng hoặc điều kiện cần phân tích.",
+            "slot_id": "s1",
+            "dimension": null,
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 21.8
+    },
+    "elapsed_seconds": 0.127
+  },
+  {
+    "id": "profit-unavailable",
+    "payload": {
+      "question": "Lợi nhuận theo chi nhánh tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "UNSUPPORTED",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "unsupported_concept",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "“Lợi nhuận” chưa có định nghĩa được quản trị. Kho chỉ có giá bán, không có giá vốn hay chi phí nên không tính được lợi nhuận."
+          },
+          {
+            "code": "unsupported_only",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Câu hỏi chỉ nêu khái niệm chưa có định nghĩa được quản trị; hãy chọn một chỉ số gần nhất để phân tích."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "unsupported_concept",
+        "message": "“Lợi nhuận” chưa có định nghĩa được quản trị. Kho chỉ có giá bán, không có giá vốn hay chi phí nên không tính được lợi nhuận.",
+        "actions": [
+          {
+            "label": "Thay bằng doanh thu",
+            "kind": "replace_question",
+            "question": "doanh thu theo chi nhánh tháng 9 năm 2026",
+            "constraint_code": "unsupported_concept",
+            "patch": {
+              "question": "doanh thu theo chi nhánh tháng 9 năm 2026"
+            },
+            "preserves": []
+          },
+          {
+            "label": "Thay bằng doanh thu sản phẩm",
+            "kind": "replace_question",
+            "question": "doanh thu sản phẩm theo chi nhánh tháng 9 năm 2026",
+            "constraint_code": "unsupported_concept",
+            "patch": {
+              "question": "doanh thu sản phẩm theo chi nhánh tháng 9 năm 2026"
+            },
+            "preserves": []
+          },
+          {
+            "label": "Thay bằng tổng tiền đã giảm giá",
+            "kind": "replace_question",
+            "question": "tổng tiền đã giảm giá theo chi nhánh tháng 9 năm 2026",
+            "constraint_code": "unsupported_concept",
+            "patch": {
+              "question": "tổng tiền đã giảm giá theo chi nhánh tháng 9 năm 2026"
+            },
+            "preserves": []
+          },
+          {
+            "label": "Thay bằng doanh thu",
+            "kind": "replace_question",
+            "question": "doanh thu theo chi nhánh tháng 9 năm 2026",
+            "constraint_code": "unsupported_only",
+            "patch": {
+              "question": "doanh thu theo chi nhánh tháng 9 năm 2026"
+            },
+            "preserves": []
+          },
+          {
+            "label": "Thay bằng doanh thu sản phẩm",
+            "kind": "replace_question",
+            "question": "doanh thu sản phẩm theo chi nhánh tháng 9 năm 2026",
+            "constraint_code": "unsupported_only",
+            "patch": {
+              "question": "doanh thu sản phẩm theo chi nhánh tháng 9 năm 2026"
+            },
+            "preserves": []
+          },
+          {
+            "label": "Thay bằng tổng tiền đã giảm giá",
+            "kind": "replace_question",
+            "question": "tổng tiền đã giảm giá theo chi nhánh tháng 9 năm 2026",
+            "constraint_code": "unsupported_only",
+            "patch": {
+              "question": "tổng tiền đã giảm giá theo chi nhánh tháng 9 năm 2026"
+            },
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [
+          {
+            "id": "store",
+            "label": "Chi nhánh"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [
+          {
+            "id": "profit_margin",
+            "phrase": "Lợi nhuận"
+          }
+        ],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "unsupported_concept",
+          "message": "“Lợi nhuận” chưa có định nghĩa được quản trị. Kho chỉ có giá bán, không có giá vốn hay chi phí nên không tính được lợi nhuận.",
+          "fixes": [
+            {
+              "label": "Thay bằng doanh thu",
+              "kind": "replace_question",
+              "question": "doanh thu theo chi nhánh tháng 9 năm 2026"
+            },
+            {
+              "label": "Thay bằng doanh thu sản phẩm",
+              "kind": "replace_question",
+              "question": "doanh thu sản phẩm theo chi nhánh tháng 9 năm 2026"
+            },
+            {
+              "label": "Thay bằng tổng tiền đã giảm giá",
+              "kind": "replace_question",
+              "question": "tổng tiền đã giảm giá theo chi nhánh tháng 9 năm 2026"
+            }
+          ],
+          "concept": "profit_margin",
+          "nearest": [
+            {
+              "id": "revenue",
+              "label": "Doanh thu"
+            },
+            {
+              "id": "product_revenue",
+              "label": "Doanh thu sản phẩm"
+            },
+            {
+              "id": "discount_amount",
+              "label": "Tổng tiền đã giảm giá"
+            }
+          ]
+        },
+        {
+          "level": "block",
+          "code": "unsupported_only",
+          "message": "Câu hỏi chỉ nêu khái niệm chưa có định nghĩa được quản trị; hãy chọn một chỉ số gần nhất để phân tích.",
+          "fixes": [
+            {
+              "label": "Thay bằng doanh thu",
+              "kind": "replace_question",
+              "question": "doanh thu theo chi nhánh tháng 9 năm 2026"
+            },
+            {
+              "label": "Thay bằng doanh thu sản phẩm",
+              "kind": "replace_question",
+              "question": "doanh thu sản phẩm theo chi nhánh tháng 9 năm 2026"
+            },
+            {
+              "label": "Thay bằng tổng tiền đã giảm giá",
+              "kind": "replace_question",
+              "question": "tổng tiền đã giảm giá theo chi nhánh tháng 9 năm 2026"
+            }
+          ],
+          "nearest": [
+            {
+              "id": "revenue",
+              "label": "Doanh thu"
+            },
+            {
+              "id": "product_revenue",
+              "label": "Doanh thu sản phẩm"
+            },
+            {
+              "id": "discount_amount",
+              "label": "Tổng tiền đã giảm giá"
+            }
+          ],
+          "missing": [
+            "metric"
+          ]
+        }
+      ],
+      "recognition": {
+        "business": [
+          "chi nhánh",
+          "profit_margin",
+          "store",
+          "subject:stores"
+        ],
+        "analytical": [
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "501d978ed1b86f335fd0cceba814434244eab514865fac0770fc003130d08152",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 41,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [
+          "store"
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 100.04
+    },
+    "elapsed_seconds": 0.146
+  },
+  {
+    "id": "pii",
+    "payload": {
+      "question": "Cho tôi số điện thoại khách hàng mua nhiều nhất",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "BLOCKED",
+      "state_label": "Chưa thể gửi yêu cầu này",
+      "can_submit": false,
+      "capability": {
+        "decision": "UNSUPPORTED",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "privacy_blocked",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Thông tin liên hệ cá nhân (số điện thoại, email) không được cung cấp cho phân tích AI."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "privacy_blocked",
+        "message": "Thông tin liên hệ cá nhân (số điện thoại, email) không được cung cấp cho phân tích AI.",
+        "actions": [
+          {
+            "label": "Phân tích ở mức tổng hợp (ví dụ theo chi nhánh hoặc phân khúc)",
+            "kind": "advice",
+            "constraint_code": "privacy_blocked",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        }
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "privacy_blocked",
+          "message": "Thông tin liên hệ cá nhân (số điện thoại, email) không được cung cấp cho phân tích AI.",
+          "fixes": [
+            {
+              "label": "Phân tích ở mức tổng hợp (ví dụ theo chi nhánh hoặc phân khúc)",
+              "kind": "advice"
+            }
+          ],
+          "concept": "contact",
+          "phrases": [
+            "số điện thoại"
+          ]
+        }
+      ],
+      "recognition": {
+        "business": [
+          "contact",
+          "khách",
+          "khách hàng",
+          "subject:customers"
+        ],
+        "analytical": [
+          "ranking"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "bd19fa218fe24471065f10cc6e3de6f33038a64e5ab4a15d3ec270e3639be563",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 47,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": "ranking",
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 20.52
+    },
+    "elapsed_seconds": 0.064
+  },
+  {
+    "id": "write-request",
+    "payload": {
+      "question": "Xóa dữ liệu đơn hàng tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "subject:orders",
+          "đơn"
+        ],
+        "analytical": [
+          "granularity",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "e4ba49611bfaca9a9a67832eef9eeec99418f1c3c07521d987ed02e73dce232a",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 37,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 31.67
+    },
+    "elapsed_seconds": 0.039
+  },
+  {
+    "id": "ambiguous-best",
+    "payload": {
+      "question": "Cửa hàng nào tốt nhất?",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "metric_needed",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "“tốt nhất” cần một tiêu chí đo lường. Hãy chọn chỉ số dùng để đánh giá."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "metric_needed",
+        "message": "“tốt nhất” cần một tiêu chí đo lường. Hãy chọn chỉ số dùng để đánh giá.",
+        "actions": [
+          {
+            "label": "Theo doanh thu",
+            "kind": "replace_question",
+            "question": "Cửa hàng nào tốt nhất theo doanh thu",
+            "constraint_code": "metric_needed",
+            "patch": {
+              "question": "Cửa hàng nào tốt nhất theo doanh thu"
+            },
+            "preserves": []
+          },
+          {
+            "label": "Theo giá trị đơn trung bình",
+            "kind": "replace_question",
+            "question": "Cửa hàng nào tốt nhất theo giá trị đơn trung bình",
+            "constraint_code": "metric_needed",
+            "patch": {
+              "question": "Cửa hàng nào tốt nhất theo giá trị đơn trung bình"
+            },
+            "preserves": []
+          },
+          {
+            "label": "Theo số khách mua hàng",
+            "kind": "replace_question",
+            "question": "Cửa hàng nào tốt nhất theo số khách mua hàng",
+            "constraint_code": "metric_needed",
+            "patch": {
+              "question": "Cửa hàng nào tốt nhất theo số khách mua hàng"
+            },
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "metric_needed",
+          "message": "“tốt nhất” cần một tiêu chí đo lường. Hãy chọn chỉ số dùng để đánh giá.",
+          "fixes": [
+            {
+              "label": "Theo doanh thu",
+              "kind": "replace_question",
+              "question": "Cửa hàng nào tốt nhất theo doanh thu"
+            },
+            {
+              "label": "Theo giá trị đơn trung bình",
+              "kind": "replace_question",
+              "question": "Cửa hàng nào tốt nhất theo giá trị đơn trung bình"
+            },
+            {
+              "label": "Theo số khách mua hàng",
+              "kind": "replace_question",
+              "question": "Cửa hàng nào tốt nhất theo số khách mua hàng"
+            }
+          ],
+          "missing": [
+            "metric"
+          ]
+        }
+      ],
+      "recognition": {
+        "business": [
+          "cửa hàng",
+          "subject:stores"
+        ],
+        "analytical": []
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "40fc80fc4fb85d86fc75c07821c48ef9102324487e4c5da9eef5cfa702f6f8e4",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 22,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 21.86
+    },
+    "elapsed_seconds": 0.129
+  },
+  {
+    "id": "negative-n",
+    "payload": {
+      "question": "Top -5 tỉnh theo doanh thu tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "ranking"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "input_number_invalid",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "“Top -5” chưa hợp lệ. Top/Bottom N phải là số nguyên từ 1 đến 100."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "input_number_invalid",
+        "message": "“Top -5” chưa hợp lệ. Top/Bottom N phải là số nguyên từ 1 đến 100.",
+        "actions": [
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_number_invalid",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        }
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_number_invalid",
+          "message": "“Top -5” chưa hợp lệ. Top/Bottom N phải là số nguyên từ 1 đến 100.",
+          "slot_id": "s1",
+          "dimension": null,
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            }
+          ]
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "9921dccaff6ade52699353682068af960d370567263c39ee2b04a8cdf2418109",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 43,
+            "slot_ids": [
+              "s1"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "ranking",
+            "state": "INVALID",
+            "reason": "input_number_invalid",
+            "start": 0,
+            "end": 6,
+            "raw": "Top -5",
+            "label": "Top/Bottom N",
+            "clause_id": "c1"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_number_invalid",
+            "message": "“Top -5” chưa hợp lệ. Top/Bottom N phải là số nguyên từ 1 đến 100.",
+            "slot_id": "s1",
+            "dimension": null,
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "ranking",
+        "inferred_mission": "ranking",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 21.61
+    },
+    "elapsed_seconds": 0.069
+  },
+  {
+    "id": "bad-calendar",
+    "payload": {
+      "question": "Doanh thu ngày 31/02/2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "input_time_invalid",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Thời gian “31/02/2026” chưa hợp lệ hoặc mâu thuẫn. Hãy sửa kỳ phân tích."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "input_time_invalid",
+        "message": "Thời gian “31/02/2026” chưa hợp lệ hoặc mâu thuẫn. Hãy sửa kỳ phân tích.",
+        "actions": [
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_time_invalid",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_time_invalid",
+          "message": "Thời gian “31/02/2026” chưa hợp lệ hoặc mâu thuẫn. Hãy sửa kỳ phân tích.",
+          "slot_id": "s1",
+          "dimension": null,
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            }
+          ]
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“Doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": []
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "9f3b10608800d87248d277823bc7c5fa302825360aef1e7ae254fe2230f2c5f5",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 25,
+            "slot_ids": [
+              "s1"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "time",
+            "state": "INVALID",
+            "reason": "input_time_invalid",
+            "start": 15,
+            "end": 25,
+            "raw": "31/02/2026",
+            "label": "Ngày tháng",
+            "clause_id": "c1"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_time_invalid",
+            "message": "Thời gian “31/02/2026” chưa hợp lệ hoặc mâu thuẫn. Hãy sửa kỳ phân tích.",
+            "slot_id": "s1",
+            "dimension": null,
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 18.89
+    },
+    "elapsed_seconds": 0.041
+  },
+  {
+    "id": "conflicting-date",
+    "payload": {
+      "question": "Doanh thu tháng 8 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“Doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "079927edf522e0c241f04c00328edaadf9a7a291a73d970c405ae2c9106eaa29",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 26,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 16.94
+    },
+    "elapsed_seconds": 0.047
+  },
+  {
+    "id": "snapshot-history",
+    "payload": {
+      "question": "Xu hướng vị trí tạm ngưng bán theo ngày tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_mission": "trend"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "warning",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "paused_sale_positions",
+            "label": "Vị trí tạm ngưng bán",
+            "unit": "vị trí",
+            "historical": false,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "trend",
+          "label": "Xu hướng"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "trend",
+          "label": "Xu hướng"
+        }
+      },
+      "findings": [
+        {
+          "level": "warn",
+          "code": "snapshot_metric_trend",
+          "message": "Vị trí tạm ngưng bán là chỉ số hiện trạng (ảnh chụp), không có lịch sử theo thời gian; hệ thống chỉ trả giá trị hiện tại.",
+          "fixes": [
+            {
+              "label": "Bỏ mốc thời gian / xu hướng",
+              "kind": "advice"
+            }
+          ],
+          "metric": "paused_sale_positions"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "bán",
+          "paused_sale_positions",
+          "subject:inventory"
+        ],
+        "analytical": [
+          "granularity",
+          "time",
+          "trend"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "03f2b654fcb26a7c83b41154a70ae799e3abeb60fc6f39ffe81bcecc17df66bf",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 56,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "trend",
+        "inferred_mission": "trend",
+        "metric_locks": [],
+        "metrics": [
+          "paused_sale_positions"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 38.72
+    },
+    "elapsed_seconds": 0.048
+  },
+  {
+    "id": "multi-two",
+    "payload": {
+      "question": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_scope": {
+        "mode": "selected",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh",
+              "Hà Nội"
+            ]
+          }
+        ]
+      },
+      "analysis_mission": "ranking",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "n": 5,
+        "direction": "bottom"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh",
+              "Hà Nội"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hà Nội",
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "b4cd7f7b4ba8b66d88edbe6d41f70da98895d04eeff43af2cb3c1cdb0d643543",
+        "requested_phrase": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        },
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "49b981e1830a3a9941afa53f907ddfda574c78271baa0e8d1b8a421f7c690661",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 65,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "ranking",
+          "metric": "revenue",
+          "dimension": "city",
+          "n": 5,
+          "direction": "bottom"
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "ranking",
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 21.52
+    },
+    "elapsed_seconds": 0.118
+  },
+  {
+    "id": "rare-five",
+    "payload": {
+      "question": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_scope": {
+        "mode": "selected",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Ninh Thuận",
+              "Sóc Trăng",
+              "Bạc Liêu",
+              "Trà Vinh",
+              "Quảng Trị"
+            ]
+          }
+        ]
+      },
+      "analysis_mission": "ranking",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "n": 5,
+        "direction": "bottom"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Ninh Thuận",
+              "Sóc Trăng",
+              "Bạc Liêu",
+              "Trà Vinh",
+              "Quảng Trị"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Bạc Liêu",
+              "Ninh Thuận",
+              "Quảng Trị",
+              "Sóc Trăng",
+              "Trà Vinh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "d7e182c96cd1cc5df3da67f2bbbd643ae7f4b05d6f6685a5d54bd348546d1eba",
+        "requested_phrase": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Bạc Liêu",
+            "display": "Bạc Liêu"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Ninh Thuận",
+            "display": "Ninh Thuận"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Quảng Trị",
+            "display": "Quảng Trị"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Sóc Trăng",
+            "display": "Sóc Trăng"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Trà Vinh",
+            "display": "Trà Vinh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        },
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "6358fe3e33e398757b8e15a719334786f8286afa6acfbd7316b08432e8f52a07",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 65,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "builder",
+        "slots": {
+          "mission": "ranking",
+          "metric": "revenue",
+          "dimension": "city",
+          "n": 5,
+          "direction": "bottom"
+        }
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "ranking",
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Bạc Liêu",
+            "display": "Bạc Liêu"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Ninh Thuận",
+            "display": "Ninh Thuận"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Quảng Trị",
+            "display": "Quảng Trị"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Sóc Trăng",
+            "display": "Sóc Trăng"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Trà Vinh",
+            "display": "Trà Vinh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 57.14
+    },
+    "elapsed_seconds": 0.07
+  },
+  {
+    "id": "secondary-unknown",
+    "payload": {
+      "question": "Doanh thu tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_context": "Chỉ tỉnh abcjdsakjd"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "input_entity_unresolved",
+            "stage": "static",
+            "blocking": true,
+            "subject": "city",
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "input_entity_unresolved",
+        "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+        "actions": [
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hồ Chí Minh",
+            "start": 36,
+            "end": 46,
+            "old_text": "abcjdsakjd",
+            "new_text": "Hồ Chí Minh",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hà Nội",
+            "start": 36,
+            "end": 46,
+            "old_text": "abcjdsakjd",
+            "new_text": "Hà Nội",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Đà Nẵng",
+            "start": 36,
+            "end": 46,
+            "old_text": "abcjdsakjd",
+            "new_text": "Đà Nẵng",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Cần Thơ",
+            "start": 36,
+            "end": 46,
+            "old_text": "abcjdsakjd",
+            "new_text": "Cần Thơ",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_entity_unresolved",
+          "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+          "slot_id": "s1",
+          "dimension": "city",
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hồ Chí Minh",
+              "start": 36,
+              "end": 46,
+              "old_text": "abcjdsakjd",
+              "new_text": "Hồ Chí Minh"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hà Nội",
+              "start": 36,
+              "end": 46,
+              "old_text": "abcjdsakjd",
+              "new_text": "Hà Nội"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Đà Nẵng",
+              "start": 36,
+              "end": 46,
+              "old_text": "abcjdsakjd",
+              "new_text": "Đà Nẵng"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Cần Thơ",
+              "start": 36,
+              "end": 46,
+              "old_text": "abcjdsakjd",
+              "new_text": "Cần Thơ"
+            }
+          ]
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“Doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "ab6cb9e2316a38cae2dbd9b239c980ab18dde293046c67550de8aa2da0761d1a",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 26,
+            "slot_ids": [],
+            "state": "BOUND"
+          },
+          {
+            "id": "c2",
+            "start": 27,
+            "end": 46,
+            "slot_ids": [
+              "s1"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "entity",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_entity_unresolved",
+            "start": 36,
+            "end": 46,
+            "raw": "abcjdsakjd",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [],
+            "lookup_allowed": false,
+            "clause_id": "c2"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_entity_unresolved",
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+            "slot_id": "s1",
+            "dimension": "city",
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hồ Chí Minh",
+                "start": 36,
+                "end": 46,
+                "old_text": "abcjdsakjd",
+                "new_text": "Hồ Chí Minh"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hà Nội",
+                "start": 36,
+                "end": 46,
+                "old_text": "abcjdsakjd",
+                "new_text": "Hà Nội"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Đà Nẵng",
+                "start": 36,
+                "end": 46,
+                "old_text": "abcjdsakjd",
+                "new_text": "Đà Nẵng"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Cần Thơ",
+                "start": 36,
+                "end": 46,
+                "old_text": "abcjdsakjd",
+                "new_text": "Cần Thơ"
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 24.51
+    },
+    "elapsed_seconds": 0.118
+  },
+  {
+    "id": "no-accent",
+    "payload": {
+      "question": "doanh thu theo chi nhanh tai HCM thang 9 nam 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "eq",
+            "value": "Hồ Chí Minh"
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "doanh thu theo chi nhanh tai HCM thang 9 nam 2026"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "store",
+            "label": "Chi nhánh"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "chi nhánh",
+          "city",
+          "revenue",
+          "store",
+          "subject:orders",
+          "subject:stores"
+        ],
+        "analytical": [
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "37ff8c2edc4cfbcea8f1e626ade37b6d2c12df4f15f95d14c927a3f117fc04ec",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 49,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "store"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 18.69
+    },
+    "elapsed_seconds": 0.067
+  },
+  {
+    "id": "english",
+    "payload": {
+      "question": "Top 5 cities by revenue in September 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue"
+        ],
+        "analytical": [
+          "ranking"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "32f04487e71bdb93d33938e8e453e9f29a7c99bc061af98be5c3f91528307b6e",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 41,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": "ranking",
+        "metric_locks": [],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 18.67
+    },
+    "elapsed_seconds": 0.026
+  },
+  {
+    "id": "too-long",
+    "payload": {
+      "question": "Doanh thu a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a ",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "BLOCKED",
+      "state_label": "Chưa thể gửi yêu cầu này",
+      "can_submit": false,
+      "capability": {
+        "decision": "UNSUPPORTED",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "question_too_long",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Câu hỏi dài 8.210 ký tự. vượt giới hạn 8.000 ký tự của hệ thống."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "question_too_long",
+        "message": "Câu hỏi dài 8.210 ký tự. vượt giới hạn 8.000 ký tự của hệ thống.",
+        "actions": [
+          {
+            "label": "Rút gọn còn 8.000 ký tự",
+            "kind": "truncate",
+            "max_chars": 8000,
+            "constraint_code": "question_too_long",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": []
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": null,
+        "forecast": null,
+        "mission": null,
+        "unsupported": []
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "question_too_long",
+          "message": "Câu hỏi dài 8.210 ký tự. vượt giới hạn 8.000 ký tự của hệ thống.",
+          "fixes": [
+            {
+              "label": "Rút gọn còn 8.000 ký tự",
+              "kind": "truncate",
+              "max_chars": 8000
+            }
+          ],
+          "length": 8210,
+          "max_chars": 8000
+        }
+      ],
+      "recognition": {
+        "business": [],
+        "analytical": []
+      },
+      "input_validation": null,
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": null,
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 22.55
+    },
+    "elapsed_seconds": 0.132
+  }
+]

@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from pydantic import Field
 from services.analysis_contract import Contract
 
-VERSION = '2.8.5'
+VERSION = '2.8.8'
 
 class ScorePart(Contract):
     id: str
@@ -59,6 +59,7 @@ class QualityCoverage(Contract):
     omitted_count: int = 0
 
 class AnalysisQualityAssessment(Contract):
+    publication_checks: list[VerificationCheck] = Field(default_factory=list)
     score: Optional[int | float] = Field(default=None, ge=0, le=100)
     grade: Literal['excellent', 'good', 'partial', 'needs_attention'] = 'needs_attention'
     status: Literal['verified', 'partially_verified', 'not_scored']
@@ -77,5 +78,8 @@ class AnalysisQualityAssessment(Contract):
     score_method: Optional[ScoreMethod] = None
     score_breakdown: list[ScorePart] = Field(default_factory=list)
     accuracy_assessment: AccuracyAssessment = Field(default_factory=AccuracyAssessment)
+    trust_dimensions: list[dict] = Field(default_factory=list, description='Separate, never-blended trust dimensions (V3.3).')
+    # FINAL P3: analytical breadth recomputed from artifacts; separate from numeric correctness, never scored into it.
+    analysis_breadth: Optional[dict] = None
     confidence_probability: Optional[float] = Field(default=None, ge=0, le=1)
     confidence_reason: str = 'Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy.'

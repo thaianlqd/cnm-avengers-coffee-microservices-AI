@@ -1,0 +1,25 @@
+E
+======================================================================
+ERROR: test_locked_complete_request_does_not_require_an_unspecified_clarification (tests.test_v34_semantic_repair.CohortRepairTests.test_locked_complete_request_does_not_require_an_unspecified_clarification)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_semantic_repair.py", line 188, in test_locked_complete_request_does_not_require_an_unspecified_clarification
+    proposal=pipeline.propose(self.request(capture['question']).model_copy(update={'reference_date':f.date(2026,10,18)}))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 588, in run
+    raw=self.read_response(response,delta=tools[0]["name"] == "submit_analysis_delta")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 237, in read_response
+    raise AnalysisError(code,"Provider interpretation unavailable")
+services.analysis_catalog.AnalysisError: Provider interpretation unavailable
+
+----------------------------------------------------------------------
+Ran 1 test in 0.666s
+
+FAILED (errors=1)

@@ -1,0 +1,1709 @@
+{
+  "status": "DIAGNOSTIC",
+  "generated_at": "2026-10-18T00:24:28.140523+00:00",
+  "ceiling": 120,
+  "physical_http_total": 119,
+  "actual_external_http": 4,
+  "injected_failures": 0,
+  "prior_reserved_http": 115,
+  "current_run_reserved_http": 4,
+  "cases_total": 29,
+  "cases_run": 2,
+  "skipped": [
+    "L01",
+    "L02",
+    "L03",
+    "L04",
+    "L05",
+    "L06",
+    "L07",
+    "L08",
+    "L09",
+    "L10",
+    "L11",
+    "L12",
+    "L13",
+    "L14",
+    "L15",
+    "L16",
+    "L17",
+    "L18",
+    "L19",
+    "L20",
+    "L21",
+    "L22",
+    "L23",
+    "L24",
+    "L25",
+    "L26",
+    "L27"
+  ],
+  "useful_first_click": {
+    "passed": 1,
+    "total": 25,
+    "rate": 0.04
+  },
+  "overall": {
+    "passed": 1,
+    "total": 29
+  },
+  "semantic_http_median": 2.0,
+  "max_http_any_case": 2,
+  "latency_p95_ms": 4092,
+  "wall_seconds": 20.0,
+  "cases": [
+    {
+      "id": "L01",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L02",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L03",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L04",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L05",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L06",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L07",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L08",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L09",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L10",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L11",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L12",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L13",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L14",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L15",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L16",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L17",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L18",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L19",
+      "group": "association",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L20",
+      "group": "driver",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L21",
+      "group": "expectation",
+      "expected": "useful_no_guarantee",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L22",
+      "group": "recovery",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L23",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L24",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L25",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L26",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L27",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L28",
+      "group": "geography",
+      "expected": "useful",
+      "passed": false,
+      "logical_calls": 2,
+      "physical_http": 2,
+      "repair": 1,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 4092,
+      "outcome": {
+        "status": "error",
+        "analysis_state": "UNDERSTANDING_FAILURE",
+        "error_category": "semantic_intent_invalid",
+        "actions": [],
+        "choices": [],
+        "proposal_semantics": {},
+        "contract_issues": [
+          {
+            "requirement_id": "req_south_revenue_sep2026",
+            "field": "filters",
+            "code": "population_filter_mismatch",
+            "expected": {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          },
+          {
+            "requirement_id": "req_hanoi_revenue_sep2026",
+            "field": "filters",
+            "code": "population_filter_mismatch",
+            "expected": {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          }
+        ],
+        "root_contract_issues": [
+          {
+            "requirement_id": "req_south_revenue_sep2026",
+            "field": "filters",
+            "code": "population_filter_mismatch",
+            "expected": {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          },
+          {
+            "requirement_id": "req_hanoi_revenue_sep2026",
+            "field": "filters",
+            "code": "population_filter_mismatch",
+            "expected": {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          },
+          {
+            "requirement_id": "req_south_revenue_sep2026",
+            "field": "filters",
+            "code": "scope_membership_mismatch",
+            "expected": [
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          },
+          {
+            "requirement_id": "req_hanoi_revenue_sep2026",
+            "field": "filters",
+            "code": "scope_membership_mismatch",
+            "expected": [
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          }
+        ],
+        "interpreter_outputs": [
+          {
+            "decision": "analyze",
+            "clarification": {},
+            "requirements": [
+              {
+                "analysis_kind": "aggregate",
+                "availability": "requested",
+                "dimension_ids": [
+                  "city"
+                ],
+                "id": "req_south_revenue_sep2026",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Cần Thơ",
+                      "Hồ Chí Minh",
+                      "Kiên Giang",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "metric_ids": [
+                  "revenue"
+                ],
+                "time": {
+                  "kind": "month",
+                  "month": 9,
+                  "year": 2026
+                }
+              },
+              {
+                "availability": "requested",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "value": "Hà Nội",
+                    "operator": "eq"
+                  }
+                ],
+                "time": {
+                  "year": 2026,
+                  "kind": "month",
+                  "month": 9
+                },
+                "analysis_kind": "aggregate",
+                "id": "req_hanoi_revenue_sep2026",
+                "dimension_ids": [
+                  "city"
+                ],
+                "metric_ids": [
+                  "revenue"
+                ]
+              }
+            ]
+          },
+          {
+            "decision": "analyze",
+            "clarification": {},
+            "requirements": [
+              {
+                "id": "req_south_revenue_sep2026",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Cần Thơ",
+                      "Hồ Chí Minh",
+                      "Kiên Giang",
+                      "Đồng Nai"
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "req_hanoi_revenue_sep2026",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "value": "Hà Nội",
+                    "dimension": "city"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "planning_ms": 3696.6
+    },
+    {
+      "id": "L29",
+      "group": "geography",
+      "expected": "useful",
+      "passed": true,
+      "logical_calls": 2,
+      "physical_http": 2,
+      "repair": 1,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 5987,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Trong 2 nhóm quan sát đã trả về, doanh thu cao nhất ở Miền Nam (197,594,000 VND), thấp nhất ở Miền Bắc (129,534,000 VND); chênh lệch là 68,060,000 VND.",
+        "verification": "verified",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "compare_north_south_revenue",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_9ac5a5e71c915eb06df70959"
+            ],
+            "derived_features": [
+              "group_gap"
+            ],
+            "goal": "So sánh doanh thu miền Bắc với miền Nam tháng 9 năm 2026",
+            "supporting_for": null,
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "reporting_region"
+                ],
+                "required": true,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_5469e33d445977d7f851129c",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_297bbac1a8113cc7c527e142"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến theo Miền báo cáo",
+            "supporting_for": "compare_north_south_revenue",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "reporting_region"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_6327289903237b8bb6f19854",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_c71b9b0c91f49b24602f93bd"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Phương thức thanh toán",
+            "supporting_for": "compare_north_south_revenue",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "payment_method"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_75e8a88d5d177c263433fff5",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_c3b2747cd1d2d20449b6a13d"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "supporting_for": "compare_north_south_revenue",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_b9b5801b4899ebc1efbc65dd",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_3c53d51b58980f6c04c0d095"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Chi nhánh",
+            "supporting_for": "compare_north_south_revenue",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_be5370cd7cd7792e75147960",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_2fad26fc183543287e4c56f7",
+              "q_8efd8af90dddca031048791a"
+            ],
+            "derived_features": [
+              "scalar"
+            ],
+            "goal": "Chỉ số toàn phạm vi",
+            "supporting_for": "compare_north_south_revenue",
+            "views": [
+              {
+                "kind": "scalar",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "compare_north_south_revenue",
+            "index": 0,
+            "kind": "grouped",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_5469e33d445977d7f851129c",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_6327289903237b8bb6f19854",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_75e8a88d5d177c263433fff5",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_b9b5801b4899ebc1efbc65dd",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": "validated_table_for_capacity"
+          },
+          {
+            "requirement_id": "support_be5370cd7cd7792e75147960",
+            "index": 0,
+            "kind": "scalar",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "aov",
+          "order_cancellation_rate",
+          "revenue"
+        ],
+        "applied_filters": [
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Bắc Ninh",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hải Phòng",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Quảng Ninh",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Bắc Ninh",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hải Phòng",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Quảng Ninh",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Bắc Ninh",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hải Phòng",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Quảng Ninh",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Bắc Ninh",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hải Phòng",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Quảng Ninh",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Bắc Ninh",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hải Phòng",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Quảng Ninh",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Bắc Ninh",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hải Phòng",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Quảng Ninh",
+                "Đồng Nai"
+              ]
+            }
+          ]
+        ],
+        "verification_score_status": "verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "compare_north_south_revenue",
+            "role": "grouped",
+            "evidence_id": "q_9ac5a5e71c915eb06df70959:revenue:group_comparison:6230060e3b",
+            "query_id": "q_9ac5a5e71c915eb06df70959",
+            "metric": "revenue",
+            "unit": "VND",
+            "scope": {
+              "label": "Đơn hàng và doanh thu",
+              "period": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "population_relation": "same",
+              "metric_business_filters": [
+                {
+                  "dimension": "order_status",
+                  "operator": "in",
+                  "value": [
+                    "HOAN_THANH",
+                    "DANG_GIAO"
+                  ]
+                }
+              ],
+              "metric_required_non_null": [],
+              "filters": [
+                {
+                  "dimension": "city",
+                  "operator": "in",
+                  "value": [
+                    "Bà Rịa - Vũng Tàu",
+                    "Bình Dương",
+                    "Bắc Ninh",
+                    "Cần Thơ",
+                    "Hà Nội",
+                    "Hải Phòng",
+                    "Hồ Chí Minh",
+                    "Kiên Giang",
+                    "Quảng Ninh",
+                    "Đồng Nai"
+                  ]
+                }
+              ],
+              "partition": {},
+              "selection": "complete"
+            },
+            "statement": "Trong 2 nhóm quan sát đã trả về, doanh thu cao nhất ở Miền Nam (197,594,000 VND), thấp nhất ở Miền Bắc (129,534,000 VND); chênh lệch là 68,060,000 VND."
+          }
+        ],
+        "scope_resolution": {
+          "state": "resolved",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Bắc Ninh",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hải Phòng",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Quảng Ninh",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          "bindings": [
+            {
+              "dimension": "city",
+              "members": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Bắc Ninh",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hải Phòng",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Quảng Ninh",
+                "Đồng Nai"
+              ],
+              "comparison": true,
+              "cohorts": [
+                {
+                  "phrase": "mien bac",
+                  "members": [
+                    "Bắc Ninh",
+                    "Hà Nội",
+                    "Hải Phòng",
+                    "Quảng Ninh"
+                  ]
+                },
+                {
+                  "phrase": "mien nam",
+                  "members": [
+                    "Bà Rịa - Vũng Tàu",
+                    "Bình Dương",
+                    "Cần Thơ",
+                    "Hồ Chí Minh",
+                    "Kiên Giang",
+                    "Đồng Nai"
+                  ]
+                }
+              ],
+              "excluded_members": [],
+              "comparison_dimension": "reporting_region"
+            }
+          ],
+          "source": [
+            {
+              "id": "north",
+              "label": "Miền Bắc",
+              "source": "warehouse_reporting_geography_v1",
+              "version": 1
+            },
+            {
+              "id": "south",
+              "label": "Miền Nam",
+              "source": "warehouse_reporting_geography_v1",
+              "version": 1
+            }
+          ],
+          "fingerprint": "9b5a7e804e7685c06814606087117d97d71a19e7a1e03b265953bd613e1cb8e4",
+          "requested_phrase": "So sánh doanh thu miền Bắc với miền Nam tháng 9 năm 2026"
+        },
+        "query_semantics": [
+          {
+            "id": "q_9ac5a5e71c915eb06df70959",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "reporting_region"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Bắc Ninh",
+                  "Cần Thơ",
+                  "Hà Nội",
+                  "Hải Phòng",
+                  "Hồ Chí Minh",
+                  "Kiên Giang",
+                  "Quảng Ninh",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "requested"
+          },
+          {
+            "id": "q_297bbac1a8113cc7c527e142",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "reporting_region"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Bắc Ninh",
+                  "Cần Thơ",
+                  "Hà Nội",
+                  "Hải Phòng",
+                  "Hồ Chí Minh",
+                  "Kiên Giang",
+                  "Quảng Ninh",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_2fad26fc183543287e4c56f7",
+            "metrics": [
+              "order_cancellation_rate"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Bắc Ninh",
+                  "Cần Thơ",
+                  "Hà Nội",
+                  "Hải Phòng",
+                  "Hồ Chí Minh",
+                  "Kiên Giang",
+                  "Quảng Ninh",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_3c53d51b58980f6c04c0d095",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "store"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Bắc Ninh",
+                  "Cần Thơ",
+                  "Hà Nội",
+                  "Hải Phòng",
+                  "Hồ Chí Minh",
+                  "Kiên Giang",
+                  "Quảng Ninh",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_8efd8af90dddca031048791a",
+            "metrics": [
+              "aov",
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Bắc Ninh",
+                  "Cần Thơ",
+                  "Hà Nội",
+                  "Hải Phòng",
+                  "Hồ Chí Minh",
+                  "Kiên Giang",
+                  "Quảng Ninh",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_c3b2747cd1d2d20449b6a13d",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Bắc Ninh",
+                  "Cần Thơ",
+                  "Hà Nội",
+                  "Hải Phòng",
+                  "Hồ Chí Minh",
+                  "Kiên Giang",
+                  "Quảng Ninh",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_c71b9b0c91f49b24602f93bd",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "payment_method"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Bắc Ninh",
+                  "Cần Thơ",
+                  "Hà Nội",
+                  "Hải Phòng",
+                  "Hồ Chí Minh",
+                  "Kiên Giang",
+                  "Quảng Ninh",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "compare_north_south_revenue",
+                "goal": "So sánh doanh thu miền Bắc với miền Nam tháng 9 năm 2026",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "reporting_region"
+                ],
+                "analysis_kind": "aggregate",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Bắc Ninh",
+                      "Cần Thơ",
+                      "Hà Nội",
+                      "Hải Phòng",
+                      "Hồ Chí Minh",
+                      "Kiên Giang",
+                      "Quảng Ninh",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "group_gap"
+                ],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_75e8a88d5d177c263433fff5",
+                "goal": "Diễn biến trong phạm vi đã chọn",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "compare_north_south_revenue",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Bắc Ninh",
+                      "Cần Thơ",
+                      "Hà Nội",
+                      "Hải Phòng",
+                      "Hồ Chí Minh",
+                      "Kiên Giang",
+                      "Quảng Ninh",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "week",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_5469e33d445977d7f851129c",
+                "goal": "Diễn biến theo Miền báo cáo",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "compare_north_south_revenue",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "reporting_region"
+                ],
+                "analysis_kind": "trend",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Bắc Ninh",
+                      "Cần Thơ",
+                      "Hà Nội",
+                      "Hải Phòng",
+                      "Hồ Chí Minh",
+                      "Kiên Giang",
+                      "Quảng Ninh",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "week",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_b9b5801b4899ebc1efbc65dd",
+                "goal": "Đối chiếu bổ sung · Chi nhánh",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "compare_north_south_revenue",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Bắc Ninh",
+                      "Cần Thơ",
+                      "Hà Nội",
+                      "Hải Phòng",
+                      "Hồ Chí Minh",
+                      "Kiên Giang",
+                      "Quảng Ninh",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_be5370cd7cd7792e75147960",
+                "goal": "Chỉ số toàn phạm vi",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "compare_north_south_revenue",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "aggregate",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Bắc Ninh",
+                      "Cần Thơ",
+                      "Hà Nội",
+                      "Hải Phòng",
+                      "Hồ Chí Minh",
+                      "Kiên Giang",
+                      "Quảng Ninh",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "scalar"
+                ],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_6327289903237b8bb6f19854",
+                "goal": "Đối chiếu bổ sung · Phương thức thanh toán",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "compare_north_south_revenue",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "payment_method"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Bắc Ninh",
+                      "Cần Thơ",
+                      "Hà Nội",
+                      "Hải Phòng",
+                      "Hồ Chí Minh",
+                      "Kiên Giang",
+                      "Quảng Ninh",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": [
+            {
+              "requirement_id": "compare_north_south_revenue",
+              "field": "analysis_kind",
+              "rule": "catalog_semantic_normalization",
+              "value": "aggregate"
+            },
+            {
+              "requirement_id": "compare_north_south_revenue",
+              "field": "analysis_kind",
+              "rule": "catalog_semantic_normalization",
+              "value": "aggregate"
+            }
+          ],
+          "semantic_issue_history": [
+            [
+              {
+                "requirement_id": "compare_north_south_revenue",
+                "field": "filters",
+                "code": "scope_membership_mismatch",
+                "expected": [
+                  [
+                    "Bắc Ninh",
+                    "Hà Nội",
+                    "Hải Phòng",
+                    "Quảng Ninh"
+                  ],
+                  [
+                    "Bà Rịa - Vũng Tàu",
+                    "Bình Dương",
+                    "Cần Thơ",
+                    "Hồ Chí Minh",
+                    "Kiên Giang",
+                    "Đồng Nai"
+                  ]
+                ]
+              },
+              {
+                "requirement_id": "compare_north_south_revenue",
+                "field": "dimension_ids",
+                "code": "scope_cohort_axis_mismatch",
+                "expected": [
+                  "reporting_region"
+                ]
+              },
+              {
+                "requirement_id": null,
+                "field": "filters",
+                "code": "scope_cohort_missing",
+                "expected": [
+                  [
+                    "Bắc Ninh",
+                    "Hà Nội",
+                    "Hải Phòng",
+                    "Quảng Ninh"
+                  ],
+                  [
+                    "Bà Rịa - Vũng Tàu",
+                    "Bình Dương",
+                    "Cần Thơ",
+                    "Hồ Chí Minh",
+                    "Kiên Giang",
+                    "Đồng Nai"
+                  ]
+                ]
+              }
+            ]
+          ],
+          "planning_latency_ms": 4783.18
+        },
+        "contract_issues": [],
+        "root_contract_issues": [
+          {
+            "requirement_id": "compare_north_south_revenue",
+            "field": "filters",
+            "code": "scope_membership_mismatch",
+            "expected": [
+              [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ],
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          },
+          {
+            "requirement_id": "compare_north_south_revenue",
+            "field": "dimension_ids",
+            "code": "scope_cohort_axis_mismatch",
+            "expected": [
+              "reporting_region"
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "scope_cohort_missing",
+            "expected": [
+              [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ],
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          }
+        ],
+        "interpreter_outputs": [
+          {
+            "decision": "analyze",
+            "clarification": {},
+            "requirements": [
+              {
+                "id": "compare_north_south_revenue",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "availability": "requested",
+                "filters": [
+                  {
+                    "operator": "in",
+                    "dimension": "city",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Bắc Ninh",
+                      "Cần Thơ",
+                      "Hà Nội",
+                      "Hải Phòng",
+                      "Hồ Chí Minh",
+                      "Kiên Giang",
+                      "Quảng Ninh",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "analysis_kind": "comparison",
+                "dimension_ids": [
+                  "city"
+                ],
+                "derived_features": [
+                  "group_gap"
+                ],
+                "time": {
+                  "kind": "month",
+                  "year": 2026,
+                  "month": 9
+                }
+              }
+            ]
+          },
+          {
+            "decision": "analyze",
+            "clarification": {},
+            "requirements": [
+              {
+                "analysis_kind": "comparison",
+                "id": "compare_north_south_revenue",
+                "derived_features": [
+                  "group_gap"
+                ],
+                "dimension_ids": [
+                  "reporting_region"
+                ],
+                "time": {
+                  "kind": "month",
+                  "month": 9,
+                  "year": 2026
+                },
+                "metric_ids": [
+                  "revenue"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "planning_ms": 4783.18
+    }
+  ],
+  "case_file_sha256": "975e93363e4d80f20059fcef860a349ee8158cad827b40a984afe8d922808cab",
+  "release_passed": false
+}

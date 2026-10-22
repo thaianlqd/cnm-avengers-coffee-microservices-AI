@@ -1,0 +1,101 @@
+[
+  {
+    "module": "tests.test_business_coverage_corpus",
+    "returncode": 0,
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "seconds": 21.854
+  },
+  {
+    "module": "tests.test_capacity_v29.CapacityTests.test_dry_run_precedes_execution_and_failure_does_not_repair_semantics",
+    "returncode": 0,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "seconds": 2.978
+  },
+  {
+    "module": "tests.test_capacity_v29.CapacityTests.test_estimator_identity_filter_ranking_and_calendar",
+    "returncode": 0,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "seconds": 1.632
+  },
+  {
+    "module": "tests.test_capacity_v29.CapacityTests.test_five_large_scenarios_real_compiler_and_fixture_oracle",
+    "returncode": 0,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "seconds": 18.495
+  },
+  {
+    "module": "tests.test_capacity_v29.CapacityTests.test_immutable_expiry_integrity_failure_and_bounded_paging",
+    "returncode": 0,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "seconds": 1.626
+  },
+  {
+    "module": "tests.test_capacity_v29.CapacityTests.test_missing_cadence_uses_server_policy_explicit_day_unchanged",
+    "returncode": 0,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "seconds": 1.666
+  },
+  {
+    "module": "tests.test_capacity_v29.CapacityTests.test_paging_requires_owned_approved_session_and_allowed_dimensions",
+    "returncode": 0,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "seconds": 1.485
+  },
+  {
+    "module": "tests.test_capacity_v29.CapacityTests.test_row_boundaries_artifact_backed_exact_population",
+    "returncode": 0,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "seconds": 41.281
+  },
+  {
+    "module": "tests.test_capacity_v29.CapacityTests.test_session_size_1_to_10mb_and_reference_roundtrip",
+    "returncode": 0,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "seconds": 3.057
+  }
+]

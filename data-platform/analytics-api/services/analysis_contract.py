@@ -2,8 +2,9 @@
 
 from datetime import date
 import math
+import json
 from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, model_serializer
 
 
 class Contract(BaseModel):
@@ -112,11 +113,31 @@ class Filter(Contract):
         return self
 
 
+def equivalent_filter(left, right):
+    """IN is a set of typed members; its order is not a scope change."""
+    if left.get('dimension')!=right.get('dimension') or left.get('operator')!=right.get('operator'):return False
+    if left.get('operator')=='in' and isinstance(left.get('value'),list) and isinstance(right.get('value'),list):
+        key=lambda v:json.dumps(v,ensure_ascii=False,sort_keys=True)
+        return {key(v) for v in left['value']}=={key(v) for v in right['value']}
+    return left==right
+
+
 class Ranking(Contract):
     metric: str
     direction: Literal["ASC", "DESC"] = "DESC"
     top_n: int = Field(ge=1, le=100)
     per_group: List[str] = Field(default_factory=list, max_length=2)
+    # H.5: also return, for every selected row, how many eligible rows share its value and the eligible
+    # population size (computed before LIMIT). Omitted from dumps when False so plans/SQL/signatures of
+    # reports saved before this field stay byte-identical.
+    tie_census: bool = False
+
+    @model_serializer(mode="wrap")
+    def _omit_default_census(self, handler):
+        data = handler(self)
+        if isinstance(data, dict) and not data.get("tie_census"):
+            data.pop("tie_census", None)
+        return data
 
 
 class ComparisonGroup(Contract):

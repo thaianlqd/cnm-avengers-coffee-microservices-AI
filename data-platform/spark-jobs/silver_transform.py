@@ -1,163 +1,100 @@
-"""
-Silver Layer: Clean, normalize, and join data from Bronze → Silver bucket.
-Uses verified column names from entity files.
-"""
-import os
-import io
+"""Validate one committed Bronze run, transform, publish one immutable Silver run."""
 import logging
-from datetime import datetime
-
 import pandas as pd
-import boto3
-from botocore.client import Config
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
-logger = logging.getLogger("silver")
+from bronze_ingestion import get_minio, CONTRACT as BRONZE_CONTRACT
+from batch_runtime import LayerRun, checked_frame, existing_run, read_frame, run_arguments
+from pipeline_runtime import read_manifest, PipelineContractError, fingerprint
 
-MINIO_ENDPOINT   = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin123")
-BRONZE_BUCKET = "avengers-bronze"
-SILVER_BUCKET = "avengers-silver"
-
-
-def get_minio():
-    return boto3.client(
-        "s3", endpoint_url=MINIO_ENDPOINT,
-        aws_access_key_id=MINIO_ACCESS_KEY,
-        aws_secret_access_key=MINIO_SECRET_KEY,
-        config=Config(signature_version="s3v4"),
-    )
+logger = logging.getLogger('silver')
+BRONZE_BUCKET = 'avengers-bronze'
+SILVER_BUCKET = 'avengers-silver'
+INPUTS = ['orders','order_items','shipper_deliveries','wallet_transactions','delivery_tracking']
+REQUIRED = ['orders_clean','items_clean','orders_enriched','deliveries_clean',
+            'wallet_transactions_clean','delivery_tracking_clean']
+CONTRACT = {'version':'3.4.0', 'layer':'silver', 'required_outputs':REQUIRED,
+            'input_outputs':INPUTS, 'numeric_policy':'reject invalid/null/negative; never coerce to zero',
+            'join_policy':'many-to-one order FK; unique keys', 'transform_version':'3.4.0'}
 
 
-def get_latest_df(s3, table_name: str) -> pd.DataFrame | None:
-    """Find and read the latest parquet file for a given table name."""
-    try:
-        all_keys = []
-        paginator = s3.get_paginator("list_objects_v2")
-        for page in paginator.paginate(Bucket=BRONZE_BUCKET, Prefix=""):
-            for obj in page.get("Contents", []):
-                if f"/{table_name}/" in obj["Key"] and obj["Key"].endswith(".parquet"):
-                    all_keys.append((obj["Key"], obj["LastModified"]))
-        if not all_keys:
-            return None
-        latest = sorted(all_keys, key=lambda x: x[1], reverse=True)[0][0]
-        obj = s3.get_object(Bucket=BRONZE_BUCKET, Key=latest)
-        df = pd.read_parquet(io.BytesIO(obj["Body"].read()))
-        logger.info(f"Read {len(df)} rows from s3://{BRONZE_BUCKET}/{latest}")
-        return df
-    except Exception as e:
-        logger.warning(f"Could not read {table_name}: {e}")
-        return None
+def transform_frames(frames, as_of):
+    outputs, quality = {}, {}
+    def check(name, frame, **kwargs):
+        result, checks = checked_frame(frame, name, **kwargs)
+        outputs[name], quality[name] = result, checks
+        return result
+    if sum(int(frame.memory_usage(index=True, deep=True).sum()) for frame in frames.values()) > 256000000:
+        raise PipelineContractError('Combined source frames exceed bounded batch capacity')
+    orders = check('orders_clean', frames['orders'], keys=['ma_don_hang'],
+                   numeric={'tong_tien':0}, dates=['ngay_tao'])
+    for required in ('ma_nguoi_dung','co_so_ma','trang_thai_don_hang','phuong_thuc_thanh_toan'):
+        if required not in orders.columns: raise PipelineContractError('Required order business field missing')
+    if orders['trang_thai_don_hang'].isna().any():
+        raise PipelineContractError('Null order status cannot authorize revenue publication')
+    orders['date'] = orders['ngay_tao'].dt.date
+    orders['hour'] = orders['ngay_tao'].dt.hour
+    orders['month'] = orders['ngay_tao'].dt.strftime('%Y-%m')
+    orders['_processed_at'] = as_of.isoformat()
+    items = check('items_clean', frames['order_items'], keys=['id'], numeric={'so_luong':1,'gia_ban':0},
+                  reference=('ma_don_hang', set(orders['ma_don_hang'])))
+    items['line_total'] = items['so_luong']*items['gia_ban']
+    items['kich_co'] = items['kich_co'].fillna('Standard') if 'kich_co' in items else 'Standard'
+    items['_processed_at'] = as_of.isoformat()
+    summary = items.groupby('ma_don_hang').agg(total_items=('so_luong','sum'), line_total=('line_total','sum')).reset_index()
+    enriched = orders.merge(summary, on='ma_don_hang', how='left', validate='one_to_one')
+    check('orders_enriched', enriched, keys=['ma_don_hang'])
+    deliveries = check('deliveries_clean', frames['shipper_deliveries'], keys=['id'],
+                       numeric={'delivery_fee':0}, dates=['assigned_at'],
+                       reference=('ma_don_hang', set(orders['ma_don_hang'])))
+    for column in ('picked_up_at','delivered_at'):
+        if column in deliveries:
+            raw = deliveries[column]
+            values = pd.to_datetime(raw, errors='coerce', utc=True)
+            if (raw.notna() & values.isna()).any(): raise PipelineContractError('Invalid optional delivery timestamp')
+            deliveries[column] = values
+    if 'delivered_at' in deliveries:
+        deliveries['delivery_duration_min'] = (deliveries['delivered_at']-deliveries['assigned_at']).dt.total_seconds()/60
+        if (deliveries['delivery_duration_min'].dropna()<0).any(): raise PipelineContractError('Negative delivery duration')
+    check('wallet_transactions_clean', frames['wallet_transactions'], keys=['id'], numeric={'amount':None}, dates=['created_at'])
+    tracking = check('delivery_tracking_clean', frames['delivery_tracking'], keys=['id'], dates=['created_at'],
+                     reference=('ma_don_hang', set(orders['ma_don_hang'])))
+    # Nullable fee/estimate means not measured. Validate supplied values without
+    # filling absent observations with fabricated zeros.
+    for column in ('delivery_fee','estimated_minutes'):
+        if column in tracking:
+            values = pd.to_numeric(tracking[column], errors='coerce')
+            invalid = tracking[column].notna() & (values.isna() | (values<0) | ~values.map(lambda x: __import__('math').isfinite(x)))
+            if invalid.any(): raise PipelineContractError('Invalid optional logistics value')
+            tracking[column] = values
+    from pipeline_runtime import fingerprint
+    for name, frame in outputs.items():
+        frame['_processed_at'] = as_of.isoformat()
+        quality[name]['schema_fingerprint'] = fingerprint({str(c):str(t) for c,t in frame.dtypes.items()})
+    return outputs, quality
 
 
-def ensure_bucket(s3, bucket: str):
-    try:
-        s3.head_bucket(Bucket=bucket)
-    except Exception:
-        try:
-            s3.create_bucket(Bucket=bucket)
-        except Exception:
-            pass
-
-
-def upload_parquet(s3, df: pd.DataFrame, bucket: str, key: str):
-    ensure_bucket(s3, bucket)
-    buf = io.BytesIO()
-    df.to_parquet(buf, index=False, engine="pyarrow")
-    buf.seek(0)
-    s3.put_object(Bucket=bucket, Key=key, Body=buf.read())
-    logger.info(f"Saved {len(df)} rows → s3://{bucket}/{key}")
-
-
-def main():
-    logger.info("=== Silver Layer Starting ===")
+def main(run_id=None, as_of=None, input_run=None):
     s3 = get_minio()
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    today = datetime.now().strftime("%Y/%m/%d")
-
-    orders      = get_latest_df(s3, "orders")
-    items       = get_latest_df(s3, "order_items")
-    deliveries  = get_latest_df(s3, "shipper_deliveries")
-
-    if orders is None:
-        logger.warning("No orders data found in Bronze. Skipping Silver.")
-        return
-
-    # 1. Clean Orders
-    orders = orders.copy()
-    if "ngay_tao" in orders.columns:
-        orders["ngay_tao"] = pd.to_datetime(orders["ngay_tao"], errors="coerce")
-        orders["date"] = orders["ngay_tao"].dt.date
-        orders["hour"] = orders["ngay_tao"].dt.hour
-        orders["month"] = orders["ngay_tao"].dt.to_period("M").astype(str)
-    if "tong_tien" in orders.columns:
-        orders["tong_tien"] = pd.to_numeric(orders["tong_tien"], errors="coerce").fillna(0)
-    orders["_processed_at"] = datetime.now().isoformat()
-    upload_parquet(s3, orders, SILVER_BUCKET, f"{today}/orders_clean/{ts}.parquet")
-
-    # 2. Clean Items & Enriched Orders
-    if items is not None and "ma_don_hang" in items.columns:
-        items = items.copy()
-        items["so_luong"] = pd.to_numeric(items.get("so_luong", 0), errors="coerce").fillna(0).astype(int)
-        items["gia_ban"]  = pd.to_numeric(items.get("gia_ban", 0), errors="coerce").fillna(0)
-        items["line_total"] = items["so_luong"] * items["gia_ban"]
-        items["kich_co"] = items["kich_co"].fillna("Standard") if "kich_co" in items.columns else "Standard"
-        items["_processed_at"] = datetime.now().isoformat()
-        upload_parquet(s3, items, SILVER_BUCKET, f"{today}/items_clean/{ts}.parquet")
-
-        items_summary = items.groupby("ma_don_hang").agg(
-            total_items=("so_luong", "sum"),
-            line_total=("line_total", "sum"),
-        ).reset_index()
-        enriched = orders.merge(items_summary, on="ma_don_hang", how="left")
-        upload_parquet(s3, enriched, SILVER_BUCKET, f"{today}/orders_enriched/{ts}.parquet")
-
-    # 3. Clean Delivery metrics
-    if deliveries is not None:
-        d = deliveries.copy()
-        for col in ["assigned_at", "picked_up_at", "delivered_at"]:
-            if col in d.columns:
-                d[col] = pd.to_datetime(d[col], errors="coerce")
-        if "assigned_at" in d.columns and "delivered_at" in d.columns:
-            d["delivery_duration_min"] = (
-                (d["delivered_at"] - d["assigned_at"]).dt.total_seconds() / 60
-            ).round(2)
-        d["_processed_at"] = datetime.now().isoformat()
-        upload_parquet(s3, d, SILVER_BUCKET, f"{today}/deliveries_clean/{ts}.parquet")
-
-    # 4. Clean Wallet Transactions (if present in Bronze)
-    wallet_tx = get_latest_df(s3, "wallet_transactions")
-    if wallet_tx is not None:
-        try:
-            w = wallet_tx.copy()
-            if "amount" in w.columns:
-                w["amount"] = pd.to_numeric(w["amount"], errors="coerce").fillna(0)
-            if "created_at" in w.columns:
-                w["created_at"] = pd.to_datetime(w["created_at"], errors="coerce")
-            w["_processed_at"] = datetime.now().isoformat()
-            upload_parquet(s3, w, SILVER_BUCKET, f"{today}/wallet_transactions_clean/{ts}.parquet")
-        except Exception as e:
-            logger.warning(f"Error processing wallet transactions in Silver: {e}")
-
-    # 5. Clean Delivery Tracking (if present in Bronze)
-    deliv_track = get_latest_df(s3, "delivery_tracking")
-    if deliv_track is not None:
-        try:
-            dt = deliv_track.copy()
-            if "delivery_fee" in dt.columns:
-                dt["delivery_fee"] = pd.to_numeric(dt["delivery_fee"], errors="coerce").fillna(0)
-            if "estimated_minutes" in dt.columns:
-                dt["estimated_minutes"] = pd.to_numeric(dt["estimated_minutes"], errors="coerce").fillna(0)
-            if "created_at" in dt.columns:
-                dt["created_at"] = pd.to_datetime(dt["created_at"], errors="coerce")
-            dt["_processed_at"] = datetime.now().isoformat()
-            upload_parquet(s3, dt, SILVER_BUCKET, f"{today}/delivery_tracking_clean/{ts}.parquet")
-        except Exception as e:
-            logger.warning(f"Error processing delivery tracking in Silver: {e}")
-
-    logger.info("=== Silver Layer Done ===")
+    old = existing_run(s3, SILVER_BUCKET, run_id, as_of, CONTRACT)
+    if old is not None:
+        if old.get('input_run_id') != input_run: raise PipelineContractError('Existing Silver run has different inputs')
+        return old
+    if not input_run: raise PipelineContractError('Explicit committed Bronze input run required')
+    upstream = read_manifest(s3, BRONZE_BUCKET, input_run, fingerprint(BRONZE_CONTRACT))
+    if set(INPUTS)-set(upstream['outputs']): raise PipelineContractError('Required Bronze inputs absent')
+    run = LayerRun(s3, SILVER_BUCKET, 'batch.silver', run_id, as_of, CONTRACT,
+                   {'bronze': upstream['manifest_fingerprint']})
+    run.manifest['input_run_id'] = input_run
+    frames = {name: read_frame(s3, BRONZE_BUCKET, upstream, name) for name in INPUTS}
+    outputs, quality = transform_frames(frames, run.as_of)
+    for name, frame in outputs.items(): run.frame(name, frame, quality[name])
+    return run.finish()
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    arguments = run_arguments('Governed batch publication')
+    try:
+        main(**arguments)
+    except Exception as error:
+        logging.getLogger(__name__).error('Layer failed: %s', type(error).__name__)
+        raise SystemExit(1) from None

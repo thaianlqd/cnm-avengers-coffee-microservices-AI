@@ -1,0 +1,565 @@
+{
+  "note": "Normalized interpreter captures from failed full run3. Historical observer omitted comparison_time and granularity: absent fields are unknown, not evidence of omission. Preserve original run unchanged.",
+  "cases": [
+    {
+      "id": "L01",
+      "question": "Doanh thu 30 ngày gần nhất theo tuần",
+      "outputs": [
+        {
+          "decision": "clarification",
+          "clarification": {},
+          "requirements": [
+            {
+              "metric_ids": [
+                "item_revenue",
+                "payment_revenue",
+                "product_revenue",
+                "revenue",
+                "store_revenue",
+                "voucher_revenue"
+              ],
+              "availability": "needs_input",
+              "analysis_kind": "trend",
+              "time": {
+                "mode": "previous_month",
+                "kind": "relative"
+              },
+              "id": "req_1"
+            }
+          ]
+        },
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "id": "req_1",
+              "time": {
+                "amount": 30,
+                "unit": "day",
+                "kind": "rolling"
+              },
+              "metric_ids": [
+                "revenue"
+              ],
+              "availability": "requested",
+              "analysis_kind": "trend",
+              "dimension_ids": []
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "requirement_id": null,
+          "field": "clarification",
+          "code": "clarification_required"
+        },
+        {
+          "requirement_id": "req_1",
+          "field": "reason",
+          "code": "limitation_reason_required"
+        }
+      ]
+    },
+    {
+      "id": "L03",
+      "question": "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+      "outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "dimension_ids": [
+                "city"
+              ],
+              "id": "req_revenue_comparison",
+              "derived_features": [
+                "group_gap"
+              ],
+              "time": {
+                "year": 2026,
+                "month": 9,
+                "kind": "month"
+              },
+              "metric_ids": [
+                "revenue"
+              ],
+              "analysis_kind": "comparison",
+              "filters": [
+                {
+                  "value": [
+                    "Hà Nội",
+                    "Hồ Chí Minh"
+                  ],
+                  "dimension": "city",
+                  "operator": "in"
+                }
+              ],
+              "availability": "requested"
+            },
+            {
+              "time": {
+                "month": 9,
+                "kind": "month",
+                "year": 2026
+              },
+              "metric_ids": [
+                "store_revenue"
+              ],
+              "filters": [
+                {
+                  "dimension": "city",
+                  "operator": "in",
+                  "value": [
+                    "Hà Nội",
+                    "Hồ Chí Minh"
+                  ]
+                }
+              ],
+              "analysis_kind": "comparison",
+              "availability": "requested",
+              "dimension_ids": [
+                "city"
+              ],
+              "derived_features": [
+                "group_gap"
+              ],
+              "id": "req_store_revenue_comparison"
+            },
+            {
+              "dimension_ids": [
+                "city"
+              ],
+              "analysis_kind": "comparison",
+              "time": {
+                "kind": "month",
+                "year": 2026,
+                "month": 9
+              },
+              "id": "req_item_revenue_comparison",
+              "filters": [
+                {
+                  "value": [
+                    "Hà Nội",
+                    "Hồ Chí Minh"
+                  ],
+                  "operator": "in",
+                  "dimension": "city"
+                }
+              ],
+              "derived_features": [
+                "group_gap"
+              ],
+              "metric_ids": [
+                "item_revenue"
+              ],
+              "availability": "requested"
+            },
+            {
+              "analysis_kind": "comparison",
+              "id": "req_product_revenue_comparison",
+              "filters": [
+                {
+                  "dimension": "city",
+                  "value": [
+                    "Hà Nội",
+                    "Hồ Chí Minh"
+                  ],
+                  "operator": "in"
+                }
+              ],
+              "metric_ids": [
+                "product_revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "derived_features": [
+                "group_gap"
+              ],
+              "availability": "requested",
+              "time": {
+                "kind": "month",
+                "month": 9,
+                "year": 2026
+              }
+            },
+            {
+              "derived_features": [
+                "group_gap"
+              ],
+              "availability": "requested",
+              "id": "req_voucher_revenue_comparison",
+              "dimension_ids": [
+                "city"
+              ],
+              "analysis_kind": "comparison",
+              "time": {
+                "month": 9,
+                "year": 2026,
+                "kind": "month"
+              },
+              "filters": [
+                {
+                  "operator": "in",
+                  "dimension": "city",
+                  "value": [
+                    "Hà Nội",
+                    "Hồ Chí Minh"
+                  ]
+                }
+              ],
+              "metric_ids": [
+                "voucher_revenue"
+              ]
+            },
+            {
+              "filters": [
+                {
+                  "operator": "in",
+                  "value": [
+                    "Hà Nội",
+                    "Hồ Chí Minh"
+                  ],
+                  "dimension": "city"
+                }
+              ],
+              "id": "req_payment_revenue_comparison",
+              "availability": "requested",
+              "analysis_kind": "comparison",
+              "time": {
+                "year": 2026,
+                "month": 9,
+                "kind": "month"
+              },
+              "derived_features": [
+                "group_gap"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "metric_ids": [
+                "payment_revenue"
+              ]
+            }
+          ]
+        }
+      ],
+      "issues": null
+    },
+    {
+      "id": "L20",
+      "question": "Vì sao doanh thu tháng 9 năm 2026 thay đổi",
+      "outputs": [
+        {
+          "decision": "clarification",
+          "clarification": {},
+          "requirements": [
+            {
+              "time": {
+                "month": 9,
+                "year": 2026,
+                "kind": "month"
+              },
+              "filters": [
+                {
+                  "operator": "in",
+                  "dimension": "order_status",
+                  "value": [
+                    "HOAN_THANH",
+                    "DANG_GIAO"
+                  ]
+                }
+              ],
+              "availability": "unsupported",
+              "metric_ids": [
+                "revenue"
+              ],
+              "id": "revenue_change_drivers",
+              "analysis_kind": "aggregate",
+              "feature_metrics": {
+                "change_pct": [
+                  "revenue"
+                ]
+              },
+              "derived_features": [
+                "change_pct"
+              ],
+              "dimension_ids": [
+                "store"
+              ]
+            }
+          ]
+        },
+        {
+          "decision": "unsupported",
+          "clarification": {},
+          "requirements": [
+            {
+              "availability": "unsupported",
+              "reason": "historical_data_unavailable",
+              "id": "revenue_change_drivers"
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "requirement_id": null,
+          "field": "clarification",
+          "code": "clarification_required"
+        },
+        {
+          "requirement_id": "revenue_change_drivers",
+          "field": "reason",
+          "code": "limitation_reason_required"
+        },
+        {
+          "requirement_id": null,
+          "field": "derived_features",
+          "code": "explicit_features_missing",
+          "candidate_ids": [
+            "driver_delta"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L32",
+      "question": "Top 3 thành phố có doanh thu thấp nhất tháng 9 năm 2026",
+      "outputs": [
+        {
+          "decision": "clarification",
+          "clarification": {},
+          "requirements": [
+            {
+              "id": "req_1",
+              "feature_metrics": {
+                "selected_total": [
+                  "revenue"
+                ]
+              },
+              "dimension_ids": [
+                "city"
+              ],
+              "analysis_kind": "ranking",
+              "metric_ids": [
+                "revenue"
+              ],
+              "ranking": {
+                "metric_id": "revenue",
+                "direction": "bottom",
+                "limit": 3
+              },
+              "availability": "needs_input",
+              "time": {
+                "kind": "month",
+                "month": 9,
+                "year": 2026
+              }
+            }
+          ]
+        },
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "metric_ids": [
+                "revenue"
+              ],
+              "id": "req_1",
+              "time": {
+                "kind": "month",
+                "year": 2026,
+                "month": 9
+              },
+              "ranking": {
+                "direction": "bottom",
+                "metric_id": "revenue",
+                "limit": 3
+              },
+              "analysis_kind": "ranking",
+              "availability": "requested",
+              "dimension_ids": [
+                "city"
+              ]
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "requirement_id": null,
+          "field": "clarification",
+          "code": "clarification_required"
+        },
+        {
+          "requirement_id": "req_1",
+          "field": "reason",
+          "code": "limitation_reason_required"
+        },
+        {
+          "requirement_id": null,
+          "field": "ranking",
+          "code": "explicit_ranking_missing",
+          "expected": {
+            "direction": "bottom",
+            "limit": 3,
+            "metric_candidates": [
+              "item_revenue",
+              "payment_revenue",
+              "product_revenue",
+              "revenue",
+              "store_revenue",
+              "voucher_revenue"
+            ],
+            "dimension_id": "city",
+            "partition_requested": false,
+            "partition_dimensions": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "L33",
+      "question": "Doanh thu từ ngày 10/09/2026 đến hết ngày 20/09/2026",
+      "outputs": [
+        {
+          "decision": "clarification",
+          "clarification": {},
+          "requirements": []
+        },
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "time": {
+                "end": "2026-09-20",
+                "kind": "range",
+                "start": "2026-09-10"
+              },
+              "id": "repair_add_1",
+              "availability": "requested",
+              "analysis_kind": "aggregate",
+              "dimension_ids": [],
+              "derived_features": [
+                "scalar"
+              ],
+              "metric_ids": [
+                "revenue"
+              ],
+              "feature_metrics": {
+                "scalar": [
+                  "revenue"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "requirement_id": null,
+          "field": "clarification",
+          "code": "clarification_required"
+        },
+        {
+          "requirement_id": null,
+          "field": "metric_ids",
+          "code": "explicit_metrics_missing",
+          "candidate_ids": [
+            "item_revenue",
+            "payment_revenue",
+            "product_revenue",
+            "revenue",
+            "store_revenue",
+            "voucher_revenue"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L41",
+      "question": "So sánh doanh thu tháng 8 với tháng 9 năm 2026",
+      "outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "metric_ids": [
+                "revenue"
+              ],
+              "id": "req_1",
+              "time": {
+                "start": "2026-08-01",
+                "kind": "range",
+                "end": "2026-08-31"
+              },
+              "availability": "requested",
+              "analysis_kind": "aggregate"
+            }
+          ]
+        },
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "id": "req_1"
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "requirement_id": "req_1",
+          "field": "comparison_time",
+          "code": "scalar_period_comparison_required"
+        }
+      ]
+    },
+    {
+      "id": "L43",
+      "question": "Top 5 chi nhánh có tỷ lệ hủy đơn cao nhất tháng 9 năm 2026, kèm số đơn để xem quy mô.",
+      "outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "metric_ids": [
+                "order_cancellation_rate",
+                "order_count"
+              ],
+              "analysis_kind": "ranking",
+              "availability": "requested",
+              "ranking": {
+                "direction": "top",
+                "metric_id": "order_cancellation_rate",
+                "limit": 5
+              },
+              "derived_features": [
+                "selected_total"
+              ],
+              "time": {
+                "month": 9,
+                "kind": "month",
+                "year": 2026
+              },
+              "dimension_ids": [
+                "store"
+              ],
+              "id": "req_1"
+            }
+          ]
+        }
+      ],
+      "issues": null
+    }
+  ]
+}

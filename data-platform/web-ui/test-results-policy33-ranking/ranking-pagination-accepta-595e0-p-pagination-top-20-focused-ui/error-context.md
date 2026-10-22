@@ -1,0 +1,636 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: AC
+      - generic [ref=e7]:
+        - generic [ref=e8]: Avengers Coffee
+        - generic [ref=e9]: Data Analytics Platform
+    - generic [ref=e10]: Điều hướng chính
+    - navigation "Điều hướng chính" [ref=e11]:
+      - button "Tổng quan" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: Tổng quan
+      - button "Báo cáo & Phân tích" [ref=e14] [cursor=pointer]:
+        - generic [ref=e15]: Báo cáo & Phân tích
+      - button "Trợ lý AI" [ref=e16] [cursor=pointer]:
+        - generic [ref=e17]: Trợ lý AI
+      - button "Quản lý Báo cáo" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: Quản lý Báo cáo
+      - button "Khám phá dữ liệu" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: Khám phá dữ liệu
+      - button "Kiến trúc hệ thống" [ref=e23] [cursor=pointer]:
+        - generic [ref=e24]: Kiến trúc hệ thống
+      - button "Quản trị hệ thống" [ref=e25] [cursor=pointer]:
+        - generic [ref=e26]: Quản trị hệ thống
+    - button "Hệ thống phân tích Xem kiến trúc & luồng dữ liệu" [ref=e28] [cursor=pointer]:
+      - generic [ref=e29]:
+        - generic [ref=e30]: Hệ thống phân tích
+        - generic [ref=e31]: Xem kiến trúc & luồng dữ liệu
+  - generic [ref=e33]:
+    - banner [ref=e34]:
+      - textbox "Tìm bài toán phân tích toàn hệ thống" [ref=e36]:
+        - /placeholder: Tìm bài toán, báo cáo phân tích…
+      - generic [ref=e37]:
+        - generic "Kho phân tích được đồng bộ định kỳ (data-sync), không phải thời gian thực" [ref=e40]: Cập nhật theo đợt
+        - group "Hồ sơ và phiên đăng nhập" [ref=e42]:
+          - generic [ref=e43]:
+            - generic [ref=e44]: AC
+            - generic [ref=e45]:
+              - generic [ref=e46]: Ban Điều Hành
+              - generic [ref=e47]: Avengers Analytics
+          - button "Đăng xuất tài khoản phân tích" [ref=e49] [cursor=pointer]:
+            - img [ref=e50]
+            - generic [ref=e52]: Đăng xuất
+    - main [ref=e53]:
+      - generic [ref=e56]:
+        - generic [ref=e58]:
+          - button "Đặt câu hỏi" [ref=e59] [cursor=pointer]:
+            - img [ref=e61]
+            - generic [ref=e63]: Đặt câu hỏi
+          - button "Duyệt kế hoạch" [disabled] [ref=e64]:
+            - img [ref=e66]
+            - generic [ref=e68]: Duyệt kế hoạch
+          - button "Báo cáo & Xuất Word" [ref=e69] [cursor=pointer]:
+            - img [ref=e71]
+            - generic [ref=e73]: Báo cáo & Xuất Word
+        - region "Bài toán phân tích đã lưu" [ref=e74]:
+          - generic [ref=e75]:
+            - button "Bài toán đã lưu ▾" [ref=e76] [cursor=pointer]
+            - button "Lưu thành bài toán mới" [ref=e77] [cursor=pointer]
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e81]:
+              - generic [ref=e82]:
+                - generic [ref=e83]: Báo cáo hoàn tất
+                - generic [ref=e85]:
+                  - img [ref=e86]
+                  - text: 09:56 • 22/10/2026
+              - generic [ref=e88]:
+                - button "👍 Hài lòng" [ref=e89] [cursor=pointer]:
+                  - generic [ref=e90]: 👍
+                  - generic [ref=e91]: Hài lòng
+                - button "👎 Chưa chuẩn" [ref=e93] [cursor=pointer]:
+                  - generic [ref=e94]: 👎
+                  - generic [ref=e95]: Chưa chuẩn
+            - heading "Top 20 tỉnh theo doanh thu tháng 9 năm 2026; kèm tổng doanh thu tập chọn" [level=2] [ref=e97]
+            - generic [ref=e98]:
+              - generic [ref=e99]:
+                - button "Hỏi câu mới" [ref=e100] [cursor=pointer]:
+                  - img [ref=e101]
+                  - text: Hỏi câu mới
+                - button "Xem mã SQL" [ref=e103] [cursor=pointer]:
+                  - img [ref=e104]
+                  - text: Xem mã SQL
+              - generic [ref=e106]:
+                - button "Lưu báo cáo" [ref=e107] [cursor=pointer]:
+                  - img [ref=e108]
+                  - text: Lưu báo cáo
+                - button "Xem trước" [ref=e110] [cursor=pointer]:
+                  - img [ref=e111]
+                  - text: Xem trước
+                - button "Tải file Word (.docx)" [ref=e114] [cursor=pointer]:
+                  - img [ref=e115]
+                  - text: Tải file Word (.docx)
+          - region "Điều chỉnh phân tích" [ref=e117]:
+            - generic [ref=e118]:
+              - generic [ref=e119]:
+                - heading "Điều chỉnh phân tích" [level=2] [ref=e120]
+                - paragraph [ref=e121]: Thay đổi phạm vi, cách nhóm hoặc cách trình bày của báo cáo đang xem.
+              - generic [ref=e122]: Bản báo cáo 1
+            - form "Gửi điều chỉnh phân tích" [ref=e123]:
+              - textbox "Yêu cầu điều chỉnh phân tích" [ref=e124]:
+                - /placeholder: "VD: Đổi biểu đồ sang tròn donut, chỉ lọc chi nhánh Hà Nội…"
+              - button "Áp dụng điều chỉnh →" [disabled] [ref=e125]
+            - status [ref=e126]: Nêu thay đổi cụ thể. Hệ thống kiểm tra phạm vi và chỉ cập nhật báo cáo sau khi chạy thành công.
+            - generic [ref=e127]:
+              - generic [ref=e128]: "Điền nhanh:"
+              - button "Lọc phạm vi" [ref=e129] [cursor=pointer]
+              - button "Đổi cách nhóm" [ref=e130] [cursor=pointer]
+              - button "Đổi kiểu biểu đồ" [ref=e131] [cursor=pointer]
+              - generic [ref=e132]: Chỉ chạy khi bấm áp dụng. Đổi bố cục 2–3 ô không cần gửi yêu cầu.
+          - group [ref=e133]:
+            - generic "Toàn phạm vi 2026-09-01 → 2026-09-30 Xem phạm vi ▾" [ref=e134] [cursor=pointer]:
+              - generic [ref=e135]: Toàn phạm vi
+              - generic [ref=e136]: 2026-09-01 → 2026-09-30
+              - generic [ref=e137]: Xem phạm vi ▾
+          - generic [ref=e138]:
+            - group "Tương tác báo cáo" [ref=e139]:
+              - region "Bộ lọc tương tác" [ref=e140]:
+                - paragraph [ref=e141]: "Đã áp dụng: 0 bộ lọc · 0 cấp chi tiết · revision 1"
+                - generic [ref=e142]:
+                  - generic [ref=e143]:
+                    - text: Chiều phân tích
+                    - combobox "Chiều lọc biểu đồ" [ref=e144]:
+                      - option "Chọn chiều" [selected]
+                      - option "Tỉnh/thành trong dữ liệu"
+                      - option "Chi nhánh"
+                  - generic [ref=e145]:
+                    - text: Giá trị
+                    - combobox "Giá trị lọc biểu đồ" [disabled] [ref=e146]:
+                      - option "Chọn nhóm" [selected]
+                  - button "Thêm lọc chờ" [disabled] [ref=e147]
+                  - button "Đi sâu một cấp" [disabled] [ref=e148]
+                  - generic [ref=e149]:
+                    - text: Mức phân tích
+                    - combobox "Mức phân tích báo cáo" [ref=e150]:
+                      - option "Tập trung" [selected]
+                      - option "Sâu"
+                      - option "Toàn diện"
+                - navigation "Đường dẫn chi tiết" [ref=e151]:
+                  - generic [ref=e152]: Phạm vi gốc
+                  - button "Quay lại một cấp" [disabled] [ref=e153]
+                  - button "Đặt lại đường dẫn" [disabled] [ref=e154]
+                - generic [ref=e156]: Bộ lọc đang hiển thị
+                - generic [ref=e157]:
+                  - button "Áp dụng bộ lọc" [disabled] [ref=e158]
+                  - button "Bỏ thay đổi chờ" [disabled] [ref=e159]
+                  - button "Xóa toàn bộ lọc" [ref=e160] [cursor=pointer]
+                  - button "Làm mới dữ liệu" [ref=e161] [cursor=pointer]
+            - status [ref=e162]: Độ đầy đủ dữ liệu nguồn chưa được chứng nhận; hoàn tất phân tích không chứng minh nguồn đầy đủ.
+            - generic [ref=e163]:
+              - paragraph [ref=e164]: "Phạm vi: Toàn hệ thống"
+              - paragraph [ref=e165]: "Thời gian: 01/09/2026 → 30/09/2026"
+              - paragraph [ref=e166]: "Nguồn: Mạng lưới chi nhánh cửa hàng · Đơn hàng chi tiết và doanh thu"
+            - tablist "Phần báo cáo" [ref=e167]:
+              - tab "Báo cáo" [selected] [ref=e168] [cursor=pointer]
+              - tab "Kiểm chứng & nguồn" [ref=e169] [cursor=pointer]
+              - tab "Dữ liệu / SQL" [ref=e170] [cursor=pointer]
+              - tab "Lưu & xuất" [ref=e171] [cursor=pointer]
+            - tabpanel "Báo cáo" [ref=e172]:
+              - generic [ref=e173]:
+                - generic [ref=e174]:
+                  - paragraph [ref=e175]: Doanh thu · hạng 1
+                  - paragraph [ref=e176]: 2.800 đ
+                  - group [ref=e177]:
+                    - generic "Chi tiết chỉ số" [ref=e178] [cursor=pointer]
+                - generic [ref=e179]:
+                  - paragraph [ref=e180]: Doanh thu cao nhất
+                  - paragraph [ref=e181]: 2.800 đ
+                  - group [ref=e182]:
+                    - generic "Chi tiết chỉ số" [ref=e183] [cursor=pointer]
+              - generic [ref=e184]:
+                - group [ref=e185]:
+                  - generic "Trả lời ngắn" [active] [ref=e186] [cursor=pointer]
+                  - list [ref=e187]:
+                    - listitem [ref=e188]: "Tây Ninh đứng đầu xếp hạng: 2,800 VND theo doanh thu."
+                - group [ref=e189]:
+                  - generic "Điểm nổi bật · 3 nhận định" [ref=e190] [cursor=pointer]
+              - generic [ref=e191]:
+                - generic [ref=e192]:
+                  - generic [ref=e193]:
+                    - paragraph [ref=e194]: Geographic intelligence
+                    - heading "Bản đồ tỉnh/thành & khu vực" [level=2] [ref=e195]
+                    - paragraph [ref=e196]: Từ tỉnh/thành đến từng cửa hàng · Zoom để xem các điểm bán và doanh số
+                  - generic [ref=e197]:
+                    - text: Chỉ số trên bản đồ
+                    - combobox "Chỉ số trên bản đồ" [ref=e198]:
+                      - option "Top 20 — Doanh thu theo tỉnh/thành trong dữ liệu — Đơn hàng và doanh thu · VND" [selected]
+                - generic [ref=e199]:
+                  - text: "Khám phá cửa hàng: Directory unavailable in this report-artifact fixture; report map retained."
+                  - button "Kết nối lại" [ref=e200] [cursor=pointer]
+                  - paragraph [ref=e201]: Lớp chỉ số đã có trong báo cáo vẫn được giữ bên dưới.
+                - generic [ref=e202]:
+                  - navigation "Chế độ bản đồ" [ref=e203]:
+                    - button "Doanh số tỉnh" [pressed] [ref=e204] [cursor=pointer]
+                    - button "Mạng lưới cửa hàng" [ref=e205] [cursor=pointer]
+                  - generic [ref=e206]:
+                    - text: Nền bản đồ
+                    - combobox "Nền bản đồ" [ref=e207]:
+                      - option "Streets · hiện đại" [selected]
+                      - option "Đường phố · chi tiết"
+                      - option "Nền sáng"
+                      - option "Chỉ địa giới"
+                  - generic [ref=e208]:
+                    - button "Phóng to bản đồ" [ref=e209] [cursor=pointer]: +
+                    - button "Thu nhỏ bản đồ" [ref=e210] [cursor=pointer]: −
+                    - button "Toàn cảnh" [ref=e211] [cursor=pointer]
+                    - button "Toàn màn hình" [ref=e212] [cursor=pointer]
+                    - button "Xuất SVG" [ref=e213] [cursor=pointer]
+                  - group [ref=e214]:
+                    - generic "☷Tùy chỉnh hiển thị" [ref=e215] [cursor=pointer]
+                    - option "Xanh phân tích" [selected]
+                    - option "Đa sắc"
+                    - option "Đại dương"
+                    - option "Nhiệt"
+                    - option "Theo phân vị" [selected]
+                    - option "Khoảng đều"
+                - generic [ref=e216]:
+                  - generic [ref=e217]:
+                    - generic [ref=e218]:
+                      - generic "Bản đồ đường phố tương tác; dùng mũi tên để di chuyển, cộng trừ để phóng to" [ref=e219]:
+                        - region "Map" [ref=e220]
+                      - group "Địa giới 63 tỉnh/thành năm 2020" [ref=e221]:
+                        - 'button "Hà Nội: Chưa có giá trị" [ref=e223] [cursor=pointer]'
+                        - 'button "Hải Phòng: Chưa có giá trị" [ref=e224] [cursor=pointer]'
+                        - 'button "Vĩnh Phúc: Chưa có giá trị" [ref=e225] [cursor=pointer]'
+                        - 'button "Bắc Ninh: Chưa có giá trị" [ref=e226] [cursor=pointer]'
+                        - 'button "Hải Dương: Chưa có giá trị" [ref=e227] [cursor=pointer]'
+                        - 'button "Hưng Yên: 2.200 VND" [ref=e228] [cursor=pointer]'
+                        - 'button "Hà Nam: Chưa có giá trị" [ref=e229] [cursor=pointer]'
+                        - 'button "Nam Định: 2.400 VND" [ref=e230] [cursor=pointer]'
+                        - 'button "Thái Bình: Chưa có giá trị" [ref=e231] [cursor=pointer]'
+                        - 'button "Ninh Bình: 2.400 VND" [ref=e232] [cursor=pointer]'
+                        - 'button "Hà Giang: Chưa có giá trị" [ref=e233] [cursor=pointer]'
+                        - 'button "Cao Bằng: Chưa có giá trị" [ref=e234] [cursor=pointer]'
+                        - 'button "Lào Cai: 2.300 VND" [ref=e235] [cursor=pointer]'
+                        - 'button "Bắc Kạn: Chưa có giá trị" [ref=e236] [cursor=pointer]'
+                        - 'button "Lạng Sơn: 2.300 VND" [ref=e237] [cursor=pointer]'
+                        - 'button "Tuyên Quang: Chưa có giá trị" [ref=e238] [cursor=pointer]'
+                        - 'button "Yên Bái: Chưa có giá trị" [ref=e239] [cursor=pointer]'
+                        - 'button "Thái Nguyên: Chưa có giá trị" [ref=e240] [cursor=pointer]'
+                        - 'button "Phú Thọ: 2.500 VND" [ref=e241] [cursor=pointer]'
+                        - 'button "Bắc Giang: Chưa có giá trị" [ref=e242] [cursor=pointer]'
+                        - 'button "Quảng Ninh: Chưa có giá trị" [ref=e243] [cursor=pointer]'
+                        - 'button "Lai Châu: 2.300 VND" [ref=e244] [cursor=pointer]'
+                        - 'button "Điện Biên: Chưa có giá trị" [ref=e245] [cursor=pointer]'
+                        - 'button "Sơn La: 2.700 VND" [ref=e246] [cursor=pointer]'
+                        - 'button "Hòa Bình: 2.200 VND" [ref=e247] [cursor=pointer]'
+                        - 'button "Thanh Hóa: Chưa có giá trị" [ref=e248] [cursor=pointer]'
+                        - 'button "Nghệ An: Chưa có giá trị" [ref=e249] [cursor=pointer]'
+                        - 'button "Hà Tĩnh: 2.100 VND" [ref=e250] [cursor=pointer]'
+                        - 'button "Quảng Bình: 2.600 VND" [ref=e251] [cursor=pointer]'
+                        - 'button "Quảng Trị: 2.700 VND" [ref=e252] [cursor=pointer]'
+                        - 'button "Thừa Thiên - Huế: Chưa có giá trị" [ref=e253] [cursor=pointer]'
+                        - 'button "Đà Nẵng: Chưa có giá trị" [ref=e254] [cursor=pointer]'
+                        - 'button "Quảng Nam: 2.600 VND" [ref=e255] [cursor=pointer]'
+                        - 'button "Quảng Ngãi: 2.600 VND" [ref=e256] [cursor=pointer]'
+                        - 'button "Bình Định: Chưa có giá trị" [ref=e257] [cursor=pointer]'
+                        - 'button "Phú Yên: 2.500 VND" [ref=e258] [cursor=pointer]'
+                        - 'button "Khánh Hòa: Chưa có giá trị" [ref=e259] [cursor=pointer]'
+                        - 'button "Kon Tum: 2.200 VND" [ref=e260] [cursor=pointer]'
+                        - 'button "Gia Lai: Chưa có giá trị" [ref=e261] [cursor=pointer]'
+                        - 'button "Đắk Lắk: Chưa có giá trị" [ref=e262] [cursor=pointer]'
+                        - 'button "Đắk Nông: Chưa có giá trị" [ref=e263] [cursor=pointer]'
+                        - 'button "Lâm Đồng: Chưa có giá trị" [ref=e264] [cursor=pointer]'
+                        - 'button "Hồ Chí Minh: Chưa có giá trị" [ref=e265] [cursor=pointer]'
+                        - 'button "Ninh Thuận: 2.500 VND" [ref=e266] [cursor=pointer]'
+                        - 'button "Bình Phước: Chưa có giá trị" [ref=e267] [cursor=pointer]'
+                        - 'button "Tây Ninh: 2.800 VND" [ref=e268] [cursor=pointer]'
+                        - 'button "Bình Dương: Chưa có giá trị" [ref=e269] [cursor=pointer]'
+                        - 'button "Đồng Nai: Chưa có giá trị" [ref=e270] [cursor=pointer]'
+                        - 'button "Bình Thuận: Chưa có giá trị" [ref=e271] [cursor=pointer]'
+                        - 'button "Bà Rịa - Vũng Tàu: Chưa có giá trị" [ref=e272] [cursor=pointer]'
+                        - 'button "Long An: 2.400 VND" [ref=e273] [cursor=pointer]'
+                        - 'button "Đồng Tháp: Chưa có giá trị" [ref=e274] [cursor=pointer]'
+                        - 'button "An Giang: Chưa có giá trị" [ref=e275] [cursor=pointer]'
+                        - 'button "Tiền Giang: Chưa có giá trị" [ref=e276] [cursor=pointer]'
+                        - 'button "Vĩnh Long: Chưa có giá trị" [ref=e277] [cursor=pointer]'
+                        - 'button "Bến Tre: Chưa có giá trị" [ref=e278] [cursor=pointer]'
+                        - 'button "Kiên Giang: Chưa có giá trị" [ref=e279] [cursor=pointer]'
+                        - 'button "Cần Thơ: Chưa có giá trị" [ref=e280] [cursor=pointer]'
+                        - 'button "Hậu Giang: Chưa có giá trị" [ref=e281] [cursor=pointer]'
+                        - 'button "Trà Vinh: Chưa có giá trị" [ref=e282] [cursor=pointer]'
+                        - 'button "Sóc Trăng: 2.700 VND" [ref=e283] [cursor=pointer]'
+                        - 'button "Bạc Liêu: Chưa có giá trị" [ref=e284] [cursor=pointer]'
+                        - 'button "Cà Mau: Chưa có giá trị" [ref=e285] [cursor=pointer]'
+                        - generic: Hà Nội
+                        - generic: Hải Phòng
+                        - generic: Vĩnh Phúc
+                        - generic: Bắc Ninh
+                        - generic: Hải Dương
+                        - generic: Hưng Yên
+                        - generic: Hà Nam
+                        - generic: Nam Định
+                        - generic: Thái Bình
+                        - generic: Ninh Bình
+                        - generic: Hà Giang
+                        - generic: Cao Bằng
+                        - generic: Lào Cai
+                        - generic: Bắc Kạn
+                        - generic: Lạng Sơn
+                        - generic: Tuyên Quang
+                        - generic: Yên Bái
+                        - generic: Thái Nguyên
+                        - generic: Phú Thọ
+                        - generic: Bắc Giang
+                        - generic: Quảng Ninh
+                        - generic: Lai Châu
+                        - generic: Điện Biên
+                        - generic: Sơn La
+                        - generic: Hòa Bình
+                        - generic: Thanh Hóa
+                        - generic: Nghệ An
+                        - generic: Hà Tĩnh
+                        - generic: Quảng Bình
+                        - generic: Quảng Trị
+                        - generic: Thừa Thiên - Huế
+                        - generic: Đà Nẵng
+                        - generic: Quảng Nam
+                        - generic: Quảng Ngãi
+                        - generic: Bình Định
+                        - generic: Phú Yên
+                        - generic: Khánh Hòa
+                        - generic: Kon Tum
+                        - generic: Gia Lai
+                        - generic: Đắk Lắk
+                        - generic: Đắk Nông
+                        - generic: Lâm Đồng
+                        - generic: Hồ Chí Minh
+                        - generic: Ninh Thuận
+                        - generic: Bình Phước
+                        - generic: Tây Ninh
+                        - generic: Bình Dương
+                        - generic: Đồng Nai
+                        - generic: Bình Thuận
+                        - generic: Bà Rịa - Vũng Tàu
+                        - generic: Long An
+                        - generic: Đồng Tháp
+                        - generic: An Giang
+                        - generic: Tiền Giang
+                        - generic: Vĩnh Long
+                        - generic: Bến Tre
+                        - generic: Kiên Giang
+                        - generic: Cần Thơ
+                        - generic: Hậu Giang
+                        - generic: Trà Vinh
+                        - generic: Sóc Trăng
+                        - generic: Bạc Liêu
+                        - generic: Cà Mau
+                      - status: Thiết bị chưa bật WebGL · đang dùng địa giới chi tiết
+                    - generic [ref=e286]:
+                      - generic [ref=e287]:
+                        - generic [ref=e288]: Phân vị · thấp → cao
+                        - generic [ref=e289]: VND
+                      - generic [ref=e290]:
+                        - generic "2100 → 2216.6666666666665" [ref=e291]
+                        - generic "2216.6666666666665 → 2333.3333333333335" [ref=e292]
+                        - generic "2333.3333333333335 → 2450" [ref=e293]
+                        - generic "2450 → 2566.6666666666665" [ref=e294]
+                        - generic "2566.6666666666665 → 2683.3333333333335" [ref=e295]
+                        - generic "2683.3333333333335 → 2800" [ref=e296]
+                      - generic [ref=e297]:
+                        - generic [ref=e298]: 2.100 VND
+                        - generic [ref=e299]: 2.800 VND
+                      - generic [ref=e300]:
+                        - generic [ref=e301]:
+                          - text: Chưa có giá trị
+                          - text: "0"
+                        - generic [ref=e304]: 20/63 tỉnh/thành có chỉ số
+                  - complementary [ref=e305]:
+                    - generic [ref=e306]:
+                      - paragraph [ref=e307]: Theo tỉnh/thành
+                      - generic [ref=e308]: 20 địa bàn trong báo cáo
+                    - paragraph [ref=e309]: Top 20 — Doanh thu theo tỉnh/thành trong dữ liệu — Đơn hàng và doanh thu
+                    - searchbox "Tìm địa bàn trên bản đồ" [ref=e310]
+                    - generic [ref=e311]:
+                      - text: Xếp hạng địa bàn
+                      - combobox "Sắp xếp tỉnh trên bản đồ" [ref=e312]:
+                        - option "Chỉ số cao → thấp" [selected]
+                        - option "Tên tỉnh A–Z"
+                    - generic [ref=e313]:
+                      - button "Tây Ninh 2.800 VND" [ref=e314] [cursor=pointer]:
+                        - generic [ref=e316]: Tây Ninh
+                        - generic [ref=e317]: 2.800 VND
+                      - button "Quảng Trị 2.700 VND" [ref=e318] [cursor=pointer]:
+                        - generic [ref=e320]: Quảng Trị
+                        - generic [ref=e321]: 2.700 VND
+                      - button "Sóc Trăng 2.700 VND" [ref=e322] [cursor=pointer]:
+                        - generic [ref=e324]: Sóc Trăng
+                        - generic [ref=e325]: 2.700 VND
+                      - button "Sơn La 2.700 VND" [ref=e326] [cursor=pointer]:
+                        - generic [ref=e328]: Sơn La
+                        - generic [ref=e329]: 2.700 VND
+                      - button "Quảng Bình 2.600 VND" [ref=e330] [cursor=pointer]:
+                        - generic [ref=e332]: Quảng Bình
+                        - generic [ref=e333]: 2.600 VND
+                      - button "Quảng Nam 2.600 VND" [ref=e334] [cursor=pointer]:
+                        - generic [ref=e336]: Quảng Nam
+                        - generic [ref=e337]: 2.600 VND
+                      - button "Quảng Ngãi 2.600 VND" [ref=e338] [cursor=pointer]:
+                        - generic [ref=e340]: Quảng Ngãi
+                        - generic [ref=e341]: 2.600 VND
+                      - button "Ninh Thuận 2.500 VND" [ref=e342] [cursor=pointer]:
+                        - generic [ref=e344]: Ninh Thuận
+                        - generic [ref=e345]: 2.500 VND
+                    - navigation "Địa bàn bản đồ" [ref=e346]:
+                      - status [ref=e347]: 1–8 / 20 địa bàn
+                      - generic [ref=e348]:
+                        - generic [ref=e349]:
+                          - text: Mỗi trang
+                          - 'combobox "Địa bàn bản đồ: số mục mỗi trang" [ref=e350]':
+                            - option "8" [selected]
+                            - option "10"
+                            - option "25"
+                            - option "50"
+                        - 'button "Địa bàn bản đồ: trang trước" [disabled] [ref=e351]': ←
+                        - 'button "Địa bàn bản đồ: trang 1" [ref=e352] [cursor=pointer]': "1"
+                        - 'button "Địa bàn bản đồ: trang 2" [ref=e353] [cursor=pointer]': "2"
+                        - 'button "Địa bàn bản đồ: trang 3" [ref=e354] [cursor=pointer]': "3"
+                        - 'button "Địa bàn bản đồ: trang sau" [ref=e355] [cursor=pointer]': →
+                    - paragraph [ref=e356]: Độ đậm thể hiện chỉ số của từng tỉnh. Chọn tỉnh để hiện các điểm bán và xếp hạng cửa hàng.
+                - generic [ref=e357]:
+                  - paragraph [ref=e358]: Địa giới tham chiếu năm 2020 · 63 tỉnh/thành theo các tên lịch sử trong dữ liệu. Nơi chưa có giá trị được để xám; khác với giá trị 0. Chỉ phản ánh tập dòng đang hiển thị của biểu đồ.
+                  - paragraph [ref=e359]:
+                    - text: "Địa giới: Government of Viet Nam / HDX qua"
+                    - link "geoBoundaries (CC BY 3.0 IGO)" [ref=e360] [cursor=pointer]:
+                      - /url: https://www.geoboundaries.org/
+                    - text: "· Nền đường phố:"
+                    - link "OpenFreeMap" [ref=e361] [cursor=pointer]:
+                      - /url: https://openfreemap.org/
+                    - text: / © OpenStreetMap contributors ·
+                    - link "Thiết kế Streets / OSM Bright" [ref=e362] [cursor=pointer]:
+                      - /url: /map-styles/README.md
+                    - text: .
+              - generic [ref=e363]:
+                - heading "Các góc nhìn phân tích · 2 biểu đồ" [level=3] [ref=e364]:
+                  - text: Các góc nhìn phân tích
+                  - generic [ref=e365]: · 2 biểu đồ
+                - group [ref=e366]:
+                  - generic "Tập trung · 2/4 góc nhìn · giới hạn dữ liệu" [ref=e367] [cursor=pointer]
+                - tablist "Góc nhìn biểu đồ" [ref=e368]:
+                  - tab "Tất cả · 2" [selected] [ref=e369] [cursor=pointer]
+                  - tab "Xếp hạng · 1" [ref=e370] [cursor=pointer]
+                  - tab "So sánh · 1" [ref=e371] [cursor=pointer]
+              - tabpanel "Tất cả · 2" [ref=e372]:
+                - generic [ref=e373]:
+                  - navigation "Bố cục biểu đồ" [ref=e374]:
+                    - generic [ref=e375]: Bố cục
+                    - button "Tự động · 2–3 ô" [pressed] [ref=e376] [cursor=pointer]
+                    - button "Hai ô mỗi hàng" [ref=e377] [cursor=pointer]
+                    - button "Toàn chiều rộng" [ref=e378] [cursor=pointer]
+                  - generic [ref=e379]:
+                    - article [ref=e380]:
+                      - generic [ref=e381]:
+                        - generic [ref=e382]:
+                          - heading "Top 20 · Doanh thu theo tỉnh/thành trong dữ liệu" [level=5] [ref=e385]
+                          - paragraph [ref=e386]: Tỉnh/thành trong dữ liệu · VND
+                        - group [ref=e387]:
+                          - generic "Tùy chọn Top 20 · Doanh thu theo tỉnh/thành trong dữ liệu" [ref=e388] [cursor=pointer]: •••
+                          - option "Cột ngang" [selected]
+                          - option "Cột dọc"
+                      - generic [ref=e391]:
+                        - generic [ref=e392]:
+                          - 'button "Xem nhóm Tây Ninh: 2.800 VND" [ref=e393] [cursor=pointer]':
+                            - generic [ref=e394]:
+                              - generic [ref=e395]: "1."
+                              - text: Tây Ninh
+                            - generic [ref=e398]: 2,8 nghìn
+                          - 'button "Xem nhóm Quảng Trị: 2.700 VND" [ref=e399] [cursor=pointer]':
+                            - generic [ref=e400]:
+                              - generic [ref=e401]: "2."
+                              - text: Quảng Trị
+                            - generic [ref=e404]: 2,7 nghìn
+                          - 'button "Xem nhóm Sóc Trăng: 2.700 VND" [ref=e405] [cursor=pointer]':
+                            - generic [ref=e406]:
+                              - generic [ref=e407]: "3."
+                              - text: Sóc Trăng
+                            - generic [ref=e410]: 2,7 nghìn
+                          - 'button "Xem nhóm Sơn La: 2.700 VND" [ref=e411] [cursor=pointer]':
+                            - generic [ref=e412]:
+                              - generic [ref=e413]: "4."
+                              - text: Sơn La
+                            - generic [ref=e416]: 2,7 nghìn
+                          - 'button "Xem nhóm Quảng Bình: 2.600 VND" [ref=e417] [cursor=pointer]':
+                            - generic [ref=e418]:
+                              - generic [ref=e419]: "5."
+                              - text: Quảng Bình
+                            - generic [ref=e422]: 2,6 nghìn
+                          - 'button "Xem nhóm Quảng Nam: 2.600 VND" [ref=e423] [cursor=pointer]':
+                            - generic [ref=e424]:
+                              - generic [ref=e425]: "6."
+                              - text: Quảng Nam
+                            - generic [ref=e428]: 2,6 nghìn
+                          - 'button "Xem nhóm Quảng Ngãi: 2.600 VND" [ref=e429] [cursor=pointer]':
+                            - generic [ref=e430]:
+                              - generic [ref=e431]: "7."
+                              - text: Quảng Ngãi
+                            - generic [ref=e434]: 2,6 nghìn
+                          - 'button "Xem nhóm Ninh Thuận: 2.500 VND" [ref=e435] [cursor=pointer]':
+                            - generic [ref=e436]:
+                              - generic [ref=e437]: "8."
+                              - text: Ninh Thuận
+                            - generic [ref=e440]: 2,5 nghìn
+                          - 'button "Xem nhóm Phú Thọ: 2.500 VND" [ref=e441] [cursor=pointer]':
+                            - generic [ref=e442]:
+                              - generic [ref=e443]: "9."
+                              - text: Phú Thọ
+                            - generic [ref=e446]: 2,5 nghìn
+                          - 'button "Xem nhóm Phú Yên: 2.500 VND" [ref=e447] [cursor=pointer]':
+                            - generic [ref=e448]:
+                              - generic [ref=e449]: "10."
+                              - text: Phú Yên
+                            - generic [ref=e452]: 2,5 nghìn
+                        - generic [ref=e453]:
+                          - generic [ref=e454]: 1–10/20 nhóm hiển thị
+                          - generic [ref=e455]:
+                            - button "Nhóm trước" [disabled] [ref=e456]: ←
+                            - button "Nhóm tiếp theo" [ref=e457] [cursor=pointer]: →
+                      - generic [ref=e458]:
+                        - generic [ref=e459]:
+                          - combobox "Lọc nhóm từ Top 20 · Doanh thu theo tỉnh/thành trong dữ liệu" [ref=e460]:
+                            - option "Chọn nhóm để thêm lọc chờ" [selected]
+                            - option "Tây Ninh"
+                            - option "Quảng Trị"
+                            - option "Sóc Trăng"
+                            - option "Sơn La"
+                            - option "Quảng Bình"
+                            - option "Quảng Nam"
+                            - option "Quảng Ngãi"
+                            - option "Ninh Thuận"
+                            - option "Phú Thọ"
+                            - option "Phú Yên"
+                            - option "Long An"
+                            - option "Nam Định"
+                            - option "Ninh Bình"
+                            - option "Lai Châu"
+                            - option "Lào Cai"
+                            - option "Lạng Sơn"
+                            - option "Hòa Bình"
+                            - option "Hưng Yên"
+                            - option "Kon Tum"
+                            - option "Hà Tĩnh"
+                          - group [ref=e461]:
+                            - generic "Chi tiết biểu đồ" [ref=e462] [cursor=pointer]
+                          - group [ref=e463]:
+                            - generic "Nhận định từ biểu đồ" [ref=e464] [cursor=pointer]
+                        - paragraph [ref=e465]: Tập Top N được chọn; không phải cơ cấu toàn bộ.
+                    - article [ref=e466]:
+                      - generic [ref=e467]:
+                        - generic [ref=e468]:
+                          - heading "Doanh thu theo chi nhánh" [level=5] [ref=e471]
+                          - paragraph [ref=e472]: Chi nhánh · VND
+                          - generic [ref=e473]: Trong Top 20
+                          - generic [ref=e474]: Góc nhìn cốt lõi
+                        - group [ref=e475]:
+                          - generic "Tùy chọn Doanh thu theo chi nhánh" [ref=e476] [cursor=pointer]: •••
+                          - option "Cột ngang" [selected]
+                          - option "Cột dọc"
+                      - generic [ref=e479]:
+                        - generic [ref=e480]:
+                          - 'button "Xem nhóm Điểm bán thử 33: 2.100 VND" [ref=e481] [cursor=pointer]':
+                            - generic [ref=e482]: Điểm bán thử 33
+                            - generic [ref=e485]: 2,1 nghìn
+                          - 'button "Xem nhóm Điểm bán thử 36: 2.200 VND" [ref=e486] [cursor=pointer]':
+                            - generic [ref=e487]: Điểm bán thử 36
+                            - generic [ref=e490]: 2,2 nghìn
+                          - 'button "Xem nhóm Điểm bán thử 37: 2.200 VND" [ref=e491] [cursor=pointer]':
+                            - generic [ref=e492]: Điểm bán thử 37
+                            - generic [ref=e495]: 2,2 nghìn
+                          - 'button "Xem nhóm Điểm bán thử 38: 2.200 VND" [ref=e496] [cursor=pointer]':
+                            - generic [ref=e497]: Điểm bán thử 38
+                            - generic [ref=e500]: 2,2 nghìn
+                          - 'button "Xem nhóm Điểm bán thử 39: 2.300 VND" [ref=e501] [cursor=pointer]':
+                            - generic [ref=e502]: Điểm bán thử 39
+                            - generic [ref=e505]: 2,3 nghìn
+                          - 'button "Xem nhóm Điểm bán thử 40: 2.300 VND" [ref=e506] [cursor=pointer]':
+                            - generic [ref=e507]: Điểm bán thử 40
+                            - generic [ref=e510]: 2,3 nghìn
+                          - 'button "Xem nhóm Điểm bán thử 41: 2.300 VND" [ref=e511] [cursor=pointer]':
+                            - generic [ref=e512]: Điểm bán thử 41
+                            - generic [ref=e515]: 2,3 nghìn
+                          - 'button "Xem nhóm Điểm bán thử 42: 2.400 VND" [ref=e516] [cursor=pointer]':
+                            - generic [ref=e517]: Điểm bán thử 42
+                            - generic [ref=e520]: 2,4 nghìn
+                          - 'button "Xem nhóm Điểm bán thử 43: 2.400 VND" [ref=e521] [cursor=pointer]':
+                            - generic [ref=e522]: Điểm bán thử 43
+                            - generic [ref=e525]: 2,4 nghìn
+                          - 'button "Xem nhóm Điểm bán thử 44: 2.400 VND" [ref=e526] [cursor=pointer]':
+                            - generic [ref=e527]: Điểm bán thử 44
+                            - generic [ref=e530]: 2,4 nghìn
+                        - generic [ref=e531]:
+                          - generic [ref=e532]: 1–10/20 nhóm hiển thị
+                          - generic [ref=e533]:
+                            - button "Nhóm trước" [disabled] [ref=e534]: ←
+                            - button "Nhóm tiếp theo" [ref=e535] [cursor=pointer]: →
+                      - generic [ref=e537]:
+                        - combobox "Lọc nhóm từ Doanh thu theo chi nhánh" [ref=e538]:
+                          - option "Chọn nhóm để thêm lọc chờ" [selected]
+                          - option "Điểm bán thử 33"
+                          - option "Điểm bán thử 36"
+                          - option "Điểm bán thử 37"
+                          - option "Điểm bán thử 38"
+                          - option "Điểm bán thử 39"
+                          - option "Điểm bán thử 40"
+                          - option "Điểm bán thử 41"
+                          - option "Điểm bán thử 42"
+                          - option "Điểm bán thử 43"
+                          - option "Điểm bán thử 44"
+                          - option "Điểm bán thử 45"
+                          - option "Điểm bán thử 46"
+                          - option "Điểm bán thử 47"
+                          - option "Điểm bán thử 48"
+                          - option "Điểm bán thử 49"
+                          - option "Điểm bán thử 50"
+                          - option "Điểm bán thử 51"
+                          - option "Điểm bán thử 52"
+                          - option "Điểm bán thử 53"
+                          - option "Điểm bán thử 54"
+                        - group [ref=e539]:
+                          - generic "Chi tiết biểu đồ" [ref=e540] [cursor=pointer]
+                        - group [ref=e541]:
+                          - generic "Nhận định từ biểu đồ" [ref=e542] [cursor=pointer]
+              - group [ref=e543]:
+                - generic "Giới hạn quan trọng" [ref=e544] [cursor=pointer]
+              - group [ref=e545]:
+                - generic "Kết luận phân tích" [ref=e546] [cursor=pointer]
+              - generic [ref=e547]:
+                - heading "Câu hỏi tiếp theo" [level=3] [ref=e548]
+                - generic [ref=e549]:
+                  - button "Doanh thu theo chi nhánh từ 2026-09-01 đến 2026-09-30" [ref=e550] [cursor=pointer]
+                  - button "Doanh thu theo tuần từ 2026-09-01 đến 2026-09-30" [ref=e551] [cursor=pointer]
+                  - button "So sánh doanh thu từ 2026-09-01 đến 2026-09-30 với kỳ trước" [ref=e552] [cursor=pointer]
+                  - button "Dự báo doanh thu 3 tháng tới" [ref=e553] [cursor=pointer]
+          - generic [ref=e554]: "Nguồn tham khảo: Tầng Silver Lake Data Platform — Hệ thống phân tích tự động Avengers Coffee. Các số liệu được chuẩn hóa và kiểm chứng an toàn dữ liệu."
+```

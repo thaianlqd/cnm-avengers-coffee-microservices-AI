@@ -1,0 +1,11 @@
+{
+  "method": "separate diagnostic process; fixture principal/policy only; actual physical metadata read-only; API auth/cache unchanged",
+  "unscoped_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+  "preflight_warmed_without_principal": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+  "authenticated_direct_fingerprint": "4d7b23725d4a90573eb68da0822b2093b5706af2d91daacff51e841858a7ebf6",
+  "preflight_after_principal": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+  "cache_returned_same_object": true,
+  "scoped_equals_cached": false,
+  "unscoped_columns": 388,
+  "scoped_columns": 375
+}

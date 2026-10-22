@@ -1,0 +1,1128 @@
+{
+  "auto": {
+    "scope": [
+      {
+        "dimension": "city",
+        "operator": "in",
+        "value": [
+          "Hà Nội"
+        ]
+      }
+    ],
+    "time": {
+      "mode": "custom",
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "timezone": "Asia/Ho_Chi_Minh"
+    },
+    "signals": [
+      {
+        "id": "delivery_success_low",
+        "label": "Tỷ lệ giao thành công thấp",
+        "metric": "delivery_success_rate",
+        "metric_label": "Tỷ lệ giao thành công",
+        "unit": "%",
+        "operator": "lt",
+        "operator_symbol": "<",
+        "threshold": 90,
+        "warning_margin": 3,
+        "threshold_kind": "system_default",
+        "definition": "Phần trăm chuyến giao thành công trên các chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); chuyến đang xử lý không vào mẫu số.",
+        "historical": true,
+        "value": 94.62,
+        "observations": null,
+        "breakdown": {
+          "dimension": "store",
+          "dimension_label": "Chi nhánh",
+          "groups_total": 136,
+          "groups_evaluable": 136,
+          "groups_missing": 0,
+          "groups_insufficient_sample": 0,
+          "groups_in_breach": 10,
+          "worst": [
+            {
+              "group": "129 Thái Thịnh",
+              "value": 0.0
+            },
+            {
+              "group": "Fivimart Nam Đô",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee Dai Hoc Dai Nam HN",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee - Lâm Viên Complex",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee Ngoc Lam Post Office HN",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee RMIT Hà Nội",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee Vincom Dan Phuong Ha Noi",
+              "value": 0.0
+            },
+            {
+              "group": "FLC 36 Phạm Hùng",
+              "value": 50.0
+            },
+            {
+              "group": "Highlands Coffee Warehouse Noi Bai",
+              "value": 50.0
+            },
+            {
+              "group": "Pacific",
+              "value": 50.0
+            }
+          ],
+          "note": "Nhóm có ít quan sát có thể dao động mạnh; đối chiếu số lượng trước khi kết luận."
+        },
+        "note": "Toàn phạm vi trong ngưỡng nhưng 10 chi nhánh vượt ngưỡng.",
+        "period": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "status": "green",
+        "bad_direction": "below",
+        "status_label": "Trong ngưỡng"
+      }
+    ],
+    "sql_queries": 2,
+    "provider_calls": 0
+  },
+  "custom": {
+    "scope": [
+      {
+        "dimension": "city",
+        "operator": "in",
+        "value": [
+          "Hà Nội"
+        ]
+      }
+    ],
+    "time": {
+      "mode": "custom",
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "timezone": "Asia/Ho_Chi_Minh"
+    },
+    "signals": [
+      {
+        "id": "delivery_success_low",
+        "label": "Tỷ lệ giao thành công thấp",
+        "metric": "delivery_success_rate",
+        "metric_label": "Tỷ lệ giao thành công",
+        "unit": "%",
+        "operator": "lt",
+        "operator_symbol": "<",
+        "threshold": 90,
+        "warning_margin": 3,
+        "threshold_kind": "system_default",
+        "definition": "Phần trăm chuyến giao thành công trên các chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); chuyến đang xử lý không vào mẫu số.",
+        "historical": true,
+        "value": 94.62,
+        "observations": null,
+        "breakdown": {
+          "dimension": "store",
+          "dimension_label": "Chi nhánh",
+          "groups_total": 136,
+          "groups_evaluable": 136,
+          "groups_missing": 0,
+          "groups_insufficient_sample": 0,
+          "groups_in_breach": 10,
+          "worst": [
+            {
+              "group": "129 Thái Thịnh",
+              "value": 0.0
+            },
+            {
+              "group": "Fivimart Nam Đô",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee Dai Hoc Dai Nam HN",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee - Lâm Viên Complex",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee Ngoc Lam Post Office HN",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee RMIT Hà Nội",
+              "value": 0.0
+            },
+            {
+              "group": "Highlands Coffee Vincom Dan Phuong Ha Noi",
+              "value": 0.0
+            },
+            {
+              "group": "FLC 36 Phạm Hùng",
+              "value": 50.0
+            },
+            {
+              "group": "Highlands Coffee Warehouse Noi Bai",
+              "value": 50.0
+            },
+            {
+              "group": "Pacific",
+              "value": 50.0
+            }
+          ],
+          "note": "Nhóm có ít quan sát có thể dao động mạnh; đối chiếu số lượng trước khi kết luận."
+        },
+        "note": "Toàn phạm vi trong ngưỡng nhưng 10 chi nhánh vượt ngưỡng.",
+        "period": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "status": "green",
+        "bad_direction": "below",
+        "status_label": "Trong ngưỡng"
+      }
+    ],
+    "sql_queries": 2,
+    "provider_calls": 0
+  },
+  "south_report": {
+    "status": "success",
+    "outcome": "SUCCESS",
+    "completion_status": "complete",
+    "short_answer": [
+      "Doanh thu: 197,594,000 VND trong phạm vi đã chọn.",
+      "Doanh thu thay đổi từ 48,181,000 thành 43,016,000 VND giữa kỳ 2026-09-07 và 2026-09-21 (-10.72%). Chỉ đối chiếu kỳ đầy đủ; 2 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+      "Tổng doanh thu: 197,594,000 VND trong phạm vi đã chọn (540 nhóm có dữ liệu)."
+    ],
+    "conclusion": {
+      "version": "3.3",
+      "answer": "Doanh thu: 197,594,000 VND trong phạm vi đã chọn. Doanh thu thay đổi từ 48,181,000 thành 43,016,000 VND giữa kỳ 2026-09-07 và 2026-09-21 (-10.72%). Chỉ đối chiếu kỳ đầy đủ; 2 kỳ biên chưa đủ ngày vẫn có trên biểu đồ. Tổng doanh thu: 197,594,000 VND trong phạm vi đã chọn (540 nhóm có dữ liệu).",
+      "answers": [
+        "Doanh thu: 197,594,000 VND trong phạm vi đã chọn.",
+        "Doanh thu thay đổi từ 48,181,000 thành 43,016,000 VND giữa kỳ 2026-09-07 và 2026-09-21 (-10.72%). Chỉ đối chiếu kỳ đầy đủ; 2 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+        "Tổng doanh thu: 197,594,000 VND trong phạm vi đã chọn (540 nhóm có dữ liệu)."
+      ],
+      "findings": [
+        {
+          "statement": "Doanh thu thay đổi từ 48,181,000 thành 43,016,000 VND giữa kỳ 2026-09-07 và 2026-09-21 (-10.72%). Chỉ đối chiếu kỳ đầy đủ; 2 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+          "evidence_id": "q_7f7c96c4fa192ad4e5c15b50:revenue:change:6230060e3b"
+        },
+        {
+          "statement": "Tổng doanh thu: 197,594,000 VND trong phạm vi đã chọn (540 nhóm có dữ liệu).",
+          "evidence_id": "q_96f727b3755f89ef36ab2ff4:revenue:scope_total:6230060e3b"
+        },
+        {
+          "statement": "Doanh thu: 197,594,000 VND trong phạm vi đã chọn.",
+          "evidence_id": "q_ec608ca5f29e85df440c9f78:revenue:scalar:6230060e3b"
+        }
+      ],
+      "caveats": [
+        "Nguồn Đơn hàng chi tiết và doanh thu: quan sát đến chưa rõ; Độ đầy đủ dữ liệu nguồn chưa được chứng minh; MIN/MAX không chứng minh nguồn đầy đủ.",
+        "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+        "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+        "Kỳ biên chưa đủ ngày; chỉ so sánh biến động giữa các kỳ đầy đủ.",
+        "Biểu đồ hiển thị một phần nhóm; bảng và phép tính giữ toàn bộ kết quả.",
+        "Phân vùng báo cáo nội bộ theo warehouse_reporting_geography_v1 v1; phạm vi chỉ gồm các tỉnh/thành được quản trị trong danh mục kho, không đại diện toàn bộ địa bàn thực tế.",
+        "Biểu đồ chỉ hiển thị nhóm được chọn (Top N/tập hiển thị); số liệu phân tích dùng toàn bộ phạm vi.",
+        "2 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ."
+      ],
+      "actions": [
+        "Chỉ số có sự biến động qua các kỳ: Cần tiếp tục theo dõi các kỳ tương đương để dự báo chu kỳ nhu cầu và chủ động phân bổ nguồn lực."
+      ],
+      "evidence_ids": [
+        "q_7f7c96c4fa192ad4e5c15b50:revenue:change:6230060e3b",
+        "q_96f727b3755f89ef36ab2ff4:revenue:scope_total:6230060e3b",
+        "q_ec608ca5f29e85df440c9f78:revenue:scalar:6230060e3b"
+      ],
+      "unanswered": []
+    },
+    "answer_requirements": [
+      {
+        "requirement_id": "r1",
+        "role": "scalar",
+        "evidence_id": "q_ec608ca5f29e85df440c9f78:revenue:scalar:6230060e3b",
+        "query_id": "q_ec608ca5f29e85df440c9f78",
+        "metric": "revenue",
+        "unit": "VND",
+        "scope": {
+          "label": "Đơn hàng và doanh thu",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "population_relation": "same",
+          "metric_business_filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_required_non_null": [],
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          "partition": {},
+          "selection": "complete"
+        },
+        "statement": "Doanh thu: 197,594,000 VND trong phạm vi đã chọn."
+      },
+      {
+        "requirement_id": "r2",
+        "role": "time_series",
+        "evidence_id": "q_7f7c96c4fa192ad4e5c15b50:revenue:change:6230060e3b",
+        "query_id": "q_7f7c96c4fa192ad4e5c15b50",
+        "metric": "revenue",
+        "unit": "VND",
+        "scope": {
+          "label": "Đơn hàng và doanh thu",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "population_relation": "same",
+          "metric_business_filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_required_non_null": [],
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          "partition": {},
+          "selection": "complete"
+        },
+        "statement": "Doanh thu thay đổi từ 48,181,000 thành 43,016,000 VND giữa kỳ 2026-09-07 và 2026-09-21 (-10.72%). Chỉ đối chiếu kỳ đầy đủ; 2 kỳ biên chưa đủ ngày vẫn có trên biểu đồ."
+      },
+      {
+        "requirement_id": "r3",
+        "role": "grouped",
+        "evidence_id": "q_96f727b3755f89ef36ab2ff4:revenue:scope_total:6230060e3b",
+        "query_id": "q_96f727b3755f89ef36ab2ff4",
+        "metric": "revenue",
+        "unit": "VND",
+        "scope": {
+          "label": "Đơn hàng và doanh thu",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "population_relation": "same",
+          "metric_business_filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_required_non_null": [],
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          "partition": {},
+          "selection": "complete"
+        },
+        "statement": "Tổng doanh thu: 197,594,000 VND trong phạm vi đã chọn (540 nhóm có dữ liệu)."
+      }
+    ],
+    "view_coverage": [
+      {
+        "requirement_id": "r1",
+        "index": 0,
+        "kind": "scalar",
+        "required": true,
+        "status": "satisfied",
+        "reason": null
+      },
+      {
+        "requirement_id": "r2",
+        "index": 0,
+        "kind": "time_series",
+        "required": true,
+        "status": "satisfied",
+        "reason": null
+      },
+      {
+        "requirement_id": "r3",
+        "index": 0,
+        "kind": "grouped",
+        "required": true,
+        "status": "satisfied",
+        "reason": null
+      }
+    ],
+    "scope_resolution": {
+      "state": "resolved",
+      "filters": [
+        {
+          "dimension": "city",
+          "operator": "in",
+          "value": [
+            "Bà Rịa - Vũng Tàu",
+            "Bình Dương",
+            "Cần Thơ",
+            "Hồ Chí Minh",
+            "Kiên Giang",
+            "Đồng Nai"
+          ]
+        }
+      ],
+      "bindings": [
+        {
+          "dimension": "city",
+          "members": [
+            "Bà Rịa - Vũng Tàu",
+            "Bình Dương",
+            "Cần Thơ",
+            "Hồ Chí Minh",
+            "Kiên Giang",
+            "Đồng Nai"
+          ],
+          "comparison": false,
+          "cohorts": [],
+          "excluded_members": [],
+          "comparison_dimension": "reporting_region"
+        }
+      ],
+      "source": [
+        {
+          "id": "south",
+          "label": "Miền Nam",
+          "source": "warehouse_reporting_geography_v1",
+          "version": 1
+        }
+      ],
+      "fingerprint": "a44010d66521dd5c075ee9df8e5762938555f409a0db714aa4ee6a02d34f8b32",
+      "requested_phrase": "Tình hình doanh thu miền Nam tháng 9 năm 2026"
+    },
+    "verification": {
+      "version": "3.2.0",
+      "status": "verified",
+      "metrics": [
+        {
+          "id": "numeric_reconciliation",
+          "label": "Đối chiếu số liệu độc lập",
+          "passed": 0,
+          "total": 0
+        },
+        {
+          "id": "ranking_reconciliation",
+          "label": "Đối chiếu xếp hạng",
+          "passed": 0,
+          "total": 0
+        },
+        {
+          "id": "requirement_coverage",
+          "label": "Yêu cầu được đáp ứng",
+          "passed": 3,
+          "total": 3
+        },
+        {
+          "id": "grounded_claims",
+          "label": "Nhận định có bằng chứng",
+          "passed": 4,
+          "total": 4
+        },
+        {
+          "id": "chart_relevance",
+          "label": "Biểu đồ đúng yêu cầu",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "id": "view_coverage",
+          "label": "Góc nhìn bắt buộc đã có",
+          "passed": 3,
+          "total": 3
+        },
+        {
+          "id": "conclusion_grounding",
+          "label": "Kết luận có bằng chứng",
+          "passed": 4,
+          "total": 4
+        }
+      ],
+      "conclusion": {
+        "present": true,
+        "passed": 4,
+        "total": 4,
+        "dangling": []
+      },
+      "view_coverage": [
+        {
+          "requirement_id": "r1",
+          "index": 0,
+          "kind": "scalar",
+          "required": true,
+          "status": "satisfied",
+          "reason": null
+        },
+        {
+          "requirement_id": "r2",
+          "index": 0,
+          "kind": "time_series",
+          "required": true,
+          "status": "satisfied",
+          "reason": null
+        },
+        {
+          "requirement_id": "r3",
+          "index": 0,
+          "kind": "grouped",
+          "required": true,
+          "status": "satisfied",
+          "reason": null
+        }
+      ],
+      "independent_oracle": null,
+      "independent_oracle_label": "Chưa đo đối chiếu độc lập",
+      "numeric": [],
+      "ranking": [],
+      "trend": [
+        {
+          "query_id": "q_7f7c96c4fa192ad4e5c15b50",
+          "buckets": 5,
+          "ordered": true,
+          "duplicate_buckets": 0
+        }
+      ],
+      "forecast_backtest": [],
+      "grounding": {
+        "narrative_claims": 0,
+        "narrative_claims_with_evidence": 0,
+        "chart_numeric_claims": 4,
+        "chart_numeric_matched": 4,
+        "unsupported_claims": [],
+        "causal_language": []
+      },
+      "chart_relevance": {
+        "total": 2,
+        "passed": 2,
+        "charts": [
+          {
+            "chart_id": "visual_1",
+            "title": "Doanh thu theo chi nhánh — Tỉnh/thành trong dữ liệu: Bà Rịa - Vũng Tàu, Bình Dương, Cần Thơ, Hồ Chí Minh, Kiên Giang, Đồng Nai — 20/540 nhóm có doanh thu cao nhất",
+            "passed": true,
+            "problems": []
+          },
+          {
+            "chart_id": "visual_2",
+            "title": "Doanh thu theo tuần — Tỉnh/thành trong dữ liệu: Bà Rịa - Vũng Tàu, Bình Dương, Cần Thơ, Hồ Chí Minh, Kiên Giang, Đồng Nai",
+            "passed": true,
+            "problems": []
+          }
+        ]
+      },
+      "internal_completeness_score": 90.0,
+      "internal_completeness_label": "Mức hoàn tất kiểm chứng nội bộ (không phải độ chính xác AI)",
+      "methodology": [
+        "Đối chiếu độc lập: truy vấn tổng hợp read-only riêng từ cùng định nghĩa chỉ số; không đọc lại số đã hiển thị.",
+        "Sai số theo đơn vị: số đếm phải khớp tuyệt đối, tiền tệ sai số ≤ 0,01, phần trăm ≤ 0,05 điểm.",
+        "Tỷ lệ/trung bình không đối chiếu bằng cách cộng hoặc lấy trung bình các nhóm.",
+        "Không dùng AI để chấm AI; không gộp các chỉ số trên thành một 'độ chính xác AI'."
+      ],
+      "trust_dimensions": [
+        {
+          "id": "structural",
+          "label": "Cấu trúc và kiểm tra kết quả",
+          "passed": 3,
+          "total": 3,
+          "status": "passed"
+        },
+        {
+          "id": "numeric_reconciliation",
+          "label": "Đối soát số liệu độc lập",
+          "passed": 0,
+          "total": 0,
+          "status": "not_measured"
+        },
+        {
+          "id": "semantic_coverage",
+          "label": "Yêu cầu và bằng chứng",
+          "passed": 3,
+          "total": 3,
+          "status": "passed"
+        },
+        {
+          "id": "forecast_quality",
+          "label": "Kiểm tra lùi dự báo",
+          "passed": 0,
+          "total": 0,
+          "status": "not_measured"
+        },
+        {
+          "id": "provider_execution",
+          "label": "Thực thi provider trong ngân sách",
+          "passed": 1,
+          "total": 1,
+          "status": "passed"
+        }
+      ],
+      "snapshot": {
+        "registry_fingerprint": "822be4ba71e15a1207253c6416a709f5965f4b19d473b7fce669eb94939b02c3",
+        "catalog_fingerprint": "eb588f56a2f54942b6086e65366ea9109e07ee5adde378967b085e5d7d21ed1f",
+        "verification_version": "3.2.0",
+        "metric_definitions": {
+          "revenue": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy."
+        },
+        "chart_requirements": {
+          "visual_1": "r3",
+          "visual_2": "r2"
+        },
+        "reference_date": "2026-10-17"
+      }
+    },
+    "query_semantics": [
+      {
+        "id": "q_7f7c96c4fa192ad4e5c15b50",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Hồ Chí Minh",
+              "Kiên Giang",
+              "Đồng Nai"
+            ]
+          }
+        ],
+        "project": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "amount": null,
+          "unit": null
+        },
+        "order_by": [],
+        "limit": 100,
+        "role": "requested",
+        "parent_id": null,
+        "purpose": "answer",
+        "lens_id": "channel_mix",
+        "population_relation": "same",
+        "replaces": null,
+        "changed_fields": [],
+        "subject": "orders",
+        "operation": "trend",
+        "ranking": null,
+        "granularity": "week"
+      },
+      {
+        "id": "q_96f727b3755f89ef36ab2ff4",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Hồ Chí Minh",
+              "Kiên Giang",
+              "Đồng Nai"
+            ]
+          }
+        ],
+        "project": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "amount": null,
+          "unit": null
+        },
+        "order_by": [],
+        "limit": 100,
+        "role": "requested",
+        "parent_id": null,
+        "purpose": "answer",
+        "lens_id": "sales_overview",
+        "population_relation": "same",
+        "replaces": null,
+        "changed_fields": [],
+        "subject": "orders",
+        "operation": "aggregate",
+        "ranking": null,
+        "granularity": "day"
+      },
+      {
+        "id": "q_ec608ca5f29e85df440c9f78",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Hồ Chí Minh",
+              "Kiên Giang",
+              "Đồng Nai"
+            ]
+          }
+        ],
+        "project": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "amount": null,
+          "unit": null
+        },
+        "order_by": [],
+        "limit": 100,
+        "role": "requested",
+        "parent_id": null,
+        "purpose": "answer",
+        "lens_id": "channel_mix",
+        "population_relation": "same",
+        "replaces": null,
+        "changed_fields": [],
+        "subject": "orders",
+        "operation": "aggregate",
+        "ranking": null,
+        "granularity": "day"
+      }
+    ],
+    "quality_assessment": {
+      "score": 90.0,
+      "grade": "good",
+      "status": "verified",
+      "components": [],
+      "completed": [
+        {
+          "id": "r1",
+          "label": "Đơn hàng và doanh thu",
+          "evidence_refs": [
+            "q_ec608ca5f29e85df440c9f78:revenue:scalar:6230060e3b"
+          ]
+        },
+        {
+          "id": "r2",
+          "label": "Đơn hàng và doanh thu",
+          "evidence_refs": [
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:change:6230060e3b",
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:extrema:6230060e3b"
+          ]
+        },
+        {
+          "id": "r3",
+          "label": "Đơn hàng và doanh thu",
+          "evidence_refs": [
+            "q_96f727b3755f89ef36ab2ff4:revenue:scope_total:6230060e3b",
+            "q_96f727b3755f89ef36ab2ff4:revenue:group_comparison:6230060e3b",
+            "q_96f727b3755f89ef36ab2ff4:revenue:peer_gap:4c1ecfdc6f"
+          ]
+        }
+      ],
+      "missing": [],
+      "unverified": [
+        {
+          "id": "causes",
+          "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+          "evidence_refs": []
+        },
+        {
+          "id": "independent_accuracy",
+          "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+          "evidence_refs": []
+        }
+      ],
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: quan sát đến chưa rõ; Độ đầy đủ dữ liệu nguồn chưa được chứng minh; MIN/MAX không chứng minh nguồn đầy đủ.",
+          "evidence_refs": []
+        },
+        {
+          "id": "scope_taxonomy:q_7f7c96c4fa192ad4e5c15b50",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "evidence_refs": [
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:change:6230060e3b",
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:extrema:6230060e3b"
+          ]
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "evidence_refs": [
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:change:6230060e3b",
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:extrema:6230060e3b"
+          ]
+        },
+        {
+          "id": "partial_period:q_7f7c96c4fa192ad4e5c15b50",
+          "label": "Kỳ biên chưa đủ ngày; chỉ so sánh biến động giữa các kỳ đầy đủ.",
+          "evidence_refs": [
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:change:6230060e3b",
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:extrema:6230060e3b"
+          ]
+        },
+        {
+          "id": "scope_taxonomy:q_96f727b3755f89ef36ab2ff4",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "evidence_refs": [
+            "q_96f727b3755f89ef36ab2ff4:revenue:scope_total:6230060e3b",
+            "q_96f727b3755f89ef36ab2ff4:revenue:group_comparison:6230060e3b",
+            "q_96f727b3755f89ef36ab2ff4:revenue:peer_gap:4c1ecfdc6f"
+          ]
+        },
+        {
+          "id": "scope_taxonomy:q_ec608ca5f29e85df440c9f78",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "evidence_refs": [
+            "q_ec608ca5f29e85df440c9f78:revenue:scalar:6230060e3b"
+          ]
+        },
+        {
+          "id": "display_subset:q_96f727b3755f89ef36ab2ff4",
+          "label": "Biểu đồ hiển thị một phần nhóm; bảng và phép tính giữ toàn bộ kết quả.",
+          "evidence_refs": [
+            "q_96f727b3755f89ef36ab2ff4:revenue:scope_total:6230060e3b",
+            "q_96f727b3755f89ef36ab2ff4:revenue:group_comparison:6230060e3b",
+            "q_96f727b3755f89ef36ab2ff4:revenue:peer_gap:4c1ecfdc6f"
+          ]
+        }
+      ],
+      "suggested_next_actions": [
+        {
+          "id": "partial_period:q_7f7c96c4fa192ad4e5c15b50",
+          "label": "Đối chiếu các kỳ đầy đủ có cùng độ dài.",
+          "evidence_refs": [
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:change:6230060e3b",
+            "q_7f7c96c4fa192ad4e5c15b50:revenue:extrema:6230060e3b"
+          ],
+          "action": "compare_complete_periods"
+        }
+      ],
+      "coverage": {
+        "requested_count": 3,
+        "completed_count": 3,
+        "supporting_count": 0,
+        "omitted_count": 0
+      },
+      "generated_by": "deterministic_verifier",
+      "version": "2.8.5",
+      "reason": null,
+      "measurement_mode": "evidence_checks",
+      "verification_checks": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phần yêu cầu đã thực hiện."
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "passed": 546,
+          "total": 546,
+          "status": "passed",
+          "summary": "546/546 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "1/1 phép tính yêu cầu có đủ quan sát và bằng chứng."
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "passed": 590,
+          "total": 590,
+          "status": "passed",
+          "summary": "590/590 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "passed": 4,
+          "total": 4,
+          "status": "passed",
+          "summary": "2/2 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "passed": 7,
+          "total": 7,
+          "status": "passed",
+          "summary": "7/7 giới hạn dữ liệu được công bố."
+        },
+        {
+          "id": "analysis_depth_coverage",
+          "label": "Yêu cầu bằng chứng",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 vai trò phân tích bắt buộc có bằng chứng."
+        },
+        {
+          "id": "population_correctness",
+          "label": "Quần thể và mẫu số",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm. Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ."
+        },
+        {
+          "id": "provenance_completeness",
+          "label": "Nguồn gốc kết quả",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập."
+        }
+      ],
+      "score_method": {
+        "id": "verification_evidence_v3",
+        "label": "Điểm kiểm chứng tổng",
+        "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+        "unmeasured_points": 10.0,
+        "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+      },
+      "score_breakdown": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "earned_points": 8.5714,
+          "possible_points": 8.5714,
+          "status": "passed"
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "earned_points": 12.8571,
+          "possible_points": 12.8571,
+          "status": "passed"
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "earned_points": 12.8571,
+          "possible_points": 12.8571,
+          "status": "passed"
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "earned_points": 8.5714,
+          "possible_points": 8.5714,
+          "status": "passed"
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "earned_points": 8.5714,
+          "possible_points": 8.5714,
+          "status": "passed"
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "earned_points": 8.5714,
+          "possible_points": 8.5714,
+          "status": "passed"
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "earned_points": 4.2857,
+          "possible_points": 4.2857,
+          "status": "passed"
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "earned_points": 4.2857,
+          "possible_points": 4.2857,
+          "status": "passed"
+        },
+        {
+          "id": "population_correctness",
+          "label": "Quần thể và mẫu số",
+          "earned_points": 4.2857,
+          "possible_points": 4.2857,
+          "status": "passed"
+        },
+        {
+          "id": "provenance_completeness",
+          "label": "Nguồn gốc kết quả",
+          "earned_points": 4.2857,
+          "possible_points": 4.2857,
+          "status": "passed"
+        },
+        {
+          "id": "analysis_depth_coverage",
+          "label": "Yêu cầu bằng chứng",
+          "earned_points": 12.8571,
+          "possible_points": 12.8571,
+          "status": "passed"
+        },
+        {
+          "id": "independent_reference",
+          "label": "Đối chứng độc lập",
+          "earned_points": 0.0,
+          "possible_points": 10.0,
+          "status": "not_measured"
+        }
+      ],
+      "accuracy_assessment": {
+        "status": "not_measured",
+        "matched_count": null,
+        "reference_count": 0,
+        "accuracy_pct": null,
+        "reference_source": null,
+        "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+      },
+      "trust_dimensions": [
+        {
+          "id": "reliability",
+          "label": "Độ tin cậy của kết quả",
+          "status": "passed",
+          "passed": 1144,
+          "total": 1144
+        },
+        {
+          "id": "reconciliation",
+          "label": "Đối soát quần thể và nguồn gốc",
+          "status": "passed",
+          "passed": 6,
+          "total": 6
+        },
+        {
+          "id": "presentation",
+          "label": "Trình bày và giới hạn",
+          "status": "passed",
+          "passed": 14,
+          "total": 14
+        },
+        {
+          "id": "independent_accuracy",
+          "label": "Đối chứng độc lập",
+          "status": "not_measured",
+          "passed": 0,
+          "total": 0
+        }
+      ],
+      "confidence_probability": null,
+      "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+    }
+  }
+}

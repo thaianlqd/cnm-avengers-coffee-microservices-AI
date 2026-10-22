@@ -1,0 +1,24 @@
+# V3.4 findings → production → evidence — working checkpoint, NOT release approval
+
+| Finding | Production change and evidence in this directory | Remaining release condition |
+|---|---|---|
+| F01 SQL authorization | query.py default-disabled admin/AST/catalog column policy; served-security-snapshot-smoke.json; query negative tests | Full scoped BI/export matrix; SQL explorer remains explicitly disabled |
+| F02 Ownership | server principal/resource predicates,026/027 deployed; API ownership/epoch fixtures; private Identity session; server-owned artifact restoration regression15 | Final save/reopen/export served gate; legacy rows quarantined/read-only, no ownership auto-claim |
+| F03 Replica cursor | source upper bound/overlap/idempotent transaction/independent reconcile; pipeline-final-real-35.txt | Governed ingestion not switched on real source; approved non-destructive deployment/canary and cadence/lateness/owner decisions remain |
+| F04 Stream delivery | durable acknowledged cursor/manual offsets/immutable Bronze/idempotent projection; real Kafka fixture in pipeline-final-real-35.txt | Governed producer/consumer deployment and source availability; no canonical CDC claim |
+| F05 Run publication | exact run inputs, required-output manifest fence, Gold DB pointer transaction, fault replay fixtures | Actual batch committed run on current deployment; object and DB states independently observed |
+| F06 Definitions/invalid numbers | typed rejects, canonical revenue statuses, AOV/BI product-line labels; PG metric/CSV tests | Full Gold/marts/Analyst parity on final reference generation; no completeness fiction |
+| F07 False operational UI | quality endpoint measured3checks; trigger reports actual KPI action; fake BI numbers removed | Unmeasured rules stay unknown; pipeline trigger still not granted |
+| F08 DataHealth | existing coverage owner extended23source/schema/checkpoint projection/expiry | Current governed checkpoints missing21sources; completeness unknown until extraction/lineage evidence exists |
+| F09 L03 | exact missing-axis dependency/frozen fields; recorded fixture +live-l03-recovered-asserted.json PASS1HTTP | Full frozen44 run must also pass L03; diagnostic alone insufficient |
+| F10 Static capability rules | existing canonical evaluator used at compiled/guided paths; corpus299input +120reference (83compiled/37terminal) | Cross-entrypoint parity inventory and final integration checks; no claim all text recognition collapsed into one rule |
+| F11 Catalog ownership/lifecycle | additive semantic hash/IDs/team lifecycle and contract diff; existing legacy fingerprint preserved | Business source owners not certified; authoring split intentionally NEXT |
+| F12 Provider operations | rolling denominators, one lazy primary probe, bounded lease; operations-provider*.txt/provider-circuit-isolation-90.txt | Final full regressions/live recovery; shared multi-process cooldown is NEXT |
+| F13 Forecast selection | common folds/separate validation tail/coverage diagnostics/version3.4 | Insufficient data/calibration explicitly unavailable; final full gate |
+| F14 Stats | full-pair Spearman/ties/sensitivity; robust anomaly eligibility requires source certificate | Actual completeness unknown → anomaly unavailable, no invented statistical success/score |
+| F15 Oracle trust | attempts reserved before failed/timeout,1snapshot, epoch vector/incomparable,8PGownership/epoch tests | Actual reports missing source epochs stay not_measured; not source/formula independence |
+| F16 Coupling |Latest81services/390edges/78staticreachable/SCC57 vsbaseline60; previouscheckpoint53;1lifecycle hook/facade retained | Review newly introduced real dependency paths;175source/config/docs/79untracked inclhandoff exceeds estimate; no dynamic-import/count concealment |
+| F17 Jobs/scale | Atomic Redis registration/readback,owner4/global12,shutdown/cancel,4snapshot exporters; real2client Redis fixtures26combined | Two full API processes/network load not measured; no multi-tenant/SLA claim |
+| F18 CI/telemetry | Workflow source/offline fixture jobs,joinedSQL/provider/jobIDs,requestSQLbudget; bounded private auditspool/replay code+96targeted/27PGfixturePASS | Spool operator setting not enabled; final full gate pending. Remote CI not pushed/run, branch/admin policy pending; reviewed secretscanner/HTTPbrowserCI, raw BI/metadata SQL accounting and OTel still incomplete |
+
+No target maturity score has been awarded. Latest user-approved280TOTAL; ledger263/events263,17remaining. Full44 runs failed35/40 then37/40; L03passed both. L11fixed offline afterrun2; L41/L43open. Latest96targeted+27PGfixture do not replace final full/backend/live gates. Read AI_V34_IMPLEMENTATION_HANDOFF_20261018.md for the complete continuation state. Historical runs/failed diagnostics retained; no commit/push/reset/clean or fact DML in this work.

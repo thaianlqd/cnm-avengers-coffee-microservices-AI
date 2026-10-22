@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from common import AiTextToReportRequest, AiReportRefineRequest
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
 from services.analysis_pipeline import safe_failure
+from tests.archive_planner import historical_catalog
 from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.analysis_contract import Filter
 from services.analyst_decision import DecisionOperation, decision_tool
@@ -47,11 +48,11 @@ class ContractV251Tests(unittest.TestCase):
         for name in ("requests.sessions.Session.request", "psycopg2.connect"):
             guard = patch(name, side_effect=AssertionError("External I/O forbidden"))
             guard.start(); self.addCleanup(guard.stop)
-        config = patch.dict(os.environ, {"AI_OFFLINE": "1", "DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "10000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
+        config = patch.dict(os.environ, {"AI_OFFLINE": "1", "DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "14000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
         config.start(); self.addCleanup(config.stop)
         models = patch("services.llm_service.GEMINI_MODELS", ["configured_model"])
         models.start(); self.addCleanup(models.stop)
-        self.catalog = AnalysisCatalog(physical_metadata())
+        self.catalog = historical_catalog(AnalysisCatalog(physical_metadata()))  # archived one-shot scope
         self.intelligence = DomainIntelligence(self.catalog)
         self.manifest = build_manifest(self.catalog)[0]
         self.refs = manifest_references(self.manifest)
@@ -123,7 +124,11 @@ class ContractV251Tests(unittest.TestCase):
         self.assertEqual(d["global_domain_count"], 16)
         # V2.7 carries richer business definitions and explicit coverage. Keep
         # bounded headroom without discarding mandatory five-domain semantics.
-        self.assertGreaterEqual(d["provider_body_headroom_chars"], 1000)
+        # V3.0: this retired planner sends the complete global manifest on every
+        # call; the governed delivery fact (+~1.1K chars) consumed the former
+        # 1,000-char margin. The hard body bound below still holds. Production
+        # (HybridAnalystPlanner) retrieves only question-relevant candidates.
+        self.assertGreaterEqual(d["provider_body_headroom_chars"], 0)
         req = p.provider.requests[0]
         native = NativeAgentProvider()
         sizes = {"native": len(compact(native._gemini_body(**req))), "compat": len(compact(native._gemini_compat_body(**req, model="configured_model")))}

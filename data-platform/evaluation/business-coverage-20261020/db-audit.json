@@ -1,0 +1,5460 @@
+{
+  "observed_at": "2026-10-20T02:41:48.313703+00:00",
+  "mode": "READ ONLY metadata and aggregate counts; no business row values",
+  "databases": {
+    "source": {
+      "read_only": "on",
+      "tables": {
+        "ai.chat_ai_conversation": {
+          "columns": [
+            {
+              "name": "conversation_id",
+              "type": "uuid"
+            },
+            {
+              "name": "session_id",
+              "type": "character varying"
+            },
+            {
+              "name": "messages",
+              "type": "jsonb"
+            },
+            {
+              "name": "state",
+              "type": "jsonb"
+            },
+            {
+              "name": "processed_responses",
+              "type": "jsonb"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone"
+            }
+          ]
+        },
+        "ai.inference_logs": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "bigint"
+            },
+            {
+              "name": "endpoint",
+              "type": "character varying"
+            },
+            {
+              "name": "user_id",
+              "type": "character varying"
+            },
+            {
+              "name": "status",
+              "type": "character varying"
+            },
+            {
+              "name": "latency_ms",
+              "type": "integer"
+            },
+            {
+              "name": "request_payload",
+              "type": "jsonb"
+            },
+            {
+              "name": "response_payload",
+              "type": "jsonb"
+            },
+            {
+              "name": "error_message",
+              "type": "text"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            }
+          ]
+        },
+        "ai.mo_hinh_ai": {
+          "columns": [
+            {
+              "name": "ma_mo_hinh",
+              "type": "bigint"
+            },
+            {
+              "name": "ten_mo_hinh",
+              "type": "character varying"
+            },
+            {
+              "name": "phien_ban",
+              "type": "character varying"
+            },
+            {
+              "name": "da_huan_luyen",
+              "type": "boolean"
+            },
+            {
+              "name": "tong_ban_ghi",
+              "type": "integer"
+            },
+            {
+              "name": "tong_thuc_the",
+              "type": "integer"
+            },
+            {
+              "name": "thoi_diem_huan_luyen",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "chi_so",
+              "type": "jsonb"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ]
+        },
+        "ai.model_registry": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "bigint"
+            },
+            {
+              "name": "model_name",
+              "type": "character varying"
+            },
+            {
+              "name": "model_version",
+              "type": "character varying"
+            },
+            {
+              "name": "is_trained",
+              "type": "boolean"
+            },
+            {
+              "name": "total_records",
+              "type": "integer"
+            },
+            {
+              "name": "total_entities",
+              "type": "integer"
+            },
+            {
+              "name": "trained_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "metrics",
+              "type": "jsonb"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone"
+            }
+          ]
+        },
+        "ai.nhat_ky_suy_luan": {
+          "columns": [
+            {
+              "name": "ma_nhat_ky",
+              "type": "bigint"
+            },
+            {
+              "name": "diem_cuoi",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "do_tre_ms",
+              "type": "integer"
+            },
+            {
+              "name": "du_lieu_yeu_cau",
+              "type": "jsonb"
+            },
+            {
+              "name": "du_lieu_phan_hoi",
+              "type": "jsonb"
+            },
+            {
+              "name": "thong_tin_loi",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            }
+          ]
+        },
+        "analytics.ai_logs": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "session_id",
+              "type": "text"
+            },
+            {
+              "name": "chart",
+              "type": "text"
+            },
+            {
+              "name": "question",
+              "type": "text"
+            },
+            {
+              "name": "sql_queries",
+              "type": "jsonb"
+            },
+            {
+              "name": "answer",
+              "type": "text"
+            },
+            {
+              "name": "ts",
+              "type": "timestamp without time zone"
+            }
+          ]
+        },
+        "analytics.ai_modules": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ten_module",
+              "type": "text"
+            },
+            {
+              "name": "muc_tieu",
+              "type": "text"
+            },
+            {
+              "name": "gia_tri",
+              "type": "text"
+            },
+            {
+              "name": "ket_qua_mong_muon",
+              "type": "text"
+            },
+            {
+              "name": "bang_du_lieu",
+              "type": "ARRAY"
+            },
+            {
+              "name": "cot_phan_tich",
+              "type": "ARRAY"
+            },
+            {
+              "name": "ai_config",
+              "type": "jsonb"
+            },
+            {
+              "name": "dashboard_config",
+              "type": "jsonb"
+            },
+            {
+              "name": "trang_thai",
+              "type": "text"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            }
+          ]
+        },
+        "analytics.morning_digest": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "digest_date",
+              "type": "date"
+            },
+            {
+              "name": "anomalies",
+              "type": "jsonb"
+            },
+            {
+              "name": "narrative",
+              "type": "text"
+            },
+            {
+              "name": "ts",
+              "type": "timestamp without time zone"
+            }
+          ]
+        },
+        "context.thoi_tiet_ngay": {
+          "columns": [
+            {
+              "name": "ngay",
+              "type": "date"
+            },
+            {
+              "name": "cum_vung",
+              "type": "character varying"
+            },
+            {
+              "name": "nhiet_do_tb",
+              "type": "numeric"
+            },
+            {
+              "name": "luong_mua_mm",
+              "type": "numeric"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "is_holiday",
+              "type": "boolean"
+            }
+          ]
+        },
+        "finance.chi_phi_van_hanh": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "ky_ke_toan",
+              "type": "date"
+            },
+            {
+              "name": "chi_phi_cogs",
+              "type": "bigint"
+            },
+            {
+              "name": "chi_phi_mat_bang",
+              "type": "bigint"
+            },
+            {
+              "name": "chi_phi_luong",
+              "type": "bigint"
+            },
+            {
+              "name": "chi_phi_logistics",
+              "type": "bigint"
+            },
+            {
+              "name": "chi_phi_marketing",
+              "type": "bigint"
+            }
+          ]
+        },
+        "finance.hop_dong_nq": {
+          "columns": [
+            {
+              "name": "ma_hop_dong",
+              "type": "uuid"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "franchisee_ten",
+              "type": "text"
+            },
+            {
+              "name": "von_dau_tu_vnd",
+              "type": "bigint"
+            },
+            {
+              "name": "phi_nhuong_quyen_pct",
+              "type": "numeric"
+            },
+            {
+              "name": "phi_thuong_hieu_pct",
+              "type": "numeric"
+            },
+            {
+              "name": "ngay_ky",
+              "type": "date"
+            },
+            {
+              "name": "thoi_han_thang",
+              "type": "smallint"
+            },
+            {
+              "name": "ngay_het_han",
+              "type": "date"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            }
+          ]
+        },
+        "franchise.audit_log": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "admin_id",
+              "type": "uuid"
+            },
+            {
+              "name": "hanh_dong",
+              "type": "character varying"
+            },
+            {
+              "name": "chi_tiet",
+              "type": "text"
+            },
+            {
+              "name": "thoi_gian",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 54
+        },
+        "franchise.bien_ban_vi_pham": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "kiosk_id",
+              "type": "uuid"
+            },
+            {
+              "name": "loai_vi_pham",
+              "type": "character varying"
+            },
+            {
+              "name": "hinh_phat",
+              "type": "character varying"
+            },
+            {
+              "name": "so_tien_phat",
+              "type": "numeric"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ly_do",
+              "type": "text"
+            },
+            {
+              "name": "nguoi_lap_id",
+              "type": "uuid"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 0
+        },
+        "franchise.combo_nguyen_lieu": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ten_combo",
+              "type": "character varying"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "gia_ban",
+              "type": "numeric"
+            },
+            {
+              "name": "so_ly_pha_che_uoc_tinh",
+              "type": "integer"
+            },
+            {
+              "name": "doanh_thu_uoc_tinh_moi_combo",
+              "type": "numeric"
+            },
+            {
+              "name": "don_vi_tinh",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 3
+        },
+        "franchise.cong_no": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "kiosk_id",
+              "type": "uuid"
+            },
+            {
+              "name": "don_mua_combo_id",
+              "type": "uuid"
+            },
+            {
+              "name": "royalty_id",
+              "type": "uuid"
+            },
+            {
+              "name": "loai_phat_sinh",
+              "type": "character varying"
+            },
+            {
+              "name": "so_tien",
+              "type": "numeric"
+            },
+            {
+              "name": "han_thanh_toan",
+              "type": "date"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_xac_nhan_thanh_toan",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "nguoi_xac_nhan_id",
+              "type": "uuid"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "phi_phat_tre_han",
+              "type": "numeric"
+            },
+            {
+              "name": "so_lan_nhac_nho",
+              "type": "integer"
+            }
+          ],
+          "count": 25
+        },
+        "franchise.don_mua_combo": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "kiosk_id",
+              "type": "uuid"
+            },
+            {
+              "name": "combo_id",
+              "type": "uuid"
+            },
+            {
+              "name": "so_luong",
+              "type": "integer"
+            },
+            {
+              "name": "don_gia",
+              "type": "numeric"
+            },
+            {
+              "name": "tong_tien",
+              "type": "numeric"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "phuong_thuc_thanh_toan",
+              "type": "character varying"
+            },
+            {
+              "name": "thanh_toan_ngay",
+              "type": "boolean"
+            },
+            {
+              "name": "ghi_chu_admin",
+              "type": "text"
+            },
+            {
+              "name": "nguoi_xu_ly_id",
+              "type": "uuid"
+            },
+            {
+              "name": "ngay_dat",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_giao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 9
+        },
+        "franchise.gia_san_pham_kiosk": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_kiosk",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "gia_kiosk",
+              "type": "numeric"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 798
+        },
+        "franchise.ho_so_dang_ky": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ho_ten",
+              "type": "character varying"
+            },
+            {
+              "name": "email",
+              "type": "character varying"
+            },
+            {
+              "name": "so_dien_thoai",
+              "type": "character varying"
+            },
+            {
+              "name": "dia_chi_mat_bang",
+              "type": "text"
+            },
+            {
+              "name": "thanh_pho",
+              "type": "character varying"
+            },
+            {
+              "name": "dien_tich_m2",
+              "type": "numeric"
+            },
+            {
+              "name": "goi_kiosk",
+              "type": "character varying"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ly_do_tu_choi",
+              "type": "text"
+            },
+            {
+              "name": "franchisee_user_id",
+              "type": "uuid"
+            },
+            {
+              "name": "nguoi_xu_ly_id",
+              "type": "uuid"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "hinh_anh_urls",
+              "type": "text"
+            },
+            {
+              "name": "phuong_xa",
+              "type": "character varying"
+            },
+            {
+              "name": "vi_do",
+              "type": "numeric"
+            },
+            {
+              "name": "kinh_do",
+              "type": "numeric"
+            }
+          ],
+          "count": 25
+        },
+        "franchise.hop_dong_nhuong_quyen": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "kiosk_id",
+              "type": "uuid"
+            },
+            {
+              "name": "goi_kiosk",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_ky",
+              "type": "date"
+            },
+            {
+              "name": "ngay_het_han",
+              "type": "date"
+            },
+            {
+              "name": "ty_le_royalty_phan_tram",
+              "type": "numeric"
+            },
+            {
+              "name": "so_combo_khoi_diem",
+              "type": "integer"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_khai_truong",
+              "type": "date"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "nguoi_tao_id",
+              "type": "uuid"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "file_hop_dong_url",
+              "type": "text"
+            },
+            {
+              "name": "so_ngay_an_han",
+              "type": "integer"
+            },
+            {
+              "name": "phan_tram_phat_tre_han",
+              "type": "numeric"
+            }
+          ],
+          "count": 9
+        },
+        "franchise.ket_qua_doi_soat": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "kiosk_id",
+              "type": "uuid"
+            },
+            {
+              "name": "ky_doi_soat",
+              "type": "character varying"
+            },
+            {
+              "name": "tong_combo_da_mua",
+              "type": "integer"
+            },
+            {
+              "name": "doanh_thu_ky_vong_moi_combo",
+              "type": "numeric"
+            },
+            {
+              "name": "doanh_thu_ky_vong",
+              "type": "numeric"
+            },
+            {
+              "name": "doanh_thu_thuc_te",
+              "type": "numeric"
+            },
+            {
+              "name": "chenh_lech_phan_tram",
+              "type": "numeric"
+            },
+            {
+              "name": "muc_canh_bao",
+              "type": "character varying"
+            },
+            {
+              "name": "so_ky_lien_tiep_canh_bao",
+              "type": "integer"
+            },
+            {
+              "name": "ngay_doi_soat",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "nguoi_doi_soat_id",
+              "type": "uuid"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 3
+        },
+        "franchise.kiosk": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_kiosk",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_kiosk",
+              "type": "character varying"
+            },
+            {
+              "name": "dia_chi",
+              "type": "text"
+            },
+            {
+              "name": "thanh_pho",
+              "type": "character varying"
+            },
+            {
+              "name": "loai_kiosk",
+              "type": "character varying"
+            },
+            {
+              "name": "ho_so_id",
+              "type": "uuid"
+            },
+            {
+              "name": "franchisee_id",
+              "type": "uuid"
+            },
+            {
+              "name": "so_combo_hien_tai",
+              "type": "integer"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "phuong_xa",
+              "type": "character varying"
+            },
+            {
+              "name": "vi_do",
+              "type": "numeric"
+            },
+            {
+              "name": "kinh_do",
+              "type": "numeric"
+            }
+          ],
+          "count": 51
+        },
+        "franchise.royalty_hang_thang": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "kiosk_id",
+              "type": "uuid"
+            },
+            {
+              "name": "thang",
+              "type": "character varying"
+            },
+            {
+              "name": "doanh_thu_thuc_te",
+              "type": "numeric"
+            },
+            {
+              "name": "ty_le_royalty",
+              "type": "numeric"
+            },
+            {
+              "name": "so_tien_royalty",
+              "type": "numeric"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_xac_nhan",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "nguoi_xac_nhan_id",
+              "type": "uuid"
+            },
+            {
+              "name": "ngay_thanh_toan",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ghi_chu_ke_toan",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 5
+        },
+        "franchise.thu_chi": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "kiosk_id",
+              "type": "uuid"
+            },
+            {
+              "name": "loai_phieu",
+              "type": "character varying"
+            },
+            {
+              "name": "danh_muc",
+              "type": "character varying"
+            },
+            {
+              "name": "so_tien",
+              "type": "numeric"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "nguoi_thuc_hien_id",
+              "type": "uuid"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 0
+        },
+        "identity.chi_nhanh": {
+          "columns": [
+            {
+              "name": "ma_chi_nhanh",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_chi_nhanh",
+              "type": "character varying"
+            },
+            {
+              "name": "dia_chi",
+              "type": "text"
+            },
+            {
+              "name": "so_dien_thoai",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "thanh_pho",
+              "type": "character varying"
+            },
+            {
+              "name": "hinh_anh_url",
+              "type": "text"
+            },
+            {
+              "name": "gio_mo_cua",
+              "type": "character varying"
+            },
+            {
+              "name": "gio_dong_cua",
+              "type": "character varying"
+            },
+            {
+              "name": "map_url",
+              "type": "text"
+            },
+            {
+              "name": "loai_diem_ban",
+              "type": "character varying"
+            },
+            {
+              "name": "vi_do",
+              "type": "numeric"
+            },
+            {
+              "name": "kinh_do",
+              "type": "numeric"
+            },
+            {
+              "name": "khu_vuc_id",
+              "type": "uuid"
+            },
+            {
+              "name": "chi_nhanh_me_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "loai_vi_tri",
+              "type": "character varying"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            }
+          ],
+          "count": 1215
+        },
+        "identity.dia_chi_giao_hang": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "uuid"
+            },
+            {
+              "name": "ten_dia_chi",
+              "type": "character varying"
+            },
+            {
+              "name": "dia_chi_day_du",
+              "type": "text"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "mac_dinh",
+              "type": "boolean"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "vi_do",
+              "type": "numeric"
+            },
+            {
+              "name": "kinh_do",
+              "type": "numeric"
+            }
+          ],
+          "count": 503
+        },
+        "identity.external_voucher_usage": {
+          "columns": [
+            {
+              "name": "voucher_code",
+              "type": "character varying"
+            },
+            {
+              "name": "user_id",
+              "type": "character varying"
+            },
+            {
+              "name": "order_id",
+              "type": "character varying"
+            },
+            {
+              "name": "discount_amount",
+              "type": "numeric"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 0
+        },
+        "identity.khu_vuc": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_khu_vuc",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_khu_vuc",
+              "type": "character varying"
+            },
+            {
+              "name": "thanh_pho",
+              "type": "character varying"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "nguoi_quan_ly_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 8
+        },
+        "identity.khuyen_mai": {
+          "columns": [
+            {
+              "name": "ma_khuyen_mai",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_khuyen_mai",
+              "type": "character varying"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "loai_khuyen_mai",
+              "type": "character varying"
+            },
+            {
+              "name": "gia_tri",
+              "type": "numeric"
+            },
+            {
+              "name": "gia_tri_don_toi_thieu",
+              "type": "numeric"
+            },
+            {
+              "name": "giam_toi_da",
+              "type": "numeric"
+            },
+            {
+              "name": "so_luong_toi_da",
+              "type": "integer"
+            },
+            {
+              "name": "so_luong_da_dung",
+              "type": "integer"
+            },
+            {
+              "name": "gioi_han_moi_nguoi",
+              "type": "integer"
+            },
+            {
+              "name": "ngay_bat_dau",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_ket_thuc",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "hien_thi_cho_khach",
+              "type": "boolean"
+            },
+            {
+              "name": "ten_san_pham_tang",
+              "type": "character varying"
+            },
+            {
+              "name": "hinh_anh",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "hang_toi_thieu",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "loai_su_kien",
+              "type": "character varying"
+            },
+            {
+              "name": "loai_phan_phoi",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_template_goc",
+              "type": "character varying"
+            }
+          ],
+          "count": 38
+        },
+        "identity.khuyen_mai_su_dung": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_khuyen_mai",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "character varying"
+            },
+            {
+              "name": "so_tien_giam",
+              "type": "numeric"
+            },
+            {
+              "name": "ngay_su_dung",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 4013
+        },
+        "identity.loyalty_order_award": {
+          "columns": [
+            {
+              "name": "order_id",
+              "type": "character varying"
+            },
+            {
+              "name": "user_id",
+              "type": "character varying"
+            },
+            {
+              "name": "base_points",
+              "type": "integer"
+            },
+            {
+              "name": "awarded_points",
+              "type": "integer"
+            },
+            {
+              "name": "tier_before",
+              "type": "character varying"
+            },
+            {
+              "name": "tier_after",
+              "type": "character varying"
+            },
+            {
+              "name": "reward_processed_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 0
+        },
+        "identity.membership_config": {
+          "columns": [
+            {
+              "name": "key",
+              "type": "character varying"
+            },
+            {
+              "name": "value",
+              "type": "json"
+            }
+          ],
+          "count": 2
+        },
+        "identity.nguoi_dung": {
+          "columns": [
+            {
+              "name": "ma_nguoi_dung",
+              "type": "uuid"
+            },
+            {
+              "name": "ten_dang_nhap",
+              "type": "character varying"
+            },
+            {
+              "name": "mat_khau_hash",
+              "type": "character varying"
+            },
+            {
+              "name": "ho_ten",
+              "type": "character varying"
+            },
+            {
+              "name": "email",
+              "type": "character varying"
+            },
+            {
+              "name": "so_dien_thoai",
+              "type": "character varying"
+            },
+            {
+              "name": "avatar_url",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "diem_loyalty",
+              "type": "integer"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "vai_tro",
+              "type": "character varying"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "co_so_ten",
+              "type": "character varying"
+            },
+            {
+              "name": "reset_password_code_hash",
+              "type": "character varying"
+            },
+            {
+              "name": "reset_password_code_expires_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "reset_password_requested_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "reset_password_attempts",
+              "type": "integer"
+            },
+            {
+              "name": "diem_kha_dung",
+              "type": "integer"
+            },
+            {
+              "name": "tong_chi_tieu",
+              "type": "numeric"
+            },
+            {
+              "name": "ngay_sinh",
+              "type": "date"
+            },
+            {
+              "name": "chi_tieu_thang_nay",
+              "type": "numeric"
+            },
+            {
+              "name": "thang_chi_tieu_gan_nhat",
+              "type": "character varying"
+            },
+            {
+              "name": "require_password_change",
+              "type": "boolean"
+            },
+            {
+              "name": "parent_franchisee_id",
+              "type": "uuid"
+            },
+            {
+              "name": "kiosk_id",
+              "type": "uuid"
+            },
+            {
+              "name": "pos_permissions",
+              "type": "jsonb"
+            },
+            {
+              "name": "so_du_vi",
+              "type": "numeric"
+            }
+          ],
+          "count": 342
+        },
+        "identity.order_voucher_claim": {
+          "columns": [
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_khuyen_mai",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "so_tien_giam",
+              "type": "numeric"
+            },
+            {
+              "name": "ngay_su_dung",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 17
+        },
+        "identity.vi_giao_dich": {
+          "columns": [
+            {
+              "name": "ma_giao_dich",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "uuid"
+            },
+            {
+              "name": "so_tien",
+              "type": "numeric"
+            },
+            {
+              "name": "loai_giao_dich",
+              "type": "character varying"
+            },
+            {
+              "name": "mo_ta",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 6
+        },
+        "inventory.ton_kho_san_pham": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "so_luong_ton",
+              "type": "integer"
+            },
+            {
+              "name": "muc_canh_bao",
+              "type": "integer"
+            },
+            {
+              "name": "dang_kinh_doanh",
+              "type": "boolean"
+            },
+            {
+              "name": "cap_nhat_luc",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            }
+          ],
+          "count": 3232
+        },
+        "master_data.co_so": {
+          "columns": [
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_co_so",
+              "type": "text"
+            },
+            {
+              "name": "loai_co_so",
+              "type": "character varying"
+            },
+            {
+              "name": "tinh_thanh",
+              "type": "text"
+            },
+            {
+              "name": "cum_vung",
+              "type": "character varying"
+            },
+            {
+              "name": "tier_do_thi",
+              "type": "smallint"
+            },
+            {
+              "name": "lat",
+              "type": "double precision"
+            },
+            {
+              "name": "lng",
+              "type": "double precision"
+            },
+            {
+              "name": "khoang_cach_kho_km",
+              "type": "double precision"
+            },
+            {
+              "name": "mat_do_doi_thu",
+              "type": "smallint"
+            },
+            {
+              "name": "dien_tich_m2",
+              "type": "smallint"
+            },
+            {
+              "name": "ngay_khai_truong",
+              "type": "date"
+            },
+            {
+              "name": "is_active",
+              "type": "boolean"
+            }
+          ]
+        },
+        "menu.bien_the_san_pham": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "ma_thuoc_tinh",
+              "type": "integer"
+            },
+            {
+              "name": "gia_tri",
+              "type": "character varying"
+            },
+            {
+              "name": "phu_thu",
+              "type": "numeric"
+            }
+          ],
+          "count": 1393
+        },
+        "menu.danh_muc": {
+          "columns": [
+            {
+              "name": "ma_danh_muc",
+              "type": "integer"
+            },
+            {
+              "name": "ten_danh_muc",
+              "type": "character varying"
+            },
+            {
+              "name": "hinh_anh_icon",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_danh_muc_cha",
+              "type": "integer"
+            },
+            {
+              "name": "cap_bac",
+              "type": "integer"
+            }
+          ],
+          "count": 25
+        },
+        "menu.san_pham": {
+          "columns": [
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "ten_san_pham",
+              "type": "character varying"
+            },
+            {
+              "name": "gia_ban",
+              "type": "numeric"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "hinh_anh_url",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai",
+              "type": "boolean"
+            },
+            {
+              "name": "ma_danh_muc",
+              "type": "integer"
+            },
+            {
+              "name": "gia_niem_yet",
+              "type": "numeric"
+            },
+            {
+              "name": "la_hot",
+              "type": "boolean"
+            },
+            {
+              "name": "la_moi",
+              "type": "boolean"
+            },
+            {
+              "name": "sizes",
+              "type": "jsonb"
+            },
+            {
+              "name": "luong_da",
+              "type": "jsonb"
+            },
+            {
+              "name": "do_ngot",
+              "type": "jsonb"
+            },
+            {
+              "name": "loai_sua",
+              "type": "jsonb"
+            },
+            {
+              "name": "toppings",
+              "type": "jsonb"
+            },
+            {
+              "name": "bien_the",
+              "type": "jsonb"
+            }
+          ],
+          "count": 118
+        },
+        "menu.thuoc_tinh": {
+          "columns": [
+            {
+              "name": "ma_thuoc_tinh",
+              "type": "integer"
+            },
+            {
+              "name": "ten_thuoc_tinh",
+              "type": "character varying"
+            }
+          ],
+          "count": 6
+        },
+        "news.articles": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "title",
+              "type": "character varying"
+            },
+            {
+              "name": "description",
+              "type": "text"
+            },
+            {
+              "name": "content",
+              "type": "text"
+            },
+            {
+              "name": "image_url",
+              "type": "character varying"
+            },
+            {
+              "name": "category",
+              "type": "character varying"
+            },
+            {
+              "name": "author_name",
+              "type": "character varying"
+            },
+            {
+              "name": "author_id",
+              "type": "character varying"
+            },
+            {
+              "name": "views",
+              "type": "integer"
+            },
+            {
+              "name": "is_published",
+              "type": "boolean"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 3
+        },
+        "orders.ca_doi_soat": {
+          "columns": [
+            {
+              "name": "ma_ca",
+              "type": "uuid"
+            },
+            {
+              "name": "thoi_gian_bat_dau",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "thoi_gian_ket_thuc",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "tien_dau_ca",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_cuoi_ca",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_mat_he_thong",
+              "type": "numeric"
+            },
+            {
+              "name": "doanh_thu_he_thong",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_mat_ky_vong",
+              "type": "numeric"
+            },
+            {
+              "name": "chenh_lech",
+              "type": "numeric"
+            },
+            {
+              "name": "tong_don",
+              "type": "integer"
+            },
+            {
+              "name": "tong_don_tien_mat",
+              "type": "integer"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "ten_nhan_vien",
+              "type": "character varying"
+            },
+            {
+              "name": "du_lieu_tom_tat",
+              "type": "jsonb"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "trang_thai_phe_duyet",
+              "type": "character varying"
+            },
+            {
+              "name": "manager_duyet",
+              "type": "character varying"
+            },
+            {
+              "name": "ghi_chu_phe_duyet",
+              "type": "text"
+            },
+            {
+              "name": "thoi_gian_phe_duyet",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            }
+          ],
+          "count": 4140
+        },
+        "orders.ca_lam_viec_nhan_vien": {
+          "columns": [
+            {
+              "name": "ma_ca_lam_viec",
+              "type": "uuid"
+            },
+            {
+              "name": "staff_username",
+              "type": "character varying"
+            },
+            {
+              "name": "staff_name",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_lam_viec",
+              "type": "date"
+            },
+            {
+              "name": "ma_khung_ca",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_ca",
+              "type": "character varying"
+            },
+            {
+              "name": "gio_bat_dau",
+              "type": "character varying"
+            },
+            {
+              "name": "gio_ket_thuc",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai_cham_cong",
+              "type": "character varying"
+            },
+            {
+              "name": "check_in_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "check_out_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "note",
+              "type": "character varying"
+            },
+            {
+              "name": "manager_username",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "nguon_tao",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai_yeu_cau",
+              "type": "character varying"
+            },
+            {
+              "name": "thoi_gian_gui_yeu_cau",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "nguoi_duyet_yeu_cau",
+              "type": "character varying"
+            },
+            {
+              "name": "ghi_chu_duyet",
+              "type": "text"
+            },
+            {
+              "name": "thoi_gian_duyet",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 4144
+        },
+        "orders.cart_metadata": {
+          "columns": [
+            {
+              "name": "user_id",
+              "type": "character varying"
+            },
+            {
+              "name": "cart_id",
+              "type": "character varying"
+            },
+            {
+              "name": "cart_version",
+              "type": "bigint"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 28
+        },
+        "orders.cart_mutation_operation": {
+          "columns": [
+            {
+              "name": "operation_id",
+              "type": "character varying"
+            },
+            {
+              "name": "user_id",
+              "type": "character varying"
+            },
+            {
+              "name": "operation_type",
+              "type": "character varying"
+            },
+            {
+              "name": "request_hash",
+              "type": "text"
+            },
+            {
+              "name": "result",
+              "type": "jsonb"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 354
+        },
+        "orders.chat_conversation": {
+          "columns": [
+            {
+              "name": "ma_hoi_thoai",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_khach_hang",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_khach_hang",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_nhan_su_phu_trach",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_nhan_su_phu_trach",
+              "type": "character varying"
+            },
+            {
+              "name": "vai_tro_nhan_su_phu_trach",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "tin_nhan_cuoi",
+              "type": "text"
+            },
+            {
+              "name": "vai_tro_nguoi_gui_cuoi",
+              "type": "character varying"
+            },
+            {
+              "name": "so_tin_nhan_chua_doc_khach",
+              "type": "integer"
+            },
+            {
+              "name": "so_tin_nhan_chua_doc_nhan_su",
+              "type": "integer"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 5
+        },
+        "orders.chat_message": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_hoi_thoai",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_nguoi_gui",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_nguoi_gui",
+              "type": "character varying"
+            },
+            {
+              "name": "vai_tro_nguoi_gui",
+              "type": "character varying"
+            },
+            {
+              "name": "noi_dung",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 33
+        },
+        "orders.checkout_operation": {
+          "columns": [
+            {
+              "name": "operation_id",
+              "type": "character varying"
+            },
+            {
+              "name": "user_id",
+              "type": "character varying"
+            },
+            {
+              "name": "request_hash",
+              "type": "text"
+            },
+            {
+              "name": "result",
+              "type": "jsonb"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 0
+        },
+        "orders.checkout_outbox": {
+          "columns": [
+            {
+              "name": "event_id",
+              "type": "uuid"
+            },
+            {
+              "name": "event_key",
+              "type": "character varying"
+            },
+            {
+              "name": "event_type",
+              "type": "character varying"
+            },
+            {
+              "name": "payload",
+              "type": "jsonb"
+            },
+            {
+              "name": "attempts",
+              "type": "integer"
+            },
+            {
+              "name": "available_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "delivered_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "last_error",
+              "type": "text"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 0
+        },
+        "orders.checkout_quote": {
+          "columns": [
+            {
+              "name": "quote_id",
+              "type": "uuid"
+            },
+            {
+              "name": "action_id",
+              "type": "uuid"
+            },
+            {
+              "name": "user_id",
+              "type": "character varying"
+            },
+            {
+              "name": "cart_id",
+              "type": "character varying"
+            },
+            {
+              "name": "cart_version",
+              "type": "bigint"
+            },
+            {
+              "name": "request",
+              "type": "jsonb"
+            },
+            {
+              "name": "quote",
+              "type": "jsonb"
+            },
+            {
+              "name": "expires_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "consumed_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 0
+        },
+        "orders.checkout_voucher_claim": {
+          "columns": [
+            {
+              "name": "order_id",
+              "type": "character varying"
+            },
+            {
+              "name": "user_id",
+              "type": "character varying"
+            },
+            {
+              "name": "voucher_code",
+              "type": "character varying"
+            },
+            {
+              "name": "reconciled_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 0
+        },
+        "orders.chi_tiet_don_hang": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "ten_san_pham",
+              "type": "character varying"
+            },
+            {
+              "name": "gia_ban",
+              "type": "numeric"
+            },
+            {
+              "name": "so_luong",
+              "type": "integer"
+            },
+            {
+              "name": "kich_co",
+              "type": "character varying"
+            },
+            {
+              "name": "hinh_anh_url",
+              "type": "character varying"
+            },
+            {
+              "name": "toppings",
+              "type": "jsonb"
+            },
+            {
+              "name": "luong_da",
+              "type": "character varying"
+            },
+            {
+              "name": "do_ngot",
+              "type": "character varying"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "character varying"
+            },
+            {
+              "name": "loai_sua",
+              "type": "character varying"
+            },
+            {
+              "name": "custom_attributes",
+              "type": "jsonb"
+            }
+          ],
+          "count": 72063
+        },
+        "orders.customer_wallet": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "customer_id",
+              "type": "uuid"
+            },
+            {
+              "name": "balance",
+              "type": "numeric"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 4
+        },
+        "orders.customer_wallet_transaction": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "customer_id",
+              "type": "uuid"
+            },
+            {
+              "name": "amount",
+              "type": "numeric"
+            },
+            {
+              "name": "type",
+              "type": "character varying"
+            },
+            {
+              "name": "status",
+              "type": "character varying"
+            },
+            {
+              "name": "reference_id",
+              "type": "character varying"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 112
+        },
+        "orders.danh_gia_chi_nhanh": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_chi_nhanh",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_chi_nhanh",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "so_dien_thoai",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "character varying"
+            },
+            {
+              "name": "diem_tong_quan",
+              "type": "integer"
+            },
+            {
+              "name": "tieu_chi",
+              "type": "jsonb"
+            },
+            {
+              "name": "nhan_xet",
+              "type": "text"
+            },
+            {
+              "name": "hinh_anh_urls",
+              "type": "jsonb"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ma_kiosk",
+              "type": "character varying"
+            }
+          ],
+          "count": 2077
+        },
+        "orders.danh_gia_san_pham": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "uuid"
+            },
+            {
+              "name": "so_sao",
+              "type": "integer"
+            },
+            {
+              "name": "binh_luan",
+              "type": "text"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "phan_hoi_quan_ly",
+              "type": "text"
+            },
+            {
+              "name": "nguoi_phan_hoi",
+              "type": "character varying"
+            },
+            {
+              "name": "thoi_gian_phan_hoi",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ma_kiosk",
+              "type": "character varying"
+            }
+          ],
+          "count": 3005
+        },
+        "orders.delivery_tracking": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "delivery_mode",
+              "type": "character varying"
+            },
+            {
+              "name": "delivery_method",
+              "type": "character varying"
+            },
+            {
+              "name": "lalamove_order_id",
+              "type": "character varying"
+            },
+            {
+              "name": "lalamove_share_link",
+              "type": "text"
+            },
+            {
+              "name": "lalamove_status",
+              "type": "character varying"
+            },
+            {
+              "name": "branch_code",
+              "type": "character varying"
+            },
+            {
+              "name": "table_number",
+              "type": "character varying"
+            },
+            {
+              "name": "pickup_time",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "customer_name",
+              "type": "character varying"
+            },
+            {
+              "name": "customer_phone",
+              "type": "character varying"
+            },
+            {
+              "name": "tracking_code",
+              "type": "character varying"
+            },
+            {
+              "name": "shipper_delivery_id",
+              "type": "uuid"
+            },
+            {
+              "name": "delivery_address",
+              "type": "text"
+            },
+            {
+              "name": "store_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "store_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "destination_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "destination_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "delivery_fee",
+              "type": "numeric"
+            },
+            {
+              "name": "estimated_minutes",
+              "type": "integer"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 7875
+        },
+        "orders.don_hang": {
+          "columns": [
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "tong_tien",
+              "type": "numeric"
+            },
+            {
+              "name": "dia_chi_giao_hang",
+              "type": "character varying"
+            },
+            {
+              "name": "khung_gio_giao",
+              "type": "character varying"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "phuong_thuc_thanh_toan",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai_thanh_toan",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai_don_hang",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_voucher",
+              "type": "character varying"
+            },
+            {
+              "name": "so_tien_giam",
+              "type": "numeric"
+            },
+            {
+              "name": "lich_su_trang_thai",
+              "type": "jsonb"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "loai_don_hang",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_ban",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_khach_hang",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_thu_ngan",
+              "type": "character varying"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "tien_khach_dua",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_thoi",
+              "type": "numeric"
+            },
+            {
+              "name": "guest_email",
+              "type": "character varying"
+            },
+            {
+              "name": "guest_phone",
+              "type": "character varying"
+            },
+            {
+              "name": "session_id",
+              "type": "character varying"
+            }
+          ],
+          "count": 40460
+        },
+        "orders.giao_dich_thanh_toan": {
+          "columns": [
+            {
+              "name": "ma_giao_dich",
+              "type": "integer"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "cong_thanh_toan",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_tham_chieu",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_giao_dich_cong",
+              "type": "character varying"
+            },
+            {
+              "name": "so_tien",
+              "type": "numeric"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "du_lieu_tho",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 38843
+        },
+        "orders.gift_card_theme": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "character varying"
+            },
+            {
+              "name": "name",
+              "type": "character varying"
+            },
+            {
+              "name": "color",
+              "type": "character varying"
+            },
+            {
+              "name": "image_url",
+              "type": "character varying"
+            },
+            {
+              "name": "collection_name",
+              "type": "character varying"
+            },
+            {
+              "name": "is_active",
+              "type": "boolean"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 9
+        },
+        "orders.gift_cards": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "code",
+              "type": "character varying"
+            },
+            {
+              "name": "value",
+              "type": "numeric"
+            },
+            {
+              "name": "sender_id",
+              "type": "uuid"
+            },
+            {
+              "name": "sender_name",
+              "type": "character varying"
+            },
+            {
+              "name": "receiver_email",
+              "type": "character varying"
+            },
+            {
+              "name": "receiver_phone",
+              "type": "character varying"
+            },
+            {
+              "name": "receiver_name",
+              "type": "character varying"
+            },
+            {
+              "name": "message",
+              "type": "text"
+            },
+            {
+              "name": "theme",
+              "type": "character varying"
+            },
+            {
+              "name": "status",
+              "type": "USER-DEFINED"
+            },
+            {
+              "name": "redeemed_by",
+              "type": "uuid"
+            },
+            {
+              "name": "redeemed_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "current_balance",
+              "type": "numeric"
+            }
+          ],
+          "count": 13
+        },
+        "orders.gio_hang": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "ten_san_pham",
+              "type": "character varying"
+            },
+            {
+              "name": "gia_ban",
+              "type": "numeric"
+            },
+            {
+              "name": "hinh_anh_url",
+              "type": "character varying"
+            },
+            {
+              "name": "kich_co",
+              "type": "character varying"
+            },
+            {
+              "name": "so_luong",
+              "type": "integer"
+            },
+            {
+              "name": "toppings",
+              "type": "jsonb"
+            },
+            {
+              "name": "luong_da",
+              "type": "character varying"
+            },
+            {
+              "name": "do_ngot",
+              "type": "character varying"
+            },
+            {
+              "name": "loai_sua",
+              "type": "character varying"
+            },
+            {
+              "name": "custom_attributes",
+              "type": "jsonb"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "character varying"
+            }
+          ],
+          "count": 15
+        },
+        "orders.khao_sat_bieu_mau": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "tieu_de",
+              "type": "character varying"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "cau_hoi",
+              "type": "jsonb"
+            },
+            {
+              "name": "trang_thai",
+              "type": "boolean"
+            },
+            {
+              "name": "nguoi_tao",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 1
+        },
+        "orders.khao_sat_phan_hoi": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_bieu_mau",
+              "type": "integer"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "so_dien_thoai",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "character varying"
+            },
+            {
+              "name": "tra_loi",
+              "type": "jsonb"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai_voucher",
+              "type": "character varying"
+            }
+          ],
+          "count": 12
+        },
+        "orders.kiosk_shift_session": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "character varying"
+            },
+            {
+              "name": "staff_username",
+              "type": "character varying"
+            },
+            {
+              "name": "staff_name",
+              "type": "character varying"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "thoi_gian_mo_ca",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "thoi_gian_dong_ca",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "tien_dau_ca",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_cuoi_ca",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_mat_he_thong",
+              "type": "numeric"
+            },
+            {
+              "name": "doanh_thu_he_thong",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_mat_ky_vong",
+              "type": "numeric"
+            },
+            {
+              "name": "chenh_lech",
+              "type": "numeric"
+            },
+            {
+              "name": "tong_don_hang",
+              "type": "integer"
+            },
+            {
+              "name": "tong_don_tien_mat",
+              "type": "integer"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "dong_ca_boi",
+              "type": "character varying"
+            },
+            {
+              "name": "du_lieu_chi_tiet",
+              "type": "jsonb"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ]
+        },
+        "orders.shipper": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "username",
+              "type": "character varying"
+            },
+            {
+              "name": "full_name",
+              "type": "character varying"
+            },
+            {
+              "name": "phone",
+              "type": "character varying"
+            },
+            {
+              "name": "email",
+              "type": "character varying"
+            },
+            {
+              "name": "status",
+              "type": "character varying"
+            },
+            {
+              "name": "branch_code",
+              "type": "character varying"
+            },
+            {
+              "name": "current_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "current_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "total_deliveries",
+              "type": "integer"
+            },
+            {
+              "name": "rating",
+              "type": "numeric"
+            },
+            {
+              "name": "avatar_url",
+              "type": "text"
+            },
+            {
+              "name": "vehicle_type",
+              "type": "character varying"
+            },
+            {
+              "name": "vehicle_plate",
+              "type": "character varying"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "password",
+              "type": "character varying"
+            }
+          ],
+          "count": 301
+        },
+        "orders.shipper_cod_remit": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "shipper_id",
+              "type": "uuid"
+            },
+            {
+              "name": "shipper_name",
+              "type": "character varying"
+            },
+            {
+              "name": "branch_code",
+              "type": "character varying"
+            },
+            {
+              "name": "amount",
+              "type": "numeric"
+            },
+            {
+              "name": "status",
+              "type": "character varying"
+            },
+            {
+              "name": "note",
+              "type": "text"
+            },
+            {
+              "name": "confirmed_by",
+              "type": "uuid"
+            },
+            {
+              "name": "confirmed_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 15
+        },
+        "orders.shipper_delivery": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "shipper_id",
+              "type": "uuid"
+            },
+            {
+              "name": "status",
+              "type": "character varying"
+            },
+            {
+              "name": "delivery_note",
+              "type": "text"
+            },
+            {
+              "name": "delivery_address",
+              "type": "character varying"
+            },
+            {
+              "name": "pickup_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "pickup_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "delivery_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "delivery_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "estimated_time_minutes",
+              "type": "integer"
+            },
+            {
+              "name": "picked_up_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "delivered_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "proof_image_url",
+              "type": "text"
+            },
+            {
+              "name": "delivery_fee",
+              "type": "numeric"
+            },
+            {
+              "name": "assigned_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "shipperId",
+              "type": "uuid"
+            },
+            {
+              "name": "is_batched",
+              "type": "boolean"
+            }
+          ],
+          "count": 7857
+        },
+        "orders.shipper_exception": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "shipper_id",
+              "type": "uuid"
+            },
+            {
+              "name": "delivery_id",
+              "type": "uuid"
+            },
+            {
+              "name": "exception_type",
+              "type": "character varying"
+            },
+            {
+              "name": "description",
+              "type": "text"
+            },
+            {
+              "name": "image_url",
+              "type": "text"
+            },
+            {
+              "name": "status",
+              "type": "character varying"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "shipperId",
+              "type": "uuid"
+            },
+            {
+              "name": "deliveryId",
+              "type": "uuid"
+            }
+          ],
+          "count": 0
+        },
+        "orders.shipper_schedule": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "shipper_id",
+              "type": "uuid"
+            },
+            {
+              "name": "work_date",
+              "type": "date"
+            },
+            {
+              "name": "shift_name",
+              "type": "character varying"
+            },
+            {
+              "name": "check_in_time",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "check_out_time",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "status",
+              "type": "character varying"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "shipperId",
+              "type": "uuid"
+            }
+          ],
+          "count": 0
+        },
+        "orders.shipper_wallet": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "shipper_id",
+              "type": "uuid"
+            },
+            {
+              "name": "balance",
+              "type": "numeric"
+            },
+            {
+              "name": "cod_holding",
+              "type": "numeric"
+            },
+            {
+              "name": "pending_commission",
+              "type": "numeric"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "shipperId",
+              "type": "uuid"
+            },
+            {
+              "name": "cod_details",
+              "type": "jsonb"
+            }
+          ],
+          "count": 9
+        },
+        "orders.smtp_config": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "character varying"
+            },
+            {
+              "name": "host",
+              "type": "character varying"
+            },
+            {
+              "name": "port",
+              "type": "integer"
+            },
+            {
+              "name": "secure",
+              "type": "boolean"
+            },
+            {
+              "name": "auth_user",
+              "type": "character varying"
+            },
+            {
+              "name": "auth_pass",
+              "type": "character varying"
+            },
+            {
+              "name": "from_email",
+              "type": "character varying"
+            },
+            {
+              "name": "from_name",
+              "type": "character varying"
+            },
+            {
+              "name": "is_active",
+              "type": "boolean"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            }
+          ]
+        },
+        "orders.thong_bao": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "tieu_de",
+              "type": "character varying"
+            },
+            {
+              "name": "noi_dung",
+              "type": "text"
+            },
+            {
+              "name": "loai",
+              "type": "character varying"
+            },
+            {
+              "name": "da_doc",
+              "type": "boolean"
+            },
+            {
+              "name": "du_lieu",
+              "type": "jsonb"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 1211
+        },
+        "orders.voucher": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_voucher",
+              "type": "character varying"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "loai",
+              "type": "character varying"
+            },
+            {
+              "name": "gia_tri",
+              "type": "numeric"
+            },
+            {
+              "name": "giam_toi_da",
+              "type": "numeric"
+            },
+            {
+              "name": "don_hang_toi_thieu",
+              "type": "numeric"
+            },
+            {
+              "name": "tong_luot_dung",
+              "type": "integer"
+            },
+            {
+              "name": "luot_da_dung",
+              "type": "integer"
+            },
+            {
+              "name": "han_su_dung",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "trang_thai",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ten_voucher",
+              "type": "character varying"
+            },
+            {
+              "name": "loai_phan_phoi",
+              "type": "character varying"
+            },
+            {
+              "name": "ngu_canh_su_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "so_ngay_hieu_luc",
+              "type": "integer"
+            },
+            {
+              "name": "gioi_han_moi_nguoi",
+              "type": "integer"
+            },
+            {
+              "name": "ten_san_pham_tang",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_bat_dau",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "hien_thi_cho_khach",
+              "type": "boolean"
+            },
+            {
+              "name": "hinh_anh",
+              "type": "character varying"
+            }
+          ],
+          "count": 9
+        },
+        "orders.wallet_voucher_claim_outbox": {
+          "columns": [
+            {
+              "name": "order_id",
+              "type": "uuid"
+            },
+            {
+              "name": "customer_id",
+              "type": "character varying"
+            },
+            {
+              "name": "voucher_code",
+              "type": "character varying"
+            },
+            {
+              "name": "discount_amount",
+              "type": "numeric"
+            },
+            {
+              "name": "status",
+              "type": "character varying"
+            },
+            {
+              "name": "attempts",
+              "type": "integer"
+            },
+            {
+              "name": "next_attempt_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "completed_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "last_error",
+              "type": "text"
+            },
+            {
+              "name": "error_code",
+              "type": "character varying"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "dead_at",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 20
+        },
+        "orders.yeu_thich_san_pham": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "character varying"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "character varying"
+            },
+            {
+              "name": "ten_san_pham",
+              "type": "character varying"
+            },
+            {
+              "name": "gia_ban",
+              "type": "numeric"
+            },
+            {
+              "name": "hinh_anh_url",
+              "type": "character varying"
+            },
+            {
+              "name": "danh_muc",
+              "type": "character varying"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 637
+        },
+        "public.ai_chat_sessions": {
+          "columns": [
+            {
+              "name": "session_id",
+              "type": "character varying"
+            },
+            {
+              "name": "user_id",
+              "type": "character varying"
+            },
+            {
+              "name": "branch_id",
+              "type": "character varying"
+            },
+            {
+              "name": "branch_name",
+              "type": "character varying"
+            },
+            {
+              "name": "cart_items",
+              "type": "jsonb"
+            },
+            {
+              "name": "is_checking_out",
+              "type": "boolean"
+            },
+            {
+              "name": "last_order_id",
+              "type": "character varying"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "checkout_prefs",
+              "type": "jsonb"
+            }
+          ]
+        },
+        "public.ai_turn_log": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "session_id_short",
+              "type": "character varying"
+            },
+            {
+              "name": "user_msg",
+              "type": "text"
+            },
+            {
+              "name": "state_before",
+              "type": "jsonb"
+            },
+            {
+              "name": "gate_name",
+              "type": "character varying"
+            },
+            {
+              "name": "reply",
+              "type": "text"
+            },
+            {
+              "name": "tool_calls",
+              "type": "jsonb"
+            },
+            {
+              "name": "model_name",
+              "type": "character varying"
+            },
+            {
+              "name": "latency_ms",
+              "type": "integer"
+            },
+            {
+              "name": "conversation_id",
+              "type": "character varying"
+            },
+            {
+              "name": "bot_history",
+              "type": "jsonb"
+            }
+          ],
+          "count": 21
+        }
+      }
+    },
+    "replica": {
+      "read_only": "on",
+      "tables": {
+        "analytics.ingestion_checkpoints": {
+          "columns": [
+            {
+              "name": "dataset_id",
+              "type": "text"
+            },
+            {
+              "name": "cursor_time",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "cursor_keys",
+              "type": "jsonb"
+            },
+            {
+              "name": "source_upper_bound",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "generation",
+              "type": "bigint"
+            },
+            {
+              "name": "schema_fingerprint",
+              "type": "character varying"
+            },
+            {
+              "name": "last_attempt_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "last_success_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "last_full_reconcile_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "observed_rows",
+              "type": "bigint"
+            },
+            {
+              "name": "completeness",
+              "type": "character varying"
+            },
+            {
+              "name": "certificate",
+              "type": "jsonb"
+            },
+            {
+              "name": "error_code",
+              "type": "character varying"
+            }
+          ]
+        },
+        "identity.chi_nhanh": {
+          "columns": [
+            {
+              "name": "ma_chi_nhanh",
+              "type": "text"
+            },
+            {
+              "name": "ten_chi_nhanh",
+              "type": "text"
+            },
+            {
+              "name": "dia_chi",
+              "type": "text"
+            },
+            {
+              "name": "so_dien_thoai",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "thanh_pho",
+              "type": "text"
+            },
+            {
+              "name": "hinh_anh_url",
+              "type": "text"
+            },
+            {
+              "name": "gio_mo_cua",
+              "type": "text"
+            },
+            {
+              "name": "gio_dong_cua",
+              "type": "text"
+            },
+            {
+              "name": "map_url",
+              "type": "text"
+            },
+            {
+              "name": "loai_diem_ban",
+              "type": "text"
+            },
+            {
+              "name": "vi_do",
+              "type": "numeric"
+            },
+            {
+              "name": "kinh_do",
+              "type": "numeric"
+            },
+            {
+              "name": "khu_vuc_id",
+              "type": "uuid"
+            },
+            {
+              "name": "chi_nhanh_me_ma",
+              "type": "text"
+            },
+            {
+              "name": "loai_vi_tri",
+              "type": "text"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            }
+          ],
+          "count": 1215
+        },
+        "identity.khu_vuc": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_khu_vuc",
+              "type": "text"
+            },
+            {
+              "name": "ten_khu_vuc",
+              "type": "text"
+            },
+            {
+              "name": "thanh_pho",
+              "type": "text"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "nguoi_quan_ly_ma",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 8
+        },
+        "identity.khuyen_mai": {
+          "columns": [
+            {
+              "name": "ma_khuyen_mai",
+              "type": "text"
+            },
+            {
+              "name": "ten_khuyen_mai",
+              "type": "text"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "loai_khuyen_mai",
+              "type": "text"
+            },
+            {
+              "name": "gia_tri",
+              "type": "numeric"
+            },
+            {
+              "name": "gia_tri_don_toi_thieu",
+              "type": "numeric"
+            },
+            {
+              "name": "giam_toi_da",
+              "type": "numeric"
+            },
+            {
+              "name": "so_luong_toi_da",
+              "type": "integer"
+            },
+            {
+              "name": "so_luong_da_dung",
+              "type": "integer"
+            },
+            {
+              "name": "gioi_han_moi_nguoi",
+              "type": "integer"
+            },
+            {
+              "name": "ngay_bat_dau",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ngay_ket_thuc",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "trang_thai",
+              "type": "text"
+            },
+            {
+              "name": "hien_thi_cho_khach",
+              "type": "boolean"
+            },
+            {
+              "name": "ten_san_pham_tang",
+              "type": "text"
+            },
+            {
+              "name": "hinh_anh",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "hang_toi_thieu",
+              "type": "text"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "text"
+            },
+            {
+              "name": "loai_su_kien",
+              "type": "text"
+            },
+            {
+              "name": "loai_phan_phoi",
+              "type": "text"
+            },
+            {
+              "name": "ma_template_goc",
+              "type": "text"
+            }
+          ],
+          "count": 38
+        },
+        "identity.khuyen_mai_su_dung": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_khuyen_mai",
+              "type": "text"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "text"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "text"
+            },
+            {
+              "name": "so_tien_giam",
+              "type": "numeric"
+            },
+            {
+              "name": "ngay_su_dung",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 4013
+        },
+        "identity.nguoi_dung": {
+          "columns": [
+            {
+              "name": "ma_nguoi_dung",
+              "type": "uuid"
+            },
+            {
+              "name": "ten_dang_nhap",
+              "type": "text"
+            },
+            {
+              "name": "mat_khau_hash",
+              "type": "text"
+            },
+            {
+              "name": "ho_ten",
+              "type": "text"
+            },
+            {
+              "name": "email",
+              "type": "text"
+            },
+            {
+              "name": "so_dien_thoai",
+              "type": "text"
+            },
+            {
+              "name": "avatar_url",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai",
+              "type": "text"
+            },
+            {
+              "name": "diem_loyalty",
+              "type": "integer"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "vai_tro",
+              "type": "text"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "text"
+            },
+            {
+              "name": "co_so_ten",
+              "type": "text"
+            },
+            {
+              "name": "reset_password_code_hash",
+              "type": "text"
+            },
+            {
+              "name": "reset_password_code_expires_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "reset_password_requested_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "reset_password_attempts",
+              "type": "integer"
+            },
+            {
+              "name": "diem_kha_dung",
+              "type": "integer"
+            },
+            {
+              "name": "tong_chi_tieu",
+              "type": "numeric"
+            },
+            {
+              "name": "ngay_sinh",
+              "type": "date"
+            },
+            {
+              "name": "chi_tieu_thang_nay",
+              "type": "numeric"
+            },
+            {
+              "name": "thang_chi_tieu_gan_nhat",
+              "type": "text"
+            },
+            {
+              "name": "require_password_change",
+              "type": "boolean"
+            },
+            {
+              "name": "parent_franchisee_id",
+              "type": "uuid"
+            },
+            {
+              "name": "kiosk_id",
+              "type": "uuid"
+            },
+            {
+              "name": "pos_permissions",
+              "type": "jsonb"
+            },
+            {
+              "name": "so_du_vi",
+              "type": "numeric"
+            }
+          ],
+          "count": 342
+        },
+        "inventory.ton_kho_san_pham": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "so_luong_ton",
+              "type": "integer"
+            },
+            {
+              "name": "muc_canh_bao",
+              "type": "integer"
+            },
+            {
+              "name": "dang_kinh_doanh",
+              "type": "boolean"
+            },
+            {
+              "name": "cap_nhat_luc",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "text"
+            }
+          ],
+          "count": 3232
+        },
+        "menu.bien_the_san_pham": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "ma_thuoc_tinh",
+              "type": "integer"
+            },
+            {
+              "name": "gia_tri",
+              "type": "text"
+            },
+            {
+              "name": "phu_thu",
+              "type": "numeric"
+            }
+          ],
+          "count": 1393
+        },
+        "menu.danh_muc": {
+          "columns": [
+            {
+              "name": "ma_danh_muc",
+              "type": "integer"
+            },
+            {
+              "name": "ten_danh_muc",
+              "type": "text"
+            },
+            {
+              "name": "hinh_anh_icon",
+              "type": "text"
+            },
+            {
+              "name": "ma_danh_muc_cha",
+              "type": "integer"
+            },
+            {
+              "name": "cap_bac",
+              "type": "integer"
+            }
+          ],
+          "count": 25
+        },
+        "menu.san_pham": {
+          "columns": [
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "ten_san_pham",
+              "type": "text"
+            },
+            {
+              "name": "gia_ban",
+              "type": "numeric"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "hinh_anh_url",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai",
+              "type": "boolean"
+            },
+            {
+              "name": "ma_danh_muc",
+              "type": "integer"
+            },
+            {
+              "name": "gia_niem_yet",
+              "type": "numeric"
+            },
+            {
+              "name": "la_hot",
+              "type": "boolean"
+            },
+            {
+              "name": "la_moi",
+              "type": "boolean"
+            },
+            {
+              "name": "sizes",
+              "type": "jsonb"
+            },
+            {
+              "name": "luong_da",
+              "type": "jsonb"
+            },
+            {
+              "name": "do_ngot",
+              "type": "jsonb"
+            },
+            {
+              "name": "loai_sua",
+              "type": "jsonb"
+            },
+            {
+              "name": "toppings",
+              "type": "jsonb"
+            },
+            {
+              "name": "bien_the",
+              "type": "jsonb"
+            }
+          ],
+          "count": 118
+        },
+        "orders.ca_doi_soat": {
+          "columns": [
+            {
+              "name": "ma_ca",
+              "type": "uuid"
+            },
+            {
+              "name": "thoi_gian_bat_dau",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "thoi_gian_ket_thuc",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "tien_dau_ca",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_cuoi_ca",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_mat_he_thong",
+              "type": "numeric"
+            },
+            {
+              "name": "doanh_thu_he_thong",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_mat_ky_vong",
+              "type": "numeric"
+            },
+            {
+              "name": "chenh_lech",
+              "type": "numeric"
+            },
+            {
+              "name": "tong_don",
+              "type": "integer"
+            },
+            {
+              "name": "tong_don_tien_mat",
+              "type": "integer"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "ten_nhan_vien",
+              "type": "text"
+            },
+            {
+              "name": "du_lieu_tom_tat",
+              "type": "jsonb"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "trang_thai_phe_duyet",
+              "type": "text"
+            },
+            {
+              "name": "manager_duyet",
+              "type": "text"
+            },
+            {
+              "name": "ghi_chu_phe_duyet",
+              "type": "text"
+            },
+            {
+              "name": "thoi_gian_phe_duyet",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "text"
+            }
+          ],
+          "count": 4140
+        },
+        "orders.ca_lam_viec_nhan_vien": {
+          "columns": [
+            {
+              "name": "ma_ca_lam_viec",
+              "type": "uuid"
+            },
+            {
+              "name": "staff_username",
+              "type": "text"
+            },
+            {
+              "name": "staff_name",
+              "type": "text"
+            },
+            {
+              "name": "ngay_lam_viec",
+              "type": "date"
+            },
+            {
+              "name": "ma_khung_ca",
+              "type": "text"
+            },
+            {
+              "name": "ten_ca",
+              "type": "text"
+            },
+            {
+              "name": "gio_bat_dau",
+              "type": "text"
+            },
+            {
+              "name": "gio_ket_thuc",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai_cham_cong",
+              "type": "text"
+            },
+            {
+              "name": "check_in_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "check_out_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "note",
+              "type": "text"
+            },
+            {
+              "name": "manager_username",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "text"
+            },
+            {
+              "name": "nguon_tao",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai_yeu_cau",
+              "type": "text"
+            },
+            {
+              "name": "thoi_gian_gui_yeu_cau",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "nguoi_duyet_yeu_cau",
+              "type": "text"
+            },
+            {
+              "name": "ghi_chu_duyet",
+              "type": "text"
+            },
+            {
+              "name": "thoi_gian_duyet",
+              "type": "timestamp with time zone"
+            }
+          ],
+          "count": 4144
+        },
+        "orders.chi_tiet_don_hang": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "integer"
+            },
+            {
+              "name": "ten_san_pham",
+              "type": "text"
+            },
+            {
+              "name": "gia_ban",
+              "type": "numeric"
+            },
+            {
+              "name": "so_luong",
+              "type": "integer"
+            },
+            {
+              "name": "kich_co",
+              "type": "text"
+            },
+            {
+              "name": "hinh_anh_url",
+              "type": "text"
+            },
+            {
+              "name": "toppings",
+              "type": "jsonb"
+            },
+            {
+              "name": "luong_da",
+              "type": "text"
+            },
+            {
+              "name": "do_ngot",
+              "type": "text"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "loai_sua",
+              "type": "text"
+            },
+            {
+              "name": "custom_attributes",
+              "type": "jsonb"
+            }
+          ],
+          "count": 72063
+        },
+        "orders.customer_wallet_transaction": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "customer_id",
+              "type": "uuid"
+            },
+            {
+              "name": "amount",
+              "type": "numeric"
+            },
+            {
+              "name": "type",
+              "type": "text"
+            },
+            {
+              "name": "status",
+              "type": "text"
+            },
+            {
+              "name": "reference_id",
+              "type": "text"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 112
+        },
+        "orders.danh_gia_chi_nhanh": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_chi_nhanh",
+              "type": "text"
+            },
+            {
+              "name": "ten_chi_nhanh",
+              "type": "text"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "text"
+            },
+            {
+              "name": "ten_nguoi_dung",
+              "type": "text"
+            },
+            {
+              "name": "so_dien_thoai",
+              "type": "text"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "text"
+            },
+            {
+              "name": "diem_tong_quan",
+              "type": "integer"
+            },
+            {
+              "name": "tieu_chi",
+              "type": "jsonb"
+            },
+            {
+              "name": "nhan_xet",
+              "type": "text"
+            },
+            {
+              "name": "hinh_anh_urls",
+              "type": "jsonb"
+            },
+            {
+              "name": "trang_thai",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ma_kiosk",
+              "type": "text"
+            }
+          ],
+          "count": 2077
+        },
+        "orders.danh_gia_san_pham": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "text"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "uuid"
+            },
+            {
+              "name": "so_sao",
+              "type": "integer"
+            },
+            {
+              "name": "binh_luan",
+              "type": "text"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "phan_hoi_quan_ly",
+              "type": "text"
+            },
+            {
+              "name": "nguoi_phan_hoi",
+              "type": "text"
+            },
+            {
+              "name": "thoi_gian_phan_hoi",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "ma_kiosk",
+              "type": "text"
+            }
+          ],
+          "count": 3005
+        },
+        "orders.delivery_tracking": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "delivery_mode",
+              "type": "text"
+            },
+            {
+              "name": "delivery_method",
+              "type": "text"
+            },
+            {
+              "name": "lalamove_order_id",
+              "type": "text"
+            },
+            {
+              "name": "lalamove_share_link",
+              "type": "text"
+            },
+            {
+              "name": "lalamove_status",
+              "type": "text"
+            },
+            {
+              "name": "branch_code",
+              "type": "text"
+            },
+            {
+              "name": "table_number",
+              "type": "text"
+            },
+            {
+              "name": "pickup_time",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "customer_name",
+              "type": "text"
+            },
+            {
+              "name": "customer_phone",
+              "type": "text"
+            },
+            {
+              "name": "tracking_code",
+              "type": "text"
+            },
+            {
+              "name": "shipper_delivery_id",
+              "type": "uuid"
+            },
+            {
+              "name": "delivery_address",
+              "type": "text"
+            },
+            {
+              "name": "store_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "store_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "destination_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "destination_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "delivery_fee",
+              "type": "numeric"
+            },
+            {
+              "name": "estimated_minutes",
+              "type": "integer"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 7875
+        },
+        "orders.don_hang": {
+          "columns": [
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "text"
+            },
+            {
+              "name": "tong_tien",
+              "type": "numeric"
+            },
+            {
+              "name": "dia_chi_giao_hang",
+              "type": "text"
+            },
+            {
+              "name": "khung_gio_giao",
+              "type": "text"
+            },
+            {
+              "name": "ghi_chu",
+              "type": "text"
+            },
+            {
+              "name": "phuong_thuc_thanh_toan",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai_thanh_toan",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai_don_hang",
+              "type": "text"
+            },
+            {
+              "name": "ma_voucher",
+              "type": "text"
+            },
+            {
+              "name": "so_tien_giam",
+              "type": "numeric"
+            },
+            {
+              "name": "lich_su_trang_thai",
+              "type": "jsonb"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "loai_don_hang",
+              "type": "text"
+            },
+            {
+              "name": "ma_ban",
+              "type": "text"
+            },
+            {
+              "name": "ten_khach_hang",
+              "type": "text"
+            },
+            {
+              "name": "ten_thu_ngan",
+              "type": "text"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "text"
+            },
+            {
+              "name": "tien_khach_dua",
+              "type": "numeric"
+            },
+            {
+              "name": "tien_thoi",
+              "type": "numeric"
+            },
+            {
+              "name": "guest_email",
+              "type": "text"
+            },
+            {
+              "name": "guest_phone",
+              "type": "text"
+            },
+            {
+              "name": "session_id",
+              "type": "text"
+            }
+          ],
+          "count": 40460
+        },
+        "orders.giao_dich_thanh_toan": {
+          "columns": [
+            {
+              "name": "ma_giao_dich",
+              "type": "integer"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "cong_thanh_toan",
+              "type": "text"
+            },
+            {
+              "name": "ma_tham_chieu",
+              "type": "text"
+            },
+            {
+              "name": "ma_giao_dich_cong",
+              "type": "text"
+            },
+            {
+              "name": "so_tien",
+              "type": "numeric"
+            },
+            {
+              "name": "trang_thai",
+              "type": "text"
+            },
+            {
+              "name": "du_lieu_tho",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 38843
+        },
+        "orders.khao_sat_phan_hoi": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_bieu_mau",
+              "type": "integer"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "text"
+            },
+            {
+              "name": "ten_nguoi_dung",
+              "type": "text"
+            },
+            {
+              "name": "so_dien_thoai",
+              "type": "text"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "text"
+            },
+            {
+              "name": "tra_loi",
+              "type": "jsonb"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "co_so_ma",
+              "type": "text"
+            },
+            {
+              "name": "trang_thai_voucher",
+              "type": "text"
+            }
+          ],
+          "count": 12
+        },
+        "orders.shipper": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "username",
+              "type": "text"
+            },
+            {
+              "name": "full_name",
+              "type": "text"
+            },
+            {
+              "name": "phone",
+              "type": "text"
+            },
+            {
+              "name": "email",
+              "type": "text"
+            },
+            {
+              "name": "status",
+              "type": "text"
+            },
+            {
+              "name": "branch_code",
+              "type": "text"
+            },
+            {
+              "name": "current_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "current_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "total_deliveries",
+              "type": "integer"
+            },
+            {
+              "name": "rating",
+              "type": "numeric"
+            },
+            {
+              "name": "avatar_url",
+              "type": "text"
+            },
+            {
+              "name": "vehicle_type",
+              "type": "text"
+            },
+            {
+              "name": "vehicle_plate",
+              "type": "text"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "password",
+              "type": "text"
+            }
+          ],
+          "count": 301
+        },
+        "orders.shipper_delivery": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid"
+            },
+            {
+              "name": "ma_don_hang",
+              "type": "uuid"
+            },
+            {
+              "name": "shipper_id",
+              "type": "uuid"
+            },
+            {
+              "name": "status",
+              "type": "text"
+            },
+            {
+              "name": "delivery_note",
+              "type": "text"
+            },
+            {
+              "name": "delivery_address",
+              "type": "text"
+            },
+            {
+              "name": "pickup_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "pickup_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "delivery_latitude",
+              "type": "numeric"
+            },
+            {
+              "name": "delivery_longitude",
+              "type": "numeric"
+            },
+            {
+              "name": "estimated_time_minutes",
+              "type": "integer"
+            },
+            {
+              "name": "picked_up_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "delivered_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "proof_image_url",
+              "type": "text"
+            },
+            {
+              "name": "delivery_fee",
+              "type": "numeric"
+            },
+            {
+              "name": "assigned_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "shipperId",
+              "type": "uuid"
+            },
+            {
+              "name": "is_batched",
+              "type": "boolean"
+            }
+          ],
+          "count": 7857
+        },
+        "orders.voucher": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_voucher",
+              "type": "text"
+            },
+            {
+              "name": "mo_ta",
+              "type": "text"
+            },
+            {
+              "name": "loai",
+              "type": "text"
+            },
+            {
+              "name": "gia_tri",
+              "type": "numeric"
+            },
+            {
+              "name": "giam_toi_da",
+              "type": "numeric"
+            },
+            {
+              "name": "don_hang_toi_thieu",
+              "type": "numeric"
+            },
+            {
+              "name": "tong_luot_dung",
+              "type": "integer"
+            },
+            {
+              "name": "luot_da_dung",
+              "type": "integer"
+            },
+            {
+              "name": "han_su_dung",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "trang_thai",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ngay_cap_nhat",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "ten_voucher",
+              "type": "text"
+            },
+            {
+              "name": "loai_phan_phoi",
+              "type": "text"
+            },
+            {
+              "name": "ngu_canh_su_dung",
+              "type": "text"
+            },
+            {
+              "name": "so_ngay_hieu_luc",
+              "type": "integer"
+            },
+            {
+              "name": "gioi_han_moi_nguoi",
+              "type": "integer"
+            },
+            {
+              "name": "ten_san_pham_tang",
+              "type": "text"
+            },
+            {
+              "name": "ngay_bat_dau",
+              "type": "timestamp without time zone"
+            },
+            {
+              "name": "hien_thi_cho_khach",
+              "type": "boolean"
+            },
+            {
+              "name": "hinh_anh",
+              "type": "text"
+            }
+          ],
+          "count": 9
+        },
+        "orders.yeu_thich_san_pham": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "ma_nguoi_dung",
+              "type": "text"
+            },
+            {
+              "name": "ma_san_pham",
+              "type": "text"
+            },
+            {
+              "name": "ten_san_pham",
+              "type": "text"
+            },
+            {
+              "name": "gia_ban",
+              "type": "numeric"
+            },
+            {
+              "name": "hinh_anh_url",
+              "type": "text"
+            },
+            {
+              "name": "danh_muc",
+              "type": "text"
+            },
+            {
+              "name": "ngay_tao",
+              "type": "timestamp without time zone"
+            }
+          ],
+          "count": 637
+        },
+        "public.sync_history": {
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer"
+            },
+            {
+              "name": "started_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "finished_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "total_tables",
+              "type": "integer"
+            },
+            {
+              "name": "total_rows",
+              "type": "bigint"
+            },
+            {
+              "name": "status",
+              "type": "text"
+            },
+            {
+              "name": "error_message",
+              "type": "text"
+            }
+          ],
+          "count": 1645
+        },
+        "public.sync_metadata": {
+          "columns": [
+            {
+              "name": "schema_name",
+              "type": "text"
+            },
+            {
+              "name": "table_name",
+              "type": "text"
+            },
+            {
+              "name": "last_synced_at",
+              "type": "timestamp with time zone"
+            },
+            {
+              "name": "rows_synced",
+              "type": "bigint"
+            },
+            {
+              "name": "sync_duration_ms",
+              "type": "bigint"
+            },
+            {
+              "name": "sync_type",
+              "type": "text"
+            },
+            {
+              "name": "error_message",
+              "type": "text"
+            }
+          ],
+          "count": 80
+        }
+      }
+    }
+  }
+}

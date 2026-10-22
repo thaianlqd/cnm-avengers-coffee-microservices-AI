@@ -1,112 +1,31 @@
-"""
-Gold Layer: Aggregations from MinIO Silver Parquet → MinIO Gold bucket (JSON) & PostgreSQL 'gold' schema (Data Marts).
-Ready-to-consume datasets for Modern React Analytics Web UI and BI/Reporting.
-
-Architectural flow:
-  Silver Bucket (Parquet) → Business Aggregations (Pandas) → Gold Bucket (JSON/Parquet) & PostgreSQL 'gold' schema
-
-Uses VERIFIED column names:
-  don_hang: ma_nguoi_dung (NOT khach_hang_id), tong_tien, co_so_ma, etc.
-  chi_tiet_don_hang: gia_ban (NOT don_gia), ten_san_pham, ma_san_pham(int), kich_co
-  shipper_delivery: shipper_id, status, assigned_at, delivered_at
-"""
-import os
-import io
+"""Gold from an explicit Silver run, immutable objects and transactional DB version pointer."""
 import json
 import logging
+import math
 from datetime import datetime
-
 import pandas as pd
-import boto3
-from botocore.client import Config
-import sqlalchemy
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
-logger = logging.getLogger("gold")
+from bronze_ingestion import get_minio, get_engine
+from batch_runtime import LayerRun, existing_run, read_frame, publish_gold_database, run_arguments
+from pipeline_runtime import read_manifest, PipelineContractError, fingerprint
+from silver_transform import CONTRACT as SILVER_CONTRACT
 
-MINIO_ENDPOINT   = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin123")
-SILVER_BUCKET    = "avengers-silver"
-GOLD_BUCKET      = "avengers-gold"
-
-DB_HOST     = os.getenv("DB_HOST", "postgres-analytics")
-DB_PORT     = os.getenv("DB_PORT", "5432")
-DB_USER     = os.getenv("DB_USER", "analytics")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "analytics123")
-DB_NAME     = os.getenv("DB_NAME", "analytics")
-
-
-def get_minio():
-    return boto3.client(
-        "s3", endpoint_url=MINIO_ENDPOINT,
-        aws_access_key_id=MINIO_ACCESS_KEY,
-        aws_secret_access_key=MINIO_SECRET_KEY,
-        config=Config(signature_version="s3v4"),
-    )
+logger = logging.getLogger('gold')
+SILVER_BUCKET = 'avengers-silver'
+GOLD_BUCKET = 'avengers-gold'
+REQUIRED = ['kpi','revenue_daily','top_products','customer_segments']
+OPTIONAL = ['shipper_performance','order_status','payment_methods','taste_analytics.branch_taste_profile',
+            'taste_analytics.time_of_day_taste','taste_analytics.branch_product_heatmap',
+            'wallet_analytics.payment_adoption','wallet_analytics.wallet_transactions',
+            'wallet_analytics.wallet_vs_cod_comparison','logistics_analytics.delivery_method_performance',
+            'logistics_analytics.delivery_mode_adoption']
+CONTRACT = {'version':'3.4.0','layer':'gold','required_outputs':REQUIRED,'optional_outputs':OPTIONAL,
+            'revenue_statuses':['HOAN_THANH','DANG_GIAO'],'calculation_version':'3.4.0',
+            'business_definitions':'Existing batch aggregates; canonical Analyst metrics remain governed by the semantic catalog',
+            'database_publication':'analytics.gold_dataset_versions + transactional pipeline_publications pointer'}
 
 
-def get_engine():
-    try:
-        url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode={os.getenv('DB_SSLMODE', 'disable')}"
-        return sqlalchemy.create_engine(url)
-    except Exception as e:
-        logger.warning(f"Could not connect to database: {e}")
-        return None
-
-
-def ensure_bucket(s3, bucket: str):
-    try:
-        s3.head_bucket(Bucket=bucket)
-    except Exception:
-        try:
-            s3.create_bucket(Bucket=bucket)
-        except Exception:
-            pass
-
-
-def upload_json(s3, data, key: str):
-    ensure_bucket(s3, GOLD_BUCKET)
-    body = json.dumps(data, default=str, ensure_ascii=False, indent=2).encode("utf-8")
-    s3.put_object(Bucket=GOLD_BUCKET, Key=key, Body=body, ContentType="application/json")
-    logger.info(f"Saved JSON → s3://{GOLD_BUCKET}/{key}")
-
-
-def get_latest_df_from_silver(s3, table_name: str) -> pd.DataFrame | None:
-    """Find and read the latest parquet file for a given table name from Silver bucket."""
-    try:
-        all_keys = []
-        paginator = s3.get_paginator("list_objects_v2")
-        for page in paginator.paginate(Bucket=SILVER_BUCKET, Prefix=""):
-            for obj in page.get("Contents", []):
-                if f"/{table_name}/" in obj["Key"] and obj["Key"].endswith(".parquet"):
-                    all_keys.append((obj["Key"], obj["LastModified"]))
-        if not all_keys:
-            return None
-        latest = sorted(all_keys, key=lambda x: x[1], reverse=True)[0][0]
-        obj = s3.get_object(Bucket=SILVER_BUCKET, Key=latest)
-        df = pd.read_parquet(io.BytesIO(obj["Body"].read()))
-        logger.info(f"Loaded {len(df)} rows from Silver: s3://{SILVER_BUCKET}/{latest}")
-        return df
-    except Exception as e:
-        logger.warning(f"Could not read {table_name} from Silver: {e}")
-        return None
-
-
-def save_to_gold_db(engine, df: pd.DataFrame, table_name: str):
-    """Save aggregated DataFrame into postgres-analytics 'gold' schema (Data Marts)."""
-    if engine is None or df is None or df.empty:
-        return
-    try:
-        with engine.begin() as conn:
-            conn.execute(sqlalchemy.text("CREATE SCHEMA IF NOT EXISTS gold;"))
-        df.to_sql(table_name, engine, schema="gold", if_exists="replace", index=False)
-        logger.info(f"Persisted {len(df)} rows → gold.{table_name}")
-    except Exception as e:
-        logger.warning(f"Could not persist to gold.{table_name}: {e}")
-
-
-def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFrame | None, deliveries: pd.DataFrame | None, wallet_tx: pd.DataFrame | None, deliv_track: pd.DataFrame | None):
+def run_silver_aggregations(orders, items, deliveries, wallet_tx, deliv_track, *, emit, persist, as_of, errors):
     """Run all 16 aggregations directly from Silver DataFrames (True Medallion Architecture)."""
     logger.info("Computing Gold datasets directly from Silver Parquet...")
     orders = orders.copy()
@@ -117,8 +36,8 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
     if "tong_tien" in orders.columns:
         orders["tong_tien"] = pd.to_numeric(orders["tong_tien"], errors="coerce").fillna(0)
 
-    today = datetime.now().date()
-    valid_statuses = ['HOAN_THANH', 'DANG_GIAO', 'DA_XAC_NHAN']
+    today = as_of.date()
+    valid_statuses = ['HOAN_THANH', 'DANG_GIAO']
 
     # 1. KPI Summary
     try:
@@ -135,10 +54,10 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
             "total_orders_all_time": len(orders),
             "revenue_all_time": float(orders.loc[is_revenue_status, "tong_tien"].sum())
         }
-        upload_json(s3, kpi_data, "kpi/latest.json")
-        save_to_gold_db(engine, pd.DataFrame([kpi_data]), "kpi_summary")
+        emit(kpi_data, "kpi/latest.json")
+        persist(pd.DataFrame([kpi_data]), "kpi_summary")
     except Exception as e:
-        logger.warning(f"Silver KPI error: {e}")
+        errors.append(type(e).__name__)
 
     # 2. Revenue by Day (last 30 days)
     try:
@@ -150,10 +69,10 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
             ).reset_index()
             rev_daily["date"] = rev_daily["date"].astype(str)
             rev_daily = rev_daily.sort_values("date").tail(30)
-            upload_json(s3, rev_daily.to_dict(orient="records"), "revenue_daily/latest.json")
-            save_to_gold_db(engine, rev_daily, "revenue_daily")
+            emit(rev_daily.to_dict(orient="records"), "revenue_daily/latest.json")
+            persist(rev_daily, "revenue_daily")
     except Exception as e:
-        logger.warning(f"Silver Revenue daily error: {e}")
+        errors.append(type(e).__name__)
 
     # 3. Top Products
     if items is not None and not items.empty and "ma_don_hang" in items.columns:
@@ -167,10 +86,10 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
                 total_quantity=("so_luong", "sum"),
                 total_revenue=("line_total", "sum")
             ).reset_index().sort_values("total_quantity", ascending=False).head(20)
-            upload_json(s3, top_prod.to_dict(orient="records"), "top_products/latest.json")
-            save_to_gold_db(engine, top_prod, "top_products")
+            emit(top_prod.to_dict(orient="records"), "top_products/latest.json")
+            persist(top_prod, "top_products")
         except Exception as e:
-            logger.warning(f"Silver Top products error: {e}")
+            errors.append(type(e).__name__)
 
     # 4. Customer Segments
     try:
@@ -189,10 +108,10 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
                 count=("customer_id", "count"),
                 avg_ltv=("lifetime_value", "mean")
             ).reset_index()
-            upload_json(s3, seg.to_dict(orient="records"), "customer_segments/latest.json")
-            save_to_gold_db(engine, seg, "customer_segments")
+            emit(seg.to_dict(orient="records"), "customer_segments/latest.json")
+            persist(seg, "customer_segments")
     except Exception as e:
-        logger.warning(f"Silver Customer segments error: {e}")
+        errors.append(type(e).__name__)
 
     # 5. Shipper Performance
     if deliveries is not None and not deliveries.empty and "shipper_id" in deliveries.columns:
@@ -207,10 +126,10 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
             shipper_stats["success_rate"] = (100.0 * shipper_stats["completed"] / shipper_stats["total_deliveries"].replace(0, 1)).round(1)
             shipper_stats["avg_delivery_min"] = shipper_stats["avg_delivery_min"].round(1)
             shipper_stats = shipper_stats.sort_values("completed", ascending=False).head(20)
-            upload_json(s3, shipper_stats.to_dict(orient="records"), "shipper_performance/latest.json")
-            save_to_gold_db(engine, shipper_stats, "shipper_performance")
+            emit(shipper_stats.to_dict(orient="records"), "shipper_performance/latest.json")
+            persist(shipper_stats, "shipper_performance")
         except Exception as e:
-            logger.warning(f"Silver Shipper performance error: {e}")
+            errors.append(type(e).__name__)
 
     # 6. Order Status Distribution
     try:
@@ -218,10 +137,10 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
         status_dist.rename(columns={"trang_thai_don_hang": "status"}, inplace=True)
         total_cnt = status_dist["count"].sum()
         status_dist["pct"] = (100.0 * status_dist["count"] / (total_cnt if total_cnt > 0 else 1)).round(1)
-        upload_json(s3, status_dist.to_dict(orient="records"), "order_status/latest.json")
-        save_to_gold_db(engine, status_dist, "order_status_distribution")
+        emit(status_dist.to_dict(orient="records"), "order_status/latest.json")
+        persist(status_dist, "order_status_distribution")
     except Exception as e:
-        logger.warning(f"Silver Order status error: {e}")
+        errors.append(type(e).__name__)
 
     # 7. Payment Method Distribution
     try:
@@ -229,10 +148,10 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
             count=("ma_don_hang", "count"),
             revenue=("tong_tien", "sum")
         ).reset_index().rename(columns={"phuong_thuc_thanh_toan": "payment_method"}).sort_values("count", ascending=False)
-        upload_json(s3, pay_dist.to_dict(orient="records"), "payment_methods/latest.json")
-        save_to_gold_db(engine, pay_dist, "payment_methods_distribution")
+        emit(pay_dist.to_dict(orient="records"), "payment_methods/latest.json")
+        persist(pay_dist, "payment_methods_distribution")
     except Exception as e:
-        logger.warning(f"Silver Payment method error: {e}")
+        errors.append(type(e).__name__)
 
     # 8. Taste Profile by Branch
     if items is not None and not items.empty:
@@ -250,10 +169,10 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
                 avg_order_value=("tong_tien", "mean")
             ).reset_index().sort_values(["branch_code", "total_qty"], ascending=[True, False])
             branch_taste["avg_order_value"] = branch_taste["avg_order_value"].round(0)
-            upload_json(s3, branch_taste.to_dict(orient="records"), "taste_analytics/branch_taste_profile/latest.json")
-            save_to_gold_db(engine, branch_taste, "branch_taste_profile")
+            emit(branch_taste.to_dict(orient="records"), "taste_analytics/branch_taste_profile/latest.json")
+            persist(branch_taste, "branch_taste_profile")
         except Exception as e:
-            logger.warning(f"Silver Taste branch error: {e}")
+            errors.append(type(e).__name__)
 
     # 9. Taste by Time-of-Day
     if items is not None and not items.empty and "hour" in orders.columns:
@@ -278,9 +197,9 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
                 order_count=("ma_don_hang", "nunique"),
                 total_qty=("so_luong", "sum")
             ).reset_index().sort_values(["hour_of_day", "total_qty"], ascending=[True, False])
-            upload_json(s3, time_taste.to_dict(orient="records"), "taste_analytics/time_of_day_taste/latest.json")
+            emit(time_taste.to_dict(orient="records"), "taste_analytics/time_of_day_taste/latest.json")
         except Exception as e:
-            logger.warning(f"Silver Taste time error: {e}")
+            errors.append(type(e).__name__)
 
     # 10. Branch Heatmap
     if items is not None and not items.empty:
@@ -299,9 +218,9 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
             branch_totals = heat_df.groupby("branch_code")["total_qty"].transform("sum")
             heat_df["pct_of_branch"] = (100.0 * heat_df["total_qty"] / branch_totals.replace(0, 1)).round(2)
             heat_df = heat_df.sort_values(["branch_code", "total_qty"], ascending=[True, False])
-            upload_json(s3, heat_df.to_dict(orient="records"), "taste_analytics/branch_product_heatmap/latest.json")
+            emit(heat_df.to_dict(orient="records"), "taste_analytics/branch_product_heatmap/latest.json")
         except Exception as e:
-            logger.warning(f"Silver Heatmap error: {e}")
+            errors.append(type(e).__name__)
 
     # 11. Payment adoption
     try:
@@ -314,9 +233,9 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
             ).reset_index().rename(columns={"phuong_thuc_thanh_toan": "payment_method"})
             tot_cnt = padopt["order_count"].sum()
             padopt["pct_orders"] = (100.0 * padopt["order_count"] / (tot_cnt if tot_cnt > 0 else 1)).round(2)
-            upload_json(s3, padopt.to_dict(orient="records"), "wallet_analytics/payment_adoption/latest.json")
+            emit(padopt.to_dict(orient="records"), "wallet_analytics/payment_adoption/latest.json")
     except Exception as e:
-        logger.warning(f"Silver Payment adoption error: {e}")
+        errors.append(type(e).__name__)
 
     # 12. Wallet transactions
     if wallet_tx is not None and not wallet_tx.empty:
@@ -327,9 +246,9 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
                 total_amount=("amount", "sum"),
                 avg_amount=("amount", "mean")
             ).reset_index()
-            upload_json(s3, w_agg.to_dict(orient="records"), "wallet_analytics/wallet_transactions/latest.json")
+            emit(w_agg.to_dict(orient="records"), "wallet_analytics/wallet_transactions/latest.json")
         except Exception as e:
-            logger.warning(f"Silver Wallet tx error: {e}")
+            errors.append(type(e).__name__)
 
     # 13. Wallet vs COD comparison
     try:
@@ -348,9 +267,9 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
                 total_ltv=("tong_tien", "sum"),
                 avg_ltv=("tong_tien", "mean")
             ).reset_index().round(2)
-            upload_json(s3, w_summary.to_dict(orient="records"), "wallet_analytics/wallet_vs_cod_comparison/latest.json")
+            emit(w_summary.to_dict(orient="records"), "wallet_analytics/wallet_vs_cod_comparison/latest.json")
     except Exception as e:
-        logger.warning(f"Silver Wallet vs COD error: {e}")
+        errors.append(type(e).__name__)
 
     # 14, 15, 16. Logistics Analytics
     if deliv_track is not None and not deliv_track.empty:
@@ -364,143 +283,74 @@ def run_silver_aggregations(s3, engine, orders: pd.DataFrame, items: pd.DataFram
                 avg_delivery_fee=("delivery_fee", "mean"),
                 avg_estimated_minutes=("estimated_minutes", "mean")
             ).reset_index().round(2)
-            upload_json(s3, l_perf.to_dict(orient="records"), "logistics_analytics/delivery_method_performance/latest.json")
+            emit(l_perf.to_dict(orient="records"), "logistics_analytics/delivery_method_performance/latest.json")
             # 16. Mode adoption
             if "delivery_mode" in dt.columns:
                 l_mode = dt.groupby(["delivery_mode", "branch_code"]).agg(
                     order_count=("id", "count"),
                     avg_fee=("delivery_fee", "mean")
                 ).reset_index().round(2)
-                upload_json(s3, l_mode.to_dict(orient="records"), "logistics_analytics/delivery_mode_adoption/latest.json")
+                emit(l_mode.to_dict(orient="records"), "logistics_analytics/delivery_mode_adoption/latest.json")
         except Exception as e:
-            logger.warning(f"Silver Logistics tracking error: {e}")
-
-    upload_json(s3, {
-        "last_run": datetime.now().isoformat(),
-        "source": "silver_parquet_lakehouse",
-        "status": "success",
-        "orders_count": len(orders)
-    }, "pipeline_meta/latest.json")
-    logger.info("=== Gold Layer Completed Successfully from Silver Data! ===")
+            errors.append(type(e).__name__)
 
 
-def run_database_sql_fallback(s3, engine):
-    """Fallback: Runs SQL directly on postgres-analytics if Silver bucket is not populated yet."""
-    logger.info("Running Database SQL Fallback for Gold layer...")
-    # 1. KPI Summary
-    try:
-        df = pd.read_sql("""
-            SELECT
-                COUNT(*) FILTER (WHERE DATE(ngay_tao) = CURRENT_DATE) AS orders_today,
-                COUNT(*) FILTER (WHERE trang_thai_don_hang = 'HOAN_THANH'
-                                   AND DATE(ngay_tao) = CURRENT_DATE) AS completed_today,
-                COALESCE(SUM(tong_tien) FILTER (
-                    WHERE trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO')
-                    AND DATE(ngay_tao) = CURRENT_DATE
-                ), 0) AS revenue_today,
-                COUNT(*) FILTER (WHERE trang_thai_don_hang = 'DANG_GIAO') AS active_deliveries,
-                COUNT(*) AS total_orders_all_time,
-                COALESCE(SUM(tong_tien) FILTER (
-                    WHERE trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO')
-                ), 0) AS revenue_all_time
-            FROM orders.don_hang
-        """, engine)
-        upload_json(s3, df.to_dict(orient="records")[0], "kpi/latest.json")
-        save_to_gold_db(engine, df, "kpi_summary")
-    except Exception as e:
-        logger.warning(f"Fallback KPI error: {e}")
 
-    # 2. Revenue by Day (last 30 days)
-    try:
-        df = pd.read_sql("""
-            SELECT DATE(ngay_tao)::text AS date, COUNT(*) AS total_orders,
-                   COALESCE(SUM(tong_tien) FILTER (
-                       WHERE trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO')
-                   ), 0) AS revenue
-            FROM orders.don_hang
-            WHERE ngay_tao >= CURRENT_DATE - INTERVAL '30 days'
-            GROUP BY DATE(ngay_tao) ORDER BY date
-        """, engine)
-        upload_json(s3, df.to_dict(orient="records"), "revenue_daily/latest.json")
-        save_to_gold_db(engine, df, "revenue_daily")
-    except Exception as e:
-        logger.warning(f"Fallback Revenue daily error: {e}")
-
-    # 3. Top Products
-    try:
-        df = pd.read_sql("""
-            SELECT ct.ma_san_pham, ct.ten_san_pham,
-                   SUM(ct.so_luong) AS total_quantity,
-                   SUM(ct.so_luong * ct.gia_ban) AS total_revenue
-            FROM orders.chi_tiet_don_hang ct
-            JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-            WHERE d.ngay_tao >= CURRENT_DATE - INTERVAL '30 days'
-              AND d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
-            GROUP BY ct.ma_san_pham, ct.ten_san_pham
-            ORDER BY total_quantity DESC LIMIT 20
-        """, engine)
-        upload_json(s3, df.to_dict(orient="records"), "top_products/latest.json")
-        save_to_gold_db(engine, df, "top_products")
-    except Exception as e:
-        logger.warning(f"Fallback Top products error: {e}")
-
-    # 4. Customer Segments
-    try:
-        df = pd.read_sql("""
-            SELECT ma_nguoi_dung::text AS customer_id,
-                   COUNT(*) AS order_count,
-                   COALESCE(SUM(tong_tien) FILTER (
-                       WHERE trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO')
-                   ), 0) AS lifetime_value
-            FROM orders.don_hang
-            WHERE ma_nguoi_dung IS NOT NULL
-            GROUP BY ma_nguoi_dung
-        """, engine)
-        if len(df) > 0:
-            df["segment"] = pd.cut(
-                df["order_count"], bins=[0, 1, 3, 10, float("inf")],
-                labels=["Khách mới", "Thông thường", "Trung thành", "VIP"],
-            ).astype(str)
-            seg = df.groupby("segment").agg(
-                count=("customer_id", "count"),
-                avg_ltv=("lifetime_value", "mean"),
-            ).reset_index()
-            upload_json(s3, seg.to_dict(orient="records"), "customer_segments/latest.json")
-            save_to_gold_db(engine, seg, "customer_segments")
-    except Exception as e:
-        logger.warning(f"Fallback Customer segments error: {e}")
-
-    upload_json(s3, {
-        "last_run": datetime.now().isoformat(),
-        "source": "sql_fallback",
-        "status": "success"
-    }, "pipeline_meta/latest.json")
+def nullable_json(value):
+    if isinstance(value, float):
+        if math.isnan(value): return None
+        if not math.isfinite(value): raise PipelineContractError('Nonfinite aggregate cannot be published')
+    if isinstance(value, dict): return {str(k): nullable_json(v) for k,v in value.items()}
+    if isinstance(value, list): return [nullable_json(v) for v in value]
+    if isinstance(value, datetime): return value.isoformat()
+    return value
 
 
-def main():
-    logger.info("=== Gold Layer Starting ===")
+def main(run_id=None, as_of=None, input_run=None):
     s3 = get_minio()
+    old = existing_run(s3, GOLD_BUCKET, run_id, as_of, CONTRACT)
+    if old is not None and old.get('input_run_id') != input_run:
+        raise PipelineContractError('Existing Gold run has different inputs')
+    if old is None:
+        if not input_run: raise PipelineContractError('Explicit committed Silver input run required')
+        upstream = read_manifest(s3, SILVER_BUCKET, input_run, fingerprint(SILVER_CONTRACT))
+        names = ['orders_clean','items_clean','deliveries_clean','wallet_transactions_clean','delivery_tracking_clean']
+        if set(names)-set(upstream['outputs']): raise PipelineContractError('Required Silver inputs absent')
+        frames = [read_frame(s3, SILVER_BUCKET, upstream, name) for name in names]
+        if sum(int(frame.memory_usage(index=True,deep=True).sum()) for frame in frames)>256000000:
+            raise PipelineContractError('Combined Silver frames exceed bounded batch capacity')
+        run = LayerRun(s3, GOLD_BUCKET, 'batch.gold', run_id, as_of, CONTRACT,
+                       {'silver': upstream['manifest_fingerprint']})
+        run.manifest['input_run_id'] = input_run
+        errors = []
+        def emit(data, key):
+            name = key.removesuffix('/latest.json').replace('/','.')
+            run.json(name, nullable_json(data))
+        run_silver_aggregations(*frames, emit=emit, persist=lambda frame,name: None, as_of=run.as_of, errors=errors)
+        orders, items = frames[:2]
+        # Explicit empty populations are measured no_data, never borrowed from a
+        # previous run or SQL fallback. Other missing required results fail.
+        if not orders['trang_thai_don_hang'].isin(['HOAN_THANH','DANG_GIAO']).any() and 'revenue_daily' not in run.outputs:
+            run.json('revenue_daily', [])
+        if items.empty and 'top_products' not in run.outputs: run.json('top_products', [])
+        if not orders['ma_nguoi_dung'].notna().any() and 'customer_segments' not in run.outputs:
+            run.json('customer_segments', [])
+        old = run.finish(optional=OPTIONAL, errors=errors)
+    # Retry a failed DB publication using the existing immutable object run.
     engine = get_engine()
-
-    # Try reading from Silver Parquet first (Standard Medallion Pattern)
-    orders_silver = get_latest_df_from_silver(s3, "orders_clean")
-    items_silver = get_latest_df_from_silver(s3, "items_clean")
-    deliveries_silver = get_latest_df_from_silver(s3, "deliveries_clean")
-    wallet_silver = get_latest_df_from_silver(s3, "wallet_transactions_clean")
-    tracking_silver = get_latest_df_from_silver(s3, "delivery_tracking_clean")
-
-    if orders_silver is not None and not orders_silver.empty:
-        logger.info(f"Medallion Pipeline: Consuming {len(orders_silver)} rows from Silver Parquet")
-        run_silver_aggregations(s3, engine, orders_silver, items_silver, deliveries_silver, wallet_silver, tracking_silver)
-    else:
-        logger.warning("Silver Parquet data not found or empty. Using SQL fallback...")
-        if engine is not None:
-            run_database_sql_fallback(s3, engine)
-        else:
-            logger.error("Neither Silver Parquet nor PostgreSQL Analytics is available!")
-
-    logger.info("=== Gold Layer Done ===")
+    connection = engine.raw_connection()
+    try:
+        publish_gold_database(connection, s3, GOLD_BUCKET, old)
+    finally:
+        connection.close()
+        engine.dispose()
+    return old
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    arguments = run_arguments('Governed batch publication')
+    try:
+        main(**arguments)
+    except Exception as error:
+        logging.getLogger(__name__).error('Layer failed: %s', type(error).__name__)
+        raise SystemExit(1) from None

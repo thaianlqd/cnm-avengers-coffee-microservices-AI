@@ -1,0 +1,11 @@
+{
+  "campaign_id": "codex-qualification-policy27-live-20261022",
+  "source_policy": "2026-10-22.cohort-scope.27",
+  "frozen_cases": 12,
+  "max_physical_sends": 36,
+  "prior_repair_campaign_sends": 46,
+  "prior_repair_campaign_limit": 48,
+  "scope": "One execution of the already authorized fixed12; no new prompts or repeated full campaign after failure.",
+  "measured_physical_sends": 10,
+  "prior_sends_plus_qualification": 56
+}

@@ -8,6 +8,8 @@ from services.semantic_manifest_service import build_manifest, manifest_referenc
 
 def wire_payload(payload):
     value = {**payload, "domains": deepcopy(payload["domains"])}
+    if isinstance(value.get('ui'),dict):
+        value['ui']={k:v for k,v in value['ui'].items() if k!='input_integrity_policy'}
     knowledge = value["domains"]
     if "lens_directory" in knowledge:
         packed = {l[0] for p in knowledge["packs"] for l in p["lenses"]}
@@ -19,7 +21,7 @@ def wire_payload(payload):
             if pack["tier"] == "compact":
                 pack.pop("metrics", None)
                 pack.pop("dimensions", None)
-        knowledge["compact_lens_columns"] = "id,label,metrics,capabilities; subject metrics and compatible dimensions in manifest"
+        knowledge["compact_lens_columns"] = "id,label,metrics,capabilities; compatibility in manifest"
     meanings = {}
     for pack in knowledge["packs"]:
         meanings.update(pack.pop("metric_meanings", {}))
@@ -48,7 +50,7 @@ def wire_payload(payload):
                 pack["blueprints"][lens] = encoded
         if sets:
             knowledge["blueprint_sets"] = sets
-            knowledge["blueprint_encoding"] = "In blueprint rows, integer cells reference blueprint_sets[index]; all other cells are literal. Submit semantic IDs, never indices."
+            knowledge["blueprint_encoding"] = "Integers reference blueprint_sets[index]; others are literal. Submit IDs, not indices."
     return value
 
 

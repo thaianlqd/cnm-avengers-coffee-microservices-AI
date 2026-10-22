@@ -1,0 +1,1 @@
+{"guard_count": 21, "sql_sha256": "4f115ebb45ce4cd497fd2218df31c54e81d28c8530a97e3049e02af757b15f1d", "fact_writes": false, "source_grants_changed": false, "guard_contents": "one boolean column, zero rows", "applied": true}

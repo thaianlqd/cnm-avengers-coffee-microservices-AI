@@ -1,0 +1,16 @@
+{
+  "fixtures": [
+    {
+      "path": "data-platform/web-ui/tests/e2e/fixtures/ai-final-report-focused.json",
+      "parsed_values_equal_HEAD": true,
+      "semantic_sha256": "71973c80694b10e0e5b790203bedd6a8b79fc2edf531822e72b7ec1f88b6e8b0"
+    },
+    {
+      "path": "data-platform/web-ui/tests/e2e/fixtures/ai-final-report-comprehensive.json",
+      "parsed_values_equal_HEAD": true,
+      "semantic_sha256": "426a72a31c55ee05f2b0d640b9bb1f9fcc3f980aade1ad0731ded4fb08899a52"
+    }
+  ],
+  "scanner_config_unchanged": true,
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

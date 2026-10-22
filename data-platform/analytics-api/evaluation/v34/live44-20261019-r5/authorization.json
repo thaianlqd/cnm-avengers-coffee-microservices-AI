@@ -1,0 +1,12 @@
+{
+  "approved_total": 440,
+  "prior_reserved": 366,
+  "maximum_new_reservations": 74,
+  "user_reply": "oke duyệt làm tiếp cho tôi đi hoàn thành PLAN (đáp lại đề xuất tổng 440, 2026-10-19)",
+  "case_count": 44,
+  "useful_denominator": 40,
+  "full_jobs_execute": true,
+  "scope": "Existing Google Gemini primary/secondary; questions and governed semantic metadata; no raw rows/PII",
+  "ledger_sha256_before": "d3e7cb1d82e4743df1e26e33c288a87bf57ca2afb3d84e05714bc2d4217b780d",
+  "case_sha256": "5fc5eb47fd515d314c5d1d7186a9306c5c262bfac4dca3c1d1ccc206d29bda2c"
+}

@@ -86,7 +86,7 @@ class PopulationDashboardTests(f.unittest.TestCase):
         proposal=p.propose(request)
         self.assertEqual(p.provider.call_count,1)
         self.assertEqual(proposal['diagnostics']['analysis_depth'],'deep')
-        self.assertEqual(proposal['diagnostics']['minimum_visuals'],4)
+        self.assertEqual(proposal['diagnostics']['minimum_visuals'],0)  # V3.3 required roles, no global floor
         self.assertLessEqual(len(proposal['proposal']['analytical_queries']),8)
         for q in proposal['proposal']['analytical_queries']:
             self.assertTrue(any(f['dimension']=='store_type' and set(f['value'])==set(KIOSKS) for f in q['filters']))
@@ -94,7 +94,10 @@ class PopulationDashboardTests(f.unittest.TestCase):
         f.approve(request,proposal);report=p.generate(request)
         self.assertGreaterEqual(len(report['charts']),4)
         self.assertEqual(len({c['semantic_view_key'] for c in report['charts']}),len(report['charts']))
-        self.assertTrue(any(c['x_field']=='period' for c in report['charts']))
+        # FINAL 2026-10-19: a time view needs >=2 observed periods; a one-period fixture is disclosed, never drawn as a line.
+        trend_ok = any(c['x_field']=='period' for c in report['charts']) or any(
+            o.get('reason')=='insufficient_periods' for o in report['dashboard_plan']['omitted_visuals'])
+        self.assertTrue(trend_ok)
         self.assertTrue(any(c.get('selection')=='Top N' for c in report['charts']))
         self.assertEqual(report['quality_assessment'],verify_saved_report(report,self.catalog))
         check=next(c for c in report['quality_assessment']['verification_checks'] if c['id']=='analysis_depth_coverage')
@@ -118,9 +121,9 @@ class PopulationDashboardTests(f.unittest.TestCase):
     def test_missing_views_is_partial_and_score_is_recomputed(self):
         warehouse=self.warehouse();p=self.pipeline(f.scripted(f.envelope(kiosk_requirement())),executor=warehouse)
         request=self.request(QUESTION);proposal=p.propose(request);f.approve(request,proposal);report=p.generate(request)
-        report['charts']=report['charts'][:1]
+        report['charts']=[]  # remove required ranking evidence, not optional support
         verdict=verify_saved_report(report,self.catalog)
         self.assertEqual(verdict['status'],'partially_verified')
         self.assertLess(verdict['score'],90)
         check=next(c for c in verdict['verification_checks'] if c['id']=='analysis_depth_coverage')
-        self.assertEqual((check['passed'],check['total']),(1,4))
+        self.assertEqual((check['passed'],check['total']),(0,1))

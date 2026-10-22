@@ -7,6 +7,7 @@ import re
 import unicodedata
 from collections import deque
 from copy import deepcopy
+from functools import lru_cache
 from datetime import datetime, date, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -21,11 +22,8 @@ CATALOG_PATH = (
 )
 
 
-class AnalysisError(ValueError):
-    def __init__(self, category: str, message: str, choices=None, clarification=None):
-        super().__init__(message)
-        self.category, self.choices = category, choices or []
-        self.clarification = clarification
+# Compatibility export: callers keep the same exception identity.
+from services.error_taxonomy import AnalysisError
 
 
 def normalize(text: str) -> str:
@@ -67,6 +65,13 @@ def resolve_period(scope, today=None):
 
 
 def referenced_columns(expression):
+    # Pure function of the governed expression text; parsing dominated report latency once lens plans compile several
+    # views per report (FINAL P7 profiling), so the parse result is memoized. Callers receive a fresh list.
+    return list(_referenced_columns(expression))
+
+
+@lru_cache(maxsize=4096)
+def _referenced_columns(expression):
     tree = sqlglot.parse_one(expression, read="postgres")
     refs = []
     for col in tree.find_all(exp.Column):
@@ -75,7 +80,7 @@ def referenced_columns(expression):
                 "metadata", "Registry expressions require fully qualified columns"
             )
         refs.append((col.db + "." + col.table, col.name))
-    return refs
+    return tuple(refs)
 
 
 class AnalysisCatalog:
@@ -86,13 +91,17 @@ class AnalysisCatalog:
             else json.loads(CATALOG_PATH.read_text())
         )
         self.registry = self.overlay["analysis_registry"]
-        from services.semantic_catalog_validation import validate_catalog
-        validate_catalog(self.overlay)
+        from services.semantic_catalog_validation import validate_catalog, semantic_fingerprint
+        # The governed production catalog must declare every source scope.
+        validate_catalog(self.overlay, strict=overlay is None)
+        self.semantic_fingerprint = semantic_fingerprint(self.overlay)
         self.tables = {
             n: t
             for n, t in physical.get("table_map", {}).items()
             if n.startswith("silver.")
         }
+        from services.access_policy import project_tables
+        self.tables=project_tables(self.tables)
         structural = {
             n: {
                 "columns": sorted(
@@ -123,6 +132,9 @@ class AnalysisCatalog:
                 default=str,
             ).encode()
         ).hexdigest()
+        # Semantic registry version, independent of physical row/column layout.
+        self.registry_fingerprint = hashlib.sha256(json.dumps(self.overlay, sort_keys=True,
+            ensure_ascii=False, default=str).encode()).hexdigest()
         self.edges = self._relationships()
         self.snapshot_version=physical.get('snapshot_version') or physical.get('refreshed_at')
         self.policy = {
@@ -135,6 +147,23 @@ class AnalysisCatalog:
                 for n, t in self.tables.items()
             }
         }
+
+    def metric_lineage(self, metric_id):
+        """Formula identity and source references, derived from governed definitions."""
+        metric = self.registry['metrics'][metric_id]
+        columns = set()
+        for expression in [metric['expression'], metric.get('time_column'), *metric.get('required_non_null', [])]:
+            if expression:
+                columns.update(referenced_columns(expression))
+        for condition in metric.get('business_filters', []):
+            dimension = self.registry['dimensions'][condition['dimension']]
+            columns.update(referenced_columns(dimension.get('expression') or dimension['table']+'.'+dimension['column']))
+        formula = {k: metric.get(k) for k in ('source', 'expression', 'grain', 'unit', 'time_column',
+            'business_filters', 'aggregation_semantics', 'numerator', 'denominator', 'required_non_null')}
+        return {'metric_id': metric_id, 'dataset_id': self.overlay['silver_tables'][metric['source']].get('dataset_id', metric['source']),
+                'source': metric['source'], 'columns': [{'table': table, 'column': column} for table, column in sorted(columns)],
+                'formula_fingerprint': hashlib.sha256(json.dumps(formula, sort_keys=True, ensure_ascii=False,
+                                                                separators=(',', ':')).encode()).hexdigest()}
 
     def check_column(self, table, column):
         if table not in self.tables or column not in {
@@ -499,7 +528,7 @@ class AnalysisCatalog:
             },
         }
 
-    def ground(self, spec: AnalysisSpec, today=None):
+    def ground(self, spec: AnalysisSpec, today=None, grounded_values=None):
         r = self.registry
         if spec.ambiguities:
             choices = (
@@ -602,9 +631,12 @@ class AnalysisCatalog:
             dimensions[dim] = d
         for f in filters:
             d = dimensions[f.dimension]
+            # A curated alias enum with lookup_fallback is not the value universe: members outside it
+            # pass only when the caller already grounded them by exact lookup (grounded_values).
+            looked_up = set((grounded_values or {}).get(f.dimension, ())) if d.get("value_grounding", {}).get("lookup_fallback") else set()
             if d.get("enum"):
                 values = f.value if isinstance(f.value, list) else [f.value]
-                if any(v not in d["enum"] for v in values):
+                if any(v not in d["enum"] and v not in looked_up for v in values):
                     raise AnalysisError(
                         "clarification", f"Unknown value for {f.dimension}", d["enum"]
                     )

@@ -1,0 +1,134 @@
+{
+  "origin": "Normalized semantic shapes from full live rerun2; no raw HTTP or warehouse rows",
+  "cases": [
+    {
+      "id": "L11",
+      "question": "Điểm đánh giá trung bình theo chi nhánh tháng 9 năm 2026",
+      "outputs": [
+        {
+          "decision": "clarification",
+          "clarification": {},
+          "requirements": [
+            {
+              "availability": "needs_input",
+              "derived_features": [
+                "scalar"
+              ],
+              "time": {
+                "kind": "month",
+                "year": 2026,
+                "month": 9
+              },
+              "metric_ids": [
+                "avg_store_rating"
+              ],
+              "id": "req_1",
+              "dimension_ids": [
+                "store"
+              ]
+            }
+          ]
+        },
+        {
+          "decision": "clarification",
+          "clarification": {},
+          "requirements": [
+            {
+              "time": {
+                "year": 2026,
+                "kind": "month",
+                "month": 9
+              },
+              "availability": "needs_input",
+              "id": "req_1",
+              "metric_ids": [
+                "avg_store_rating"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L41",
+      "question": "So sánh doanh thu tháng 8 với tháng 9 năm 2026",
+      "outputs": [
+        {
+          "decision": "clarification",
+          "clarification": {},
+          "requirements": []
+        },
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "time": {
+                "start": "2026-08-01",
+                "kind": "range",
+                "end": "2026-09-30"
+              },
+              "metric_ids": [
+                "revenue"
+              ],
+              "feature_metrics": {
+                "change": [
+                  "revenue"
+                ],
+                "change_pct": [
+                  "revenue"
+                ]
+              },
+              "derived_features": [
+                "change",
+                "change_pct"
+              ],
+              "id": "repair_add_1",
+              "analysis_kind": "comparison",
+              "availability": "requested"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L43",
+      "question": "Top 5 chi nhánh có tỷ lệ hủy đơn cao nhất tháng 9 năm 2026, kèm số đơn để xem quy mô.",
+      "outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "feature_metrics": {
+                "selected_total": [
+                  "order_count"
+                ]
+              },
+              "id": "req_1",
+              "ranking": {
+                "limit": 5,
+                "direction": "top",
+                "metric_id": "order_cancellation_rate"
+              },
+              "analysis_kind": "ranking",
+              "metric_ids": [
+                "order_cancellation_rate",
+                "order_count"
+              ],
+              "availability": "requested",
+              "time": {
+                "year": 2026,
+                "month": 9,
+                "kind": "month"
+              },
+              "dimension_ids": [
+                "store"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "status": "LOG_AND_SOURCE_PATH_REVIEW_NO_NEW_PROVIDER_CALL",
+  "request_id": "req_d702b6b70aec42ab81309f7ca0148a8e",
+  "source": "data-platform/analytics-api/services/hybrid_analyst_planner.py",
+  "source_sha256": "8806f01b12b07207968ef3a39349305682230e58843f45e27df8c96e615f2b2b",
+  "observed_log_codes": [
+    "clarification_required",
+    "explicit_metrics_missing"
+  ],
+  "observed_runtime": {
+    "primary_calls": 1,
+    "contract_repair_calls": 1,
+    "semantic_stop_reason": "no_progress"
+  },
+  "source_path_inference": {
+    "phase": "initial interpretation, before targeted repair",
+    "parsed_decision": "clarification",
+    "clarification_object": "absent_or_null_at_guard",
+    "reason": "clarification_required has a single raise site after decision analyze/unsupported were handled; allowed decisions are analyze/clarification/unsupported. parse only normalizes clarification to analyze, never analyze into clarification.",
+    "guard_line": 341,
+    "raise_line": 342
+  },
+  "not_observed": [
+    "actual initial provider JSON",
+    "actual repaired provider JSON",
+    "stability criterion chosen by the model",
+    "whether the model represented selection→comparison correctly"
+  ],
+  "trace_gap": {
+    "existing_draft_shapes": "Only requirements shapes are added to in-memory/response diagnostics; no decision/clarification envelope in this projection.",
+    "draft_shape_line": 65,
+    "logged_summary": "AnalystPlanningTurn logs counts/phases/status/timing, not full semantic draft.",
+    "summary_log_line": 664
+  },
+  "no_claim_about_chain_of_thought": true,
+  "new_provider_calls": 0,
+  "product_edits": false
+}

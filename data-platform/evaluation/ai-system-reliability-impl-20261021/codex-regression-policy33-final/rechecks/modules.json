@@ -1,0 +1,40 @@
+[
+  {
+    "module": "tests.test_agent_v23",
+    "returncode": 1,
+    "seconds": 11.174,
+    "tests": 24,
+    "failures": 0,
+    "errors": 1,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [
+      "tests.test_agent_v23.V23Tests.test_rich_dashboard_result_reuse_diversity_and_units"
+    ],
+    "passed_ids": [
+      "tests.test_agent_v23.V23Tests.test_approval_reuses_all_operations_zero_provider_calls",
+      "tests.test_agent_v23.V23Tests.test_approved_execution_failure_keeps_layer_attribution",
+      "tests.test_agent_v23.V23Tests.test_boundary_preserves_omission_and_never_overrides_explicit_values",
+      "tests.test_agent_v23.V23Tests.test_duplicate_invalid_signature_stops_after_one_repair",
+      "tests.test_agent_v23.V23Tests.test_exact_wire_shapes_compact_required_typed_and_non_mutating",
+      "tests.test_agent_v23.V23Tests.test_feedback_and_trace_bounded_value_free",
+      "tests.test_agent_v23.V23Tests.test_feedback_repairs_conflict_without_rediscovery",
+      "tests.test_agent_v23.V23Tests.test_http_no_execution_without_approval",
+      "tests.test_agent_v23.V23Tests.test_http_success_bad_contract_has_separate_diagnostics",
+      "tests.test_agent_v23.V23Tests.test_invalid_batch_atomic_and_domain_hard_constraint",
+      "tests.test_agent_v23.V23Tests.test_invalid_visual_fallback_keeps_every_metric",
+      "tests.test_agent_v23.V23Tests.test_latest_invalid_contract_is_terminal",
+      "tests.test_agent_v23.V23Tests.test_no_semantic_guessing",
+      "tests.test_agent_v23.V23Tests.test_old_error_does_not_mask_budget_exhaustion",
+      "tests.test_agent_v23.V23Tests.test_only_exposed_concepts_authorized",
+      "tests.test_agent_v23.V23Tests.test_partial_refinement_does_not_hide_failed_result_contract",
+      "tests.test_agent_v23.V23Tests.test_partial_refinement_merges_before_validation",
+      "tests.test_agent_v23.V23Tests.test_resolve_run_same_batch_bounded_lookup",
+      "tests.test_agent_v23.V23Tests.test_safe_defaults_paired_and_same_unit_multi_metrics",
+      "tests.test_agent_v23.V23Tests.test_simple_hcm_ranking_two_rounds_zero_sql_for_paraphrases",
+      "tests.test_agent_v23.V23Tests.test_snapshot_trend_and_scope_changing_support_rejected",
+      "tests.test_agent_v23.V23Tests.test_transport_failure_overrides_old_contract_error",
+      "tests.test_agent_v23.V23Tests.test_two_repair_budget_does_not_use_all_six_rounds"
+    ]
+  }
+]

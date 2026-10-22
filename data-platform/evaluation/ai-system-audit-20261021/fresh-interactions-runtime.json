@@ -1,0 +1,137 @@
+[
+  {
+    "case": "refinement-preflight",
+    "feedback": "dsfdsfsdfsd",
+    "result": {
+      "http_error": 409,
+      "detail": {
+        "detail": "Danh mục dữ liệu đã thay đổi. Hãy tạo lại phân tích."
+      }
+    }
+  },
+  {
+    "case": "refinement-preflight",
+    "feedback": "Chỉ lọc Hà Nội",
+    "result": {
+      "http_error": 409,
+      "detail": {
+        "detail": "Danh mục dữ liệu đã thay đổi. Hãy tạo lại phân tích."
+      }
+    }
+  },
+  {
+    "case": "refinement-preflight",
+    "feedback": "Chỉ tỉnh abcjdsakjd",
+    "result": {
+      "http_error": 409,
+      "detail": {
+        "detail": "Danh mục dữ liệu đã thay đổi. Hãy tạo lại phân tích."
+      }
+    }
+  },
+  {
+    "case": "refinement-preflight",
+    "feedback": "Chỉ lọc Ninh Thuận",
+    "result": {
+      "http_error": 409,
+      "detail": {
+        "detail": "Danh mục dữ liệu đã thay đổi. Hãy tạo lại phân tích."
+      }
+    }
+  },
+  {
+    "case": "refinement-preflight",
+    "feedback": "Đổi biểu đồ sang donut",
+    "result": {
+      "http_error": 409,
+      "detail": {
+        "detail": "Danh mục dữ liệu đã thay đổi. Hãy tạo lại phân tích."
+      }
+    }
+  },
+  {
+    "case": "reconcile-before-change",
+    "result": {
+      "numeric": [],
+      "ranking": [
+        {
+          "query_id": "q_84285c0c3a48633193b73f66",
+          "metric": "revenue",
+          "status": "matched",
+          "k": 5,
+          "exact_set_match": true,
+          "precision": 1.0,
+          "recall": 1.0,
+          "jaccard": 1.0,
+          "kendall_tau": 1.0,
+          "order_agreement": true
+        }
+      ],
+      "trend": [],
+      "independent_oracle": null,
+      "oracle_queries": 1,
+      "oracle_failures": 0,
+      "oracle_successes": 1,
+      "consistency": {
+        "status": "same_generation",
+        "report_epoch": "b7cce045a3d22457abe598532f0b13b3194ffc934fc55171076ead422d3682a6",
+        "oracle_epoch": "b7cce045a3d22457abe598532f0b13b3194ffc934fc55171076ead422d3682a6",
+        "reason": "same_observed_source_generations",
+        "basis": "Per-source replica generation vector; no source/formula independence claim"
+      },
+      "provider_calls": 0,
+      "measured_at": "2026-10-21T08:11:08.186055+00:00",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "session_revision": 1
+    }
+  },
+  {
+    "case": "filter-returned-rare-city",
+    "selection": {
+      "chart_id": "visual_1",
+      "query_id": "q_84285c0c3a48633193b73f66",
+      "lens_id": null,
+      "dimension_id": "city",
+      "operator": "eq",
+      "values": [
+        {
+          "type": "string",
+          "value": "Ninh Thuận"
+        }
+      ]
+    },
+    "result": {
+      "status": "needs_clarification",
+      "revision": null,
+      "message": "Có một phần phạm vi phân tích cần xác nhận. Vui lòng làm rõ yêu cầu.",
+      "failure": {
+        "stage": "PLAN_VALIDATION",
+        "code": "clarification",
+        "user_impact": "NEEDS_INPUT",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 0
+        },
+        "what_failed": "clarification",
+        "retry_helps": false,
+        "error_type": "AMBIGUOUS_REQUEST",
+        "analysis_state": "SUPPORTED_BUT_NEEDS_CLARIFICATION",
+        "analysis_stage": "SYSTEM_FAILURE",
+        "guidance": {
+          "title": "Cần thêm một lựa chọn",
+          "description": "Yêu cầu có nhiều cách hiểu cho kết quả khác nhau.",
+          "next_action": "answer_clarification"
+        },
+        "needs_user_input": true,
+        "recommended_server_action": "request_clarification"
+      },
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "analysis_coverage": null,
+      "http_error": null,
+      "detail": null
+    }
+  }
+]

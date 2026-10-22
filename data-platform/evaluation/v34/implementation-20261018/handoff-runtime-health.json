@@ -1,0 +1,14 @@
+{
+  "/health": {
+    "http": 200,
+    "status": "ok",
+    "warehouse_available": null,
+    "catalog_ready": null
+  },
+  "/api/readiness": {
+    "http": 200,
+    "status": "ready",
+    "warehouse_available": true,
+    "catalog_ready": true
+  }
+}

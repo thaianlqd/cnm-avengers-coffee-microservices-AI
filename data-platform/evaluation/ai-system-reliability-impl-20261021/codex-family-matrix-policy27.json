@@ -1,0 +1,659 @@
+{
+  "cases": [
+    {
+      "metric": "revenue",
+      "family": "sum",
+      "density": "rich",
+      "depth": "focused",
+      "expected_primary": 43892827,
+      "outcome": "success",
+      "quality": "verified",
+      "charts": 4,
+      "queries": 5,
+      "provider_calls": 0,
+      "actual_primary": 43892827.0
+    },
+    {
+      "metric": "revenue",
+      "family": "sum",
+      "density": "rich",
+      "depth": "deep",
+      "expected_primary": 43892827,
+      "outcome": "success",
+      "quality": "verified",
+      "charts": 6,
+      "queries": 7,
+      "provider_calls": 0,
+      "actual_primary": 43892827.0
+    },
+    {
+      "metric": "revenue",
+      "family": "sum",
+      "density": "rich",
+      "depth": "comprehensive",
+      "expected_primary": 43892827,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 7,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 43892827.0
+    },
+    {
+      "metric": "order_count",
+      "family": "count",
+      "density": "rich",
+      "depth": "focused",
+      "expected_primary": 400,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 3,
+      "queries": 4,
+      "provider_calls": 0,
+      "actual_primary": 400
+    },
+    {
+      "metric": "order_count",
+      "family": "count",
+      "density": "rich",
+      "depth": "deep",
+      "expected_primary": 400,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 6,
+      "queries": 7,
+      "provider_calls": 0,
+      "actual_primary": 400
+    },
+    {
+      "metric": "order_count",
+      "family": "count",
+      "density": "rich",
+      "depth": "comprehensive",
+      "expected_primary": 400,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 7,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 400
+    },
+    {
+      "metric": "purchasing_customer_count",
+      "family": "distinct",
+      "density": "rich",
+      "depth": "focused",
+      "expected_primary": 24,
+      "outcome": "guided_contract_invalid"
+    },
+    {
+      "metric": "purchasing_customer_count",
+      "family": "distinct",
+      "density": "rich",
+      "depth": "deep",
+      "expected_primary": 24,
+      "outcome": "guided_contract_invalid"
+    },
+    {
+      "metric": "purchasing_customer_count",
+      "family": "distinct",
+      "density": "rich",
+      "depth": "comprehensive",
+      "expected_primary": 24,
+      "outcome": "guided_contract_invalid"
+    },
+    {
+      "metric": "aov",
+      "family": "average",
+      "density": "rich",
+      "depth": "focused",
+      "expected_primary": 128717.96774193548,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 3,
+      "queries": 5,
+      "provider_calls": 0,
+      "actual_primary": 128717.96774193548
+    },
+    {
+      "metric": "aov",
+      "family": "average",
+      "density": "rich",
+      "depth": "deep",
+      "expected_primary": 128717.96774193548,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 4,
+      "queries": 6,
+      "provider_calls": 0,
+      "actual_primary": 128717.96774193548
+    },
+    {
+      "metric": "aov",
+      "family": "average",
+      "density": "rich",
+      "depth": "comprehensive",
+      "expected_primary": 128717.96774193548,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 6,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 128717.96774193548
+    },
+    {
+      "metric": "order_cancellation_rate",
+      "family": "ratio",
+      "density": "rich",
+      "depth": "focused",
+      "expected_primary": 14.97,
+      "outcome": "success",
+      "quality": "verified",
+      "charts": 4,
+      "queries": 6,
+      "provider_calls": 0,
+      "actual_primary": 14.97
+    },
+    {
+      "metric": "order_cancellation_rate",
+      "family": "ratio",
+      "density": "rich",
+      "depth": "deep",
+      "expected_primary": 14.97,
+      "outcome": "success",
+      "quality": "verified",
+      "charts": 6,
+      "queries": 7,
+      "provider_calls": 0,
+      "actual_primary": 14.97
+    },
+    {
+      "metric": "order_cancellation_rate",
+      "family": "ratio",
+      "density": "rich",
+      "depth": "comprehensive",
+      "expected_primary": 14.97,
+      "outcome": "success",
+      "quality": "verified",
+      "charts": 8,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 14.97
+    },
+    {
+      "metric": "late_shift_rate",
+      "family": "staff_ratio",
+      "density": "rich",
+      "depth": "focused",
+      "expected_primary": 9.47,
+      "outcome": "success",
+      "quality": "verified",
+      "charts": 4,
+      "queries": 6,
+      "provider_calls": 0,
+      "actual_primary": 9.47
+    },
+    {
+      "metric": "late_shift_rate",
+      "family": "staff_ratio",
+      "density": "rich",
+      "depth": "deep",
+      "expected_primary": 9.47,
+      "outcome": "success",
+      "quality": "verified",
+      "charts": 6,
+      "queries": 7,
+      "provider_calls": 0,
+      "actual_primary": 9.47
+    },
+    {
+      "metric": "late_shift_rate",
+      "family": "staff_ratio",
+      "density": "rich",
+      "depth": "comprehensive",
+      "expected_primary": 9.47,
+      "outcome": "success",
+      "quality": "verified",
+      "charts": 8,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 9.47
+    },
+    {
+      "metric": "stock_quantity",
+      "family": "snapshot",
+      "density": "rich",
+      "depth": "focused",
+      "expected_primary": 2052,
+      "outcome": "unsupported_metric"
+    },
+    {
+      "metric": "stock_quantity",
+      "family": "snapshot",
+      "density": "rich",
+      "depth": "deep",
+      "expected_primary": 2052,
+      "outcome": "unsupported_metric"
+    },
+    {
+      "metric": "stock_quantity",
+      "family": "snapshot",
+      "density": "rich",
+      "depth": "comprehensive",
+      "expected_primary": 2052,
+      "outcome": "unsupported_metric"
+    },
+    {
+      "metric": "revenue",
+      "family": "sum",
+      "density": "sparse",
+      "depth": "focused",
+      "expected_primary": 187247,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 5,
+      "provider_calls": 0,
+      "actual_primary": 187247.0
+    },
+    {
+      "metric": "revenue",
+      "family": "sum",
+      "density": "sparse",
+      "depth": "deep",
+      "expected_primary": 187247,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 7,
+      "provider_calls": 0,
+      "actual_primary": 187247.0
+    },
+    {
+      "metric": "revenue",
+      "family": "sum",
+      "density": "sparse",
+      "depth": "comprehensive",
+      "expected_primary": 187247,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 187247.0
+    },
+    {
+      "metric": "order_count",
+      "family": "count",
+      "density": "sparse",
+      "depth": "focused",
+      "expected_primary": 1,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 4,
+      "provider_calls": 0,
+      "actual_primary": 1
+    },
+    {
+      "metric": "order_count",
+      "family": "count",
+      "density": "sparse",
+      "depth": "deep",
+      "expected_primary": 1,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 7,
+      "provider_calls": 0,
+      "actual_primary": 1
+    },
+    {
+      "metric": "order_count",
+      "family": "count",
+      "density": "sparse",
+      "depth": "comprehensive",
+      "expected_primary": 1,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 1
+    },
+    {
+      "metric": "purchasing_customer_count",
+      "family": "distinct",
+      "density": "sparse",
+      "depth": "focused",
+      "expected_primary": 1,
+      "outcome": "guided_contract_invalid"
+    },
+    {
+      "metric": "purchasing_customer_count",
+      "family": "distinct",
+      "density": "sparse",
+      "depth": "deep",
+      "expected_primary": 1,
+      "outcome": "guided_contract_invalid"
+    },
+    {
+      "metric": "purchasing_customer_count",
+      "family": "distinct",
+      "density": "sparse",
+      "depth": "comprehensive",
+      "expected_primary": 1,
+      "outcome": "guided_contract_invalid"
+    },
+    {
+      "metric": "aov",
+      "family": "average",
+      "density": "sparse",
+      "depth": "focused",
+      "expected_primary": 187247.0,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 5,
+      "provider_calls": 0,
+      "actual_primary": 187247.0
+    },
+    {
+      "metric": "aov",
+      "family": "average",
+      "density": "sparse",
+      "depth": "deep",
+      "expected_primary": 187247.0,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 6,
+      "provider_calls": 0,
+      "actual_primary": 187247.0
+    },
+    {
+      "metric": "aov",
+      "family": "average",
+      "density": "sparse",
+      "depth": "comprehensive",
+      "expected_primary": 187247.0,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 187247.0
+    },
+    {
+      "metric": "order_cancellation_rate",
+      "family": "ratio",
+      "density": "sparse",
+      "depth": "focused",
+      "expected_primary": 0.0,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 6,
+      "provider_calls": 0,
+      "actual_primary": 0.0
+    },
+    {
+      "metric": "order_cancellation_rate",
+      "family": "ratio",
+      "density": "sparse",
+      "depth": "deep",
+      "expected_primary": 0.0,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 7,
+      "provider_calls": 0,
+      "actual_primary": 0.0
+    },
+    {
+      "metric": "order_cancellation_rate",
+      "family": "ratio",
+      "density": "sparse",
+      "depth": "comprehensive",
+      "expected_primary": 0.0,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 0.0
+    },
+    {
+      "metric": "late_shift_rate",
+      "family": "staff_ratio",
+      "density": "sparse",
+      "depth": "focused",
+      "expected_primary": 100.0,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 6,
+      "provider_calls": 0,
+      "actual_primary": 100.0
+    },
+    {
+      "metric": "late_shift_rate",
+      "family": "staff_ratio",
+      "density": "sparse",
+      "depth": "deep",
+      "expected_primary": 100.0,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 7,
+      "provider_calls": 0,
+      "actual_primary": 100.0
+    },
+    {
+      "metric": "late_shift_rate",
+      "family": "staff_ratio",
+      "density": "sparse",
+      "depth": "comprehensive",
+      "expected_primary": 100.0,
+      "outcome": "success",
+      "quality": "partially_verified",
+      "charts": 1,
+      "queries": 8,
+      "provider_calls": 0,
+      "actual_primary": 100.0
+    },
+    {
+      "metric": "stock_quantity",
+      "family": "snapshot",
+      "density": "sparse",
+      "depth": "focused",
+      "expected_primary": 42,
+      "outcome": "unsupported_metric"
+    },
+    {
+      "metric": "stock_quantity",
+      "family": "snapshot",
+      "density": "sparse",
+      "depth": "deep",
+      "expected_primary": 42,
+      "outcome": "unsupported_metric"
+    },
+    {
+      "metric": "stock_quantity",
+      "family": "snapshot",
+      "density": "sparse",
+      "depth": "comprehensive",
+      "expected_primary": 42,
+      "outcome": "unsupported_metric"
+    },
+    {
+      "metric": "revenue",
+      "family": "sum",
+      "density": "empty",
+      "depth": "focused",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "revenue",
+      "family": "sum",
+      "density": "empty",
+      "depth": "deep",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "revenue",
+      "family": "sum",
+      "density": "empty",
+      "depth": "comprehensive",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "order_count",
+      "family": "count",
+      "density": "empty",
+      "depth": "focused",
+      "expected_primary": 0,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "order_count",
+      "family": "count",
+      "density": "empty",
+      "depth": "deep",
+      "expected_primary": 0,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "order_count",
+      "family": "count",
+      "density": "empty",
+      "depth": "comprehensive",
+      "expected_primary": 0,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "purchasing_customer_count",
+      "family": "distinct",
+      "density": "empty",
+      "depth": "focused",
+      "expected_primary": 0,
+      "outcome": "guided_contract_invalid"
+    },
+    {
+      "metric": "purchasing_customer_count",
+      "family": "distinct",
+      "density": "empty",
+      "depth": "deep",
+      "expected_primary": 0,
+      "outcome": "guided_contract_invalid"
+    },
+    {
+      "metric": "purchasing_customer_count",
+      "family": "distinct",
+      "density": "empty",
+      "depth": "comprehensive",
+      "expected_primary": 0,
+      "outcome": "guided_contract_invalid"
+    },
+    {
+      "metric": "aov",
+      "family": "average",
+      "density": "empty",
+      "depth": "focused",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "aov",
+      "family": "average",
+      "density": "empty",
+      "depth": "deep",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "aov",
+      "family": "average",
+      "density": "empty",
+      "depth": "comprehensive",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "order_cancellation_rate",
+      "family": "ratio",
+      "density": "empty",
+      "depth": "focused",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "order_cancellation_rate",
+      "family": "ratio",
+      "density": "empty",
+      "depth": "deep",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "order_cancellation_rate",
+      "family": "ratio",
+      "density": "empty",
+      "depth": "comprehensive",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "late_shift_rate",
+      "family": "staff_ratio",
+      "density": "empty",
+      "depth": "focused",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "late_shift_rate",
+      "family": "staff_ratio",
+      "density": "empty",
+      "depth": "deep",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "late_shift_rate",
+      "family": "staff_ratio",
+      "density": "empty",
+      "depth": "comprehensive",
+      "expected_primary": null,
+      "outcome": "insufficient_data"
+    },
+    {
+      "metric": "stock_quantity",
+      "family": "snapshot",
+      "density": "empty",
+      "depth": "focused",
+      "expected_primary": null,
+      "outcome": "unsupported_metric"
+    },
+    {
+      "metric": "stock_quantity",
+      "family": "snapshot",
+      "density": "empty",
+      "depth": "deep",
+      "expected_primary": null,
+      "outcome": "unsupported_metric"
+    },
+    {
+      "metric": "stock_quantity",
+      "family": "snapshot",
+      "density": "empty",
+      "depth": "comprehensive",
+      "expected_primary": null,
+      "outcome": "unsupported_metric"
+    }
+  ],
+  "passed": false
+}

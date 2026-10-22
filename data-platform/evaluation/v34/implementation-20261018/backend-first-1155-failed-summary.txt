@@ -1,0 +1,25 @@
+== backend (log: /tmp/v34-current-full-backend/backend.log)
+ERROR: test_mixed_additive_average_default_targets_do_not_discard_aggregate (test_voucher_scope_v285.VoucherTests.test_mixed_additive_average_default_targets_do_not_discard_aggregate)
+ERROR: test_recorded_detail_and_guardrail_failure_now_single_interpretation (test_voucher_scope_v285.VoucherTests.test_recorded_detail_and_guardrail_failure_now_single_interpretation)
+ERROR: test_same_program_label_does_not_merge_codes (test_voucher_scope_v285.VoucherTests.test_same_program_label_does_not_merge_codes)
+ERROR: test_unmatched_code_retained_for_every_metric_and_denominator (test_voucher_scope_v285.VoucherTests.test_unmatched_code_retained_for_every_metric_and_denominator)
+ERROR: test_voucher_charts_and_conclusions_keep_code_identity (test_voucher_scope_v285.VoucherTests.test_voucher_charts_and_conclusions_keep_code_identity)
+FAIL: test_dynamic_catalog_capabilities_and_all_depths (test_domain_v25.DomainV25Tests.test_dynamic_catalog_capabilities_and_all_depths)
+FAIL: test_equivalent_metric_aliases_share_one_chart_without_losing_coverage (test_verifiable_v27.VerifiableV27Tests.test_equivalent_metric_aliases_share_one_chart_without_losing_coverage)
+Ran 1155 tests in 603.516s
+FAILED (failures=2, errors=5)
+  File "/app/tests/test_voucher_scope_v285.py", line 89, in test_mixed_additive_average_default_targets_do_not_discard_aggregate
+  File "/app/tests/test_voucher_scope_v285.py", line 49, in report
+    req=self.request(QUESTION);proposal=p.propose(req);p.executor.assert_not_called()
+  File "/app/services/agent_pipeline.py", line 447, in propose
+  File "/app/services/agent_pipeline.py", line 458, in _propose
+  File "/app/services/agent_pipeline.py", line 146, in guided_context
+    raise AnalysisError(category, decision['message'])
+services.analysis_catalog.AnalysisError: “chi phí” chưa có định nghĩa được quản trị. Kho chỉ có giá bán, không có giá vốn hay chi phí nên không tính được lợi nhuận.
+  File "/app/tests/test_voucher_scope_v285.py", line 61, in test_recorded_detail_and_guardrail_failure_now_single_interpretation
+  File "/app/tests/test_voucher_scope_v285.py", line 49, in report
+    req=self.request(QUESTION);proposal=p.propose(req);p.executor.assert_not_called()
+  File "/app/services/agent_pipeline.py", line 447, in propose
+  File "/app/services/agent_pipeline.py", line 458, in _propose
+  File "/app/services/agent_pipeline.py", line 146, in guided_context
+    raise AnalysisError(category, decision['message'])

@@ -1,0 +1,34 @@
+{
+  "url": "http://127.0.0.1:8501",
+  "assets": [
+    {
+      "url": "/assets/index-CzRz9zWn.css",
+      "sha256": "7c8d701cdde011472733d3ed42cba0e08b051337b92fc7e1b65755cef17a12f7",
+      "bytes": 89617,
+      "markers": {
+        "valid_orders": false,
+        "Nhận định từ biểu đồ": false,
+        "Toàn phạm vi": false,
+        "Phạm vi số liệu:": false
+      }
+    },
+    {
+      "url": "/assets/index-peyJMbSz.js",
+      "sha256": "85d4377a12c996c0e61373e16e296f75b3044f632c7c7f07cf842d235d118f20",
+      "bytes": 760033,
+      "markers": {
+        "valid_orders": true,
+        "Nhận định từ biểu đồ": true,
+        "Toàn phạm vi": true,
+        "Phạm vi số liệu:": true
+      }
+    }
+  ],
+  "backend": {
+    "image": "sha256:e9bf790e0cc6840e9d5df24a4bc612b5766949f63466d80fea9f0524ad53dbaf",
+    "started_at": "2026-10-21T18:36:12.407626841Z",
+    "health": "healthy"
+  },
+  "plan_policy": "2026-10-22.cohort-scope.29",
+  "input_policy": "1.2.2"
+}

@@ -1,0 +1,1446 @@
+{
+  "checked_at": "2026-10-21T03:30:31.538836+00:00",
+  "surface": "authenticated /api/ai/preflight through web-ui :8501",
+  "role": "DATA_ANALYST",
+  "baseline_only": true,
+  "scope": "Typing/preflight decisions only; no submit/propose/execute/refine or model interpretation was called.",
+  "cases": [
+    {
+      "id": "S01",
+      "family": "unknown_province",
+      "question": "phân tích doanh thu tỉnh abcjdsakjd",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S02",
+      "family": "mixed_known_unknown",
+      "question": "doanh thu Hà Nội và tỉnh abcjdsakjd tháng 9 năm 2026",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S03",
+      "family": "unknown_exclusion",
+      "question": "doanh thu miền Nam trừ tỉnh abcjdsakjd",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Bà Rịa - Vũng Tàu",
+            "display": "Bà Rịa - Vũng Tàu"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Bình Dương",
+            "display": "Bình Dương"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Cần Thơ",
+            "display": "Cần Thơ"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Kiên Giang",
+            "display": "Kiên Giang"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Đồng Nai",
+            "display": "Đồng Nai"
+          }
+        ],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S04",
+      "family": "valid_group_axis",
+      "question": "doanh thu theo tỉnh tháng 9 năm 2026",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S05",
+      "family": "valid_city_alias",
+      "question": "doanh thu tại TP.HCM tháng 9 năm 2026",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S06",
+      "family": "unknown_store",
+      "question": "doanh thu chi nhánh abcxyz",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "store_revenue",
+            "label": "Doanh thu chi nhánh",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S07",
+      "family": "unknown_product",
+      "question": "doanh thu sản phẩm abcxyz",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "product_revenue",
+            "label": "Doanh thu sản phẩm",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S08",
+      "family": "residual_token",
+      "question": "doanh thu abcxyz",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S09",
+      "family": "negative_top_n",
+      "question": "top -5 chi nhánh theo doanh thu",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "store",
+            "label": "Chi nhánh"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S10",
+      "family": "invalid_month",
+      "question": "doanh thu tháng 13 năm 2026",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S11",
+      "family": "conflicting_time",
+      "question": "doanh thu tháng 9 năm 2026 nhưng chỉ tháng 10 năm 2026",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S12",
+      "family": "unknown_payment_method",
+      "question": "doanh thu thanh toán bằng abcxyz tháng 9 năm 2026",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "payment_revenue",
+            "label": "Doanh thu thanh toán",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Giao dịch qua cổng thanh toán: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S13",
+      "family": "unknown_store_type",
+      "question": "doanh thu kiosk loại abcxyz",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "store_type",
+            "label": "Loại điểm bán",
+            "value": "KIOSK_NHUONG_QUYEN",
+            "display": "Kiosk nhượng quyền"
+          },
+          {
+            "dimension": "store_type",
+            "label": "Loại điểm bán",
+            "value": "KIOSK_VE_TINH",
+            "display": "Kiosk vệ tinh"
+          }
+        ],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S14",
+      "family": "unavailable_metric",
+      "question": "lợi nhuận ròng tháng 9 năm 2026",
+      "state": "NEEDS_INPUT",
+      "can_submit": false,
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [
+          {
+            "id": "profit_margin",
+            "phrase": "lợi nhuận"
+          }
+        ],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "unsupported_concept",
+          "message": "“lợi nhuận” chưa có định nghĩa được quản trị. Kho chỉ có giá bán, không có giá vốn hay chi phí nên không tính được lợi nhuận."
+        },
+        {
+          "level": "block",
+          "code": "unsupported_only",
+          "message": "Câu hỏi chỉ nêu khái niệm chưa có định nghĩa được quản trị; hãy chọn một chỉ số gần nhất để phân tích."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S15",
+      "family": "benign_colloquial",
+      "question": "b ơi xem giúp doanh thu Hà Nội tháng 9 năm 2026 với nhé :v",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S16",
+      "family": "scope_not_stated",
+      "question": "doanh thu tháng 9 năm 2026",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S17",
+      "family": "missing_scope_value",
+      "question": "doanh thu tại tỉnh",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S18",
+      "family": "numeric_only",
+      "question": "123456",
+      "state": "BLOCKED",
+      "can_submit": false,
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "unrecognized_question",
+          "message": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S19",
+      "family": "nonsense_only",
+      "question": "abcjdsakjd",
+      "state": "BLOCKED",
+      "can_submit": false,
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "unrecognized_question",
+          "message": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S20",
+      "family": "unknown_order_status",
+      "question": "số đơn trạng thái abcxyz",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "order_count",
+            "label": "Số lượng đơn",
+            "unit": "đơn",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "store_order_count",
+                "label": "Số đơn chi nhánh"
+              },
+              {
+                "id": "voucher_order_count",
+                "label": "Số đơn áp dụng khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“số đơn” được hiểu là số lượng đơn (chỉ số chuẩn). Chỉ số chuyên biệt như số đơn chi nhánh, số đơn áp dụng khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S21",
+      "family": "known_union",
+      "question": "doanh thu Hà Nội và Hồ Chí Minh tháng 9 năm 2026",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "S22",
+      "family": "unknown_delivery_mode",
+      "question": "doanh thu đơn giao bằng abcxyz",
+      "state": "READY_FOR_AI",
+      "can_submit": true,
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ."
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh."
+        }
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    }
+  ],
+  "interpretation_limits": [
+    "This is a typing/preflight baseline, not evidence that an invalid request executed SQL or produced a report.",
+    "READY_FOR_AI only permits interpretation in the current contract; it does not prove full understanding. The proposed plan requires stronger validation of critical unresolved clauses before this permission.",
+    "Expected handling of an entity missing from cache includes bounded authorized resolution; cache absence alone must not classify the entity as nonexistent."
+  ],
+  "review": {
+    "preflight_ready": 19,
+    "preflight_blocked": 2,
+    "preflight_needs_input": 1,
+    "critical_or_unresolved_cases_still_ready": [
+      "S01",
+      "S02",
+      "S03",
+      "S06",
+      "S07",
+      "S08",
+      "S09",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S17",
+      "S20",
+      "S22"
+    ],
+    "valid_control_cases": [
+      "S04",
+      "S05",
+      "S15",
+      "S16",
+      "S21"
+    ],
+    "already_stopped_controls": [
+      "S14",
+      "S18",
+      "S19"
+    ],
+    "all_provider_calls_zero": true,
+    "all_warehouse_queries_zero": true
+  },
+  "workspace_provenance": {
+    "branch": "branch_thaian",
+    "head": "790eae42026441bb74bc6a53dc29e08934846944",
+    "dirty_tree": true,
+    "note": "Source hashes captured during this audit; the runtime preflight receipt is not a full production execution trace.",
+    "source_sha256": {
+      "data-platform/analytics-api/services/preflight_service.py": "a78ebeda38430250d653eed75f5d574853841b9adfb669bbdbabeb2ab8ea01f2",
+      "data-platform/analytics-api/services/request_anchors.py": "03a32ee258cd86dcc48d35736524756b0e93adcd5813d46883209e005c0da41f",
+      "data-platform/analytics-api/services/scope_resolution_service.py": "12a51babfaa94078edba7711139fd9d656ca7a799bed6ac6f5802ee0ea3c8c32",
+      "data-platform/analytics-api/services/semantic_preflight_contract.py": "128bb92b48d1acc86e00a56c76f429ff8e9146cf84da7299eb2467209a42d4e2",
+      "data-platform/analytics-api/metadata/semantic_catalog.json": "275f628ff7314331c2546d74a08b8d31bf86e1c1855ca1682ef718a499575584",
+      "data-platform/web-ui/src/components/workspace/AnalystWorkspace.tsx": "4b2361b1ac062cec9ade62b584475a65fbfc2ff833a847e9c32ead2e39e3c024",
+      "data-platform/web-ui/src/utils/preflightPresentation.mjs": "a4b199b222a8722d6d61279b92de51e9b21f10ae619f7392e8ffb01f9259daf7"
+    }
+  }
+}

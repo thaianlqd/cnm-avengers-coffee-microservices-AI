@@ -1,0 +1,28 @@
+{
+  "version": "3.5.0",
+  "status": "passed",
+  "tests": 15,
+  "seconds": 144.974,
+  "modules": [
+    "integration_minio",
+    "integration_batch",
+    "integration_kafka"
+  ],
+  "external_provider_http": 0,
+  "resources": {
+    "test_cpu": 0.5,
+    "test_memory_mib": 768,
+    "minio_cpu": 0.1,
+    "minio_memory_mib": 512,
+    "kafka_cpu_initial": 0.15,
+    "kafka_cpu_final": 0.5,
+    "kafka_memory_mib": 512
+  },
+  "log": "/tmp/v35-current-pipeline-broker.log",
+  "observations": [
+    "Initial extreme0.15CPU broker produced actual offset-commit timeouts; changed disposable broker to0.5CPU, client recovered and all15tests passed without assertion/timeout changes",
+    "Image assembled offline from existing pinned Spark-jobs and Kafka-consumer dependencies; no package downloads",
+    "No production offset, group or volume changes"
+  ],
+  "observed_at": "2026-10-19T13:37:46.617431+00:00"
+}

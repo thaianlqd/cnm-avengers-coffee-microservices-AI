@@ -9,10 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY analytics-api/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . ./
+COPY analytics-api/ ./
+COPY pipeline-common/ /opt/pipeline-common/
+ENV PYTHONPATH=/app:/opt/pipeline-common
 
 EXPOSE 8000
 

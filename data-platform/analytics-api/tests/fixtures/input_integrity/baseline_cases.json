@@ -1,0 +1,134 @@
+[
+  {
+    "id": "S01",
+    "family": "unknown_province",
+    "question": "phân tích doanh thu tỉnh abcjdsakjd",
+    "can_submit": false
+  },
+  {
+    "id": "S02",
+    "family": "mixed_known_unknown",
+    "question": "doanh thu Hà Nội và tỉnh abcjdsakjd tháng 9 năm 2026",
+    "can_submit": false
+  },
+  {
+    "id": "S03",
+    "family": "unknown_exclusion",
+    "question": "doanh thu miền Nam trừ tỉnh abcjdsakjd",
+    "can_submit": false
+  },
+  {
+    "id": "S04",
+    "family": "valid_group_axis",
+    "question": "doanh thu theo tỉnh tháng 9 năm 2026",
+    "can_submit": true
+  },
+  {
+    "id": "S05",
+    "family": "valid_city_alias",
+    "question": "doanh thu tại TP.HCM tháng 9 năm 2026",
+    "can_submit": true
+  },
+  {
+    "id": "S06",
+    "family": "unknown_store",
+    "question": "doanh thu chi nhánh abcxyz",
+    "can_submit": false
+  },
+  {
+    "id": "S07",
+    "family": "unknown_product",
+    "question": "doanh thu sản phẩm abcxyz",
+    "can_submit": false
+  },
+  {
+    "id": "S08",
+    "family": "residual_token",
+    "question": "doanh thu abcxyz",
+    "can_submit": false
+  },
+  {
+    "id": "S09",
+    "family": "negative_top_n",
+    "question": "top -5 chi nhánh theo doanh thu",
+    "can_submit": false
+  },
+  {
+    "id": "S10",
+    "family": "invalid_month",
+    "question": "doanh thu tháng 13 năm 2026",
+    "can_submit": false
+  },
+  {
+    "id": "S11",
+    "family": "conflicting_time",
+    "question": "doanh thu tháng 9 năm 2026 nhưng chỉ tháng 10 năm 2026",
+    "can_submit": false
+  },
+  {
+    "id": "S12",
+    "family": "unknown_payment_method",
+    "question": "doanh thu thanh toán bằng abcxyz tháng 9 năm 2026",
+    "can_submit": false
+  },
+  {
+    "id": "S13",
+    "family": "unknown_store_type",
+    "question": "doanh thu kiosk loại abcxyz",
+    "can_submit": false
+  },
+  {
+    "id": "S14",
+    "family": "unavailable_metric",
+    "question": "lợi nhuận ròng tháng 9 năm 2026",
+    "can_submit": false
+  },
+  {
+    "id": "S15",
+    "family": "benign_colloquial",
+    "question": "b ơi xem giúp doanh thu Hà Nội tháng 9 năm 2026 với nhé :v",
+    "can_submit": true
+  },
+  {
+    "id": "S16",
+    "family": "scope_not_stated",
+    "question": "doanh thu tháng 9 năm 2026",
+    "can_submit": true
+  },
+  {
+    "id": "S17",
+    "family": "missing_scope_value",
+    "question": "doanh thu tại tỉnh",
+    "can_submit": false
+  },
+  {
+    "id": "S18",
+    "family": "numeric_only",
+    "question": "123456",
+    "can_submit": false
+  },
+  {
+    "id": "S19",
+    "family": "nonsense_only",
+    "question": "abcjdsakjd",
+    "can_submit": false
+  },
+  {
+    "id": "S20",
+    "family": "unknown_order_status",
+    "question": "số đơn trạng thái abcxyz",
+    "can_submit": false
+  },
+  {
+    "id": "S21",
+    "family": "known_union",
+    "question": "doanh thu Hà Nội và Hồ Chí Minh tháng 9 năm 2026",
+    "can_submit": true
+  },
+  {
+    "id": "S22",
+    "family": "unknown_delivery_mode",
+    "question": "doanh thu đơn giao bằng abcxyz",
+    "can_submit": false
+  }
+]

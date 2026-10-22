@@ -1,0 +1,1289 @@
+[
+  {
+    "case": "risk-edited",
+    "input": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh",
+    "resolved_tasks": [
+      {
+        "id": "q_0aa8328a6096cd1633362998",
+        "operation": "aggregate",
+        "metrics": [
+          "order_cancellation_rate"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_332502f988651c1246415411",
+        "operation": "aggregate",
+        "metrics": [
+          "delivery_success_rate"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_341b4887313da8e842801c42",
+        "operation": "aggregate",
+        "metrics": [
+          "large_cash_discrepancy_shift_count"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_3a273ebe2d250d1f9a4f96a6",
+        "operation": "aggregate",
+        "metrics": [
+          "late_shift_rate"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_6dbc58a67f370c6682185663",
+        "operation": "aggregate",
+        "metrics": [
+          "avg_store_rating"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_7132d9bb40ddc5062e7c92d5",
+        "operation": "aggregate",
+        "metrics": [
+          "avg_store_rating"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_87765795b9a5aa5fb23cc252",
+        "operation": "aggregate",
+        "metrics": [
+          "late_shift_rate"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_8f4eb150dc6a3b4582355fb3",
+        "operation": "aggregate",
+        "metrics": [
+          "paused_sale_positions"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_c2b835971ae6b9acc6119690",
+        "operation": "aggregate",
+        "metrics": [
+          "delivery_success_rate"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_dafa5bfa16bca49db0eba765",
+        "operation": "aggregate",
+        "metrics": [
+          "order_cancellation_rate"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Tỷ lệ hủy đơn: 4.68 % trong phạm vi đã chọn.",
+      "Tỷ lệ giao thành công: 96.4 % trong phạm vi đã chọn.",
+      "Tổng số ca lệch tiền lớn: 0 ca trong phạm vi đã chọn (6 nhóm có dữ liệu).",
+      "Tỷ lệ ca đi trễ: 6.9 % trong phạm vi đã chọn.",
+      "Tổng vị trí tạm ngưng bán: 3 vị trí trong phạm vi đã chọn (15 nhóm có dữ liệu).",
+      "Điểm phục vụ trung bình: 4.71 điểm trong phạm vi đã chọn."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2",
+      "visual_3",
+      "visual_4",
+      "visual_5",
+      "visual_6"
+    ],
+    "claim_ids": [
+      "q_0aa8328a6096cd1633362998:order_cancellation_rate:scalar:6230060e3b",
+      "q_332502f988651c1246415411:delivery_success_rate:scalar:6230060e3b",
+      "q_341b4887313da8e842801c42:large_cash_discrepancy_shift_count:scope_total:6230060e3b",
+      "q_341b4887313da8e842801c42:large_cash_discrepancy_shift_count:group_comparison:6230060e3b",
+      "q_3a273ebe2d250d1f9a4f96a6:late_shift_rate:group_comparison:6230060e3b",
+      "q_6dbc58a67f370c6682185663:avg_store_rating:scalar:6230060e3b",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:group_comparison:6230060e3b",
+      "q_87765795b9a5aa5fb23cc252:late_shift_rate:scalar:6230060e3b",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:scope_total:6230060e3b",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:group_comparison:6230060e3b",
+      "q_c2b835971ae6b9acc6119690:delivery_success_rate:group_comparison:6230060e3b",
+      "q_dafa5bfa16bca49db0eba765:order_cancellation_rate:group_comparison:6230060e3b",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:b2d29759fa",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:2a312273ae",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:98fe934300",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:3ca3109642",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:a3be7c4d0c",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:0a3035f529",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:5d6d51b8b8",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:c55988cae7",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:c9025450b1",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:c8adad9ee5",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:a53a1cf499",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:d6c420670b",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:1fb95be061",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:a5f48c99f0",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:6c7a24e3cd",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:369b5bf680",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:0af51eb62a",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:b17be47dcd",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:794ec99e9f",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:ce4a85da08",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:d2dce8fe70",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:f710660602",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:e8587d58f5",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:4646f67617",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:d5a103be97",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:0f4fe29b05",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:0d9614d1ae",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:5ca3eb5084",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:4e5c8902e5",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:c709c31640",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:e212cd7ec8",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:8d70b5e5ab",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:2a49e5bc91",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:3ad1d45673",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:415e92c192",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:f3ae57699c",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:708a076788",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:6fa5437d59",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:46371751b8",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:9522e76ad1",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:771d27715d",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:1ba868ad10",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:2c769ad143",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:e852d30318",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:907779c358",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:610f62a919",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:32a0779f47",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:0f725895ff",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:faa1c44500",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:b416e2e0eb",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:bc121f91a1",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:c1ee1a4148",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:60820d1ea9",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:8d286ec821",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:657b4556ba",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:ebaf9b3a54",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:0233a1d553",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:611f95514f",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:3835cea255",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:c6e38e41af",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:14219085eb",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:6674c2eda9",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:03a49e0b5e",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:7f413ec5ec",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:6affd4e1da",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:b8cf9c6e9b",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:79193a704a",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:4733fe1b40",
+      "q_7132d9bb40ddc5062e7c92d5:avg_store_rating:peer_gap:1f96405c1a",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:0e460ca56b",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:f0da315ce9",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:faf2790c34",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:75985fd797",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:76e82c3b9a",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:cc6bb4fd75",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:785f18e485",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:169d6ec5b9",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:d6db9e8059",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:3835cea255",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:79193a704a",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:64b99832f6",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:c01563250d",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:2d29e0cfc3",
+      "q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:peer_gap:25e4b89bb5"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "risk-explicit-scope",
+    "input": "Kiểm tra rủi ro vận hành tháng 9 năm 2026",
+    "resolved_tasks": [
+      {
+        "id": "q_25d0e62bd2a64d52732223b4",
+        "operation": "aggregate",
+        "metrics": [
+          "delivery_success_rate"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_6069a1d2d5d5f2dce619bc13",
+        "operation": "aggregate",
+        "metrics": [
+          "order_cancellation_rate"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_8262b47f549ffd558ee65c16",
+        "operation": "aggregate",
+        "metrics": [
+          "late_shift_rate"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_8b89a232b3e4c1152dfa9cdf",
+        "operation": "aggregate",
+        "metrics": [
+          "paused_sale_positions"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_b1ab0d34325f99b53dac4bda",
+        "operation": "aggregate",
+        "metrics": [
+          "large_cash_discrepancy_shift_count"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_e1f89f588cb554b8efca1579",
+        "operation": "aggregate",
+        "metrics": [
+          "avg_store_rating"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_e9518e350b412f6e2be5a832",
+        "operation": "aggregate",
+        "metrics": [
+          "late_shift_rate"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_f1abcaa54f995997add99272",
+        "operation": "aggregate",
+        "metrics": [
+          "delivery_success_rate"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_fdddae565e2b304bdb2890e3",
+        "operation": "aggregate",
+        "metrics": [
+          "order_cancellation_rate"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_ff52ad16576bed1961223b16",
+        "operation": "aggregate",
+        "metrics": [
+          "avg_store_rating"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Tỷ lệ hủy đơn: 4.68 % trong phạm vi đã chọn.",
+      "Tỷ lệ giao thành công: 96.4 % trong phạm vi đã chọn.",
+      "Tổng số ca lệch tiền lớn: 0 ca trong phạm vi đã chọn (6 nhóm có dữ liệu).",
+      "Tỷ lệ ca đi trễ: 6.9 % trong phạm vi đã chọn.",
+      "Tổng vị trí tạm ngưng bán: 3 vị trí trong phạm vi đã chọn (15 nhóm có dữ liệu).",
+      "Điểm phục vụ trung bình: 4.71 điểm trong phạm vi đã chọn."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2",
+      "visual_3",
+      "visual_4",
+      "visual_5",
+      "visual_6"
+    ],
+    "claim_ids": [
+      "q_25d0e62bd2a64d52732223b4:delivery_success_rate:scalar:6230060e3b",
+      "q_6069a1d2d5d5f2dce619bc13:order_cancellation_rate:group_comparison:6230060e3b",
+      "q_8262b47f549ffd558ee65c16:late_shift_rate:group_comparison:6230060e3b",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:scope_total:6230060e3b",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:group_comparison:6230060e3b",
+      "q_b1ab0d34325f99b53dac4bda:large_cash_discrepancy_shift_count:scope_total:6230060e3b",
+      "q_b1ab0d34325f99b53dac4bda:large_cash_discrepancy_shift_count:group_comparison:6230060e3b",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:group_comparison:6230060e3b",
+      "q_e9518e350b412f6e2be5a832:late_shift_rate:scalar:6230060e3b",
+      "q_f1abcaa54f995997add99272:delivery_success_rate:group_comparison:6230060e3b",
+      "q_fdddae565e2b304bdb2890e3:order_cancellation_rate:scalar:6230060e3b",
+      "q_ff52ad16576bed1961223b16:avg_store_rating:scalar:6230060e3b",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:0e460ca56b",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:f0da315ce9",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:faf2790c34",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:75985fd797",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:76e82c3b9a",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:cc6bb4fd75",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:785f18e485",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:169d6ec5b9",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:d6db9e8059",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:3835cea255",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:79193a704a",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:64b99832f6",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:c01563250d",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:2d29e0cfc3",
+      "q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:peer_gap:25e4b89bb5",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:b2d29759fa",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:2a312273ae",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:98fe934300",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:3ca3109642",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:a3be7c4d0c",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:0a3035f529",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:5d6d51b8b8",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:c55988cae7",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:c9025450b1",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:c8adad9ee5",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:a53a1cf499",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:d6c420670b",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:1fb95be061",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:a5f48c99f0",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:6c7a24e3cd",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:369b5bf680",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:0af51eb62a",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:b17be47dcd",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:794ec99e9f",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:ce4a85da08",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:d2dce8fe70",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:f710660602",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:e8587d58f5",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:4646f67617",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:d5a103be97",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:0f4fe29b05",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:0d9614d1ae",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:5ca3eb5084",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:4e5c8902e5",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:c709c31640",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:e212cd7ec8",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:8d70b5e5ab",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:2a49e5bc91",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:3ad1d45673",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:415e92c192",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:f3ae57699c",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:708a076788",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:6fa5437d59",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:46371751b8",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:9522e76ad1",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:771d27715d",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:1ba868ad10",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:2c769ad143",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:e852d30318",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:907779c358",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:610f62a919",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:32a0779f47",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:0f725895ff",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:faa1c44500",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:b416e2e0eb",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:bc121f91a1",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:c1ee1a4148",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:60820d1ea9",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:8d286ec821",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:657b4556ba",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:ebaf9b3a54",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:0233a1d553",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:611f95514f",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:3835cea255",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:c6e38e41af",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:14219085eb",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:6674c2eda9",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:03a49e0b5e",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:7f413ec5ec",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:6affd4e1da",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:b8cf9c6e9b",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:79193a704a",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:4733fe1b40",
+      "q_e1f89f588cb554b8efca1579:avg_store_rating:peer_gap:1f96405c1a"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "risk-followup",
+    "input": "Top 5 chi nhánh có tỷ lệ hủy đơn cao nhất",
+    "resolved_tasks": [
+      {
+        "id": "q_2aff4c126d4cc014a696e2c8",
+        "operation": "ranking",
+        "metrics": [
+          "order_cancellation_rate"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Highlands Coffee Central Garden D1 đứng đầu xếp hạng: 100 % theo tỷ lệ hủy đơn."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2",
+      "visual_3",
+      "visual_4"
+    ],
+    "claim_ids": [
+      "q_2aff4c126d4cc014a696e2c8:order_cancellation_rate:leader:6230060e3b",
+      "q_2aff4c126d4cc014a696e2c8:order_cancellation_rate:top_gap:6230060e3b",
+      "q_517856311a48d910045e4334:cancelled_terminal_order_count:scope_total:6230060e3b",
+      "q_517856311a48d910045e4334:cancelled_terminal_order_count:group_comparison:6230060e3b",
+      "q_517856311a48d910045e4334:order_cancellation_rate:group_comparison:6230060e3b",
+      "q_517856311a48d910045e4334:terminal_order_count:scope_total:6230060e3b",
+      "q_517856311a48d910045e4334:terminal_order_count:group_comparison:6230060e3b",
+      "q_73da3e91c8598b7d60c5227f:order_cancellation_rate:change:6230060e3b",
+      "q_73da3e91c8598b7d60c5227f:order_cancellation_rate:extrema:6230060e3b",
+      "q_962619aa4433bc41bfc1b700:cancelled_terminal_order_count:scope_total:6230060e3b",
+      "q_962619aa4433bc41bfc1b700:cancelled_terminal_order_count:group_comparison:6230060e3b",
+      "q_962619aa4433bc41bfc1b700:order_cancellation_rate:group_comparison:6230060e3b",
+      "q_962619aa4433bc41bfc1b700:terminal_order_count:scope_total:6230060e3b",
+      "q_962619aa4433bc41bfc1b700:terminal_order_count:group_comparison:6230060e3b",
+      "q_9b41fc91c188bd2816a8e406:cancelled_terminal_order_count:scalar:6230060e3b",
+      "q_9b41fc91c188bd2816a8e406:order_cancellation_rate:scalar:6230060e3b",
+      "q_9b41fc91c188bd2816a8e406:terminal_order_count:scalar:6230060e3b"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "overview-scoped",
+    "input": "Tình hình doanh thu tháng 9 năm 2026 tại Hồ Chí Minh",
+    "resolved_tasks": [
+      {
+        "id": "q_efe0ea52fab76b9ff59669b0",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "city"
+        ],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Tổng doanh thu: 154,577,000 VND trong phạm vi đã chọn (1 nhóm có dữ liệu)."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2",
+      "visual_5",
+      "visual_6"
+    ],
+    "claim_ids": [
+      "q_efe0ea52fab76b9ff59669b0:revenue:scope_total:6230060e3b",
+      "q_efe0ea52fab76b9ff59669b0:revenue:scalar:6230060e3b",
+      "q_19007a5390ff0ff9407fefe3:revenue:change:fe21c339fa",
+      "q_19007a5390ff0ff9407fefe3:revenue:extrema:fe21c339fa",
+      "q_19007a5390ff0ff9407fefe3:revenue:change:f0edeeaf83",
+      "q_19007a5390ff0ff9407fefe3:revenue:extrema:f0edeeaf83",
+      "q_19007a5390ff0ff9407fefe3:revenue:change:aa76e5338a",
+      "q_19007a5390ff0ff9407fefe3:revenue:extrema:aa76e5338a",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:scope_total:6230060e3b",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:group_comparison:6230060e3b",
+      "q_aa6ac54c56d1bc53014e38d7:revenue:change:6230060e3b",
+      "q_aa6ac54c56d1bc53014e38d7:revenue:extrema:6230060e3b",
+      "q_b4ec5f9c8e209fa69b71c4a5:revenue:scope_total:6230060e3b",
+      "q_b4ec5f9c8e209fa69b71c4a5:revenue:group_comparison:6230060e3b",
+      "q_d59292fceecc5eb35d27107f:revenue:scope_total:6230060e3b",
+      "q_d59292fceecc5eb35d27107f:revenue:concentration:6230060e3b",
+      "q_ea0e8cf884cb7bc5ddf35297:revenue:scope_total:6230060e3b",
+      "q_ea0e8cf884cb7bc5ddf35297:revenue:group_comparison:6230060e3b",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:4c1ecfdc6f",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:b2d29759fa",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:8442636190",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:0e460ca56b",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:90a51ff952",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:2761d69df3",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:853995135e",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:5ebee1edf2",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:d99934b146",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:51b9864190",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:98fe934300",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:b6ca087c62",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:260f771529",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:fc7636bd48",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:41e5e1a9db",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:b15c439e96",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:5cbcce7906",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:56cdd14991",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:0db3f17eb1",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:3ca3109642",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:376e787a09",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:22d30ba563",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:0cbf46024e",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:1bbb81d74a",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:315b6b4c4f",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:f6741ed56c",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:fe962cc2bf",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:e0c510b3a1",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:a3be7c4d0c",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:39787fc591",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:0a3035f529",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:ca38b7963a",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:5d6d51b8b8",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:c55988cae7",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:963eb8f176",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:f0da315ce9",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:c9025450b1",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:c8adad9ee5",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:53231441ec",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:bc49e4812d",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:e511e198e6",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:2d2d1cc597",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:a53a1cf499",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:f38dcaac87",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:e8d1412cd3",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:f90ee13559",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:a3b63c57db",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:b9bdbf5444",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:19bf98d37f",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:8cf3da18e5",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:11b31abdfb",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:1644d58cf5",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:426391adf9",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:c2317ff4be",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:fb2a4d3fbb",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:2b77fc3393",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:d6c420670b",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:00fb52c43a",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:105749552b",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:8d5a4bb3d9",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:737299c4d9",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:7d218e3d17",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:28f0937e82",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:881502dd43",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:d2e59c9b69",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:47c9ced0f2",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:59d3e0dc0a",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:af70adcd43",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:962ea15638",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:96c4ac7009",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:1fb95be061",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:342339e300",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:a5f48c99f0",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:4521d711d3",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:06f06dd959",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:6c7a24e3cd",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:90b6f3cfa2",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:2e66d64fb8",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:dc571ee779",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:974d8f25e3",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:da816c9ba3",
+      "q_463da5c6e55fc92c67e7b0b8:revenue:peer_gap:c974207946"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "compare",
+    "input": "So sánh doanh thu theo tỉnh/thành giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+    "resolved_tasks": [
+      {
+        "id": "q_bbbfd263f60514cc928b35c9",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "city"
+        ],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Trong 2 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh (154,577,000 VND), thấp nhất ở Hà Nội (96,171,000 VND); chênh lệch là 58,406,000 VND."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2",
+      "visual_4",
+      "visual_5"
+    ],
+    "claim_ids": [
+      "q_bbbfd263f60514cc928b35c9:revenue:scope_total:6230060e3b",
+      "q_bbbfd263f60514cc928b35c9:revenue:group_comparison:6230060e3b",
+      "q_658458f8f4057e47d1466dca:revenue:scope_total:6230060e3b",
+      "q_658458f8f4057e47d1466dca:revenue:group_comparison:6230060e3b",
+      "q_84b2dd79f1a9a607c63255b4:revenue:scope_total:6230060e3b",
+      "q_84b2dd79f1a9a607c63255b4:revenue:group_comparison:6230060e3b",
+      "q_855712105d039de029b8e8ee:revenue:change:fe21c339fa",
+      "q_855712105d039de029b8e8ee:revenue:extrema:fe21c339fa",
+      "q_855712105d039de029b8e8ee:revenue:change:f0edeeaf83",
+      "q_855712105d039de029b8e8ee:revenue:extrema:f0edeeaf83",
+      "q_855712105d039de029b8e8ee:revenue:change:aa76e5338a",
+      "q_855712105d039de029b8e8ee:revenue:extrema:aa76e5338a",
+      "q_c14d2ad82e45d972a4931639:revenue:scope_total:6230060e3b",
+      "q_c14d2ad82e45d972a4931639:revenue:group_comparison:6230060e3b",
+      "q_cd69f672ea2c3fba345cc5e1:revenue:change:6230060e3b",
+      "q_cd69f672ea2c3fba345cc5e1:revenue:extrema:6230060e3b",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:877693f01c",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:c50bd44d31",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:4c1ecfdc6f",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:b2d29759fa",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:54b0eaa6a2",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:8442636190",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:0e460ca56b",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:90a51ff952",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:2761d69df3",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:853995135e",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:5ebee1edf2",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:d99934b146",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:51b9864190",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:98fe934300",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:b6ca087c62",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:260f771529",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:829290e233",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:7a5c4933ae",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:fc7636bd48",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:41e5e1a9db",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:b15c439e96",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:5cbcce7906",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:56cdd14991",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:0db3f17eb1",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:3ca3109642",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:833ed0242b",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:cb83f63101",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:376e787a09",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:2494d35b83",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:45d79e903f",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:22d30ba563",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:0cbf46024e",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:1bbb81d74a",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:315b6b4c4f",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:f6741ed56c",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:fe962cc2bf",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:e0c510b3a1",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:a3be7c4d0c",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:39787fc591",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:0a3035f529",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:ca38b7963a",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:5d6d51b8b8",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:c55988cae7",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:963eb8f176",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:f0da315ce9",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:c9025450b1",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:e4d8b6d8ad",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:c8adad9ee5",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:53231441ec",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:ea76ac6aa2",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:bc49e4812d",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:e511e198e6",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:205e955266",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:2d2d1cc597",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:a53a1cf499",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:c1129bfc6a",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:f38dcaac87",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:e8d1412cd3",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:f90ee13559",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:a3b63c57db",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:8d690cfe35",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:be19bffec2",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:f46f5ae69a",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:b9bdbf5444",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:19bf98d37f",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:177d7d9dcf",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:46fc13a535",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:8cf3da18e5",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:11b31abdfb",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:5844e4c1be",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:1644d58cf5",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:a90a2f710e",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:682fdd624a",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:426391adf9",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:6408adb9bf",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:c2317ff4be",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:385713984d",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:0eb4f7b859",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:43460bc722",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:e8c25179e1",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:92337836fc",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:d1af50a1a4",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:8a942cdb76",
+      "q_84b2dd79f1a9a607c63255b4:revenue:peer_gap:fb2a4d3fbb"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "bottom-five",
+    "input": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026",
+    "resolved_tasks": [
+      {
+        "id": "q_84285c0c3a48633193b73f66",
+        "operation": "ranking",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "city"
+        ],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2",
+      "visual_3",
+      "visual_4",
+      "visual_5"
+    ],
+    "claim_ids": [
+      "q_84285c0c3a48633193b73f66:revenue:leader:6230060e3b",
+      "q_84285c0c3a48633193b73f66:revenue:top_gap:6230060e3b",
+      "q_84285c0c3a48633193b73f66:revenue:selected_total:6230060e3b",
+      "q_1d18f72ca6c2102b54886980:revenue:change:fe21c339fa",
+      "q_1d18f72ca6c2102b54886980:revenue:extrema:fe21c339fa",
+      "q_6e5af6b96f89b7a06371c004:revenue:scope_total:6230060e3b",
+      "q_6e5af6b96f89b7a06371c004:revenue:group_comparison:6230060e3b",
+      "q_c551db73f57b79989bb47245:revenue:change:6230060e3b",
+      "q_c551db73f57b79989bb47245:revenue:extrema:6230060e3b",
+      "q_cc356cc5d74b52502d8a3515:revenue:scope_total:6230060e3b",
+      "q_cc356cc5d74b52502d8a3515:revenue:group_comparison:6230060e3b",
+      "q_dc1ffe12bcc26979caf7bef3:revenue:scope_total:6230060e3b",
+      "q_dc1ffe12bcc26979caf7bef3:revenue:group_comparison:6230060e3b",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:67ac460174",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:6169df0d43",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:e9d3308a3a",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:53d8fa0638",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:7ecb04c258",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:0580cb919e"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "trend-scoped",
+    "input": "Xu hướng doanh thu theo tuần tháng 9 năm 2026 tại Hồ Chí Minh",
+    "resolved_tasks": [
+      {
+        "id": "q_4b0811876de71f6cfc1d7c13",
+        "operation": "trend",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Doanh thu thay đổi từ 41,170,000 thành 31,919,000 VND giữa kỳ 2026-09-07 và 2026-09-21 (-22.47%). Chỉ đối chiếu kỳ đầy đủ; 2 kỳ biên chưa đủ ngày vẫn có trên biểu đồ."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_3",
+      "visual_5",
+      "visual_6"
+    ],
+    "claim_ids": [
+      "q_4b0811876de71f6cfc1d7c13:revenue:change:6230060e3b",
+      "q_4b0811876de71f6cfc1d7c13:revenue:extrema:6230060e3b",
+      "q_1fae057fcfaa597109d8e930:revenue:scope_total:6230060e3b",
+      "q_1fae057fcfaa597109d8e930:revenue:group_comparison:6230060e3b",
+      "q_967a2c95167d70e0087bc8aa:revenue:scope_total:6230060e3b",
+      "q_967a2c95167d70e0087bc8aa:revenue:group_comparison:6230060e3b",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:scope_total:6230060e3b",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:group_comparison:6230060e3b",
+      "q_ae534f37bc40d06918688ec4:revenue:change:fe21c339fa",
+      "q_ae534f37bc40d06918688ec4:revenue:extrema:fe21c339fa",
+      "q_ae534f37bc40d06918688ec4:revenue:change:f0edeeaf83",
+      "q_ae534f37bc40d06918688ec4:revenue:extrema:f0edeeaf83",
+      "q_ae534f37bc40d06918688ec4:revenue:change:aa76e5338a",
+      "q_ae534f37bc40d06918688ec4:revenue:extrema:aa76e5338a",
+      "q_ee0ec03ff243f64a69494ddc:revenue:scope_total:6230060e3b",
+      "q_ee0ec03ff243f64a69494ddc:revenue:group_comparison:6230060e3b",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:4c1ecfdc6f",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:b2d29759fa",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:8442636190",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:0e460ca56b",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:90a51ff952",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:2761d69df3",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:853995135e",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:5ebee1edf2",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:d99934b146",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:51b9864190",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:98fe934300",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:b6ca087c62",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:260f771529",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:fc7636bd48",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:41e5e1a9db",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:b15c439e96",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:5cbcce7906",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:56cdd14991",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:0db3f17eb1",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:3ca3109642",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:376e787a09",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:22d30ba563",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:0cbf46024e",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:1bbb81d74a",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:315b6b4c4f",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:f6741ed56c",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:fe962cc2bf",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:e0c510b3a1",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:a3be7c4d0c",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:39787fc591",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:0a3035f529",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:ca38b7963a",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:5d6d51b8b8",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:c55988cae7",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:963eb8f176",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:f0da315ce9",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:c9025450b1",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:c8adad9ee5",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:53231441ec",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:bc49e4812d",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:e511e198e6",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:2d2d1cc597",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:a53a1cf499",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:f38dcaac87",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:e8d1412cd3",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:f90ee13559",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:a3b63c57db",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:b9bdbf5444",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:19bf98d37f",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:8cf3da18e5",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:11b31abdfb",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:1644d58cf5",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:426391adf9",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:c2317ff4be",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:fb2a4d3fbb",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:2b77fc3393",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:d6c420670b",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:00fb52c43a",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:105749552b",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:8d5a4bb3d9",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:737299c4d9",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:7d218e3d17",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:28f0937e82",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:881502dd43",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:d2e59c9b69",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:47c9ced0f2",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:59d3e0dc0a",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:af70adcd43",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:962ea15638",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:96c4ac7009",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:1fb95be061",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:342339e300",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:a5f48c99f0",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:4521d711d3",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:06f06dd959",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:6c7a24e3cd",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:90b6f3cfa2",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:2e66d64fb8",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:dc571ee779",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:974d8f25e3",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:da816c9ba3",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:c974207946",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:26d2873083",
+      "q_9ecb7ea01fc4ac865ad48734:revenue:peer_gap:2c02b04f96"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "composition",
+    "input": "Cơ cấu doanh thu theo phương thức thanh toán tháng 9 năm 2026",
+    "resolved_tasks": [
+      {
+        "id": "q_14769897035a9daa452ba2e6",
+        "operation": "distribution",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "payment_method"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_7ea5a3c1504cf524808515ec",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Doanh thu: 440,072,000 VND trong phạm vi đã chọn."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2",
+      "visual_3",
+      "visual_5",
+      "visual_6"
+    ],
+    "claim_ids": [
+      "q_14769897035a9daa452ba2e6:revenue:scope_total:6230060e3b",
+      "q_14769897035a9daa452ba2e6:revenue:concentration:6230060e3b",
+      "q_7ea5a3c1504cf524808515ec:revenue:scalar:6230060e3b",
+      "q_1d18f72ca6c2102b54886980:revenue:change:fe21c339fa",
+      "q_1d18f72ca6c2102b54886980:revenue:extrema:fe21c339fa",
+      "q_1d18f72ca6c2102b54886980:revenue:change:f0edeeaf83",
+      "q_1d18f72ca6c2102b54886980:revenue:extrema:f0edeeaf83",
+      "q_1d18f72ca6c2102b54886980:revenue:change:aa76e5338a",
+      "q_1d18f72ca6c2102b54886980:revenue:extrema:aa76e5338a",
+      "q_2bc14c39c283a94a3d482730:revenue:scope_total:6230060e3b",
+      "q_2bc14c39c283a94a3d482730:revenue:group_comparison:6230060e3b",
+      "q_6e5af6b96f89b7a06371c004:revenue:scope_total:6230060e3b",
+      "q_6e5af6b96f89b7a06371c004:revenue:group_comparison:6230060e3b",
+      "q_ae2d228ea6c8cdd6f8a39ecd:revenue:scope_total:6230060e3b",
+      "q_ae2d228ea6c8cdd6f8a39ecd:revenue:concentration:6230060e3b",
+      "q_c551db73f57b79989bb47245:revenue:change:6230060e3b",
+      "q_c551db73f57b79989bb47245:revenue:extrema:6230060e3b",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:e86be8feda",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:877693f01c",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:c50bd44d31",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:4c1ecfdc6f",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:b2d29759fa",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:54b0eaa6a2",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:8442636190",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:2291cc18a6",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:0e460ca56b",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:90a51ff952",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:2761d69df3",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:853995135e",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:5ebee1edf2",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:d99934b146",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:676af80300",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:51b9864190",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:98fe934300",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:b6ca087c62",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:260f771529",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:829290e233",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:7a5c4933ae",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:fc7636bd48",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:41e5e1a9db",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:b15c439e96",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:5cbcce7906",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:56cdd14991",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:92bf245297",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:0db3f17eb1",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:7afe528360",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:3ca3109642",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:833ed0242b",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:cb83f63101",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:376e787a09",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:2494d35b83",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:45d79e903f",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:22d30ba563",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:0cbf46024e",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:1bbb81d74a",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:315b6b4c4f",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:f6741ed56c",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:fe962cc2bf",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:e0c510b3a1",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:a3be7c4d0c",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:39787fc591",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:0a3035f529",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:ca38b7963a",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:5d6d51b8b8",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:c55988cae7",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:963eb8f176",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:f0da315ce9",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:c9025450b1",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:94b367ea56",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:e4d8b6d8ad",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:c8adad9ee5",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:53231441ec",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:ea76ac6aa2",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:bc49e4812d",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:e511e198e6",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:205e955266",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:2910660993",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:2d2d1cc597",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:a53a1cf499",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:c1129bfc6a",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:f38dcaac87",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:e8d1412cd3",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:f90ee13559",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:a3b63c57db",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:8d690cfe35",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:be19bffec2",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:f46f5ae69a",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:6b8aaebb43",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:3a376e3df0",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:b9bdbf5444",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:19bf98d37f",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:177d7d9dcf",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:9e9af52bd4",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:a34cfab309",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:46fc13a535",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:8cf3da18e5",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:11b31abdfb",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:5844e4c1be",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:1644d58cf5",
+      "q_6e5af6b96f89b7a06371c004:revenue:peer_gap:a90a2f710e"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "forecast",
+    "input": "Dự báo doanh thu 3 tháng tới",
+    "resolved_tasks": [
+      {
+        "id": "q_490363cd53014da1f1f16f68",
+        "operation": "trend",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Dự báo doanh thu 3 tháng tới: kỳ cuối 421,7 triệu VND (khoảng 80%: 365,3 triệu VND – 478,2 triệu VND); tổng các kỳ dự báo 1,3 tỷ VND."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2"
+    ],
+    "claim_ids": [
+      "q_490363cd53014da1f1f16f68:revenue:change:6230060e3b",
+      "q_490363cd53014da1f1f16f68:revenue:extrema:6230060e3b",
+      "q_7c3e230b863b175ef96a1b5f:revenue:change:fe21c339fa",
+      "q_7c3e230b863b175ef96a1b5f:revenue:extrema:fe21c339fa",
+      "q_7c3e230b863b175ef96a1b5f:revenue:change:f0edeeaf83",
+      "q_7c3e230b863b175ef96a1b5f:revenue:extrema:f0edeeaf83",
+      "q_7c3e230b863b175ef96a1b5f:revenue:change:aa76e5338a",
+      "q_7c3e230b863b175ef96a1b5f:revenue:extrema:aa76e5338a"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "relationship",
+    "input": "Liên hệ giữa tổng chuyến giao và điểm hồ sơ tài xế theo mã tài xế tháng 9 năm 2026",
+    "resolved_tasks": [],
+    "primary_answer": null,
+    "view_ids": [],
+    "claim_ids": [],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "unsupported"
+  },
+  {
+    "case": "multi-clause",
+    "input": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026; phân tích chi nhánh và phương thức thanh toán chỉ trong 5 tỉnh này",
+    "resolved_tasks": [
+      {
+        "id": "q_769c8994e929285eac64a45f",
+        "operation": "ranking",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "city"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_13b4871a3ba1b2d9a205d010",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "store"
+        ],
+        "cohort_scope_query_id": "q_769c8994e929285eac64a45f"
+      },
+      {
+        "id": "q_4d01e4d9db160aa0a55402d5",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "payment_method"
+        ],
+        "cohort_scope_query_id": "q_769c8994e929285eac64a45f"
+      }
+    ],
+    "primary_answer": [
+      "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu.",
+      "Tổng doanh thu: 1,071,000 VND trong phạm vi đã chọn (6 nhóm có dữ liệu). Phạm vi: trong Bottom 5 của xếp hạng chính.",
+      "Tổng doanh thu: 1,071,000 VND trong phạm vi đã chọn (4 nhóm có dữ liệu). Phạm vi: trong Bottom 5 của xếp hạng chính."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2",
+      "visual_3",
+      "visual_4",
+      "visual_5",
+      "visual_6"
+    ],
+    "claim_ids": [
+      "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+      "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b",
+      "q_769c8994e929285eac64a45f:revenue:selected_total:6230060e3b",
+      "q_13b4871a3ba1b2d9a205d010:revenue:scope_total:6230060e3b",
+      "q_13b4871a3ba1b2d9a205d010:revenue:group_comparison:6230060e3b",
+      "q_4d01e4d9db160aa0a55402d5:revenue:scope_total:6230060e3b",
+      "q_4d01e4d9db160aa0a55402d5:revenue:group_comparison:6230060e3b",
+      "q_1a1f973307134af10ed8cc36:revenue:group_comparison:6230060e3b",
+      "q_380fdcb57b2691ba3086fb93:revenue:change:fe21c339fa",
+      "q_380fdcb57b2691ba3086fb93:revenue:extrema:fe21c339fa",
+      "q_af27c95380796d3a6603bc2f:revenue:group_comparison:6230060e3b",
+      "q_c551db73f57b79989bb47245:revenue:change:6230060e3b",
+      "q_c551db73f57b79989bb47245:revenue:extrema:6230060e3b",
+      "q_13b4871a3ba1b2d9a205d010:revenue:peer_gap:67ac460174",
+      "q_13b4871a3ba1b2d9a205d010:revenue:peer_gap:6169df0d43",
+      "q_13b4871a3ba1b2d9a205d010:revenue:peer_gap:e9d3308a3a",
+      "q_13b4871a3ba1b2d9a205d010:revenue:peer_gap:53d8fa0638",
+      "q_13b4871a3ba1b2d9a205d010:revenue:peer_gap:7ecb04c258",
+      "q_13b4871a3ba1b2d9a205d010:revenue:peer_gap:0580cb919e"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  },
+  {
+    "case": "casual",
+    "input": "tháng 9 năm 2026 ở HCM bán được bao nhiêu?",
+    "resolved_tasks": [
+      {
+        "id": "q_2d6bfd94888f033636aa5161",
+        "operation": "aggregate",
+        "metrics": [
+          "quantity_sold"
+        ],
+        "group_by": [
+          "city"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_3ee51636c6e0571bfce014fe",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [
+          "city"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_5c8efa42b7478bd479b12c45",
+        "operation": "aggregate",
+        "metrics": [
+          "order_count"
+        ],
+        "group_by": [
+          "city"
+        ],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_5e5c491e98778a989d995107",
+        "operation": "aggregate",
+        "metrics": [
+          "revenue"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_730d0d82b4748e746fc99db3",
+        "operation": "aggregate",
+        "metrics": [
+          "order_count"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      },
+      {
+        "id": "q_f3a80d47cfc2cad49f3d5c6d",
+        "operation": "aggregate",
+        "metrics": [
+          "quantity_sold"
+        ],
+        "group_by": [],
+        "cohort_scope_query_id": null
+      }
+    ],
+    "primary_answer": [
+      "Doanh thu: 154,577,000 VND trong phạm vi đã chọn.",
+      "Số lượng đơn: 1,431 đơn trong phạm vi đã chọn.",
+      "Số lượng sản phẩm bán: 3,142 sản phẩm trong phạm vi đã chọn.",
+      "Tổng số lượng sản phẩm bán: 3,142 sản phẩm trong phạm vi đã chọn (1 nhóm có dữ liệu).",
+      "Tổng doanh thu: 154,577,000 VND trong phạm vi đã chọn (1 nhóm có dữ liệu).",
+      "Tổng số lượng đơn: 1,431 đơn trong phạm vi đã chọn (1 nhóm có dữ liệu)."
+    ],
+    "view_ids": [
+      "visual_1",
+      "visual_2"
+    ],
+    "claim_ids": [
+      "q_2d6bfd94888f033636aa5161:quantity_sold:scope_total:6230060e3b",
+      "q_2d6bfd94888f033636aa5161:quantity_sold:scalar:6230060e3b",
+      "q_3ee51636c6e0571bfce014fe:revenue:scope_total:6230060e3b",
+      "q_3ee51636c6e0571bfce014fe:revenue:scalar:6230060e3b",
+      "q_5c8efa42b7478bd479b12c45:order_count:scope_total:6230060e3b",
+      "q_5c8efa42b7478bd479b12c45:order_count:scalar:6230060e3b",
+      "q_5e5c491e98778a989d995107:revenue:scalar:6230060e3b",
+      "q_730d0d82b4748e746fc99db3:order_count:scalar:6230060e3b",
+      "q_f3a80d47cfc2cad49f3d5c6d:quantity_sold:scalar:6230060e3b",
+      "q_36c5c882d61ff4a2852ef49c:order_count:change:6230060e3b",
+      "q_36c5c882d61ff4a2852ef49c:order_count:extrema:6230060e3b",
+      "q_918b471a9af7bfe7d7204d4f:order_count:scope_total:6230060e3b",
+      "q_918b471a9af7bfe7d7204d4f:order_count:concentration:6230060e3b"
+    ],
+    "oracle_receipt": "codex-qualification-policy27-warehouse-oracles.json",
+    "outcome": "completed"
+  }
+]

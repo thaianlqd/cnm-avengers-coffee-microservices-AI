@@ -1,0 +1,34 @@
+AVENGERS COFFEE SUPPLY CHAIN & BI PLATFORM DỮ LIỆU TẦNG SILVER LAKE
+Giá trị dữ liệu quan sát: 13/13 đạt. 13/13 ô chỉ số có giá trị; ô thiếu không được xem là số 0.
+Phép tính được yêu cầu: 1/1 đạt. 1/1 phép tính yêu cầu có đủ quan sát và bằng chứng.
+Bằng chứng: 76/76 đạt. 76/76 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu,
+không phải đối chứng dữ liệu độc lập.
+Biểu đồ: 6/6 đạt. 1/1 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ.
+Giới hạn dữ liệu: 9/9 đạt. 9/9 giới hạn dữ liệu được công bố.
+Yêu cầu bằng chứng: 1/1 đạt. 1/1 vai trò phân tích bắt buộc có bằng chứng.
+Quần thể và mẫu số: 5/5 đạt. Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm.
+Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ.
+Nguồn gốc kết quả: 5/5 đạt. Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận
+dữ liệu nguồn độc lập.
+Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ.
+Điểm kiểm chứng đối chiếu phạm vi, số liệu và bằng chứng; không phải xác suất AI trả lời đúng.
+Đã thực hiện: Đơn hàng và doanh thu
+Chưa thể xác minh: Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.; Chưa có đáp án
+đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.
+Giới hạn dữ liệu: Nguồn Đơn hàng chi tiết và doanh thu: quan sát đến chưa rõ; Độ đầy đủ dữ liệu nguồn chưa được
+chứng minh; MIN/MAX không chứng minh nguồn đầy đủ.; Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa
+đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.; Doanh thu:
+Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.; Tập Bottom N
+được chọn; không đại diện cơ cấu toàn bộ.; Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.;
+Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.; Chỉ số đối chiếu bổ sung được tính toán
+độc lập theo định nghĩa riêng.; Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.
+II. CÁC CHỈ SỐ HIỆU SUẤT CỐT LÕI (KEY METRICS)
+CHÊNH LỆCH HẠNG 1–2
+TỔNG CỦA TẬP BOTTOM N
+100 VND
+700 VND
+Chỉ số Silver
+Chỉ số Silver
+Tài liệu nội bộ bảo mật • Bản quyền thuộc Avengers Coffee Data
+Platform
+Định dạng chuẩn Microsoft Word (.docx)

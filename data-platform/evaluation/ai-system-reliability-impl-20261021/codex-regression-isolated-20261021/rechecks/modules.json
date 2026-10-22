@@ -1,0 +1,24 @@
+[
+  {
+    "module": "tests.test_one_click_semantics",
+    "returncode": 0,
+    "seconds": 16.409,
+    "tests": 14,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  },
+  {
+    "module": "tests.test_v32_mission_reliability",
+    "returncode": 0,
+    "seconds": 23.581,
+    "tests": 43,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": []
+  }
+]

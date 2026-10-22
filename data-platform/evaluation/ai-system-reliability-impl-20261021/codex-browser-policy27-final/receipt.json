@@ -1,0 +1,846 @@
+[
+  {
+    "id": "ranking-focused",
+    "mission": "ranking",
+    "depth": "focused",
+    "started_at": "2026-10-21T18:11:58.451Z",
+    "map_cohort": {
+      "cities": [
+        "Ninh Thuận",
+        "Sóc Trăng",
+        "Bạc Liêu",
+        "Trà Vinh",
+        "Quảng Trị"
+      ],
+      "revenue": 1071000,
+      "valid_orders": 12,
+      "aov": 89250,
+      "displayed_aov": "89.250 ₫"
+    },
+    "status": "PASS",
+    "payload": {
+      "question": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "focused",
+      "analysis_mission": "ranking",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "n": 5,
+        "direction": "bottom"
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 4,
+    "queries": 4,
+    "quality": "verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Bottom 5 theo doanh thu.\n\nThể hiện: Doanh thu của 5 tỉnh/thành trong dữ liệu, xếp từ cao đến thấp.\n\nCao nhất: Quảng Trị với 300.000 VND (28% tổng).\nThấp nhất: Ninh Thuận với 112.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 72,5% tổng doanh thu của phạm vi.\n\nLưu ý: Biểu đồ chỉ gồm tập Bottom N được chọn (Bottom 5); không đại diện cơ cấu toàn bộ phạm vi.",
+        "facts": 2
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các chi nhánh?.\n\nThể hiện: Doanh thu của 6 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị với 300.000 VND (28% tổng).\nThấp nhất: Highlands Coffee Vincom Trà Vinh với 110.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 64,3% tổng doanh thu của phạm vi.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Chỉ số biến động thế nào theo thời gian?.\n\nThể hiện: Diễn biến doanh thu qua 8 kỳ.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-28: tăng 88.000 VND (+80%)\nKỳ cao nhất: 2026-09-19 với 235.000 VND.\n\nDiễn giải: Doanh thu tăng giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Doanh thu của 3 hình thức nhận hàng, xếp từ cao đến thấp.\n\nCao nhất: Dùng tại chỗ với 509.000 VND (47,5% tổng).\nThấp nhất: Giao tận nơi với 222.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "bace8a20-fc27-476e-a5b4-8311f9eee55e",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "compare-focused",
+    "mission": "compare",
+    "depth": "focused",
+    "started_at": "2026-10-21T18:12:10.615Z",
+    "status": "PASS",
+    "payload": {
+      "question": "So sánh doanh thu theo tỉnh/thành trong dữ liệu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "focused",
+      "analysis_mission": "compare",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "group_a": "Hồ Chí Minh",
+        "group_b": "Hà Nội"
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 3,
+    "queries": 4,
+    "quality": "partially_verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: So sánh doanh thu giữa Hồ Chí Minh và Hà Nội.\n\nThể hiện: Doanh thu của 2 tỉnh/thành trong dữ liệu, xếp từ cao đến thấp.\n\nCao nhất: Hồ Chí Minh với 154,6 triệu VND (61,6% tổng).\nHồ Chí Minh cao hơn Hà Nội 58,4 triệu VND (+60,7%) trong phạm vi đã chọn.\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 58,4 triệu VND.",
+        "facts": 2
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Doanh thu của 3 hình thức nhận hàng, xếp từ cao đến thấp.\n\nCao nhất: Dùng tại chỗ với 117,3 triệu VND (46,8% tổng).\nThấp nhất: Giao tận nơi với 50,9 triệu VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.",
+        "facts": 2
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Chỉ số biến động thế nào theo thời gian?.\n\nThể hiện: Diễn biến doanh thu qua 30 kỳ.\n\nTừ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: giảm 1,5 triệu VND (-18,7%)\nKỳ cao nhất: 2026-09-19 với 12,3 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.",
+        "facts": 2
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "69b05118-df27-4b7a-b52f-43fd988aa0fd",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "risk_watch-focused",
+    "mission": "risk_watch",
+    "depth": "focused",
+    "started_at": "2026-10-21T18:12:18.152Z",
+    "status": "PASS",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "focused",
+      "analysis_scope": {
+        "mode": "selected",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh"
+            ]
+          }
+        ]
+      },
+      "analysis_mission": "risk_watch",
+      "input_mode": "guided",
+      "guided_contract": {
+        "signals": [
+          "order_cancellation_high",
+          "delivery_success_low",
+          "cash_discrepancy_high",
+          "late_shift_high",
+          "paused_positions_exist",
+          "store_rating_low"
+        ]
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 6,
+    "queries": 10,
+    "quality": "verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Tỷ lệ hủy đơn cao.\n\nThể hiện: Tỷ lệ hủy đơn của 417 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Highlands Coffee Central Garden D1 với 100%.\nThấp nhất: Xuân Thủy với 0%.\n58/417 chi nhánh / mã chi nhánh vượt ngưỡng tỷ lệ hủy đơn cao (> 8%).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 100 điểm %.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Biểu đồ chỉ hiển thị một phần nhóm; số liệu phân tích dùng toàn bộ phạm vi. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra tỷ lệ hủy đơn tại Highlands Coffee Central Garden D1 (100%). · Kiểm tra tỷ lệ hủy đơn tại Highlands Coffee KCN Bau Bang Dinh Duong (75%).",
+        "facts": 3
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Tỷ lệ ca đi trễ cao.\n\nThể hiện: Tỷ lệ ca đi trễ của 6 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Lakai với 13,8%.\nThấp nhất: TTC Ung Văn Khiêm với 3,3%.\n0/6 chi nhánh / mã chi nhánh vượt ngưỡng tỷ lệ ca đi trễ cao (> 15%).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 10 điểm %.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.",
+        "facts": 3
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Có vị trí món × điểm bán đang tạm ngưng bán (hiện trạng).\n\nThể hiện: Vị trí tạm ngưng bán của 15 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Highlands Coffee Điện Biên Phủ với 2 vị trí (66,7% tổng).\nThấp nhất: Tùng Thiện Vương với 0 vị trí.\n2/15 chi nhánh / mã chi nhánh vượt ngưỡng có vị trí món × điểm bán đang tạm ngưng bán (> 0 vị trí).\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng vị trí tạm ngưng bán của phạm vi.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra vị trí tạm ngưng bán tại Highlands Coffee Điện Biên Phủ (2 vị trí). · Kiểm tra vị trí tạm ngưng bán tại Highlands Coffee D9 Tân Phú (1 vị trí).",
+        "facts": 3
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Có ca lệch tiền lớn (> 500.000 VND/ca).\n\nThể hiện: Số ca lệch tiền lớn của 6 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Avengers Coffee - Vincom Đồng Khởi với 0 ca.\nThấp nhất: Tùng Thiện Vương với 0 ca.\n0/6 chi nhánh / mã chi nhánh vượt ngưỡng có ca lệch tiền lớn (> 500.000 vnd/ca) (> 0 ca).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 0 ca.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp.",
+        "facts": 3
+      },
+      {
+        "chart": 4,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Điểm đánh giá chi nhánh thấp.\n\nThể hiện: Điểm phục vụ trung bình của 69 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: 1180 Quang Trung với 5 điểm.\nThấp nhất: L16 Him Lam với 3 điểm.\n2/69 chi nhánh / mã chi nhánh vượt ngưỡng điểm đánh giá chi nhánh thấp (< 3,5 điểm).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 2 điểm.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra điểm phục vụ trung bình tại Highlands Coffee Sun Village (3 điểm). · Kiểm tra điểm phục vụ trung bình tại L16 Him Lam (3 điểm).",
+        "facts": 3
+      },
+      {
+        "chart": 5,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Tỷ lệ giao thành công thấp.\n\nThể hiện: Tỷ lệ giao thành công của 214 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: 184 Lâm Văn Bền với 100%.\nThấp nhất: Highlands Coffee UrBan Hill D7 với 0%.\n10/214 chi nhánh / mã chi nhánh vượt ngưỡng tỷ lệ giao thành công thấp (< 90%).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 100 điểm %.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Biểu đồ chỉ hiển thị một phần nhóm; số liệu phân tích dùng toàn bộ phạm vi. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra tỷ lệ giao thành công tại Highlands Coffee 158 Pham Van Chieu (0%). · Kiểm tra tỷ lệ giao thành công tại Highlands Coffee 26A Hoang Viet HCM (0%).",
+        "facts": 3
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "5f08e447-b2ec-4f8f-806f-d93468856acc",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "trend-focused",
+    "mission": "trend",
+    "depth": "focused",
+    "started_at": "2026-10-21T18:12:27.552Z",
+    "status": "PASS",
+    "payload": {
+      "question": "Xu hướng doanh thu theo tuần tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "focused",
+      "analysis_mission": "trend",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "granularity": "week"
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 2,
+    "queries": 4,
+    "quality": "partially_verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Xu hướng doanh thu.\n\nThể hiện: Diễn biến doanh thu qua 5 kỳ.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-21: giảm 2,1 triệu VND (-2,1%)\nKỳ cao nhất: 2026-09-14 với 105,2 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: 2 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ.",
+        "facts": 2
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Doanh thu của 3 hình thức nhận hàng, xếp từ cao đến thấp.\n\nCao nhất: Dùng tại chỗ với 198 triệu VND (45% tổng).\nThấp nhất: Giao tận nơi với 84,2 triệu VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.",
+        "facts": 2
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "dab0d268-8639-4c73-baff-e236da61976f",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "ranking-deep",
+    "mission": "ranking",
+    "depth": "deep",
+    "started_at": "2026-10-21T18:12:38.507Z",
+    "map_cohort": {
+      "cities": [
+        "Ninh Thuận",
+        "Sóc Trăng",
+        "Bạc Liêu",
+        "Trà Vinh",
+        "Quảng Trị"
+      ],
+      "revenue": 1071000,
+      "valid_orders": 12,
+      "aov": 89250,
+      "displayed_aov": "89.250 ₫"
+    },
+    "status": "PASS",
+    "payload": {
+      "question": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "deep",
+      "analysis_mission": "ranking",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "n": 5,
+        "direction": "bottom"
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 5,
+    "queries": 6,
+    "quality": "verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Bottom 5 theo doanh thu.\n\nThể hiện: Doanh thu của 5 tỉnh/thành trong dữ liệu, xếp từ cao đến thấp.\n\nCao nhất: Quảng Trị với 300.000 VND (28% tổng).\nThấp nhất: Ninh Thuận với 112.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 72,5% tổng doanh thu của phạm vi.\n\nLưu ý: Biểu đồ chỉ gồm tập Bottom N được chọn (Bottom 5); không đại diện cơ cấu toàn bộ phạm vi.",
+        "facts": 2
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các chi nhánh?.\n\nThể hiện: Doanh thu của 6 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị với 300.000 VND (28% tổng).\nThấp nhất: Highlands Coffee Vincom Trà Vinh với 110.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 64,3% tổng doanh thu của phạm vi.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các phương thức thanh toán?.\n\nThể hiện: Doanh thu của 4 phương thức thanh toán, xếp từ cao đến thấp.\n\nCao nhất: Thanh toán khi nhận hàng với 362.000 VND (33,8% tổng).\nThấp nhất: VNPay với 110.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 89,7% tổng doanh thu của phạm vi.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Chỉ số biến động thế nào theo thời gian?.\n\nThể hiện: Diễn biến doanh thu qua 8 kỳ.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-28: tăng 88.000 VND (+80%)\nKỳ cao nhất: 2026-09-19 với 235.000 VND.\n\nDiễn giải: Doanh thu tăng giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      },
+      {
+        "chart": 4,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Doanh thu của 3 hình thức nhận hàng, xếp từ cao đến thấp.\n\nCao nhất: Dùng tại chỗ với 509.000 VND (47,5% tổng).\nThấp nhất: Giao tận nơi với 222.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "585089e2-e90d-4462-b3ab-c44a546bd0b0",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "compare-deep",
+    "mission": "compare",
+    "depth": "deep",
+    "started_at": "2026-10-21T18:12:48.242Z",
+    "status": "PASS",
+    "payload": {
+      "question": "So sánh doanh thu theo tỉnh/thành trong dữ liệu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "deep",
+      "analysis_mission": "compare",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "group_a": "Hồ Chí Minh",
+        "group_b": "Hà Nội"
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 4,
+    "queries": 6,
+    "quality": "partially_verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: So sánh doanh thu giữa Hồ Chí Minh và Hà Nội.\n\nThể hiện: Doanh thu của 2 tỉnh/thành trong dữ liệu, xếp từ cao đến thấp.\n\nCao nhất: Hồ Chí Minh với 154,6 triệu VND (61,6% tổng).\nHồ Chí Minh cao hơn Hà Nội 58,4 triệu VND (+60,7%) trong phạm vi đã chọn.\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 58,4 triệu VND.",
+        "facts": 2
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Doanh thu của 3 hình thức nhận hàng, xếp từ cao đến thấp.\n\nCao nhất: Dùng tại chỗ với 117,3 triệu VND (46,8% tổng).\nThấp nhất: Giao tận nơi với 50,9 triệu VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.",
+        "facts": 2
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Chỉ số biến động thế nào theo thời gian?.\n\nThể hiện: Diễn biến doanh thu qua 30 kỳ.\n\nTừ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: giảm 1,5 triệu VND (-18,7%)\nKỳ cao nhất: 2026-09-19 với 12,3 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.",
+        "facts": 2
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?.\n\nThể hiện: Diễn biến doanh thu qua 30 kỳ, chia theo 3 nhóm.\n\nTừ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: giảm 1,7 triệu VND (-21,9%)\nKỳ cao nhất: 2026-09-19 với 12,1 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "b5263359-0a5d-411d-b73d-d54f534ab2de",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "risk_watch-deep",
+    "mission": "risk_watch",
+    "depth": "deep",
+    "started_at": "2026-10-21T18:12:55.990Z",
+    "status": "PASS",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "deep",
+      "analysis_scope": {
+        "mode": "selected",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh"
+            ]
+          }
+        ]
+      },
+      "analysis_mission": "risk_watch",
+      "input_mode": "guided",
+      "guided_contract": {
+        "signals": [
+          "order_cancellation_high",
+          "delivery_success_low",
+          "cash_discrepancy_high",
+          "late_shift_high",
+          "paused_positions_exist",
+          "store_rating_low"
+        ]
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 6,
+    "queries": 10,
+    "quality": "verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Tỷ lệ hủy đơn cao.\n\nThể hiện: Tỷ lệ hủy đơn của 417 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Highlands Coffee Central Garden D1 với 100%.\nThấp nhất: Xuân Thủy với 0%.\n58/417 chi nhánh / mã chi nhánh vượt ngưỡng tỷ lệ hủy đơn cao (> 8%).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 100 điểm %.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Biểu đồ chỉ hiển thị một phần nhóm; số liệu phân tích dùng toàn bộ phạm vi. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra tỷ lệ hủy đơn tại Highlands Coffee Central Garden D1 (100%). · Kiểm tra tỷ lệ hủy đơn tại Highlands Coffee KCN Bau Bang Dinh Duong (75%).",
+        "facts": 3
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Tỷ lệ ca đi trễ cao.\n\nThể hiện: Tỷ lệ ca đi trễ của 6 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Lakai với 13,8%.\nThấp nhất: TTC Ung Văn Khiêm với 3,3%.\n0/6 chi nhánh / mã chi nhánh vượt ngưỡng tỷ lệ ca đi trễ cao (> 15%).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 10 điểm %.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.",
+        "facts": 3
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Có vị trí món × điểm bán đang tạm ngưng bán (hiện trạng).\n\nThể hiện: Vị trí tạm ngưng bán của 15 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Highlands Coffee Điện Biên Phủ với 2 vị trí (66,7% tổng).\nThấp nhất: Tùng Thiện Vương với 0 vị trí.\n2/15 chi nhánh / mã chi nhánh vượt ngưỡng có vị trí món × điểm bán đang tạm ngưng bán (> 0 vị trí).\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng vị trí tạm ngưng bán của phạm vi.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra vị trí tạm ngưng bán tại Highlands Coffee Điện Biên Phủ (2 vị trí). · Kiểm tra vị trí tạm ngưng bán tại Highlands Coffee D9 Tân Phú (1 vị trí).",
+        "facts": 3
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Có ca lệch tiền lớn (> 500.000 VND/ca).\n\nThể hiện: Số ca lệch tiền lớn của 6 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Avengers Coffee - Vincom Đồng Khởi với 0 ca.\nThấp nhất: Tùng Thiện Vương với 0 ca.\n0/6 chi nhánh / mã chi nhánh vượt ngưỡng có ca lệch tiền lớn (> 500.000 vnd/ca) (> 0 ca).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 0 ca.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp.",
+        "facts": 3
+      },
+      {
+        "chart": 4,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Điểm đánh giá chi nhánh thấp.\n\nThể hiện: Điểm phục vụ trung bình của 69 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: 1180 Quang Trung với 5 điểm.\nThấp nhất: L16 Him Lam với 3 điểm.\n2/69 chi nhánh / mã chi nhánh vượt ngưỡng điểm đánh giá chi nhánh thấp (< 3,5 điểm).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 2 điểm.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra điểm phục vụ trung bình tại Highlands Coffee Sun Village (3 điểm). · Kiểm tra điểm phục vụ trung bình tại L16 Him Lam (3 điểm).",
+        "facts": 3
+      },
+      {
+        "chart": 5,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Tỷ lệ giao thành công thấp.\n\nThể hiện: Tỷ lệ giao thành công của 214 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: 184 Lâm Văn Bền với 100%.\nThấp nhất: Highlands Coffee UrBan Hill D7 với 0%.\n10/214 chi nhánh / mã chi nhánh vượt ngưỡng tỷ lệ giao thành công thấp (< 90%).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 100 điểm %.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Biểu đồ chỉ hiển thị một phần nhóm; số liệu phân tích dùng toàn bộ phạm vi. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra tỷ lệ giao thành công tại Highlands Coffee 158 Pham Van Chieu (0%). · Kiểm tra tỷ lệ giao thành công tại Highlands Coffee 26A Hoang Viet HCM (0%).",
+        "facts": 3
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "a8fd4372-60ad-4064-b688-a2264d1981d4",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "trend-deep",
+    "mission": "trend",
+    "depth": "deep",
+    "started_at": "2026-10-21T18:13:08.036Z",
+    "status": "PASS",
+    "payload": {
+      "question": "Xu hướng doanh thu theo tuần tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "deep",
+      "analysis_mission": "trend",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "granularity": "week"
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 4,
+    "queries": 6,
+    "quality": "partially_verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Xu hướng doanh thu.\n\nThể hiện: Diễn biến doanh thu qua 5 kỳ.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-21: giảm 2,1 triệu VND (-2,1%)\nKỳ cao nhất: 2026-09-14 với 105,2 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: 2 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ.",
+        "facts": 2
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?.\n\nThể hiện: Diễn biến doanh thu qua 5 kỳ, chia theo 3 nhóm.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-21: giảm 530.000 VND (-0,5%)\nKỳ cao nhất: 2026-09-14 với 101,1 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: 2 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ. Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Doanh thu của 3 hình thức nhận hàng, xếp từ cao đến thấp.\n\nCao nhất: Dùng tại chỗ với 198 triệu VND (45% tổng).\nThấp nhất: Giao tận nơi với 84,2 triệu VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.",
+        "facts": 2
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các loại điểm bán?.\n\nThể hiện: Doanh thu của 3 loại điểm bán, xếp từ cao đến thấp.\n\nCao nhất: Chi nhánh chính với 420,6 triệu VND (95,6% tổng).\nThấp nhất: Kiosk vệ tinh với 3,1 triệu VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.",
+        "facts": 2
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "56b3d023-b36b-43f7-83e6-566a6f4aed85",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "ranking-comprehensive",
+    "mission": "ranking",
+    "depth": "comprehensive",
+    "started_at": "2026-10-21T18:13:22.455Z",
+    "map_cohort": {
+      "cities": [
+        "Ninh Thuận",
+        "Sóc Trăng",
+        "Bạc Liêu",
+        "Trà Vinh",
+        "Quảng Trị"
+      ],
+      "revenue": 1071000,
+      "valid_orders": 12,
+      "aov": 89250,
+      "displayed_aov": "89.250 ₫"
+    },
+    "status": "PASS",
+    "payload": {
+      "question": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "comprehensive",
+      "analysis_mission": "ranking",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "n": 5,
+        "direction": "bottom"
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 7,
+    "queries": 8,
+    "quality": "verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Bottom 5 theo doanh thu.\n\nThể hiện: Doanh thu của 5 tỉnh/thành trong dữ liệu, xếp từ cao đến thấp.\n\nCao nhất: Quảng Trị với 300.000 VND (28% tổng).\nThấp nhất: Ninh Thuận với 112.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 72,5% tổng doanh thu của phạm vi.\n\nLưu ý: Biểu đồ chỉ gồm tập Bottom N được chọn (Bottom 5); không đại diện cơ cấu toàn bộ phạm vi.",
+        "facts": 2
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các chi nhánh?.\n\nThể hiện: Doanh thu của 6 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị với 300.000 VND (28% tổng).\nThấp nhất: Highlands Coffee Vincom Trà Vinh với 110.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 64,3% tổng doanh thu của phạm vi.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các phương thức thanh toán?.\n\nThể hiện: Doanh thu của 4 phương thức thanh toán, xếp từ cao đến thấp.\n\nCao nhất: Thanh toán khi nhận hàng với 362.000 VND (33,8% tổng).\nThấp nhất: VNPay với 110.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 89,7% tổng doanh thu của phạm vi.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Chỉ số biến động thế nào theo thời gian?.\n\nThể hiện: Diễn biến doanh thu qua 8 kỳ.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-28: tăng 88.000 VND (+80%)\nKỳ cao nhất: 2026-09-19 với 235.000 VND.\n\nDiễn giải: Doanh thu tăng giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      },
+      {
+        "chart": 4,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Doanh thu của 3 hình thức nhận hàng, xếp từ cao đến thấp.\n\nCao nhất: Dùng tại chỗ với 509.000 VND (47,5% tổng).\nThấp nhất: Giao tận nơi với 222.000 VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.",
+        "facts": 2
+      },
+      {
+        "chart": 5,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Diễn biến doanh thu qua 8 kỳ, chia theo 3 nhóm.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-28: tăng 88.000 VND (+80%)\nKỳ cao nhất: 2026-09-28 với 198.000 VND.\n\nDiễn giải: Doanh thu tăng giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính. Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      },
+      {
+        "chart": 6,
+        "text": "Nhận định từ biểu đồ\n\nPhạm vi số liệu: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính.\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các phương thức thanh toán?.\n\nThể hiện: Diễn biến doanh thu qua 8 kỳ, chia theo 4 nhóm.\n\nTừ kỳ 2026-09-16 đến kỳ đầy đủ gần nhất 2026-09-22: tăng 2.000 VND (+2,1%)\nKỳ cao nhất: 2026-09-19 với 170.000 VND.\n\nDiễn giải: Doanh thu tăng giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: Chỉ tính trên Bottom 5 đối tượng của xếp hạng chính. Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "560a06d3-c19b-4646-bfd5-39297a0712c1",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "compare-comprehensive",
+    "mission": "compare",
+    "depth": "comprehensive",
+    "started_at": "2026-10-21T18:13:38.702Z",
+    "status": "PASS",
+    "payload": {
+      "question": "So sánh doanh thu theo tỉnh/thành trong dữ liệu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "comprehensive",
+      "analysis_mission": "compare",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "dimension": "city",
+        "group_a": "Hồ Chí Minh",
+        "group_b": "Hà Nội"
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 6,
+    "queries": 8,
+    "quality": "partially_verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: So sánh doanh thu giữa Hồ Chí Minh và Hà Nội.\n\nThể hiện: Doanh thu của 2 tỉnh/thành trong dữ liệu, xếp từ cao đến thấp.\n\nCao nhất: Hồ Chí Minh với 154,6 triệu VND (61,6% tổng).\nHồ Chí Minh cao hơn Hà Nội 58,4 triệu VND (+60,7%) trong phạm vi đã chọn.\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 58,4 triệu VND.",
+        "facts": 2
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Doanh thu của 3 hình thức nhận hàng, xếp từ cao đến thấp.\n\nCao nhất: Dùng tại chỗ với 117,3 triệu VND (46,8% tổng).\nThấp nhất: Giao tận nơi với 50,9 triệu VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.",
+        "facts": 2
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Chỉ số biến động thế nào theo thời gian?.\n\nThể hiện: Diễn biến doanh thu qua 30 kỳ.\n\nTừ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: giảm 1,5 triệu VND (-18,7%)\nKỳ cao nhất: 2026-09-19 với 12,3 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.",
+        "facts": 2
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?.\n\nThể hiện: Diễn biến doanh thu qua 30 kỳ, chia theo 3 nhóm.\n\nTừ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: giảm 1,7 triệu VND (-21,9%)\nKỳ cao nhất: 2026-09-19 với 12,1 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      },
+      {
+        "chart": 4,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Diễn biến doanh thu qua 30 kỳ, chia theo 3 nhóm.\n\nTừ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: giảm 1,8 triệu VND (-44,8%)\nKỳ cao nhất: 2026-09-19 với 7,7 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      },
+      {
+        "chart": 5,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các phương thức thanh toán?.\n\nThể hiện: Diễn biến doanh thu qua 30 kỳ, chia theo 4 nhóm.\n\nTừ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: giảm 161.000 VND (-4,9%)\nKỳ cao nhất: 2026-09-06 với 4,9 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "fee1c04c-41e9-4830-9a0b-214eb2cba67d",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "risk_watch-comprehensive",
+    "mission": "risk_watch",
+    "depth": "comprehensive",
+    "started_at": "2026-10-21T18:13:54.869Z",
+    "status": "PASS",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "comprehensive",
+      "analysis_scope": {
+        "mode": "selected",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh"
+            ]
+          }
+        ]
+      },
+      "analysis_mission": "risk_watch",
+      "input_mode": "guided",
+      "guided_contract": {
+        "signals": [
+          "order_cancellation_high",
+          "delivery_success_low",
+          "cash_discrepancy_high",
+          "late_shift_high",
+          "paused_positions_exist",
+          "store_rating_low"
+        ]
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 6,
+    "queries": 10,
+    "quality": "verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Tỷ lệ hủy đơn cao.\n\nThể hiện: Tỷ lệ hủy đơn của 417 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Highlands Coffee Central Garden D1 với 100%.\nThấp nhất: Xuân Thủy với 0%.\n58/417 chi nhánh / mã chi nhánh vượt ngưỡng tỷ lệ hủy đơn cao (> 8%).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 100 điểm %.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Biểu đồ chỉ hiển thị một phần nhóm; số liệu phân tích dùng toàn bộ phạm vi. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra tỷ lệ hủy đơn tại Highlands Coffee Central Garden D1 (100%). · Kiểm tra tỷ lệ hủy đơn tại Highlands Coffee KCN Bau Bang Dinh Duong (75%).",
+        "facts": 3
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Tỷ lệ ca đi trễ cao.\n\nThể hiện: Tỷ lệ ca đi trễ của 6 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Lakai với 13,8%.\nThấp nhất: TTC Ung Văn Khiêm với 3,3%.\n0/6 chi nhánh / mã chi nhánh vượt ngưỡng tỷ lệ ca đi trễ cao (> 15%).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 10 điểm %.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.",
+        "facts": 3
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Có vị trí món × điểm bán đang tạm ngưng bán (hiện trạng).\n\nThể hiện: Vị trí tạm ngưng bán của 15 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Highlands Coffee Điện Biên Phủ với 2 vị trí (66,7% tổng).\nThấp nhất: Tùng Thiện Vương với 0 vị trí.\n2/15 chi nhánh / mã chi nhánh vượt ngưỡng có vị trí món × điểm bán đang tạm ngưng bán (> 0 vị trí).\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng vị trí tạm ngưng bán của phạm vi.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra vị trí tạm ngưng bán tại Highlands Coffee Điện Biên Phủ (2 vị trí). · Kiểm tra vị trí tạm ngưng bán tại Highlands Coffee D9 Tân Phú (1 vị trí).",
+        "facts": 3
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Có ca lệch tiền lớn (> 500.000 VND/ca).\n\nThể hiện: Số ca lệch tiền lớn của 6 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: Avengers Coffee - Vincom Đồng Khởi với 0 ca.\nThấp nhất: Tùng Thiện Vương với 0 ca.\n0/6 chi nhánh / mã chi nhánh vượt ngưỡng có ca lệch tiền lớn (> 500.000 vnd/ca) (> 0 ca).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 0 ca.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp.",
+        "facts": 3
+      },
+      {
+        "chart": 4,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Điểm đánh giá chi nhánh thấp.\n\nThể hiện: Điểm phục vụ trung bình của 69 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: 1180 Quang Trung với 5 điểm.\nThấp nhất: L16 Him Lam với 3 điểm.\n2/69 chi nhánh / mã chi nhánh vượt ngưỡng điểm đánh giá chi nhánh thấp (< 3,5 điểm).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 2 điểm.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra điểm phục vụ trung bình tại Highlands Coffee Sun Village (3 điểm). · Kiểm tra điểm phục vụ trung bình tại L16 Him Lam (3 điểm).",
+        "facts": 3
+      },
+      {
+        "chart": 5,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Tỷ lệ giao thành công thấp.\n\nThể hiện: Tỷ lệ giao thành công của 214 chi nhánh / mã chi nhánh, xếp từ cao đến thấp.\n\nCao nhất: 184 Lâm Văn Bền với 100%.\nThấp nhất: Highlands Coffee UrBan Hill D7 với 0%.\n10/214 chi nhánh / mã chi nhánh vượt ngưỡng tỷ lệ giao thành công thấp (< 90%).\n\nDiễn giải: Chênh lệch giữa nhóm cao nhất và thấp nhất là 100 điểm %.\n\nLưu ý: Ngưỡng là mặc định hệ thống, có thể cấu hình; trạng thái chỉ so với ngưỡng, không phải điểm rủi ro tổng hợp. Biểu đồ chỉ hiển thị một phần nhóm; số liệu phân tích dùng toàn bộ phạm vi. Chỉ số dạng tỷ lệ/trung bình: không cộng giá trị giữa các nhóm.\n\nĐiểm nên kiểm tra tiếp: Kiểm tra tỷ lệ giao thành công tại Highlands Coffee 158 Pham Van Chieu (0%). · Kiểm tra tỷ lệ giao thành công tại Highlands Coffee 26A Hoang Viet HCM (0%).",
+        "facts": 3
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "ce3f7b9f-ca88-4899-a610-97c7c95d76f5",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  },
+  {
+    "id": "trend-comprehensive",
+    "mission": "trend",
+    "depth": "comprehensive",
+    "started_at": "2026-10-21T18:14:07.698Z",
+    "status": "PASS",
+    "payload": {
+      "question": "Xu hướng doanh thu theo tuần tháng 9 năm 2026",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "analysis_depth": "comprehensive",
+      "analysis_mission": "trend",
+      "input_mode": "guided",
+      "guided_contract": {
+        "metric": "revenue",
+        "granularity": "week"
+      },
+      "allow_deterministic_upgrade": true
+    },
+    "charts": 6,
+    "queries": 8,
+    "quality": "partially_verified",
+    "explanations": [
+      {
+        "chart": 0,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Trả lời trực tiếp yêu cầu: Xu hướng doanh thu.\n\nThể hiện: Diễn biến doanh thu qua 5 kỳ.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-21: giảm 2,1 triệu VND (-2,1%)\nKỳ cao nhất: 2026-09-14 với 105,2 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: 2 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ.",
+        "facts": 2
+      },
+      {
+        "chart": 1,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?.\n\nThể hiện: Diễn biến doanh thu qua 5 kỳ, chia theo 3 nhóm.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-21: giảm 530.000 VND (-0,5%)\nKỳ cao nhất: 2026-09-14 với 101,1 triệu VND.\n\nDiễn giải: Doanh thu giảm giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: 2 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ. Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      },
+      {
+        "chart": 2,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Diễn biến doanh thu qua 5 kỳ, chia theo 3 nhóm.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-21: tăng 2,6 triệu VND (+6%)\nKỳ cao nhất: 2026-09-14 với 49,2 triệu VND.\n\nDiễn giải: Doanh thu tăng giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: 2 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ. Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      },
+      {
+        "chart": 3,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Diễn biến doanh thu khác nhau thế nào giữa các phương thức thanh toán?.\n\nThể hiện: Diễn biến doanh thu qua 5 kỳ, chia theo 4 nhóm.\n\nTừ kỳ 2026-09-07 đến kỳ đầy đủ gần nhất 2026-09-21: tăng 2,2 triệu VND (+6,2%)\nKỳ cao nhất: 2026-09-14 với 37,9 triệu VND.\n\nDiễn giải: Doanh thu tăng giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.\n\nLưu ý: 2 kỳ đầu/cuối chưa đủ ngày (đánh dấu *); không so sánh trực tiếp với kỳ đầy đủ. Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.",
+        "facts": 2
+      },
+      {
+        "chart": 4,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các hình thức nhận hàng?.\n\nThể hiện: Doanh thu của 3 hình thức nhận hàng, xếp từ cao đến thấp.\n\nCao nhất: Dùng tại chỗ với 198 triệu VND (45% tổng).\nThấp nhất: Giao tận nơi với 84,2 triệu VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.",
+        "facts": 2
+      },
+      {
+        "chart": 5,
+        "text": "Nhận định từ biểu đồ\n\nVì sao có biểu đồ này: Góc nhìn hỗ trợ cho yêu cầu: Doanh thu khác nhau thế nào giữa các loại điểm bán?.\n\nThể hiện: Doanh thu của 3 loại điểm bán, xếp từ cao đến thấp.\n\nCao nhất: Chi nhánh chính với 420,6 triệu VND (95,6% tổng).\nThấp nhất: Kiosk vệ tinh với 3,1 triệu VND.\n\nDiễn giải: Ba nhóm dẫn đầu chiếm 100% tổng doanh thu của phạm vi.",
+        "facts": 2
+      }
+    ],
+    "analytic_requests": [
+      "/api/ai/analysis-jobs"
+    ],
+    "explanation_new_requests": 0,
+    "provider_calls": 0,
+    "session_id": "888c328e-6139-482d-9c56-b16bc776f02b",
+    "revision": 1,
+    "completion_status": "complete",
+    "outcome": "SUCCESS"
+  }
+]

@@ -18,8 +18,38 @@ function compile(relative) {
     return createRequire(import.meta.url)(artifact);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
-const { AnalystChart, SeriesLineChart, HeatmapChart } = compile('../components/Charts.tsx');
+const { AnalystChart, SeriesLineChart, HeatmapChart, ForecastChart } = compile('../components/Charts.tsx');
 const { AnalystDashboard, AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystViews, AnalystResultTable, AnalystPlanningSummary } = compile('../components/AnalystDashboardSummary.tsx');
+
+test('temporal points preserve real date distance and split unobserved daily gaps',()=>{
+  const data=[{label:'2026-09-01',v:10},{label:'2026-09-02',v:20},{label:'2026-09-11',v:15}];
+  const html=renderToStaticMarkup(React.createElement(SeriesLineChart,{data,series:[{key:'v',label:'Doanh thu'}],unit:'VND',granularity:'day'}));
+  const xs=[...html.matchAll(/<circle[^>]*cx="([\d.]+)"/g)].map(m=>Number(m[1]));
+  assert.equal(xs.length,3);
+  assert(Math.abs((xs[2]-xs[1])/(xs[1]-xs[0])-9)<1e-6);
+  assert.equal((html.match(/data-series-line/g)||[]).length,2);
+  for(const row of data)assert(html.includes(row.label));
+  assert(!html.includes('NaN'));
+});
+
+test('forecast preserves elapsed time and distinguishes model interval from observed facts',()=>{
+  const html=renderToStaticMarkup(React.createElement(ForecastChart,{unit:'VND',
+    history:[{period:'2026-09-01',value:10},{period:'2026-09-02',value:12}],
+    forecast:[{period:'2026-09-11',value:20,lower_80:15,upper_80:25}]}));
+  const xs=[...html.matchAll(/<circle[^>]*cx="([\d.]+)"/g)].map(m=>Number(m[1]));
+  assert.equal(xs.length,3); assert(Math.abs((xs[2]-xs[1])/(xs[1]-xs[0])-9)<1e-6);
+  assert(html.includes('data-forecast-band'));assert(html.includes('data-history-line'));
+  assert(html.includes('dự báo; 80%'));assert(html.includes('lịch sử'));
+});
+
+test('invalid temporal order falls back to the same observed table with a reason',()=>{
+ const data=[{label:'2026-09-02',v:20},{label:'2026-09-01',v:10}];
+ const before=JSON.stringify(data);
+ const html=renderToStaticMarkup(React.createElement(SeriesLineChart,{data,series:[{key:'v',label:'Doanh thu'}],unit:'VND'}));
+ assert(html.includes('<table>'));assert(html.includes('Thời gian chưa theo thứ tự'));
+ assert(html.includes('2026-09-02'));assert(html.includes('20 VND'));assert(!html.includes('data-series-line'));
+ assert.equal(JSON.stringify(data),before);
+});
 
 test('ranked metric companions render two plot cards with full category names', () => {
   const observed = JSON.parse(readFileSync(new URL('../../../analytics-api/tests/fixtures/ranking_dashboard_observed.json', import.meta.url), 'utf8'));
@@ -35,7 +65,7 @@ test('ranked metric companions render two plot cards with full category names', 
   for (const name of ['Americano Phúc Bồn Tử', '1 Lít Matcha Latte Tây Bắc', 'Bánh Trung Thu Matcha']) {
     assert.ok(html.includes(name));
   }
-  assert.ok(html.includes('lg:grid-cols-2'));
+  assert.ok(html.includes('xl:grid-cols-12'));
   assert.ok(html.includes('giữ nguyên thứ tự theo số lượng bán'));
 });
 
@@ -49,7 +79,7 @@ test('per-group bars show stored ranks and empty chart sections explain missing 
   assert.equal((html.match(/mr-2">1\./g) || []).length, 2);
   const empty = renderToStaticMarkup(React.createElement(AnalystDashboard, { report: { charts: [] } }));
   assert.ok(empty.includes('Chưa có biểu đồ phù hợp được kiểm chứng'));
-  assert.ok(empty.includes('bảng dữ liệu đối chiếu'));
+  assert.ok(empty.includes('Dữ liệu / SQL'));  // V3.2: tables live in the data tab
 });
 
 test('large population chart discloses display subset and complete analytical coverage', () => {
@@ -127,11 +157,13 @@ test('AnalyticsView wires actual dashboard components and no static scope claim'
 
 test('natural fields replace depth configuration and approval reuses submitted input', () => {
   const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
-  assert.ok(source.includes('question: prompt, context: aiAnalysisContext, expectation: aiAnalysisExpectation'));
+  // V3.1: question + time + scope + depth + optional mission; the overlapping
+  // context/expectation fields were removed from the normal workflow.
+  assert.ok(source.includes('analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission })'));
   assert.ok(source.includes('body: JSON.stringify(submittedInput)'));
   assert.ok(source.includes('aiPlan?.submittedInput || aiInput(promptToSend)'));
   const form = readFileSync(new URL('../components/AnalysisInputForm.tsx', import.meta.url), 'utf8');
-  assert.ok(form.includes('Mong muốn phân tích')); assert.ok(!form.includes('Độ sâu phân tích'));
+  assert.ok(!form.includes('Mong muốn phân tích')); assert.ok(!form.includes('Ngữ cảnh phân tích')); assert.ok(!form.includes('Độ sâu phân tích'));
 });
 
 test('deep planning and related population evidence explain their actual scope', () => {
@@ -153,7 +185,7 @@ test('seven views render requested first, with responsive widths and distinct un
   const html = render(AnalystViews, { charts });
   assert.equal((html.match(/<article/g) || []).length, 7);
   assert.ok(html.indexOf('Phân tích theo yêu cầu') < html.indexOf('Phân tích hỗ trợ'));
-  assert.ok(html.includes('grid-cols-1 lg:grid-cols-2'));
+  assert.ok(html.includes('grid-cols-1 xl:grid-cols-12'));
   assert.ok(!html.includes('lg:col-span-2'));
   for (const label of ['VND', 'sản phẩm', 'Tập Top N']) assert.ok(html.includes(label));
   assert.ok(!html.includes('private_query_'));
@@ -186,8 +218,8 @@ test('area adds real observed segments while gaps remain separate', () => {
   const chart = { chart_type: 'area', unit: 'VND', data: [{ label: '1', value: 10 }, { label: '2', value: 20 }, { label: '3' }, { label: '4', value: 30 }] };
   const area = render(AnalystChart, { chart });
   const line = render(AnalystChart, { chart: { ...chart, chart_type: 'line' } });
-  assert.equal((area.match(/opacity=".12"/g) || []).length, 2);
-  assert.ok(!line.includes('opacity=".12"'));
+  assert.equal((area.match(/data-series-area/g) || []).length, 2);
+  assert.ok(!line.includes('data-series-area'));
   assert.equal((area.match(/<circle/g) || []).length, 3);
 });
 
@@ -235,7 +267,7 @@ test('refinement wire sends revision and explicit visual action without full his
 });
 
 test('one-shot guard failures have safe business headings', () => {
-  for (const [category, heading] of [['provider_call_budget_exceeded', 'Yêu cầu đã đạt giới hạn lượt AI'], ['one_shot_context_budget_exceeded', 'Phạm vi yêu cầu quá lớn'], ['dashboard_contract', 'Cách trình bày chưa phù hợp với dữ liệu']]) {
+  for (const [category, heading] of [['provider_call_budget_exceeded', 'Chưa ánh xạ được yêu cầu vào danh mục dữ liệu'], ['one_shot_context_budget_exceeded', 'Phạm vi yêu cầu quá lớn'], ['dashboard_contract', 'Cách trình bày chưa phù hợp với dữ liệu']]) {
     const html = render(AnalysisClarification, { response: { status: 'error', diagnostics: { error_category: category } } });
     assert.ok(html.includes(heading)); assert.ok(!html.includes(category));
   }
@@ -254,7 +286,9 @@ test('dashboard opens with up to six primary views and keeps all result tables i
   const { AnalystDashboard } = compile('../components/AnalystDashboardSummary.tsx');
   const html = render(AnalystDashboard, { report: { charts: Array.from({ length: 9 }, (_, i) => ({ id: `c${i}`, role: i < 3 ? 'requested' : 'supporting', title: `Chart ${i}`, chart_type: 'bar', data: [{ label: 'A', value: i }] })), result_sets: { all: { columns: ['value'], rows: [{ value: 1 }] } } } });
   assert.equal((html.match(/<article/g) || []).length, 6);
-  assert.ok(html.includes('Xem thêm 3 góc nhìn chi tiết')); assert.ok(html.includes('Bảng dữ liệu')); assert.ok(html.includes('Diễn giải đầy đủ'));
+  assert.ok(html.includes('Xem thêm 3 góc nhìn chi tiết'));
+  const data = render(AnalystDashboard, { initialTab: 'data', report: { charts: [], result_sets: { all: { columns: ['value'], rows: [{ value: 1 }] } } } });
+  assert.ok(data.includes('Bảng dữ liệu')); assert.ok(data.includes('Diễn giải đầy đủ'));
   assert.ok(!html.includes('open=""'));
 });
 
@@ -271,12 +305,12 @@ test('compact dashboard uses one responsive grid across different story sections
   assert.equal((html.match(/data-dashboard-grid/g) || []).length, 1);
   assert.equal((html.match(/<article/g) || []).length, 4);
   assert.ok(!html.includes('lg:col-span-2'));
-  assert.ok(html.includes('lg:grid-cols-2'));
+  assert.ok(html.includes('xl:grid-cols-12'));
 });
 
 test('overview displays equal trend and composition cards and a visible result table', () => {
   const { AnalystDashboard } = compile('../components/AnalystDashboardSummary.tsx');
-  const html = render(AnalystDashboard,{report:{charts:[
+  const html = render(AnalystDashboard,{initialTab:'data',report:{charts:[
     {id:'mix',chart_type:'donut',title:'Cơ cấu',data:[{label:'A',value:40},{label:'B',value:60}]},
     {id:'trend',chart_type:'line',title:'Diễn biến',data:[{label:'2026-09-01',value:100}]},
   ],result_sets:{q:{columns:['order_type','revenue'],column_labels:{order_type:'Hình thức nhận hàng',revenue:'Doanh thu'},rows:[{order_type:'DUNG_TAI_CHO',revenue:249482000}]}}}});
@@ -287,7 +321,7 @@ test('overview displays equal trend and composition cards and a visible result t
 
 test('time axes use five short labels, with full dates retained for tooltips', () => {
   const html = render(SeriesLineChart, { data: Array.from({ length: 14 }, (_, i) => ({ label: `2026-09-${String(i + 1).padStart(2, '0')}T00:00:00`, s: i })), series: [{ key: 's', label: 'Sản lượng', color: '#2563eb' }] });
-  assert.equal((html.match(/y="278"/g) || []).length, 5);
+  assert.equal((html.match(/data-time-tick="true"/g) || []).length, 5);
   assert.ok(html.includes('01/09')); assert.ok(html.includes('14/09'));
   assert.ok(html.includes('<title>2026-09-14T00:00:00'));
 });
@@ -307,26 +341,34 @@ test('clipped weekly buckets are marked and disclose the actual selected dates',
 });
 
 for (const count of [1, 3, 4, 5, 6]) {
-  test(`${count} primary chart cards share two equal desktop columns and one mobile column`, () => {
+  test(`${count} primary chart cards fill complete content-aware rows`, () => {
     const charts=Array.from({length:count}, (_,i)=>({id:'balanced'+i,chart_type:['line','donut','bar','heatmap'][i%4],title:'View '+i,data:[]}));
     const html=render(AnalystViews,{charts,compact:true});
     assert.equal((html.match(/<article/g)||[]).length,count);
-    assert.match(html,/grid-cols-1 lg:grid-cols-2/);
+    assert.match(html,/grid-cols-1 xl:grid-cols-12/);
     assert.doesNotMatch(html,/lg:col-span-|lg:grid-cols-6/);
-    assert.equal((html.match(/class="col-span-1 /g)||[]).length,count);
+    const placements=[...html.matchAll(/data-chart-row="(\d+)" data-chart-span="([\d.]+)"/g)].map(match=>({row:Number(match[1]),span:Number(match[2])}));
+    assert.equal(placements.length,count);
+    for(const row of new Set(placements.map(p=>p.row))) {
+      const cards=placements.filter(p=>p.row===row);
+      assert.ok(cards.length<=3);
+      assert.equal(cards.reduce((sum,p)=>sum+p.span,0),12);
+    }
+    assert.ok(html.includes('dashboard-chart-card'));
+
   });
 }
 
 test('provider status is shown separately from local readiness and generic failure', () => {
-  const source=readFileSync(new URL('../views/AnalyticsView.tsx',import.meta.url),'utf8');
-  for (const label of ['Kho dữ liệu:', 'Semantic catalog:', 'AI provider:', 'Chưa kiểm tra', 'Không ổn định']) assert.ok(source.includes(label));
+  const source=readFileSync(new URL('../components/workspace/AnalystWorkspace.tsx',import.meta.url),'utf8');  // V3.1: status lives in the workspace
+  for (const label of ['Kho dữ liệu:', 'Semantic catalog:', 'AI provider:', 'Chưa kiểm tra', 'Đang chuyển dự phòng', 'Giới hạn quota', 'Không khả dụng']) assert.ok(source.includes(label));  // V3.2 §118 labels
   const error=render(AnalysisClarification,{response:{status:'error',diagnostics:{error_category:'provider_timeout'},message:'Provider chậm'}});
   const clarification=render(AnalysisClarification,{response:{status:'needs_clarification',message:'Chọn chỉ số'}});
   assert.match(error,/border-rose-200/);assert.match(clarification,/border-amber-200/);
   assert.match(error,/Dịch vụ AI chưa phản hồi kịp/);
 });
 
-test('broad kiosk dashboard opens four views with view tabs and honest missing-view notice', () => {
+test('broad kiosk dashboard reports required evidence gaps without a chart floor', () => {
   const charts = [
     { id:'rank', purpose:'ranking', chart_type:'horizontal_bar', title:'Xếp hạng kiosk' },
     { id:'trend', purpose:'trend', x_field:'period', chart_type:'line', title:'Diễn biến kiosk' },
@@ -334,13 +376,14 @@ test('broad kiosk dashboard opens four views with view tabs and honest missing-v
     { id:'city', purpose:'comparison', chart_type:'bar', title:'Doanh thu kiosk theo thành phố' },
   ].map(c => ({ ...c, data:[{ label:'A',value:10 },{ label:'B',value:20 }] }));
   const quality = { verification_checks:[{id:'analysis_depth_coverage',total:4}] };
-  const html = render(AnalystDashboard,{report:{charts,quality_assessment:quality}});
+  const coverage=charts.map(c=>({requirement_id:c.id,required:true,status:'satisfied'}));
+  const html = render(AnalystDashboard,{report:{charts,quality_assessment:quality,view_coverage:coverage}});
   assert.equal((html.match(/data-dashboard-chart=/g) || []).length,4);
   assert.ok(html.includes('aria-label="Góc nhìn biểu đồ"'));
   for (const label of ['Tất cả','Xếp hạng','Diễn biến','Cơ cấu','So sánh']) assert.ok(html.includes(label));
   assert.ok(html.includes('aria-selected="true"'));
   assert.ok(!html.includes('Mới có'));
-  const partial = render(AnalystDashboard,{report:{charts:charts.slice(0,1),quality_assessment:quality}});
+  const partial = render(AnalystDashboard,{report:{charts:charts.slice(0,1),quality_assessment:quality,view_coverage:coverage.map((v,i)=>i ? {...v,status:'missing',reason:'no_rows'}:v)}});
   assert.ok(partial.includes('1/4'));assert.ok(partial.includes('chưa đầy đủ'));
 });
 
@@ -357,14 +400,14 @@ test('expanded report shows whole-population KPIs before ranking findings', () =
   assert.ok(!html.includes('hạng 1'));
 });
 
-test('simple legacy reports cannot hide the four-view floor with missing or zero flags', () => {
+test('legacy reports show unmeasured coverage without inventing a four-chart floor', () => {
   const charts=['Số giao dịch','Doanh thu thanh toán'].map((title,i)=>({
     id:'payment'+i,chart_type:'bar',title,metric:'m'+i,x_field:'payment_gateway',
     data:[{label:'VNPAY',value:10},{label:'Ví điện tử',value:20}]
   }));
   for (const diagnostics of [undefined,{minimum_visuals:0}]) {
     const html=render(AnalystDashboard,{report:{charts,diagnostics}});
-    assert.ok(html.includes('2/4'));
-    assert.ok(html.includes('Báo cáo phân tích chưa đầy đủ biểu đồ'));
+    assert.ok(!html.includes('2/4'));
+    assert.ok(html.includes('Chưa đo độ đầy đủ yêu cầu'));
   }
 });

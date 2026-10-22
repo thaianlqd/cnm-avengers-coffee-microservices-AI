@@ -1,4 +1,5 @@
 """Report verification using immutable evidence; no warehouse SQL or provider calls."""
+from services.insight_service import evidence_comment, selected_total_label, fact_reference
 from copy import deepcopy
 from datetime import date
 import json
@@ -24,6 +25,16 @@ def not_scored(reason='Chưa đủ metadata để kiểm chứng báo cáo.'):
     return AnalysisQualityAssessment(status='not_scored', reason=reason).model_dump(mode='json')
 
 
+def publication_issues(quality):
+    """Missing coverage may be disclosed; an unverified factual claim cannot be published."""
+    if quality.get('status') == 'not_scored':
+        return ['verification_unavailable']
+    return [c['id'] for c in [*quality.get('verification_checks', []), *quality.get('publication_checks', [])]
+            if c['id'] in {'evidence_grounding', 'semantic_consistency', 'result_integrity',
+                           'chart_contract', 'limitation_disclosure'}
+            and c['status'] in {'partial', 'failed'}]
+
+
 def restore_artifacts(report, catalog):
     """Recompile logical meaning and revalidate stored rows; never execute stored SQL."""
     from services.analytical_query_service import AnalyticalQueries
@@ -35,7 +46,8 @@ def restore_artifacts(report, catalog):
     queries = AnalyticalQueries(catalog, semantic, date.fromisoformat(context['reference_date']), forbidden, {}, proposal=True)
     queries.ui_context = context.get('ui_constraints', {})
     prepared = {}
-    for raw in report['analytical_queries']:
+    # A cohort-scoped view compiles against its ranked parent: prepare parents first.
+    for raw in sorted(report['analytical_queries'], key=lambda q: bool(q.get('cohort_scope_query_id'))):
         for f in raw.get('filters', []):
             semantic.resolved.setdefault(f['dimension'], set()).update(f['value'] if isinstance(f['value'], list) else [f['value']])
         a = queries.prepare(raw)
@@ -56,26 +68,50 @@ def restore_artifacts(report, catalog):
             a.result = deepcopy(supplied)
         a.contract = validate_results(a.result, a.plan, a.grounded, catalog).model_dump()
         prepared[a.query.id] = a
+    # Same order as the stored report (plans/SQL are compared positionally).
+    prepared = {q['id']: prepared[q['id']] for q in report['analytical_queries'] if q['id'] in prepared}
+    from services.analysis_query import validate_ranked_cohorts, validate_cohort_scoped
+    validate_ranked_cohorts(prepared)
+    validate_cohort_scoped(prepared)
     return prepared
 
 
-def chart_checks(charts, artifacts, evidence=()):
+def chart_checks(charts, artifacts, evidence=(), view_catalog=None):
     """Reuse production visual grammar and renderer, including exact numerical data."""
-    from services.derived_chart_service import contribution_charts
-    expected_derived={c['semantic_view_key']:c for c in contribution_charts(artifacts,evidence)}
+    from services.derived_chart_service import contribution_charts, pair_charts, driver_charts
+    expected_derived={c['semantic_view_key']:c for build in (contribution_charts,pair_charts,driver_charts) for c in build(artifacts,evidence)}
     checks, identities = [], set()
     for chart in charts:
         try:
-            if chart.get('value_transform'):
+            if chart.get('value_transform') or chart.get('pair'):
                 expected=expected_derived.get(chart.get('semantic_view_key'))
                 valid=bool(expected and all(chart.get(k)==v for k,v in expected.items()))
                 key=('derived',chart.get('semantic_view_key'))
                 if key in identities:valid=False
                 identities.add(key)
+                scopes=chart.get('scope_refs') or [chart.get('scope_ref')]
+                bindings=[(q,m) for q in scopes if q in artifacts for m in chart.get('metrics',[]) if m in artifacts[q].plan.metrics]
                 checks.append(dict(valid=valid,reason=None if valid else 'derived_chart_mismatch',
-                    query_id=chart.get('query_id'),scope_refs=[chart.get('scope_ref')],metrics=chart.get('metrics',[]),covered_pairs=[]))
+                    query_id=chart.get('query_id'),scope_refs=scopes,metrics=chart.get('metrics',[]),covered_pairs=bindings))
+                continue
+            if chart.get('view_modes') or chart.get('view_ref'):
+                # Server view modes: every variant is re-derived from the stored base artifact (view_mode_service).
+                from services.view_mode_service import verify_view_chart
+                ref = chart.get('query_id') or chart['scope_ref']
+                valid = bool(view_catalog) and verify_view_chart(chart, artifacts, view_catalog)[0]
+                # One projection may feed one chart per metric; a duplicate is the same view of the same metrics/grammar.
+                identity = ('view', chart.get('view_ref'), tuple(chart.get('metrics') or []), chart.get('chart_type'),
+                            chart.get('x_field'), chart.get('series_field'))
+                if identity in identities:
+                    valid = False
+                identities.add(identity)
+                checks.append({'valid': valid, 'reason': None if valid else 'chart_data_mismatch', 'query_id': ref,
+                               'scope_refs': chart.get('scope_refs') or [ref], 'metrics': chart.get('metrics', []),
+                               'covered_pairs': [(ref, m) for m in chart.get('metrics', []) if ref in artifacts and m in artifacts[ref].plan.metrics]})
                 continue
             ref = chart.get('query_id') or chart['scope_ref']
+            if chart.get('scope_ref', ref) != ref:
+                raise ValueError('Chart scope differs from its bound query')
             a = artifacts[ref]
             comparison = chart.get('scope_refs', []) if not chart.get('x_field') else []
             v = DashboardVisual(query_id=ref, chart_type=chart['chart_type'], metrics=chart['metrics'],
@@ -93,7 +129,7 @@ def chart_checks(charts, artifacts, evidence=()):
                                  if c.get('query_id', c.get('scope_ref')) == ref and set(c.get('scope_refs', [])) == set(scopes))
                             if v.compare_query_ids else render(v, a, 0))
                 for key in ('data', 'metrics', 'unit', 'selection', 'series', 'series_keys', 'y_unit',
-                            'ranking_metric','ranking_metric_label','ranking_direction','ranking_limit',
+                            'ranking_metric','ranking_metric_label','ranking_direction','ranking_limit','ranking_census',
                             'ranking_per_group','ranking_note','category_fields','x_label'):
                     # Older one-axis charts already encode their entire grain
                     # in x_field. New tuple/partition metadata is mandatory only
@@ -160,25 +196,53 @@ def equivalent_visual_metrics(visual, source, other, expected):
         return None
     aliases = dict(zip(mapped, visual.metrics))
     def rows(data, rename=False):
-        return sorted(json.dumps({aliases.get(k, k) if rename else k: value for k,value in row.items()},
-                                 sort_keys=True, ensure_ascii=False, default=str) for row in data)
+        # Both sides are freshly rendered from their own verified artifacts.
+        # Navigation query IDs differ across equivalent source operations;
+        # retain and compare the exact typed filters while normalizing that ID.
+        return sorted(json.dumps({aliases.get(k, k) if rename else k:
+            ({'filters':value['filters']} if k=='entity_ref' else value) for k,value in row.items()},
+            sort_keys=True, ensure_ascii=False, default=str) for row in data)
     if rows(rendered['data'], True) != rows(expected['data']):
         return None
     return mapped
 
 
-def report_limitations(artifacts, charts, catalog, omissions=()):
+def report_limitations(artifacts, charts, catalog, omissions=(), source_coverage=()):
     items = []
     def add(id, label, ref):
         if id not in {i['id'] for i in items}:
             items.append({'id': id, 'label': label, 'scope_ref': ref})
+    for source in source_coverage:
+        if source.get('completeness')=='reconciled':
+            add('source_coverage:'+source['source'],
+                f"Nguồn {source['label']}: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; "
+                f"thay đổi sau đó được nạp tăng dần (dữ liệu đến {source.get('max_date') or 'chưa rõ'}).",None)
+        elif source.get('completeness','unknown')!='complete':
+            add('source_coverage:'+source['source'],
+                f"Nguồn {source['label']}: quan sát đến {source.get('max_date') or 'chưa rõ'}; "
+                + ('nguồn đang trễ. ' if source.get('stale') else '')
+                + 'Độ đầy đủ dữ liệu nguồn chưa được chứng minh; MIN/MAX không chứng minh nguồn đầy đủ.',None)
+        elif source.get('stale'):
+            # Event recency is separate from load completeness (G5): the replica is
+            # parity-certified, the business simply has no newer events.
+            add('source_coverage:'+source['source'],
+                f"Nguồn {source['label']}: phát sinh nghiệp vụ mới nhất ngày {source.get('max_date') or 'chưa rõ'}; "
+                'bản sao đã đối soát đầy đủ với hệ thống nguồn, không có dữ liệu mới hơn.',None)
     for id, a in artifacts.items():
+        for name in set(a.plan.dimensions) | {f.dimension for f in a.query.filters}:
+            for limitation in catalog.registry['dimensions'].get(name, {}).get('analysis_limitations', []):
+                add('dimension_limit:'+name+':'+limitation['id'], limitation['label'], id)
         for f in a.query.filters:
             definition=catalog.registry['dimensions'][f.dimension]
             if definition.get('population_selector'):
                 values=f.value if isinstance(f.value,list) else [f.value]
                 labels=definition.get('value_labels',{})
                 add('population_filter:'+f.dimension,definition['business_name']+': '+', '.join(str(labels.get(v,v)) for v in values)+'. Áp dụng cho toàn bộ các góc nhìn trong phạm vi này.',id)
+        for f in a.query.filters:
+            dim=catalog.registry['dimensions'].get(f.dimension,{})
+            if dim.get('scope_governed'):
+                sources=sorted({g['source'] for g in dim.get('value_groups',[])})
+                add('scope_taxonomy:'+id, 'Phân vùng báo cáo nội bộ: '+', '.join(sources)+'. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.',id)
         for dim in a.plan.dimensions:
             definition=catalog.registry['dimensions'][dim]
             if definition.get('required_non_null'):
@@ -196,7 +260,7 @@ def report_limitations(artifacts, charts, catalog, omissions=()):
         if any(not a.grounded.metrics[m].get('additive') for m in a.plan.metrics):
             add('nonadditive:'+id, 'Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.', id)
         if a.plan.ranking:
-            add('topn:'+id, 'Tập Top N được chọn; không đại diện cơ cấu toàn bộ.', id)
+            add('topn:'+id, f"Tập {'Bottom' if a.plan.ranking.direction == 'ASC' else 'Top'} N được chọn; không đại diện cơ cấu toàn bộ.", id)
         if a.plan.explicit_limit:
             add('limited:'+id, 'Kết quả giới hạn số dòng theo phạm vi đã duyệt.', id)
         if a.plan.kind == 'trend' and any(trend_bucket_coverage(r['period'], a.plan.granularity, a.grounded.period)['partial'] for r in a.result['rows']):
@@ -226,16 +290,19 @@ def assess_report(report, catalog, *, artifacts=None):
         return not_scored()
     if context.get('catalog_fingerprint') != catalog.fingerprint:
         return not_scored('Danh mục đã thay đổi; cần chạy lại để kiểm chứng theo phiên bản hiện tại.')
+    breadth_plan, breadth = {}, None
     try:
         artifacts = artifacts or restore_artifacts(report, catalog)
         if not artifacts:
             return not_scored()
         # Current validator verdict is authoritative, not a stored passed flag.
+        # Driver baseline/independent-total queries may legitimately be empty; that is disclosed as a driver limitation.
+        baseline_ids = {q for b in report.get('derived_feature_bindings', []) if b.get('feature') == 'driver_delta' for q in b.get('query_ids', [])[1:]}
         for id, a in artifacts.items():
             verdict = validate_results(a.result, a.plan, a.grounded, catalog)
             if not verdict.valid or not report.get('result_contracts', {}).get(id, {}).get('valid'):
                 return not_scored('Kết quả chưa vượt qua kiểm chứng; cần chạy lại phân tích.')
-            if a.query.role == 'requested' and (not a.result['rows'] or (a.plan.metrics and not any(
+            if a.query.role == 'requested' and id not in baseline_ids and (not a.result['rows'] or (a.plan.metrics and not any(
                     row.get(metric) is not None for row in a.result['rows'] for metric in a.plan.metrics))):
                 return not_scored('Không có giá trị quan sát cho phần yêu cầu; cần bổ sung dữ liệu.')
         components, _ = canonical_components(report['analysis_components'], artifacts, DomainIntelligence(catalog))
@@ -247,12 +314,19 @@ def assess_report(report, catalog, *, artifacts=None):
             intent = AnalysisIntentEnvelope.model_validate(report['semantic_intent'])
             resolved = AnalyticalResolver(catalog,reference,context.get('ui_constraints',{})).resolve(intent)
             provenance = report.get('provenance',{})
+            from services.goal_provenance_service import goal_provenance
+            if report.get('goal_provenance') != goal_provenance(report,catalog):
+                return not_scored('Nguồn đầu vào của từng mục tiêu chưa vượt qua kiểm chứng.')
+            if provenance.get('source_analysis')!=context.get('source_analysis'):
+                return not_scored('Nguồn của yêu cầu mới không khớp tham chiếu đã kiểm chứng.')
             anchors, replayed = refinement_anchors(provenance['user_request'],provenance['initial_semantic_intent'],
                 provenance.get('semantic_history', []),catalog,context.get('ui_constraints',{}),reference)
-            if 'executed_supporting_ids' in context.get('ui_constraints', {}):
-                # Replay the immutable requested meaning, then reproduce the
-                # deterministic server policy for optional work that completed.
-                replayed = AnalyticalResolver(catalog,reference,context['ui_constraints']).resolve(replayed)['intent']
+            interactions = [e['interaction'] for e in provenance.get('semantic_history', []) if 'interaction' in e]
+            if interactions and report.get('interaction_state') != interactions[-1]:
+                return not_scored('Trạng thái tương tác lưu không khớp lịch sử ngữ nghĩa.')
+            # A parent delta invalidates generated supporting views. Reproduce
+            # those views under the frozen server policy before comparing intent.
+            replayed = AnalyticalResolver(catalog,reference,context.get('ui_constraints',{})).resolve(replayed)['intent']
             if intent_fingerprint(replayed,reference,catalog) != intent_fingerprint(intent,reference,catalog):
                 return not_scored('Lịch sử thay đổi ngữ nghĩa chưa vượt qua kiểm chứng.')
             if (verify_anchors(anchors,intent.requirements,reference,catalog)
@@ -269,9 +343,10 @@ def assess_report(report, catalog, *, artifacts=None):
                 return not_scored('Thông tin kế hoạch hoặc SQL lưu không khớp compiler hiện tại.')
             if not verify_operation_bindings(resolved['operations'], artifacts):
                 return not_scored('Phép phân tích không khớp kế hoạch đã được máy chủ xác minh.')
+            breadth_plan = resolved.get('lens_plan') or {}
     except (ValueError, KeyError, TypeError):
         return not_scored('Ngữ nghĩa hoặc metadata báo cáo chưa vượt qua kiểm chứng.')
-    canonical = {e['id']: e for e in analytical_features(artifacts, catalog, report.get('derived_feature_bindings'))}
+    canonical = {e['id']: e for e in analytical_features(artifacts, catalog, report.get('derived_feature_bindings'), as_of=(report.get('quality_context') or {}).get('reference_date'))}
     # Index per-row feature evidence once; high-cardinality shares must not
     # require a quadratic scan during verification.
     feature_rows = {(e['scope_ref'],e['feature'],e['metric'],json.dumps(e['values'].get('dimensions'),sort_keys=True,default=str))
@@ -295,16 +370,66 @@ def assess_report(report, catalog, *, artifacts=None):
     claims = []
     # Evidence drives the visible dashboard highlights/findings. Verify its values/prose too.
     claims += [e.get('id') in valid_refs for e in report.get('evidence', [])]
+    from services.chart_insight_service import insight as canonical_chart_insight
+    for chart in report.get('charts', []):
+        block = chart.get('insight')
+        if block is None and context.get('version') != '2.8':
+            continue
+        if chart.get('view_modes') or chart.get('view_ref'):
+            from services.view_mode_service import verify_view_chart
+            claims += verify_view_chart(chart, artifacts, catalog, date.fromisoformat(context['reference_date']),
+                                        report.get('analysis_mission'))[1]
+            continue
+        try:
+            source = (chart.get('scope_refs') or [chart.get('scope_ref')])[0]
+            clean = {k:v for k,v in chart.items() if k != 'insight'}
+            expected = canonical_chart_insight(clean, artifacts[source], catalog,
+                date.fromisoformat(context['reference_date']), report.get('analysis_mission'))
+            claims.append(block == expected)
+        except (KeyError, ValueError, TypeError, IndexError):
+            claims.append(False)
+    for frame in report.get('comparison_frames') or []:
+        if frame.get('selection'):
+            # A computed cohort is a claim too: re-derive it from the stored selection-query rows.
+            from services.selection_service import verify_selection
+            claims.append(verify_selection(frame['selection'], [m['key'] for m in frame['members']], catalog.registry))
     for card in report.get('kpi_cards', []):
+        if card.get('kind')=='comparison_view':
+            from services.view_mode_service import comparison_view_cards
+            # chart_checks below independently reconstructs each default from its immutable query artifact.
+            claims.append(card in comparison_view_cards(report.get('charts',[])))
+            continue
         e = canonical.get(card.get('evidence_id'), {})
+        if card.get('value_field'):
+            values = e.get('values', {})
+            unit = e.get('unit')
+            fields = {'largest_value': (values.get('largest'), values.get('largest_value'), unit),
+                      'smallest_value': (values.get('smallest'), values.get('smallest_value'), unit),
+                      'gap': ('Chênh lệch tuyệt đối', values.get('gap'), 'điểm %' if unit == '%' else unit)}
+            if values.get('smallest_value') and unit != '%':
+                fields['relative_gap_pct'] = ('Chênh lệch %', values['gap'] / abs(values['smallest_value']) * 100, '%')
+            expected = fields.get(card['value_field'])
+            if expected is not None and card['value_field'] in {'gap', 'relative_gap_pct'}:
+                # V2 cards name the pair; reports saved before keep their generic label.
+                from services.chart_insight_service import gap_label, pct_gap_label
+                named = (gap_label if card['value_field'] == 'gap' else pct_gap_label)(
+                    str(values.get('largest')), str(values.get('smallest')))
+                if card.get('label') == named:
+                    expected = (named, *expected[1:])
+            claims.append(card.get('evidence_id') in valid_refs and e.get('feature') == 'group_comparison'
+                and values.get('observed_groups') == 2 and expected is not None
+                and (card.get('label'), card.get('value'), card.get('unit')) == expected
+                and card.get('metric') == e.get('metric') and card.get('scope_ref') == e.get('scope_ref'))
+            continue
         field = {'scalar':'value','top_gap':'gap','selected_total':'total','change':'change','concentration':'largest_share_pct'}.get(e.get('feature'))
-        label = {'scalar':'Giá trị trong phạm vi','top_gap':'Chênh lệch hạng 1–2','selected_total':'Tổng của tập Top N',
+        label = {'scalar':'Giá trị trong phạm vi','top_gap':'Chênh lệch hạng 1–2','selected_total':selected_total_label(e),
                  'change':'Thay đổi giữa hai kỳ quan sát','concentration':'Tỷ trọng lớn nhất'}.get(e.get('feature'))
         claims.append(card.get('evidence_id') in valid_refs and field is not None and card.get('value') == e.get('values', {}).get(field)
-                      and card.get('unit') == ('%' if e.get('feature') == 'concentration' else e.get('unit'))
+                      and card.get('unit') == ('%' if e.get('feature') == 'concentration' else e.get('values',{}).get('gap_unit',e.get('unit')))
                       and card.get('label') == label and card.get('metric') == e.get('metric') and card.get('scope_ref') == e.get('scope_ref'))
     for finding in report.get('key_findings', []):
         e = canonical.get(finding.get('evidence_id'), {})
+        claims.append(all(finding.get(k) == v for k, v in fact_reference(e).items()))
         claims.append(finding.get('evidence_id') in valid_refs and finding.get('finding') == e.get('statement') and finding.get('value_details') == e.get('values') and finding.get('value') == e.get('values', {}).get({'population_gap':'gap','peer_gap':'gap','group_comparison':'gap','leader':'value','top_gap':'gap','change':'change','concentration':'largest_share_pct','scalar':'value','selected_total':'total','pearson':'r'}.get(e.get('feature'),'')))
     try:
         expected_narrative = grounded_narrative(DashboardPlan.model_validate(report.get('dashboard_plan_input') or {'active_query_ids': list(artifacts)}), list(canonical.values()))
@@ -314,16 +439,26 @@ def assess_report(report, catalog, *, artifacts=None):
         claims.append(any(e['statement'] == statement and id in valid_refs for id,e in canonical.items()))
     if report.get('executive_summary'):
         claims.append(report['executive_summary'] == expected_narrative['executive_summary'])
+        claims.append(report.get('executive_summary_facts') == expected_narrative['executive_summary_facts'])
     for rec in report.get('recommendations', []):
         claims.append(rec.get('evidence_id') in valid_refs and rec in expected_narrative['recommendations'])
     for finding in report.get('key_findings', []):
         e = canonical.get(finding.get('evidence_id'))
-        expected_comment = (f"Căn cứ {e['scope'].get('label', 'phần phân tích đã chọn')}; phạm vi {e['scope']['selection']}. Xem bằng chứng và phép tính kèm theo." if e else None)
+        expected_comment = evidence_comment(e) if e else None
         claims.append(e is not None and finding.get('comment') == expected_comment)
     for conclusion in report.get('conclusions', []):
         claims.append(conclusion in expected_narrative['conclusions'])
-    charts = chart_checks(report.get('charts', []), artifacts, list(canonical.values()))
-    applicable = [(id,m) for id,a in artifacts.items() if a.query.role == 'requested' and (a.plan.dimensions or a.plan.kind == 'trend') and a.plan.kind != 'detail' for m in a.plan.metrics]
+    if report.get('conclusion'):
+        from services.answer_requirement_service import conclusion_from_report
+        expected_conclusion,expected_answers,expected_bindings=conclusion_from_report(report,artifacts,catalog,list(canonical.values()))
+        claims += [report['conclusion']==expected_conclusion, report.get('short_answer')==expected_answers,
+                   report.get('answer_requirements')==expected_bindings]
+    charts = chart_checks(report.get('charts', []), artifacts, list(canonical.values()), view_catalog=catalog)
+    from services.dashboard_planner_service import pinned_by_scope, exposure_companions
+    # Exposure companions are shown as n/N inside their rate's chart (same artifact), not as charts of their own.
+    applicable = [(id,m) for id,a in artifacts.items() if a.query.role == 'requested' and (a.plan.dimensions or a.plan.kind == 'trend')
+                  and a.plan.kind != 'detail' and not pinned_by_scope(a, artifacts) for m in a.plan.metrics
+                  if m not in exposure_companions(a)]  # a scope-fixed grouping is a KPI
     capacity_tables = {v['query_id'] for v in report.get('dashboard_plan',{}).get('omitted_visuals',[])
                        if v['reason'] in {'chart_point_budget','chart_payload_budget','category_budget','series_budget'}}
     table_pairs = {(t['query_id'],m) for t in report.get('dashboard_plan',{}).get('tables',[]) for m in t.get('metrics',[])
@@ -332,7 +467,7 @@ def assess_report(report, catalog, *, artifacts=None):
     invalid_charts = sum(not c['valid'] for c in charts)
     visual_pass = covered + sum(c['valid'] for c in charts)
     visual_total = len(applicable) + len(charts)
-    facts = report_limitations(artifacts, report.get('charts', []), catalog, context.get('limitations', []))
+    facts = report_limitations(artifacts, report.get('charts', []), catalog, context.get('limitations', []),context.get('source_coverage',[]))
     disclosed = {i['id']:i for i in report.get('quality_limitations', []) if isinstance(i,dict)}
     disclosed_count = sum(disclosed.get(f['id']) == f for f in facts)
     ratios = [len(done)/len(requested) if requested else 0, 1, 1,
@@ -410,19 +545,24 @@ def assess_report(report, catalog, *, artifacts=None):
             check('visualization_appropriateness',LABELS['visualization_appropriateness'],visual_pass,visual_total,summaries[4]),
             check('limitation_disclosure',LABELS['limitation_disclosure'],disclosed_count,len(facts),summaries[5]),
         ]
-        # Recompute depth from protected request facts, not the displayed count
-        # or a saved success flag. One requested metric cannot prove a broad
-        # evaluation was fully delivered.
-        ui=context.get('ui_constraints',{})
-        from services.analysis_expansion_service import dashboard_policy
-        minimum = max(dashboard_policy(catalog)['minimum_views'], ui.get('minimum_visuals',0))
-        if minimum:
-            valid_views=sum(c['valid'] for c in charts)
-            measurements.append(check('analysis_depth_coverage','Độ đầy đủ góc nhìn',min(valid_views,minimum),minimum,
-                f'{valid_views}/{minimum} góc nhìn độc lập được kiểm chứng; mọi báo cáo phân tích cần đủ góc nhìn.'))
-            if valid_views<minimum:
-                unverified.append(item('insufficient_views',f'Chưa đủ góc nhìn: {valid_views}/{minimum}. Các bảng dữ liệu không thay thế biểu đồ còn thiếu.'))
-                actions.append({**item('complete_views','Bổ sung góc nhìn đúng phạm vi hoặc công bố dữ liệu chưa hỗ trợ.'),'action':'review_scope'})
+        # Required analytical roles, rather than a count of charts, define completeness.
+        from services.view_requirement_service import view_coverage
+        views=view_coverage(report.get('resolved_requirement_coverage'),report.get('charts',[]),artifacts,
+                            report.get('dashboard_plan',{}).get('omitted_visuals',[]),report.get('dashboard_plan',{}).get('tables',[]))
+        required=[v for v in views if v['required']]
+        if required:
+            satisfied=sum(v['status']=='satisfied' for v in required)
+            measurements.append(check('analysis_depth_coverage','Yêu cầu bằng chứng',satisfied,len(required),
+                f'{satisfied}/{len(required)} vai trò phân tích bắt buộc có bằng chứng.'))
+            for v in required:
+                if v['status']!='satisfied':
+                    unverified.append(item('missing_view:'+v['requirement_id'],f"Thiếu {v['kind']}: {v['reason']}"))
+        breadth = breadth_check(report, artifacts, catalog, charts, breadth_plan)
+        if breadth:
+            breadth = dict(id='analysis_breadth_coverage', label='Độ bao phủ góc nhìn', passed=breadth[0], total=breadth[1],
+                           summary=breadth[2], status=breadth[3] or ('passed' if breadth[0] >= breadth[1] else 'partial'))
+            if breadth['status'] in {'partial', 'failed'}:
+                unverified.append(item('analysis_breadth', breadth['summary']))
         if report.get('capacity'):
             from services.result_artifact_store import fingerprint
             population = []
@@ -448,18 +588,75 @@ def assess_report(report, catalog, *, artifacts=None):
                 check('provenance_completeness','Nguồn gốc kết quả',sum(provenance_checks),len(provenance_checks),
                       'Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập.')])
         unverified.append(item('independent_accuracy','Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.'))
-    complete = cap==100 and all(c['status'] in {'passed','not_applicable'} for c in measurements)
+    publication_checks = [dict(id='chart_contract', label='Phạm vi và dữ liệu biểu đồ',
+        passed=sum(c['valid'] for c in charts if c.get('reason') != 'missing_requested_derived_view'),
+        total=sum(c.get('reason') != 'missing_requested_derived_view' for c in charts),
+        status='not_applicable' if not charts else 'passed' if all(c['valid'] or c.get('reason') == 'missing_requested_derived_view'
+            for c in charts) else 'failed',
+        summary='Binding và biểu diễn của từng biểu đồ thực tế; độ bao phủ được công bố riêng.')]
+    if not publication_checks[0]['total']:publication_checks[0]['status']='not_applicable'
+    complete = cap==100 and all(c['status'] in {'passed','not_applicable'} for c in measurements) and not (
+        breadth and breadth['status'] in {'partial', 'failed'})
     scored = {}
     if hybrid:
         from services.verification_score import verification_score
         scored = verification_score(measurements)
-    return AnalysisQualityAssessment(**scored, **({} if hybrid else {'score':score}),
+        from services.verification_score import trust_dimensions
+        scored['trust_dimensions'] = trust_dimensions(measurements)
+    return AnalysisQualityAssessment(**scored, **({} if hybrid else {'score':score}), analysis_breadth=breadth,
+        publication_checks=publication_checks,
         grade=('good' if complete else 'partial') if hybrid else 'excellent' if score>=90 else 'good' if score>=75 else 'partial' if score>=50 else 'needs_attention',
         status='verified' if complete else 'partially_verified', components=[] if hybrid else breakdown,
         measurement_mode='evidence_checks' if hybrid else 'legacy_weighted_checks',verification_checks=measurements,
         completed=completed_items, missing=missing_items, unverified=unverified,
         limitations=[item(f['id'],f['label'],f['scope_ref']) for f in facts], suggested_next_actions=actions,
         coverage=dict(requested_count=len(requested), completed_count=len(done), supporting_count=sum(c['requested_or_supporting']=='supporting' and c['status']=='planned' for c in components), omitted_count=len(missing))).model_dump(mode='json')
+
+
+def breadth_check(report, artifacts, catalog, chart_results, lens_plan):
+    """FINAL P3: recompute analytical breadth independently of the stored ``analysis_coverage``.
+
+    Lens eligibility is re-derived from the restored artifacts (a deleted chart cannot hide behind a stored
+    "no data" reason); only verified charts count. Returns ``(passed, total, summary, status_override)`` or None for
+    legacy (not lens-governed) reports, which stay "not evaluated" instead of failing.
+    """
+    from services.dashboard_planner_service import lens_context, lens_visuals
+    from services.view_requirement_service import analysis_coverage, CAPACITY_LIMIT
+    from services.analysis_expansion_service import view_targets, lens_policy
+    coverage = report.get('resolved_requirement_coverage') or []
+    stored = report.get('analysis_coverage')
+    lenses, groups = lens_context(coverage, catalog)
+    if not lenses and stored is None:
+        return None
+    ui = (report.get('quality_context') or {}).get('ui_constraints') or {}
+    depth = ui.get('server_supporting_expansion')
+    visuals, rejected = lens_visuals(artifacts, lenses, groups)
+    # The production chart grammar (e.g. constant scatter, invalid part-to-whole) is re-applied here too.
+    for v in visuals:
+        reason = chart_reason(v, artifacts[v.query_id], 100, 16) or (
+            None if render(v, artifacts[v.query_id], 0) is not None else 'invalid_composition_total')
+        if reason:
+            rejected.append(dict(lens_id=v.analysis_lens_id, reason=reason))
+    omitted = [dict(lens_id=r['lens_id'], reason=r['reason']) for r in rejected] + [
+        dict(lens_id=o.get('lens_id'), reason=o.get('reason')) for o in (report.get('dashboard_plan') or {}).get('omitted_visuals', [])
+        if o.get('lens_id') and o.get('reason') in CAPACITY_LIMIT]
+    charts = [c for c, r in zip(report.get('charts', []), chart_results) if r.get('valid')]
+    recomputed = analysis_coverage(coverage, charts, omitted, view_targets(catalog, depth), lens_decisions=lens_plan.get('decisions', []),
+                                   depth=depth, origin=ui.get('depth_selection_origin'), family=lens_plan.get('family'),
+                                   policy_version=lens_policy(catalog).get('version'), forecasts=report.get('forecasts') or [])
+    if recomputed is None:
+        return None
+    keys = ('status', 'gap_kind', 'counted', 'targets', 'rendered_total', 'target_total')
+    if not stored or any(stored.get(k) != recomputed.get(k) for k in keys) or [
+            (l['id'], l['status']) for l in stored.get('lenses', [])] != [(l['id'], l['status']) for l in recomputed['lenses']]:
+        return (0, recomputed['target_total'], 'Độ bao phủ góc nhìn đã lưu không khớp kết quả tính lại từ dữ liệu; cần chạy lại phân tích.', 'failed')
+    passed, total = recomputed['rendered_total'], recomputed['target_total']
+    if recomputed['status'] == 'complete':
+        return (passed, total, recomputed['summary'] + '.', None)
+    if recomputed['status'] == 'limited':
+        # Honest data/source/capacity limits do not make the numbers wrong; they are disclosed, not scored as failure.
+        return (passed, total, recomputed['summary'] + '.', 'not_applicable')
+    return (passed, total, recomputed['summary'] + '.', 'partial')
 
 
 def verify_saved_report(report, catalog):

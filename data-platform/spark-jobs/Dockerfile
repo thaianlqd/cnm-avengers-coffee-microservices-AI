@@ -8,11 +8,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir \
     psycopg2-binary==2.9.9 \
-    boto3==1.34.0 \
+    boto3==1.37.32 \
     pandas==2.1.4 \
     pyarrow==14.0.2 \
     sqlalchemy==2.0.36
 
-COPY . /opt/spark-jobs/
+COPY spark-jobs/ /opt/spark-jobs/
+
+COPY pipeline-common/ /opt/pipeline-common/
+COPY metadata/ /opt/data-platform-metadata/
+ENV PYTHONPATH=/opt/pipeline-common DATA_PLATFORM_DATA_CONTRACTS_PATH=/opt/data-platform-metadata/data_contracts.json
 
 ENTRYPOINT ["/bin/bash", "/opt/spark-jobs/entrypoint.sh"]

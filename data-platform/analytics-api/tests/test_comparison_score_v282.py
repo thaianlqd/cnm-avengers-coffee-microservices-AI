@@ -68,8 +68,10 @@ class ComparisonScoreTests(unittest.TestCase):
         observed={}
         for result in (report['result_sets'][q['id']] for q in report['analytical_queries'] if q['role']=='requested'):
             for row in result['rows']:observed.setdefault(row['city'],{}).update({k:v for k,v in row.items() if k!='city'})
-        self.assertEqual(observed['Hồ Chí Minh'],dict(revenue=300,aov=150,order_count=2))
-        self.assertEqual(observed['Hà Nội'],dict(revenue=400,aov=400,order_count=2))
+        # AOV carries its governed denominator, distinct from all-order count:
+        # Hà Nội has one valid order and one cancelled order in the raw fixture.
+        self.assertEqual(observed['Hồ Chí Minh'],dict(revenue=300,aov=150,order_count=2,valid_order_count=2))
+        self.assertEqual(observed['Hà Nội'],dict(revenue=400,aov=400,order_count=2,valid_order_count=1))
         self.assertEqual(report['quality_assessment']['score'],90)
         self.assertEqual(report['quality_assessment'],verify_saved_report(report,self.catalog))
 

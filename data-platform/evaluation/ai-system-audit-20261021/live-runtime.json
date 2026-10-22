@@ -1,0 +1,3878 @@
+[
+  {
+    "id": "risk-edited",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "risk_watch"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "eq",
+            "value": "Hồ Chí Minh"
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh"
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "subject:stores",
+          "vận hành"
+        ],
+        "analytical": [
+          "risk_watch",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "a5b190825db12a238f4f95f709237fefba226dd9d8a8dea0f652f9eb3251d5f9",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 67,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "risk_watch",
+        "inferred_mission": "risk_watch",
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 204.19
+    },
+    "job": {
+      "job_id": "aj_0ff2db11cb9b414f959f72f92d952f24",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 182.3,
+        "accepted": 4298.45
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_25d28ef45f5146ad88149bdebeb41aa7",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 22290.98,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 22290.98,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 28.688
+  },
+  {
+    "id": "risk-explicit-scope",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_scope": {
+        "mode": "selected",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh"
+            ]
+          }
+        ]
+      },
+      "analysis_mission": "risk_watch"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "Kiểm tra rủi ro vận hành tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "vận hành"
+        ],
+        "analytical": [
+          "risk_watch",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "ec06de3921a30c40bd09e8ae00463ebd3b9ea622cfc8cb46ba5cd8585cc0867b",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 41,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "auto_upgrade",
+        "slots": {
+          "mission": "risk_watch",
+          "signals": [
+            "order_cancellation_high",
+            "delivery_success_low",
+            "cash_discrepancy_high",
+            "late_shift_high",
+            "paused_positions_exist",
+            "store_rating_low"
+          ]
+        },
+        "question_filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ]
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "risk_watch",
+        "inferred_mission": "risk_watch",
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 105.22
+    },
+    "job": {
+      "job_id": "aj_fe1a70f9cea1439ea19409bf907f3126",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 79.84,
+        "accepted": 1786.35
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_81f05629627c442985f39b3b5c29ea51",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_GUIDED"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 21299.44,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 21299.44,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 24.264
+  },
+  {
+    "id": "risk-followup",
+    "payload": {
+      "question": "Top 5 chi nhánh có tỷ lệ hủy đơn cao nhất",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_scope": {
+        "mode": "selected",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh"
+            ]
+          }
+        ]
+      },
+      "analysis_mission": "ranking"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hồ Chí Minh"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "Top 5 chi nhánh có tỷ lệ hủy đơn cao nhất"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "order_cancellation_rate",
+            "label": "Tỷ lệ hủy đơn",
+            "unit": "%",
+            "historical": true,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "store",
+            "label": "Chi nhánh"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "chi nhánh",
+          "city",
+          "order_cancellation_rate",
+          "store",
+          "subject:stores",
+          "đơn"
+        ],
+        "analytical": [
+          "ranking"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "04906258b8406a22a16ffb0ac11b1adf3abdf28e57348191004f173a5096ecb6",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 41,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "ranking",
+        "inferred_mission": "ranking",
+        "metric_locks": [],
+        "metrics": [
+          "order_cancellation_rate"
+        ],
+        "dimensions": [
+          "store"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "control",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 99.34
+    },
+    "job": {
+      "job_id": "aj_c219fa2e099c475a901d2808c2a7767d",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 6.69,
+        "accepted": 1007.2
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_d9a90ba0e40b4712a8d64da634e485a8",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20914.73,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20914.74,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 22.543
+  },
+  {
+    "id": "overview-scoped",
+    "payload": {
+      "question": "Tình hình doanh thu tháng 9 năm 2026 tại Hồ Chí Minh",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "overview"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "eq",
+            "value": "Hồ Chí Minh"
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "Tình hình doanh thu tháng 9 năm 2026 tại Hồ Chí Minh"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "overview",
+          "label": "Tổng quan"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "overview",
+          "label": "Tổng quan"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "overview",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "62297a7e910ba67ae868d4bc681f3cbe45215d99c4a7026ee7c7f01e917aff91",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 52,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "overview",
+        "inferred_mission": "overview",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 104.83
+    },
+    "job": {
+      "job_id": "aj_bbac72bb1f54427b8714c4fca24b2048",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 109.06,
+        "accepted": 3913.19
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_86d031a278c643c194e11877d846dda5",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 21395.51,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 21395.52,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 27.043
+  },
+  {
+    "id": "compare",
+    "payload": {
+      "question": "So sánh doanh thu theo tỉnh/thành giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "compare"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "input_entity_unresolved",
+            "stage": "static",
+            "blocking": true,
+            "subject": "city",
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “giữa Hồ Chí Minh”. Sửa tên hoặc chọn lại giá trị trước khi phân tích."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "input_entity_unresolved",
+        "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “giữa Hồ Chí Minh”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+        "actions": [
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hồ Chí Minh",
+            "start": 34,
+            "end": 50,
+            "old_text": "giữa Hồ Chí Minh",
+            "new_text": "Hồ Chí Minh",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hà Nội",
+            "start": 34,
+            "end": 50,
+            "old_text": "giữa Hồ Chí Minh",
+            "new_text": "Hà Nội",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Đà Nẵng",
+            "start": 34,
+            "end": 50,
+            "old_text": "giữa Hồ Chí Minh",
+            "new_text": "Đà Nẵng",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Cần Thơ",
+            "start": 34,
+            "end": 50,
+            "old_text": "giữa Hồ Chí Minh",
+            "new_text": "Cần Thơ",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Hà Nội",
+              "Hồ Chí Minh"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hà Nội",
+              "Hồ Chí Minh"
+            ],
+            "comparison": true,
+            "cohorts": [
+              {
+                "phrase": "ho chi minh",
+                "members": [
+                  "Hồ Chí Minh"
+                ]
+              },
+              {
+                "phrase": "ha noi",
+                "members": [
+                  "Hà Nội"
+                ]
+              }
+            ],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "e11a97c58b08eeaaa7b9fd703c9454c3eaa843539fe80de376f6d50b7ebcb427",
+        "requested_phrase": "So sánh doanh thu theo tỉnh/thành giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "compare",
+          "label": "So sánh"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "compare",
+          "label": "So sánh"
+        }
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_entity_unresolved",
+          "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “giữa Hồ Chí Minh”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+          "slot_id": "s1",
+          "dimension": "city",
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hồ Chí Minh",
+              "start": 34,
+              "end": 50,
+              "old_text": "giữa Hồ Chí Minh",
+              "new_text": "Hồ Chí Minh"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hà Nội",
+              "start": 34,
+              "end": 50,
+              "old_text": "giữa Hồ Chí Minh",
+              "new_text": "Hà Nội"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Đà Nẵng",
+              "start": 34,
+              "end": 50,
+              "old_text": "giữa Hồ Chí Minh",
+              "new_text": "Đà Nẵng"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Cần Thơ",
+              "start": 34,
+              "end": 50,
+              "old_text": "giữa Hồ Chí Minh",
+              "new_text": "Cần Thơ"
+            }
+          ]
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "compare",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "b610beebacb65396d4e5a6a14211acd6f69bb7af27a5ef62dbbef2800b385575",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 77,
+            "slot_ids": [
+              "s1",
+              "s2"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "entity",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_entity_unresolved",
+            "start": 34,
+            "end": 50,
+            "raw": "giữa Hồ Chí Minh",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [],
+            "lookup_allowed": false,
+            "clause_id": "c1"
+          },
+          {
+            "id": "s2",
+            "kind": "entity",
+            "state": "BOUND",
+            "reason": "catalog_alias",
+            "start": 54,
+            "end": 60,
+            "raw": "Hà Nội",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [
+              "Hà Nội"
+            ],
+            "lookup_allowed": false,
+            "clause_id": "c1"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_entity_unresolved",
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “giữa Hồ Chí Minh”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+            "slot_id": "s1",
+            "dimension": "city",
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hồ Chí Minh",
+                "start": 34,
+                "end": 50,
+                "old_text": "giữa Hồ Chí Minh",
+                "new_text": "Hồ Chí Minh"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hà Nội",
+                "start": 34,
+                "end": 50,
+                "old_text": "giữa Hồ Chí Minh",
+                "new_text": "Hà Nội"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Đà Nẵng",
+                "start": 34,
+                "end": 50,
+                "old_text": "giữa Hồ Chí Minh",
+                "new_text": "Đà Nẵng"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Cần Thơ",
+                "start": 34,
+                "end": 50,
+                "old_text": "giữa Hồ Chí Minh",
+                "new_text": "Cần Thơ"
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "compare",
+        "inferred_mission": "compare",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          },
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hà Nội",
+            "display": "Hà Nội"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 101.85
+    },
+    "job": {
+      "job_id": null,
+      "state": null,
+      "provider_call_count": null,
+      "physical_http": null,
+      "stage_timings_ms": null,
+      "http_error": 400,
+      "detail": {
+        "detail": "Chưa xác minh được tỉnh/thành trong dữ liệu “giữa Hồ Chí Minh”. Sửa tên hoặc chọn lại giá trị trước khi phân tích."
+      }
+    },
+    "report": {
+      "status": null,
+      "outcome": null,
+      "message": null,
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": null,
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": null,
+      "input_policy_version": null,
+      "terminal_error": null,
+      "error_category": null,
+      "failure_code": null,
+      "failure_stage": null,
+      "contract_issues": null,
+      "provider_call_count": null,
+      "provider_physical_attempts": null,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": null,
+      "execution_status": null,
+      "result_status": null,
+      "guided_contract_used": null,
+      "preflight_state": null
+    },
+    "provider_attempts": [],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 0.337
+  },
+  {
+    "id": "bottom-five",
+    "payload": {
+      "question": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "ranking"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        },
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "b93b7ee9a712a1ec4dc40d88e5fe3bacd2612ffb56881859110f8ec1b6071022",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 65,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "ranking",
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 389.41
+    },
+    "job": {
+      "job_id": "aj_d6bd177384584a7f8e7f60be8d2ecd06",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 100.62,
+        "accepted": 2314.76
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_f883657dfb774050ab054922a79a07e2",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20292.14,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20292.14,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 24.11
+  },
+  {
+    "id": "trend-scoped",
+    "payload": {
+      "question": "Xu hướng doanh thu theo tuần tháng 9 năm 2026 tại Hồ Chí Minh",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "trend"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "eq",
+            "value": "Hồ Chí Minh"
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "Xu hướng doanh thu theo tuần tháng 9 năm 2026 tại Hồ Chí Minh"
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "trend",
+          "label": "Xu hướng"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "trend",
+          "label": "Xu hướng"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "granularity",
+          "time",
+          "trend"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "7cba73bb9616ff292baa1ee6ee9638baa3a18c808d0601b31a1c916729f5e746",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 61,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "trend",
+        "inferred_mission": "trend",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 28.37
+    },
+    "job": {
+      "job_id": "aj_f80e21dc1c964883bf11a64a2883a0d4",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 3.02,
+        "accepted": 401.3
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_c69c341120f94c7a901f1573df4824bf",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20255.86,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20255.87,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 21.295
+  },
+  {
+    "id": "composition",
+    "payload": {
+      "question": "Cơ cấu doanh thu theo phương thức thanh toán tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "overview"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "payment_method",
+            "label": "Phương thức thanh toán"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "overview",
+          "label": "Tổng quan"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "composition",
+          "label": "Cơ cấu"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "payment_method",
+          "revenue",
+          "subject:orders",
+          "subject:payments",
+          "thanh toán"
+        ],
+        "analytical": [
+          "composition",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "9b3863585815718572bd74c1aafa129e84c159e3e6e96c5cc8b413029d9aaf06",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 61,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "overview",
+        "inferred_mission": "composition",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "payment_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "payment_method"
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 113.68
+    },
+    "job": {
+      "job_id": "aj_5bb3a1d12a6d451e8febb932b2e17c2f",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 4.1,
+        "accepted": 601.65
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_7bca77fcb8e644c9ba2742b409d6e30e",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20387.54,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20387.55,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 21.588
+  },
+  {
+    "id": "forecast",
+    "payload": {
+      "question": "Dự báo doanh thu 3 tháng tới",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "auto"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "forecast"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "warning",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": {
+          "requested": true,
+          "horizon": 3,
+          "unit": "month",
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          }
+        },
+        "mission": {
+          "id": "forecast",
+          "label": "Dự báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "forecast",
+          "label": "Dự báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "warn",
+          "code": "forecast_data_stale",
+          "message": "Dữ liệu đơn hàng chi tiết và doanh thu mới đến 2026-10-18 (cập nhật theo đợt); dự báo bắt đầu từ kỳ hoàn tất gần nhất, các ngày chưa đồng bộ không được coi là doanh số bằng 0.",
+          "fixes": [],
+          "metric": "revenue",
+          "max_date": "2026-10-18"
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "revenue",
+          "subject:orders"
+        ],
+        "analytical": [
+          "forecast"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "658419156929f851958e45d081abe6cafd57f736ed74c4628f5af51af5260853",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 28,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "forecast",
+        "inferred_mission": "forecast",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": {
+          "requested": true,
+          "horizon": 3,
+          "unit": "month",
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          }
+        },
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 75.7
+    },
+    "job": {
+      "job_id": "aj_f5e9dd9364074f408715dffc4b12829b",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 4.57,
+        "accepted": 686.04
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_1f563c2ede1445b9b28a9f165a2fd035",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20314.02,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20314.02,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 21.359
+  },
+  {
+    "id": "relationship",
+    "payload": {
+      "question": "Liên hệ giữa tổng chuyến giao và điểm hồ sơ tài xế theo mã tài xế tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "warning",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "total_deliveries",
+            "label": "Tổng chuyến giao",
+            "unit": "lượt",
+            "historical": false,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          },
+          {
+            "id": "driver_rating",
+            "label": "Điểm hồ sơ tài xế",
+            "unit": "điểm",
+            "historical": false,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "relationship",
+          "label": "Tương quan"
+        }
+      },
+      "findings": [
+        {
+          "level": "warn",
+          "code": "snapshot_metric_trend",
+          "message": "Tổng chuyến giao là chỉ số hiện trạng (ảnh chụp), không có lịch sử theo thời gian; hệ thống chỉ trả giá trị hiện tại.",
+          "fixes": [
+            {
+              "label": "Bỏ mốc thời gian / xu hướng",
+              "kind": "advice"
+            }
+          ],
+          "metric": "total_deliveries"
+        },
+        {
+          "level": "warn",
+          "code": "snapshot_metric_trend",
+          "message": "Điểm hồ sơ tài xế là chỉ số hiện trạng (ảnh chụp), không có lịch sử theo thời gian; hệ thống chỉ trả giá trị hiện tại.",
+          "fixes": [
+            {
+              "label": "Bỏ mốc thời gian / xu hướng",
+              "kind": "advice"
+            }
+          ],
+          "metric": "driver_rating"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "driver_rating",
+          "subject:delivery",
+          "total_deliveries"
+        ],
+        "analytical": [
+          "relationship",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "0e3bc68a5309a7ad4add7afa11df816c9d64df213266e3823aef647cb060d111",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 82,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": "relationship",
+        "metric_locks": [],
+        "metrics": [
+          "total_deliveries",
+          "driver_rating"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 46.16
+    },
+    "job": {
+      "job_id": "aj_70803914ea1643afa60131a4cc280ba0",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 4.04,
+        "accepted": 912.32
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_d9a0b3a2ce75474e8cf4fb5dc82ca043",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20287.19,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20287.21,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 21.386
+  },
+  {
+    "id": "multi-clause",
+    "payload": {
+      "question": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026; phân tích chi nhánh và phương thức thanh toán chỉ trong 5 tỉnh này",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "NEEDS_INPUT",
+      "state_label": "Cần bổ sung thông tin",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "input_entity_unresolved",
+            "stage": "static",
+            "blocking": true,
+            "subject": "city",
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “này”. Sửa tên hoặc chọn lại giá trị trước khi phân tích."
+          },
+          {
+            "code": "input_entity_unresolved",
+            "stage": "static",
+            "blocking": true,
+            "subject": "payment_method",
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa xác minh được phương thức thanh toán “chỉ”. Sửa tên hoặc chọn lại giá trị trước khi phân tích."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": false,
+        "reason": "input_entity_unresolved",
+        "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “này”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+        "actions": [
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hồ Chí Minh",
+            "start": 112,
+            "end": 115,
+            "old_text": "này",
+            "new_text": "Hồ Chí Minh",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Hà Nội",
+            "start": 112,
+            "end": 115,
+            "old_text": "này",
+            "new_text": "Hà Nội",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Đà Nẵng",
+            "start": 112,
+            "end": 115,
+            "old_text": "này",
+            "new_text": "Đà Nẵng",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng Cần Thơ",
+            "start": 112,
+            "end": 115,
+            "old_text": "này",
+            "new_text": "Cần Thơ",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "advice",
+            "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền.",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng TIEN_MAT",
+            "start": 95,
+            "end": 98,
+            "old_text": "chỉ",
+            "new_text": "TIEN_MAT",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng NGAN_HANG_QR",
+            "start": 95,
+            "end": 98,
+            "old_text": "chỉ",
+            "new_text": "NGAN_HANG_QR",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng THE_NGAN_HANG",
+            "start": 95,
+            "end": 98,
+            "old_text": "chỉ",
+            "new_text": "THE_NGAN_HANG",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          },
+          {
+            "kind": "replace_span",
+            "label": "Dùng CHUYEN_KHOAN",
+            "start": 95,
+            "end": 98,
+            "old_text": "chỉ",
+            "new_text": "CHUYEN_KHOAN",
+            "constraint_code": "input_entity_unresolved",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "store",
+            "label": "Chi nhánh"
+          },
+          {
+            "id": "payment_method",
+            "label": "Phương thức thanh toán"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        }
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "input_entity_unresolved",
+          "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “này”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+          "slot_id": "s1",
+          "dimension": "city",
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hồ Chí Minh",
+              "start": 112,
+              "end": 115,
+              "old_text": "này",
+              "new_text": "Hồ Chí Minh"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Hà Nội",
+              "start": 112,
+              "end": 115,
+              "old_text": "này",
+              "new_text": "Hà Nội"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Đà Nẵng",
+              "start": 112,
+              "end": 115,
+              "old_text": "này",
+              "new_text": "Đà Nẵng"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng Cần Thơ",
+              "start": 112,
+              "end": 115,
+              "old_text": "này",
+              "new_text": "Cần Thơ"
+            }
+          ]
+        },
+        {
+          "level": "block",
+          "code": "input_entity_unresolved",
+          "message": "Chưa xác minh được phương thức thanh toán “chỉ”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+          "slot_id": "s2",
+          "dimension": "payment_method",
+          "fixes": [
+            {
+              "kind": "advice",
+              "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng TIEN_MAT",
+              "start": 95,
+              "end": 98,
+              "old_text": "chỉ",
+              "new_text": "TIEN_MAT"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng NGAN_HANG_QR",
+              "start": 95,
+              "end": 98,
+              "old_text": "chỉ",
+              "new_text": "NGAN_HANG_QR"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng THE_NGAN_HANG",
+              "start": 95,
+              "end": 98,
+              "old_text": "chỉ",
+              "new_text": "THE_NGAN_HANG"
+            },
+            {
+              "kind": "replace_span",
+              "label": "Dùng CHUYEN_KHOAN",
+              "start": 95,
+              "end": 98,
+              "old_text": "chỉ",
+              "new_text": "CHUYEN_KHOAN"
+            }
+          ]
+        },
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "chi nhánh",
+          "payment_method",
+          "revenue",
+          "store",
+          "subject:orders",
+          "subject:payments",
+          "subject:stores",
+          "thanh toán"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "5160b2c08e469f14ddaca2bc0f66814825d707649b2ee9e72d55a3cb7dafa2f8",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 47,
+            "slot_ids": [],
+            "state": "BOUND"
+          },
+          {
+            "id": "c2",
+            "start": 48,
+            "end": 115,
+            "slot_ids": [
+              "s1",
+              "s2"
+            ],
+            "state": "PRESENT_UNRESOLVED"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "kind": "entity",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_entity_unresolved",
+            "start": 112,
+            "end": 115,
+            "raw": "này",
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "candidates": [],
+            "lookup_allowed": false,
+            "clause_id": "c2"
+          },
+          {
+            "id": "s2",
+            "kind": "entity",
+            "state": "PRESENT_UNRESOLVED",
+            "reason": "input_entity_unresolved",
+            "start": 95,
+            "end": 98,
+            "raw": "chỉ",
+            "dimension": "payment_method",
+            "label": "Phương thức thanh toán",
+            "candidates": [],
+            "lookup_allowed": false,
+            "clause_id": "c2"
+          }
+        ],
+        "findings": [
+          {
+            "level": "block",
+            "code": "input_entity_unresolved",
+            "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “này”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+            "slot_id": "s1",
+            "dimension": "city",
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hồ Chí Minh",
+                "start": 112,
+                "end": 115,
+                "old_text": "này",
+                "new_text": "Hồ Chí Minh"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Hà Nội",
+                "start": 112,
+                "end": 115,
+                "old_text": "này",
+                "new_text": "Hà Nội"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Đà Nẵng",
+                "start": 112,
+                "end": 115,
+                "old_text": "này",
+                "new_text": "Đà Nẵng"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng Cần Thơ",
+                "start": 112,
+                "end": 115,
+                "old_text": "này",
+                "new_text": "Cần Thơ"
+              }
+            ]
+          },
+          {
+            "level": "block",
+            "code": "input_entity_unresolved",
+            "message": "Chưa xác minh được phương thức thanh toán “chỉ”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+            "slot_id": "s2",
+            "dimension": "payment_method",
+            "fixes": [
+              {
+                "kind": "advice",
+                "label": "Sửa cụm được đánh dấu hoặc chọn giá trị từ danh mục được cấp quyền."
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng TIEN_MAT",
+                "start": 95,
+                "end": 98,
+                "old_text": "chỉ",
+                "new_text": "TIEN_MAT"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng NGAN_HANG_QR",
+                "start": 95,
+                "end": 98,
+                "old_text": "chỉ",
+                "new_text": "NGAN_HANG_QR"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng THE_NGAN_HANG",
+                "start": 95,
+                "end": 98,
+                "old_text": "chỉ",
+                "new_text": "THE_NGAN_HANG"
+              },
+              {
+                "kind": "replace_span",
+                "label": "Dùng CHUYEN_KHOAN",
+                "start": 95,
+                "end": 98,
+                "old_text": "chỉ",
+                "new_text": "CHUYEN_KHOAN"
+              }
+            ]
+          }
+        ],
+        "can_submit": false,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": "ranking",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "payment_revenue",
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "store",
+          "payment_method"
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 116.27
+    },
+    "job": {
+      "job_id": null,
+      "state": null,
+      "provider_call_count": null,
+      "physical_http": null,
+      "stage_timings_ms": null,
+      "http_error": 400,
+      "detail": {
+        "detail": "Chưa xác minh được tỉnh/thành trong dữ liệu “này”. Sửa tên hoặc chọn lại giá trị trước khi phân tích."
+      }
+    },
+    "report": {
+      "status": null,
+      "outcome": null,
+      "message": null,
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": null,
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": null,
+      "input_policy_version": null,
+      "terminal_error": null,
+      "error_category": null,
+      "failure_code": null,
+      "failure_stage": null,
+      "contract_issues": null,
+      "provider_call_count": null,
+      "provider_physical_attempts": null,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": null,
+      "execution_status": null,
+      "result_status": null,
+      "guided_contract_used": null,
+      "preflight_state": null
+    },
+    "provider_attempts": [],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 0.224
+  },
+  {
+    "id": "casual",
+    "payload": {
+      "question": "tháng 9 năm 2026 ở HCM bán được bao nhiêu?",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "eq",
+            "value": "Hồ Chí Minh"
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "tháng 9 năm 2026 ở HCM bán được bao nhiêu?"
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "bán",
+          "bán được",
+          "city"
+        ],
+        "analytical": [
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "8bda3cd926318351046a625b0fc3603c8236d1ef121bf7d602350ccca7fcef4b",
+        "fingerprint": "1c943585e70166e8d3dfc8a32320982105a3a7093341228dbf1d499390dffee0",
+        "catalog_fingerprint": "926a329cf4790ad233df32dc73862936b60d3c0894db9ecea9c60b1da6bcf9d9",
+        "access_fingerprint": "7b28677df205d7da7f243f91db20ce92236005648faf05a1cd64c9db1a310f10",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 42,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "3e82d64fb291f80fa3e2b16f566ac2205a770a8db60d6c89086b89d251f76d33",
+      "elapsed_ms": 23.61
+    },
+    "job": {
+      "job_id": "aj_152def1971184f228e9b144403e34349",
+      "state": "failed",
+      "provider_call_count": 1,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 3.73,
+        "accepted": 500.63
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PROVIDER_TRANSPORT",
+        "code": "provider_timeout",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "provider_timeout",
+        "retry_helps": true,
+        "error_type": "PROVIDER_TIMEOUT",
+        "analysis_state": "PROVIDER_FAILURE",
+        "analysis_stage": "PROVIDER_TRANSPORT_FAILURE",
+        "guidance": {
+          "title": "Dịch vụ AI phản hồi quá chậm",
+          "description": "Dịch vụ AI hiện phản hồi quá chậm.",
+          "next_action": "retry"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_199719033b6342a69a4bb2d43514e62a",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "provider_timeout",
+      "error_category": "provider_timeout",
+      "failure_code": null,
+      "failure_stage": "PROVIDER_TRANSPORT",
+      "contract_issues": null,
+      "provider_call_count": 1,
+      "provider_physical_attempts": 2,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI"
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20279.01,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": "provider_timeout",
+        "latency_ms": 20279.02,
+        "tokens": {
+          "input": null,
+          "output": null
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 21.05
+  }
+]

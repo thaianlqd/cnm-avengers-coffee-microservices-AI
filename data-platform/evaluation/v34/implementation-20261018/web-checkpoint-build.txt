@@ -1,0 +1,18 @@
+
+> data-platform-web-ui@1.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 91 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   1.41 kB │ gzip:   0.80 kB
+dist/assets/index-C7LhEk_e.css   50.55 kB │ gzip:   8.81 kB
+dist/assets/index-CXwdHPxg.js   522.59 kB │ gzip: 147.40 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.66s

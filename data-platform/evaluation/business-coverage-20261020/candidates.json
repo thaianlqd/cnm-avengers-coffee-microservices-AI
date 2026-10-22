@@ -1,0 +1,27 @@
+{
+  "question": "Phân tích đánh giá của khách hàng về các sản phẩm",
+  "domains": [
+    "customers",
+    "products"
+  ],
+  "metrics": [
+    "customer_count",
+    "product_revenue",
+    "quantity_sold",
+    "total_spent"
+  ],
+  "retrieved": [
+    {
+      "id": "customers",
+      "score": 2,
+      "match_category": "alias_match",
+      "protected": true
+    },
+    {
+      "id": "products",
+      "score": 2,
+      "match_category": "exact_business_label_match",
+      "protected": true
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "mode": "offline",
+  "measures_natural_language_understanding": false,
+  "generated_at": "2026-10-16T04:37:29.640651+00:00",
+  "registry_fingerprint": "a8c6267a642ca88204e2d977f6f535250e8219bb269071f83c45e36ae715a315",
+  "case_count": 113,
+  "dataset_errors": [],
+  "categories": [
+    "ambiguous",
+    "comparison",
+    "cross_domain",
+    "delivery",
+    "distribution",
+    "filters",
+    "followup",
+    "forecast",
+    "forecast_unsupported",
+    "informal",
+    "multi_dimension",
+    "out_of_scope",
+    "ranking",
+    "relative_time",
+    "restricted",
+    "simple",
+    "trend",
+    "typo",
+    "unsupported"
+  ],
+  "retrieval_domain": {
+    "passed": 86,
+    "total": 88,
+    "rate": 0.9773
+  },
+  "retrieval_metric": {
+    "passed": 85,
+    "total": 88,
+    "rate": 0.9659
+  },
+  "regression_retrieval": {
+    "passed": 6,
+    "total": 6,
+    "rate": 1.0
+  },
+  "compile_level2": {
+    "passed": 83,
+    "total": 83,
+    "rate": 1.0
+  },
+  "forecast_capability_rejections": {
+    "passed": 3,
+    "total": 3,
+    "rate": 1.0
+  },
+  "max_context_chars": 11984,
+  "failures": [
+    {
+      "id": "ship_12",
+      "status": "SUPPORTED",
+      "category": "delivery",
+      "retrieval": {
+        "domain_ok": true,
+        "metric_ok": false,
+        "context_chars": 3253,
+        "candidate_domains": [
+          "delivery"
+        ],
+        "directory_mode": false
+      },
+      "compile": {
+        "ok": true,
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "states": [
+          "RESOLVED"
+        ]
+      }
+    },
+    {
+      "id": "rev_12",
+      "status": "SUPPORTED",
+      "category": "informal",
+      "retrieval": {
+        "domain_ok": false,
+        "metric_ok": false,
+        "context_chars": 5492,
+        "candidate_domains": [
+          "customer_surveys",
+          "customers",
+          "order_items"
+        ],
+        "directory_mode": false
+      },
+      "compile": {
+        "ok": true,
+        "subjects": [
+          "orders"
+        ],
+        "states": [
+          "RESOLVED"
+        ]
+      }
+    },
+    {
+      "id": "rev_r_02",
+      "status": "SUPPORTED",
+      "category": "ranking",
+      "retrieval": {
+        "domain_ok": false,
+        "metric_ok": false,
+        "context_chars": 3453,
+        "candidate_domains": [
+          "products"
+        ],
+        "directory_mode": false
+      },
+      "compile": {
+        "ok": true,
+        "subjects": [
+          "product_reviews"
+        ],
+        "states": [
+          "RESOLVED"
+        ]
+      }
+    }
+  ]
+}

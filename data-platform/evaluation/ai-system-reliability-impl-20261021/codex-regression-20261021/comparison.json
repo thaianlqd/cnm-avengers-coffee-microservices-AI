@@ -1,0 +1,19 @@
+{
+  "modules_finished": 12,
+  "modules_expected": 101,
+  "tests": 583,
+  "failures": 2,
+  "errors": 0,
+  "new_failure_ids": [
+    "tests.test_analysis_jobs.AnalysisJobTests.test_load_one_five_ten_jobs_without_provider_network (count=10)",
+    "tests.test_analysis_jobs.AnalysisJobTests.test_load_one_five_ten_jobs_without_provider_network (count=5)"
+  ],
+  "existing_failure_ids": [],
+  "baseline_ids_passed_in_current_modules": [
+    "tests.test_business_coverage_corpus.BusinessCoverageCorpusTests.test_candidate_only_receipt"
+  ],
+  "incomplete_modules": [],
+  "source_drift": null,
+  "qualification": "IN_PROGRESS",
+  "isolation": "Fresh process per module; monolithic suite not qualified."
+}

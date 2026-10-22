@@ -1,0 +1,464 @@
+{
+  "checked_at": "2026-10-21T06:32:22.954350+00:00",
+  "surface": "http://127.0.0.1:8501",
+  "role": "DATA_ANALYST",
+  "scope": "Authenticated preflight, rejected invalid direct submissions and explicit bounded read-only metadata resolution. No valid AI proposal or analytical job was submitted.",
+  "cases": [
+    {
+      "id": "S01",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_entity_unresolved",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "814dc8e96e135a89f43c7bf5f9dfc5ac9b975a837ee9d1ddc015a0e9c82d0fb9",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S02",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_entity_unresolved",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "c6c51e42fa205c6ce790cb62e54b779a00fb968c71167131aaea2af5077c1a02",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S03",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_entity_unresolved",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "ec428b68064082ba221ef4b361c4f9adb59df8abd294a308dbd0d350bb40d625",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S04",
+      "http": 200,
+      "expected": true,
+      "actual": true,
+      "passed": true,
+      "state": "READY_FOR_AI",
+      "codes": [
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "90d82e23623b34110a146893df68b08ee191b9b543ea478acfbb476380ae479d",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S05",
+      "http": 200,
+      "expected": true,
+      "actual": true,
+      "passed": true,
+      "state": "READY_FOR_AI",
+      "codes": [
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "60828698ea301b5f3c74cd1a502a279612ccfa71f92904b2d98f26adec5fe8d4",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S06",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_lookup_required",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "84bceec18d819ef3e2871ffdad4cf7447ef7371413eb90471c1f03ce7dc78474",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S07",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_lookup_required"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "9383f1d0a69ff7a41fc32dc3b6556be32669b45d2be2d48b5763e85d5d4d34ae",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S08",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_residual_unresolved",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "60dac0e6131e380a02f7d1addd7d7ca23cd80ec18ffad7db8508d681b5fa28cf",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S09",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_number_invalid",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "57926ba152b84101086cc2c058ed422ed149e718589e0fc12f72a66f7e625073",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S10",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_time_invalid",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "8b664299b93b4ed7ea01a5154893ff3d17f388843ff8901cb3f03fa5594843ee",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S11",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_time_conflict",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "8b214efbfd31ebc51bc9fc0faf43d67b04a55e0036a572fb48ed7b81f0e27212",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S12",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_entity_unresolved",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "e800e67df2b19d566c1d48a005af2fc9925baa48738b1fc1bbdabe0081d486ef",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S13",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_scope_forbidden",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "3ede88004e3ba854d5753248cf1740fbd64f5b84fea42aa5612b03ea3bdad6c4",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S14",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "unsupported_concept",
+        "unsupported_only"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "3505b2e36e746af2882f95e3be0b5573e26c5f08208643432d5214934c86971c",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S15",
+      "http": 200,
+      "expected": true,
+      "actual": true,
+      "passed": true,
+      "state": "READY_FOR_AI",
+      "codes": [
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "31428486fd6661704d28db535b3125529f22b4a0d6f889c742f2405c8b5cbace",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S16",
+      "http": 200,
+      "expected": true,
+      "actual": true,
+      "passed": true,
+      "state": "READY_FOR_AI",
+      "codes": [
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "a6c9bb10255e1c8777b7753c2554fe4d05fab37fd51deedba46111d0062e1114",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S17",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_value_missing",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "9d1c5ec4bc9db85a5f314672f11d8844abcfd148ae5f2ae85bc18da10f81db14",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S18",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "unrecognized_question",
+        "input_residual_unresolved"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "fe5f045122b4ca6d4d7ecf91f7e4c30e2fff01fa7e07d1590c7e0d5e04f12b22",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S19",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "unrecognized_question",
+        "input_residual_unresolved"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "2596070b2015183b439c2c5b8b37e81e59dade89a9c25d546320b162240f8bfe",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S20",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_entity_unresolved",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "a99921b41402fafef5b209b042703639160aaaafc71a035dae670c471db47721",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S21",
+      "http": 200,
+      "expected": true,
+      "actual": true,
+      "passed": true,
+      "state": "READY_FOR_AI",
+      "codes": [
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "90f967447baeed6973d5ba2fabc8fb5316289555af2e0a6208d97b785c781062",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    },
+    {
+      "id": "S22",
+      "http": 200,
+      "expected": false,
+      "actual": false,
+      "passed": true,
+      "state": "NEEDS_INPUT",
+      "codes": [
+        "input_entity_unresolved",
+        "canonical_metric",
+        "source_coverage_unknown"
+      ],
+      "policy": "1.2.0",
+      "fingerprint": "8a62369b0119ade97d5f71282d1309e610fb94531568c133c79002a050ca48d2",
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0
+    }
+  ],
+  "baseline_passed": 22,
+  "baseline_total": 22,
+  "direct_invalid": [
+    {
+      "path": "/api/ai/propose-plan",
+      "http": 200,
+      "status": "needs_clarification",
+      "category": null,
+      "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+      "provider_calls": 0,
+      "input_policy": "1.2.0"
+    },
+    {
+      "path": "/api/ai/analysis-jobs",
+      "http": 400,
+      "status": null,
+      "category": null,
+      "message": "Chưa xác minh được tỉnh/thành trong dữ liệu “abcjdsakjd”. Sửa tên hoặc chọn lại giá trị trước khi phân tích.",
+      "provider_calls": null,
+      "input_policy": null
+    }
+  ],
+  "explicit_lookup": [
+    {
+      "path": "/api/ai/resolve-input",
+      "http": 200,
+      "can_submit": true,
+      "lookup_queries": 1,
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "slots": [
+        {
+          "dimension": "store",
+          "state": "BOUND",
+          "reason": "authorized_lookup"
+        }
+      ],
+      "codes": [
+        "canonical_metric",
+        "source_coverage_unknown"
+      ]
+    },
+    {
+      "path": "/api/ai/preflight",
+      "http": 200,
+      "can_submit": true,
+      "lookup_queries": 0,
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "slots": [
+        {
+          "dimension": "store",
+          "state": "BOUND",
+          "reason": "authorized_lookup"
+        }
+      ],
+      "codes": [
+        "canonical_metric",
+        "source_coverage_unknown"
+      ]
+    }
+  ],
+  "deployed_bundle": {
+    "asset": "/assets/index-DuBdhXOv.js",
+    "sha256": "802a95e2c57d6ae8cc59faabed9a7379adca7b4069633f51d33f5ff6cf62ed63",
+    "markers": {
+      "Đang kiểm tra câu hỏi hiện tại": true,
+      "Đã nhận diện": true,
+      "refinement-preflight": true,
+      "resolve-input": true
+    }
+  }
+}

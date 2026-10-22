@@ -1,0 +1,105 @@
+EEEE.......
+======================================================================
+ERROR: test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts (tests.test_v34_ranked_companion.RankedCompanionTests.test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_ranked_companion.py", line 49, in test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts
+    report=self.report()
+           ^^^^^^^^^^^^^
+  File "/app/tests/test_v34_ranked_companion.py", line 43, in report
+    proposal=pipeline.propose(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 992, in run
+    active, omitted = self.queries.run_batch(prepared, allow_supporting_failure=True)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analytical_query_service.py", line 483, in run_batch
+    validate_ranked_cohorts(result)
+  File "/app/services/analytical_query_service.py", line 76, in validate_ranked_cohorts
+    raise AnalysisError('result_contract','Selected ranking cohort unavailable')
+services.analysis_catalog.AnalysisError: Selected ranking cohort unavailable
+
+======================================================================
+ERROR: test_companion_cannot_change_time_or_filters_or_reference_an_unknown_cohort (tests.test_v34_ranked_companion.RankedCompanionTests.test_companion_cannot_change_time_or_filters_or_reference_an_unknown_cohort)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_ranked_companion.py", line 93, in test_companion_cannot_change_time_or_filters_or_reference_an_unknown_cohort
+    report=self.report()
+           ^^^^^^^^^^^^^
+  File "/app/tests/test_v34_ranked_companion.py", line 43, in report
+    proposal=pipeline.propose(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 992, in run
+    active, omitted = self.queries.run_batch(prepared, allow_supporting_failure=True)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analytical_query_service.py", line 483, in run_batch
+    validate_ranked_cohorts(result)
+  File "/app/services/analytical_query_service.py", line 76, in validate_ranked_cohorts
+    raise AnalysisError('result_contract','Selected ranking cohort unavailable')
+services.analysis_catalog.AnalysisError: Selected ranking cohort unavailable
+
+======================================================================
+ERROR: test_full_artifact_membership_guard_rejects_a_different_top_n (tests.test_v34_ranked_companion.RankedCompanionTests.test_full_artifact_membership_guard_rejects_a_different_top_n)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_ranked_companion.py", line 84, in test_full_artifact_membership_guard_rejects_a_different_top_n
+    artifacts=restore_artifacts(self.report(),self.catalog)
+                                ^^^^^^^^^^^^^
+  File "/app/tests/test_v34_ranked_companion.py", line 43, in report
+    proposal=pipeline.propose(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 992, in run
+    active, omitted = self.queries.run_batch(prepared, allow_supporting_failure=True)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analytical_query_service.py", line 483, in run_batch
+    validate_ranked_cohorts(result)
+  File "/app/services/analytical_query_service.py", line 76, in validate_ranked_cohorts
+    raise AnalysisError('result_contract','Selected ranking cohort unavailable')
+services.analysis_catalog.AnalysisError: Selected ranking cohort unavailable
+
+======================================================================
+ERROR: test_tampered_membership_population_sql_and_parent_cannot_verify (tests.test_v34_ranked_companion.RankedCompanionTests.test_tampered_membership_population_sql_and_parent_cannot_verify)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_ranked_companion.py", line 71, in test_tampered_membership_population_sql_and_parent_cannot_verify
+    report=self.report()
+           ^^^^^^^^^^^^^
+  File "/app/tests/test_v34_ranked_companion.py", line 43, in report
+    proposal=pipeline.propose(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 992, in run
+    active, omitted = self.queries.run_batch(prepared, allow_supporting_failure=True)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analytical_query_service.py", line 483, in run_batch
+    validate_ranked_cohorts(result)
+  File "/app/services/analytical_query_service.py", line 76, in validate_ranked_cohorts
+    raise AnalysisError('result_contract','Selected ranking cohort unavailable')
+services.analysis_catalog.AnalysisError: Selected ranking cohort unavailable
+
+----------------------------------------------------------------------
+Ran 11 tests in 3.692s
+
+FAILED (errors=4)

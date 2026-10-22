@@ -1,0 +1,61 @@
+{
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "production_files": [
+    "data-platform/analytics-api/common.py",
+    "data-platform/analytics-api/route_policy.py",
+    "data-platform/analytics-api/routers/ai.py",
+    "data-platform/analytics-api/routers/reports.py",
+    "data-platform/analytics-api/services/agent_pipeline.py",
+    "data-platform/analytics-api/services/analysis_expansion_service.py",
+    "data-platform/analytics-api/services/analysis_quality_service.py",
+    "data-platform/analytics-api/services/analysis_response_service.py",
+    "data-platform/analytics-api/services/analytical_query_service.py",
+    "data-platform/analytics-api/services/analytical_resolver.py",
+    "data-platform/analytics-api/services/dashboard_planner_service.py",
+    "data-platform/analytics-api/services/error_taxonomy.py",
+    "data-platform/analytics-api/services/hybrid_analyst_planner.py",
+    "data-platform/analytics-api/services/request_anchors.py",
+    "data-platform/analytics-api/services/semantic_catalog_validation.py",
+    "data-platform/analytics-api/services/session_service.py",
+    "data-platform/analytics-api/services/telemetry.py",
+    "data-platform/analytics-api/services/workspace_service.py",
+    "data-platform/web-ui/src/components/report/ReportWorkspace.tsx",
+    "data-platform/web-ui/src/utils/reportPersistence.mjs",
+    "data-platform/web-ui/src/utils/workspaceInteraction.d.ts",
+    "data-platform/web-ui/src/utils/workspaceInteraction.mjs",
+    "data-platform/web-ui/src/views/AnalyticsView.tsx",
+    "data-platform/web-ui/src/views/DashboardHubView.tsx"
+  ],
+  "test_eval_files": [
+    "data-platform/analytics-api/evals/ai_final_acceptance.py",
+    "data-platform/analytics-api/evals/ai_final_expectations.json",
+    "data-platform/analytics-api/tests/test_ai_final_edges.py",
+    "data-platform/analytics-api/tests/test_workspace_revision.py",
+    "data-platform/pipeline-tests/final_workspace_two_api.py",
+    "data-platform/web-ui/src/utils/reportPersistence.test.mjs",
+    "data-platform/web-ui/src/utils/workspaceInteraction.test.mjs",
+    "data-platform/web-ui/tests/e2e/fixtures/ai-final-report-comprehensive.json",
+    "data-platform/web-ui/tests/e2e/fixtures/ai-final-report-focused.json",
+    "data-platform/web-ui/tests/e2e/fixtures/ai-workspace-report.json",
+    "data-platform/web-ui/tests/e2e/real-api.spec.ts",
+    "data-platform/web-ui/tests/e2e/workspace-interaction.spec.ts"
+  ],
+  "config_tools": [
+    ".claude/scripts/dp-v35-two-api.sh",
+    ".github/workflows/data-platform-ci.yml",
+    "data-platform/analytics-api/tools/run_workspace_ui_oracle.py"
+  ],
+  "production_demo_literal_branch_findings": 0,
+  "reviewed_search_hits": [
+    "+    cancellation_token = request_cancelled.set(cancelled)",
+    "+        request_cancelled.reset(cancellation_token)"
+  ],
+  "notes": [
+    "Only cancellation-token lifecycle names matched; no domain/demo/question control-flow branches",
+    "Existing compiler, AnalyticalResolver, batch snapshot, access and CAS owners reused",
+    "No provider client, metric formula, SQL bypass, frontend metric arithmetic, schema or grant change",
+    "Two legacy minified JSON fixtures reformatted only; parsed values equal HEAD",
+    "Versioned rendering policy preserves saved-report semantics and immutable signatures"
+  ],
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

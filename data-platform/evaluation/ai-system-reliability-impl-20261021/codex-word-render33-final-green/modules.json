@@ -1,0 +1,23 @@
+[
+  {
+    "module": "tests.test_word_render_20261022",
+    "returncode": 0,
+    "seconds": 5.897,
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_ids": [],
+    "error_ids": [],
+    "passed_ids": [
+      "tests.test_word_render_20261022.WordNarrativeTests.test_bottom_chart_metadata_and_conclusion_are_factual",
+      "tests.test_word_render_20261022.WordNarrativeTests.test_unplottable_chart_has_explicit_table_without_fabricated_zero",
+      "tests.test_word_render_20261022.WordPlotTests.test_donut_does_not_drop_tail_and_recompute_wrong_shares",
+      "tests.test_word_render_20261022.WordPlotTests.test_invalid_or_reversed_time_uses_table_and_zero_is_real",
+      "tests.test_word_render_20261022.WordPlotTests.test_missing_buckets_break_line_without_changing_observations",
+      "tests.test_word_render_20261022.WordPlotTests.test_multiline_missing_values_are_not_zero_and_names_are_semantic",
+      "tests.test_word_render_20261022.WordPlotTests.test_negative_bar_is_not_clipped",
+      "tests.test_word_render_20261022.WordPlotTests.test_time_distance_is_not_array_index"
+    ]
+  }
+]

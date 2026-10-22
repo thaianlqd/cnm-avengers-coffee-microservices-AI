@@ -10,6 +10,11 @@ COOKIE = "analysis_browser"
 def browser_owner(request, response):
     if request is None:  # Internal compatibility/test callers only.
         return None
+    from services.access_policy import current_principal, development_fallback
+    principal=current_principal()
+    if principal is not None: return principal.bound_owner
+    if not development_fallback():
+        raise HTTPException(401,'Vui lòng đăng nhập để tiếp tục.')
     origin = request.headers.get("origin")
     allowed = {v.strip().rstrip("/") for v in os.getenv("DATA_ANALYST_ALLOWED_ORIGINS", "").split(",") if v.strip() and v.strip() != "*"}
     allowed.add(str(request.base_url).rstrip("/"))

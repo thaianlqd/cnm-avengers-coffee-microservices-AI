@@ -1,0 +1,7528 @@
+{
+  "checked_at": "2026-10-21T06:29:44.847173+00:00",
+  "scope": "Offline input integrity only. READY does not certify capability, source health, generated intent or numerical correctness.",
+  "policy": "1.2.0",
+  "policy_fingerprint": "4b66bb2636508ef0257053c14bda09d6d73aa04763d9be874b91677247c9732a",
+  "catalog_fingerprint": "2890c651cef1c2ee56b2869ff15472c10815ccc326f9011ad87881e76e827cd9",
+  "source_sha256": {
+    "services/input_integrity_service.py": "3b4d062de9bccaf93da4ef6623034292a9d0e48731a671889fe2663a03f14224",
+    "metadata/input_integrity_policy.json": "9be6df0a3e63656bd4057df59c7b724281d621e6183e9245d3c53f4433d18408",
+    "services/preflight_service.py": "fbe5ba924770726e4af8d27ffb153e6715f0f490baeadd5f757ab19d651a7038",
+    "services/agent_pipeline.py": "e5adca8d78870550e30fa3b7e7fa1c8e864361f3f885e6c7e5afa0c581ddf656",
+    "services/analysis_job_service.py": "6cc5711aaca186d7cea5f528aa2efa3555044556b1d519a592a465d746c842d1",
+    "routers/ai.py": "cd6a231bf53fc187d3f768407ee009179bbce595f646a82cf79a818b7d987cb2",
+    "services/analysis_pipeline.py": "95a01cc460fd2128231b6d235c6afb01875d341e87cc3348493ea4797613923b",
+    "services/semantic_preflight_contract.py": "eabcdb07ff2c2d2d74a10295e94be216917013f3ac104d4f550ecd73478f0735",
+    "services/metadata_service.py": "80136cc484b07bfa824775f01460147bcc22a56fd31e56be04fe29b326b04f92",
+    "common.py": "f8f2824eea5fd1c961cbe608d74c19125a0e1f5138040dac801288bef1ae27d8",
+    "route_policy.py": "ab34f5def5988811e5cdeebcb59c6794a70e01b35cb1c9d97065b65e73abaaba"
+  },
+  "physical_boundary": {
+    "provider_http_calls": 0,
+    "warehouse_connections": 0
+  },
+  "sections": {
+    "baseline_cases.json": {
+      "total": 22,
+      "passed": 22,
+      "positive_controls": 5,
+      "sha256": "0a6ca883723ccb8c6a81e4fc7eae2621c0cb341b1b54d279b74dce3e710b4012",
+      "cases": [
+        {
+          "id": "S01",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S02",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S03",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [
+            "canonical_metric"
+          ],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [
+            "canonical_metric"
+          ],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S06",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S07",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "product",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S08",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S09",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S10",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_conflict",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "CONFLICT",
+              "reason": "input_time_conflict",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "payment_method",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "kiosk_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "unsupported_concept",
+            "unsupported_only"
+          ],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S15",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [
+            "canonical_metric"
+          ],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S16",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [
+            "canonical_metric"
+          ],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_value_missing",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_value_missing",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "unrecognized_question",
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "unrecognized_question",
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S21",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "S22",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "canonical_metric"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        }
+      ]
+    },
+    "corpus.json": {
+      "total": 240,
+      "passed": 240,
+      "positive_controls": 113,
+      "sha256": "1e90a20b2dc80fcf4ff7370ae649bfc2fbcc764b2b91eedba4be3a16f566b311",
+      "cases": [
+        {
+          "id": "geography-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_value_missing"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_value_missing",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_value_missing"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_value_missing",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "geography-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "calendar-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_conflict"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "CONFLICT",
+              "reason": "input_time_conflict",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "ranking-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_value_missing"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_value_missing",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store_id",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required",
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "store_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "store_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "stores-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required",
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "product",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "product_id",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "category",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "topping",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "item_size",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "ice_level",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "sweetness",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required",
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "product",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "product",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_value_missing"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_value_missing",
+              "dimension": "product",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "products-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "item_size",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "order_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "payment_method",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "payment_method",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "payment_transaction_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "payment_gateway",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "payment_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "payments-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "promotion",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "promotion_id",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "promotion",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "customer_role",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "customer_id",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "promotion",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "redeemed_promotion",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "redeemed_promotion_code",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "chat_sender_role",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "promotions_customers-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_value_missing"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_value_missing",
+              "dimension": "promotion",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "kiosk_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "kiosk_package",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "application_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "combo_name",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "debt_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "debt_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "royalty_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "kiosk_shift_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "owner_wallet_txn_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "franchise-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "reconciliation_alert",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_status",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "delivery_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "cod_remit_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "shift_name",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_status",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "attendance_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "chat_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "article_category",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_status",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "gift_card_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "delivery_exception_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "wallet_txn_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "operations-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_status",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "wallet_txn_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-01",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_condition_unsupported"
+          ],
+          "slots": [
+            {
+              "kind": "condition",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_condition_unsupported",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-02",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_condition_unsupported"
+          ],
+          "slots": [
+            {
+              "kind": "condition",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_condition_unsupported",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-03",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_condition_unsupported"
+          ],
+          "slots": [
+            {
+              "kind": "condition",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_condition_unsupported",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-04",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_condition_unsupported"
+          ],
+          "slots": [
+            {
+              "kind": "condition",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_condition_unsupported",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-05",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_condition_unsupported"
+          ],
+          "slots": [
+            {
+              "kind": "condition",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_condition_unsupported",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-06",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_condition_unsupported"
+          ],
+          "slots": [
+            {
+              "kind": "condition",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_condition_unsupported",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "number",
+              "state": "BOUND",
+              "reason": "typed_numeric_filter",
+              "dimension": "order_amount",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-08",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_condition_unsupported"
+          ],
+          "slots": [
+            {
+              "kind": "condition",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_condition_unsupported",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid",
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "number",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid",
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "number",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid",
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "number",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid",
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "number",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "number",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid",
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "number",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "numeric_and_residual-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_value_missing"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_value_missing",
+              "dimension": null,
+              "clause_id": null
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "payment_method",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "product",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "language-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved",
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved",
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "dimension",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved",
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "kiosk_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "refinement-20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        }
+      ]
+    },
+    "holdout.json": {
+      "total": 60,
+      "passed": 60,
+      "positive_controls": 29,
+      "sha256": "0ce5a2e58e70bbef9be7e4b3f986f9676235dd54185a71d8470086434755af95",
+      "cases": [
+        {
+          "id": "HV01",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV02",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV03",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV04",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV05",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV06",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV07",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV08",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV09",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV10",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV11",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV12",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV13",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV14",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_condition_unsupported"
+          ],
+          "slots": [
+            {
+              "kind": "condition",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_condition_unsupported",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV16",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV17",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV18",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV19",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV20",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV21",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV22",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV23",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV24",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV25",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV26",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV27",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV28",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV29",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HV30",
+          "expected": true,
+          "actual": true,
+          "passed": true,
+          "reason_codes": [],
+          "slots": [],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN01",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN02",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "BOUND",
+              "reason": "catalog_alias",
+              "dimension": "city",
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN03",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN04",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN05",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved",
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN06",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN07",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN08",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN09",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN10",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN11",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN12",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN13",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "ranking",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN14",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "store_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN15",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN16",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "payment_transaction_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN17",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "order_type",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN18",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "payment_method",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN19",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "product",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN20",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "store",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN21",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "kiosk_package",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN22",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_lookup_required"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_lookup_required",
+              "dimension": "gift_card_theme",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN23",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "cod_remit_status",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN24",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_number_invalid",
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "number",
+              "state": "INVALID",
+              "reason": "input_number_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN25",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN26",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved",
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN27",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved",
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "dimension",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN28",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN29",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_residual_unresolved",
+            "input_time_invalid"
+          ],
+          "slots": [
+            {
+              "kind": "residual",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_residual_unresolved",
+              "dimension": null,
+              "clause_id": "c1"
+            },
+            {
+              "kind": "time",
+              "state": "INVALID",
+              "reason": "input_time_invalid",
+              "dimension": null,
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        },
+        {
+          "id": "HN30",
+          "expected": false,
+          "actual": false,
+          "passed": true,
+          "reason_codes": [
+            "input_entity_unresolved"
+          ],
+          "slots": [
+            {
+              "kind": "entity",
+              "state": "PRESENT_UNRESOLVED",
+              "reason": "input_entity_unresolved",
+              "dimension": "city",
+              "clause_id": "c1"
+            }
+          ],
+          "provider_calls": 0,
+          "analytical_queries": 0,
+          "lookup_queries": 0
+        }
+      ]
+    }
+  },
+  "business_groups": {
+    "B01": [
+      {
+        "id": "BC-REV-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-006",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-007",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-009",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-010",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-011",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-013",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-015",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-016",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B01-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B01-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B01-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B01-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B01-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B01-006",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B01-007",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B32": [
+      {
+        "id": "BC-REV-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-012",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B32-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B32-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B32-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B32-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B32-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B32-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B02": [
+      {
+        "id": "BC-REV-008",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-REV-014",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B02-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B02-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B02-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B02-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B02-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B02-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B03": [
+      {
+        "id": "BC-B03-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B03-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B03-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B03-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B03-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B03-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B04": [
+      {
+        "id": "BC-B04-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B04-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B04-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B04-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B04-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B04-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B05": [
+      {
+        "id": "BC-B05-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B05-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B05-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B05-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B05-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B05-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B06": [
+      {
+        "id": "BC-B06-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B06-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B06-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B06-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B06-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B06-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B07": [
+      {
+        "id": "BC-B07-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B07-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B07-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B07-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B07-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B07-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B08": [
+      {
+        "id": "BC-B08-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B08-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B08-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B08-004",
+        "input_gate_ready": false,
+        "reasons": [
+          "input_lookup_required"
+        ]
+      },
+      {
+        "id": "BC-B08-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B08-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B09": [
+      {
+        "id": "BC-B09-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B09-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B09-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B09-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B09-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B09-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B10": [
+      {
+        "id": "BC-B10-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B10-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B10-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B10-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B10-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B10-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B11": [
+      {
+        "id": "BC-B11-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B11-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B11-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B11-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B11-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B11-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B12": [
+      {
+        "id": "BC-B12-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B12-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B12-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B12-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B12-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B12-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B13": [
+      {
+        "id": "BC-B13-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B13-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B13-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B13-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B13-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B13-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B14": [
+      {
+        "id": "BC-B14-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B14-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B14-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B14-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B14-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B14-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B15": [
+      {
+        "id": "BC-B15-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B15-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B15-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B15-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B15-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B15-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B16": [
+      {
+        "id": "BC-B16-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B16-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B16-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B16-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B16-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B16-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B17": [
+      {
+        "id": "BC-B17-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B17-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B17-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B17-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B17-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B17-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B18": [
+      {
+        "id": "BC-B18-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B18-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B18-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B18-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B18-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B18-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B19": [
+      {
+        "id": "BC-B19-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B19-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B19-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B19-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B19-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B19-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B20": [
+      {
+        "id": "BC-B20-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B20-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B20-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B20-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B20-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B20-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B21": [
+      {
+        "id": "BC-B21-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B21-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B21-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B21-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B21-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B21-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B22": [
+      {
+        "id": "BC-B22-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B22-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B22-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B22-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B22-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B22-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B23": [
+      {
+        "id": "BC-B23-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B23-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B23-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B23-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B23-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B23-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B24": [
+      {
+        "id": "BC-B24-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B24-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B24-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B24-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B24-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B24-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B25": [
+      {
+        "id": "BC-B25-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B25-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B25-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B25-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B25-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B25-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B26": [
+      {
+        "id": "BC-B26-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B26-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B26-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B26-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B26-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B26-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B27": [
+      {
+        "id": "BC-B27-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B27-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B27-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B27-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B27-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B27-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B28": [
+      {
+        "id": "BC-B28-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B28-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B28-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B28-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B28-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B28-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B29": [
+      {
+        "id": "BC-B29-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B29-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B29-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B29-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B29-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B29-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B30": [
+      {
+        "id": "BC-B30-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B30-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B30-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B30-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B30-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B30-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B31": [
+      {
+        "id": "BC-B31-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B31-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B31-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B31-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B31-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B31-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B33": [
+      {
+        "id": "BC-B33-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B33-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B33-003",
+        "input_gate_ready": false,
+        "reasons": [
+          "input_time_unresolved"
+        ]
+      },
+      {
+        "id": "BC-B33-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B33-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B33-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "B34": [
+      {
+        "id": "BC-B34-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B34-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B34-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B34-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B34-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-B34-006",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ],
+    "X": [
+      {
+        "id": "BC-X-001",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-002",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-003",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-004",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-005",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-006",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-007",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-008",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-009",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-010",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-011",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-012",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-013",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-014",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-015",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-016",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-017",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-018",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-019",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-020",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-021",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-022",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-023",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-024",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-025",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-026",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-027",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-028",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-029",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-030",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-031",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-032",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-033",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-034",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-035",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-036",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-037",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-038",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-039",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-040",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-041",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-042",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-043",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-044",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-045",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-046",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-047",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-048",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-049",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-050",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-051",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-052",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-053",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-054",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-055",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-056",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-057",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-058",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-059",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-060",
+        "input_gate_ready": true,
+        "reasons": []
+      },
+      {
+        "id": "BC-X-061",
+        "input_gate_ready": true,
+        "reasons": []
+      }
+    ]
+  },
+  "dimension_inventory": [
+    {
+      "id": "product",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "product_id",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "category",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "store",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "store_id",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "city",
+      "mode": "enum",
+      "scope_governed": true,
+      "status": "typed_entity"
+    },
+    {
+      "id": "customer_id",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "customer_role",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "loyalty_points",
+      "mode": "literal",
+      "scope_governed": false,
+      "status": "existing_typed_contract"
+    },
+    {
+      "id": "lifetime_spend",
+      "mode": "literal",
+      "scope_governed": false,
+      "status": "existing_typed_contract"
+    },
+    {
+      "id": "order_id",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "order_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "payment_method",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "payment_status",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "order_amount",
+      "mode": "literal",
+      "scope_governed": false,
+      "status": "existing_typed_contract"
+    },
+    {
+      "id": "order_created",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "existing_typed_contract"
+    },
+    {
+      "id": "promotion",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "promotion_id",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "payment_gateway",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "driver_id",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "shift_name",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "attendance_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "stock_quantity_detail",
+      "mode": "literal",
+      "scope_governed": false,
+      "status": "existing_typed_contract"
+    },
+    {
+      "id": "warning_threshold",
+      "mode": "literal",
+      "scope_governed": false,
+      "status": "existing_typed_contract"
+    },
+    {
+      "id": "hour",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "existing_typed_contract"
+    },
+    {
+      "id": "order_type",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "payment_transaction_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "store_type",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "delivery_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "weekday",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "existing_typed_contract"
+    },
+    {
+      "id": "redeemed_promotion",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "redeemed_promotion_code",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "reporting_region",
+      "mode": null,
+      "scope_governed": false,
+      "status": "existing_typed_contract"
+    },
+    {
+      "id": "wallet_txn_type",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "wallet_txn_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "gift_card_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "gift_card_theme",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "cod_remit_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "delivery_exception_type",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "chat_status",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "chat_sender_role",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "article_category",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "application_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "kiosk_package",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "application_city",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "kiosk_type",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "combo_order_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "combo_payment_method",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "combo_name",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "debt_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "debt_type",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "royalty_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "reconciliation_alert",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "cashbook_type",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "owner_wallet_txn_type",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "kiosk_shift_status",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "survey_question",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "survey_answer",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "tier_after_award",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "review_visibility",
+      "mode": "enum",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "review_raw_status",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "topping",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "item_size",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "ice_level",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    },
+    {
+      "id": "sweetness",
+      "mode": "lookup",
+      "scope_governed": false,
+      "status": "typed_entity"
+    }
+  ],
+  "complete": true
+}

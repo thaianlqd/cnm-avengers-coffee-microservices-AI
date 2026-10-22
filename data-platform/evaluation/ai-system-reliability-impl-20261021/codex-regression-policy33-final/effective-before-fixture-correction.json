@@ -1,0 +1,22 @@
+{
+  "passed": false,
+  "modules": 107,
+  "expected_modules": 107,
+  "unique_tests": 1704,
+  "effective_failures": 0,
+  "effective_errors": 1,
+  "initial_full_run_failures": [
+    "tests.test_agent_v23.V23Tests.test_rich_dashboard_result_reuse_diversity_and_units"
+  ],
+  "rechecked_modules": [
+    "tests.test_agent_v23"
+  ],
+  "test_only_correction": {
+    "path": "data-platform/analytics-api/tests/test_agent_v23.py",
+    "before_sha256": "096ea90d1bbf53295865bcb78efa3f4889a337f0e482ad5d7e9f9332b1b4f2d4",
+    "after_sha256": "4442fedaca7237473ccd321817eb8e942b8e3776736abab825da6302024ab148",
+    "reason": "Replace cosmetic non-repetition assertion with scoped-evidence positive assertion and unsupported-causal-conclusion rejection. Product source unchanged."
+  },
+  "product_source_drift": [],
+  "limits": "Full107module product-source-frozen run retained one obsolete assertion failure; stronger test-only correction followed by entire24test module recheck. Not monolithic; no production change after freeze."
+}

@@ -1,0 +1,145 @@
+{
+  "version": "3.5.0",
+  "state": "LOCAL_VERIFIED",
+  "observed_at": "2026-10-19T14:58:43.379094+00:00",
+  "identity_basis": "Verified file bytes; CI dp-candidate-identity binds the repository commit after commit/push. No historical HEAD is used as candidate proof.",
+  "results": {
+    "backend": {
+      "status": "PASS",
+      "tests": 1301,
+      "seconds": 741.24,
+      "log_sha256": "6a287267180f463a597e0e631e3c2278beb7bedc89646283fcb581b895c47807",
+      "failures": 0,
+      "errors": 0
+    },
+    "pipeline_unit": {
+      "status": "PASS",
+      "tests": 65,
+      "seconds": 0.645,
+      "log_sha256": "3585bc9f49643593960ddb80c72b1e3d6e517b4ae8cc4ecdfe90b5793fe6fb40",
+      "failures": 0,
+      "errors": 0
+    },
+    "pipeline_integration": {
+      "status": "PASS",
+      "tests": 41,
+      "seconds": 30.104,
+      "log_sha256": "0ae61b7ddb6a22a3ebc5021811d1a19c272fc0bb63c93fac15e8425ec5b2c2e1",
+      "failures": 0,
+      "errors": 0
+    },
+    "api_postgresql_acceptance": {
+      "status": "PASS",
+      "tests": 33,
+      "seconds": 13.624,
+      "log_sha256": "5fdde3e5dabe588ba325550e606897de8503e1b2bdb98c2d5f1062d97f959b8d",
+      "failures": 0,
+      "errors": 0
+    },
+    "worker_compatibility": {
+      "status": "PASS",
+      "tests": 6,
+      "seconds": 0.003,
+      "log_sha256": "6cfe06310f47ff2b158bd64856ad1ed5951618102f8ca95c94582812b6151da6",
+      "failures": 0,
+      "errors": 0
+    },
+    "web": {
+      "status": "PASS",
+      "tests": 183,
+      "typecheck": "PASS",
+      "build": "PASS",
+      "log_sha256": "6b6e6c00bfbbb83ccdc1fc5a69db344ae9212e006b2b5f9e9c72bea636f4f6eb"
+    },
+    "browser_ui": {
+      "status": "PASS",
+      "tests": 35,
+      "log_sha256": "11d8364defeb848aeb0ba5d599891d98d065eecc794e9d679d9c361b4c1cad74"
+    },
+    "browser_http": {
+      "status": "PASS",
+      "tests": 4,
+      "log_sha256": "0d6a6b3aa442fcee8e93fddc849d62990849e99de379be2cde3a0d9c5fe98560",
+      "counters": {
+        "logical_calls": 2,
+        "sql_queries": 10,
+        "external_http": 0
+      }
+    },
+    "semantic": {
+      "status": "PASS",
+      "corpus": 146,
+      "compiled": {
+        "passed": 108,
+        "total": 108,
+        "rate": 1.0
+      },
+      "v33": {
+        "passed": 33,
+        "total": 33,
+        "rate": 1.0
+      },
+      "v34": {
+        "passed": 120,
+        "total": 120,
+        "rate": 1.0
+      },
+      "authored_reference": {
+        "passed": 120,
+        "compiled_intents": 83
+      },
+      "provider_http": 0
+    },
+    "ownership": {
+      "status": "PASS",
+      "cross_process_idempotency": true,
+      "cas": "exactly_one_save",
+      "provider_http": 0
+    },
+    "load": {
+      "status": "PASS",
+      "profiles": 15,
+      "completed": 111,
+      "expected_429": 24,
+      "max_p99_ms": 23175.06
+    },
+    "soak": {
+      "status": "PASS",
+      "seconds": 900.104,
+      "operations": 1922,
+      "controlled_jobs": 60,
+      "counter_match": true,
+      "provider_http": 0
+    },
+    "faults": {
+      "status": "PASS",
+      "evidence": "faults.json"
+    },
+    "real_dashboard": {
+      "status": "PASS",
+      "dashboards": 16,
+      "charts_per_dashboard": "3–7",
+      "provider_http": 0,
+      "partial_verification": [
+        "D15"
+      ]
+    },
+    "critical_parity": {
+      "status": "PASS",
+      "sources": 4,
+      "database_writes": 0
+    }
+  },
+  "provider_http": 0,
+  "backend_isolation": {
+    "network": "none",
+    "cpus": 1,
+    "memory_mib": 1024
+  },
+  "limitations": [
+    "Local representative load/soak/fault observations are not production HA or production SLO.",
+    "Remote same-commit six-job CI verification is a separate gate.",
+    "Unknown/partial source completeness is preserved."
+  ],
+  "source_tree_sha256": "7a7d975b5f920ef56384bfc510904701df65b64dcd1c9eae666ab450a60f658c"
+}

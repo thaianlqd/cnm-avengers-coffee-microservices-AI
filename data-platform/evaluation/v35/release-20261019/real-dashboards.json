@@ -1,0 +1,475 @@
+{
+  "version": "3.5.0",
+  "status": "passed",
+  "observed_at": "2026-10-19T14:43:42.074013+00:00",
+  "provider_http": 0,
+  "results": [
+    {
+      "dashboard_id": "D01",
+      "status": "success",
+      "charts": 3,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 2.593,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 111,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 109,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          }
+        ],
+        "fingerprint": "16fc2a96c0908a9cf4c400912551a5b472eaec4ed3062a4b4ba93c315c18d0e3",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D02",
+      "status": "success",
+      "charts": 4,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.687,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.menu.danh_muc",
+            "generation": 113,
+            "schema_fingerprint": "be13f6cb490581c058c87b9067401ab1ffe89434538ce8eae2c7b2cb94fa256d"
+          },
+          {
+            "dataset_id": "replica.menu.san_pham",
+            "generation": 111,
+            "schema_fingerprint": "e262a1c0df53db8f8a561ae3be21772f4f1ffb28c5790d60447a0f74c3b2f35f"
+          },
+          {
+            "dataset_id": "replica.orders.chi_tiet_don_hang",
+            "generation": 108,
+            "schema_fingerprint": "88e28e04bbf79940e9d7f16420502465f188f686d87f9824d4f2d716f1f6b042"
+          },
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 109,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          }
+        ],
+        "fingerprint": "11dde055e7dbcfb15f56d0a20fd1782577138aeef58f1bf9ede8d790dd378af8",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D03",
+      "status": "success",
+      "charts": 4,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 2.197,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 111,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 109,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          }
+        ],
+        "fingerprint": "16fc2a96c0908a9cf4c400912551a5b472eaec4ed3062a4b4ba93c315c18d0e3",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D04",
+      "status": "success",
+      "charts": 4,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 2.536,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 111,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 109,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          }
+        ],
+        "fingerprint": "16fc2a96c0908a9cf4c400912551a5b472eaec4ed3062a4b4ba93c315c18d0e3",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D05",
+      "status": "success",
+      "charts": 4,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 2.18,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.orders.shipper",
+            "generation": 110,
+            "schema_fingerprint": "f2bb43dc823a2ea176d3ba82536b39a1c101a76718a19484a13d6495208a50ed"
+          },
+          {
+            "dataset_id": "replica.orders.shipper_delivery",
+            "generation": 109,
+            "schema_fingerprint": "836cf000999406b729141d7708603cb3af92b3a3f65e7500abd62d94d78fa8bb"
+          }
+        ],
+        "fingerprint": "13571f9c88c4ac6b8aa63d4f1bf2faeb35fea6b16462ee1968a1c902666f5047",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D06",
+      "status": "success",
+      "charts": 4,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.609,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 109,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          },
+          {
+            "dataset_id": "replica.orders.giao_dich_thanh_toan",
+            "generation": 106,
+            "schema_fingerprint": "ed341ecfb883300a63460e45bd545e6b2ba39943b5d5ca251e991b2c7894124e"
+          }
+        ],
+        "fingerprint": "92b76a0047354431d125ccf36426c634eb159d610984c4f9e409ab8f2fd9f2a0",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D07",
+      "status": "success",
+      "charts": 4,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.771,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.khuyen_mai",
+            "generation": 111,
+            "schema_fingerprint": "9967387b07d159a0a4c9b685d38d695a7586a841ebcbb6e740183c34920b627b"
+          },
+          {
+            "dataset_id": "replica.identity.khuyen_mai_su_dung",
+            "generation": 110,
+            "schema_fingerprint": "cdd7a0b10338fe15f0462f36a588b3c6beca849033818b292ecf329eb31698c0"
+          },
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 109,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          },
+          {
+            "dataset_id": "replica.orders.voucher",
+            "generation": 110,
+            "schema_fingerprint": "9d7992f51765bbc6882f38cad4aebb0128cebeb1d31904f0f0d9f8f0a8a2f5b1"
+          }
+        ],
+        "fingerprint": "d5d47bd19049771bcbc63664f274256f72dfb2bd88651d2ee2540469eefc7566",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D08",
+      "status": "success",
+      "charts": 3,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.842,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.nguoi_dung",
+            "generation": 111,
+            "schema_fingerprint": "79cd406409716bf26d82d79b0cefd95b43853b2146d11dc734eba203a27f2dea"
+          },
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 109,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          }
+        ],
+        "fingerprint": "8ef545c4884584a45a2f2a13438c32c0f5385648f27379b99d0f85f951307fe2",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D09",
+      "status": "success",
+      "charts": 4,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.479,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 111,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.inventory.ton_kho_san_pham",
+            "generation": 111,
+            "schema_fingerprint": "e7fcb0317861198a2e654c1634acb47b6a3bf98cbd14f03c42177c6d45923fe7"
+          },
+          {
+            "dataset_id": "replica.menu.danh_muc",
+            "generation": 113,
+            "schema_fingerprint": "be13f6cb490581c058c87b9067401ab1ffe89434538ce8eae2c7b2cb94fa256d"
+          },
+          {
+            "dataset_id": "replica.menu.san_pham",
+            "generation": 111,
+            "schema_fingerprint": "e262a1c0df53db8f8a561ae3be21772f4f1ffb28c5790d60447a0f74c3b2f35f"
+          }
+        ],
+        "fingerprint": "ac6d0de705e619aeeaecce741ee8e60c2b3898d36311b6949e2242a37c0ff774",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D10",
+      "status": "success",
+      "charts": 3,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.615,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.orders.ca_lam_viec_nhan_vien",
+            "generation": 110,
+            "schema_fingerprint": "64803ca668ed8c04b18cf6e5f9f26916b7386eb3d75312b97d0968d51a9db972"
+          }
+        ],
+        "fingerprint": "23479f31a9de10c8c570d2fd85235ff3053a83de659b693692464ed477b3b4be",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D11",
+      "status": "success",
+      "charts": 3,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.292,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 111,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.orders.ca_doi_soat",
+            "generation": 110,
+            "schema_fingerprint": "a68ef0fcb733b72d3098cf76598b4df579d03174a2d26a36546bb7779e951861"
+          }
+        ],
+        "fingerprint": "250826448e8886b612f250aeac3d6c6ef1553cb1f6afa7e7520457ba978a3177",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D12",
+      "status": "success",
+      "charts": 7,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.712,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.menu.danh_muc",
+            "generation": 113,
+            "schema_fingerprint": "be13f6cb490581c058c87b9067401ab1ffe89434538ce8eae2c7b2cb94fa256d"
+          },
+          {
+            "dataset_id": "replica.menu.san_pham",
+            "generation": 111,
+            "schema_fingerprint": "e262a1c0df53db8f8a561ae3be21772f4f1ffb28c5790d60447a0f74c3b2f35f"
+          },
+          {
+            "dataset_id": "replica.orders.danh_gia_san_pham",
+            "generation": 110,
+            "schema_fingerprint": "42b30a39c59dfec23dfaf1b00f103ae63b723159ec25d3f32b3b35fecfd7db9e"
+          }
+        ],
+        "fingerprint": "8afec295155b82334552dcac6072a0972d93db26ce3b520d0e5dad5bee09aacc",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D13",
+      "status": "success",
+      "charts": 7,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.766,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 111,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.orders.danh_gia_chi_nhanh",
+            "generation": 110,
+            "schema_fingerprint": "6b0e53001f79e4ddce4064bdf7c9b776059f5722336b7d50e5b7f8f4c7ce6ec1"
+          }
+        ],
+        "fingerprint": "0ae45f720ecce5cfa7c32cbf212747c628b51a4258dac185e9e80c3a16c0b4af",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D14",
+      "status": "success",
+      "charts": 3,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.408,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 111,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.orders.khao_sat_phan_hoi",
+            "generation": 110,
+            "schema_fingerprint": "5b8ec1712f260631b6003e70447d61166310ed3043eb6d9a29e469478d392359"
+          }
+        ],
+        "fingerprint": "f4a271f164512194166eec92132641a294e9d5b6e3da838bf7db729456c63a78",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D15",
+      "status": "success",
+      "charts": 3,
+      "verification": "partially_verified",
+      "provider_http": 0,
+      "elapsed_seconds": 1.581,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.menu.danh_muc",
+            "generation": 113,
+            "schema_fingerprint": "be13f6cb490581c058c87b9067401ab1ffe89434538ce8eae2c7b2cb94fa256d"
+          },
+          {
+            "dataset_id": "replica.menu.san_pham",
+            "generation": 111,
+            "schema_fingerprint": "e262a1c0df53db8f8a561ae3be21772f4f1ffb28c5790d60447a0f74c3b2f35f"
+          },
+          {
+            "dataset_id": "replica.orders.yeu_thich_san_pham",
+            "generation": 110,
+            "schema_fingerprint": "b45c80f73a177b80de6e03b292acf1a376f8ea7b37883523571d43336cc45446"
+          }
+        ],
+        "fingerprint": "b99784eeff425779984fae4a67e1a02c0c1358ddd67995b0e47c5b65a9ced37e",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    },
+    {
+      "dashboard_id": "D16",
+      "status": "success",
+      "charts": 4,
+      "verification": "verified",
+      "provider_http": 0,
+      "elapsed_seconds": 2.999,
+      "data_epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 111,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 109,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          }
+        ],
+        "fingerprint": "16fc2a96c0908a9cf4c400912551a5b472eaec4ed3062a4b4ba93c315c18d0e3",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "requirement_ids_preserved": true,
+      "relation_lock_conflicts": 0
+    }
+  ]
+}

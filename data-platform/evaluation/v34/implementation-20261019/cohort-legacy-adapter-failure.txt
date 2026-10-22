@@ -1,0 +1,36 @@
+.........................Result rejected source=execution operation=ranking rows=1 limit=5 rules=projection_columns,projection_rows,sensitive_field dimensions=product,product_id granularity=day
+.................................E..E......[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "KeyError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 707}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "TypeError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 707}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "ValueError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 707}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+.......
+======================================================================
+ERROR: test_mixed_or_stale_cache_never_supplies_fresh_denominator (tests.test_query_batch.QueryBatchTests.test_mixed_or_stale_cache_never_supplies_fresh_denominator)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_query_batch.py", line 114, in test_mixed_or_stale_cache_never_supplies_fresh_denominator
+    q.run_batch(prepared)
+  File "/app/services/analytical_query_service.py", line 556, in run_batch
+    validate_ranked_cohorts(result)
+  File "/app/services/analytical_query_service.py", line 72, in validate_ranked_cohorts
+    ref=artifact.query.cohort_query_id
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'types.SimpleNamespace' object has no attribute 'cohort_query_id'
+
+======================================================================
+ERROR: test_unique_queries_run_at_most_two_and_worker_counters_merge (tests.test_query_batch.QueryBatchTests.test_unique_queries_run_at_most_two_and_worker_counters_merge)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_query_batch.py", line 99, in test_unique_queries_run_at_most_two_and_worker_counters_merge
+    results,errors=q.run_batch(prepared)
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analytical_query_service.py", line 556, in run_batch
+    validate_ranked_cohorts(result)
+  File "/app/services/analytical_query_service.py", line 72, in validate_ranked_cohorts
+    ref=artifact.query.cohort_query_id
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'types.SimpleNamespace' object has no attribute 'cohort_query_id'
+
+----------------------------------------------------------------------
+Ran 75 tests in 82.122s
+
+FAILED (errors=2)

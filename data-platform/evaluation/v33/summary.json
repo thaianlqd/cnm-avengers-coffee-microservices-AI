@@ -1,0 +1,75 @@
+{
+  "generated": "2026-10-17",
+  "backend": {
+    "tests": 1017,
+    "failures": 0,
+    "errors": 0
+  },
+  "web": {
+    "tests": 161,
+    "fail": 0,
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "eval_offline": {
+    "cases": 146,
+    "retrieval_domain": "113/113",
+    "retrieval_metric": "113/113",
+    "compile_level2": "108/108",
+    "preflight_expectations": "17/17",
+    "unsupported_preflight": "5/5",
+    "forecast_capability_rejections": "6/6",
+    "v33_cases": "33/33",
+    "failures": []
+  },
+  "browser_e2e": {
+    "engine": "Playwright 1.58.2 + Chromium (local cache 1223)",
+    "journeys": 12,
+    "passed": 12,
+    "mode": "real browser against Vite app, mocked/deferred /api; NOT a live provider run"
+  },
+  "database_smoke": {
+    "mode": "real read-only executor on the local analytics DB, scripted (not real) interpretation",
+    "risk_scan": {
+      "signals": 6,
+      "sql_queries": 12,
+      "provider_calls": 0
+    },
+    "risk_selected_signal": {
+      "signals": 1,
+      "sql_queries": 2,
+      "provider_calls": 0
+    },
+    "governed_pair_revenue_cancellation": {
+      "stores_paired": 1215,
+      "queries": 2,
+      "view": "paired_scatter satisfied",
+      "verification": "verified"
+    },
+    "driver_delta_sep_2026": {
+      "queries": 4,
+      "view": "driver_delta satisfied",
+      "verification": "verified"
+    }
+  },
+  "live_provider": {
+    "status": "NOT_RUN",
+    "reason": "The live provider command was blocked by the Claude Code permission classifier (real-money action); 0 physical HTTP were sent in this work.",
+    "unlock": "Run on the host: docker compose -f docker-compose.data.yml exec -T analytics-api python -m evals.live_acceptance_v33 --out /tmp/live_v33.json [--execute] [--extension]. Hard meter: 60 HTTP (80 with --extension); cases pre-defined in evals/live_cases_v33.json."
+  },
+  "previous_failures_resolved": {
+    "backend": [
+      "test_one_shot_v24.test_default_native_budget_blocks_reentry_without_reset",
+      "test_agent_v22.test_distribution_and_correlation_observational",
+      "test_agent_v22.test_native_provider_gemini_signature_and_groq_fallback",
+      "test_one_shot_v24.test_native_transport_failure_never_retries_or_falls_back"
+    ],
+    "retrieval": [
+      "ship_12",
+      "rev_12",
+      "rev_r_02",
+      "v31_rev_01"
+    ],
+    "how": "policy-conflicting legacy expectations were rewritten with an explanation (transport owner, deadline table); retrieval fixed with governed aliases; nothing skipped or deleted"
+  }
+}

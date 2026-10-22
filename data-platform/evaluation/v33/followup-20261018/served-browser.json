@@ -1,0 +1,705 @@
+{
+  "status": "PASS",
+  "mode": "served_real_api",
+  "builds": [
+    {
+      "url": "http://localhost:8501/assets/index-BQXk_xMd.js",
+      "sha256": "94af386bd32277eeafb0613b6e2f57921edde770d368428337fd259914109d48"
+    }
+  ],
+  "rows": [
+    {
+      "id": "seven_modes",
+      "passed": true
+    },
+    {
+      "id": "south",
+      "passed": true,
+      "decision": "READY",
+      "scope": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Hồ Chí Minh",
+              "Kiên Giang",
+              "Đồng Nai"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Hồ Chí Minh",
+              "Kiên Giang",
+              "Đồng Nai"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "reporting_region"
+          }
+        ],
+        "source": [
+          {
+            "id": "south",
+            "label": "Miền Nam",
+            "source": "warehouse_reporting_geography_v1",
+            "version": 1
+          }
+        ],
+        "fingerprint": "a44010d66521dd5c075ee9df8e5762938555f409a0db714aa4ee6a02d34f8b32",
+        "requested_phrase": "Doanh thu các chi nhánh miền Nam tháng 9 năm 2026"
+      }
+    },
+    {
+      "id": "difference",
+      "passed": true,
+      "decision": "READY",
+      "scope": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Kiên Giang",
+              "Đồng Nai"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Kiên Giang",
+              "Đồng Nai"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison_dimension": "reporting_region"
+          }
+        ],
+        "source": [
+          {
+            "id": "south",
+            "label": "Miền Nam",
+            "source": "warehouse_reporting_geography_v1",
+            "version": 1
+          }
+        ],
+        "fingerprint": "aefe8b1d796ff26f29122fafe7d7fbcc1166946e487828af44e3dcb064dfdd04",
+        "requested_phrase": "Doanh thu miền Nam trừ HCM tháng 9 năm 2026"
+      }
+    },
+    {
+      "id": "union",
+      "passed": true,
+      "decision": "READY",
+      "scope": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "in",
+            "value": [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Hà Nội",
+              "Hồ Chí Minh",
+              "Kiên Giang",
+              "Đồng Nai"
+            ]
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Hà Nội",
+              "Hồ Chí Minh",
+              "Kiên Giang",
+              "Đồng Nai"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "reporting_region"
+          }
+        ],
+        "source": [
+          {
+            "id": "south",
+            "label": "Miền Nam",
+            "source": "warehouse_reporting_geography_v1",
+            "version": 1
+          }
+        ],
+        "fingerprint": "b927e3add45c7b9a80f68a9089434460caceab179625caf02393375ce6788937",
+        "requested_phrase": "Doanh thu miền Nam và Hà Nội tháng 9 năm 2026"
+      }
+    },
+    {
+      "id": "unresolved",
+      "passed": true,
+      "decision": "UNSUPPORTED",
+      "scope": {
+        "state": "unsupported",
+        "filters": [],
+        "bindings": [],
+        "message": "Kho chưa có nhãn Quảng Nam trong danh mục tỉnh/thành; hãy chọn một địa danh được hỗ trợ.",
+        "requested_phrase": "Doanh thu Quảng Nam tháng 9 năm 2026"
+      }
+    },
+    {
+      "id": "mixed_unsupported",
+      "passed": true,
+      "decision": "UNSUPPORTED",
+      "scope": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      }
+    },
+    {
+      "id": "one_day_week",
+      "passed": true,
+      "decision": "CLARIFY",
+      "scope": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      }
+    },
+    {
+      "id": "risk_inline_scope",
+      "passed": true,
+      "decision": "READY",
+      "scope": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "eq",
+            "value": "Hà Nội"
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hà Nội"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "c71dede6741f21b348d61fa4d2d60d2183131c7b4961f725e4708414ddd7bcac",
+        "requested_phrase": "Rủi ro Hà Nội tháng 9 năm 2026"
+      }
+    },
+    {
+      "id": "risk_real_scan",
+      "passed": true,
+      "scope": [
+        {
+          "dimension": "city",
+          "operator": "in",
+          "value": [
+            "Hà Nội"
+          ]
+        }
+      ],
+      "counts": {
+        "red": 1,
+        "yellow": 0,
+        "green": 5,
+        "no_data": 0,
+        "insufficient_sample": 0,
+        "not_applicable": 0,
+        "execution_error": 0
+      },
+      "provider_calls": 0
+    },
+    {
+      "id": "guided_served_report",
+      "passed": true,
+      "job_id": "aj_a00c487664ec4be697894a3ca4da706b",
+      "physical_http": 0,
+      "answer": [
+        "Doanh thu: 440,072,000 VND trong phạm vi đã chọn.",
+        "Doanh thu thay đổi từ 102,293,000 thành 100,161,000 VND giữa kỳ 2026-09-07 và 2026-09-21 (-2.08%). Chỉ đối chiếu kỳ đầy đủ; 2 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+        "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu)."
+      ],
+      "verification": {
+        "version": "3.2.0",
+        "status": "verified",
+        "metrics": [
+          {
+            "id": "numeric_reconciliation",
+            "label": "Đối chiếu số liệu độc lập",
+            "passed": 0,
+            "total": 0
+          },
+          {
+            "id": "ranking_reconciliation",
+            "label": "Đối chiếu xếp hạng",
+            "passed": 0,
+            "total": 0
+          },
+          {
+            "id": "requirement_coverage",
+            "label": "Yêu cầu được đáp ứng",
+            "passed": 6,
+            "total": 6
+          },
+          {
+            "id": "grounded_claims",
+            "label": "Nhận định có bằng chứng",
+            "passed": 6,
+            "total": 6
+          },
+          {
+            "id": "chart_relevance",
+            "label": "Biểu đồ đúng yêu cầu",
+            "passed": 3,
+            "total": 3
+          },
+          {
+            "id": "view_coverage",
+            "label": "Góc nhìn bắt buộc đã có",
+            "passed": 3,
+            "total": 3
+          },
+          {
+            "id": "conclusion_grounding",
+            "label": "Kết luận có bằng chứng",
+            "passed": 4,
+            "total": 4
+          }
+        ],
+        "conclusion": {
+          "present": true,
+          "passed": 4,
+          "total": 4,
+          "dangling": []
+        },
+        "view_coverage": [
+          {
+            "requirement_id": "r1",
+            "index": 0,
+            "kind": "scalar",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "r2",
+            "index": 0,
+            "kind": "time_series",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "r3",
+            "index": 0,
+            "kind": "grouped",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_96dff7bd20ba80ace56eff5a",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "missing",
+            "reason": "outside_mission_grammar"
+          },
+          {
+            "requirement_id": "support_d14d1c3a78beb5737ff60ab6",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_deb27e4c4ff1744854bfa725",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "missing",
+            "reason": "outside_mission_grammar"
+          }
+        ],
+        "independent_oracle": null,
+        "independent_oracle_label": "Chưa đo đối chiếu độc lập",
+        "numeric": [],
+        "ranking": [],
+        "trend": [
+          {
+            "query_id": "q_f60fcf601f12324ee4e766c6",
+            "buckets": 5,
+            "ordered": true,
+            "duplicate_buckets": 0
+          }
+        ],
+        "forecast_backtest": [],
+        "grounding": {
+          "narrative_claims": 0,
+          "narrative_claims_with_evidence": 0,
+          "chart_numeric_claims": 6,
+          "chart_numeric_matched": 6,
+          "unsupported_claims": [],
+          "causal_language": []
+        },
+        "chart_relevance": {
+          "total": 3,
+          "passed": 3,
+          "charts": [
+            {
+              "chart_id": "visual_1",
+              "title": "Doanh thu theo chi nhánh — Đơn hàng và doanh thu — 20/1175 nhóm có doanh thu cao nhất",
+              "passed": true,
+              "problems": []
+            },
+            {
+              "chart_id": "visual_2",
+              "title": "Doanh thu theo tuần — Đơn hàng và doanh thu",
+              "passed": true,
+              "problems": []
+            },
+            {
+              "chart_id": "visual_3",
+              "title": "Tỷ trọng doanh thu theo hình thức nhận hàng — Đơn hàng và doanh thu",
+              "passed": true,
+              "problems": []
+            }
+          ]
+        },
+        "internal_completeness_score": 90,
+        "internal_completeness_label": "Mức hoàn tất kiểm chứng nội bộ (không phải độ chính xác AI)",
+        "methodology": [
+          "Đối chiếu độc lập: truy vấn tổng hợp read-only riêng từ cùng định nghĩa chỉ số; không đọc lại số đã hiển thị.",
+          "Sai số theo đơn vị: số đếm phải khớp tuyệt đối, tiền tệ sai số ≤ 0,01, phần trăm ≤ 0,05 điểm.",
+          "Tỷ lệ/trung bình không đối chiếu bằng cách cộng hoặc lấy trung bình các nhóm.",
+          "Không dùng AI để chấm AI; không gộp các chỉ số trên thành một 'độ chính xác AI'."
+        ],
+        "trust_dimensions": [
+          {
+            "id": "structural",
+            "label": "Cấu trúc và kiểm tra kết quả",
+            "passed": 6,
+            "total": 6,
+            "status": "passed"
+          },
+          {
+            "id": "numeric_reconciliation",
+            "label": "Đối soát số liệu độc lập",
+            "passed": 0,
+            "total": 0,
+            "status": "not_measured"
+          },
+          {
+            "id": "semantic_coverage",
+            "label": "Yêu cầu và bằng chứng",
+            "passed": 3,
+            "total": 3,
+            "status": "passed"
+          },
+          {
+            "id": "forecast_quality",
+            "label": "Kiểm tra lùi dự báo",
+            "passed": 0,
+            "total": 0,
+            "status": "not_measured"
+          },
+          {
+            "id": "provider_execution",
+            "label": "Thực thi provider trong ngân sách",
+            "passed": 1,
+            "total": 1,
+            "status": "passed"
+          }
+        ],
+        "snapshot": {
+          "registry_fingerprint": "c2805207d50c4480360cdfb5e6e145283426e6bdc31dc61146741f237810d12a",
+          "catalog_fingerprint": "967f2fdc6ab5933e616596c02f256793bc7e12c23356b1eb54f45a7f93e667d1",
+          "verification_version": "3.2.0",
+          "metric_definitions": {
+            "revenue": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy."
+          },
+          "chart_requirements": {
+            "visual_1": "r3",
+            "visual_2": "r2",
+            "visual_3": "support_d14d1c3a78beb5737ff60ab6"
+          },
+          "reference_date": "2026-10-18"
+        }
+      },
+      "coverage": [
+        {
+          "requirement_id": "r1",
+          "index": 0,
+          "kind": "scalar",
+          "required": true,
+          "status": "satisfied",
+          "reason": null
+        },
+        {
+          "requirement_id": "r2",
+          "index": 0,
+          "kind": "time_series",
+          "required": true,
+          "status": "satisfied",
+          "reason": null
+        },
+        {
+          "requirement_id": "r3",
+          "index": 0,
+          "kind": "grouped",
+          "required": true,
+          "status": "satisfied",
+          "reason": null
+        },
+        {
+          "requirement_id": "support_96dff7bd20ba80ace56eff5a",
+          "index": 0,
+          "kind": "grouped",
+          "required": false,
+          "status": "missing",
+          "reason": "outside_mission_grammar"
+        },
+        {
+          "requirement_id": "support_d14d1c3a78beb5737ff60ab6",
+          "index": 0,
+          "kind": "grouped",
+          "required": false,
+          "status": "satisfied",
+          "reason": null
+        },
+        {
+          "requirement_id": "support_deb27e4c4ff1744854bfa725",
+          "index": 0,
+          "kind": "grouped",
+          "required": false,
+          "status": "missing",
+          "reason": "outside_mission_grammar"
+        }
+      ]
+    },
+    {
+      "id": "served_independent_reconciliation",
+      "passed": true,
+      "physical_http": 0,
+      "oracle": {
+        "numeric": [
+          {
+            "label": "Tổng doanh thu = tổng các nhóm/kỳ",
+            "expected_value": 440072000,
+            "reported_value": 440072000,
+            "absolute_error": 0,
+            "relative_error": 0,
+            "within_tolerance": true,
+            "tolerance": {
+              "absolute": 0.01,
+              "relative": 1e-9
+            },
+            "unit": "VND",
+            "source": "independent_scalar_query",
+            "status": "matched",
+            "query_id": "q_13b4871a3ba1b2d9a205d010",
+            "metric": "revenue"
+          },
+          {
+            "label": "Tổng doanh thu = tổng các nhóm/kỳ",
+            "expected_value": 440072000,
+            "reported_value": 440072000,
+            "absolute_error": 0,
+            "relative_error": 0,
+            "within_tolerance": true,
+            "tolerance": {
+              "absolute": 0.01,
+              "relative": 1e-9
+            },
+            "unit": "VND",
+            "source": "independent_scalar_query",
+            "status": "matched",
+            "query_id": "q_f60fcf601f12324ee4e766c6",
+            "metric": "revenue"
+          }
+        ],
+        "ranking": [],
+        "trend": [
+          {
+            "query_id": "q_f60fcf601f12324ee4e766c6",
+            "buckets": 5,
+            "ordered": true,
+            "duplicate_buckets": 0
+          }
+        ],
+        "independent_oracle": {
+          "matched": 2,
+          "eligible": 2,
+          "accuracy_pct": 100,
+          "source": "Truy vấn tổng hợp độc lập (read-only) từ cùng định nghĩa chỉ số"
+        },
+        "oracle_queries": 2,
+        "provider_calls": 0,
+        "measured_at": "2026-10-18T00:46:09.104498+00:00",
+        "registry_fingerprint": "c2805207d50c4480360cdfb5e6e145283426e6bdc31dc61146741f237810d12a",
+        "session_revision": 1
+      }
+    },
+    {
+      "id": "guided_served_forecast",
+      "passed": true,
+      "job_id": "aj_bf2172cf4fdf48aab2b0edb6a0ca39c3",
+      "physical_http": 0,
+      "answer": [
+        "Dự báo doanh thu 2 tháng tới: kỳ cuối 478,7 triệu VND (khoảng 80%: 395,3 triệu VND – 562 triệu VND); tổng các kỳ dự báo 957,3 triệu VND."
+      ],
+      "forecast": {
+        "requirement_id": "r1",
+        "query_id": "q_fdef553792b874509572c9b8",
+        "metric_id": "revenue",
+        "metric_label": "Doanh thu",
+        "metric_unit": "VND",
+        "unit": "month",
+        "horizon": 2,
+        "status": "ok",
+        "version": "3.0.0",
+        "method": "ses_0.3",
+        "history": {
+          "start": "2026-01-01",
+          "end": "2026-09-01",
+          "periods": 9,
+          "missing_data_policy": "zero_fill"
+        },
+        "forecast": [
+          {
+            "period": "2026-10-01",
+            "value": 478667611.07,
+            "lower_80": 428680787.3,
+            "upper_80": 528654434.84,
+            "kind": "in_progress"
+          },
+          {
+            "period": "2026-11-01",
+            "value": 478667611.07,
+            "lower_80": 410633137.39,
+            "upper_80": 546702084.74,
+            "kind": "future"
+          },
+          {
+            "period": "2026-12-01",
+            "value": 478667611.07,
+            "lower_80": 395342738.35,
+            "upper_80": 561992483.78,
+            "kind": "future"
+          }
+        ],
+        "backtest": {
+          "mae": 41561308.5607,
+          "rmse": 46579757.3236,
+          "smape_pct": 8.45,
+          "evaluated_points": 6,
+          "test_horizon": 2,
+          "folds": 3,
+          "naive_baseline": {
+            "mae": 51060333.3333,
+            "rmse": 59946876.8439,
+            "smape_pct": 10.24,
+            "evaluated_points": 6
+          },
+          "improvement_vs_naive_pct": 18.6
+        },
+        "interval": "Khoảng 80% ước lượng từ sai số backtest; không phải xác suất được bảo đảm.",
+        "limitations": [
+          "Dự báo thống kê từ lịch sử đã kiểm chứng; không tính sự kiện, khuyến mãi hay thay đổi vận hành chưa có trong dữ liệu."
+        ],
+        "history_points": [
+          {
+            "period": "2026-01-01",
+            "value": 559624000
+          },
+          {
+            "period": "2026-02-01",
+            "value": 429346000
+          },
+          {
+            "period": "2026-03-01",
+            "value": 449688000
+          },
+          {
+            "period": "2026-04-01",
+            "value": 443188000
+          },
+          {
+            "period": "2026-05-01",
+            "value": 535051000
+          },
+          {
+            "period": "2026-06-01",
+            "value": 499114000
+          },
+          {
+            "period": "2026-07-01",
+            "value": 540465000
+          },
+          {
+            "period": "2026-08-01",
+            "value": 458156000
+          },
+          {
+            "period": "2026-09-01",
+            "value": 440072000
+          }
+        ]
+      },
+      "binding": {
+        "requirement_id": "r1",
+        "role": "forecast",
+        "forecast_ref": "r1",
+        "metric": "revenue",
+        "unit": "VND",
+        "cadence": "month",
+        "query_id": "q_fdef553792b874509572c9b8"
+      }
+    }
+  ],
+  "blocked": []
+}

@@ -1,0 +1,59 @@
+{
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "command": "docker exec fixture-b python < v35_operational_soak.py",
+  "result": {
+    "event": "soak_complete",
+    "status": "passed",
+    "duration_seconds": 900.105,
+    "sample_interval_seconds": 5,
+    "instances": [
+      {
+        "instance": "v35-fixture-api-a",
+        "pid": 1,
+        "redis_db": 15,
+        "session_backend": "redis",
+        "artifact_backend": "redis",
+        "physical_http": 0,
+        "peak_rss_kib": 183180
+      },
+      {
+        "instance": "v35-fixture-api-b",
+        "pid": 1,
+        "redis_db": 15,
+        "session_backend": "redis",
+        "artifact_backend": "redis",
+        "physical_http": 0,
+        "peak_rss_kib": 198632
+      }
+    ],
+    "eligible_operations": 1541,
+    "outcomes": {
+      "completed": 1541,
+      "failed": 0
+    },
+    "request_counter_deltas": {
+      "http://127.0.0.1:18881": 757,
+      "http://127.0.0.1:18882": 784
+    },
+    "expected_request_counts": {
+      "http://127.0.0.1:18881": 757,
+      "http://127.0.0.1:18882": 784
+    },
+    "p95_ms": 49.534458000380255,
+    "p99_ms": 143.08570800039888,
+    "controlled_jobs": 60,
+    "jobs_with_request_context": 60,
+    "external_http": 0,
+    "physical_provider_sends": 0,
+    "shared_gauge_aggregation": "max; never summed",
+    "errors": [],
+    "limitations": [
+      "Local isolated fixture measurement; not a production SLO",
+      "Source freshness and worker restarts captured separately",
+      "No deployed multi-API traffic claim"
+    ]
+  },
+  "log_sha256": "067018f0311bacf64018ef441a98926454dff1037d7b5d35c1ea5f8c71c6589c",
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

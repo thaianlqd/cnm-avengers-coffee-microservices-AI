@@ -1,0 +1,133 @@
+EEEE.......
+======================================================================
+ERROR: test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts (tests.test_v34_ranked_companion.RankedCompanionTests.test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_ranked_companion.py", line 49, in test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts
+    report=self.report()
+           ^^^^^^^^^^^^^
+  File "/app/tests/test_v34_ranked_companion.py", line 43, in report
+    proposal=pipeline.propose(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 952, in run
+    prepared=self.preflight(resolved,context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 460, in preflight
+    a=self.queries.prepare(op)
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analytical_query_service.py", line 330, in prepare
+    sql=compile_ranked_companion(plan,ground,cohort_parent,self.catalog)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analysis_query.py", line 480, in compile_ranked_companion
+    validate_read_only_sql(sql);validate_ai_query_scope(sql,policy);validate_sql_ast_security(sql,policy)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/sql_service.py", line 399, in validate_ai_query_scope
+    raise SqlSafetyError(
+services.sql_service.SqlSafetyError: SQL AI tham chiếu bảng ngoài phạm vi semantic resolver: r.store, r.store_id
+
+======================================================================
+ERROR: test_companion_cannot_change_time_or_filters_or_reference_an_unknown_cohort (tests.test_v34_ranked_companion.RankedCompanionTests.test_companion_cannot_change_time_or_filters_or_reference_an_unknown_cohort)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_ranked_companion.py", line 93, in test_companion_cannot_change_time_or_filters_or_reference_an_unknown_cohort
+    report=self.report()
+           ^^^^^^^^^^^^^
+  File "/app/tests/test_v34_ranked_companion.py", line 43, in report
+    proposal=pipeline.propose(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 952, in run
+    prepared=self.preflight(resolved,context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 460, in preflight
+    a=self.queries.prepare(op)
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analytical_query_service.py", line 330, in prepare
+    sql=compile_ranked_companion(plan,ground,cohort_parent,self.catalog)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analysis_query.py", line 480, in compile_ranked_companion
+    validate_read_only_sql(sql);validate_ai_query_scope(sql,policy);validate_sql_ast_security(sql,policy)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/sql_service.py", line 399, in validate_ai_query_scope
+    raise SqlSafetyError(
+services.sql_service.SqlSafetyError: SQL AI tham chiếu bảng ngoài phạm vi semantic resolver: r.store, r.store_id
+
+======================================================================
+ERROR: test_full_artifact_membership_guard_rejects_a_different_top_n (tests.test_v34_ranked_companion.RankedCompanionTests.test_full_artifact_membership_guard_rejects_a_different_top_n)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_ranked_companion.py", line 84, in test_full_artifact_membership_guard_rejects_a_different_top_n
+    artifacts=restore_artifacts(self.report(),self.catalog)
+                                ^^^^^^^^^^^^^
+  File "/app/tests/test_v34_ranked_companion.py", line 43, in report
+    proposal=pipeline.propose(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 952, in run
+    prepared=self.preflight(resolved,context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 460, in preflight
+    a=self.queries.prepare(op)
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analytical_query_service.py", line 330, in prepare
+    sql=compile_ranked_companion(plan,ground,cohort_parent,self.catalog)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analysis_query.py", line 480, in compile_ranked_companion
+    validate_read_only_sql(sql);validate_ai_query_scope(sql,policy);validate_sql_ast_security(sql,policy)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/sql_service.py", line 399, in validate_ai_query_scope
+    raise SqlSafetyError(
+services.sql_service.SqlSafetyError: SQL AI tham chiếu bảng ngoài phạm vi semantic resolver: r.store, r.store_id
+
+======================================================================
+ERROR: test_tampered_membership_population_sql_and_parent_cannot_verify (tests.test_v34_ranked_companion.RankedCompanionTests.test_tampered_membership_population_sql_and_parent_cannot_verify)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_ranked_companion.py", line 71, in test_tampered_membership_population_sql_and_parent_cannot_verify
+    report=self.report()
+           ^^^^^^^^^^^^^
+  File "/app/tests/test_v34_ranked_companion.py", line 43, in report
+    proposal=pipeline.propose(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 952, in run
+    prepared=self.preflight(resolved,context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 460, in preflight
+    a=self.queries.prepare(op)
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analytical_query_service.py", line 330, in prepare
+    sql=compile_ranked_companion(plan,ground,cohort_parent,self.catalog)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/analysis_query.py", line 480, in compile_ranked_companion
+    validate_read_only_sql(sql);validate_ai_query_scope(sql,policy);validate_sql_ast_security(sql,policy)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/sql_service.py", line 399, in validate_ai_query_scope
+    raise SqlSafetyError(
+services.sql_service.SqlSafetyError: SQL AI tham chiếu bảng ngoài phạm vi semantic resolver: r.store, r.store_id
+
+----------------------------------------------------------------------
+Ran 11 tests in 3.574s
+
+FAILED (errors=4)

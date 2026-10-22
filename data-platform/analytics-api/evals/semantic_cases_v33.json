@@ -1,0 +1,263 @@
+{
+ "version": "3.3",
+ "note": "Each case: question, optional mission/time/scope, expected capability decision and blocking codes. Fixtures for invariants, not production strings.",
+ "cases": [
+  {
+   "id": "IN-14a",
+   "q": "Dự báo doanh thu từng chi nhánh trong 24 tháng tới",
+   "decision": "UNSUPPORTED",
+   "codes": [
+    "forecast_grouped_unsupported",
+    "forecast_horizon_exceeded"
+   ]
+  },
+  {
+   "id": "IN-14b",
+   "q": "Dự báo doanh thu 12 tháng tới theo từng chi nhánh",
+   "decision": "UNSUPPORTED",
+   "codes": [
+    "forecast_grouped_unsupported",
+    "forecast_horizon_exceeded"
+   ]
+  },
+  {
+   "id": "IN-14c",
+   "q": "Dự báo số đơn hàng 18 tháng tới",
+   "decision": "UNSUPPORTED",
+   "codes": [
+    "forecast_horizon_exceeded"
+   ]
+  },
+  {
+   "id": "IN-14d",
+   "q": "Dự báo doanh thu 9 tháng tới theo thành phố",
+   "decision": "UNSUPPORTED",
+   "codes": [
+    "forecast_grouped_unsupported",
+    "forecast_horizon_exceeded"
+   ]
+  },
+  {
+   "id": "IN-16",
+   "q": "Dự báo doanh thu 3 tháng tới của Hà Nội",
+   "decision": "UNSUPPORTED",
+   "codes": [
+    "forecast_scope_unsupported"
+   ]
+  },
+  {
+   "id": "IN-16b",
+   "q": "Dự báo doanh thu 3 tháng tới",
+   "scope": {
+    "mode": "selected",
+    "filters": [
+     {
+      "dimension": "city",
+      "operator": "in",
+      "value": [
+       "Hà Nội"
+      ]
+     }
+    ]
+   },
+   "decision": "UNSUPPORTED",
+   "codes": [
+    "forecast_scope_unsupported"
+   ]
+  },
+  {
+   "id": "IN-14e",
+   "q": "Dự báo tỷ lệ đi trễ 3 tháng tới",
+   "decision": "UNSUPPORTED",
+   "codes": [
+    "forecast_metric_unsupported"
+   ]
+  },
+  {
+   "id": "IN-15",
+   "q": "Dự báo doanh thu 3 tháng tới, độ chính xác tối thiểu 95%",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "IN-15b",
+   "q": "Dự báo doanh thu 3 tháng tới",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "IN-17",
+   "q": "Doanh thu và số đơn hàng có rủi ro không",
+   "mission": "risk_watch",
+   "decision": "REDIRECT",
+   "codes": [
+    "risk_signal_required"
+   ]
+  },
+  {
+   "id": "IN-11",
+   "q": "Xu hướng doanh thu theo tuần trong ngày 15/09/2026",
+   "decision": "CLARIFY",
+   "codes": [
+    "trend_range_too_short"
+   ]
+  },
+  {
+   "id": "OK-1",
+   "q": "Doanh thu 7 ngày qua",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "OK-2",
+   "q": "Xu hướng doanh thu theo tuần trong 3 tháng gần đây",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "IN-01",
+   "q": "dsdasds",
+   "decision": "CLARIFY",
+   "codes": [
+    "unrecognized_question"
+   ]
+  },
+  {
+   "id": "IN-01b",
+   "q": "xin chào bạn",
+   "decision": "CLARIFY",
+   "codes": [
+    "unrecognized_question"
+   ]
+  },
+  {
+   "id": "IN-02",
+   "q": "Top 5 chi nhánh tốt nhất tháng 9",
+   "decision": "CLARIFY",
+   "codes": [
+    "metric_needed"
+   ]
+  },
+  {
+   "id": "IN-03",
+   "q": "Top 5 chi nhánh theo doanh thu tháng 9",
+   "mission": "overview",
+   "decision": "REDIRECT",
+   "codes": [
+    "mission_mismatch"
+   ]
+  },
+  {
+   "id": "IN-04",
+   "q": "Doanh thu Hồ Chí Minh so với nhóm chi nhánh hoạt động tốt nhất",
+   "decision": "CLARIFY",
+   "codes": [
+    "cohort_criterion_needed"
+   ]
+  },
+  {
+   "id": "IN-05",
+   "q": "So sánh doanh thu Hồ Chí Minh với tỷ lệ hủy Hà Nội",
+   "decision": "CLARIFY",
+   "codes": [
+    "compare_mixed_units"
+   ]
+  },
+  {
+   "id": "IN-06",
+   "q": "Doanh thu của các chi nhánh đang lỗ",
+   "decision": "UNSUPPORTED",
+   "codes": [
+    "unsupported_predicate"
+   ]
+  },
+  {
+   "id": "IN-09",
+   "q": "Cơ cấu AOV theo chi nhánh",
+   "decision": "REDIRECT",
+   "codes": [
+    "composition_non_additive"
+   ]
+  },
+  {
+   "id": "IN-10",
+   "q": "Cơ cấu tỷ lệ hủy theo thành phố",
+   "decision": "REDIRECT",
+   "codes": [
+    "composition_non_additive"
+   ]
+  },
+  {
+   "id": "IN-21",
+   "q": "Tương quan doanh thu với thành phố",
+   "decision": "CLARIFY",
+   "codes": [
+    "association_category_variable"
+   ]
+  },
+  {
+   "id": "IN-35",
+   "q": "Doanh thu theo chi nhánh, chỉ những chi nhánh lỗ vốn",
+   "decision": "UNSUPPORTED",
+   "codes": [
+    "unsupported_predicate"
+   ]
+  },
+  {
+   "id": "OK-3",
+   "q": "Cơ cấu doanh thu theo kênh bán tháng 9 năm 2026",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "OK-4",
+   "q": "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "OK-5",
+   "q": "Tình hình doanh thu tháng 9 năm 2026 thế nào?",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "OK-6",
+   "q": "Tổng hợp hoạt động kinh doanh trong 45 ngày gần nhất: doanh thu, số đơn và giá trị đơn trung bình. Hiển thị xu hướng theo tuần, so sánh doanh thu giữa các loại đơn và tính tỷ trọng doanh thu của từng loại.",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "IN-35b",
+   "q": "Cơ cấu doanh thu theo kênh bán và AOV theo chi nhánh",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "IN-35c",
+   "q": "Cơ cấu AOV theo chi nhánh và doanh thu theo tháng",
+   "decision": "REDIRECT",
+   "codes": [
+    "composition_non_additive"
+   ]
+  },
+  {
+   "id": "IN-35d",
+   "q": "So sánh doanh thu, số đơn và giá trị đơn trung bình theo chi nhánh trong 90 ngày gần nhất.",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "IN-35e",
+   "q": "So sánh doanh thu, số đơn và giá trị đơn trung bình giữa TP.HCM và Hà Nội trong 90 ngày gần nhất.",
+   "decision": "READY",
+   "codes": []
+  },
+  {
+   "id": "OK-7",
+   "q": "Top 5 sản phẩm bán chạy ở Hà Nội quý trước, so sánh doanh thu với TP.HCM và cho tôi xu hướng theo tuần.",
+   "decision": "READY",
+   "codes": []
+  }
+ ]
+}

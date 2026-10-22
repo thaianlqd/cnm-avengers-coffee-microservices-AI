@@ -1,0 +1,664 @@
+{
+  "observed_at": "2026-10-20T03:19:31.665747+00:00",
+  "mode": "READ_ONLY_AGGREGATES",
+  "database_writes": 0,
+  "queries": {
+    "guest_identity": {
+      "sql": "SELECT count(*) total_orders, count(*) FILTER(WHERE ma_nguoi_dung IS NULL OR ma_nguoi_dung='') missing_user, count(*) FILTER(WHERE ma_nguoi_dung LIKE 'anon%') anon_marker, count(*) FILTER(WHERE session_id IS NOT NULL AND session_id<>'') has_session, count(*) FILTER(WHERE ma_nguoi_dung ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') uuid_shaped_user FROM orders.don_hang",
+      "columns": [
+        "total_orders",
+        "missing_user",
+        "anon_marker",
+        "has_session",
+        "uuid_shaped_user"
+      ],
+      "rows": [
+        [
+          40460,
+          14228,
+          0,
+          18,
+          26232
+        ]
+      ]
+    },
+    "delivery_quality": {
+      "sql": "SELECT count(*) deliveries, count(*) FILTER(WHERE delivery_note LIKE '[Đánh giá %') rating_note_marker, count(*) FILTER(WHERE is_batched) batched, count(*) FILTER(WHERE shipper_id IS DISTINCT FROM \"shipperId\") relation_key_disagreement, count(*) FILTER(WHERE delivered_at<picked_up_at) negative_duration, count(*) FILTER(WHERE status='DELIVERED' AND delivered_at IS NULL) delivered_missing_clock, count(*) FILTER(WHERE delivery_fee IS NULL) missing_fee FROM orders.shipper_delivery",
+      "columns": [
+        "deliveries",
+        "rating_note_marker",
+        "batched",
+        "relation_key_disagreement",
+        "negative_duration",
+        "delivered_missing_clock",
+        "missing_fee"
+      ],
+      "rows": [
+        [
+          7857,
+          0,
+          0,
+          7807,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "shipper_profile": {
+      "sql": "SELECT count(*) profiles, min(rating),max(rating),count(*) FILTER(WHERE rating IS NULL OR rating<1 OR rating>5) invalid_rating FROM orders.shipper",
+      "columns": [
+        "profiles",
+        "min",
+        "max",
+        "invalid_rating"
+      ],
+      "rows": [
+        [
+          301,
+          "4.50",
+          "4.98",
+          0
+        ]
+      ]
+    },
+    "gift_status_balances": {
+      "sql": "SELECT status::text,count(*),count(*) FILTER(WHERE current_balance=0) zero_balance,count(*) FILTER(WHERE current_balance>0) positive_balance FROM orders.gift_cards GROUP BY 1 ORDER BY 1",
+      "columns": [
+        "status",
+        "count",
+        "zero_balance",
+        "positive_balance"
+      ],
+      "rows": [
+        [
+          "ACTIVE",
+          10,
+          0,
+          10
+        ],
+        [
+          "CLAIMED",
+          1,
+          0,
+          1
+        ],
+        [
+          "REDEEMED",
+          2,
+          2,
+          0
+        ]
+      ]
+    },
+    "wallet_reference_presence": {
+      "sql": "SELECT type,status,count(*),count(*) FILTER(WHERE reference_id IS NOT NULL AND reference_id<>'') has_reference FROM orders.customer_wallet_transaction GROUP BY 1,2 ORDER BY 1,2",
+      "columns": [
+        "type",
+        "status",
+        "count",
+        "has_reference"
+      ],
+      "rows": [
+        [
+          "PAYMENT",
+          "SUCCESS",
+          72,
+          10
+        ],
+        [
+          "REFUND",
+          "SUCCESS",
+          2,
+          2
+        ],
+        [
+          "TOP_UP",
+          "PENDING",
+          4,
+          0
+        ],
+        [
+          "TOP_UP",
+          "SUCCESS",
+          34,
+          0
+        ]
+      ]
+    }
+  },
+  "json_shapes": [
+    {
+      "relation": "ai.chat_ai_conversation",
+      "column": "messages",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 234,
+          "empty_container_rows": 16
+        }
+      ]
+    },
+    {
+      "relation": "ai.chat_ai_conversation",
+      "column": "state",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 234,
+          "empty_container_rows": 16
+        }
+      ]
+    },
+    {
+      "relation": "ai.chat_ai_conversation",
+      "column": "processed_responses",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 234,
+          "empty_container_rows": 16
+        }
+      ]
+    },
+    {
+      "relation": "ai.inference_logs",
+      "column": "request_payload",
+      "type": "jsonb",
+      "groups": []
+    },
+    {
+      "relation": "ai.inference_logs",
+      "column": "response_payload",
+      "type": "jsonb",
+      "groups": []
+    },
+    {
+      "relation": "ai.mo_hinh_ai",
+      "column": "chi_so",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 2,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "ai.model_registry",
+      "column": "metrics",
+      "type": "jsonb",
+      "groups": []
+    },
+    {
+      "relation": "ai.nhat_ky_suy_luan",
+      "column": "du_lieu_yeu_cau",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 12703,
+          "empty_container_rows": 0
+        },
+        {
+          "shape": "SQL_NULL",
+          "rows": 21,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "ai.nhat_ky_suy_luan",
+      "column": "du_lieu_phan_hoi",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 12523,
+          "empty_container_rows": 0
+        },
+        {
+          "shape": "SQL_NULL",
+          "rows": 201,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "analytics.ai_logs",
+      "column": "sql_queries",
+      "type": "jsonb",
+      "groups": []
+    },
+    {
+      "relation": "analytics.ai_modules",
+      "column": "bang_du_lieu",
+      "type": "ARRAY",
+      "profile": "metadata_only"
+    },
+    {
+      "relation": "analytics.ai_modules",
+      "column": "cot_phan_tich",
+      "type": "ARRAY",
+      "profile": "metadata_only"
+    },
+    {
+      "relation": "analytics.ai_modules",
+      "column": "ai_config",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 2,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "analytics.ai_modules",
+      "column": "dashboard_config",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 2,
+          "empty_container_rows": 2
+        }
+      ]
+    },
+    {
+      "relation": "analytics.morning_digest",
+      "column": "anomalies",
+      "type": "jsonb",
+      "groups": []
+    },
+    {
+      "relation": "identity.membership_config",
+      "column": "value",
+      "type": "json",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 1,
+          "empty_container_rows": 0
+        },
+        {
+          "shape": "object",
+          "rows": 1,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "identity.nguoi_dung",
+      "column": "pos_permissions",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 342,
+          "empty_container_rows": 341
+        }
+      ]
+    },
+    {
+      "relation": "menu.san_pham",
+      "column": "sizes",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 110,
+          "empty_container_rows": 0
+        },
+        {
+          "shape": "SQL_NULL",
+          "rows": 8,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "menu.san_pham",
+      "column": "luong_da",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 43,
+          "empty_container_rows": 0
+        },
+        {
+          "shape": "SQL_NULL",
+          "rows": 75,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "menu.san_pham",
+      "column": "do_ngot",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 61,
+          "empty_container_rows": 0
+        },
+        {
+          "shape": "SQL_NULL",
+          "rows": 57,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "menu.san_pham",
+      "column": "loai_sua",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 14,
+          "empty_container_rows": 0
+        },
+        {
+          "shape": "SQL_NULL",
+          "rows": 104,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "menu.san_pham",
+      "column": "toppings",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 60,
+          "empty_container_rows": 0
+        },
+        {
+          "shape": "SQL_NULL",
+          "rows": 58,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "menu.san_pham",
+      "column": "bien_the",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 2,
+          "empty_container_rows": 2
+        },
+        {
+          "shape": "SQL_NULL",
+          "rows": 116,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "orders.ca_doi_soat",
+      "column": "du_lieu_tom_tat",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 4140,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "orders.cart_mutation_operation",
+      "column": "result",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 354,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "orders.checkout_operation",
+      "column": "result",
+      "type": "jsonb",
+      "groups": []
+    },
+    {
+      "relation": "orders.checkout_outbox",
+      "column": "payload",
+      "type": "jsonb",
+      "groups": []
+    },
+    {
+      "relation": "orders.checkout_quote",
+      "column": "request",
+      "type": "jsonb",
+      "groups": []
+    },
+    {
+      "relation": "orders.checkout_quote",
+      "column": "quote",
+      "type": "jsonb",
+      "groups": []
+    },
+    {
+      "relation": "orders.chi_tiet_don_hang",
+      "column": "toppings",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 72063,
+          "empty_container_rows": 46904
+        }
+      ]
+    },
+    {
+      "relation": "orders.chi_tiet_don_hang",
+      "column": "custom_attributes",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 72063,
+          "empty_container_rows": 72063
+        }
+      ]
+    },
+    {
+      "relation": "orders.danh_gia_chi_nhanh",
+      "column": "tieu_chi",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 2077,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "orders.danh_gia_chi_nhanh",
+      "column": "hinh_anh_urls",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 2077,
+          "empty_container_rows": 2077
+        }
+      ]
+    },
+    {
+      "relation": "orders.don_hang",
+      "column": "lich_su_trang_thai",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 40460,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "orders.gio_hang",
+      "column": "toppings",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 15,
+          "empty_container_rows": 15
+        }
+      ]
+    },
+    {
+      "relation": "orders.gio_hang",
+      "column": "custom_attributes",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 15,
+          "empty_container_rows": 14
+        }
+      ]
+    },
+    {
+      "relation": "orders.khao_sat_bieu_mau",
+      "column": "cau_hoi",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 1,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "orders.khao_sat_phan_hoi",
+      "column": "tra_loi",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 12,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "orders.kiosk_shift_session",
+      "column": "du_lieu_chi_tiet",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 6,
+          "empty_container_rows": 4
+        }
+      ]
+    },
+    {
+      "relation": "orders.shipper_wallet",
+      "column": "cod_details",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 9,
+          "empty_container_rows": 5
+        }
+      ]
+    },
+    {
+      "relation": "orders.thong_bao",
+      "column": "du_lieu",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 1211,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "public.ai_chat_sessions",
+      "column": "cart_items",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 274,
+          "empty_container_rows": 164
+        }
+      ]
+    },
+    {
+      "relation": "public.ai_chat_sessions",
+      "column": "checkout_prefs",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 274,
+          "empty_container_rows": 26
+        }
+      ]
+    },
+    {
+      "relation": "public.ai_turn_log",
+      "column": "state_before",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "object",
+          "rows": 21,
+          "empty_container_rows": 0
+        }
+      ]
+    },
+    {
+      "relation": "public.ai_turn_log",
+      "column": "tool_calls",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 21,
+          "empty_container_rows": 20
+        }
+      ]
+    },
+    {
+      "relation": "public.ai_turn_log",
+      "column": "bot_history",
+      "type": "jsonb",
+      "groups": [
+        {
+          "shape": "array",
+          "rows": 21,
+          "empty_container_rows": 21
+        }
+      ]
+    }
+  ],
+  "transaction_read_only": "on"
+}
