@@ -6,7 +6,7 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { UserProvider } from './src/context/UserContext'
+import { UserProvider, useUser } from './src/context/UserContext'
 import { AppNavigator } from './src/navigation/AppNavigator'
 import { FulfillmentProvider } from './src/context/FulfillmentContext'
 import { FeedbackProvider } from './src/context/FeedbackContext'
@@ -34,6 +34,11 @@ const navigationTheme = {
   },
 }
 
+function SessionActivity({ children }) {
+  const { touchSession } = useUser()
+  return <View style={{ flex: 1 }} onTouchStartCapture={touchSession}>{children}</View>
+}
+
 export default function App() {
   useEffect(() => {
     if (Platform.OS !== 'web') return
@@ -51,10 +56,10 @@ export default function App() {
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
             <UserProvider>
-              <FulfillmentProvider><FeedbackProvider><NavigationContainer theme={navigationTheme} documentTitle={{ formatter: (options, route) => `${options?.title || route?.name || 'Trang chủ'} | Highlands Coffee` }}>
+              <SessionActivity><FulfillmentProvider><FeedbackProvider><NavigationContainer theme={navigationTheme} documentTitle={{ formatter: (options, route) => `${options?.title || route?.name || 'Trang chủ'} | Avengers Coffee` }}>
                 <AppNavigator />
                 <StatusBar style="dark" />
-              </NavigationContainer></FeedbackProvider></FulfillmentProvider>
+              </NavigationContainer></FeedbackProvider></FulfillmentProvider></SessionActivity>
             </UserProvider>
           </QueryClientProvider>
         </SafeAreaProvider>

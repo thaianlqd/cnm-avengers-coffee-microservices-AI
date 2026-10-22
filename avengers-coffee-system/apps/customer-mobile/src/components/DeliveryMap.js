@@ -1,7 +1,7 @@
 import { nativeTileUrl, detailedNativeStyle } from '../../../shared-ui/nativeBasemap'
 import useDeliveryRoute from '../hooks/useDeliveryRoute'
 import JourneyOverlay, { JourneyPin } from '../../../shared-ui/JourneyOverlay'
-import { journeyProgress, measuredRouteSummary } from '../../../web-customer/src/components/deliveryMapPresentation'
+import { journeyProgress, measuredRouteSummary } from '../../../web-customer/src/components/map/deliveryMapPresentation'
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native'
 import MapView, { Marker, AnimatedRegion, Polyline, UrlTile } from 'react-native-maps'

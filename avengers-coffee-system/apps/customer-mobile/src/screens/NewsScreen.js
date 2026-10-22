@@ -9,7 +9,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   Pressable,
   ScrollView,
   RefreshControl,
@@ -21,6 +20,7 @@ import { useQuery } from '@tanstack/react-query'
 import apiClient from '../lib/apiClient'
 import { formatDateTime, normalizeNewsArticle, safeArray } from '../lib/customerData'
 import { colors, spacing, shadows, radius } from '../theme'
+import { NewsCardSkeleton } from '../components/common/Skeleton'
 
 const CATEGORIES = [
   { value: 'all', label: 'Tất cả' },
@@ -204,10 +204,7 @@ export function NewsScreen({ route, navigation: navigationProp }) {
 
       {/* Loading */}
       {newsQuery.isLoading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={styles.loadingText}>Đang tải bài viết...</Text>
-        </View>
+        <NewsCardSkeleton count={3} />
       ) : null}
 
       {newsQuery.isError && <Pressable onPress={() => newsQuery.refetch()} style={{ padding: 24 }}><Text>Chưa tải được bài viết. Chạm để thử lại.</Text></Pressable>}

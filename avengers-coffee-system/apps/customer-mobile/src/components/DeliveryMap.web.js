@@ -1,5 +1,5 @@
-import { installDetailedBasemap } from '../../../web-customer/src/components/mapBasemap'
-import '../../../web-customer/src/components/features_thaian/DeliveryJourney.css'
+import { installDetailedBasemap } from '../../../web-customer/src/components/map/mapBasemap'
+import '../../../web-customer/src/components/delivery/DeliveryJourney.css'
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, Pressable } from 'react-native'
 import L from 'leaflet'
@@ -7,7 +7,7 @@ import './leaflet.web.css'
 import { coordinate } from '../lib/trackingSession'
 import useDeliveryRoute from '../hooks/useDeliveryRoute'
 import JourneyOverlay from '../../../shared-ui/JourneyOverlay'
-import { journeyProgress, measuredRouteSummary, mapPinHtml } from '../../../web-customer/src/components/deliveryMapPresentation'
+import { journeyProgress, measuredRouteSummary, mapPinHtml } from '../../../web-customer/src/components/map/deliveryMapPresentation'
 import { colors } from '../theme'
 function pin(kind) {
   return L.divIcon({ className: '', html: mapPinHtml(kind), iconSize: [44,54], iconAnchor: [22,52] })

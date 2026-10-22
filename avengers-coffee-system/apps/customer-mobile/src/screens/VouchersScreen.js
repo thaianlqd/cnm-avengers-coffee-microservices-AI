@@ -7,7 +7,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   Pressable,
   Alert,
 } from 'react-native'
@@ -18,6 +17,7 @@ import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
 import { formatDateOnly, getUserId, safeArray, getVoucherDisplayTitle, getVoucherDisplayDescription } from '../lib/customerData'
 import { colors, spacing, shadows, radius } from '../theme'
+import { VoucherListSkeleton } from '../components/common/Skeleton'
 // Clipboard import removed - using Alert fallback
 
 const TYPE_CONFIG = {
@@ -148,10 +148,7 @@ export function VouchersScreen({ navigation }) {
 
       {/* Loading */}
       {vouchersQuery.isLoading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={styles.loadingText}>Đang tải voucher...</Text>
-        </View>
+        <VoucherListSkeleton count={3} />
       ) : null}
 
       {/* Empty */}
