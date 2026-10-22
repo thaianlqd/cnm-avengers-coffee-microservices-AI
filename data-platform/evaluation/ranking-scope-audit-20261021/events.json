@@ -1,0 +1,1754 @@
+[
+  {
+    "stage": "job_lookup",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "request",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": null,
+    "duration_ms": 432.792
+  },
+  {
+    "stage": "sql_reader",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "sql_reader",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 4.655
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 0.063,
+    "rows": 0
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 6.483
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 76.452
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 75.856
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 97.051
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 90.976
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 12.274
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 14.185
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 0.596,
+    "rows": 1
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 85.463,
+    "rows": 1
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 0.355,
+    "rows": 1
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 108.142,
+    "rows": 1
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 2.83
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 15.813
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 1.047
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 54.666
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 66.12
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 0.663
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 0.207,
+    "rows": 1
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 73.587,
+    "rows": 1
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 0.164,
+    "rows": 2
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 20.73,
+    "rows": 2
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 1.56
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 59.834
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 6.429
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 5.89
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 8.729
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 0.08,
+    "rows": 2
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 0.871
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 26.947,
+    "rows": 2
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 0.205,
+    "rows": 1
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_b12447524c3141f992d62c4850a3104b",
+    "job_id": "aj_aed8c0990b674877bacd22381e5f3023",
+    "duration_ms": 14.692,
+    "rows": 1
+  },
+  {
+    "stage": "job_lookup",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "request",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": null,
+    "duration_ms": 46.752
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 0.893
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 8.62
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 13.029
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 15.05
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 0.534
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 25.747
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 0.808
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 0.108,
+    "rows": 5
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 18.438,
+    "rows": 5
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 0.239,
+    "rows": 30
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 63.299,
+    "rows": 30
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 0.839
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 11.828
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 51.276
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 55.393
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 56.992
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 2.251
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 2.65,
+    "rows": 1175
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 0.079,
+    "rows": 3
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 16.393,
+    "rows": 3
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_62206f8077164886985500a6700ef18b",
+    "job_id": "aj_d51ac9f5c2d441deaf97afae00722c18",
+    "duration_ms": 82.911,
+    "rows": 1175
+  },
+  {
+    "stage": "job_lookup",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "request",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": null,
+    "duration_ms": 59.024
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.897
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 6.086
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 10.263
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 10.937
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.557
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 20.778
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.693
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.133,
+    "rows": 5
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 16.836,
+    "rows": 5
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.216,
+    "rows": 30
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 24.52,
+    "rows": 30
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.708
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 10.121
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.835
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 5.308
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 12.664
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.548
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 3.16,
+    "rows": 1175
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.497,
+    "rows": 81
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 71.679,
+    "rows": 1175
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 64.222,
+    "rows": 81
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 5.721
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 55.514
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 61.158
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.538
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 66.815
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.426
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.097,
+    "rows": 3
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 17.7,
+    "rows": 3
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 0.071,
+    "rows": 4
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_561ea208a18741728326b19a072024c2",
+    "job_id": "aj_12fa3f47d78b43c89d5ae01e843dad04",
+    "duration_ms": 12.019,
+    "rows": 4
+  },
+  {
+    "stage": "job_lookup",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "request",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": null,
+    "duration_ms": 27.589
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.681
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 11.906
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 11.618
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 17.324
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.552
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 23.916
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.553
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.305,
+    "rows": 90
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 58.819,
+    "rows": 90
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.116,
+    "rows": 5
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 20.465,
+    "rows": 5
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.538
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 10.869
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 6.279
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 5.795
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 11.803
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.466
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.156,
+    "rows": 30
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 21.739,
+    "rows": 30
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 2.764,
+    "rows": 1175
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 70.472,
+    "rows": 1175
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 3.102
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 14.058
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 5.939
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 6.213
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 12.835
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.74
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.305,
+    "rows": 81
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 24.791,
+    "rows": 81
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.072,
+    "rows": 4
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 14.869,
+    "rows": 4
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.637
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 9.556
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.702
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "sql_dry_run",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 10.507
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.713
+  },
+  {
+    "stage": "sql",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_acquire",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.433,
+    "rows": 120
+  },
+  {
+    "stage": "db_acquire",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 5.71
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 16.429,
+    "rows": 120
+  },
+  {
+    "stage": "db_fetch",
+    "status": "started",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf"
+  },
+  {
+    "stage": "db_fetch",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 0.138,
+    "rows": 3
+  },
+  {
+    "stage": "sql",
+    "status": "completed",
+    "request_id": "req_cc0e9fc5f96748a791964b16d1531a7e",
+    "job_id": "aj_de06746846b74ada84e3707a6ee3b8cf",
+    "duration_ms": 22.466,
+    "rows": 3
+  },
+  {
+    "stage": "job_lookup",
+    "status": "completed",
+    "request_id": "req_6932d8701a9d4835a0e5348b163c11f9",
+    "job_id": "aj_d3914723bf604a96a1bc083edff98e80"
+  },
+  {
+    "stage": "request",
+    "status": "completed",
+    "request_id": "req_6932d8701a9d4835a0e5348b163c11f9",
+    "job_id": null,
+    "duration_ms": 91.494
+  }
+]

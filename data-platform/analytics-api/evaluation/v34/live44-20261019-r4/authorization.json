@@ -1,0 +1,12 @@
+{
+  "approved_total": 380,
+  "prior_reserved": 320,
+  "maximum_new_reservations": 60,
+  "user_reply": "hoàn thành xong PLAN từ A-Z đã live full các kiểu đi oke hết (2026-10-19 ~10:55)",
+  "case_count": 44,
+  "useful_denominator": 40,
+  "full_jobs_execute": true,
+  "scope": "Existing Google Gemini primary/secondary; questions and governed semantic metadata; no raw rows/PII",
+  "ledger_sha256_before": "c86d3bd8e356afda5a0530ff8418134318b7a9462998504843ae1ab801c7f38b",
+  "case_sha256": "5fc5eb47fd515d314c5d1d7186a9306c5c262bfac4dca3c1d1ccc206d29bda2c"
+}

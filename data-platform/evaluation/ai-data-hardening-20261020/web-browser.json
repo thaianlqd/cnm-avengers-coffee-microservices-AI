@@ -1,0 +1,49 @@
+{
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "web_unit": {
+    "passed": 191,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "build": "passed",
+  "browser_mocked": {
+    "passed": 40,
+    "failed": 0,
+    "workers": 1
+  },
+  "browser_real_http": {
+    "passed": 5,
+    "failed": 0,
+    "workers": 1,
+    "fixture_metrics": {
+      "logical_calls": 2,
+      "sql_queries": 35,
+      "external_http": 0
+    }
+  },
+  "logs": [
+    {
+      "name": "web-unit.log",
+      "sha256": "b952da92692d03c6823fd6206c67fcd0bb939442de8cbbf0f1042fd07b24eb69"
+    },
+    {
+      "name": "typecheck.log",
+      "sha256": "d60cf3e0c6afcd983a85cdc71fdc2d74da8680ed2e1d2f90d41a4a3fd981c2dd"
+    },
+    {
+      "name": "build.log",
+      "sha256": "00f0f4537de00423ff889aaab4ca01d9341350e398b78dc271affcf010ef0856"
+    },
+    {
+      "name": "browser.log",
+      "sha256": "cad699facdf9523427e38150ebabfb2e9f5db92604e528605dbe4b0dc44b4beb"
+    },
+    {
+      "name": "browser-api.log",
+      "sha256": "4dee25220455264c19ea0c9fb195ffce883aa4859c99ec8a89c9df221e50fb90"
+    }
+  ],
+  "external_provider_sends": 0,
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

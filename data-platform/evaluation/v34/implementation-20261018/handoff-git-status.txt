@@ -1,0 +1,156 @@
+ M .claude/scripts/dp-fixture-http.sh
+ M .claude/scripts/dp-test.sh
+ M .gitignore
+ M data-platform/.env.example
+ M data-platform/airflow/Dockerfile
+ M data-platform/airflow/dags/daily_pipeline_dag.py
+ M data-platform/airflow/requirements.txt
+ M data-platform/analytics-api/db.py
+ M data-platform/analytics-api/evals/live_acceptance_v33.py
+ M data-platform/analytics-api/evals/semantic_eval_v30.py
+ M data-platform/analytics-api/metadata/semantic_catalog.json
+ M data-platform/analytics-api/routers/ai.py
+ M data-platform/analytics-api/routers/analysis_modules.py
+ M data-platform/analytics-api/routers/customers.py
+ M data-platform/analytics-api/routers/marts.py
+ M data-platform/analytics-api/routers/platform.py
+ M data-platform/analytics-api/routers/products.py
+ M data-platform/analytics-api/routers/query.py
+ M data-platform/analytics-api/routers/reports.py
+ M data-platform/analytics-api/routers/stores.py
+ M data-platform/analytics-api/server.py
+ M data-platform/analytics-api/services/agent_pipeline.py
+ M data-platform/analytics-api/services/agent_provider.py
+ M data-platform/analytics-api/services/analysis_catalog.py
+ M data-platform/analytics-api/services/analysis_job_service.py
+ M data-platform/analytics-api/services/analysis_module_repository.py
+ M data-platform/analytics-api/services/analysis_module_service.py
+ M data-platform/analytics-api/services/analysis_quality_service.py
+ M data-platform/analytics-api/services/analysis_response_service.py
+ M data-platform/analytics-api/services/analytical_capacity_planner.py
+ M data-platform/analytics-api/services/analytical_query_service.py
+ M data-platform/analytics-api/services/browser_owner.py
+ M data-platform/analytics-api/services/dashboard_planner_service.py
+ M data-platform/analytics-api/services/data_coverage_service.py
+ M data-platform/analytics-api/services/domain_intelligence_service.py
+ M data-platform/analytics-api/services/forecast_service.py
+ M data-platform/analytics-api/services/hybrid_analyst_planner.py
+ M data-platform/analytics-api/services/insight_service.py
+ M data-platform/analytics-api/services/one_shot_planner.py
+ M data-platform/analytics-api/services/preflight_service.py
+ M data-platform/analytics-api/services/provider_credential_router.py
+ M data-platform/analytics-api/services/provider_health_service.py
+ M data-platform/analytics-api/services/query_execution_batch.py
+ M data-platform/analytics-api/services/readiness_service.py
+ M data-platform/analytics-api/services/report_sql_policy.py
+ M data-platform/analytics-api/services/request_anchors.py
+ M data-platform/analytics-api/services/risk_watch_service.py
+ M data-platform/analytics-api/services/scope_resolution_service.py
+ M data-platform/analytics-api/services/semantic_catalog_validation.py
+ M data-platform/analytics-api/services/sql_service.py
+ M data-platform/analytics-api/services/verification_reconciliation_service.py
+ M data-platform/analytics-api/services/workspace_service.py
+ M data-platform/analytics-api/tests/fixtures/capabilities_v31.json
+ M data-platform/analytics-api/tests/test_analysis_jobs.py
+ M data-platform/analytics-api/tests/test_one_shot_v24.py
+ M data-platform/analytics-api/tests/test_overview_dashboard_v296.py
+ M data-platform/analytics-api/tests/test_query_batch.py
+ M data-platform/analytics-api/tests/test_v33_live_regressions.py
+ M data-platform/analytics-api/tests/test_workspace_v31.py
+ M data-platform/analytics-api/tools/regenerate_capabilities_fixture.py
+ M data-platform/analytics-api/tools/run_tests_v29.py
+ M data-platform/analytics-api/tools/v33_fixture_server.py
+ M data-platform/data-sync/Dockerfile
+ M data-platform/data-sync/sync.py
+ M data-platform/kafka-consumer/Dockerfile
+ M data-platform/kafka-consumer/consumer.py
+ M data-platform/kafka-consumer/requirements.txt
+ M data-platform/kafka-producer/Dockerfile
+ M data-platform/kafka-producer/producer.py
+ M data-platform/spark-jobs/Dockerfile
+ M data-platform/spark-jobs/bronze_ingestion.py
+ M data-platform/spark-jobs/entrypoint.sh
+ M data-platform/spark-jobs/gold_aggregation.py
+ M data-platform/spark-jobs/silver_transform.py
+ M data-platform/web-ui/nginx.conf
+ M data-platform/web-ui/src/App.tsx
+ M data-platform/web-ui/src/components/AnalystDashboardSummary.tsx
+ M data-platform/web-ui/src/components/Charts.tsx
+ M data-platform/web-ui/src/components/report/VerificationPanel.tsx
+ M data-platform/web-ui/src/components/workspace/AnalysisScopePanel.tsx
+ M data-platform/web-ui/src/components/workspace/DataCoverageBar.tsx
+ M data-platform/web-ui/src/main.tsx
+ M data-platform/web-ui/src/store/usePlatformStore.ts
+ M data-platform/web-ui/src/utils/analysisJobs.mjs
+ M data-platform/web-ui/src/utils/analysisJobs.test.mjs
+ M data-platform/web-ui/src/utils/analysisQuality.test.mjs
+ M data-platform/web-ui/src/utils/missionWorkspace.mjs
+ M data-platform/web-ui/src/utils/missionWorkspace.test.mjs
+ M data-platform/web-ui/src/utils/reportPersistence.mjs
+ M data-platform/web-ui/src/utils/reportPersistence.test.mjs
+ M data-platform/web-ui/src/utils/verificationPresentation.mjs
+ M data-platform/web-ui/src/views/AnalyticsView.tsx
+ M data-platform/web-ui/src/views/DataExplorerView.tsx
+ M data-platform/web-ui/src/views/OverviewView.tsx
+ M data-platform/web-ui/tests/e2e/helpers.ts
+ M docker-compose.data.yml
+?? .claude/scripts/dp-pipeline-test.sh
+?? .github/workflows/data-platform-ci.yml
+?? data-platform/.dockerignore
+?? data-platform/AI_V34_PLATFORM_MATURITY_PLAN.md
+?? data-platform/AI_V34_PLATFORM_MATURITY_PLAN.progress.md
+?? data-platform/analytics-api/.dockerignore
+?? data-platform/analytics-api/evals/live_cases_v34.json
+?? data-platform/analytics-api/evals/semantic_cases_v34.json
+?? data-platform/analytics-api/evals/semantic_eval_v34.py
+?? data-platform/analytics-api/evals/semantic_reference_eval_v34.py
+?? data-platform/analytics-api/evals/semantic_reference_v34.json
+?? data-platform/analytics-api/evaluation/v34/
+?? data-platform/analytics-api/metadata/access_policy.json
+?? data-platform/analytics-api/metadata/data_health_contracts.json
+?? data-platform/analytics-api/metadata/warehouse_views.json
+?? data-platform/analytics-api/migrations/027_platform_governance.sql
+?? data-platform/analytics-api/migrations/028_snapshot_lock_guards.sql
+?? data-platform/analytics-api/services/access_policy.py
+?? data-platform/analytics-api/services/telemetry.py
+?? data-platform/analytics-api/tests/fixtures/v34_l03_intents.json
+?? data-platform/analytics-api/tests/fixtures/v34_l29_live_rejection.json
+?? data-platform/analytics-api/tests/fixtures/v34_live44_failed_intents.json
+?? data-platform/analytics-api/tests/fixtures/v34_live44_rerun2_failed_intents.json
+?? data-platform/analytics-api/tests/fixtures/v34_runtime_overview_intent.json
+?? data-platform/analytics-api/tests/http_fixture.py
+?? data-platform/analytics-api/tests/test_v34_access_policy.py
+?? data-platform/analytics-api/tests/test_v34_anomalies.py
+?? data-platform/analytics-api/tests/test_v34_architecture.py
+?? data-platform/analytics-api/tests/test_v34_audit.py
+?? data-platform/analytics-api/tests/test_v34_auth_boundary.py
+?? data-platform/analytics-api/tests/test_v34_catalog_lifecycle.py
+?? data-platform/analytics-api/tests/test_v34_data_health.py
+?? data-platform/analytics-api/tests/test_v34_entity_inspect.py
+?? data-platform/analytics-api/tests/test_v34_forecast_diagnostics.py
+?? data-platform/analytics-api/tests/test_v34_identity_login_session.py
+?? data-platform/analytics-api/tests/test_v34_job_operations.py
+?? data-platform/analytics-api/tests/test_v34_live_harness.py
+?? data-platform/analytics-api/tests/test_v34_observability.py
+?? data-platform/analytics-api/tests/test_v34_oracle_consistency.py
+?? data-platform/analytics-api/tests/test_v34_platform_routes.py
+?? data-platform/analytics-api/tests/test_v34_provider_observability.py
+?? data-platform/analytics-api/tests/test_v34_query_security.py
+?? data-platform/analytics-api/tests/test_v34_relationship.py
+?? data-platform/analytics-api/tests/test_v34_semantic_corpus.py
+?? data-platform/analytics-api/tests/test_v34_semantic_repair.py
+?? data-platform/analytics-api/tools/architecture_inventory.py
+?? data-platform/analytics-api/tools/benchmark_v34_preflight.py
+?? data-platform/analytics-api/tools/catalog_contract_diff.py
+?? data-platform/analytics-api/tools/deploy_v34_governance.py
+?? data-platform/analytics-api/tools/regenerate_pipeline_metadata.py
+?? data-platform/evaluation/v34/
+?? data-platform/metadata/
+?? data-platform/pipeline-common/
+?? data-platform/pipeline-tests/
+?? data-platform/web-ui/src/hooks/
+?? data-platform/web-ui/src/utils/authSession.d.mts
+?? data-platform/web-ui/src/utils/authSession.mjs
+?? data-platform/web-ui/src/utils/authSession.test.mjs
+?? data-platform/web-ui/src/utils/platformData.test.mjs
+?? data-platform/web-ui/tests/e2e/platform-v34.spec.ts

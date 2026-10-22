@@ -1,0 +1,16 @@
+.F....................[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "KeyError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 675}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "TypeError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 675}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "ValueError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 675}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+.................................
+======================================================================
+FAIL: test_overlap_and_grouped_or_ranked_shapes_are_rejected (tests.test_v34_period_comparison.PeriodComparisonTests.test_overlap_and_grouped_or_ranked_shapes_are_rejected) (change={'analysis_kind': 'detail'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_period_comparison.py", line 98, in test_overlap_and_grouped_or_ranked_shapes_are_rejected
+    with self.subTest(change=change),self.assertRaises(f.AnalysisError):
+AssertionError: AnalysisError not raised
+
+----------------------------------------------------------------------
+Ran 55 tests in 18.870s
+
+FAILED (failures=1)

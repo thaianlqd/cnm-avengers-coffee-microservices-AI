@@ -1,0 +1,360 @@
+[
+  {
+    "id": "multi-clause",
+    "payload": {
+      "question": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026; phân tích chi nhánh và phương thức thanh toán chỉ trong 5 tỉnh này",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "refresh": true
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "store",
+            "label": "Chi nhánh"
+          },
+          {
+            "id": "payment_method",
+            "label": "Phương thức thanh toán"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "chi nhánh",
+          "payment_method",
+          "revenue",
+          "store",
+          "subject:orders",
+          "subject:payments",
+          "subject:stores",
+          "thanh toán"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "f2af3d137301e1c55bb2a8f6e3905d203f33d41e83c923ceac6f144af5ad2e4b",
+        "fingerprint": "4c66d99c835d9b0c35f36f088c8599741bba1b68a98822fcc9a38299c555a767",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 47,
+            "slot_ids": [],
+            "state": "BOUND"
+          },
+          {
+            "id": "c2",
+            "start": 48,
+            "end": 115,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": "ranking",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "payment_revenue",
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "store",
+          "payment_method"
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "a7fed9b2a0dde9b01593f8aad690c30577b7cfde5ed293de28883ecebf7ab44d",
+      "elapsed_ms": 86.29
+    },
+    "job": {
+      "job_id": "aj_7636154e31c34a1aac3925b68451e64d",
+      "state": "failed",
+      "provider_call_count": 2,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 3.97,
+        "accepted": 488.36,
+        "planning": 1795.93
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "message": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "SEMANTIC_INTENT",
+        "code": "semantic_intent_invalid",
+        "user_impact": "SYSTEM_ERROR",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "provider_attempt_count": 2
+        },
+        "what_failed": "semantic_intent_invalid",
+        "retry_helps": false,
+        "error_type": "SEMANTIC_CONTRACT_INVALID",
+        "analysis_state": "UNDERSTANDING_FAILURE",
+        "analysis_stage": "SEMANTIC_CONTRACT_FAILURE",
+        "guidance": {
+          "title": "Hệ thống chưa hoàn tất diễn giải phân tích",
+          "description": "Diễn giải của AI chưa vượt qua kiểm tra ngữ nghĩa của máy chủ.",
+          "next_action": "edit_question"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_217352286dfe45ab99a02418dcf7359c",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "semantic_intent_invalid",
+      "error_category": "semantic_intent_invalid",
+      "failure_code": "untargeted_field_changed",
+      "failure_stage": "SEMANTIC_INTENT",
+      "contract_issues": [
+        {
+          "requirement_id": "req_2",
+          "field": "analysis_kind",
+          "code": "untargeted_field_changed"
+        }
+      ],
+      "provider_call_count": 2,
+      "provider_physical_attempts": 2,
+      "input_tokens": 9316,
+      "output_tokens": 575,
+      "db_query_count": 0,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI",
+      "interpreted_shapes": null,
+      "guided_source": null
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": null,
+        "latency_ms": 1772.57,
+        "tokens": {
+          "input": 3604,
+          "output": 214
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": null,
+        "latency_ms": 2240.62,
+        "tokens": {
+          "input": 5712,
+          "output": 361
+        }
+      }
+    ],
+    "charts": [],
+    "result_summary": {},
+    "semantic_evidence": {
+      "query_plans": null,
+      "result_sets": null,
+      "result_contracts": null,
+      "evidence": null,
+      "kpi_cards": null,
+      "key_findings": null,
+      "short_answer": null,
+      "executive_summary": null,
+      "conclusion": null,
+      "quality_assessment": {
+        "publication_checks": [],
+        "score": null,
+        "grade": "needs_attention",
+        "status": "not_scored",
+        "components": [],
+        "completed": [],
+        "missing": [],
+        "unverified": [],
+        "limitations": [],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 0,
+          "completed_count": 0,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.6",
+        "reason": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+        "measurement_mode": "legacy_weighted_checks",
+        "verification_checks": [],
+        "score_method": null,
+        "score_breakdown": [],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "trust_dimensions": [],
+        "analysis_breadth": null,
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      },
+      "answer_requirements": null,
+      "resolved_requirement_coverage": null,
+      "semantic_intent": null,
+      "charts": []
+    },
+    "elapsed_seconds": 5.175
+  }
+]

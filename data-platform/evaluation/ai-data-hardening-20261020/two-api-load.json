@@ -1,0 +1,342 @@
+{
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "workspace": {
+    "status": "passed",
+    "cross_process_workspace_publish": "exactly_one_revision",
+    "stale_revision_rejected": true,
+    "provider_sends": 0,
+    "atomic_result_set": true,
+    "revision": 2
+  },
+  "ownership": {
+    "version": "3.5.0",
+    "topology": [
+      {
+        "instance": "v35-fixture-api-a",
+        "pid": 1,
+        "redis_db": 15,
+        "session_backend": "redis",
+        "artifact_backend": "redis",
+        "physical_http": 0,
+        "peak_rss_kib": 168324
+      },
+      {
+        "instance": "v35-fixture-api-b",
+        "pid": 1,
+        "redis_db": 15,
+        "session_backend": "redis",
+        "artifact_backend": "redis",
+        "physical_http": 0,
+        "peak_rss_kib": 156036
+      }
+    ],
+    "duplicate_same_job": true,
+    "cross_process_artifact": true,
+    "cross_owner_denied": true,
+    "cross_process_cancel": true,
+    "external_http": 0,
+    "provider_call_count": 0,
+    "physical_http": 0,
+    "status": "passed",
+    "limitations": [
+      "Fixture SQLite SQL adapter; no deployed dual-API traffic claim",
+      "15-minute soak not covered by this command"
+    ],
+    "session_cas": "exactly_one_save",
+    "crash_reservation_retained": true,
+    "crash_physical_http": 1,
+    "injected_fault": "injected reservation before transport; no provider request"
+  },
+  "load": {
+    "summary": {
+      "event": "load_profiles_complete",
+      "version": "3.5.0",
+      "status": "passed",
+      "owner_cap": 4,
+      "global_cap": 12,
+      "fairness_headroom": true,
+      "external_provider_http": 0,
+      "limitations": [
+        "SQLite adapter; PostgreSQL reader-pool pressure is not qualified",
+        "No provider transport/crash/revocation assertion from this command",
+        "Local capacity observation; not a production SLO"
+      ]
+    },
+    "profile_count": 15,
+    "completed": 111,
+    "expected_429": 24,
+    "profiles": [
+      {
+        "offered": 1,
+        "repeat": 1,
+        "admitted": 1,
+        "rejected_429": 0,
+        "observed_global_active": 1,
+        "per_owner_counts": [
+          1
+        ],
+        "completed": 1,
+        "p95_ms": 1270.471,
+        "p99_ms": 1270.471,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 1,
+        "repeat": 2,
+        "admitted": 1,
+        "rejected_429": 0,
+        "observed_global_active": 1,
+        "per_owner_counts": [
+          1
+        ],
+        "completed": 1,
+        "p95_ms": 1057.411,
+        "p99_ms": 1057.411,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 1,
+        "repeat": 3,
+        "admitted": 1,
+        "rejected_429": 0,
+        "observed_global_active": 1,
+        "per_owner_counts": [
+          1
+        ],
+        "completed": 1,
+        "p95_ms": 1220.189,
+        "p99_ms": 1220.189,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 4,
+        "repeat": 1,
+        "admitted": 4,
+        "rejected_429": 0,
+        "observed_global_active": 4,
+        "per_owner_counts": [
+          1,
+          1,
+          2
+        ],
+        "completed": 4,
+        "p95_ms": 3150.901,
+        "p99_ms": 3150.901,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 4,
+        "repeat": 2,
+        "admitted": 4,
+        "rejected_429": 0,
+        "observed_global_active": 4,
+        "per_owner_counts": [
+          1,
+          1,
+          2
+        ],
+        "completed": 4,
+        "p95_ms": 2474.5,
+        "p99_ms": 2474.5,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 4,
+        "repeat": 3,
+        "admitted": 4,
+        "rejected_429": 0,
+        "observed_global_active": 4,
+        "per_owner_counts": [
+          1,
+          1,
+          2
+        ],
+        "completed": 4,
+        "p95_ms": 2673.635,
+        "p99_ms": 2673.635,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 8,
+        "repeat": 1,
+        "admitted": 8,
+        "rejected_429": 0,
+        "observed_global_active": 8,
+        "per_owner_counts": [
+          2,
+          3,
+          3
+        ],
+        "completed": 8,
+        "p95_ms": 5302.33,
+        "p99_ms": 5302.33,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 8,
+        "repeat": 2,
+        "admitted": 8,
+        "rejected_429": 0,
+        "observed_global_active": 8,
+        "per_owner_counts": [
+          2,
+          3,
+          3
+        ],
+        "completed": 8,
+        "p95_ms": 5278.954,
+        "p99_ms": 5278.954,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 8,
+        "repeat": 3,
+        "admitted": 8,
+        "rejected_429": 0,
+        "observed_global_active": 8,
+        "per_owner_counts": [
+          2,
+          3,
+          3
+        ],
+        "completed": 8,
+        "p95_ms": 5372.675,
+        "p99_ms": 5372.675,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 12,
+        "repeat": 1,
+        "admitted": 12,
+        "rejected_429": 0,
+        "observed_global_active": 12,
+        "per_owner_counts": [
+          4,
+          4,
+          4
+        ],
+        "completed": 12,
+        "p95_ms": 9792.518,
+        "p99_ms": 9792.518,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 12,
+        "repeat": 2,
+        "admitted": 12,
+        "rejected_429": 0,
+        "observed_global_active": 12,
+        "per_owner_counts": [
+          4,
+          4,
+          4
+        ],
+        "completed": 12,
+        "p95_ms": 10022.172,
+        "p99_ms": 10022.172,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 12,
+        "repeat": 3,
+        "admitted": 12,
+        "rejected_429": 0,
+        "observed_global_active": 12,
+        "per_owner_counts": [
+          4,
+          4,
+          4
+        ],
+        "completed": 12,
+        "p95_ms": 9549.364,
+        "p99_ms": 9549.364,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 20,
+        "repeat": 1,
+        "admitted": 12,
+        "rejected_429": 8,
+        "observed_global_active": 12,
+        "per_owner_counts": [
+          2,
+          2,
+          2,
+          3,
+          3
+        ],
+        "completed": 12,
+        "p95_ms": 14087.16,
+        "p99_ms": 14087.16,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 20,
+        "repeat": 2,
+        "admitted": 12,
+        "rejected_429": 8,
+        "observed_global_active": 12,
+        "per_owner_counts": [
+          2,
+          2,
+          2,
+          3,
+          3
+        ],
+        "completed": 12,
+        "p95_ms": 16903.744,
+        "p99_ms": 16903.744,
+        "provider_calls": 0,
+        "physical_http": 0
+      },
+      {
+        "offered": 20,
+        "repeat": 3,
+        "admitted": 12,
+        "rejected_429": 8,
+        "observed_global_active": 12,
+        "per_owner_counts": [
+          2,
+          2,
+          2,
+          3,
+          3
+        ],
+        "completed": 12,
+        "p95_ms": 13252.819,
+        "p99_ms": 13252.819,
+        "provider_calls": 0,
+        "physical_http": 0
+      }
+    ]
+  },
+  "logs": [
+    {
+      "name": "two-api-workspace.log",
+      "sha256": "2be8611e1e9bba0e17ca45187f0ab7de872b3cc365eb9165a7824cba29892434"
+    },
+    {
+      "name": "two-api-ownership.log",
+      "sha256": "1223e3465978b62d0a779083bfdd75851dd129df4def6c4592314b62662b628e"
+    },
+    {
+      "name": "load.jsonl",
+      "sha256": "9ef64c116ce8e5790e0e5f680b5c9d251e230fcb25f0dd886c98ed2afe35aed1"
+    }
+  ],
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

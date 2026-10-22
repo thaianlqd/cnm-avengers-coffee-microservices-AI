@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-22T12:30:04.579825+00:00",
+  "full_regression_snapshot": "backend-regression-r4",
+  "product_delta_since_full_freeze": [
+    "services/chart_insight_service.py"
+  ],
+  "reason": "Final presentation audit: correct chart-type reading instructions, omit unproved sorting claim, percentage-point unit precision and avoid tautological three-of-three concentration. Numeric query/planning/execution unchanged.",
+  "snapshot_sha256": "56f9a936d4711743350e9073773426fef328f06bb0d2e93532377e982b93b2ee",
+  "final_sha256": "b02979ab68535eba7158d5e39042ca65a824738108436fdc974912c76b2dcd59",
+  "required_targeted_rechecks": [
+    "tests.test_comparison_workspace_cw",
+    "tests.test_narrative_scope_20261021",
+    "tests.test_completion_20261022",
+    "tests.test_cohort_rollups_20261021",
+    "tests.test_word_render_20261022",
+    "tests.test_ai_services",
+    "tests.test_v33_verification",
+    "tests.test_reliability_20261021",
+    "tests.test_cw_live_rubric"
+  ],
+  "frontend_delta": "Series legend visibility note + opacity; no data/query/model behavior changed; rerun typecheck/unit/full E2E/build after backend.",
+  "evaluation_delta": "Frozen manifest v2 independently checks metric/time/axes/exclusion/ranking; records redacted provider attempt model/usage. Calibration rejects wrong-window, wrong-metric, wrong-axis, all-orders-as-valid, dropped-exclusion, reversed-baseline and reversed-ranking controls."
+}

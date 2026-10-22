@@ -1,0 +1,64 @@
+{
+  "passed": false,
+  "harnesses": [
+    {
+      "harness": "codex_acceptance_properties",
+      "returncode": 1,
+      "seconds": 2.26
+    },
+    {
+      "harness": "codex_holdout_cohorts",
+      "returncode": 0,
+      "seconds": 5.4
+    },
+    {
+      "harness": "codex_remaining_holdouts",
+      "returncode": 0,
+      "seconds": 7.94
+    },
+    {
+      "harness": "codex_identity_holdouts",
+      "returncode": 1,
+      "seconds": 1.94
+    },
+    {
+      "harness": "codex_risk_equivalence",
+      "returncode": 0,
+      "seconds": 3.49
+    },
+    {
+      "harness": "codex_family_matrix",
+      "returncode": 0,
+      "seconds": 61.13
+    },
+    {
+      "harness": "codex_city_inventory_check",
+      "returncode": 0,
+      "seconds": 44.06
+    },
+    {
+      "harness": "codex_advertised_roundtrip",
+      "returncode": 0,
+      "seconds": 152.33
+    },
+    {
+      "harness": "semantic_eval_v30",
+      "returncode": 0,
+      "assertions_passed": true
+    },
+    {
+      "harness": "semantic_reference_eval_v34",
+      "returncode": 0,
+      "assertions_passed": true
+    },
+    {
+      "harness": "semantic_eval_v34",
+      "returncode": 0,
+      "assertions_passed": true
+    },
+    {
+      "harness": "domain-matrix234",
+      "returncode": 0
+    }
+  ]
+}

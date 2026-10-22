@@ -1,47 +1,78 @@
 """Semantic meaning only. Executable identities and coverage are server outputs."""
+from copy import deepcopy
+from services.error_taxonomy import AnalysisError, ResolutionIssues
 from typing import Literal, Optional
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_serializer
+from pydantic.json_schema import SkipJsonSchema
 from services.analysis_contract import Contract, Filter, TimeSpec
 from services.analyst_contract import Granularity, Operation
 
 DerivedFeature = Literal["scalar", "contribution_share", "leader", "top_gap", "group_gap",
                          "change", "change_pct", "concentration", "selected_total",
-                         "relationship_strength"]
+                         "relationship_strength", "driver_delta"]
 
 
 class IntentRanking(Contract):
     direction: Literal["top", "bottom"] = "top"
     limit: int = Field(ge=1, le=100)
     metric_id: Optional[str] = Field(default=None,
-        description='Explicit ordering metric in metric_ids; other displayed metrics do not change ranking.')
+        description='Ordering metric; companions do not change rank.')
     per_group: list[str] = Field(default_factory=list, max_length=2)
+
+
+# Requested future horizon only; forecast numbers are always server-computed.
+# (A class docstring would be copied into the provider schema on every call.)
+class IntentForecast(Contract):
+    horizon: int = Field(ge=1, le=366)
+    unit: Literal["day", "week", "month"]
+
+
+class IntentSelection(Contract):
+    criterion: Literal["stability", "growth", "volatility"]
+    limit: int = Field(ge=1, le=20)
+    # Server-owned (cohort materialization); kept out of the model-facing schema.
+    entity_dimension_id: SkipJsonSchema[Optional[str]] = None
+    cadence: SkipJsonSchema[Optional[Granularity]] = None
+    selected_keys: SkipJsonSchema[list[str]] = Field(default_factory=list, max_length=20)
 
 
 class IntentRequirement(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
     goal: str = Field(default="Phân tích yêu cầu", min_length=1, max_length=2000,
-                      description="Display label <=120 chars preferred; not executable meaning.")
+                      description="Display label (<=120 chars).")
     domain_id: Optional[str] = None
     lens_hint: Optional[str] = None
     supporting_for: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]{0,39}$",
         description='Related view of a requested requirement ID.')
     metric_ids: list[str] = Field(default_factory=list, max_length=6)
     dimension_ids: list[str] = Field(default_factory=list, max_length=4,
-        description='Business grouping axes only; trend period comes from granularity, not a raw timestamp.')
+        description='Independent grouping axes.')
     analysis_kind: Optional[Literal['comparison', Operation]] = Field(default=None,
-        description='comparison/aggregate for groups; cross_tab requires two independent dimensions.')
+        description='comparison/aggregate for groups.')
     filters: list[Filter] = Field(default_factory=list, max_length=12)
     time: Optional[TimeSpec] = None
+    comparison_time: Optional[TimeSpec] = Field(default=None,
+        description='Baseline period; time is the target.')
     ranking: Optional[IntentRanking] = None
     granularity: Optional[Granularity] = Field(default=None,
         description='Required for trend: day/week/month/quarter/year. Preserve the cadence explicitly requested in the question.')
     derived_features: list[DerivedFeature] = Field(default_factory=list, max_length=10,
-        description='scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.')
+        description='scalar: ungrouped; selected_total: additive Top N.')
     feature_metrics: dict[DerivedFeature, list[str]] = Field(default_factory=dict, max_length=10,
-        description='Targets only ACTIVE derived_features within metric_ids. Omit inactive entries and unnecessary maps.')
+        description='Targets only ACTIVE derived_features within metric_ids.')
+    forecast: Optional[IntentForecast] = None
+    # Omitted from dumps when absent: fingerprints of intents saved before selection existed stay identical.
+    selection: Optional[IntentSelection] = None
     availability: Literal["requested", "needs_input", "unsupported", "insufficient_data"] = "requested"
     reason: Optional[Literal["historical_data_unavailable", "metric_unavailable",
                              "definition_unavailable", "ambiguous_criterion"]] = None
+
+    @model_serializer(mode="wrap")
+    def _omit_absent_selection(self, handler):
+        data = handler(self)
+        if isinstance(data, dict) and data.get("selection") is None:
+            data.pop("selection", None)
+        return data
 
     @field_validator("goal", mode="before")
     @classmethod
@@ -79,7 +110,64 @@ class AnalysisIntentDelta(Contract):
     changes: list[IntentChange] = Field(default_factory=list, max_length=16)
 
 
-def intent_tool(delta=False):
+def apply_delta(intent, raw):
+    """Apply one atomic patch; repeated updates may agree or affect disjoint fields.
+
+    Ranking is a nested patch (changing N keeps its metric/direction/group).
+    Lists and time specifications are replacements, never concatenated or
+    combined across different populations/time kinds. Conflicts never use
+    last-write-wins and the caller's baseline is never mutated.
+    """
+    delta = AnalysisIntentDelta.model_validate(raw)
+    requirements = {r.id:r.model_copy(deep=True) for r in intent.requirements}
+    grouped = {}
+    allowed = set(IntentRequirement.model_fields)-{"id"}
+    def merge(left, right, id, field=None):
+        result = deepcopy(left)
+        for key, value in right.items():
+            target = field or key
+            if key in result and result[key] != value:
+                if isinstance(result[key],dict) and isinstance(value,dict) and (field == 'ranking' or key == 'ranking'):
+                    result[key] = merge(result[key],value,id,target)
+                    continue
+                raise ResolutionIssues([{"requirement_id":id,"field":target,"code":"duplicate_delta"}])
+            result[key] = deepcopy(value)
+        return result
+    for change in delta.changes:
+        id = change.requirement_id
+        if id in grouped:
+            prior = grouped[id]
+            if prior.action != 'update' or change.action != 'update' or change.requirement:
+                raise ResolutionIssues([{"requirement_id":id,"field":"changes","code":"duplicate_delta"}])
+            prior.changes = merge(prior.changes,change.changes,id)
+        else:
+            grouped[id] = change.model_copy(deep=True)
+    for id, change in grouped.items():
+        if change.action == "add":
+            if id in requirements or not change.requirement or change.requirement.id != id or change.changes:
+                raise ResolutionIssues([{"requirement_id":id,"field":"requirement","code":"invalid_delta"}])
+            requirements[id] = change.requirement
+        elif change.action == "remove":
+            if id not in requirements or change.requirement or change.changes:
+                raise ResolutionIssues([{"requirement_id":id,"field":"requirement_id","code":"unknown_requirement"}])
+            del requirements[id]
+        else:
+            if id not in requirements or change.requirement or not set(change.changes) <= allowed:
+                raise ResolutionIssues([{"requirement_id":id,"field":"changes","code":"invalid_delta"}])
+            patch = deepcopy(change.changes)
+            baseline = requirements[id].model_dump(mode="json")
+            if isinstance(patch.get('ranking'),dict) and isinstance(baseline.get('ranking'),dict):
+                patch['ranking'] = {**baseline['ranking'],**patch['ranking']}
+            requirements[id] = IntentRequirement.model_validate({**baseline,**patch})
+    # Supporting views are derived from their parent meaning. Regenerate them
+    # after a parent delta rather than retaining stale time/scope/metric filters.
+    requirements={id:r for id,r in requirements.items() if not r.supporting_for or r.supporting_for not in grouped}
+    if not requirements:
+        raise AnalysisError("clarification", "Refinement removed all analytical requirements")
+    return AnalysisIntentEnvelope(decision="analyze",requirements=list(requirements.values()))
+
+
+def intent_tool(delta=False, selection=False):
     from services.agent_provider import gemini_tool_schema
     model = AnalysisIntentDelta if delta else AnalysisIntentEnvelope
     tool = {"name": "submit_analysis_delta" if delta else "submit_analysis_intent",
@@ -110,10 +198,19 @@ def intent_tool(delta=False):
         time_props = props['time']['properties']
         time_props['mode'] = {'type':'string', 'enum': [m for m in
             TimeScope.model_json_schema()['properties']['mode']['enum'] if m != 'custom']}
-        props['time'] = {'description':'Omit when unspecified (all_time). Supply exactly one complete time kind.',
+        props['time'] = {'description':'Exactly one complete time kind.',
             'anyOf':[{'type':'object', 'properties':{'kind':{'type':'string','enum':[kind]},
                 **{f:time_props[f] for f in required + optional}}, 'required':['kind', *required]}
                 for kind,(required,optional) in TIME_SHAPES.items()]}
+        # The baseline wire grammar is an exact inclusive range. Reusing the
+        # full calendar grammar twice exceeds the bounded provider context.
+        # Local calendar specs remain compatible with authored/guided intents.
+        props['comparison_time'] = next(s for s in props['time']['anyOf']
+            if s['properties']['kind']['enum']==['range'])
+        # These meanings are already in SYSTEM/shape_rules. Preserve every
+        # type/enum/required field while avoiding duplicate wire prose.
+        for field in ('goal','dimension_ids','time','derived_features'):
+            props[field].pop('description',None)
     if delta:
         # A semantic patch uses the SAME finite field grammar, not arbitrary JSON.
         properties = intent_tool()["parameters"]["properties"]["requirements"]["items"]["properties"]
@@ -123,6 +220,20 @@ def intent_tool(delta=False):
         # omitted values and local validation checks the complete result.
         patch = tool['parameters']['properties']['changes']['items']['properties']['changes']
         patch['properties']['ranking'].pop('required', None)
+    if not selection:
+        # Computed member selection is offered only when the question names a governed criterion
+        # (selection_service.criterion_anchored): ordinary questions do not pay its schema tokens.
+        def drop(value):
+            if isinstance(value, dict):
+                props = value.get('properties')
+                if isinstance(props, dict):
+                    props.pop('selection', None)
+                for v in value.values():
+                    drop(v)
+            elif isinstance(value, list):
+                for v in value:
+                    drop(v)
+        drop(tool['parameters'])
     return tool
 
 
@@ -237,6 +348,12 @@ def repair_tool(issues, previous=None):
     Local merge guards reject any unauthorized fields sent despite the schema.
     """
     tool = intent_tool()
+    # Omitted patch fields inherit their old value. Nullable local fields must
+    # therefore also admit an explicit null to remove an invented baseline,
+    # cadence or ranking. This grammar does not authorize any extra target.
+    props=tool['parameters']['properties']['requirements']['items']['properties']
+    for name in ('time','comparison_time','ranking','granularity','forecast','supporting_for','reason'):
+        props[name]={'anyOf':[props[name],{'type':'null'}]}
     targets={i.get('requirement_id') for i in issues if i.get('requirement_id')}
     if any(i.get('requirement_id') is None for i in issues):
         shapes={'leader':{'ranking'},'top_gap':{'ranking'},'change':{'trend'},'change_pct':{'trend'}}
@@ -263,7 +380,8 @@ def repair_tool(issues, previous=None):
                 changed = deepcopy(item)
                 changed['properties'] = {k:v for k,v in changed['properties'].items() if k in fields}
                 changed['properties']['id']['enum'] = [target]
-                changed['required'] = ['id']; changed['additionalProperties'] = False
+                changed['required'] = sorted({'id'}|({'filters'} if 'filters' in fields else set()))
+                changed['additionalProperties'] = False
                 alternatives.append(changed)
             # Define each field's type once. Branches restrict allowed keys and
             # mandatory shape without duplicating the full time/ranking grammar.

@@ -1,0 +1,17 @@
+{
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "port": 8501,
+  "asset": "/assets/index-CzZ6kpJZ.js",
+  "served_sha256": "03750e54297a7d7ff4dc9eff36513761c7b3da7cb6ecefae6a43f9bdf529ccc7",
+  "served_bytes": 587098,
+  "local_dist_identical": true,
+  "required_interaction_strings_present": true,
+  "production_api_openapi_workspace_route": true,
+  "command": "docker compose -f docker-compose.data.yml up -d --no-deps --build web-ui",
+  "services_recreated": [
+    "web-ui"
+  ],
+  "production_api_recreated": false,
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

@@ -1,0 +1,5041 @@
+{
+  "status": "DIAGNOSTIC",
+  "generated_at": "2026-10-17T15:59:27.581837+00:00",
+  "ceiling": 60,
+  "physical_http_total": 49,
+  "actual_external_http": 13,
+  "injected_failures": 1,
+  "prior_reserved_http": 35,
+  "current_run_reserved_http": 14,
+  "cases_total": 29,
+  "cases_run": 13,
+  "skipped": [
+    "L01",
+    "L02",
+    "L03",
+    "L04",
+    "L05",
+    "L06",
+    "L07",
+    "L08",
+    "L10",
+    "L11",
+    "L15",
+    "L23",
+    "L24",
+    "L25",
+    "L26",
+    "L28"
+  ],
+  "useful_first_click": {
+    "passed": 8,
+    "total": 25,
+    "rate": 0.32
+  },
+  "overall": {
+    "passed": 11,
+    "total": 29
+  },
+  "semantic_http_median": 1.0,
+  "max_http_any_case": 2,
+  "latency_p95_ms": 4883,
+  "wall_seconds": 70.3,
+  "cases": [
+    {
+      "id": "L01",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L02",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L03",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L04",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L05",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L06",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L07",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L08",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L09",
+      "group": "happy",
+      "expected": "useful",
+      "passed": true,
+      "logical_calls": 2,
+      "physical_http": 2,
+      "repair": 1,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 4883,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (4 nhóm có dữ liệu).",
+        "verification": "verified",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "repair_add_1",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_4d01e4d9db160aa0a55402d5"
+            ],
+            "derived_features": [],
+            "goal": "Phân tích yêu cầu",
+            "supporting_for": null,
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "payment_method"
+                ],
+                "required": true,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "repair_add_1",
+            "index": 0,
+            "kind": "grouped",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "revenue"
+        ],
+        "applied_filters": [
+          []
+        ],
+        "verification_score_status": "verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "repair_add_1",
+            "role": "grouped",
+            "evidence_id": "q_4d01e4d9db160aa0a55402d5:revenue:scope_total:6230060e3b",
+            "query_id": "q_4d01e4d9db160aa0a55402d5",
+            "metric": "revenue",
+            "unit": "VND",
+            "scope": {
+              "label": "Đơn hàng và doanh thu",
+              "period": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "population_relation": "same",
+              "metric_business_filters": [
+                {
+                  "dimension": "order_status",
+                  "operator": "in",
+                  "value": [
+                    "HOAN_THANH",
+                    "DANG_GIAO"
+                  ]
+                }
+              ],
+              "metric_required_non_null": [],
+              "filters": [],
+              "partition": {},
+              "selection": "complete"
+            },
+            "statement": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (4 nhóm có dữ liệu)."
+          }
+        ],
+        "scope_resolution": {
+          "state": "unspecified",
+          "filters": [],
+          "bindings": [],
+          "source": [],
+          "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+          "requested_phrase": null
+        },
+        "query_semantics": [
+          {
+            "id": "q_4d01e4d9db160aa0a55402d5",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "payment_method"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "repair_add_1",
+                "goal": "Phân tích yêu cầu",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "payment_method"
+                ],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": null,
+          "semantic_issue_history": [
+            [
+              {
+                "requirement_id": null,
+                "field": "clarification",
+                "code": "clarification_required"
+              },
+              {
+                "requirement_id": null,
+                "field": "requirements",
+                "code": "explicit_grouped_metric_missing",
+                "expected": {
+                  "metric_candidates": [
+                    "item_revenue",
+                    "payment_revenue",
+                    "product_revenue",
+                    "revenue",
+                    "store_revenue",
+                    "voucher_revenue"
+                  ],
+                  "dimension_id": "payment_method"
+                }
+              },
+              {
+                "requirement_id": null,
+                "field": "metric_ids",
+                "code": "explicit_metrics_missing",
+                "candidate_ids": [
+                  "item_revenue",
+                  "payment_revenue",
+                  "product_revenue",
+                  "revenue",
+                  "store_revenue",
+                  "voucher_revenue"
+                ]
+              },
+              {
+                "requirement_id": null,
+                "field": "dimension_ids",
+                "code": "explicit_dimensions_missing",
+                "candidate_ids": [
+                  "payment_method"
+                ]
+              }
+            ]
+          ],
+          "planning_latency_ms": 4213.07
+        },
+        "contract_issues": [],
+        "root_contract_issues": [
+          {
+            "requirement_id": null,
+            "field": "clarification",
+            "code": "clarification_required"
+          },
+          {
+            "requirement_id": null,
+            "field": "requirements",
+            "code": "explicit_grouped_metric_missing",
+            "expected": {
+              "metric_candidates": [
+                "item_revenue",
+                "payment_revenue",
+                "product_revenue",
+                "revenue",
+                "store_revenue",
+                "voucher_revenue"
+              ],
+              "dimension_id": "payment_method"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "metric_ids",
+            "code": "explicit_metrics_missing",
+            "candidate_ids": [
+              "item_revenue",
+              "payment_revenue",
+              "product_revenue",
+              "revenue",
+              "store_revenue",
+              "voucher_revenue"
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "dimension_ids",
+            "code": "explicit_dimensions_missing",
+            "candidate_ids": [
+              "payment_method"
+            ]
+          }
+        ]
+      },
+      "planning_ms": 4213.07
+    },
+    {
+      "id": "L10",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L11",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L12",
+      "group": "happy",
+      "expected": "useful",
+      "passed": true,
+      "logical_calls": 1,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 3211,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Dự báo doanh thu 3 tháng tới: kỳ cuối 478,7 triệu VND (khoảng 80%: 382,5 triệu VND – 574,9 triệu VND); tổng các kỳ dự báo 1,4 tỷ VND.",
+        "verification": "verified",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "req_1",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_490363cd53014da1f1f16f68"
+            ],
+            "derived_features": [],
+            "goal": "Phân tích yêu cầu",
+            "supporting_for": null,
+            "forecast": {
+              "horizon": 3,
+              "unit": "month"
+            }
+          },
+          {
+            "requirement_id": "support_10fe69d54c38481864f76838",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_b987ed9f2f90732ca195d131"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Chi nhánh",
+            "supporting_for": "req_1",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_4e51da154fb38f5a7a92a97d",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_07a0d21a28aed77159a428ed"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến theo Tỉnh/thành trong dữ liệu",
+            "supporting_for": "req_1",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_7c202956757b0944d01a1ae1",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_eec10c2b4a6dc6341db7fb7f"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "supporting_for": "req_1",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_c4f96ae98f51180a42acbcf3",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_62e5c182f46ee0be0a2c6d29",
+              "q_7abe63a27a32fcd0ce110057"
+            ],
+            "derived_features": [
+              "scalar"
+            ],
+            "goal": "Chỉ số toàn phạm vi",
+            "supporting_for": "req_1",
+            "views": [
+              {
+                "kind": "scalar",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_ff2677afb4de20dc6b3b2317",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_5615c051da07d097aec6ee9a"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Tỉnh/thành trong dữ liệu",
+            "supporting_for": "req_1",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "support_10fe69d54c38481864f76838",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": "validated_table_for_capacity"
+          },
+          {
+            "requirement_id": "support_4e51da154fb38f5a7a92a97d",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "satisfied",
+            "reason": "validated_table_for_capacity"
+          },
+          {
+            "requirement_id": "support_7c202956757b0944d01a1ae1",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_c4f96ae98f51180a42acbcf3",
+            "index": 0,
+            "kind": "scalar",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_ff2677afb4de20dc6b3b2317",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "aov",
+          "order_cancellation_rate",
+          "revenue"
+        ],
+        "applied_filters": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "verification_score_status": "verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "req_1",
+            "role": "forecast",
+            "forecast_ref": "req_1",
+            "metric": "revenue",
+            "unit": "month",
+            "query_id": "q_490363cd53014da1f1f16f68"
+          }
+        ],
+        "scope_resolution": {
+          "state": "unspecified",
+          "filters": [],
+          "bindings": [],
+          "source": [],
+          "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+          "requested_phrase": null
+        },
+        "query_semantics": [
+          {
+            "id": "q_490363cd53014da1f1f16f68",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_07a0d21a28aed77159a428ed",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "city"
+            ],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_5615c051da07d097aec6ee9a",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "city"
+            ],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_62e5c182f46ee0be0a2c6d29",
+            "metrics": [
+              "aov",
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_7abe63a27a32fcd0ce110057",
+            "metrics": [
+              "order_cancellation_rate"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_b987ed9f2f90732ca195d131",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "store"
+            ],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_eec10c2b4a6dc6341db7fb7f",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "req_1",
+                "goal": "Phân tích yêu cầu",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "month",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": {
+                  "horizon": 3,
+                  "unit": "month"
+                },
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_10fe69d54c38481864f76838",
+                "goal": "Đối chiếu bổ sung · Chi nhánh",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "req_1",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_7c202956757b0944d01a1ae1",
+                "goal": "Diễn biến trong phạm vi đã chọn",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "req_1",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "week",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_ff2677afb4de20dc6b3b2317",
+                "goal": "Đối chiếu bổ sung · Tỉnh/thành trong dữ liệu",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "req_1",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_4e51da154fb38f5a7a92a97d",
+                "goal": "Diễn biến theo Tỉnh/thành trong dữ liệu",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "req_1",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "month",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_c4f96ae98f51180a42acbcf3",
+                "goal": "Chỉ số toàn phạm vi",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "req_1",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "scalar"
+                ],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": [
+            {
+              "requirement_id": "req_1",
+              "field": "time",
+              "rule": "unspecified_time_all_time"
+            },
+            {
+              "requirement_id": "req_1",
+              "field": "granularity",
+              "rule": "catalog_semantic_normalization",
+              "value": "month"
+            }
+          ],
+          "semantic_issue_history": null,
+          "planning_latency_ms": 2477.14
+        },
+        "contract_issues": [],
+        "root_contract_issues": null
+      },
+      "planning_ms": 2477.14
+    },
+    {
+      "id": "L13",
+      "group": "happy",
+      "expected": "useful",
+      "passed": true,
+      "logical_calls": 1,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 1816,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Số khách mua hàng thay đổi từ 318 thành 318 khách giữa kỳ 2026-05-01 và 2026-09-01 (0%). Chỉ đối chiếu kỳ đầy đủ; 2 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+        "verification": "verified",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "req_1",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_ea0d810d7850f15383a03066"
+            ],
+            "derived_features": [],
+            "goal": "Phân tích yêu cầu",
+            "supporting_for": null,
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "purchasing_customer_count"
+                ],
+                "dimension_ids": [],
+                "required": true,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "req_1",
+            "index": 0,
+            "kind": "time_series",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "purchasing_customer_count"
+        ],
+        "applied_filters": [
+          []
+        ],
+        "verification_score_status": "verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "req_1",
+            "role": "time_series",
+            "evidence_id": "q_ea0d810d7850f15383a03066:purchasing_customer_count:change:6230060e3b",
+            "query_id": "q_ea0d810d7850f15383a03066",
+            "metric": "purchasing_customer_count",
+            "unit": "khách",
+            "scope": {
+              "label": "Đơn hàng và doanh thu",
+              "period": {
+                "mode": "custom",
+                "start": "2026-04-18",
+                "end": "2026-10-17",
+                "end_exclusive": "2026-10-18",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "population_relation": "same",
+              "metric_business_filters": [
+                {
+                  "dimension": "order_status",
+                  "operator": "in",
+                  "value": [
+                    "HOAN_THANH",
+                    "DANG_GIAO"
+                  ]
+                }
+              ],
+              "metric_required_non_null": [],
+              "filters": [],
+              "partition": {},
+              "selection": "complete"
+            },
+            "statement": "Số khách mua hàng thay đổi từ 318 thành 318 khách giữa kỳ 2026-05-01 và 2026-09-01 (0%). Chỉ đối chiếu kỳ đầy đủ; 2 kỳ biên chưa đủ ngày vẫn có trên biểu đồ."
+          }
+        ],
+        "scope_resolution": {
+          "state": "unspecified",
+          "filters": [],
+          "bindings": [],
+          "source": [],
+          "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+          "requested_phrase": null
+        },
+        "query_semantics": [
+          {
+            "id": "q_ea0d810d7850f15383a03066",
+            "metrics": [
+              "purchasing_customer_count"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-04-18",
+              "end": "2026-10-17",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "req_1",
+                "goal": "Phân tích yêu cầu",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "purchasing_customer_count"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "rolling",
+                  "mode": null,
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": 6,
+                  "unit": "month"
+                },
+                "ranking": null,
+                "granularity": "month",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": null,
+          "semantic_issue_history": null,
+          "planning_latency_ms": 1513.08
+        },
+        "contract_issues": [],
+        "root_contract_issues": null
+      },
+      "planning_ms": 1513.08
+    },
+    {
+      "id": "L14",
+      "group": "happy",
+      "expected": "useful",
+      "passed": true,
+      "logical_calls": 1,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 2265,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Tổng tiền đã giảm giá: 29,030,000 VND trong phạm vi đã chọn. Số đơn áp dụng khuyến mãi: 1,010 đơn trong phạm vi đã chọn.",
+        "verification": "verified",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "req_promotions_summary",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_c44a96dcb441fad099ed29ec",
+              "q_df0c61e80c544550510e9fda"
+            ],
+            "derived_features": [
+              "scalar"
+            ],
+            "goal": "Phân tích yêu cầu",
+            "supporting_for": null,
+            "views": [
+              {
+                "kind": "scalar",
+                "metric_ids": [
+                  "discount_amount",
+                  "voucher_order_count"
+                ],
+                "dimension_ids": [],
+                "required": true,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_1abaecc09fb2c5a5c05b1388",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_ce6578de31dc1c53df2bf8e3"
+            ],
+            "derived_features": [],
+            "goal": "Góc nhìn bổ sung · Doanh thu tập đơn voucher",
+            "supporting_for": "req_promotions_summary",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "voucher_revenue"
+                ],
+                "dimension_ids": [
+                  "promotion"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_92961425a7bd56d21fe5b3ea",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_562815fb39bf46fc567574ff",
+              "q_929e536b92a0913435fdeff4"
+            ],
+            "derived_features": [],
+            "goal": "Góc nhìn bổ sung · Khách mua trong kỳ",
+            "supporting_for": "req_promotions_summary",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "purchasing_customer_count"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_aa0a405aafeef9748fc37a3f",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_226d98b6917e531dcf219e5a",
+              "q_e5d2a6ac25be2164dfadf2cc"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "supporting_for": "req_promotions_summary",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "discount_amount",
+                  "voucher_order_count"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_d1532987fa6602e510df31c0",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_8f346deb6d07cceb3fa6d68e"
+            ],
+            "derived_features": [],
+            "goal": "Góc nhìn bổ sung · Lượng đơn và trạng thái",
+            "supporting_for": "req_promotions_summary",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "order_count"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "req_promotions_summary",
+            "index": 0,
+            "kind": "scalar",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_1abaecc09fb2c5a5c05b1388",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_92961425a7bd56d21fe5b3ea",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_aa0a405aafeef9748fc37a3f",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "missing",
+            "reason": "depth_budget"
+          },
+          {
+            "requirement_id": "support_d1532987fa6602e510df31c0",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "discount_amount",
+          "order_count",
+          "purchasing_customer_count",
+          "voucher_order_count",
+          "voucher_revenue"
+        ],
+        "applied_filters": [
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "verification_score_status": "verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "req_promotions_summary",
+            "role": "scalar",
+            "evidence_id": "q_c44a96dcb441fad099ed29ec:discount_amount:scalar:6230060e3b",
+            "query_id": "q_c44a96dcb441fad099ed29ec",
+            "metric": "discount_amount",
+            "unit": "VND",
+            "scope": {
+              "label": "Chương trình khuyến mãi và Voucher",
+              "period": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "population_relation": "same",
+              "metric_business_filters": [
+                {
+                  "dimension": "order_status",
+                  "operator": "in",
+                  "value": [
+                    "HOAN_THANH",
+                    "DANG_GIAO"
+                  ]
+                }
+              ],
+              "metric_required_non_null": [
+                "silver.don_hang.ma_voucher"
+              ],
+              "filters": [],
+              "partition": {},
+              "selection": "complete"
+            },
+            "statement": "Tổng tiền đã giảm giá: 29,030,000 VND trong phạm vi đã chọn."
+          },
+          {
+            "requirement_id": "req_promotions_summary",
+            "role": "scalar",
+            "evidence_id": "q_df0c61e80c544550510e9fda:voucher_order_count:scalar:6230060e3b",
+            "query_id": "q_df0c61e80c544550510e9fda",
+            "metric": "voucher_order_count",
+            "unit": "đơn",
+            "scope": {
+              "label": "Chương trình khuyến mãi và Voucher",
+              "period": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "population_relation": "same",
+              "metric_business_filters": [],
+              "metric_required_non_null": [
+                "silver.don_hang.ma_voucher"
+              ],
+              "filters": [],
+              "partition": {},
+              "selection": "complete"
+            },
+            "statement": "Số đơn áp dụng khuyến mãi: 1,010 đơn trong phạm vi đã chọn."
+          }
+        ],
+        "scope_resolution": {
+          "state": "unspecified",
+          "filters": [],
+          "bindings": [],
+          "source": [],
+          "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+          "requested_phrase": null
+        },
+        "query_semantics": [
+          {
+            "id": "q_c44a96dcb441fad099ed29ec",
+            "metrics": [
+              "discount_amount"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_df0c61e80c544550510e9fda",
+            "metrics": [
+              "voucher_order_count"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_226d98b6917e531dcf219e5a",
+            "metrics": [
+              "discount_amount"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_562815fb39bf46fc567574ff",
+            "metrics": [
+              "purchasing_customer_count"
+            ],
+            "group_by": [
+              "city"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_8f346deb6d07cceb3fa6d68e",
+            "metrics": [
+              "order_count"
+            ],
+            "group_by": [
+              "city"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_929e536b92a0913435fdeff4",
+            "metrics": [
+              "purchasing_customer_count"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_ce6578de31dc1c53df2bf8e3",
+            "metrics": [
+              "voucher_revenue"
+            ],
+            "group_by": [
+              "promotion"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_e5d2a6ac25be2164dfadf2cc",
+            "metrics": [
+              "voucher_order_count"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "req_promotions_summary",
+                "goal": "Phân tích yêu cầu",
+                "domain_id": "promotions",
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "discount_amount",
+                  "voucher_order_count"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "scalar"
+                ],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_aa0a405aafeef9748fc37a3f",
+                "goal": "Diễn biến trong phạm vi đã chọn",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "req_promotions_summary",
+                "metric_ids": [
+                  "discount_amount",
+                  "voucher_order_count"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "week",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_92961425a7bd56d21fe5b3ea",
+                "goal": "Góc nhìn bổ sung · Khách mua trong kỳ",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "req_promotions_summary",
+                "metric_ids": [
+                  "purchasing_customer_count"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_d1532987fa6602e510df31c0",
+                "goal": "Góc nhìn bổ sung · Lượng đơn và trạng thái",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "req_promotions_summary",
+                "metric_ids": [
+                  "order_count"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_1abaecc09fb2c5a5c05b1388",
+                "goal": "Góc nhìn bổ sung · Doanh thu tập đơn voucher",
+                "domain_id": "promotions",
+                "lens_hint": null,
+                "supporting_for": "req_promotions_summary",
+                "metric_ids": [
+                  "voucher_revenue"
+                ],
+                "dimension_ids": [
+                  "promotion"
+                ],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": null,
+          "semantic_issue_history": null,
+          "planning_latency_ms": 1615.51
+        },
+        "contract_issues": [],
+        "root_contract_issues": null
+      },
+      "planning_ms": 1615.51
+    },
+    {
+      "id": "L15",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L16",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 0,
+      "repair": 0,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 94,
+      "outcome": {
+        "status": "needs_clarification",
+        "analysis_state": "SUPPORTED_BUT_NEEDS_CLARIFICATION",
+        "error_category": "clarification",
+        "actions": [
+          {
+            "label": "Chọn chỉ số trong “Hỏi được gì?”",
+            "kind": "advice",
+            "constraint_code": "analysis_target_missing",
+            "preserves": []
+          }
+        ],
+        "choices": [],
+        "proposal_semantics": {},
+        "contract_issues": null,
+        "root_contract_issues": null
+      },
+      "planning_ms": null
+    },
+    {
+      "id": "L17",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 0,
+      "repair": 0,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 90,
+      "outcome": {
+        "status": "needs_clarification",
+        "analysis_state": "SUPPORTED_BUT_NEEDS_CLARIFICATION",
+        "error_category": "clarification",
+        "actions": [
+          {
+            "label": "Chọn chỉ số trong “Hỏi được gì?”",
+            "kind": "advice",
+            "constraint_code": "metric_needed",
+            "preserves": []
+          }
+        ],
+        "choices": [],
+        "proposal_semantics": {},
+        "contract_issues": null,
+        "root_contract_issues": null
+      },
+      "planning_ms": null
+    },
+    {
+      "id": "L18",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 0,
+      "repair": 0,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 88,
+      "outcome": {
+        "status": "needs_clarification",
+        "analysis_state": "SUPPORTED_BUT_NEEDS_CLARIFICATION",
+        "error_category": "clarification",
+        "actions": [
+          {
+            "label": "Chọn chỉ số trong “Hỏi được gì?”",
+            "kind": "advice",
+            "constraint_code": "metric_needed",
+            "preserves": []
+          }
+        ],
+        "choices": [],
+        "proposal_semantics": {},
+        "contract_issues": null,
+        "root_contract_issues": null
+      },
+      "planning_ms": null
+    },
+    {
+      "id": "L19",
+      "group": "association",
+      "expected": "useful",
+      "passed": false,
+      "logical_calls": 1,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 2432,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Tương quan giữa Doanh thu và Tỷ lệ hủy đơn đạt hệ số -0.15 trên 1215 cặp ghép theo mã duy nhất (1215/1215 nhóm ban đầu, 1215 cặp hợp lệ; loại 0 giá trị không hợp lệ và 0 khóa không khớp); tương quan không chứng minh nguyên nhân.",
+        "verification": "attention",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "revenue_vs_cancellation_rate",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_cea78b12ccff601c76ffcf3c",
+              "q_db92aacff1c62d4ae8f6f291"
+            ],
+            "derived_features": [
+              "relationship_strength"
+            ],
+            "goal": "Phân tích yêu cầu",
+            "supporting_for": null,
+            "views": [
+              {
+                "kind": "paired_scatter",
+                "metric_ids": [
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store_id"
+                ],
+                "required": true,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_690207f9275fef101b2cde15",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_de7d1b83ed78e643e0c42425",
+              "q_ea6871bdd2d5b62525c793af"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "supporting_for": "revenue_vs_cancellation_rate",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_6a8d16583bdeeb426a51b648",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_453a7fdbf524d6a293979730"
+            ],
+            "derived_features": [],
+            "goal": "Góc nhìn bổ sung · Lượng đơn và trạng thái",
+            "supporting_for": "revenue_vs_cancellation_rate",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "order_count"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_c01fc5aba44382d03e4816ac",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_366104d3f5d97670fd120cfd",
+              "q_be173455e9f8707ced8b5483"
+            ],
+            "derived_features": [
+              "scalar"
+            ],
+            "goal": "Chỉ số toàn phạm vi",
+            "supporting_for": "revenue_vs_cancellation_rate",
+            "views": [
+              {
+                "kind": "scalar",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "revenue_vs_cancellation_rate",
+            "index": 0,
+            "kind": "paired_scatter",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_690207f9275fef101b2cde15",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_6a8d16583bdeeb426a51b648",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_c01fc5aba44382d03e4816ac",
+            "index": 0,
+            "kind": "scalar",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "aov",
+          "order_cancellation_rate",
+          "order_count",
+          "revenue"
+        ],
+        "applied_filters": [
+          [],
+          [],
+          [],
+          []
+        ],
+        "verification_score_status": "partially_verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "revenue_vs_cancellation_rate",
+            "role": "paired_scatter",
+            "evidence_id": "q_db92aacff1c62d4ae8f6f291:revenue:pearson:6230060e3b",
+            "query_id": "q_db92aacff1c62d4ae8f6f291",
+            "metric": "revenue",
+            "unit": "VND",
+            "scope": {
+              "label": "Đơn hàng và doanh thu",
+              "period": {
+                "mode": "all_time",
+                "start": null,
+                "end": null,
+                "end_exclusive": null,
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "population_relation": "same",
+              "metric_business_filters": [
+                {
+                  "dimension": "order_status",
+                  "operator": "in",
+                  "value": [
+                    "HOAN_THANH",
+                    "DANG_GIAO"
+                  ]
+                }
+              ],
+              "metric_required_non_null": [],
+              "filters": [],
+              "partition": {},
+              "selection": "complete"
+            },
+            "statement": "Tương quan giữa Doanh thu và Tỷ lệ hủy đơn đạt hệ số -0.15 trên 1215 cặp ghép theo mã duy nhất (1215/1215 nhóm ban đầu, 1215 cặp hợp lệ; loại 0 giá trị không hợp lệ và 0 khóa không khớp); tương quan không chứng minh nguyên nhân."
+          }
+        ],
+        "scope_resolution": {
+          "state": "unspecified",
+          "filters": [],
+          "bindings": [],
+          "source": [],
+          "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+          "requested_phrase": null
+        },
+        "query_semantics": [
+          {
+            "id": "q_cea78b12ccff601c76ffcf3c",
+            "metrics": [
+              "order_cancellation_rate"
+            ],
+            "group_by": [
+              "store_id",
+              "store"
+            ],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_db92aacff1c62d4ae8f6f291",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "store_id",
+              "store"
+            ],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_366104d3f5d97670fd120cfd",
+            "metrics": [
+              "aov",
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_453a7fdbf524d6a293979730",
+            "metrics": [
+              "order_count"
+            ],
+            "group_by": [
+              "city"
+            ],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_be173455e9f8707ced8b5483",
+            "metrics": [
+              "order_cancellation_rate"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_de7d1b83ed78e643e0c42425",
+            "metrics": [
+              "order_cancellation_rate"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_ea6871bdd2d5b62525c793af",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "revenue_vs_cancellation_rate",
+                "goal": "Phân tích yêu cầu",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store_id"
+                ],
+                "analysis_kind": "relationship",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "relationship_strength"
+                ],
+                "feature_metrics": {
+                  "relationship_strength": [
+                    "order_cancellation_rate",
+                    "revenue"
+                  ]
+                },
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_6a8d16583bdeeb426a51b648",
+                "goal": "Góc nhìn bổ sung · Lượng đơn và trạng thái",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "revenue_vs_cancellation_rate",
+                "metric_ids": [
+                  "order_count"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_c01fc5aba44382d03e4816ac",
+                "goal": "Chỉ số toàn phạm vi",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "revenue_vs_cancellation_rate",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "scalar"
+                ],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_690207f9275fef101b2cde15",
+                "goal": "Diễn biến trong phạm vi đã chọn",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "revenue_vs_cancellation_rate",
+                "metric_ids": [
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "week",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": [
+            {
+              "requirement_id": "revenue_vs_cancellation_rate",
+              "field": "analysis_kind",
+              "rule": "governed_observational_pair"
+            }
+          ],
+          "semantic_issue_history": null,
+          "planning_latency_ms": 1597.39
+        },
+        "contract_issues": [],
+        "root_contract_issues": null
+      },
+      "planning_ms": 1597.39
+    },
+    {
+      "id": "L20",
+      "group": "driver",
+      "expected": "useful",
+      "passed": true,
+      "logical_calls": 1,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 3265,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Doanh thu giảm 18,084,000 VND (3.95%) giữa kỳ 2026-08-01–2026-08-31 và kỳ 2026-09-01–2026-09-30; nhóm đóng góp thay đổi lớn nhất là Highlands Coffee Vinaconex 3 Hà Nội (-1,216,000 VND). Đây là phân rã thay đổi giữa hai kỳ, không khẳng định nguyên nhân.",
+        "verification": "verified",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "revenue_change_decomposition",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_00b0d6f6fa923caebd7fd680",
+              "q_8067e3cddc9d44693cfc8602",
+              "q_80e1f31f76c9b4b2323c33a8",
+              "q_e1ea5bda827c5ed687993d97"
+            ],
+            "derived_features": [
+              "driver_delta"
+            ],
+            "goal": "Phân tích yêu cầu",
+            "supporting_for": null,
+            "views": [
+              {
+                "kind": "driver_delta",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "required": true,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_965293e20a177ef4d3c6a5e9",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_2818e47bbecf61071ba56f78",
+              "q_9ced1ed1704e980d5430fba7"
+            ],
+            "derived_features": [
+              "scalar"
+            ],
+            "goal": "Chỉ số toàn phạm vi",
+            "supporting_for": "revenue_change_decomposition",
+            "views": [
+              {
+                "kind": "scalar",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_a57609303592823fa1768331",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_d68ada73ea64102f1ef9bb4e"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "supporting_for": "revenue_change_decomposition",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_bb1324aaec2a7aaeb989eb0e",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_59d0a836d4e8c399b41537dc"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Tỉnh/thành trong dữ liệu",
+            "supporting_for": "revenue_change_decomposition",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "revenue_change_decomposition",
+            "index": 0,
+            "kind": "driver_delta",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_965293e20a177ef4d3c6a5e9",
+            "index": 0,
+            "kind": "scalar",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_a57609303592823fa1768331",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_bb1324aaec2a7aaeb989eb0e",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "aov",
+          "order_cancellation_rate",
+          "revenue"
+        ],
+        "applied_filters": [
+          [],
+          [],
+          [],
+          []
+        ],
+        "verification_score_status": "verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "revenue_change_decomposition",
+            "role": "change",
+            "evidence_id": "q_80e1f31f76c9b4b2323c33a8:revenue:driver_delta:6230060e3b",
+            "query_id": "q_80e1f31f76c9b4b2323c33a8",
+            "metric": "revenue",
+            "unit": "VND",
+            "scope": {
+              "label": "Đơn hàng và doanh thu",
+              "period": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "population_relation": "same",
+              "metric_business_filters": [
+                {
+                  "dimension": "order_status",
+                  "operator": "in",
+                  "value": [
+                    "HOAN_THANH",
+                    "DANG_GIAO"
+                  ]
+                }
+              ],
+              "metric_required_non_null": [],
+              "filters": [],
+              "partition": {},
+              "selection": "complete"
+            },
+            "statement": "Doanh thu giảm 18,084,000 VND (3.95%) giữa kỳ 2026-08-01–2026-08-31 và kỳ 2026-09-01–2026-09-30; nhóm đóng góp thay đổi lớn nhất là Highlands Coffee Vinaconex 3 Hà Nội (-1,216,000 VND). Đây là phân rã thay đổi giữa hai kỳ, không khẳng định nguyên nhân."
+          }
+        ],
+        "scope_resolution": {
+          "state": "unspecified",
+          "filters": [],
+          "bindings": [],
+          "source": [],
+          "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+          "requested_phrase": null
+        },
+        "query_semantics": [
+          {
+            "id": "q_00b0d6f6fa923caebd7fd680",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-08-01",
+              "end": "2026-08-31",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_8067e3cddc9d44693cfc8602",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_80e1f31f76c9b4b2323c33a8",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "store"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_e1ea5bda827c5ed687993d97",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "store"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-08-01",
+              "end": "2026-08-31",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_2818e47bbecf61071ba56f78",
+            "metrics": [
+              "order_cancellation_rate"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_59d0a836d4e8c399b41537dc",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "city"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_9ced1ed1704e980d5430fba7",
+            "metrics": [
+              "aov",
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_d68ada73ea64102f1ef9bb4e",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "revenue_change_decomposition",
+                "goal": "Phân tích yêu cầu",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "driver_delta"
+                ],
+                "feature_metrics": {
+                  "driver_delta": [
+                    "revenue"
+                  ]
+                },
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_a57609303592823fa1768331",
+                "goal": "Diễn biến trong phạm vi đã chọn",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "revenue_change_decomposition",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "week",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_965293e20a177ef4d3c6a5e9",
+                "goal": "Chỉ số toàn phạm vi",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "revenue_change_decomposition",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "scalar"
+                ],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_bb1324aaec2a7aaeb989eb0e",
+                "goal": "Đối chiếu bổ sung · Tỉnh/thành trong dữ liệu",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "revenue_change_decomposition",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": [
+            {
+              "requirement_id": "revenue_change_decomposition",
+              "field": "analysis_kind",
+              "rule": "governed_change_decomposition"
+            }
+          ],
+          "semantic_issue_history": null,
+          "planning_latency_ms": 2059.54
+        },
+        "contract_issues": [],
+        "root_contract_issues": null
+      },
+      "planning_ms": 2059.54
+    },
+    {
+      "id": "L21",
+      "group": "expectation",
+      "expected": "useful_no_guarantee",
+      "passed": true,
+      "logical_calls": 2,
+      "physical_http": 2,
+      "repair": 1,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 7058,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Dự báo doanh thu 3 tháng tới: kỳ cuối 478,7 triệu VND (khoảng 80%: 382,5 triệu VND – 574,9 triệu VND); tổng các kỳ dự báo 1,4 tỷ VND.",
+        "verification": "verified",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "repair_add_1",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_490363cd53014da1f1f16f68"
+            ],
+            "derived_features": [],
+            "goal": "Dự báo doanh thu 3 tháng tới",
+            "supporting_for": null,
+            "forecast": {
+              "horizon": 3,
+              "unit": "month"
+            }
+          },
+          {
+            "requirement_id": "support_5f743a6258756079f212e563",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_ecf6f4b9ccb7f27982a80eb9"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "supporting_for": "repair_add_1",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_6072b89c9e3e204042ba17ee",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_0258597696894d90f1a2eb7a"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến theo Tỉnh/thành trong dữ liệu",
+            "supporting_for": "repair_add_1",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_8517ce359e4a41c8dc705ea1",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_1b36736720d52179e5e1a517",
+              "q_f53602613ef4321e202296e8"
+            ],
+            "derived_features": [
+              "scalar"
+            ],
+            "goal": "Chỉ số toàn phạm vi",
+            "supporting_for": "repair_add_1",
+            "views": [
+              {
+                "kind": "scalar",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_86604cd8eb59faf1bb31e821",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_650458fd12136a8d54b51f1f"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Chi nhánh",
+            "supporting_for": "repair_add_1",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_ce230e850742295e20c9d8ce",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_8d5d7b43f3b83df7db694783"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Tỉnh/thành trong dữ liệu",
+            "supporting_for": "repair_add_1",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "support_5f743a6258756079f212e563",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_6072b89c9e3e204042ba17ee",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "satisfied",
+            "reason": "validated_table_for_capacity"
+          },
+          {
+            "requirement_id": "support_8517ce359e4a41c8dc705ea1",
+            "index": 0,
+            "kind": "scalar",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_86604cd8eb59faf1bb31e821",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": "validated_table_for_capacity"
+          },
+          {
+            "requirement_id": "support_ce230e850742295e20c9d8ce",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "aov",
+          "order_cancellation_rate",
+          "revenue"
+        ],
+        "applied_filters": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "verification_score_status": "verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "repair_add_1",
+            "role": "forecast",
+            "forecast_ref": "repair_add_1",
+            "metric": "revenue",
+            "unit": "month",
+            "query_id": "q_490363cd53014da1f1f16f68"
+          }
+        ],
+        "scope_resolution": {
+          "state": "unspecified",
+          "filters": [],
+          "bindings": [],
+          "source": [],
+          "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+          "requested_phrase": null
+        },
+        "query_semantics": [
+          {
+            "id": "q_490363cd53014da1f1f16f68",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          },
+          {
+            "id": "q_0258597696894d90f1a2eb7a",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "city"
+            ],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_1b36736720d52179e5e1a517",
+            "metrics": [
+              "aov",
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_650458fd12136a8d54b51f1f",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "store"
+            ],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_8d5d7b43f3b83df7db694783",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "city"
+            ],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_ecf6f4b9ccb7f27982a80eb9",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          },
+          {
+            "id": "q_f53602613ef4321e202296e8",
+            "metrics": [
+              "order_cancellation_rate"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "supporting"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "repair_add_1",
+                "goal": "Dự báo doanh thu 3 tháng tới",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "month",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": {
+                  "horizon": 3,
+                  "unit": "month"
+                },
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_8517ce359e4a41c8dc705ea1",
+                "goal": "Chỉ số toàn phạm vi",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "repair_add_1",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "aggregate",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "scalar"
+                ],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_ce230e850742295e20c9d8ce",
+                "goal": "Đối chiếu bổ sung · Tỉnh/thành trong dữ liệu",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "repair_add_1",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_6072b89c9e3e204042ba17ee",
+                "goal": "Diễn biến theo Tỉnh/thành trong dữ liệu",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "repair_add_1",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "month",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_86604cd8eb59faf1bb31e821",
+                "goal": "Đối chiếu bổ sung · Chi nhánh",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "repair_add_1",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_5f743a6258756079f212e563",
+                "goal": "Diễn biến trong phạm vi đã chọn",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "repair_add_1",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "week",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": [
+            {
+              "requirement_id": "repair_add_1",
+              "field": "time",
+              "rule": "unspecified_time_all_time"
+            }
+          ],
+          "semantic_issue_history": [
+            [
+              {
+                "requirement_id": null,
+                "field": "clarification",
+                "code": "clarification_required"
+              },
+              {
+                "requirement_id": null,
+                "field": "metric_ids",
+                "code": "explicit_metrics_missing",
+                "candidate_ids": [
+                  "item_revenue",
+                  "payment_revenue",
+                  "product_revenue",
+                  "revenue",
+                  "store_revenue",
+                  "voucher_revenue"
+                ]
+              },
+              {
+                "requirement_id": null,
+                "field": "forecast",
+                "code": "explicit_forecast_missing",
+                "expected": {
+                  "horizon": 3,
+                  "unit": "month"
+                }
+              }
+            ]
+          ],
+          "planning_latency_ms": 6313.25
+        },
+        "contract_issues": [],
+        "root_contract_issues": [
+          {
+            "requirement_id": null,
+            "field": "clarification",
+            "code": "clarification_required"
+          },
+          {
+            "requirement_id": null,
+            "field": "metric_ids",
+            "code": "explicit_metrics_missing",
+            "candidate_ids": [
+              "item_revenue",
+              "payment_revenue",
+              "product_revenue",
+              "revenue",
+              "store_revenue",
+              "voucher_revenue"
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "forecast",
+            "code": "explicit_forecast_missing",
+            "expected": {
+              "horizon": 3,
+              "unit": "month"
+            }
+          }
+        ]
+      },
+      "planning_ms": 6313.25
+    },
+    {
+      "id": "L22",
+      "group": "recovery",
+      "expected": "useful",
+      "passed": true,
+      "logical_calls": 1,
+      "physical_http": 2,
+      "repair": 0,
+      "recovery": 1,
+      "secondary_used": true,
+      "latency_ms": 1986,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Doanh thu thay đổi từ 77,589,000 thành 57,245,000 VND giữa kỳ 2025-12-29 và 2026-09-28 (-26.22%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ.",
+        "verification": "verified",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "revenue_weekly_trend",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_f7d272164bb488096053dddc"
+            ],
+            "derived_features": [],
+            "goal": "Phân tích yêu cầu",
+            "supporting_for": null,
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": true,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "revenue_weekly_trend",
+            "index": 0,
+            "kind": "time_series",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "revenue"
+        ],
+        "applied_filters": [
+          []
+        ],
+        "verification_score_status": "verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "revenue_weekly_trend",
+            "role": "time_series",
+            "evidence_id": "q_f7d272164bb488096053dddc:revenue:change:6230060e3b",
+            "query_id": "q_f7d272164bb488096053dddc",
+            "metric": "revenue",
+            "unit": "VND",
+            "scope": {
+              "label": "Đơn hàng và doanh thu",
+              "period": {
+                "mode": "all_time",
+                "start": null,
+                "end": null,
+                "end_exclusive": null,
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "population_relation": "same",
+              "metric_business_filters": [
+                {
+                  "dimension": "order_status",
+                  "operator": "in",
+                  "value": [
+                    "HOAN_THANH",
+                    "DANG_GIAO"
+                  ]
+                }
+              ],
+              "metric_required_non_null": [],
+              "filters": [],
+              "partition": {},
+              "selection": "complete"
+            },
+            "statement": "Doanh thu thay đổi từ 77,589,000 thành 57,245,000 VND giữa kỳ 2025-12-29 và 2026-09-28 (-26.22%). Chỉ đối chiếu kỳ đầy đủ; 1 kỳ biên chưa đủ ngày vẫn có trên biểu đồ."
+          }
+        ],
+        "scope_resolution": {
+          "state": "unspecified",
+          "filters": [],
+          "bindings": [],
+          "source": [],
+          "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+          "requested_phrase": null
+        },
+        "query_semantics": [
+          {
+            "id": "q_f7d272164bb488096053dddc",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "relative",
+              "mode": "all_time",
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "filters": [],
+            "role": "requested"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "revenue_weekly_trend",
+                "goal": "Phân tích yêu cầu",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [],
+                "time": {
+                  "kind": "relative",
+                  "mode": "all_time",
+                  "year": null,
+                  "month": null,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "week",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": [
+            {
+              "requirement_id": "revenue_weekly_trend",
+              "field": "time",
+              "rule": "unspecified_time_all_time"
+            }
+          ],
+          "semantic_issue_history": null,
+          "planning_latency_ms": 1698.76
+        },
+        "contract_issues": [],
+        "root_contract_issues": null
+      },
+      "planning_ms": 1698.76
+    },
+    {
+      "id": "L23",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L24",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L25",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L26",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L27",
+      "group": "geography",
+      "expected": "useful",
+      "passed": true,
+      "logical_calls": 1,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 2787,
+      "outcome": {
+        "status": "success",
+        "outcome": "SUCCESS",
+        "choices": null,
+        "actions": null,
+        "conclusion": "Doanh thu: 43,017,000 VND trong phạm vi đã chọn.",
+        "verification": "verified",
+        "completion_status": "complete",
+        "coverage": [
+          {
+            "requirement_id": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_834ecd28b1f8a600e1ffc215"
+            ],
+            "derived_features": [
+              "scalar"
+            ],
+            "goal": "Tổng doanh thu miền Nam trừ HCM tháng 9 năm 2026",
+            "supporting_for": null,
+            "views": [
+              {
+                "kind": "scalar",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": true,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_2e5918e3765493c63e541bb6",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_20ff5e6293c2dfc8721908cb"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Chi nhánh",
+            "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_97addb30f787683a5a3fb523",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_80c6a0082aa670a443b9856f"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_bbe8cbe7622311be7234cf8a",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_4bc83574699c34cf5136bb47",
+              "q_f9dd5b93155d8f219b86f407"
+            ],
+            "derived_features": [
+              "scalar"
+            ],
+            "goal": "Chỉ số toàn phạm vi",
+            "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+            "views": [
+              {
+                "kind": "scalar",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_c50f6573247196bdc8d98c75",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_c374e235dd3ce53d64ae58d4"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Hình thức nhận hàng",
+            "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "order_type"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_e13f490bb39e82eb51f28b47",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_b65d37e8564df6924717c60e"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Phương thức thanh toán",
+            "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "payment_method"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "views": [
+          {
+            "requirement_id": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+            "index": 0,
+            "kind": "scalar",
+            "required": true,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_2e5918e3765493c63e541bb6",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_97addb30f787683a5a3fb523",
+            "index": 0,
+            "kind": "time_series",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_bbe8cbe7622311be7234cf8a",
+            "index": 0,
+            "kind": "scalar",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_c50f6573247196bdc8d98c75",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          },
+          {
+            "requirement_id": "support_e13f490bb39e82eb51f28b47",
+            "index": 0,
+            "kind": "grouped",
+            "required": false,
+            "status": "satisfied",
+            "reason": null
+          }
+        ],
+        "metric_ids": [
+          "aov",
+          "order_cancellation_rate",
+          "revenue"
+        ],
+        "applied_filters": [
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ]
+        ],
+        "verification_score_status": "verified",
+        "answer_requirements": [
+          {
+            "requirement_id": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+            "role": "scalar",
+            "evidence_id": "q_834ecd28b1f8a600e1ffc215:revenue:scalar:6230060e3b",
+            "query_id": "q_834ecd28b1f8a600e1ffc215",
+            "metric": "revenue",
+            "unit": "VND",
+            "scope": {
+              "label": "Đơn hàng và doanh thu",
+              "period": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "population_relation": "same",
+              "metric_business_filters": [
+                {
+                  "dimension": "order_status",
+                  "operator": "in",
+                  "value": [
+                    "HOAN_THANH",
+                    "DANG_GIAO"
+                  ]
+                }
+              ],
+              "metric_required_non_null": [],
+              "filters": [
+                {
+                  "dimension": "city",
+                  "operator": "in",
+                  "value": [
+                    "Bà Rịa - Vũng Tàu",
+                    "Bình Dương",
+                    "Cần Thơ",
+                    "Kiên Giang",
+                    "Đồng Nai"
+                  ]
+                }
+              ],
+              "partition": {},
+              "selection": "complete"
+            },
+            "statement": "Doanh thu: 43,017,000 VND trong phạm vi đã chọn."
+          }
+        ],
+        "scope_resolution": {
+          "state": "resolved",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          ],
+          "bindings": [
+            {
+              "dimension": "city",
+              "members": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Kiên Giang",
+                "Đồng Nai"
+              ],
+              "comparison": false,
+              "cohorts": [],
+              "excluded_members": [
+                "Hồ Chí Minh"
+              ],
+              "comparison_dimension": "reporting_region"
+            }
+          ],
+          "source": [
+            {
+              "id": "south",
+              "label": "Miền Nam",
+              "source": "warehouse_reporting_geography_v1",
+              "version": 1
+            }
+          ],
+          "fingerprint": "aefe8b1d796ff26f29122fafe7d7fbcc1166946e487828af44e3dcb064dfdd04",
+          "requested_phrase": "Doanh thu miền Nam trừ HCM tháng 9 năm 2026"
+        },
+        "query_semantics": [
+          {
+            "id": "q_834ecd28b1f8a600e1ffc215",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Cần Thơ",
+                  "Kiên Giang",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "requested"
+          },
+          {
+            "id": "q_20ff5e6293c2dfc8721908cb",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "store"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Cần Thơ",
+                  "Kiên Giang",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_4bc83574699c34cf5136bb47",
+            "metrics": [
+              "order_cancellation_rate"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Cần Thơ",
+                  "Kiên Giang",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_80c6a0082aa670a443b9856f",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Cần Thơ",
+                  "Kiên Giang",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_b65d37e8564df6924717c60e",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "payment_method"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Cần Thơ",
+                  "Kiên Giang",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_c374e235dd3ce53d64ae58d4",
+            "metrics": [
+              "revenue"
+            ],
+            "group_by": [
+              "order_type"
+            ],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Cần Thơ",
+                  "Kiên Giang",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          },
+          {
+            "id": "q_f9dd5b93155d8f219b86f407",
+            "metrics": [
+              "aov",
+              "revenue"
+            ],
+            "group_by": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Bà Rịa - Vũng Tàu",
+                  "Bình Dương",
+                  "Cần Thơ",
+                  "Kiên Giang",
+                  "Đồng Nai"
+                ]
+              }
+            ],
+            "role": "supporting"
+          }
+        ],
+        "proposal_semantics": {
+          "semantic_intent": {
+            "decision": "analyze",
+            "requirements": [
+              {
+                "id": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+                "goal": "Tổng doanh thu miền Nam trừ HCM tháng 9 năm 2026",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": null,
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "aggregate",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Cần Thơ",
+                      "Kiên Giang",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "scalar"
+                ],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_e13f490bb39e82eb51f28b47",
+                "goal": "Đối chiếu bổ sung · Phương thức thanh toán",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "payment_method"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Cần Thơ",
+                      "Kiên Giang",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_97addb30f787683a5a3fb523",
+                "goal": "Diễn biến trong phạm vi đã chọn",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "trend",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Cần Thơ",
+                      "Kiên Giang",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": "week",
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_bbe8cbe7622311be7234cf8a",
+                "goal": "Chỉ số toàn phạm vi",
+                "domain_id": null,
+                "lens_hint": null,
+                "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "analysis_kind": "aggregate",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Cần Thơ",
+                      "Kiên Giang",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [
+                  "scalar"
+                ],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_c50f6573247196bdc8d98c75",
+                "goal": "Đối chiếu bổ sung · Hình thức nhận hàng",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "order_type"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Cần Thơ",
+                      "Kiên Giang",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              },
+              {
+                "id": "support_2e5918e3765493c63e541bb6",
+                "goal": "Đối chiếu bổ sung · Chi nhánh",
+                "domain_id": "orders",
+                "lens_hint": null,
+                "supporting_for": "doanh_thu_mien_nam_tru_hcm_thang_9_2026",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "analysis_kind": "distribution",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "operator": "in",
+                    "value": [
+                      "Bà Rịa - Vũng Tàu",
+                      "Bình Dương",
+                      "Cần Thơ",
+                      "Kiên Giang",
+                      "Đồng Nai"
+                    ]
+                  }
+                ],
+                "time": {
+                  "kind": "month",
+                  "mode": null,
+                  "year": 2026,
+                  "month": 9,
+                  "quarter": null,
+                  "day": null,
+                  "start": null,
+                  "end": null,
+                  "amount": null,
+                  "unit": null
+                },
+                "ranking": null,
+                "granularity": null,
+                "derived_features": [],
+                "feature_metrics": {},
+                "forecast": null,
+                "availability": "requested",
+                "reason": null
+              }
+            ],
+            "clarification": null
+          },
+          "contract_issues": [],
+          "semantic_normalizations": null,
+          "semantic_issue_history": null,
+          "planning_latency_ms": 2084.62
+        },
+        "contract_issues": [],
+        "root_contract_issues": null
+      },
+      "planning_ms": 2084.62
+    },
+    {
+      "id": "L28",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L29",
+      "group": "geography",
+      "expected": "useful",
+      "passed": false,
+      "logical_calls": 2,
+      "physical_http": 2,
+      "repair": 1,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 3400,
+      "outcome": {
+        "status": "error",
+        "analysis_state": "UNDERSTANDING_FAILURE",
+        "error_category": "semantic_intent_invalid",
+        "actions": [],
+        "choices": [],
+        "proposal_semantics": {},
+        "contract_issues": [
+          {
+            "requirement_id": "req_1",
+            "field": "feature_metrics",
+            "code": "untargeted_field_changed"
+          }
+        ],
+        "root_contract_issues": [
+          {
+            "requirement_id": "req_1",
+            "field": "filters",
+            "code": "scope_membership_mismatch",
+            "expected": [
+              [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ],
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "scope_cohort_missing",
+            "expected": [
+              [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ],
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Hà Nội"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Hải Phòng"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Bắc Ninh"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Quảng Ninh"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Hồ Chí Minh"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Cần Thơ"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Bình Dương"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Đồng Nai"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Bà Rịa - Vũng Tàu"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Kiên Giang"
+            }
+          }
+        ]
+      },
+      "planning_ms": 3305.56
+    }
+  ],
+  "case_file_sha256": "975e93363e4d80f20059fcef860a349ee8158cad827b40a984afe8d922808cab",
+  "release_passed": false
+}

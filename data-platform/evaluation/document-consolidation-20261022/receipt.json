@@ -1,0 +1,14 @@
+{
+  "status": "CONSOLIDATED_DOCUMENTS_ONLY",
+  "canonical_document": "data-platform/AI_DATA_ANALYST_TONG_HOP_20261022.md",
+  "canonical_sha256": "a6d60f7de20f43296a3388d3ec038c93d620699ae8bf374dc7f38a3fbef72f4a",
+  "original_document_count": 6,
+  "original_archive": "data-platform/evaluation/document-consolidation-20261022/source-documents.json",
+  "original_archive_sha256": "6bba58b01abf92791579ade7bd24650aeeef7410aa3ea0fcc359c0f50eba0c8c",
+  "all_six_document_bodies_preserved": true,
+  "old_paths": "Six Markdown redirect files; no original content deleted without archive",
+  "local_links_valid": true,
+  "product_source_drift": [],
+  "new_provider_calls": 0,
+  "new_tests_executed": 0
+}

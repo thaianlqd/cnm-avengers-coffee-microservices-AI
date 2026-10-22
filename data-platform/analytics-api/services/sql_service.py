@@ -15,7 +15,8 @@ def analytical_connection():
         with connection() as conn:
             yield conn
     else:
-        conn = get_db_conn()
+        from services.telemetry import span
+        with span('db_acquire'):conn = get_db_conn()
         try:
             yield conn
         finally:
@@ -457,29 +458,43 @@ def execute_read_only(sql: str, row_limit: int = 500, timeout_ms: int = 12000) -
     from services.query_execution_batch import begin
     from services.provider_budget import check_request_deadline
     check_request_deadline()
-    safe_sql = validate_read_only_sql(sql)
+    from services.access_policy import authorize_sql
+    safe_sql = validate_read_only_sql(authorize_sql(sql))
     started = time.perf_counter()
-    with analytical_connection() as conn:
-        try:
-            begin(conn, timeout_ms)
-            with conn.cursor() as cur:
-                cur.execute("SET LOCAL search_path TO gold, orders, menu, identity, inventory, analytics, public")
-                cur.execute(safe_sql)
-                rows = cur.fetchmany(row_limit + 1) if cur.description else []
-                truncated = len(rows) > row_limit
-                rows = rows[:row_limit]
-                columns = [description[0] for description in cur.description] if cur.description else []
-                check_request_deadline()
-                return {"columns": columns, "rows": [dict(row) for row in rows],
-                    "count": len(rows), "truncated": truncated,
-                    "duration_ms": round((time.perf_counter() - started) * 1000, 2), "sql": safe_sql}
-        except SqlSafetyError:
-            raise
-        except Exception as exc:
-            from services.analysis_catalog import AnalysisError
-            if isinstance(exc, AnalysisError):
+    from services.telemetry import span
+    from services.analytical_capacity_planner import query_attempt
+    with query_attempt('execute') as accounting,span('sql') as observed:
+        with analytical_connection() as conn:
+            try:
+                begin(conn, timeout_ms)
+                with conn.cursor() as cur:
+                    cur.execute("SET LOCAL search_path TO gold, orders, menu, identity, inventory, analytics, public")
+                    from services.access_policy import active_principal,current_principal
+                    if active_principal.get() is not None: current_principal(required=True)
+                    cur.execute(safe_sql)
+                    with span('db_fetch') as fetched:
+                        rows = cur.fetchmany(row_limit + 1) if cur.description else []
+                        fetched['rows']=len(rows)
+                    truncated = len(rows) > row_limit
+                    rows = rows[:row_limit]
+                    columns = [description[0] for description in cur.description] if cur.description else []
+                    check_request_deadline()
+                    if active_principal.get() is not None: current_principal(required=True)
+                    observed['rows']=len(rows)
+                    if accounting is not None:
+                        import json
+                        accounting.update(rows=len(rows),bytes=len(json.dumps(rows,default=str,separators=(',',':')).encode()))
+                    return {"columns": columns, "rows": [dict(row) for row in rows],
+                        "count": len(rows), "truncated": truncated,
+                        "duration_ms": round((time.perf_counter() - started) * 1000, 2), "sql": safe_sql}
+            except SqlSafetyError:
                 raise
-            raise QueryExecutionError(str(exc).strip(), getattr(exc, "pgcode", None)) from exc
+            except Exception as exc:
+                from services.analysis_catalog import AnalysisError
+                from fastapi import HTTPException
+                if isinstance(exc, (AnalysisError, HTTPException)):
+                    raise
+                raise QueryExecutionError(str(exc).strip(), getattr(exc, "pgcode", None)) from exc
 
 
 def dry_run_sql(sql: str, timeout_ms: int = 4000) -> Tuple[bool, str]:
@@ -488,17 +503,21 @@ def dry_run_sql(sql: str, timeout_ms: int = 4000) -> Tuple[bool, str]:
     from services.provider_budget import check_request_deadline
     check_request_deadline()
     try:
-        safe_sql = validate_read_only_sql(sql)
+        from services.access_policy import authorize_sql
+        safe_sql = validate_read_only_sql(authorize_sql(sql))
     except SqlSafetyError as exc:
         return False, str(exc)
     try:
-        with analytical_connection() as conn:
-            begin(conn, timeout_ms)
-            with conn.cursor() as cur:
-                cur.execute("SET LOCAL search_path TO gold, orders, menu, identity, inventory, analytics, public")
-                cur.execute(f"EXPLAIN {safe_sql}")
-                check_request_deadline()
-                return True, "OK"
+        from services.telemetry import span
+        from services.analytical_capacity_planner import query_attempt
+        with query_attempt('dry_run'),span('sql_dry_run'):
+            with analytical_connection() as conn:
+                begin(conn, timeout_ms)
+                with conn.cursor() as cur:
+                    cur.execute("SET LOCAL search_path TO gold, orders, menu, identity, inventory, analytics, public")
+                    cur.execute(f"EXPLAIN {safe_sql}")
+                    check_request_deadline()
+                    return True, "OK"
     except Exception as exc:
         from services.analysis_catalog import AnalysisError
         if isinstance(exc, AnalysisError):
@@ -520,7 +539,7 @@ def validate_sql_ast_security(sql: str, allowed_tables: Mapping[str, Set[str]]) 
     if len(trees) != 1 or not isinstance(trees[0], exp.Select):
         raise SqlSafetyError('Only one SELECT/CTE is allowed')
     tree = trees[0]
-    functions = {'AND','OR','NOT','SUM','COUNT','AVG','MIN','MAX','ROUND','NULLIF','COALESCE','ROW_NUMBER','TIMESTAMP_TRUNC','DATE_TRUNC','EXTRACT','CAST','AT_TIME_ZONE'}
+    functions = {'CASE','IF','AND','OR','NOT','SUM','COUNT','AVG','MIN','MAX','ROUND','NULLIF','COALESCE','ROW_NUMBER','TIMESTAMP_TRUNC','DATE_TRUNC','EXTRACT','CAST','AT_TIME_ZONE'}
     for fn in tree.find_all(exp.Func):
         name = fn.name.upper() if isinstance(fn, exp.Anonymous) else fn.sql_name()
         if name not in functions:

@@ -1,0 +1,206 @@
+{
+ "prior_ledger": 527,
+ "final_ledger": 539,
+ "physical_sends": 12,
+ "actual_http": 12,
+ "tokens": {
+  "input": 0,
+  "output": 0
+ },
+ "cases": 12,
+ "executed": 9,
+ "first_pass": 5,
+ "holdout_first_pass": 0,
+ "holdout_executed": 3,
+ "mandatory_failed": [
+  "BC-REV-003",
+  "BC-REV-013"
+ ],
+ "rows": [
+  {
+   "id": "BC-REV-001",
+   "group": "B01",
+   "holdout": false,
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "requested": [
+    {
+     "metrics": [
+      "avg_product_rating",
+      "review_count"
+     ],
+     "group_by": [
+      "product"
+     ]
+    },
+    {
+     "metrics": [
+      "avg_product_rating",
+      "review_count"
+     ],
+     "group_by": []
+    }
+   ],
+   "charts": 5,
+   "latency_ms": 11022,
+   "physical_http": 2,
+   "tokens": 0,
+   "first_pass": true
+  },
+  {
+   "id": "BC-REV-002",
+   "group": "B01",
+   "holdout": false,
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "requested": [
+    {
+     "metrics": [
+      "avg_product_rating"
+     ],
+     "group_by": [
+      "product"
+     ]
+    }
+   ],
+   "charts": 4,
+   "latency_ms": 5311,
+   "physical_http": 1,
+   "tokens": 0,
+   "first_pass": true
+  },
+  {
+   "id": "BC-REV-003",
+   "group": "B01",
+   "holdout": true,
+   "status": "error",
+   "analysis_state": "UNDERSTANDING_FAILURE",
+   "error_category": "semantic_resolution_failed",
+   "latency_ms": 3694,
+   "physical_http": 2,
+   "tokens": 0,
+   "first_pass": false
+  },
+  {
+   "id": "BC-REV-004",
+   "group": "B01",
+   "holdout": false,
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "requested": [
+    {
+     "metrics": [
+      "revenue"
+     ],
+     "group_by": []
+    }
+   ],
+   "charts": 4,
+   "latency_ms": 4978,
+   "physical_http": 1,
+   "tokens": 0,
+   "first_pass": true
+  },
+  {
+   "id": "BC-REV-007",
+   "group": "B01",
+   "holdout": false,
+   "status": "needs_clarification",
+   "analysis_state": "UNSUPPORTED_CAPABILITY",
+   "error_category": "not_analytical_request",
+   "latency_ms": 4304,
+   "physical_http": 1,
+   "tokens": 0,
+   "first_pass": true
+  },
+  {
+   "id": "BC-REV-008",
+   "group": "B02",
+   "holdout": false,
+   "proposal_status": "proposal_ready",
+   "status": "success",
+   "verification": "verified",
+   "requested": [
+    {
+     "metrics": [
+      "avg_store_rating",
+      "store_review_count"
+     ],
+     "group_by": []
+    },
+    {
+     "metrics": [
+      "avg_store_rating",
+      "store_review_count"
+     ],
+     "group_by": [
+      "store"
+     ]
+    }
+   ],
+   "charts": 4,
+   "latency_ms": 6278,
+   "physical_http": 1,
+   "tokens": 0,
+   "first_pass": true
+  },
+  {
+   "id": "BC-REV-013",
+   "group": "B01",
+   "holdout": false,
+   "status": "error",
+   "analysis_state": "UNDERSTANDING_FAILURE",
+   "error_category": "semantic_contract_drift",
+   "latency_ms": 4001,
+   "physical_http": 2,
+   "tokens": 0,
+   "first_pass": false
+  },
+  {
+   "id": "BC-B09-004",
+   "group": "B09",
+   "holdout": true,
+   "status": "needs_clarification",
+   "analysis_state": "UNSUPPORTED_CAPABILITY",
+   "error_category": "unrecognized_question",
+   "latency_ms": 996,
+   "physical_http": 0,
+   "tokens": 0,
+   "first_pass": false
+  },
+  {
+   "id": "BC-B24-004",
+   "group": "B24",
+   "holdout": true,
+   "proposal_status": "proposal_ready",
+   "status": "error",
+   "analysis_state": "SYSTEM_FAILURE",
+   "error_category": "internal",
+   "latency_ms": 5169,
+   "physical_http": 2,
+   "tokens": 0,
+   "first_pass": false
+  },
+  {
+   "id": "BC-B03-005",
+   "group": "B03",
+   "holdout": true,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-B27-005",
+   "group": "B27",
+   "holdout": true,
+   "skipped": "campaign_cap"
+  },
+  {
+   "id": "BC-B03-003",
+   "group": "B03",
+   "holdout": false,
+   "skipped": "campaign_cap"
+  }
+ ]
+}

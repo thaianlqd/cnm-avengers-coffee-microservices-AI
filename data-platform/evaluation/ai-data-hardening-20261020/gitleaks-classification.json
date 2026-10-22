@@ -1,0 +1,33 @@
+{
+  "classification": "harmless_false_positive",
+  "total": 36,
+  "findings": [
+    {
+      "rule": "generic-api-key",
+      "path": "/scan/data-platform/web-ui/tests/e2e/fixtures/ai-final-report-comprehensive.json",
+      "count": 24,
+      "reason": "Minified fixture lines contain governed semantic_view_key/fingerprint, not a credential"
+    },
+    {
+      "rule": "generic-api-key",
+      "path": "/scan/data-platform/web-ui/tests/e2e/fixtures/ai-final-report-focused.json",
+      "count": 12,
+      "reason": "Minified fixture lines contain governed semantic_view_key/fingerprint, not a credential"
+    }
+  ],
+  "credential_rotation_required": false,
+  "fix": "Pretty-print exactly two JSON fixtures; parsed values equal HEAD",
+  "allowlist_changes": 0,
+  "scanner": "v8.30.1",
+  "image_digest": "sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f",
+  "config_sha256": "5f7ecc6da3f18bcfbc773d09b338c584580a34fb81fd4a119c76aa872009a3f6",
+  "new_receipt_findings": {
+    "total": 5,
+    "rule": "generic-api-key",
+    "classification": "harmless_false_positive",
+    "reason": "Five independently verified log/source SHA256 checksums had api-bearing file names on the same JSON line",
+    "fix": "Separate file path/name and SHA256 into different fields; preserve all checksum values",
+    "allowlist_changes": 0
+  },
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

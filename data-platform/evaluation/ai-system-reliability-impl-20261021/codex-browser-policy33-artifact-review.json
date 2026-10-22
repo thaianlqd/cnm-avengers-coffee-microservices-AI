@@ -1,0 +1,106 @@
+{
+  "passed": true,
+  "reports": 12,
+  "charts": 59,
+  "chart_key_facts": 136,
+  "immutable_artifact_pages_fetched": 52,
+  "cases": [
+    {
+      "case": "ranking-focused",
+      "session_id": "e25918b6-a901-417f-8f06-97a9eade9b92",
+      "revision": 1,
+      "charts": 4,
+      "facts": 8,
+      "critical_failures": []
+    },
+    {
+      "case": "compare-focused",
+      "session_id": "4a1e7a57-051a-4112-94a4-808fc6ad7a60",
+      "revision": 1,
+      "charts": 3,
+      "facts": 6,
+      "critical_failures": []
+    },
+    {
+      "case": "risk_watch-focused",
+      "session_id": "8ae1b001-d272-4478-b736-7e0e2a506faa",
+      "revision": 1,
+      "charts": 6,
+      "facts": 18,
+      "critical_failures": []
+    },
+    {
+      "case": "trend-focused",
+      "session_id": "401164f3-a736-4a60-8f63-1f0e6f79e6a8",
+      "revision": 1,
+      "charts": 2,
+      "facts": 4,
+      "critical_failures": []
+    },
+    {
+      "case": "ranking-deep",
+      "session_id": "653ee25a-392a-40d0-b185-77b81c881c93",
+      "revision": 1,
+      "charts": 5,
+      "facts": 10,
+      "critical_failures": []
+    },
+    {
+      "case": "compare-deep",
+      "session_id": "1b2580d0-8e2f-47f1-bae5-ef45a364696c",
+      "revision": 1,
+      "charts": 4,
+      "facts": 8,
+      "critical_failures": []
+    },
+    {
+      "case": "risk_watch-deep",
+      "session_id": "fabc0b5e-fb1d-4293-9285-13d0ad84999d",
+      "revision": 1,
+      "charts": 6,
+      "facts": 18,
+      "critical_failures": []
+    },
+    {
+      "case": "trend-deep",
+      "session_id": "8df77bdd-a473-488c-84f3-6fa952751b3f",
+      "revision": 1,
+      "charts": 4,
+      "facts": 8,
+      "critical_failures": []
+    },
+    {
+      "case": "ranking-comprehensive",
+      "session_id": "c28d7f3b-c61f-4d7d-a12b-5d5d9c7a30a4",
+      "revision": 1,
+      "charts": 7,
+      "facts": 14,
+      "critical_failures": []
+    },
+    {
+      "case": "compare-comprehensive",
+      "session_id": "2e1ab373-6c0a-4f74-b201-766336b858fd",
+      "revision": 1,
+      "charts": 6,
+      "facts": 12,
+      "critical_failures": []
+    },
+    {
+      "case": "risk_watch-comprehensive",
+      "session_id": "ab4a3211-45a2-4b60-9019-8026c335205a",
+      "revision": 1,
+      "charts": 6,
+      "facts": 18,
+      "critical_failures": []
+    },
+    {
+      "case": "trend-comprehensive",
+      "session_id": "8b82dad7-a428-41e5-93ee-6cad2ba7e106",
+      "revision": 1,
+      "charts": 6,
+      "facts": 12,
+      "critical_failures": []
+    }
+  ],
+  "scope": "Numeric facts independently recomputed from complete immutable same-revision artifacts, not a warehouse data-truth assertion. Warehouse SQL oracles reviewed separately. No AI or analytical SQL requested by this review."
+}

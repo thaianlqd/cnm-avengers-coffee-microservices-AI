@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { TableMetadata } from '../types';
+import { Pagination, usePagination } from '../components/Pagination';
 
 export const DataExplorerView: React.FC = () => {
   const { 
     tables, 
     sampleQueries, 
     fetchTables, 
+    dataErrors,
+    isLoadingTables,
     activeSql, 
     setActiveSql, 
     runQuery, 
@@ -33,6 +36,11 @@ export const DataExplorerView: React.FC = () => {
     (t.columns || []).some(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const tablePage = usePagination(filteredTables,10,searchTerm);
+  const resultPage = usePagination(queryResult?.data || [],25,queryResult);
+  const historyPage = usePagination(queryHistory,5,queryHistory);
+  const samplePage = usePagination(sampleQueries,5);
+
   const categoryOrder: Record<string, number> = {
     'Bán hàng & Đơn hàng': 1,
     'Thực đơn & Sản phẩm': 2,
@@ -41,7 +49,7 @@ export const DataExplorerView: React.FC = () => {
     'Báo cáo tổng hợp': 5,
   };
 
-  const categoryGroups = filteredTables.reduce((acc: Record<string, TableMetadata[]>, table) => {
+  const categoryGroups = tablePage.items.reduce((acc: Record<string, TableMetadata[]>, table) => {
     const cat = table.category || (table.schema === 'gold' ? 'Báo cáo tổng hợp' : 'Dữ liệu vận hành');
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(table);
@@ -87,6 +95,9 @@ export const DataExplorerView: React.FC = () => {
   };
 
   const lineCount = activeSql ? activeSql.split('\n').length : 1;
+
+  if(dataErrors.tables)return <section role="alert" className="rounded-xl border border-amber-200 bg-white p-6"><h1 className="font-semibold">Khám phá dữ liệu chưa khả dụng</h1><p className="mt-2">{dataErrors.tables}</p><p className="mt-2 text-sm text-slate-500">SQL Explorer cần quyền riêng và cấu hình quản trị của máy chủ.</p><button className="mt-4 underline" onClick={()=>fetchTables()}>Thử lại</button></section>;
+  if(isLoadingTables)return <section role="status" className="p-6">Đang tải danh mục dữ liệu…</section>;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-8">
@@ -210,6 +221,7 @@ export const DataExplorerView: React.FC = () => {
             })
           )}
         </div>
+        <Pagination {...tablePage} label="Danh mục bảng" noun="bảng" />
       </div>
 
       {/* RIGHT COLUMN: SQL Editor & Results */}
@@ -291,9 +303,9 @@ export const DataExplorerView: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'saved' && (
+          {activeTab === 'saved' && (<><Pagination {...samplePage} label="Câu lệnh mẫu" sizes={[5,10,25]} />
             <div className="p-3 bg-slate-900 min-h-[220px] max-h-72 overflow-y-auto space-y-2">
-              {sampleQueries.map((item, idx) => (
+              {samplePage.items.map((item, idx) => (
                 <div
                   key={idx}
                   className="p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 flex items-center justify-between hover:bg-slate-800 transition-colors"
@@ -314,15 +326,15 @@ export const DataExplorerView: React.FC = () => {
                   </button>
                 </div>
               ))}
-            </div>
+            </div></>
           )}
 
-          {activeTab === 'history' && (
+          {activeTab === 'history' && (<><Pagination {...historyPage} label="Lịch sử truy vấn" sizes={[5,10,25]} />
             <div className="p-3 bg-slate-900 min-h-[220px] max-h-72 overflow-y-auto space-y-2">
               {queryHistory.length === 0 ? (
                 <div className="text-xs text-slate-400 text-center py-8">Chưa có lịch sử câu lệnh nào</div>
               ) : (
-                queryHistory.map((h, idx) => (
+                historyPage.items.map((h, idx) => (
                   <div key={idx} className="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700/60 flex items-center justify-between text-xs">
                     <div className="min-w-0 flex-1 pr-3">
                       <div className="font-mono text-slate-300 truncate text-[11px]">{h.sql}</div>
@@ -343,7 +355,7 @@ export const DataExplorerView: React.FC = () => {
                   </div>
                 ))
               )}
-            </div>
+            </div></>
           )}
         </div>
 
@@ -407,10 +419,10 @@ export const DataExplorerView: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {queryResult.data.map((row, rIdx) => (
+                    {resultPage.items.map((row, rIdx) => (
                       <tr key={rIdx} className="hover:bg-slate-50/70 transition-colors">
                         <td className="px-3 py-2 text-slate-400 font-mono text-[10px] text-center">
-                          {rIdx + 1}
+                          {resultPage.offset + rIdx + 1}
                         </td>
                         {queryResult.columns.map((col, cIdx) => (
                           <td key={cIdx} className="px-3.5 py-2 text-slate-700 font-mono whitespace-nowrap text-[11px]">
@@ -427,10 +439,11 @@ export const DataExplorerView: React.FC = () => {
             )}
           </div>
 
+          {queryResult && !queryResult.error && <Pagination {...resultPage} label="Kết quả truy vấn" noun="dòng đã tải" sizes={[25,50,100]} />}
           {/* Footer status */}
           <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 text-[11px] text-slate-400 flex justify-between items-center flex-shrink-0">
             <span>Cuộn ngang và dọc để xem chi tiết</span>
-            <span>{queryResult ? `${queryResult.count} bản ghi` : '0 bản ghi'}</span>
+            <span>{queryResult ? `${queryResult.data.length} dòng đã tải` : '0 bản ghi'}</span>
           </div>
         </div>
       </div>

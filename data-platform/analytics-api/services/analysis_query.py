@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import math
+import json
 from datetime import date, datetime
 from decimal import Decimal
 from copy import deepcopy
@@ -22,6 +23,7 @@ from services.sql_service import (
 )
 from services.metadata_service import is_sensitive_column
 from services.analytical_capacity_planner import AnalyticalCapacityContract
+from services.cohort_rollup_service import cohort_rollup
 
 
 def build_plans(grounded, catalog):
@@ -200,6 +202,7 @@ def build_plans(grounded, catalog):
                 + dimensions
                 + metrics
                 + (["rank_position"] if rank and rank.per_group else [])
+                + (list(TIE_CENSUS) if rank and not rank.per_group and rank.tie_census else [])
             )
             orders = (
                 [{"field": d, "direction": "ASC"} for d in rank.per_group]
@@ -434,6 +437,13 @@ def compile_sql(plan, grounded, catalog):
                     + tie
                 )
             )
+        elif plan.ranking.tie_census:
+            # Window counts run over the complete aggregated population BEFORE the Top N limit.
+            projected = (["period"] if plan.kind == "trend" else []) + plan.dimensions + plan.metrics
+            fields = ", ".join(_ident(f) for f in projected)
+            metric = _ident(plan.ranking.metric)
+            query = (f"WITH aggregate_rows AS ({query}) SELECT {fields}, COUNT(*) OVER (PARTITION BY {metric}) AS rank_tie_count, "
+                     f"COUNT(*) OVER () AS rank_population_count FROM aggregate_rows ORDER BY " + ", ".join([order] + tie))
         else:
             query += " ORDER BY " + ", ".join([order] + tie)
     elif plan.kind == "trend":
@@ -451,6 +461,143 @@ def compile_sql(plan, grounded, catalog):
         else plan.row_limit + 1
     )
     return query + " LIMIT " + str(sql_limit)
+
+
+def validate_ranked_cohorts(artifacts):
+    """Validate full artifacts against the selected Top N, including tie keys."""
+    for artifact in artifacts.values():
+        ref=getattr(artifact.query,'cohort_query_id',None)
+        if not ref:continue
+        parent=artifacts.get(ref)
+        if not parent or not parent.result or not artifact.result:
+            raise AnalysisError('result_contract','Selected ranking cohort unavailable')
+        def keys(value):
+            return {json.dumps([row[d] for d in parent.plan.dimensions],ensure_ascii=False,default=str)
+                for row in value.result['rows']}
+        if parent.plan.dimensions!=artifact.plan.dimensions or keys(parent)!=keys(artifact):
+            raise AnalysisError('result_contract','Companion keys differ from selected ranking cohort')
+
+
+def validate_cohort_scoped(artifacts, tolerance=1e-6):
+    """Independent check of I01: a cohort-scoped view of the ranked metric adds up to
+    exactly the ranked cohort total; anything else is a scope leak."""
+    for artifact in artifacts.values():
+        ref = getattr(artifact.query, 'cohort_scope_query_id', None)
+        if not ref:
+            continue
+        parent = artifacts.get(ref)
+        if not parent or not parent.result or not artifact.result or not parent.plan.ranking:
+            raise AnalysisError('result_contract', 'Ranked cohort of a scoped view is unavailable')
+        metric = parent.plan.ranking.metric
+        if metric not in artifact.plan.metrics:
+            continue
+        if not artifact.grounded.metrics[metric].get('additive'):
+            continue  # Ratios/averages cannot be checked by summing group values.
+        total = lambda rows: sum(row.get(metric) or 0 for row in rows)
+        expected, observed = total(parent.result['rows']), total(artifact.result['rows'])
+        if abs(expected - observed) > tolerance * max(1.0, abs(expected)) and len(artifact.result['rows']) < (artifact.plan.row_limit or 10**9):
+            raise AnalysisError('result_contract', 'Scoped view total differs from its ranked cohort')
+
+
+def compile_cohort_scoped(plan, inner_plan, inner_sql, parent, catalog):
+    """Restrict a supporting view to the entities a Top/Bottom N selected (I01).
+
+    The inner query is the existing compiler output of the same view with the
+    ranked dimensions added to its grouping. Rows are kept only for the ranked
+    keys, then re-aggregated to the view's own grain. Non-additive metrics require
+    declared additive components with exactly the same population and clock.
+    """
+    rank_dims = list(parent.plan.dimensions)
+    if (not parent.plan.ranking or parent.plan.ranking.per_group or parent.query.role != 'requested'
+            or not rank_dims or plan.source != inner_plan.source or plan.period != inner_plan.period
+            or not set(rank_dims) <= set(inner_plan.dimensions)
+            or any(not cohort_rollup(catalog, m) for m in plan.metrics)
+            or not validate_sql(parent.sql, parent.plan, parent.grounded, catalog).valid):
+        raise AnalysisError('query_scope', 'Supporting view cannot be restricted to the ranked cohort')
+    base = sqlglot.parse_one(inner_sql, read='postgres')
+    base.set('limit', None); base.set('order', None)
+    # Both inner statements come from the compiler and may reuse aliases (t0, t1)
+    # for different tables; the cohort copy gets its own alias namespace.
+    ranked = sqlglot.parse_one(parent.sql, read='postgres')
+    for node in ranked.find_all(sqlglot.exp.Table):
+        if node.alias:
+            node.set('alias', sqlglot.exp.TableAlias(this=sqlglot.exp.to_identifier('rc_' + node.alias)))
+    for node in ranked.find_all(sqlglot.exp.Column):
+        if node.table:
+            node.set('table', sqlglot.exp.to_identifier('rc_' + node.table))
+    if any(cohort_rollup(catalog, m).get('raw_population') for m in plan.metrics):
+        # DISTINCT populations can overlap across the ranked members. Insert
+        # membership before aggregation, preserving the compiler's fact source,
+        # fanout-safe joins, business filters, clock and NULL semantics.
+        projections = {e.alias_or_name: e.this for e in base.expressions if isinstance(e, exp.Alias)}
+        if not all(d in projections for d in rank_dims):
+            raise AnalysisError('query_scope', 'Ranked keys have no grounded raw expressions')
+        join = ' AND '.join('('+projections[d].sql(dialect='postgres')+' = r.'+_ident(d)
+            +' OR ('+projections[d].sql(dialect='postgres')+' IS NULL AND r.'+_ident(d)+' IS NULL))' for d in rank_dims)
+        # The validated, non-partitioned ranking groups by exactly these keys,
+        # so this inner join has at most one match per fact row. It filters raw
+        # membership without either summing DISTINCT counts or widening SQL's
+        # existing expression/function allowlist.
+        membership = exp.Join(this=exp.Table(this=exp.to_identifier('ranked_cohort'),
+            alias=exp.TableAlias(this=exp.to_identifier('r'))), on=sqlglot.parse_one(join, read='postgres'))
+        base.set('joins', [*(base.args.get('joins') or []), membership])
+        extra = set(inner_plan.dimensions) - set(plan.dimensions)
+        base.set('expressions', [e for e in base.expressions if e.alias_or_name in plan.output_columns])
+        group = base.args.get('group')
+        if group:
+            kept = [g for g in group.expressions if not any(g == projections[d] for d in extra)]
+            base.set('group', exp.Group(expressions=kept) if kept else None)
+        order = ', '.join(_ident(o['field'])+' '+o['direction']+' NULLS LAST' for o in plan.order_by)
+        sql = ('WITH ranked_cohort AS ('+ranked.sql(dialect='postgres')+') '+base.sql(dialect='postgres')
+               + (' ORDER BY '+order if order else '')+(f' LIMIT {plan.row_limit}' if plan.row_limit else ''))
+        tables = {p.source for p in (inner_plan, parent.plan)} | {j['to_table'] for p in (inner_plan, parent.plan) for j in p.joins}
+        policy = {t: set(catalog.policy['tables'][t]) for t in tables}
+        validate_read_only_sql(sql); validate_ai_query_scope(sql, policy); validate_sql_ast_security(sql, policy)
+        return sql
+    keys = [f for f in plan.output_columns if f not in plan.metrics]
+    fields = ', '.join(['s.' + _ident(f) for f in keys] +
+        [cohort_rollup(catalog, m)['expression'].sql(dialect='postgres') + ' AS ' + _ident(m) for m in plan.metrics])
+    join = ' AND '.join('(s.' + _ident(d) + ' = r.' + _ident(d) + ' OR (s.' + _ident(d) + ' IS NULL AND r.' + _ident(d) + ' IS NULL))'
+                        for d in rank_dims)
+    order = ', '.join(_ident(o['field']) + ' ' + o['direction'] + ' NULLS LAST' for o in plan.order_by)
+    sql = (f'WITH scoped_rows AS ({base.sql(dialect="postgres")}), ranked_cohort AS ({ranked.sql(dialect="postgres")}) '
+           f'SELECT {fields} FROM scoped_rows AS s JOIN ranked_cohort AS r ON {join}'
+           + (' GROUP BY ' + ', '.join('s.' + _ident(f) for f in keys) if keys else '')
+           + (' ORDER BY ' + order if order else '') + (f' LIMIT {plan.row_limit}' if plan.row_limit else ''))
+    tables = {p.source for p in (inner_plan, parent.plan)} | {j['to_table'] for p in (inner_plan, parent.plan) for j in p.joins}
+    policy = {t: set(catalog.policy['tables'][t]) for t in tables}
+    validate_read_only_sql(sql); validate_ai_query_scope(sql, policy); validate_sql_ast_security(sql, policy)
+    return sql
+
+
+def compile_ranked_companion(plan, grounded, parent, catalog):
+    """Intersect two catalog aggregates on selected keys, preserving populations.
+
+    Both inner SELECTs come from the existing compiler. The companion aggregate
+    is unbounded inside SQL, then restricted by the parent's bounded Top N;
+    applying its limit before the intersection would select arbitrary entities.
+    """
+    if (not parent.plan.ranking or parent.plan.ranking.per_group or parent.query.cohort_query_id
+            or parent.query.role != 'requested' or plan.kind != 'aggregate'
+            or not plan.dimensions or plan.dimensions != parent.plan.dimensions
+            or plan.source != parent.plan.source or plan.subject != parent.plan.subject
+            or plan.time_column != parent.plan.time_column or plan.period != parent.plan.period
+            or not plan.explicit_limit or plan.row_limit != parent.plan.ranking.top_n
+            or not validate_sql(parent.sql,parent.plan,parent.grounded,catalog).valid):
+        raise AnalysisError('query_scope','Ranked companion must preserve its selected entity cohort')
+    base=sqlglot.parse_one(compile_sql(plan,grounded,catalog),read='postgres')
+    base.set('limit',None);base.set('order',None)
+    fields=', '.join('c.'+_ident(f) for f in plan.output_columns)
+    keys=' AND '.join('(c.'+_ident(d)+' = r.'+_ident(d)+' OR (c.'+_ident(d)+' IS NULL AND r.'+_ident(d)+' IS NULL))'
+        for d in plan.dimensions)
+    order=', '.join('c.'+_ident(o['field'])+' '+o['direction']+' NULLS LAST' for o in plan.order_by)
+    sql=(f'WITH companion_rows AS ({base.sql(dialect="postgres")}), ranked_cohort AS ({parent.sql}) '
+         f'SELECT {fields} FROM companion_rows AS c JOIN ranked_cohort AS r ON {keys}'
+         +(' ORDER BY '+order if order else '')+f' LIMIT {plan.row_limit}')
+    tables={p.source for p in (plan,parent.plan)} | {j['to_table'] for p in (plan,parent.plan) for j in p.joins}
+    policy={t:set(catalog.policy['tables'][t]) for t in tables}
+    validate_read_only_sql(sql);validate_ai_query_scope(sql,policy);validate_sql_ast_security(sql,policy)
+    return sql
 
 
 def validate_sql(sql, plan, grounded, catalog):
@@ -510,6 +657,9 @@ def validate_sql(sql, plan, grounded, catalog):
         )
 
 
+TIE_CENSUS = ('rank_tie_count', 'rank_population_count')
+
+
 def validate_results(result, plan, grounded, catalog):
     errors = []
     rows = result.get("rows", [])
@@ -518,6 +668,7 @@ def validate_results(result, plan, grounded, catalog):
         + plan.metrics
         + (["period"] if plan.kind == "trend" else [])
         + (["rank_position"] if plan.ranking and plan.ranking.per_group else [])
+        + (list(TIE_CENSUS) if plan.ranking and not plan.ranking.per_group and plan.ranking.tie_census else [])
     )
     if result.get("truncated") or len(rows) > plan.row_limit:
         errors.append("Result population exceeds the supported row contract")
@@ -644,6 +795,15 @@ def validate_results(result, plan, grounded, catalog):
                 r.get("rank_position") for r in batch
             ] != list(range(1, len(batch) + 1)):
                 errors.append("Invalid per-group rank positions")
+            if plan.ranking.tie_census and not plan.ranking.per_group:
+                counts = [r.get("rank_tie_count") for r in batch]
+                population = {r.get("rank_population_count") for r in batch}
+                if (len(population) > 1 or any(not isinstance(c, int) or c < 1 for c in counts)
+                        or any(not isinstance(p, int) or p < len(batch) for p in population)
+                        or any(counts[i] != counts[j] for i in range(len(batch)) for j in range(len(batch))
+                               if values[i] == values[j])
+                        or any(c < sum(1 for v in values if v == values[i]) for i, c in enumerate(counts))):
+                    errors.append("Invalid ranking tie census")
     if plan.kind == "trend":
         values = [str(r.get("period")) for r in rows]
         if values != sorted(values):

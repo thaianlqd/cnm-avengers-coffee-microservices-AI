@@ -1,0 +1,3277 @@
+{
+  "version": "3.4.0",
+  "reference_date": "2026-10-16",
+  "origin": "Authored offline normalized reference meanings for frozen120 cases; no LLM inference or historical provider capture claim. IDs map to the original frozen corpus without changing it.",
+  "cases": [
+    {
+      "id": "V34-001",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Xin tổng hợp doanh thu tháng 9 năm 2026 giúp tôi.",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-002",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Tháng 9/2026 ghi nhận bao nhiêu doanh thu?",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-003",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Cho mình xem số đơn hàng trong tháng 9 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-004",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "aov"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Giá trị đơn trung bình của tháng 9 năm 2026 là bao nhiêu?",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-005",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Tóm tắt lượng bán sản phẩm trong tháng 9 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-006",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Báo cáo doanh thu toàn hệ thống tháng 8 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-007",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Mình cần thống kê doanh thu theo thành phố trong quý 3 năm 2026.",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-008",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Có thể cho biết tổng số đơn tháng 8 năm 2026 không?",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-009",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Hãy xem doanh thu của tháng 7 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 7,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        }
+      }
+    },
+    {
+      "id": "V34-010",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Tổng hợp doanh thu và số đơn trong quý 3 năm 2026.",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-011",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-012",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-013",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-014",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-015",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-016",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-017",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-018",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-019",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu theo thành phố; số đơn theo loại đơn trong tháng 9 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          },
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [
+              "order_type"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r2",
+            "goal": "Doanh thu theo thành phố; số đơn theo loại đơn trong tháng 9 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "r2": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-020",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu tháng 8 năm 2026; giá trị đơn trung bình theo chi nhánh.",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          },
+          {
+            "metric_ids": [
+              "aov"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r2",
+            "goal": "Doanh thu tháng 8 năm 2026; giá trị đơn trung bình theo chi nhánh.",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        },
+        "r2": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-021",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count",
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Số đơn và doanh thu theo từng chi nhánh tháng 7 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 7,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        }
+      }
+    },
+    {
+      "id": "V34-022",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "derived_features": [],
+            "granularity": "month",
+            "id": "r1",
+            "goal": "Doanh thu theo tháng và số đơn theo tuần trong quý 3 năm 2026.",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          },
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "derived_features": [],
+            "granularity": "week",
+            "id": "r2",
+            "goal": "Doanh thu theo tháng và số đơn theo tuần trong quý 3 năm 2026.",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        },
+        "r2": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-023",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_count",
+              "aov"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu, số đơn, AOV tháng 8 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-024",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "order_type"
+            ],
+            "analysis_kind": "distribution",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Cơ cấu doanh thu theo loại đơn và AOV theo thành phố tháng 8 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          },
+          {
+            "metric_ids": [
+              "aov"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r2",
+            "goal": "Cơ cấu doanh thu theo loại đơn và AOV theo thành phố tháng 8 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        },
+        "r2": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-025",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_cancellation_rate"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Tỷ lệ hủy theo thành phố; doanh thu theo ngày trong tháng 9 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          },
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "derived_features": [],
+            "granularity": "day",
+            "id": "r2",
+            "goal": "Tỷ lệ hủy theo thành phố; doanh thu theo ngày trong tháng 9 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "r2": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-026",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Tổng doanh thu Hà Nội và số đơn Hồ Chí Minh trong tháng 8 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          },
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "id": "r2",
+            "goal": "Tổng doanh thu Hà Nội và số đơn Hồ Chí Minh trong tháng 8 năm 2026.",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        },
+        "r2": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-027",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-028",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-029",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-030",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-031",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-032",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-033",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-034",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-035",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hồ Chí Minh",
+                  "Cần Thơ",
+                  "Bình Dương",
+                  "Đồng Nai",
+                  "Bà Rịa - Vũng Tàu",
+                  "Kiên Giang"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Tổng doanh thu miền Nam tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-036",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hải Phòng",
+                  "Bắc Ninh",
+                  "Quảng Ninh"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Doanh thu phía Bắc trong quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-037",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Đà Nẵng",
+                  "Nghệ An",
+                  "Thanh Hóa",
+                  "Thừa Thiên - Huế",
+                  "Khánh Hòa",
+                  "Lâm Đồng"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Doanh thu miền Trung và Tây Nguyên tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-038",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Cần Thơ",
+                  "Bình Dương",
+                  "Đồng Nai",
+                  "Bà Rịa - Vũng Tàu",
+                  "Kiên Giang"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Doanh thu Nam Bộ trừ Hồ Chí Minh tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-039",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hồ Chí Minh",
+                  "Cần Thơ",
+                  "Bình Dương",
+                  "Đồng Nai",
+                  "Bà Rịa - Vũng Tàu",
+                  "Kiên Giang",
+                  "Hà Nội"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Doanh thu miền Nam và Hà Nội quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-040",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hồ Chí Minh",
+                  "Bình Dương",
+                  "Đồng Nai",
+                  "Bà Rịa - Vũng Tàu"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Doanh thu Đông Nam Bộ tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-041",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Cần Thơ",
+                  "Kiên Giang"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Doanh thu Tây Nam Bộ trong tháng 7 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 7,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        }
+      }
+    },
+    {
+      "id": "V34-042",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [
+              "group_gap"
+            ],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "So sánh doanh thu Hà Nội với Hồ Chí Minh tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-043",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hải Phòng",
+                  "Bắc Ninh",
+                  "Quảng Ninh"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Doanh thu miền Bắc trừ Hà Nội tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-044",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hồ Chí Minh",
+                  "Cần Thơ",
+                  "Bình Dương",
+                  "Đồng Nai",
+                  "Bà Rịa - Vũng Tàu",
+                  "Kiên Giang"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Số đơn miền Nam tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-045",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Đà Nẵng",
+                  "Cần Thơ"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Doanh thu Đà Nẵng và Cần Thơ tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-046",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "ranking",
+            "derived_features": [],
+            "ranking": {
+              "direction": "top",
+              "limit": 3,
+              "per_group": [
+                "reporting_region"
+              ]
+            },
+            "id": "r1",
+            "goal": "Top 3 chi nhánh theo doanh thu trong mỗi miền tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-047",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu tháng 9 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-048",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-049",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Số đơn tháng 7 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 7,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        }
+      }
+    },
+    {
+      "id": "V34-050",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-051",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu 14 ngày qua",
+            "time": {
+              "kind": "range",
+              "start": "2026-10-03",
+              "end": "2026-10-16"
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-10-03",
+          "end": "2026-10-16"
+        }
+      }
+    },
+    {
+      "id": "V34-052",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Số đơn 30 ngày gần nhất",
+            "time": {
+              "kind": "range",
+              "start": "2026-09-17",
+              "end": "2026-10-16"
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-17",
+          "end": "2026-10-16"
+        }
+      }
+    },
+    {
+      "id": "V34-053",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu từ 2026-09-01 đến 2026-09-15",
+            "time": {
+              "kind": "range",
+              "start": "2026-09-01",
+              "end": "2026-09-15"
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-15"
+        }
+      }
+    },
+    {
+      "id": "V34-054",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu ngày 15/09/2026",
+            "time": {
+              "kind": "range",
+              "start": "2026-09-15",
+              "end": "2026-09-15"
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-15",
+          "end": "2026-09-15"
+        }
+      }
+    },
+    {
+      "id": "V34-055",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu năm 2025",
+            "time": {
+              "kind": "year",
+              "year": 2025
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2025-01-01",
+          "end": "2025-12-31"
+        }
+      }
+    },
+    {
+      "id": "V34-056",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu quý trước",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-057",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "ranking",
+            "derived_features": [],
+            "ranking": {
+              "limit": 3
+            },
+            "id": "r1",
+            "goal": "Top 3 chi nhánh theo doanh thu tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-058",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "ranking",
+            "derived_features": [],
+            "ranking": {
+              "limit": 7
+            },
+            "id": "r1",
+            "goal": "Top 7 chi nhánh theo số đơn tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-059",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "ranking",
+            "derived_features": [],
+            "ranking": {
+              "limit": 5
+            },
+            "id": "r1",
+            "goal": "5 thành phố doanh thu cao nhất quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-060",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "derived_features": [],
+            "ranking": {
+              "limit": 10
+            },
+            "id": "r1",
+            "goal": "Top 10 sản phẩm theo số lượng bán tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-061",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "order_type"
+            ],
+            "analysis_kind": "ranking",
+            "derived_features": [],
+            "ranking": {
+              "limit": 3
+            },
+            "id": "r1",
+            "goal": "Top 3 loại đơn theo doanh thu tháng 7 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 7,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        }
+      }
+    },
+    {
+      "id": "V34-062",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "ranking",
+            "derived_features": [],
+            "ranking": {
+              "limit": 2,
+              "per_group": [
+                "reporting_region"
+              ]
+            },
+            "id": "r1",
+            "goal": "Top 2 chi nhánh theo doanh thu mỗi miền quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-063",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [
+              "group_gap"
+            ],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "So sánh doanh thu Hà Nội và Hồ Chí Minh quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-064",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [
+              "group_gap"
+            ],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Cần Thơ"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "So sánh số đơn Hà Nội và Cần Thơ tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-065",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "id": "r1",
+            "goal": "So sánh doanh thu tháng 8 với tháng 9 năm 2026",
+            "filters": []
+          },
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "id": "r2",
+            "goal": "So sánh doanh thu tháng 8 với tháng 9 năm 2026",
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        },
+        "r2": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-066",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "aov"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "So sánh AOV theo chi nhánh tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-067",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "order_type"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "So sánh doanh thu theo loại đơn quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-068",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "reporting_region"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "reporting_region",
+                "operator": "in",
+                "value": [
+                  "Miền Bắc",
+                  "Miền Nam"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "So sánh doanh thu miền Bắc với miền Nam tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-069",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_count"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "So sánh doanh thu và số đơn giữa các thành phố tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-070",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_cancellation_rate"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "So sánh tỷ lệ hủy theo thành phố quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-071",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "derived_features": [],
+            "granularity": "day",
+            "id": "r1",
+            "goal": "Xu hướng doanh thu theo ngày trong tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-072",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "derived_features": [],
+            "granularity": "week",
+            "id": "r1",
+            "goal": "Diễn biến số đơn theo tuần trong quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-073",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "aov"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "derived_features": [],
+            "granularity": "month",
+            "time": {
+              "kind": "year",
+              "year": 2026
+            },
+            "id": "r1",
+            "goal": "Xu hướng AOV theo tháng trong năm 2026",
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-01-01",
+          "end": "2026-12-31"
+        }
+      }
+    },
+    {
+      "id": "V34-074",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "derived_features": [],
+            "granularity": "week",
+            "time": {
+              "kind": "rolling",
+              "amount": 90,
+              "unit": "day"
+            },
+            "id": "r1",
+            "goal": "Doanh thu thay đổi theo tuần trong 90 ngày qua",
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-19",
+          "end": "2026-10-16"
+        }
+      }
+    },
+    {
+      "id": "V34-075",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_cancellation_rate"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "derived_features": [],
+            "granularity": "week",
+            "id": "r1",
+            "goal": "Xu hướng tỷ lệ hủy theo tuần trong quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-076",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-077",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "forecast": {
+              "horizon": 2,
+              "unit": "month"
+            },
+            "time": {
+              "kind": "relative",
+              "mode": "all_time"
+            },
+            "id": "r1",
+            "goal": "Dự báo doanh thu 2 tháng tiếp theo",
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": null,
+          "end": null
+        }
+      }
+    },
+    {
+      "id": "V34-078",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "forecast": {
+              "horizon": 2,
+              "unit": "month"
+            },
+            "time": {
+              "kind": "relative",
+              "mode": "all_time"
+            },
+            "id": "r1",
+            "goal": "Dự báo số đơn 2 tháng tới",
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": null,
+          "end": null
+        }
+      }
+    },
+    {
+      "id": "V34-079",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "forecast": {
+              "horizon": 7,
+              "unit": "day"
+            },
+            "time": {
+              "kind": "relative",
+              "mode": "all_time"
+            },
+            "id": "r1",
+            "goal": "Dự báo doanh thu trong 7 ngày tới",
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": null,
+          "end": null
+        }
+      }
+    },
+    {
+      "id": "V34-080",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "forecast": {
+              "horizon": 6,
+              "unit": "month"
+            },
+            "time": {
+              "kind": "relative",
+              "mode": "all_time"
+            },
+            "id": "r1",
+            "goal": "Dự báo doanh thu 6 tháng tới",
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": null,
+          "end": null
+        }
+      }
+    },
+    {
+      "id": "V34-081",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-082",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-083",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-084",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-085",
+      "expected_decision": "REDIRECT",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-086",
+      "expected_decision": "REDIRECT",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-087",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_cancellation_rate"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Tỷ lệ hủy đơn theo chi nhánh tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-088",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "late_shift_rate"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Tỷ lệ đi trễ của nhân viên tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-089",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "delivery_success_rate"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Tỷ lệ giao thành công theo thành phố quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-090",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "large_cash_discrepancy_shift_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Số ca chênh lệch tiền mặt lớn tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-091",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_cancellation_rate"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "relationship",
+            "derived_features": [
+              "relationship_strength"
+            ],
+            "id": "r1",
+            "goal": "Tương quan doanh thu với tỷ lệ hủy theo chi nhánh tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-092",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_cancellation_rate"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "relationship",
+            "derived_features": [
+              "relationship_strength"
+            ],
+            "id": "r1",
+            "goal": "Quan hệ giữa doanh thu và tỷ lệ hủy theo chi nhánh quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-093",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-094",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-095",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_cancellation_rate"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "relationship",
+            "derived_features": [
+              "relationship_strength"
+            ],
+            "id": "r1",
+            "goal": "Doanh thu và tỷ lệ hủy có mối liên hệ gì theo chi nhánh tháng 8 năm 2026?",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-096",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_cancellation_rate"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "relationship",
+            "derived_features": [
+              "relationship_strength"
+            ],
+            "id": "r1",
+            "goal": "So sánh mức liên hệ doanh thu với tỷ lệ hủy theo chi nhánh tháng 7 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 7,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        }
+      }
+    },
+    {
+      "id": "V34-097",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu và số đơn tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-098",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_count",
+              "aov"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "derived_features": [],
+            "granularity": "day",
+            "id": "r1",
+            "goal": "Doanh thu, số đơn và AOV theo ngày tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-099",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "aov",
+              "order_cancellation_rate"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Giá trị đơn trung bình và tỷ lệ hủy theo thành phố tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-100",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue",
+              "order_completion_rate"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu và tỷ lệ hoàn thành đơn tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-101",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "quantity_sold",
+              "product_revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Số lượng bán và doanh thu sản phẩm quý 3 năm 2026",
+            "time": {
+              "kind": "quarter",
+              "quarter": 3,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-07-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-102",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "late_count",
+              "late_shift_rate"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Số ca đi trễ và tỷ lệ đi trễ tháng 8 năm 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-103",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-104",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-105",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-106",
+      "expected_decision": "CLARIFY",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-107",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Doanh thu thang 8 nam 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-108",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "So don hang thang 9 nam 2026",
+            "time": {
+              "kind": "month",
+              "month": 9,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-109",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "aov"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "id": "r1",
+            "goal": "Gia tri don trung binh thang 8 nam 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-110",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hồ Chí Minh",
+                  "Cần Thơ",
+                  "Bình Dương",
+                  "Đồng Nai",
+                  "Bà Rịa - Vũng Tàu",
+                  "Kiên Giang"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "Doanh thu mien Nam thang 8 nam 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-111",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "derived_features": [
+              "group_gap"
+            ],
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "id": "r1",
+            "goal": "So sanh doanh thu Ha Noi va Ho Chi Minh thang 8 nam 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            }
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-112",
+      "expected_decision": "READY",
+      "intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "ranking",
+            "derived_features": [],
+            "ranking": {
+              "limit": 3
+            },
+            "id": "r1",
+            "goal": "Top 3 chi nhanh theo doanh thu thang 8 nam 2026",
+            "time": {
+              "kind": "month",
+              "month": 8,
+              "year": 2026
+            },
+            "filters": []
+          }
+        ]
+      },
+      "expected_periods": {
+        "r1": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-113",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-114",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-115",
+      "expected_decision": "UNSUPPORTED",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-116",
+      "expected_decision": "REDIRECT",
+      "intent": null,
+      "terminal_reason": "input_terminal"
+    },
+    {
+      "id": "V34-117",
+      "expected_decision": "READY",
+      "intent": null,
+      "terminal_reason": "request_boundary"
+    },
+    {
+      "id": "V34-118",
+      "expected_decision": "READY",
+      "intent": null,
+      "terminal_reason": "request_boundary"
+    },
+    {
+      "id": "V34-119",
+      "expected_decision": "READY",
+      "intent": null,
+      "terminal_reason": "request_boundary"
+    },
+    {
+      "id": "V34-120",
+      "expected_decision": "READY",
+      "intent": null,
+      "terminal_reason": "request_boundary"
+    }
+  ]
+}

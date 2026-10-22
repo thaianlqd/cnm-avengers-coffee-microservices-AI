@@ -1,0 +1,3 @@
+== module tests.test_v34_auth_boundary tests.test_v34_access_policy tests.test_v34_data_health tests.test_v34_query_security tests.test_v34_platform_routes tests.test_v33_identity tests.test_v33_live_regressions (log: /tmp/v34-auth-regressions/module.log)
+Ran 90 tests in 7.745s
+OK

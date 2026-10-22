@@ -1,0 +1,180 @@
+{
+  "version": "1.0.0",
+  "purpose": "Synthetic independent oracle specification for Claude implementation; no production data",
+  "period": {
+    "start": "2026-09-01",
+    "end": "2026-09-30",
+    "end_exclusive": "2026-10-01",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "source_coverage": "fixture_complete",
+  "stores": [
+    {
+      "store_id": "s-A",
+      "city_id": "A",
+      "store_label": "Quán trùng tên"
+    },
+    {
+      "store_id": "s-B",
+      "city_id": "B",
+      "store_label": "Quán B"
+    },
+    {
+      "store_id": "s-C",
+      "city_id": "C",
+      "store_label": "Quán C"
+    },
+    {
+      "store_id": "s-D",
+      "city_id": "D",
+      "store_label": "Quán D"
+    },
+    {
+      "store_id": "s-E",
+      "city_id": "E",
+      "store_label": "Quán E"
+    },
+    {
+      "store_id": "s-F",
+      "city_id": "F",
+      "store_label": "Quán trùng tên"
+    },
+    {
+      "store_id": "s-G",
+      "city_id": "G",
+      "store_label": "Quán G"
+    }
+  ],
+  "orders": [
+    {
+      "order_id": "o-01",
+      "store_id": "s-A",
+      "status": "HOAN_THANH",
+      "value": 100,
+      "payment": "COD",
+      "created_day": "2026-09-01"
+    },
+    {
+      "order_id": "o-02",
+      "store_id": "s-A",
+      "status": "DA_HUY",
+      "value": 50,
+      "payment": "COD",
+      "created_day": "2026-09-02"
+    },
+    {
+      "order_id": "o-03",
+      "store_id": "s-B",
+      "status": "HOAN_THANH",
+      "value": 200,
+      "payment": "QR",
+      "created_day": "2026-09-01"
+    },
+    {
+      "order_id": "o-04",
+      "store_id": "s-B",
+      "status": "MOI_TAO",
+      "value": 90,
+      "payment": "QR",
+      "created_day": "2026-09-02"
+    },
+    {
+      "order_id": "o-05",
+      "store_id": "s-C",
+      "status": "HOAN_THANH",
+      "value": 300,
+      "payment": "WALLET",
+      "created_day": "2026-09-02"
+    },
+    {
+      "order_id": "o-06",
+      "store_id": "s-C",
+      "status": "DANG_GIAO",
+      "value": 20,
+      "payment": "WALLET",
+      "created_day": "2026-09-03"
+    },
+    {
+      "order_id": "o-07",
+      "store_id": "s-D",
+      "status": "HOAN_THANH",
+      "value": 400,
+      "payment": "VNPAY",
+      "created_day": "2026-09-01"
+    },
+    {
+      "order_id": "o-08",
+      "store_id": "s-E",
+      "status": "HOAN_THANH",
+      "value": 500,
+      "payment": "QR",
+      "created_day": "2026-09-03"
+    },
+    {
+      "order_id": "o-09",
+      "store_id": "s-F",
+      "status": "HOAN_THANH",
+      "value": 100000,
+      "payment": "QR",
+      "created_day": "2026-09-01"
+    },
+    {
+      "order_id": "o-10",
+      "store_id": "s-A",
+      "status": "HOAN_THANH",
+      "value": 999,
+      "payment": "COD",
+      "created_day": "2026-10-01"
+    }
+  ],
+  "future_qualification_status": "NOT_EXECUTED_AGAINST_FIXED_PRODUCT",
+  "oracle": {
+    "definition": "revenue sums HOAN_THANH and DANG_GIAO; all_order_count includes all statuses; AOV denominator is valid orders only",
+    "ranked_cities": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "revenue_by_city": {
+      "A": 100,
+      "B": 200,
+      "C": 320,
+      "D": 400,
+      "E": 500
+    },
+    "selected_revenue": 1520,
+    "universe_revenue": 101520,
+    "selected_valid_orders": 6,
+    "selected_all_orders": 8,
+    "selected_aov_exact_fraction": [
+      1520,
+      6
+    ],
+    "selected_payments": {
+      "COD": 100,
+      "QR": 700,
+      "WALLET": 320,
+      "VNPAY": 400
+    },
+    "selected_daily": {
+      "2026-09-01": 700,
+      "2026-09-02": 300,
+      "2026-09-03": 520
+    },
+    "selected_store_ids": [
+      "s-A",
+      "s-B",
+      "s-C",
+      "s-D",
+      "s-E"
+    ],
+    "zero_observation_city": "G",
+    "out_of_period_order": "o-10",
+    "same_display_name_different_keys": [
+      "s-A",
+      "s-F"
+    ]
+  }
+}

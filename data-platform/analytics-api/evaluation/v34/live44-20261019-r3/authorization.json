@@ -1,0 +1,12 @@
+{
+  "approved_total": 323,
+  "prior_reserved": 263,
+  "maximum_new_reservations": 60,
+  "user_reply": "Duyệt trần tổng323, chạy full44",
+  "case_count": 44,
+  "useful_denominator": 40,
+  "full_jobs_execute": true,
+  "scope": "Existing Google Gemini primary/secondary; questions and governed semantic metadata; no raw rows/PII",
+  "ledger_sha256_before": "9056e04564899bf4100455111a398432e4431ca5b0ca9888d22a0faed39c3026",
+  "case_sha256": "5fc5eb47fd515d314c5d1d7186a9306c5c262bfac4dca3c1d1ccc206d29bda2c"
+}

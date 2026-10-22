@@ -1,0 +1,509 @@
+{
+  "checked_at": "2026-10-21T03:22:48.044805+00:00",
+  "stack": {
+    "checked_at": "2026-10-21T03:21:45.437796+00:00",
+    "mode": "read_only; existing records; no synthetic business data; no provider calls",
+    "services": [
+      "airflow | running |  | 0.0.0.0:8083->8080/tcp, [::]:8083->8080/tcp",
+      "analytics-api | running | healthy | 0.0.0.0:8502->8000/tcp, [::]:8502->8000/tcp",
+      "postgres-analytics | running | healthy | 0.0.0.0:5434->5432/tcp, [::]:5434->5432/tcp",
+      "redis-analytics | running | healthy | 0.0.0.0:6380->6379/tcp, [::]:6380->6379/tcp",
+      "web-ui | running | healthy | 0.0.0.0:8501->80/tcp, [::]:8501->80/tcp",
+      "data-sync | running |  | ",
+      "kafka | running | healthy | 0.0.0.0:9092->9092/tcp, [::]:9092->9092/tcp, 0.0.0.0:9094->9094/tcp, [::]:9094->9094/tcp",
+      "kafka-consumer | running |  | ",
+      "kafka-producer | running |  | ",
+      "kafka-ui | running |  | 0.0.0.0:8082->8080/tcp, [::]:8082->8080/tcp",
+      "minio | running | healthy | 0.0.0.0:9000-9001->9000-9001/tcp, [::]:9000-9001->9000-9001/tcp",
+      "spark-jobs | exited |  | ",
+      "zookeeper | running |  | 2181/tcp, 2888/tcp, 3888/tcp"
+    ],
+    "http": {
+      "web": {
+        "status": 200
+      },
+      "api": {
+        "status": 200
+      },
+      "kafka_ui": {
+        "status": 200
+      },
+      "airflow": {
+        "status": 200
+      },
+      "minio_api": {
+        "status": 200
+      },
+      "minio_console": {
+        "status": 200
+      }
+    },
+    "stream": {
+      "checked_at": "2026-10-21T03:21:49.527804+00:00",
+      "positions": [
+        {
+          "topic": "orders-events",
+          "partition": 0,
+          "committed": 807336,
+          "end": 810257,
+          "lag": 2921
+        },
+        {
+          "topic": "orders-events",
+          "partition": 1,
+          "committed": 814405,
+          "end": 817411,
+          "lag": 3006
+        },
+        {
+          "topic": "orders-events",
+          "partition": 2,
+          "committed": 805838,
+          "end": 808842,
+          "lag": 3004
+        },
+        {
+          "topic": "order-items-events",
+          "partition": 0,
+          "committed": 2293771,
+          "end": 2296652,
+          "lag": 2881
+        },
+        {
+          "topic": "order-items-events",
+          "partition": 1,
+          "committed": 2316196,
+          "end": 2319157,
+          "lag": 2961
+        },
+        {
+          "topic": "order-items-events",
+          "partition": 2,
+          "committed": 2286692,
+          "end": 2289489,
+          "lag": 2797
+        },
+        {
+          "topic": "shipper-events",
+          "partition": 0,
+          "committed": 154448,
+          "end": 156616,
+          "lag": 2168
+        },
+        {
+          "topic": "shipper-events",
+          "partition": 1,
+          "committed": 159412,
+          "end": 161029,
+          "lag": 1617
+        },
+        {
+          "topic": "shipper-events",
+          "partition": 2,
+          "committed": 154789,
+          "end": 156932,
+          "lag": 2143
+        }
+      ],
+      "lag_total": 23498,
+      "sample": {
+        "topic": "orders-events",
+        "partition": 0,
+        "offset": 807335,
+        "event_id": "5e51de75bf18968dadf1d233d19539c0911c7569c4afead9eadf7ae54e75deac",
+        "source_hash": "77df424e8a4c4ce157c543451a400f981d30fb92c54d8ce23d9441b7e6aa10b2",
+        "broker_bronze_sha256_matches": true,
+        "bronze_key": "streaming/orders-events/0/807335-807335.json"
+      },
+      "buckets": [
+        "avengers-bronze",
+        "avengers-gold",
+        "avengers-models",
+        "avengers-silver"
+      ],
+      "projection": {
+        "matching_events": 1,
+        "first_received_at": "2026-10-19T02:55:23.960452+00:00"
+      }
+    },
+    "redis": "PONG",
+    "sync": {
+      "started_at": "2026-10-21T03:16:18.429493+00:00",
+      "finished_at": "2026-10-21T03:19:15.011824+00:00",
+      "total_tables": 49,
+      "total_rows": 125327,
+      "status": "success"
+    },
+    "batch": {
+      "engine": "Python/Pandas; not Apache Spark",
+      "pyspark_installed": false,
+      "requested_as_of": "2026-10-21T02:43:45+00:00",
+      "published_at": "2026-10-21T02:44:55.589324+00:00",
+      "verification": {
+        "status": "passed",
+        "run_id": "run_99660297140e7b41c063fbec4b23de77",
+        "manifest_fingerprint": "d9876bd49d04adf500ee02a8eac634415556133aa4ea1a10137731df8b866f5c",
+        "optional_missing": [],
+        "source_completeness": "unknown"
+      },
+      "layers": {
+        "bronze": {
+          "run_id": "run_99660297140e7b41c063fbec4b23de77",
+          "manifest_fingerprint": "a0584f1e1721dc5b72da565e851eee186e8830cc45af3fb36bbc4e211116edb1",
+          "quality": "passed",
+          "snapshot_semantics": "Observed current inputs; requested_as_of is not database time travel",
+          "outputs": {
+            "delivery_tracking": {
+              "rows": 7875,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/delivery_tracking.parquet",
+              "quality_status": "passed"
+            },
+            "order_items": {
+              "rows": 72063,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/order_items.parquet",
+              "quality_status": "passed"
+            },
+            "orders": {
+              "rows": 40460,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/orders.parquet",
+              "quality_status": "passed"
+            },
+            "shipper_deliveries": {
+              "rows": 7857,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/shipper_deliveries.parquet",
+              "quality_status": "passed"
+            },
+            "wallet_transactions": {
+              "rows": 113,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/wallet_transactions.parquet",
+              "quality_status": "passed"
+            }
+          }
+        },
+        "silver": {
+          "run_id": "run_99660297140e7b41c063fbec4b23de77",
+          "manifest_fingerprint": "79481beb5ca762b70f135f7c8087218ae554cf4fc883bc5d6413bdf2fd5e688f",
+          "quality": "passed",
+          "snapshot_semantics": "Observed current inputs; requested_as_of is not database time travel",
+          "outputs": {
+            "deliveries_clean": {
+              "rows": 7857,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/deliveries_clean.parquet",
+              "quality_status": "passed"
+            },
+            "delivery_tracking_clean": {
+              "rows": 7875,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/delivery_tracking_clean.parquet",
+              "quality_status": "passed"
+            },
+            "items_clean": {
+              "rows": 72063,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/items_clean.parquet",
+              "quality_status": "passed"
+            },
+            "orders_clean": {
+              "rows": 40460,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/orders_clean.parquet",
+              "quality_status": "passed"
+            },
+            "orders_enriched": {
+              "rows": 40460,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/orders_enriched.parquet",
+              "quality_status": "passed"
+            },
+            "wallet_transactions_clean": {
+              "rows": 113,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/wallet_transactions_clean.parquet",
+              "quality_status": "passed"
+            }
+          }
+        },
+        "gold": {
+          "run_id": "run_99660297140e7b41c063fbec4b23de77",
+          "manifest_fingerprint": "d9876bd49d04adf500ee02a8eac634415556133aa4ea1a10137731df8b866f5c",
+          "quality": "passed",
+          "snapshot_semantics": "Observed current inputs; requested_as_of is not database time travel",
+          "outputs": {
+            "customer_segments": {
+              "rows": 2,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/customer_segments.json",
+              "quality_status": "passed"
+            },
+            "kpi": {
+              "rows": 1,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/kpi.json",
+              "quality_status": "passed"
+            },
+            "logistics_analytics.delivery_method_performance": {
+              "rows": 2307,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/logistics_analytics.delivery_method_performance.json",
+              "quality_status": "passed"
+            },
+            "logistics_analytics.delivery_mode_adoption": {
+              "rows": 2309,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/logistics_analytics.delivery_mode_adoption.json",
+              "quality_status": "passed"
+            },
+            "order_status": {
+              "rows": 5,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/order_status.json",
+              "quality_status": "passed"
+            },
+            "payment_methods": {
+              "rows": 4,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/payment_methods.json",
+              "quality_status": "passed"
+            },
+            "revenue_daily": {
+              "rows": 30,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/revenue_daily.json",
+              "quality_status": "passed"
+            },
+            "shipper_performance": {
+              "rows": 20,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/shipper_performance.json",
+              "quality_status": "passed"
+            },
+            "taste_analytics.branch_product_heatmap": {
+              "rows": 54833,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/taste_analytics.branch_product_heatmap.json",
+              "quality_status": "passed"
+            },
+            "taste_analytics.branch_taste_profile": {
+              "rows": 60734,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/taste_analytics.branch_taste_profile.json",
+              "quality_status": "passed"
+            },
+            "taste_analytics.time_of_day_taste": {
+              "rows": 3750,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/taste_analytics.time_of_day_taste.json",
+              "quality_status": "passed"
+            },
+            "top_products": {
+              "rows": 20,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/top_products.json",
+              "quality_status": "passed"
+            },
+            "wallet_analytics.payment_adoption": {
+              "rows": 4,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/wallet_analytics.payment_adoption.json",
+              "quality_status": "passed"
+            },
+            "wallet_analytics.wallet_transactions": {
+              "rows": 26,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/wallet_analytics.wallet_transactions.json",
+              "quality_status": "passed"
+            },
+            "wallet_analytics.wallet_vs_cod_comparison": {
+              "rows": 2,
+              "sha256": null,
+              "key": "runs/run_99660297140e7b41c063fbec4b23de77/wallet_analytics.wallet_vs_cod_comparison.json",
+              "quality_status": "passed"
+            }
+          }
+        }
+      }
+    },
+    "dag_runs": [
+      {
+        "dag_id": "avengers_daily_pipeline",
+        "run_id": "demo_verify_20261021_0945",
+        "state": "success",
+        "execution_date": "2026-10-21T02:43:45+00:00",
+        "start_date": "2026-10-21T02:44:31.605337+00:00",
+        "end_date": "2026-10-21T02:44:59.676558+00:00"
+      },
+      {
+        "dag_id": "avengers_daily_pipeline",
+        "run_id": "scheduled__2026-10-20T02:00:00+00:00",
+        "state": "success",
+        "execution_date": "2026-10-20T02:00:00+00:00",
+        "start_date": "2026-10-21T03:13:28.527963+00:00",
+        "end_date": "2026-10-21T03:13:31.979811+00:00"
+      }
+    ],
+    "dag_tasks": [
+      {
+        "dag_id": "avengers_daily_pipeline",
+        "execution_date": "2026-10-21T02:43:45+00:00",
+        "task_id": "ingest_bronze",
+        "state": "success",
+        "start_date": "2026-10-21T02:44:33.960075+00:00",
+        "end_date": "2026-10-21T02:44:38.676909+00:00"
+      },
+      {
+        "dag_id": "avengers_daily_pipeline",
+        "execution_date": "2026-10-21T02:43:45+00:00",
+        "task_id": "transform_silver",
+        "state": "success",
+        "start_date": "2026-10-21T02:44:42.309144+00:00",
+        "end_date": "2026-10-21T02:44:46.967679+00:00"
+      },
+      {
+        "dag_id": "avengers_daily_pipeline",
+        "execution_date": "2026-10-21T02:43:45+00:00",
+        "task_id": "aggregate_gold",
+        "state": "success",
+        "start_date": "2026-10-21T02:44:50.042898+00:00",
+        "end_date": "2026-10-21T02:44:55.638772+00:00"
+      },
+      {
+        "dag_id": "avengers_daily_pipeline",
+        "execution_date": "2026-10-21T02:43:45+00:00",
+        "task_id": "verify_pipeline",
+        "state": "success",
+        "start_date": "2026-10-21T02:44:58.230474+00:00",
+        "end_date": "2026-10-21T02:44:59.166796+00:00"
+      }
+    ],
+    "dag_import_errors": []
+  },
+  "analysis": {
+    "checked_at": "2026-10-21T03:20:37.854840+00:00",
+    "feedback": "Chỉ lọc Hà Nội, giữ nguyên chỉ số và thời gian",
+    "status": "success",
+    "before_revision": 2,
+    "after_revision": 3,
+    "before_revenue": 440072000,
+    "after_revenue": 96171000,
+    "independent_replica_oracle": {
+      "revenue": 96171000.0,
+      "orders": 849
+    },
+    "all_queries_keep_september_and_hanoi": true,
+    "quality_status": "partially_verified",
+    "coverage": {
+      "requested_count": 2,
+      "completed_count": 2,
+      "supporting_count": 3,
+      "omitted_count": 0
+    },
+    "unverified": [
+      "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+      "Số liệu đã kiểm chứng · 3/4 góc nhìn; còn thiếu 1 do hệ thống chưa lập được góc nhìn.",
+      "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo."
+    ],
+    "provider_calls": 1,
+    "local_adjustments": {
+      "checked_at": "2026-10-21T03:16:38.873Z",
+      "visual": {
+        "status": "success",
+        "revision": 5,
+        "chart_type": "line",
+        "provider_calls": 0,
+        "result_rows_identical": true
+      },
+      "filter": {
+        "status": "success",
+        "revision": 6,
+        "city": "Hà Nội",
+        "order_type": "MANG_DI",
+        "revenue": 29325000,
+        "provider_calls": 0,
+        "all_queries_preserve_city_and_add_order_type": true
+      }
+    },
+    "local_filter_independent_oracle": {
+      "revenue": 29325000.0,
+      "orders": 274
+    },
+    "notes": [
+      "Oracle reads orders.don_hang and identity.chi_nhanh replicas directly, independently of the Analyst SQL compiler.",
+      "Several earlier live attempts failed; this receipt is the successful final check after guided-context, scope-anchor, generated-support and grounding fixes.",
+      "No claim of full AI reliability or independent model accuracy from this one successful request."
+    ]
+  },
+  "ui": {
+    "checked_at": "2026-10-21T03:20:04.846Z",
+    "errors": [],
+    "data_analyst_login": true,
+    "map_kpi_font": [
+      "20.16px",
+      "20.16px",
+      "20.16px",
+      "20.16px"
+    ],
+    "map_controls": [
+      {
+        "label": "+",
+        "font": "12px"
+      },
+      {
+        "label": "−",
+        "font": "12px"
+      },
+      {
+        "label": "Toàn cảnh",
+        "font": "12px"
+      },
+      {
+        "label": "Toàn màn hình",
+        "font": "12px"
+      },
+      {
+        "label": "Xuất SVG",
+        "font": "12px"
+      }
+    ],
+    "dialog_size": {
+      "x": 300,
+      "y": 165,
+      "width": 1080,
+      "height": 720
+    },
+    "mobile_no_overflow": true,
+    "nonsense_blocked": true,
+    "typing_ms": 197,
+    "composer_position": "relative",
+    "receipt_replay_for_ui_only": true,
+    "airflow_login": true
+  },
+  "tests": {
+    "typescript": "passed",
+    "node_unit_tests": 22,
+    "browser_regressions": 2,
+    "backend_targeted_regressions": 34,
+    "backend_mode": "AI_OFFLINE=1",
+    "broad_catalog_combinatorial_suite": "stopped after startup; not claimed as passed",
+    "frozen_scope_guard_tests": 3,
+    "production_bundle_rechecked_after_final_build": true
+  },
+  "verified_local_auth": {
+    "data_platform": "thaian_DataAnalyst",
+    "airflow": "admin",
+    "minio": "minioadmin",
+    "postgres": "analytics"
+  },
+  "limitations": [
+    "The service named spark-jobs uses Python/Pandas. PySpark/Java/Spark cluster are not installed or demonstrated.",
+    "Kafka is an observability stream persisted in Bronze and an idempotent PostgreSQL projection, not the direct authoritative source for every BI chart.",
+    "Batch source_completeness remains unknown; a passed publication verifies artifacts/contracts, not exhaustive parity of all source systems.",
+    "Scheduled interval older than the latest publication is skipped. The manual demo run executed all four tasks successfully.",
+    "AI refinement succeeded after fixes, but quality remains partially_verified (3/4 relevant supporting views); this is not an AI reliability benchmark."
+  ]
+}

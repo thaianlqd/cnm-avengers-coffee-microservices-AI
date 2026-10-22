@@ -86,6 +86,8 @@ class AnalysisModules:
             strategy = session.input_time_strategy
             mode = strategy.get("mode", "auto")
             definition = {**inputs,"resolved_analysis_breadth":session.analysis_depth,
+                "semantic_intent":deepcopy(session.semantic_intent),
+                "analysis_mission":session.ui_constraints.get('analysis_mission'),
                 "resolved_domains":session.report_response.get("interpretation",{}).get("domains",[]),
                 "resolved_lenses":list(dict.fromkeys(q["lens_id"] for q in queries if q.get("lens_id"))),
                 "analysis_components":deepcopy(session.analysis_components), "coverage_origin":session.coverage_origin,
@@ -119,6 +121,24 @@ class AnalysisModules:
         agent = pipeline.agent(catalog,reference,proposal=True)
         agent.queries.enforce_discovery = False
         templates = self.templates(module,context)
+        from services.hybrid_analyst_planner import HybridAnalystPlanner
+        if isinstance(agent,HybridAnalystPlanner):
+            from services.analysis_intent import AnalysisIntentEnvelope
+            stored=module['definition'].get('semantic_intent')
+            if not stored:raise AnalysisError('module_needs_review','Legacy module needs semantic review before rerunning under current policy')
+            intent=AnalysisIntentEnvelope.model_validate(stored)
+            for req in intent.requirements:
+                if context.get('required_period'):
+                    from services.analysis_contract import TimeSpec
+                    period=context['required_period']
+                    req.time=TimeSpec.model_validate({'kind':'range',**period}) if period.get('start') else TimeSpec(kind='relative',mode='all_time')
+                for f in context.get('required_filters',[]):
+                    from services.analysis_contract import Filter
+                    req.filters=[old for old in req.filters if old.dimension!=f['dimension']]+[Filter.model_validate(f)]
+            # Trusted stored meaning still passes the same anchors, resolver,
+            # capability gate and compiler. No interpretation or old rows reused.
+            context.update(guided_intent=intent.model_dump(mode='json'),guided_source='stored_module')
+            return {},[]
         for q in templates:
             # Stored safe enums were validated at save; fingerprint checked on load.
             agent.queries.prepare(q)
@@ -148,6 +168,18 @@ class AnalysisModules:
         catalog = pipeline.catalog()
         module = self.resolve(pipeline.owner_id,id,None,catalog)
         d = module["definition"]
+        from services.hybrid_analyst_planner import HybridAnalystPlanner
+        if isinstance(pipeline.agent(catalog,pipeline.reference(AiTextToReportRequest(question=d['original_question']),catalog)),HybridAnalystPlanner):
+            request=AiTextToReportRequest(question=d['original_question'],analysis_module_id=id,
+                time=time or d['time_strategy']['selection'] or {'mode':'auto'},analysis_scope=scope,
+                analysis_depth=d['resolved_analysis_breadth'],analysis_mission=d.get('analysis_mission'))
+            proposal=pipeline.propose(request)['proposal']
+            request=request.model_copy(update=dict(session_id=proposal['session_id'],proposal_revision=proposal['revision'],
+                intent_fingerprint=proposal['semantic_intent_fingerprint'],plan_fingerprint=proposal['resolved_plan_fingerprint'],catalog_fingerprint=proposal['catalog_fingerprint']))
+            result=pipeline.generate(request)
+            result['module_provenance']={"module_id":id,"name":module['name'],"mode":"rerun"}
+            self.repository.record_run(pipeline.owner_id,id,result['session_id'],request.time_range.model_dump(mode='json'))
+            return result
         request = AiTextToReportRequest(question=d["original_question"],time=time or d["time_strategy"]["selection"] or {"mode":"auto"},analysis_scope=scope)
         reference = pipeline.reference(request,catalog)
         context = pipeline.ui_context(request,catalog,reference)
@@ -163,7 +195,8 @@ class AnalysisModules:
                 agent.omit(error)
         if not any(a.query.role == "requested" for a in prepared):
             raise AnalysisError("module_needs_review", "Requested templates missing")
-        pipeline.enforce_ui({a.query.id:a for a in prepared},context)
+        from services.request_anchors import enforce_ui
+        enforce_ui({a.query.id:a for a in prepared},context)
         for a in prepared:
             try: agent.queries.run(a)
             except AnalysisError as e:

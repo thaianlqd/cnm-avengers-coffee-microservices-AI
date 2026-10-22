@@ -97,6 +97,7 @@ class ReportSession:
     analysis_inputs: Dict[str, Any] = field(default_factory=dict)
     input_time_strategy: Dict[str, Any] = field(default_factory=dict)
     module_provenance: Optional[Dict[str, Any]] = None
+    source_analysis: Optional[Dict[str, Any]] = None
 
     # Full conversation history
     conversation_turns: List[ConversationTurn] = field(default_factory=list)
@@ -344,7 +345,8 @@ def encode_session(session):
                 provenance=dict(dimensions=a.plan.dimensions, time=a.plan.period))
         data['agent_artifacts'][id] = dict(query=a.query.model_dump(mode='json'), grounded=a.grounded.model_dump(mode='json'),
             plan=a.plan.model_dump(mode='json'), sql=a.sql, signature=a.signature, result=None,
-            result_ref=a.result_ref, capacity=a.capacity, contract=a.contract, reused=a.reused, observed_at=a.observed_at)
+            result_ref=a.result_ref, capacity=a.capacity, contract=a.contract, reused=a.reused, observed_at=a.observed_at,
+            fixed_grouping_policy=getattr(a,'fixed_grouping_policy',None))
     # Migrate old result-heavy sessions on their next save. No huge inline fallback.
     if data.get('report_response', {}).get('result_sets'):
         from services.analysis_response_service import session_report_summary
@@ -478,3 +480,8 @@ def save_session(session):
     check_request_deadline()
     if storage() is not None:
         storage().save(session)
+    else:
+        with _lock:
+            if session.session_id not in _sessions:
+                raise ValueError('Cannot publish an expired session')
+            _sessions[session.session_id] = session

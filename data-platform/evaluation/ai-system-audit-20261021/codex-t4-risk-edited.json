@@ -1,0 +1,387 @@
+[
+  {
+    "id": "risk-edited",
+    "payload": {
+      "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "analysis_mission": "risk_watch",
+      "refresh": true
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_GUIDED",
+      "state_label": "Đã đủ thông tin để phân tích",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "6f66d73631fe2b116a0ac07b74a4caaf06cb1e0b42e8dfb371e83d7f1d2807b5",
+        "interpretation_required": false,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "resolved",
+        "filters": [
+          {
+            "dimension": "city",
+            "operator": "eq",
+            "value": "Hồ Chí Minh"
+          }
+        ],
+        "bindings": [
+          {
+            "dimension": "city",
+            "members": [
+              "Hồ Chí Minh"
+            ],
+            "comparison": false,
+            "cohorts": [],
+            "excluded_members": [],
+            "comparison_dimension": "city"
+          }
+        ],
+        "source": [],
+        "fingerprint": "ac5ea0c2006b73a92343e44c590a800d2707c81f7a1208e20e58e1f676f551fc",
+        "requested_phrase": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh"
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [
+          {
+            "id": "city",
+            "label": "Tỉnh/thành trong dữ liệu"
+          }
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        },
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "risk_watch",
+          "label": "Rủi ro & cảnh báo"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "city",
+          "subject:stores",
+          "vận hành"
+        ],
+        "analytical": [
+          "risk_watch",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "f2af3d137301e1c55bb2a8f6e3905d203f33d41e83c923ceac6f144af5ad2e4b",
+        "fingerprint": "43effd815b8a4548b630361bec82953bf710e9026a1d9f1528a5f6e2387cd001",
+        "catalog_fingerprint": "6f66d73631fe2b116a0ac07b74a4caaf06cb1e0b42e8dfb371e83d7f1d2807b5",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 67,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": {
+        "source": "auto_upgrade",
+        "slots": {
+          "mission": "risk_watch",
+          "signals": [
+            "order_cancellation_high",
+            "delivery_success_low",
+            "cash_discrepancy_high",
+            "late_shift_high",
+            "paused_positions_exist",
+            "store_rating_low"
+          ]
+        },
+        "question_filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ]
+      },
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": "risk_watch",
+        "inferred_mission": "risk_watch",
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [
+          "city"
+        ],
+        "filters": [
+          {
+            "dimension": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "value": "Hồ Chí Minh",
+            "display": "Hồ Chí Minh"
+          }
+        ],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "880611511c8663c244abae0911f6dc2a7496889a2ba86128a460a68a91f9b1c8",
+      "elapsed_ms": 297.5
+    },
+    "job": {
+      "job_id": "aj_e2ace5cbccea4a98ae7097081389f4d5",
+      "state": "needs_input",
+      "provider_call_count": 0,
+      "physical_http": 0,
+      "stage_timings_ms": {
+        "queue": 4.53,
+        "accepted": 712.54,
+        "planning": 78.54,
+        "validating": 1017.5
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "needs_clarification",
+      "outcome": "NEEDS_INPUT",
+      "message": "Phạm vi và nhịp thời gian yêu cầu vượt dung lượng thực thi. Chọn khoảng thời gian ngắn hơn, ít nhóm hơn hoặc nhịp tuần/tháng; hệ thống chưa thay đổi yêu cầu của bạn.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "SQL_EXECUTION",
+        "code": "capacity_requires_choice",
+        "user_impact": "NEEDS_INPUT",
+        "what_is_known": {
+          "semantic_status": "not_started",
+          "execution_status": "not_started",
+          "result_status": "not_started",
+          "request_anchor_verification": "passed",
+          "provider_attempt_count": 0
+        },
+        "what_failed": "capacity_requires_choice",
+        "retry_helps": false,
+        "error_type": "AMBIGUOUS_REQUEST",
+        "analysis_state": "SUPPORTED_BUT_NEEDS_CLARIFICATION",
+        "analysis_stage": "SYSTEM_FAILURE",
+        "guidance": {
+          "title": "Cần thêm một lựa chọn",
+          "description": "Yêu cầu có nhiều cách hiểu cho kết quả khác nhau.",
+          "next_action": "answer_clarification"
+        },
+        "needs_user_input": true,
+        "recommended_server_action": "ask_scope_or_granularity_choice"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_b8b3f3c49f67490296be70632e798b71",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "capacity_requires_choice",
+      "error_category": "capacity_requires_choice",
+      "failure_code": null,
+      "failure_stage": "SQL_EXECUTION",
+      "contract_issues": [],
+      "provider_call_count": 0,
+      "provider_physical_attempts": 0,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": 10,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": true,
+      "preflight_state": "READY_GUIDED",
+      "interpreted_shapes": [
+        {
+          "requirement_id": "r1",
+          "analysis_kind": "aggregate",
+          "dimension_count": 1,
+          "metric_ids": [
+            "order_cancellation_rate"
+          ],
+          "dimension_ids": [
+            "store"
+          ]
+        },
+        {
+          "requirement_id": "r2",
+          "analysis_kind": "aggregate",
+          "dimension_count": 1,
+          "metric_ids": [
+            "delivery_success_rate"
+          ],
+          "dimension_ids": [
+            "store"
+          ]
+        },
+        {
+          "requirement_id": "r3",
+          "analysis_kind": "aggregate",
+          "dimension_count": 1,
+          "metric_ids": [
+            "large_cash_discrepancy_shift_count"
+          ],
+          "dimension_ids": [
+            "store"
+          ]
+        },
+        {
+          "requirement_id": "r4",
+          "analysis_kind": "aggregate",
+          "dimension_count": 1,
+          "metric_ids": [
+            "late_shift_rate"
+          ],
+          "dimension_ids": [
+            "store"
+          ]
+        },
+        {
+          "requirement_id": "r5",
+          "analysis_kind": "aggregate",
+          "dimension_count": 1,
+          "metric_ids": [
+            "paused_sale_positions"
+          ],
+          "dimension_ids": [
+            "store"
+          ]
+        },
+        {
+          "requirement_id": "r6",
+          "analysis_kind": "aggregate",
+          "dimension_count": 1,
+          "metric_ids": [
+            "avg_store_rating"
+          ],
+          "dimension_ids": [
+            "store"
+          ]
+        }
+      ],
+      "guided_source": "auto_upgrade"
+    },
+    "provider_attempts": [],
+    "charts": [],
+    "result_summary": {},
+    "semantic_evidence": {
+      "query_plans": null,
+      "result_sets": null,
+      "result_contracts": null,
+      "evidence": null,
+      "kpi_cards": null,
+      "key_findings": null,
+      "short_answer": null,
+      "executive_summary": null,
+      "conclusion": null,
+      "quality_assessment": {
+        "score": null,
+        "grade": "needs_attention",
+        "status": "not_scored",
+        "components": [],
+        "completed": [],
+        "missing": [],
+        "unverified": [],
+        "limitations": [],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 0,
+          "completed_count": 0,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.5",
+        "reason": "Phạm vi và nhịp thời gian yêu cầu vượt dung lượng thực thi. Chọn khoảng thời gian ngắn hơn, ít nhóm hơn hoặc nhịp tuần/tháng; hệ thống chưa thay đổi yêu cầu của bạn.",
+        "measurement_mode": "legacy_weighted_checks",
+        "verification_checks": [],
+        "score_method": null,
+        "score_breakdown": [],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "trust_dimensions": [],
+        "analysis_breadth": null,
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      },
+      "answer_requirements": null,
+      "resolved_requirement_coverage": null,
+      "semantic_intent": null,
+      "charts": []
+    },
+    "elapsed_seconds": 4.74
+  }
+]

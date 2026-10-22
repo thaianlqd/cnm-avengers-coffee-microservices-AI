@@ -1,4 +1,13 @@
 import { create } from 'zustand';
+import { getAccountIdentity } from '../utils/authSession.mjs';
+
+export function platformLoadError(status: number): string {
+  if (status === 401) return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+  if (status === 403) return 'Tài khoản chưa được cấp quyền xem nguồn dữ liệu này.';
+  return `Chưa tải được dữ liệu (HTTP ${status || 'network'}). Vui lòng thử lại.`;
+}
+const loadVersions: Record<string, number> = {};
+
 import { 
   ViewTab, 
   AnalyticsSubTab,
@@ -23,6 +32,9 @@ interface PlatformState {
   activeTab: ViewTab;
   setActiveTab: (tab: ViewTab) => void;
   
+  dashboardSearch: { text: string; request: number } | null;
+  searchDashboards: (text: string) => void;
+
   analyticsSubTab: AnalyticsSubTab;
   setAnalyticsSubTab: (subTab: AnalyticsSubTab) => void;
   
@@ -35,6 +47,7 @@ interface PlatformState {
   isLiveStreaming: boolean;
   setIsLiveStreaming: (live: boolean) => void;
   
+  dataErrors: Record<string, string>;
   // Data caches
   overview: PlatformOverview | null;
   pipelines: PipelinesData | null;
@@ -72,6 +85,7 @@ interface PlatformState {
   roles: SystemRole[];
   systemLogs: SystemLog[];
   
+  isLoadingSystem: boolean;
   isLoadingOverview: boolean;
   isLoadingPipelines: boolean;
   isLoadingTables: boolean;
@@ -123,7 +137,10 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
   activeTab: 'overview',
   setActiveTab: (tab) => set({ activeTab: tab }),
   
-  analyticsSubTab: 'revenue',
+  dashboardSearch: null,
+  searchDashboards: text => set(state => ({ activeTab: 'analytics', analyticsSubTab: 'hub', dashboardSearch: { text, request: (state.dashboardSearch?.request || 0) + 1 } })),
+
+  analyticsSubTab: 'hub',
   setAnalyticsSubTab: (subTab) => set({ analyticsSubTab: subTab }),
   
   dateRange: '30days',
@@ -141,6 +158,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
   isLiveStreaming: true,
   setIsLiveStreaming: (live) => set({ isLiveStreaming: live }),
   
+  dataErrors: {},
   overview: null,
   pipelines: null,
   tables: [],
@@ -154,6 +172,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
   roles: [],
   systemLogs: [],
   
+  isLoadingSystem: false,
   isLoadingOverview: false,
   isLoadingPipelines: false,
   isLoadingTables: false,
@@ -162,15 +181,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
   isLoadingProducts: false,
   isLoadingMarts: false,
   
-  activeSql: `SELECT 
-    schemaname AS schema_name,
-    relname AS table_name,
-    n_live_tup AS total_rows,
-    pg_size_pretty(pg_total_relation_size(relid)) AS total_size
-FROM pg_stat_user_tables
-WHERE schemaname IN ('gold', 'orders', 'identity', 'menu', 'inventory', 'public')
-ORDER BY n_live_tup DESC
-LIMIT 15;`,
+  activeSql: 'SELECT COUNT(ma_don_hang) AS so_don FROM silver.don_hang',
   setActiveSql: (sql) => set({ activeSql: sql }),
   queryResult: null,
   isQueryRunning: false,
@@ -199,157 +210,150 @@ LIMIT 15;`,
   hideToast: () => set({ toast: null }),
   
   fetchOverview: async () => {
+    const actor = getAccountIdentity(), range = get().dateRange;
+    const version = loadVersions.overview = (loadVersions.overview || 0) + 1;
+    const current = () => actor === getAccountIdentity() && version === loadVersions.overview;
+    set(state => ({ isLoadingOverview: true, dataErrors: { ...state.dataErrors, overview: '' } }));
     try {
-      set({ isLoadingOverview: true });
       const res = await fetch('/api/platform/overview');
-      if (res.ok) {
-        const data = await res.json();
-        set({ overview: data, isLoadingOverview: false });
-      } else {
-        set({ isLoadingOverview: false });
+      if (!res.ok) throw new Error(platformLoadError(res.status));
+      const data = await res.json();
+      if (current()) set({ overview: data });
+    } catch (error) {
+      if (current() && !(error instanceof DOMException && error.name === 'AbortError')) {
+        set(state => ({ overview: null, dataErrors: { ...state.dataErrors, overview: error instanceof Error ? error.message : platformLoadError(0) } }));
       }
-    } catch (e) {
-      console.error('Lỗi tải overview:', e);
-      set({ isLoadingOverview: false });
-    }
+    } finally { if (current()) set({ isLoadingOverview: false }); }
   },
   
   fetchPipelines: async () => {
+    const actor = getAccountIdentity(), version = loadVersions.pipelines = (loadVersions.pipelines || 0) + 1;
+    const current = () => actor === getAccountIdentity() && version === loadVersions.pipelines;
+    set(state => ({ isLoadingPipelines: true, dataErrors: { ...state.dataErrors, pipelines: '' } }));
     try {
-      set({ isLoadingPipelines: true });
       const res = await fetch('/api/platform/pipelines');
-      if (res.ok) {
-        const data = await res.json();
-        set({ pipelines: data, isLoadingPipelines: false });
-      } else {
-        set({ isLoadingPipelines: false });
-      }
-    } catch (e) {
-      console.error('Lỗi tải pipelines:', e);
-      set({ isLoadingPipelines: false });
-    }
+      if (!res.ok) throw new Error(platformLoadError(res.status));
+      const data = await res.json();
+      if (!Array.isArray(data.jobs)) throw new Error('Phản hồi tác vụ không hợp lệ.');
+      if (current()) set({ pipelines: data });
+    } catch (error) {
+      if (current()) set(state => ({ pipelines: null, dataErrors: { ...state.dataErrors, pipelines: error instanceof Error ? error.message : platformLoadError(0) } }));
+    } finally { if (current()) set({ isLoadingPipelines: false }); }
   },
-  
+
   fetchTables: async () => {
+    const actor=getAccountIdentity(); const version=(loadVersions.tables || 0)+1;
+    loadVersions.tables=version;
+    const current=()=>getAccountIdentity()===actor && loadVersions.tables===version;
+    set(state=>({isLoadingTables:true,dataErrors:{...state.dataErrors,tables:''}}));
     try {
-      set({ isLoadingTables: true });
-      const res = await fetch('/api/warehouse/tables');
-      if (res.ok) {
-        const data = await res.json();
-        set({ 
-          tables: data.tables || [], 
-          sampleQueries: data.sample_queries || [],
-          isLoadingTables: false,
-          selectedTableForInspect: data.tables?.[0] || null
-        });
-      } else {
-        set({ isLoadingTables: false });
-      }
-    } catch (e) {
-      console.error('Lỗi tải danh mục bảng:', e);
-      set({ isLoadingTables: false });
-    }
+      const res=await fetch('/api/warehouse/tables');
+      if(!res.ok)throw new Error(platformLoadError(res.status));
+      const data=await res.json();
+      if(current())set({tables:data.tables || [],sampleQueries:data.sample_queries || [],selectedTableForInspect:data.tables?.[0] || null});
+    } catch(error) {
+      if(current())set(state=>({tables:[],sampleQueries:[],selectedTableForInspect:null,dataErrors:{...state.dataErrors,tables:error instanceof Error?error.message:platformLoadError(0)}}));
+    } finally {if(current())set({isLoadingTables:false});}
   },
-  
+
   fetchStreaming: async () => {
+    const actor = getAccountIdentity(), version = loadVersions.streaming = (loadVersions.streaming || 0) + 1;
+    const current = () => actor === getAccountIdentity() && version === loadVersions.streaming;
     try {
       const res = await fetch('/api/platform/streaming');
-      if (res.ok) {
-        const data = await res.json();
-        set({ realtimeEvents: data.recent_events || [] });
-      }
-    } catch (e) {
-      console.error('Lỗi tải streaming:', e);
+      if (!res.ok) throw new Error(platformLoadError(res.status));
+      const data = await res.json();
+      const events = data.live_events ?? data.recent_events;
+      if (!Array.isArray(events)) throw new Error('Phản hồi sự kiện không hợp lệ.');
+      if (current()) set(state => ({ realtimeEvents: events, dataErrors: { ...state.dataErrors, streaming: '' } }));
+    } catch (error) {
+      if (current()) set(state => ({ realtimeEvents: [], dataErrors: { ...state.dataErrors, streaming: error instanceof Error ? error.message : platformLoadError(0) } }));
     }
   },
-  
+
   fetchMarts: async () => {
+    const actor = getAccountIdentity(), range = get().dateRange;
+    const version = loadVersions.marts = (loadVersions.marts || 0) + 1;
+    const current = () => actor === getAccountIdentity() && version === loadVersions.marts && range === get().dateRange;
+    set(state => ({ isLoadingMarts: true, dataErrors: { ...state.dataErrors, marts: '' } }));
     try {
-      set({ isLoadingMarts: true });
-      const range = get().dateRange;
       const res = await fetch(`/api/marts/all?date_range=${range}&branch=all`);
-      if (res.ok) {
-        const data = await res.json();
-        set({ marts: data, isLoadingMarts: false });
-      } else {
-        set({ isLoadingMarts: false });
+      if (!res.ok) throw new Error(platformLoadError(res.status));
+      const data = await res.json();
+      if (current()) set({ marts: data });
+    } catch (error) {
+      if (current() && !(error instanceof DOMException && error.name === 'AbortError')) {
+        set(state => ({ marts: null, dataErrors: { ...state.dataErrors, marts: error instanceof Error ? error.message : platformLoadError(0) } }));
       }
-    } catch (e) {
-      console.error('Lỗi tải Data Marts:', e);
-      set({ isLoadingMarts: false });
-    }
+    } finally { if (current()) set({ isLoadingMarts: false }); }
   },
 
   fetchStores: async () => {
+    const actor = getAccountIdentity(), range = get().dateRange;
+    const version = loadVersions.storesData = (loadVersions.storesData || 0) + 1;
+    const current = () => actor === getAccountIdentity() && version === loadVersions.storesData && range === get().dateRange;
+    set(state => ({ isLoadingStores: true, dataErrors: { ...state.dataErrors, storesData: '' } }));
     try {
-      set({ isLoadingStores: true });
-      const range = get().dateRange;
       const res = await fetch(`/api/stores/overview?date_range=${range}&branch=all`);
-      if (res.ok) {
-        const data = await res.json();
-        set({ storesData: data, isLoadingStores: false });
-      } else {
-        set({ isLoadingStores: false });
+      if (!res.ok) throw new Error(platformLoadError(res.status));
+      const data = await res.json();
+      if (current()) set({ storesData: data });
+    } catch (error) {
+      if (current() && !(error instanceof DOMException && error.name === 'AbortError')) {
+        set(state => ({ storesData: null, dataErrors: { ...state.dataErrors, storesData: error instanceof Error ? error.message : platformLoadError(0) } }));
       }
-    } catch (e) {
-      console.error('Lỗi tải dữ liệu cửa hàng:', e);
-      set({ isLoadingStores: false });
-    }
+    } finally { if (current()) set({ isLoadingStores: false }); }
   },
 
   fetchCustomers: async () => {
+    const actor = getAccountIdentity(), range = get().dateRange;
+    const version = loadVersions.customersData = (loadVersions.customersData || 0) + 1;
+    const current = () => actor === getAccountIdentity() && version === loadVersions.customersData && range === get().dateRange;
+    set(state => ({ isLoadingCustomers: true, dataErrors: { ...state.dataErrors, customersData: '' } }));
     try {
-      set({ isLoadingCustomers: true });
-      const range = get().dateRange;
       const res = await fetch(`/api/customers/overview?date_range=${range}&branch=all`);
-      if (res.ok) {
-        const data = await res.json();
-        set({ customersData: data, isLoadingCustomers: false });
-      } else {
-        set({ isLoadingCustomers: false });
+      if (!res.ok) throw new Error(platformLoadError(res.status));
+      const data = await res.json();
+      if (current()) set({ customersData: data });
+    } catch (error) {
+      if (current() && !(error instanceof DOMException && error.name === 'AbortError')) {
+        set(state => ({ customersData: null, dataErrors: { ...state.dataErrors, customersData: error instanceof Error ? error.message : platformLoadError(0) } }));
       }
-    } catch (e) {
-      console.error('Lỗi tải dữ liệu khách hàng:', e);
-      set({ isLoadingCustomers: false });
-    }
+    } finally { if (current()) set({ isLoadingCustomers: false }); }
   },
 
   fetchProducts: async () => {
+    const actor = getAccountIdentity(), range = get().dateRange;
+    const version = loadVersions.productsData = (loadVersions.productsData || 0) + 1;
+    const current = () => actor === getAccountIdentity() && version === loadVersions.productsData && range === get().dateRange;
+    set(state => ({ isLoadingProducts: true, dataErrors: { ...state.dataErrors, productsData: '' } }));
     try {
-      set({ isLoadingProducts: true });
-      const range = get().dateRange;
       const res = await fetch(`/api/products/overview?date_range=${range}&branch=all`);
-      if (res.ok) {
-        const data = await res.json();
-        set({ productsData: data, isLoadingProducts: false });
-      } else {
-        set({ isLoadingProducts: false });
+      if (!res.ok) throw new Error(platformLoadError(res.status));
+      const data = await res.json();
+      if (current()) set({ productsData: data });
+    } catch (error) {
+      if (current() && !(error instanceof DOMException && error.name === 'AbortError')) {
+        set(state => ({ productsData: null, dataErrors: { ...state.dataErrors, productsData: error instanceof Error ? error.message : platformLoadError(0) } }));
       }
-    } catch (e) {
-      console.error('Lỗi tải dữ liệu sản phẩm:', e);
-      set({ isLoadingProducts: false });
-    }
+    } finally { if (current()) set({ isLoadingProducts: false }); }
   },
   
   fetchSystem: async () => {
+    const actor = getAccountIdentity(), version = loadVersions.system = (loadVersions.system || 0) + 1;
+    const current = () => actor === getAccountIdentity() && version === loadVersions.system;
+    set(state => ({ users: [], roles: [], systemLogs: [], isLoadingSystem: true, dataErrors: { ...state.dataErrors, system: '' } }));
     try {
-      const [uRes, lRes] = await Promise.all([
-        fetch('/api/system/users'),
-        fetch('/api/system/logs')
-      ]);
-      if (uRes.ok) {
-        const uData = await uRes.json();
-        set({ users: uData.users || [], roles: uData.roles || [] });
-      }
-      if (lRes.ok) {
-        const lData = await lRes.json();
-        set({ systemLogs: lData || [] });
-      }
-    } catch (e) {
-      console.error('Lỗi tải thông tin hệ thống:', e);
-    }
+      const [uRes, lRes] = await Promise.all([fetch('/api/system/users'), fetch('/api/system/logs')]);
+      if (!uRes.ok || !lRes.ok) throw new Error(platformLoadError(!uRes.ok ? uRes.status : lRes.status));
+      const [uData, lData] = await Promise.all([uRes.json(), lRes.json()]);
+      if (!Array.isArray(uData.users) || !Array.isArray(uData.roles) || !Array.isArray(lData.logs)) throw new Error('Phản hồi quản trị không hợp lệ.');
+      if (current()) set({ users: uData.users, roles: uData.roles, systemLogs: lData.logs });
+    } catch (error) {
+      if (current()) set(state => ({ users: [], roles: [], systemLogs: [], dataErrors: { ...state.dataErrors, system: error instanceof Error ? error.message : platformLoadError(0) } }));
+    } finally { if (current()) set({ isLoadingSystem: false }); }
   },
-  
+
   runQuery: async (customSql?: string) => {
     const sqlToRun = customSql || get().activeSql;
     if (!sqlToRun.trim()) return;

@@ -1,0 +1,33 @@
+{
+  "api_count": 21,
+  "sync_count": 23,
+  "only_api": [],
+  "only_sync": [
+    "silver.giao_hang",
+    "silver.khuyen_mai_su_dung"
+  ],
+  "different": [],
+  "hashes": {
+    "gold.stores_overview": "0570ac7878eca1bac9ef24dd18397f65e72bc4f20a5e5632e244312df24398e6",
+    "gold.menu_overview": "304e01f381690f4483b8d405ba53d8bb826a9e007a151ad30c8b4d3576c813e9",
+    "silver.don_hang": "e5dfca8243a49e3f744b51602e26a679270378b574ca43716c66ed150f5d42a4",
+    "silver.chi_tiet_don_hang": "501ccfb09aab8c4fd5844d94e149449e22ea4cb04ec9d6bed0178eb184d7ac30",
+    "silver.san_pham": "c40a41167454fc5d457477b8efd3e900ba86197db73a9ce6a145e7178f7ba36c",
+    "silver.danh_muc": "4bb69634f97313ad2d79616515fc1966df6f7c58ebef35df8a68cb011ea30a57",
+    "silver.nguoi_dung": "8b538e5249b5aa8781fb724085159c91981973108cec55efd3ffd47d09dffd8f",
+    "silver.chi_nhanh": "5820919282fd40087548ed1ebf8af503c73d883438a86bae90f2655f6d6fc59f",
+    "silver.giao_dich_thanh_toan": "c3935a35592a4fc758a548b1be46b2ffc5b66665bee39a8505287c7f7f638e4f",
+    "silver.shipper": "67a102dd5154ff8d9b97ce7f704742f77bdfcddfe212b10a0d707e8795345ffb",
+    "silver.ton_kho_san_pham": "26fda13980f312a6d1cb52b1ae279de76854dbf620ff349b3cb949e84bdd0c18",
+    "silver.khuyen_mai": "5ed16047cd3101a8f09f09ac31a54c11f32c9fdc107efd8ecb207ae5a4af0a4a",
+    "silver.voucher": "147eb738fa134cc55282d5d9963bdded3effc85a2558beb711afc8b08b8b65d0",
+    "silver.danh_gia_san_pham": "7a4355a4c0d813fc7b74ecccec5c50a82143fa9a371ff62d9648021fb3591c09",
+    "silver.danh_gia_chi_nhanh": "57b87b50b5e950600369676bfab4131304ef98abd15e8610eef4f392a3f4bfaa",
+    "silver.ca_lam_viec_nhan_vien": "2ad800c71f76a08eda008d404faaf5f899ae3842aa0b31326078b86e0d79d854",
+    "silver.ca_doi_soat": "377e03f13f3b3e683b848800b1f17494ce61019282be452457318b5e44b0fd14",
+    "silver.yeu_thich_san_pham": "2697bff62ad10bb715c383777036af0137c54a460b8b7e8fd50f268a3fdad840",
+    "silver.khao_sat_phan_hoi": "6eccc42966947f00c75ff2c7db101bee85bdf99fd288b39899e6cfc9de9a9004",
+    "silver.bien_the_san_pham": "3010e6f6997a38123f0ff72d77bc161d3184e29c0ad1d5649ee241a3c9545fc3",
+    "silver.khu_vuc": "907dac878374f0c667ec709d18308c986f630d72a217738cf2e5a7b3593c95ac"
+  }
+}

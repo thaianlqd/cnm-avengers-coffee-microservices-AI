@@ -1,0 +1,101 @@
+{
+  "version": "3.5.0",
+  "basis": "Evidence classification, not invented numerical achieved scores or blanket production readiness",
+  "groups": [
+    {
+      "group": "Ingestion",
+      "status": "VERIFIED",
+      "basis": "65 unit + 41 integration + 33 API acceptance; MVCC/CAS/parity/reader regressions retained"
+    },
+    {
+      "group": "Streaming",
+      "status": "VERIFIED_BOUNDED",
+      "basis": "Actual isolated Kafka/MinIO replay/sink failure/dedup/quarantine/batch; deployment backlog is not claimed caught-up"
+    },
+    {
+      "group": "Semantic",
+      "status": "VERIFIED",
+      "basis": "146 offline + V33/V34 + 120 authored reference meanings; no changed corpus IDs"
+    },
+    {
+      "group": "Natural language",
+      "status": "PRESERVED_NOT_REMEASURED",
+      "basis": "No prompts/semantic planner changed; offline anchors do not measure live model understanding; no paid rerun"
+    },
+    {
+      "group": "Capability",
+      "status": "VERIFIED",
+      "basis": "Full backend preflight READY/CLARIFY/REDIRECT/UNSUPPORTED and zero-I/O guards"
+    },
+    {
+      "group": "SQL",
+      "status": "VERIFIED",
+      "basis": "Full backend read-only/AST/auth/snapshot guards plus fresh actual PostgreSQL cancellation/pool-pressure fault matrix PASS"
+    },
+    {
+      "group": "Provider",
+      "status": "VERIFIED_BOUNDED",
+      "basis": "ADMIN/provider-only workflow; dashboard reservation denied; unchanged457 ledger; actual external HTTP0 in fixtures"
+    },
+    {
+      "group": "Forecast",
+      "status": "VERIFIED_BOUNDED",
+      "basis": "Full backend verified-series/gaps/interval/common-fold/insufficient-history regressions; no production SLO or model upgrade"
+    },
+    {
+      "group": "Risk",
+      "status": "VERIFIED_BOUNDED",
+      "basis": "Certificate/generation/unknown/stale/exposure regressions; only user-attested September is business-closed"
+    },
+    {
+      "group": "Correlation",
+      "status": "VERIFIED_BOUNDED",
+      "basis": "Paired/exposure/constant/noncausal contracts in full backend; no causality claim"
+    },
+    {
+      "group": "Chart",
+      "status": "VERIFIED",
+      "basis": "16 presets retain requirement IDs; bounded shared ReportWorkspace and denominator tests"
+    },
+    {
+      "group": "Trust",
+      "status": "VERIFIED_BOUNDED",
+      "basis": "Current source/view/dashboard health propagation and gen-bound proof; prior cross-path evidence remains timestamped historical"
+    },
+    {
+      "group": "UX",
+      "status": "VERIFIED",
+      "basis": "183web +35UI +4HTTP journeys; login/ADMIN/compact/disclosures/responsive preserved; Word visual deferred"
+    },
+    {
+      "group": "Testing",
+      "status": "REMOTE_CI_VERIFIED",
+      "basis": "All required fresh local gates plus six Data Platform CI jobs successful on 0e6fa9f96173ec9850f442cb5b3b831dabe3f073"
+    },
+    {
+      "group": "Data quality",
+      "status": "VERIFIED_BOUNDED",
+      "basis": "23 measured runtime proofs; latest observation12complete/11unknown (prior observation had1partial); full snapshot parity never extends business closure beyond attested September"
+    },
+    {
+      "group": "Governance",
+      "status": "VERIFIED_WITH_REPOSITORY_LIMITATION",
+      "basis": "65 protected/0undeclared/0stale; ADMIN-only; repository does not enforce branch checks"
+    },
+    {
+      "group": "Operations",
+      "status": "VERIFIED_BOUNDED",
+      "basis": "Fresh900-second exact two-target counter/context soak PASS; not production SLO"
+    },
+    {
+      "group": "Scale",
+      "status": "VERIFIED_BOUNDED",
+      "basis": "Fresh two-process ownership,15loadprofiles,full fault matrix including actual PostgreSQL cancellation/pool and Redis outage PASS; not productionHA"
+    },
+    {
+      "group": "Maintainability",
+      "status": "VERIFIED",
+      "basis": "Package/test ownership corrected; compiled contract single source;81modules/409edges unchanged"
+    }
+  ]
+}

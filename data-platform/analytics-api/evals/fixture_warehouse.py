@@ -63,15 +63,64 @@ class FixtureWarehouse:
         def translate(n):
             if isinstance(n, (exp.DateTrunc, exp.TimestampTrunc)):
                 return exp.Anonymous(this='EVAL_PERIOD',expressions=[exp.Literal.string(str(n.args['unit']).strip("'\"").lower()),n.this])
+            if isinstance(n, exp.Extract) and str(n.this).upper()=='EPOCH':
+                value = n.expression.unnest()
+                if not isinstance(value, exp.Sub):
+                    raise ValueError('Fixture epoch requires a timestamp interval')
+                days = exp.Sub(this=exp.Anonymous(this='JULIANDAY',expressions=[value.this]),
+                               expression=exp.Anonymous(this='JULIANDAY',expressions=[value.expression]))
+                return exp.Mul(this=exp.Paren(this=days),expression=exp.Literal.number(86400))
             if isinstance(n, exp.Extract) and str(n.this).upper()=='HOUR':
                 return exp.Cast(this=exp.Anonymous(this='STRFTIME',expressions=[exp.Literal.string('%H'),n.expression]),to=exp.DataType.build('INT'))
+            if isinstance(n, exp.Extract) and str(n.this).upper()=='ISODOW':
+                # SQLite %w is 0=Sunday..6; ISO weekday is 1=Monday..7=Sunday.
+                weekday=exp.Cast(this=exp.Anonymous(this='STRFTIME',expressions=[exp.Literal.string('%w'),n.expression]),to=exp.DataType.build('INT'))
+                return exp.Add(this=exp.Paren(this=exp.Mod(this=exp.Paren(this=exp.Add(this=weekday,expression=exp.Literal.number(6))),expression=exp.Literal.number(7))),expression=exp.Literal.number(1))
             return n
-        tree=tree.transform(translate)
+        # Fixture clocks are already business-local strings (SQLite has no zones).
+        tree=tree.transform(lambda n: n.this if isinstance(n, exp.AtTimeZone) else n).transform(translate)
         query=tree.sql(dialect='sqlite')
         self.call_count+=1;cur=self.connection.execute(query)
         rows=[dict(row) for row in cur.fetchall()]
         return dict(rows=rows,columns=[c[0] for c in cur.description],count=len(rows),truncated=False)
     def close(self):self.connection.close()
+
+# PLAN 20/10 business-coverage tables (synthetic; traps mirror tests/test_business_coverage_oracles.py).
+DATA.update({
+ 'vi_khach_hang_giao_dich':[dict(ma_giao_dich='t1',ma_nguoi_dung='u1',so_tien=100,loai_giao_dich='TOP_UP',trang_thai='SUCCESS',co_tham_chieu=1,ngay_tao=DAY),
+                            dict(ma_giao_dich='t2',ma_nguoi_dung='u1',so_tien=50,loai_giao_dich='TOP_UP',trang_thai='PENDING',co_tham_chieu=0,ngay_tao=DAY),
+                            dict(ma_giao_dich='t3',ma_nguoi_dung='u2',so_tien=30,loai_giao_dich='PAYMENT',trang_thai='SUCCESS',co_tham_chieu=0,ngay_tao=DAY)],
+ 'vi_khach_hang':[dict(ma_vi='v1',ma_nguoi_dung='u1',so_du=40,ngay_cap_nhat=DAY)],
+ 'the_qua_tang':[dict(ma_the='g1',menh_gia=100,so_du_hien_tai=100,chu_de='TET',trang_thai='ACTIVE',ngay_phat_hanh=DAY),
+                 dict(ma_the='g2',menh_gia=300,so_du_hien_tai=0,chu_de='TET',trang_thai='REDEEMED',ngay_phat_hanh=DAY)],
+ 'shipper_nop_cod':[dict(ma_phieu_nop='c1',ma_shipper='d1',co_so_ma='s1',so_tien=500,trang_thai='CONFIRMED',ngay_tao=DAY),
+                    dict(ma_phieu_nop='c2',ma_shipper='d2',co_so_ma='s2',so_tien=70,trang_thai='PENDING',ngay_tao=DAY)],
+ 'vi_shipper':[dict(ma_vi='w1',ma_shipper='d1',so_du=10,cod_dang_giu=300,hoa_hong_cho=5,ngay_cap_nhat=DAY)],
+ 'don_mua_combo':[dict(ma_don_combo='o1',co_so_ma='s2',ten_combo='Combo A',so_luong=2,tong_tien=900,trang_thai='DA_GIAO',phuong_thuc_thanh_toan='CONG_NO',ngay_dat=DAY)],
+ 'cong_no_nhuong_quyen':[dict(ma_cong_no='n1',co_so_ma='s2',loai_phat_sinh='NGUYEN_LIEU',so_tien=400,phi_phat_tre_han=20,trang_thai='QUA_HAN',ngay_tao=DAY),
+                         dict(ma_cong_no='n2',co_so_ma='s2',loai_phat_sinh='KHOI_TAO',so_tien=1000,phi_phat_tre_han=0,trang_thai='DA_THANH_TOAN',ngay_tao=DAY)],
+ 'royalty_nhuong_quyen':[dict(ma_royalty='r1',co_so_ma='s2',thang='2026-09',ky_thang='2026-09-01',so_tien_royalty=60,trang_thai='DA_THANH_TOAN')],
+ 'doi_soat_kiosk':[dict(ma_doi_soat='k1',co_so_ma='s2',muc_canh_bao='DO',ngay_doi_soat=DAY)],
+ 'ca_kiosk':[dict(ma_ca_kiosk='a1',co_so_ma='s2',trang_thai='CLOSED',thoi_gian_mo_ca=DAY,doanh_thu_he_thong=800,chenh_lech=-15,tong_don_hang=4)],
+ 'gia_kiosk':[dict(ma_gia_kiosk=1,co_so_ma='s2',ma_san_pham='p1',gia_kiosk=35,gia_niem_yet=30)],
+ 'ho_so_nhuong_quyen':[dict(ma_ho_so='h1',thanh_pho='Hà Nội',goi_kiosk='CONTAINER_CAFE',trang_thai='DA_DUYET',ngay_tao=DAY),
+                       dict(ma_ho_so='h2',thanh_pho='Hồ Chí Minh',goi_kiosk='XE_LUU_DONG',trang_thai='TU_CHOI',ngay_tao=DAY)],
+ 'hop_dong_nhuong_quyen':[dict(ma_hop_dong='c1',co_so_ma='s2',trang_thai='HIEU_LUC')],
+ 'kiosk':[dict(ma_kiosk_uuid='k1',ma_kiosk='s2',loai_kiosk='PREMIUM',khop_diem_ban=1,co_so_ma='s2'),dict(ma_kiosk_uuid='k2',ma_kiosk='x9',loai_kiosk='PREMIUM',khop_diem_ban=0)],
+ 'vi_chu_kiosk':[dict(ma_giao_dich='w1',ma_nguoi_dung='u2',so_tien=500,loai_giao_dich='NAP_TIEN',ngay_tao=DAY),
+                 dict(ma_giao_dich='w2',ma_nguoi_dung='u2',so_tien=-120,loai_giao_dich='TRA_CONG_NO',ngay_tao='2026-09-20T09:00:00')],
+ 'hoi_thoai_cskh':[dict(ma_hoi_thoai='h1',trang_thai='OPEN',vai_tro_nguoi_gui_cuoi='CUSTOMER',so_tin_nhan_chua_doc_khach=0,so_tin_nhan_chua_doc_nhan_su=2,ngay_tao=DAY,ngay_cap_nhat=DAY),
+                   dict(ma_hoi_thoai='h2',trang_thai='CLOSED',vai_tro_nguoi_gui_cuoi='STAFF',so_tin_nhan_chua_doc_khach=1,so_tin_nhan_chua_doc_nhan_su=0,ngay_tao='2026-09-20T09:00:00',ngay_cap_nhat=DAY)],
+ 'tin_nhan_cskh':[dict(ma_tin_nhan=1,ma_hoi_thoai='h1',vai_tro_nguoi_gui='CUSTOMER',ngay_tao=DAY),dict(ma_tin_nhan=2,ma_hoi_thoai='h2',vai_tro_nguoi_gui='STAFF',ngay_tao=DAY)],
+ 'bai_viet':[dict(ma_bai_viet='a1',tieu_de='[redacted]',danh_muc_bai_viet='KHUYEN_MAI',luot_xem_tich_luy=100,da_xuat_ban=1,ngay_tao=DAY),
+             dict(ma_bai_viet='a2',tieu_de='[redacted]',danh_muc_bai_viet='TIN_TUC',luot_xem_tich_luy=40,da_xuat_ban=1,ngay_tao='2026-09-20T09:00:00')],
+ 'khao_sat_tra_loi':[dict(ma_phan_hoi='r1',ma_bieu_mau='f1',co_so_ma='s1',ngay_tao=DAY,thu_tu_cau=1,ma_cau_hoi='q1',cau_hoi='Hài lòng?',kieu_tra_loi='RATING',gia_tri='5',gia_tri_so=5,chon_nhieu=0),
+                     dict(ma_phan_hoi='r2',ma_bieu_mau='f1',co_so_ma='s2',ngay_tao='2026-09-20T09:00:00',thu_tu_cau=1,ma_cau_hoi='q1',cau_hoi='Hài lòng?',kieu_tra_loi='RATING',gia_tri='3',gia_tri_so=3,chon_nhieu=0)],
+ 'thuong_loyalty_don':[dict(ma_don_hang='o1',ma_nguoi_dung='u1',diem_co_ban=10,diem_thuong=10,hang_truoc='SILVER',hang_sau='GOLD',ngay_tao='2026-09-01T10:00:00'),
+                       dict(ma_don_hang='o4',ma_nguoi_dung='u2',diem_co_ban=5,diem_thuong=5,hang_truoc='GOLD',hang_sau='GOLD',ngay_tao='2026-09-29T18:00:00')],
+ 'topping_don_hang':[dict(ma_dong=1,ma_don_hang='o1',ma_san_pham='p1',thu_tu=1,topping='Kem Cheese',so_luong=1),dict(ma_dong=1,ma_don_hang='o1',ma_san_pham='p1',thu_tu=2,topping='Hạt Sen',so_luong=1),
+                     dict(ma_dong=2,ma_don_hang='o4',ma_san_pham='p1',thu_tu=1,topping='Kem Cheese',so_luong=2)],
+})
 
 # Explicit rules independent of production catalog expressions.
 # (source table, value field, reduction, population rule, observation clock)

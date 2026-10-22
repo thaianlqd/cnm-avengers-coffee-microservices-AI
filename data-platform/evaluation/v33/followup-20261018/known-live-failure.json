@@ -1,0 +1,336 @@
+[
+  {
+    "id": "L03",
+    "group": "happy",
+    "expected": "useful",
+    "passed": false,
+    "logical_calls": 2,
+    "physical_http": 2,
+    "repair": 1,
+    "recovery": 0,
+    "secondary_used": false,
+    "latency_ms": 3361,
+    "outcome": {
+      "status": "error",
+      "outcome": "SYSTEM_ERROR",
+      "choices": [],
+      "actions": [],
+      "analysis_state": "UNDERSTANDING_FAILURE",
+      "error_category": "semantic_intent_invalid",
+      "proposal_semantics": {
+        "semantic_intent": null,
+        "contract_issues": [
+          {
+            "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+            "field": "dimension_ids",
+            "code": "untargeted_field_changed"
+          }
+        ],
+        "semantic_normalizations": null,
+        "semantic_issue_history": [
+          [
+            {
+              "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+              "field": "derived_features",
+              "code": "feature_shape_conflict",
+              "feature": "change",
+              "expected_shapes": [
+                "trend"
+              ],
+              "protected_features": [
+                "group_gap"
+              ]
+            },
+            {
+              "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+              "field": "feature_metrics",
+              "code": "feature_shape_binding_conflict",
+              "feature": "change"
+            },
+            {
+              "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+              "field": "derived_features",
+              "code": "feature_shape_conflict",
+              "feature": "change_pct",
+              "expected_shapes": [
+                "trend"
+              ],
+              "protected_features": [
+                "group_gap"
+              ]
+            },
+            {
+              "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+              "field": "feature_metrics",
+              "code": "feature_shape_binding_conflict",
+              "feature": "change_pct"
+            },
+            {
+              "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+              "field": "derived_features",
+              "code": "feature_shape_conflict",
+              "feature": "leader",
+              "expected_shapes": [
+                "ranking"
+              ],
+              "protected_features": [
+                "group_gap"
+              ]
+            },
+            {
+              "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+              "field": "feature_metrics",
+              "code": "feature_shape_binding_conflict",
+              "feature": "leader"
+            },
+            {
+              "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+              "field": "filters",
+              "code": "scope_membership_mismatch",
+              "expected": [
+                [
+                  "Hồ Chí Minh"
+                ],
+                [
+                  "Hà Nội"
+                ]
+              ]
+            },
+            {
+              "requirement_id": null,
+              "field": "filters",
+              "code": "scope_cohort_missing",
+              "expected": [
+                [
+                  "Hồ Chí Minh"
+                ],
+                [
+                  "Hà Nội"
+                ]
+              ]
+            },
+            {
+              "requirement_id": null,
+              "field": "filters",
+              "code": "explicit_value_missing",
+              "expected": {
+                "dimension": "city",
+                "value": "Hồ Chí Minh"
+              }
+            },
+            {
+              "requirement_id": null,
+              "field": "filters",
+              "code": "explicit_value_missing",
+              "expected": {
+                "dimension": "city",
+                "value": "Hà Nội"
+              }
+            }
+          ],
+          [
+            {
+              "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+              "field": "dimension_ids",
+              "code": "untargeted_field_changed"
+            }
+          ]
+        ],
+        "planning_latency_ms": 3158.01
+      },
+      "contract_issues": [
+        {
+          "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+          "field": "dimension_ids",
+          "code": "untargeted_field_changed"
+        }
+      ],
+      "root_contract_issues": [
+        {
+          "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+          "field": "derived_features",
+          "code": "feature_shape_conflict",
+          "feature": "change",
+          "expected_shapes": [
+            "trend"
+          ],
+          "protected_features": [
+            "group_gap"
+          ]
+        },
+        {
+          "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+          "field": "feature_metrics",
+          "code": "feature_shape_binding_conflict",
+          "feature": "change"
+        },
+        {
+          "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+          "field": "derived_features",
+          "code": "feature_shape_conflict",
+          "feature": "change_pct",
+          "expected_shapes": [
+            "trend"
+          ],
+          "protected_features": [
+            "group_gap"
+          ]
+        },
+        {
+          "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+          "field": "feature_metrics",
+          "code": "feature_shape_binding_conflict",
+          "feature": "change_pct"
+        },
+        {
+          "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+          "field": "derived_features",
+          "code": "feature_shape_conflict",
+          "feature": "leader",
+          "expected_shapes": [
+            "ranking"
+          ],
+          "protected_features": [
+            "group_gap"
+          ]
+        },
+        {
+          "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+          "field": "feature_metrics",
+          "code": "feature_shape_binding_conflict",
+          "feature": "leader"
+        },
+        {
+          "requirement_id": "comparison_revenue_hcm_hanoi_sep2026",
+          "field": "filters",
+          "code": "scope_membership_mismatch",
+          "expected": [
+            [
+              "Hồ Chí Minh"
+            ],
+            [
+              "Hà Nội"
+            ]
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "scope_cohort_missing",
+          "expected": [
+            [
+              "Hồ Chí Minh"
+            ],
+            [
+              "Hà Nội"
+            ]
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Hồ Chí Minh"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Hà Nội"
+          }
+        }
+      ],
+      "interpreter_outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "metric_ids": [
+                "revenue"
+              ],
+              "analysis_kind": "comparison",
+              "time": {
+                "kind": "month",
+                "month": 9,
+                "year": 2026
+              },
+              "availability": "requested",
+              "id": "comparison_revenue_hcm_hanoi_sep2026",
+              "derived_features": [
+                "change",
+                "change_pct",
+                "group_gap",
+                "leader"
+              ],
+              "feature_metrics": {
+                "change_pct": [
+                  "revenue"
+                ],
+                "leader": [
+                  "revenue"
+                ],
+                "group_gap": [
+                  "revenue"
+                ],
+                "change": [
+                  "revenue"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "time": {
+                "year": 2026,
+                "month": 9,
+                "kind": "month"
+              },
+              "derived_features": [
+                "group_gap"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "metric_ids": [
+                "revenue"
+              ],
+              "id": "comparison_revenue_hcm_hanoi_sep2026",
+              "filters": [
+                {
+                  "dimension": "city",
+                  "value": [
+                    "Hồ Chí Minh",
+                    "Hà Nội"
+                  ],
+                  "operator": "in"
+                }
+              ],
+              "analysis_kind": "comparison",
+              "availability": "requested"
+            }
+          ]
+        }
+      ]
+    },
+    "planning_ms": 3158.01,
+    "job_id": "aj_0becb21a398a4d10b3f639ba14af6f44",
+    "terminal_state": "failed",
+    "job_physical_http": 2,
+    "job_latency_ms": null,
+    "stage_timings_ms": {
+      "queue": 1.53,
+      "accepted": 213.94,
+      "planning": 1538.03
+    }
+  }
+]

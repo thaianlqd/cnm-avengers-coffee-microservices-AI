@@ -1,0 +1,153 @@
+
+> data-platform-web-ui@1.0.0 test:e2e
+> playwright test
+
+[2m[WebServer] [22m(node:10882) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 32 tests using 1 worker
+
+  ✓   1 [ui] › tests/e2e/analyst-workspace.spec.ts:8:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › shows exactly seven modes and keeps hidden legacy missions out of the picker (1.8s)
+  ✓   2 [ui] › tests/e2e/analyst-workspace.spec.ts:19:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › "Phân tích" runs one job through /analysis-jobs without opening the plan step; double click = one submission (1.3s)
+  ✓   3 [ui] › tests/e2e/analyst-workspace.spec.ts:37:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › "Xem kế hoạch" keeps the optional preview/approve flow on its own endpoint (840ms)
+  ✓   4 [ui] › tests/e2e/analyst-workspace.spec.ts:49:3 › State isolation - stale responses never come back › propose is slow, the user goes back to edit, the old plan arrives later: no plan appears (1.2s)
+  ✓   5 [ui] › tests/e2e/analyst-workspace.spec.ts:64:3 › State isolation - stale responses never come back › generate is slow, the user stops: the late report is dropped and the workspace is reset (1.3s)
+  ✓   6 [ui] › tests/e2e/analyst-workspace.spec.ts:80:3 › State isolation - stale responses never come back › lost POST response: reconnect resumes the SAME idempotency key and never starts a new interpretation (1.3s)
+  ✓   7 [ui] › tests/e2e/analyst-workspace.spec.ts:103:3 › State isolation - stale responses never come back › changing the period after a plan was proposed drops that plan (860ms)
+  ✓   8 [ui] › tests/e2e/analyst-workspace.spec.ts:117:3 › Risk scan, redirect and typed actions › a slow Risk scan is dropped when the mission changes (no scan published into another mission) (1.5s)
+  ✓   9 [ui] › tests/e2e/analyst-workspace.spec.ts:134:3 › Risk scan, redirect and typed actions › a REDIRECT fix switches the mission but keeps the deliberate question (1.8s)
+  ✓  10 [ui] › tests/e2e/analyst-workspace.spec.ts:167:3 › Guided input and typed clarification › untouched guided builder sends a guided contract; editing the text sends free text only (no stale guided intent) (1.0s)
+  ✓  11 [ui] › tests/e2e/analyst-workspace.spec.ts:203:3 › Refinement and reset on a finished report › a slow refinement that finishes after "Hỏi câu mới" does not resurrect the old report (1.7s)
+  ✓  12 [ui] › tests/e2e/analyst-workspace.spec.ts:226:3 › Refinement and reset on a finished report › cancelling while the job HTTP is still running cancels the owned task and publishes nothing late (1.4s)
+  ✓  13 [ui] › tests/e2e/platform-v34.spec.ts:30:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › anonymous login gate makes no protected platform requests (774ms)
+  ✓  14 [ui] › tests/e2e/platform-v34.spec.ts:38:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › identity login returns account state and never stores a token in browser storage (813ms)
+  ✓  15 [ui] › tests/e2e/platform-v34.spec.ts:53:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › expired protected session returns to sign in before a report can appear (829ms)
+  ✓  16 [ui] › tests/e2e/platform-v34.spec.ts:65:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › permission denial keeps the signed-in workspace and the draft (799ms)
+  ✓  17 [ui] › tests/e2e/platform-v34.spec.ts:77:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › logout removes the report before a different account can sign in (5.6s)
+  ✓  18 [ui] › tests/e2e/platform-v34.spec.ts:86:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › keyboard group inspect uses the exact composite artifact key and makes no new AI request (1.7s)
+  ✓  19 [ui] › tests/e2e/platform-v34.spec.ts:110:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › group analysis prepares a new governed request and waits for explicit submission (2.1s)
+  ✓  20 [ui] › tests/e2e/platform-v34.spec.ts:136:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › mobile group inspect shows revoked access without a generic AI retry (1.2s)
+  ✓  21 [ui] › tests/e2e/platform-v34.spec.ts:150:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › saved report reopens current server presentation with real donut rows and quarantines legacy claims (848ms)
+  ✓  22 [ui] › tests/e2e/platform-v34.spec.ts:173:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › blocked and unknown sources disclose measured health and unknown completeness (828ms)
+  ✓  23 [ui] › tests/e2e/platform-v34.spec.ts:187:3 › V3.4 BI data errors and measured values › marts503 is a visible error without zero KPI and retry recovers real data (796ms)
+  ✓  24 [ui] › tests/e2e/platform-v34.spec.ts:207:3 › V3.4 BI data errors and measured values › valid zero data is separate from a network error and never fabricates business rows (777ms)
+  ✓  25 [ui] › tests/e2e/platform-v34.spec.ts:220:1 › same-account reauthentication restores the draft without resubmitting paid work (842ms)
+  ✓  26 [ui] › tests/e2e/platform-v34.spec.ts:237:1 › disabled SQL metadata is loaded only on Explorer and cannot show as a dashboard data failure (792ms)
+  ✓  27 [ui] › tests/e2e/platform-v34.spec.ts:255:1 › BI export fails visibly on denial and only reports success after receiving an actual CSV download (804ms)
+  ✓  28 [ui] › tests/e2e/platform-v34.spec.ts:279:1 › city share keeps the full population denominator and displays unscaled money (777ms)
+[2m[WebServer] [22m9:24:53 AM [vite] http proxy error: /api/test/metrics
+[2m[WebServer] [22mError: connect ECONNREFUSED 127.0.0.1:18765
+[2m[WebServer] [22m    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+  ✘  29 [api] › tests/e2e/real-api.spec.ts:11:1 › South scope → optional proposal → generate → direct total and final conclusion (94ms)
+[2m[WebServer] [22m9:24:54 AM [vite] http proxy error: /api/test/metrics
+[2m[WebServer] [22mError: connect ECONNREFUSED 127.0.0.1:18765
+[2m[WebServer] [22m    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+  ✘  30 [api] › tests/e2e/real-api.spec.ts:51:1 › all public entry variants reject a known forbidden clause before interpretation or SQL (48ms)
+[2m[WebServer] [22m9:24:54 AM [vite] http proxy error: /api/test/metrics
+[2m[WebServer] [22mError: connect ECONNREFUSED 127.0.0.1:18765
+[2m[WebServer] [22m    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+  ✘  31 [api] › tests/e2e/real-api.spec.ts:69:1 › known mixed unsupported is blocked at real HTTP boundary with zero interpretation and SQL (50ms)
+[2m[WebServer] [22m9:24:55 AM [vite] http proxy error: /api/test/metrics
+[2m[WebServer] [22mError: connect ECONNREFUSED 127.0.0.1:18765
+[2m[WebServer] [22m    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+  ✘  32 [api] › tests/e2e/real-api.spec.ts:77:1 › one-click API job retains same identity on reconnect and guided work uses zero AI (48ms)
+
+
+  1) [api] › tests/e2e/real-api.spec.ts:11:1 › South scope → optional proposal → generate → direct total and final conclusion 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mfalse[39m
+
+       6 |   // Vite serves the page; the explicit API fixture marker protects against accidentally spending quota.
+       7 |   const marker=await request.get('/api/test/metrics');
+    >  8 |   expect(marker.ok()).toBeTruthy();expect((await marker.json()).external_http).toBe(0);
+         |                       ^
+       9 | });
+      10 |
+      11 | test('South scope → optional proposal → generate → direct total and final conclusion',async({page})=>{
+        at /Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/real-api.spec.ts:8:23
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/real-api-South-scope-→-opt-2ebef--total-and-final-conclusion-api/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/real-api-South-scope-→-opt-2ebef--total-and-final-conclusion-api/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [api] › tests/e2e/real-api.spec.ts:51:1 › all public entry variants reject a known forbidden clause before interpretation or SQL 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mfalse[39m
+
+       6 |   // Vite serves the page; the explicit API fixture marker protects against accidentally spending quota.
+       7 |   const marker=await request.get('/api/test/metrics');
+    >  8 |   expect(marker.ok()).toBeTruthy();expect((await marker.json()).external_http).toBe(0);
+         |                       ^
+       9 | });
+      10 |
+      11 | test('South scope → optional proposal → generate → direct total and final conclusion',async({page})=>{
+        at /Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/real-api.spec.ts:8:23
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/real-api-all-public-entry--9bd8e-efore-interpretation-or-SQL-api/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/real-api-all-public-entry--9bd8e-efore-interpretation-or-SQL-api/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [api] › tests/e2e/real-api.spec.ts:69:1 › known mixed unsupported is blocked at real HTTP boundary with zero interpretation and SQL 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mfalse[39m
+
+       6 |   // Vite serves the page; the explicit API fixture marker protects against accidentally spending quota.
+       7 |   const marker=await request.get('/api/test/metrics');
+    >  8 |   expect(marker.ok()).toBeTruthy();expect((await marker.json()).external_http).toBe(0);
+         |                       ^
+       9 | });
+      10 |
+      11 | test('South scope → optional proposal → generate → direct total and final conclusion',async({page})=>{
+        at /Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/real-api.spec.ts:8:23
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/real-api-known-mixed-unsup-61a54-zero-interpretation-and-SQL-api/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/real-api-known-mixed-unsup-61a54-zero-interpretation-and-SQL-api/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [api] › tests/e2e/real-api.spec.ts:77:1 › one-click API job retains same identity on reconnect and guided work uses zero AI 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mfalse[39m
+
+       6 |   // Vite serves the page; the explicit API fixture marker protects against accidentally spending quota.
+       7 |   const marker=await request.get('/api/test/metrics');
+    >  8 |   expect(marker.ok()).toBeTruthy();expect((await marker.json()).external_http).toBe(0);
+         |                       ^
+       9 | });
+      10 |
+      11 | test('South scope → optional proposal → generate → direct total and final conclusion',async({page})=>{
+        at /Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/real-api.spec.ts:8:23
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/real-api-one-click-API-job-b6d40-nd-guided-work-uses-zero-AI-api/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/real-api-one-click-API-job-b6d40-nd-guided-work-uses-zero-AI-api/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [api] › tests/e2e/real-api.spec.ts:11:1 › South scope → optional proposal → generate → direct total and final conclusion 
+    [api] › tests/e2e/real-api.spec.ts:51:1 › all public entry variants reject a known forbidden clause before interpretation or SQL 
+    [api] › tests/e2e/real-api.spec.ts:69:1 › known mixed unsupported is blocked at real HTTP boundary with zero interpretation and SQL 
+    [api] › tests/e2e/real-api.spec.ts:77:1 › one-click API job retains same identity on reconnect and guided work uses zero AI 
+  28 passed (43.8s)

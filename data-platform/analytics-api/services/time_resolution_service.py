@@ -93,8 +93,18 @@ def parse_time(prompt, interpretation, timezone, reference_date=None):
     if isinstance(reference, str):
         reference = date.fromisoformat(reference)
     text = normalize(prompt)
-    parsed, occupied = [], []
+    parsed, occupied, located = [], [], []
     errors = []
+    # Calendar prefix, not a rolling history: "N tháng đầu năm YYYY" has an exact inclusive window.
+    # Consume the whole expression before the generic year grammar to avoid anchoring the full year.
+    for match in re.finditer(r'\b(?P<months>\d{1,2})\s+thang\s+dau\s+nam\s+(?P<year>\d{4})\b',text):
+        occupied.append(match.span())
+        months,year=int(match['months']),int(match['year'])
+        try:
+            if not 1<=months<=12:raise ValueError('invalid calendar month count')
+            located.append((match.start(),match.end(),TimeSpec(kind='range',start=date(year,1,1),
+                end=date(year,months,calendar.monthrange(year,months)[1]))))
+        except ValueError:errors.append('time_range_invalid')
     for item in interpretation.get("time_grammar", []):
         for match in re.finditer(item["pattern"], text):
             if any(match.start() < b and match.end() > a for a, b in occupied):
@@ -102,15 +112,46 @@ def parse_time(prompt, interpretation, timezone, reference_date=None):
             occupied.append(match.span())
             parts = {k: int(v) for k, v in match.groupdict().items() if v is not None}
             try:
-                parsed.append(
+                located.append((match.start(), match.end(),
                     TimeSpec(
                         kind=item["kind"],
                         **parts,
                         **({"unit": item["unit"]} if item.get("unit") else {}),
-                    )
-                )
+                    )))
             except ValueError:
                 errors.append("time_range_invalid")
+    located.sort(key=lambda item: item[0])
+    parsed = [item[2] for item in located]
+    # A trailing year qualifies both calendar periods in one explicit comparison
+    # ("tháng 8 với tháng 9 năm 2026"). Never carry it across clauses or replace
+    # an explicit year. Ranges and unrelated dates keep their existing grammar.
+    if len(located) == 2:
+        (_, end, first), (start, _, second) = located
+        connector = text[end:start].strip()
+        if (first.kind == second.kind and first.kind in {'month', 'quarter'}
+                and first.year is None and second.year is not None
+                and re.fullmatch(r'(?:voi|so voi|va|versus|vs\.?)', connector)):
+            first.year = second.year
+    # "từ tháng 1 đến tháng 9 năm 2026" / "quý 2 - quý 3 năm 2026": ONE inclusive range of whole periods,
+    # the trailing year qualifying both ends (never two separate single-period requirements).
+    if len(located) == 2:
+        (_, end, first), (start, _, second) = located
+        connector = text[end:start].strip()
+        if (first.kind == second.kind and first.kind in {'month', 'quarter'} and second.year is not None
+                and re.fullmatch(r'(?:den|toi|-|–)', connector)):
+            first_year = first.year or second.year
+            first_month = first.month if first.kind == 'month' else (first.quarter - 1) * 3 + 1
+            last_month = second.month if second.kind == 'month' else second.quarter * 3
+            try:
+                low = date(first_year, first_month, 1)
+                high = date(second.year, last_month, calendar.monthrange(second.year, last_month)[1])
+                if low <= high:
+                    parsed = [TimeSpec(kind='range', start=low, end=high)]
+                else:
+                    parsed = []
+                    errors.append('time_range_invalid')
+            except ValueError:
+                errors.append('time_range_invalid')
     # Adjacent/answered year can qualify one partial date, without losing known fields.
     years = [p for p in parsed if p.kind == "year"]
     partial = [

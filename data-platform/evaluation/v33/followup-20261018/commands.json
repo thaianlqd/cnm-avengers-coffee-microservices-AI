@@ -1,0 +1,71 @@
+{
+  "full_offline": {
+    "command": "LOG_DIR=/tmp/v33-followup-resume/final-all .claude/scripts/dp-test.sh all",
+    "exit_code": 0,
+    "backend": 1063,
+    "frontend": 165,
+    "typecheck": "PASS",
+    "build": "PASS",
+    "eval_old": 146,
+    "eval_v33": 33,
+    "chromium_mocked": 12,
+    "evidence": "full-final.txt"
+  },
+  "browser_real_fixture": {
+    "command": "V33_API_TARGET=http://127.0.0.1:18765 LOG_DIR=/tmp/v33-followup-resume/final-browser .claude/scripts/dp-test.sh e2e",
+    "exit_code": 0,
+    "journeys": 16,
+    "mocked": 12,
+    "real_fastapi_fixture": 4,
+    "evidence": "browser-final.txt"
+  },
+  "typed_frontend": {
+    "command": "LOG_DIR=/tmp/v33-followup-resume/typed-web .claude/scripts/dp-test.sh web",
+    "exit_code": 0,
+    "evidence": "typed-web.txt"
+  },
+  "live": {
+    "command": "docker compose -f docker-compose.data.yml exec -T analytics-api env AI_OFFLINE=0 python -m evals.live_acceptance_v33 --execute --jobs --approved-ceiling 160 --ledger /tmp/v33-live-http-ledger.json --out /tmp/v33-final-job-live.json",
+    "entry_point": "analysis_jobs",
+    "release_passed": true,
+    "cases": 29,
+    "useful": {
+      "passed": 24,
+      "total": 25
+    },
+    "total_reserved": 151,
+    "total_external_attempts": 146,
+    "total_simulated_faults": 5,
+    "approved_total_ceiling": 160,
+    "evidence": "live-jobs-final.json"
+  },
+  "deploy_web": {
+    "command": "docker compose -f docker-compose.data.yml up -d --no-deps --build web-ui",
+    "exit_code": 0,
+    "evidence": "web-deployment.txt"
+  },
+  "restart_api": {
+    "command": "docker compose -f docker-compose.data.yml restart analytics-api",
+    "exit_code": 0,
+    "same_container": true,
+    "evidence": "api-restart.txt"
+  },
+  "served_browser": {
+    "command": "PW_CHROMIUM=<installed Chromium executable> V33_EVIDENCE_DIR=/tmp/v33-served-final node tools/served-acceptance-v33.mjs",
+    "cwd": "data-platform/web-ui",
+    "exit_code": 0,
+    "journeys": 12,
+    "real_api": true,
+    "api_response_mocks": false,
+    "physical_provider_http": 0,
+    "evidence": "served-browser.json"
+  },
+  "environment": {
+    "backend": "Docker Python 3.11.17 aarch64",
+    "frontend": "host Node + installed Chromium",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "no_human_manual_claim": true,
+    "no_warehouse_mutations": true,
+    "no_git_mutations": true
+  }
+}

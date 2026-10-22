@@ -1,0 +1,17 @@
+{
+  "scope": "Current V3.5 release diff including grant provisioning, fixture ownership, mode guards, compiled contracts and CI candidate identity",
+  "reviewer": "code_review_final (read-only independent reviewer)",
+  "actionable_findings": 0,
+  "verification": "Reviewed separately from implementation; all reports inspected. No product source changes delegated.",
+  "reviewers": [
+    {
+      "agent": "code_review_final",
+      "mode": "read_only"
+    },
+    {
+      "agent": "code_reviewer_rc",
+      "context": "fresh fork_turns=none",
+      "mode": "read_only"
+    }
+  ]
+}

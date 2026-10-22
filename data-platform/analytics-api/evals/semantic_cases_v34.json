@@ -1,0 +1,1619 @@
+{
+  "version": "3.4.0",
+  "reference_date": "2026-10-16",
+  "freeze_note": "Expected labels authored before first execution; offline contracts/reference intents, not measured LLM understanding.",
+  "upstream": "Existing governed metric/scope definitions and independently authored expected periods/sets",
+  "category_allocation": {
+    "paraphrase": 10,
+    "ambiguity": 8,
+    "mixed_multi_clause": 8,
+    "unsupported": 8,
+    "geography": 12,
+    "time": 10,
+    "ranking": 6,
+    "compare": 8,
+    "trend": 6,
+    "forecast": 8,
+    "risk": 6,
+    "relationship": 6,
+    "multi_metric": 6,
+    "typo": 4,
+    "unaccented": 6,
+    "partial": 4,
+    "contradiction": 4
+  },
+  "cases": [
+    {
+      "id": "V34-001",
+      "category": "paraphrase",
+      "q": "Xin tổng hợp doanh thu tháng 9 năm 2026 giúp tôi.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-002",
+      "category": "paraphrase",
+      "q": "Tháng 9/2026 ghi nhận bao nhiêu doanh thu?",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-003",
+      "category": "paraphrase",
+      "q": "Cho mình xem số đơn hàng trong tháng 9 năm 2026.",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-004",
+      "category": "paraphrase",
+      "q": "Giá trị đơn trung bình của tháng 9 năm 2026 là bao nhiêu?",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "aov"
+        ]
+      }
+    },
+    {
+      "id": "V34-005",
+      "category": "paraphrase",
+      "q": "Tóm tắt lượng bán sản phẩm trong tháng 9 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "quantity_sold"
+        ]
+      }
+    },
+    {
+      "id": "V34-006",
+      "category": "paraphrase",
+      "q": "Báo cáo doanh thu toàn hệ thống tháng 8 năm 2026.",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-007",
+      "category": "paraphrase",
+      "q": "Mình cần thống kê doanh thu theo thành phố trong quý 3 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-008",
+      "category": "paraphrase",
+      "q": "Có thể cho biết tổng số đơn tháng 8 năm 2026 không?",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-009",
+      "category": "paraphrase",
+      "q": "Hãy xem doanh thu của tháng 7 năm 2026.",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-010",
+      "category": "paraphrase",
+      "q": "Tổng hợp doanh thu và số đơn trong quý 3 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-011",
+      "category": "ambiguity",
+      "q": "Top 7 chi nhánh tốt nhất trong tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-012",
+      "category": "ambiguity",
+      "q": "Xếp hạng 3 cửa hàng tốt nhất tháng 7 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-013",
+      "category": "ambiguity",
+      "q": "Doanh thu Nha Trang trong tháng 9 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-014",
+      "category": "ambiguity",
+      "q": "Doanh thu Đà Lạt quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-015",
+      "category": "ambiguity",
+      "q": "Doanh thu Phú Quốc tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-016",
+      "category": "ambiguity",
+      "q": "Tương quan doanh thu với kênh bán tháng 9 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-017",
+      "category": "ambiguity",
+      "q": "So sánh doanh thu Hồ Chí Minh với tỷ lệ hủy Hà Nội tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-018",
+      "category": "ambiguity",
+      "q": "Doanh thu Hà Nội so với nhóm chi nhánh hoạt động tốt nhất tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-019",
+      "category": "mixed_multi_clause",
+      "q": "Doanh thu theo thành phố; số đơn theo loại đơn trong tháng 9 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-020",
+      "category": "mixed_multi_clause",
+      "q": "Doanh thu tháng 8 năm 2026; giá trị đơn trung bình theo chi nhánh.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "aov"
+        ]
+      }
+    },
+    {
+      "id": "V34-021",
+      "category": "mixed_multi_clause",
+      "q": "Số đơn và doanh thu theo từng chi nhánh tháng 7 năm 2026.",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count",
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-022",
+      "category": "mixed_multi_clause",
+      "q": "Doanh thu theo tháng và số đơn theo tuần trong quý 3 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-023",
+      "category": "mixed_multi_clause",
+      "q": "Doanh thu, số đơn, AOV tháng 8 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_count",
+          "aov"
+        ]
+      }
+    },
+    {
+      "id": "V34-024",
+      "category": "mixed_multi_clause",
+      "q": "Cơ cấu doanh thu theo loại đơn và AOV theo thành phố tháng 8 năm 2026.",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "aov"
+        ]
+      }
+    },
+    {
+      "id": "V34-025",
+      "category": "mixed_multi_clause",
+      "q": "Tỷ lệ hủy theo thành phố; doanh thu theo ngày trong tháng 9 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_cancellation_rate",
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-026",
+      "category": "mixed_multi_clause",
+      "q": "Tổng doanh thu Hà Nội và số đơn Hồ Chí Minh trong tháng 8 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-027",
+      "category": "unsupported",
+      "q": "Cho xem lợi nhuận các chi nhánh quý 3 năm 2026.",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-028",
+      "category": "unsupported",
+      "q": "Chi phí vận hành tháng 8 năm 2026 của Hà Nội.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-029",
+      "category": "unsupported",
+      "q": "Doanh thu của các cửa hàng đang lỗ trong tháng 8 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-030",
+      "category": "unsupported",
+      "q": "Dự báo doanh thu từng thành phố trong 18 tháng tới.",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-031",
+      "category": "unsupported",
+      "q": "Dự báo AOV theo từng chi nhánh trong 24 tháng tới.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-032",
+      "category": "unsupported",
+      "q": "Tính doanh thu Quảng Nam tháng 8 năm 2026.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-033",
+      "category": "unsupported",
+      "q": "Doanh thu những chi nhánh lỗ vốn quý 3 năm 2026.",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-034",
+      "category": "unsupported",
+      "q": "Dự báo tỷ lệ đi trễ 6 tháng tiếp theo.",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-035",
+      "category": "geography",
+      "q": "Tổng doanh thu miền Nam tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Hồ Chí Minh",
+          "Cần Thơ",
+          "Bình Dương",
+          "Đồng Nai",
+          "Bà Rịa - Vũng Tàu",
+          "Kiên Giang"
+        ]
+      }
+    },
+    {
+      "id": "V34-036",
+      "category": "geography",
+      "q": "Doanh thu phía Bắc trong quý 3 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Hà Nội",
+          "Hải Phòng",
+          "Bắc Ninh",
+          "Quảng Ninh"
+        ]
+      }
+    },
+    {
+      "id": "V34-037",
+      "category": "geography",
+      "q": "Doanh thu miền Trung và Tây Nguyên tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Đà Nẵng",
+          "Nghệ An",
+          "Thanh Hóa",
+          "Thừa Thiên - Huế",
+          "Khánh Hòa",
+          "Lâm Đồng"
+        ]
+      }
+    },
+    {
+      "id": "V34-038",
+      "category": "geography",
+      "q": "Doanh thu Nam Bộ trừ Hồ Chí Minh tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Cần Thơ",
+          "Bình Dương",
+          "Đồng Nai",
+          "Bà Rịa - Vũng Tàu",
+          "Kiên Giang"
+        ]
+      }
+    },
+    {
+      "id": "V34-039",
+      "category": "geography",
+      "q": "Doanh thu miền Nam và Hà Nội quý 3 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Hồ Chí Minh",
+          "Cần Thơ",
+          "Bình Dương",
+          "Đồng Nai",
+          "Bà Rịa - Vũng Tàu",
+          "Kiên Giang",
+          "Hà Nội"
+        ]
+      }
+    },
+    {
+      "id": "V34-040",
+      "category": "geography",
+      "q": "Doanh thu Đông Nam Bộ tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Hồ Chí Minh",
+          "Bình Dương",
+          "Đồng Nai",
+          "Bà Rịa - Vũng Tàu"
+        ]
+      }
+    },
+    {
+      "id": "V34-041",
+      "category": "geography",
+      "q": "Doanh thu Tây Nam Bộ trong tháng 7 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Cần Thơ",
+          "Kiên Giang"
+        ]
+      }
+    },
+    {
+      "id": "V34-042",
+      "category": "geography",
+      "q": "So sánh doanh thu Hà Nội với Hồ Chí Minh tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Hà Nội",
+          "Hồ Chí Minh"
+        ]
+      }
+    },
+    {
+      "id": "V34-043",
+      "category": "geography",
+      "q": "Doanh thu miền Bắc trừ Hà Nội tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Hải Phòng",
+          "Bắc Ninh",
+          "Quảng Ninh"
+        ]
+      }
+    },
+    {
+      "id": "V34-044",
+      "category": "geography",
+      "q": "Số đơn miền Nam tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ],
+        "members": [
+          "Hồ Chí Minh",
+          "Cần Thơ",
+          "Bình Dương",
+          "Đồng Nai",
+          "Bà Rịa - Vũng Tàu",
+          "Kiên Giang"
+        ]
+      }
+    },
+    {
+      "id": "V34-045",
+      "category": "geography",
+      "q": "Doanh thu Đà Nẵng và Cần Thơ tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Đà Nẵng",
+          "Cần Thơ"
+        ]
+      }
+    },
+    {
+      "id": "V34-046",
+      "category": "geography",
+      "q": "Top 3 chi nhánh theo doanh thu trong mỗi miền tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-047",
+      "category": "time",
+      "q": "Doanh thu tháng 9 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "period": {
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      }
+    },
+    {
+      "id": "V34-048",
+      "category": "time",
+      "q": "Doanh thu tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "period": {
+          "start": "2026-08-01",
+          "end": "2026-08-31"
+        }
+      }
+    },
+    {
+      "id": "V34-049",
+      "category": "time",
+      "q": "Số đơn tháng 7 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ],
+        "period": {
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        }
+      }
+    },
+    {
+      "id": "V34-050",
+      "category": "time",
+      "q": "Doanh thu quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-051",
+      "category": "time",
+      "q": "Doanh thu 14 ngày qua",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-052",
+      "category": "time",
+      "q": "Số đơn 30 ngày gần nhất",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-053",
+      "category": "time",
+      "q": "Doanh thu từ 2026-09-01 đến 2026-09-15",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-054",
+      "category": "time",
+      "q": "Doanh thu ngày 15/09/2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-055",
+      "category": "time",
+      "q": "Doanh thu năm 2025",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-056",
+      "category": "time",
+      "q": "Doanh thu quý trước",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-057",
+      "category": "ranking",
+      "q": "Top 3 chi nhánh theo doanh thu tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-058",
+      "category": "ranking",
+      "q": "Top 7 chi nhánh theo số đơn tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-059",
+      "category": "ranking",
+      "q": "5 thành phố doanh thu cao nhất quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-060",
+      "category": "ranking",
+      "q": "Top 10 sản phẩm theo số lượng bán tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "quantity_sold"
+        ]
+      }
+    },
+    {
+      "id": "V34-061",
+      "category": "ranking",
+      "q": "Top 3 loại đơn theo doanh thu tháng 7 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-062",
+      "category": "ranking",
+      "q": "Top 2 chi nhánh theo doanh thu mỗi miền quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-063",
+      "category": "compare",
+      "q": "So sánh doanh thu Hà Nội và Hồ Chí Minh quý 3 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-064",
+      "category": "compare",
+      "q": "So sánh số đơn Hà Nội và Cần Thơ tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-065",
+      "category": "compare",
+      "q": "So sánh doanh thu tháng 8 với tháng 9 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-066",
+      "category": "compare",
+      "q": "So sánh AOV theo chi nhánh tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "aov"
+        ]
+      }
+    },
+    {
+      "id": "V34-067",
+      "category": "compare",
+      "q": "So sánh doanh thu theo loại đơn quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-068",
+      "category": "compare",
+      "q": "So sánh doanh thu miền Bắc với miền Nam tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-069",
+      "category": "compare",
+      "q": "So sánh doanh thu và số đơn giữa các thành phố tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-070",
+      "category": "compare",
+      "q": "So sánh tỷ lệ hủy theo thành phố quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_cancellation_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-071",
+      "category": "trend",
+      "q": "Xu hướng doanh thu theo ngày trong tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-072",
+      "category": "trend",
+      "q": "Diễn biến số đơn theo tuần trong quý 3 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-073",
+      "category": "trend",
+      "q": "Xu hướng AOV theo tháng trong năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "aov"
+        ]
+      }
+    },
+    {
+      "id": "V34-074",
+      "category": "trend",
+      "q": "Doanh thu thay đổi theo tuần trong 90 ngày qua",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-075",
+      "category": "trend",
+      "q": "Xu hướng tỷ lệ hủy theo tuần trong quý 3 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_cancellation_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-076",
+      "category": "trend",
+      "q": "Xu hướng doanh thu theo tháng trong ngày 01/09/2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-077",
+      "category": "forecast",
+      "q": "Dự báo doanh thu 2 tháng tiếp theo",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-078",
+      "category": "forecast",
+      "q": "Dự báo số đơn 2 tháng tới",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-079",
+      "category": "forecast",
+      "q": "Dự báo doanh thu trong 7 ngày tới",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-080",
+      "category": "forecast",
+      "q": "Dự báo doanh thu 6 tháng tới",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-081",
+      "category": "forecast",
+      "q": "Dự báo doanh thu từng loại đơn 2 tháng tới",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-082",
+      "category": "forecast",
+      "q": "Dự báo doanh thu 2 tháng tới cho Cần Thơ",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-083",
+      "category": "forecast",
+      "q": "Dự báo doanh thu 24 tháng tiếp theo",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-084",
+      "category": "forecast",
+      "q": "Dự báo số lượng tồn kho trong 2 tháng tới",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-085",
+      "category": "risk",
+      "q": "Quét rủi ro doanh thu tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "REDIRECT"
+      }
+    },
+    {
+      "id": "V34-086",
+      "category": "risk",
+      "q": "Rủi ro và cảnh báo số đơn trong tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "REDIRECT"
+      }
+    },
+    {
+      "id": "V34-087",
+      "category": "risk",
+      "q": "Tỷ lệ hủy đơn theo chi nhánh tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_cancellation_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-088",
+      "category": "risk",
+      "q": "Tỷ lệ đi trễ của nhân viên tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "late_shift_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-089",
+      "category": "risk",
+      "q": "Tỷ lệ giao thành công theo thành phố quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "delivery_success_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-090",
+      "category": "risk",
+      "q": "Số ca chênh lệch tiền mặt lớn tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "large_cash_discrepancy_shift_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-091",
+      "category": "relationship",
+      "q": "Tương quan doanh thu với tỷ lệ hủy theo chi nhánh tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_cancellation_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-092",
+      "category": "relationship",
+      "q": "Quan hệ giữa doanh thu và tỷ lệ hủy theo chi nhánh quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_cancellation_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-093",
+      "category": "relationship",
+      "q": "Tương quan doanh thu với thành phố tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-094",
+      "category": "relationship",
+      "q": "Tương quan số đơn với loại đơn trong quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-095",
+      "category": "relationship",
+      "q": "Doanh thu và tỷ lệ hủy có mối liên hệ gì theo chi nhánh tháng 8 năm 2026?",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_cancellation_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-096",
+      "category": "relationship",
+      "q": "So sánh mức liên hệ doanh thu với tỷ lệ hủy theo chi nhánh tháng 7 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_cancellation_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-097",
+      "category": "multi_metric",
+      "q": "Doanh thu và số đơn tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-098",
+      "category": "multi_metric",
+      "q": "Doanh thu, số đơn và AOV theo ngày tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_count",
+          "aov"
+        ]
+      }
+    },
+    {
+      "id": "V34-099",
+      "category": "multi_metric",
+      "q": "Giá trị đơn trung bình và tỷ lệ hủy theo thành phố tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "aov",
+          "order_cancellation_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-100",
+      "category": "multi_metric",
+      "q": "Doanh thu và tỷ lệ hoàn thành đơn tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue",
+          "order_completion_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-101",
+      "category": "multi_metric",
+      "q": "Số lượng bán và doanh thu sản phẩm quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "quantity_sold"
+        ]
+      }
+    },
+    {
+      "id": "V34-102",
+      "category": "multi_metric",
+      "q": "Số ca đi trễ và tỷ lệ đi trễ tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "late_count",
+          "late_shift_rate"
+        ]
+      }
+    },
+    {
+      "id": "V34-103",
+      "category": "typo",
+      "q": "doanhthuu",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-104",
+      "category": "typo",
+      "q": "tylehuyy",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-105",
+      "category": "typo",
+      "q": "aovxyzabc",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-106",
+      "category": "typo",
+      "q": "Sodonnn",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "CLARIFY"
+      }
+    },
+    {
+      "id": "V34-107",
+      "category": "unaccented",
+      "q": "Doanh thu thang 8 nam 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-108",
+      "category": "unaccented",
+      "q": "So don hang thang 9 nam 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "order_count"
+        ]
+      }
+    },
+    {
+      "id": "V34-109",
+      "category": "unaccented",
+      "q": "Gia tri don trung binh thang 8 nam 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "aov"
+        ]
+      }
+    },
+    {
+      "id": "V34-110",
+      "category": "unaccented",
+      "q": "Doanh thu mien Nam thang 8 nam 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ],
+        "members": [
+          "Hồ Chí Minh",
+          "Cần Thơ",
+          "Bình Dương",
+          "Đồng Nai",
+          "Bà Rịa - Vũng Tàu",
+          "Kiên Giang"
+        ]
+      }
+    },
+    {
+      "id": "V34-111",
+      "category": "unaccented",
+      "q": "So sanh doanh thu Ha Noi va Ho Chi Minh thang 8 nam 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-112",
+      "category": "unaccented",
+      "q": "Top 3 chi nhanh theo doanh thu thang 8 nam 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "metrics": [
+          "revenue"
+        ]
+      }
+    },
+    {
+      "id": "V34-113",
+      "category": "partial",
+      "q": "Doanh thu tháng 8 năm 2026 và lợi nhuận quý 3 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-114",
+      "category": "partial",
+      "q": "Số đơn tháng 8 năm 2026 và chi phí vận hành tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-115",
+      "category": "partial",
+      "q": "Doanh thu Hà Nội và doanh thu của cửa hàng đang lỗ tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "V34-116",
+      "category": "partial",
+      "q": "Doanh thu theo loại đơn và cơ cấu AOV theo chi nhánh tháng 8 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "REDIRECT"
+      }
+    },
+    {
+      "id": "V34-117",
+      "category": "contradiction",
+      "q": "Doanh thu tháng 9 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "request_rejected": true
+      },
+      "request": {
+        "question": "Doanh thu tháng 9 năm 2026",
+        "prompt": "Tỷ lệ hủy quý 3 năm 2026"
+      }
+    },
+    {
+      "id": "V34-118",
+      "category": "contradiction",
+      "q": "Doanh thu tháng 9 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "request_rejected": true
+      },
+      "request": {
+        "question": "Doanh thu tháng 9 năm 2026",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-30",
+          "end": "2026-09-01"
+        }
+      }
+    },
+    {
+      "id": "V34-119",
+      "category": "contradiction",
+      "q": "Doanh thu tháng 9 năm 2026",
+      "split": "development",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "request_rejected": true
+      },
+      "request": {
+        "question": "Doanh thu tháng 9 năm 2026",
+        "analysis_scope": {
+          "mode": "all",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "eq",
+              "value": "Hà Nội"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "V34-120",
+      "category": "contradiction",
+      "q": "Doanh thu tháng 8 năm 2026",
+      "split": "holdout",
+      "expectation_kind": "deterministic_contract_and_reference_intent",
+      "expected": {
+        "decision": "READY",
+        "request_rejected": true
+      },
+      "request": {
+        "question": "Doanh thu tháng 8 năm 2026",
+        "prompt": "Doanh thu tháng 7 năm 2026"
+      }
+    }
+  ]
+}

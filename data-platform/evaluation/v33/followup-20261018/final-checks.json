@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-18T00:52:35.519888+00:00",
+  "diff_check": "PASS",
+  "added_and_untracked_text_scan": {
+    "files": 124,
+    "secret_literals": 0,
+    "print_console_locations": "Only test/eval/benchmark/evidence/browser harnesses; no new product debug prints"
+  },
+  "final_typecheck": "PASS",
+  "services": {
+    "analytics-api": "healthy",
+    "web-ui": "healthy"
+  },
+  "owned_fixture_container": "stopped after tests; production services retained",
+  "evidence_consistency": "PASS",
+  "reserved": 151,
+  "external_attempts": 146,
+  "simulated_faults": 5,
+  "approved_total": 160,
+  "screenshots_visually_checked": [
+    "south-input.png",
+    "guided-forecast.png"
+  ],
+  "known_live_failure": "L03 retained and counted as failure"
+}

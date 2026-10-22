@@ -1,0 +1,45 @@
+{
+  "group": "avengers_pipeline_writer",
+  "source_projections": {
+    "orders.don_hang": [
+      "ma_don_hang",
+      "tong_tien",
+      "co_so_ma",
+      "loai_don_hang",
+      "phuong_thuc_thanh_toan",
+      "trang_thai_thanh_toan",
+      "trang_thai_don_hang",
+      "ngay_tao",
+      "ngay_cap_nhat"
+    ],
+    "orders.chi_tiet_don_hang": [
+      "id",
+      "ma_don_hang",
+      "ma_san_pham",
+      "ten_san_pham",
+      "gia_ban",
+      "so_luong",
+      "kich_co"
+    ],
+    "orders.shipper_delivery": [
+      "id",
+      "ma_don_hang",
+      "status",
+      "delivery_fee",
+      "assigned_at",
+      "picked_up_at",
+      "delivered_at",
+      "updated_at"
+    ]
+  },
+  "sql": "GRANT USAGE ON SCHEMA orders,public TO avengers_pipeline_writer;\nGRANT SELECT (\"ma_don_hang\", \"tong_tien\", \"co_so_ma\", \"loai_don_hang\", \"phuong_thuc_thanh_toan\", \"trang_thai_thanh_toan\", \"trang_thai_don_hang\", \"ngay_tao\", \"ngay_cap_nhat\") ON \"orders\".\"don_hang\" TO avengers_pipeline_writer;\nGRANT SELECT (\"id\", \"ma_don_hang\", \"ma_san_pham\", \"ten_san_pham\", \"gia_ban\", \"so_luong\", \"kich_co\") ON \"orders\".\"chi_tiet_don_hang\" TO avengers_pipeline_writer;\nGRANT SELECT (\"id\", \"ma_don_hang\", \"status\", \"delivery_fee\", \"assigned_at\", \"picked_up_at\", \"delivered_at\", \"updated_at\") ON \"orders\".\"shipper_delivery\" TO avengers_pipeline_writer;\nGRANT INSERT ON public.realtime_events TO avengers_pipeline_writer;\nGRANT USAGE ON SEQUENCE public.realtime_events_id_seq TO avengers_pipeline_writer;\n",
+  "profile_scope": "Only existing pipeline credential; no API reader/writer credentials mounted",
+  "profile_mode": "0600, private parent0700, read-only worker mount",
+  "fact_dml": false,
+  "truncate": false,
+  "table_or_view_ddl": false,
+  "role_creation": false,
+  "worker_activation": false,
+  "offset_reset": false,
+  "applied": true
+}

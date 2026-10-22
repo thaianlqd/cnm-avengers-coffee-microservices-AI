@@ -1,0 +1,13 @@
+F..........
+======================================================================
+FAIL: test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts (tests.test_v34_ranked_companion.RankedCompanionTests.test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_ranked_companion.py", line 66, in test_captured_l43_keeps_exact_top5_keys_and_independent_all_order_counts
+    self.assertIn('Số đơn',report['conclusion']['answer'])
+AssertionError: 'Số đơn' not found in 'Số lượng đơn của cùng 5 nhóm đã chọn theo Tỷ lệ hủy đơn: Trùng tên (s1): 3 đơn; Trùng tên (s2): 5 đơn; Quán 3: 7 đơn; Quán 4: 9 đơn; Quán 5: 11 đơn. Mỗi chỉ số giữ quần thể theo định nghĩa danh mục. Trùng tên (s1) đứng đầu xếp hạng: 50 % theo tỷ lệ hủy đơn.'
+
+----------------------------------------------------------------------
+Ran 11 tests in 4.877s
+
+FAILED (failures=1)

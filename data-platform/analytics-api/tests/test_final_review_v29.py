@@ -166,7 +166,7 @@ class FinalReviewTests(unittest.TestCase):
         bad={'decision':'analyze','requirements':[{'id':'compare','metric_ids':['aov']}]}
         p=self.pipeline(f.scripted(raw,bad,bad))
         with self.assertRaises(AnalysisError):p.propose(self.request('Doanh thu và giá trị đơn trung bình theo chi nhánh trong 90 ngày gần nhất'))
-        self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+        self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
 
     def test_recorded_overview_normalizes_scalar_scope_then_reports(self):
         warehouse=FixtureWarehouse(self.catalog.overlay);self.addCleanup(warehouse.close)
@@ -184,13 +184,15 @@ class FinalReviewTests(unittest.TestCase):
         raw=malformed_overview()
         raw['requirements'][0]['derived_features']=['leader']
         raw['requirements'][0]['feature_metrics']={'leader':['revenue']}
-        question=OVERVIEW_45D+' Thống kê số đơn theo trạng thái đơn.'
+        # Keep leader explicitly requested: unasked incompatible features are
+        # now removed before repair and no longer exercise this repair guard.
+        question=OVERVIEW_45D+' Thống kê số đơn theo trạng thái đơn; chỉ ra nhóm dẫn đầu theo doanh thu.'
         for changed in ({'dimension_ids':['order_status']},{'time':{'kind':'relative','mode':'all_time'}}):
             with self.subTest(changed=changed):
                 attack=f.envelope({'id':'req_1','derived_features':[],'feature_metrics':{},**changed})
                 p=self.pipeline(f.scripted(raw,attack,attack))
                 with self.assertRaises(AnalysisError):p.propose(self.request(question))
-                self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+                self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
                 self.assertEqual(p.semantic_info['failure_code'],'untargeted_field_changed')
 
     def test_global_missing_dimension_schema_excludes_frozen_requirements(self):

@@ -10,7 +10,7 @@ class AnalysisComponent(Contract):
     domain_id: Optional[str] = None
     lens_id: Optional[str] = None
     requested_or_supporting: Literal["requested", "supporting"] = "requested"
-    operation_ids: list[str] = Field(default_factory=list, max_length=8)
+    operation_ids: list[str] = Field(default_factory=list, max_length=16)
     status: Literal["planned", "unsupported", "insufficient_data", "needs_input"] = "planned"
     reason: Optional[Literal["historical_data_unavailable", "metric_unavailable", "definition_unavailable", "ambiguous_criterion"]] = None
 
@@ -47,7 +47,9 @@ def canonical_components(declared, artifacts, intelligence):
             errors.append(issue(["analysis_components", i, "operation_ids"], "missing_requested_component"))
         for ref in c["operation_ids"]:
             a = artifacts.get(ref)
-            if not a or a.query.role != c["requested_or_supporting"] or p and a.query.subject not in p["primary_subjects"] or c["lens_id"] and a.query.lens_id != c["lens_id"]:
+            # A supporting view may share (not replace) an identical requested operation; the reverse never holds.
+            shared = c["requested_or_supporting"] == "supporting" and a is not None and a.query.role == "requested"
+            if not a or a.query.role != c["requested_or_supporting"] and not shared or p and a.query.subject not in p["primary_subjects"] or c["lens_id"] and a.query.lens_id != c["lens_id"]:
                 errors.append(issue(["analysis_components", i, "operation_ids"], "missing_requested_component"))
     mapped = {ref for c in components if c["status"] == "planned" for ref in c["operation_ids"]}
     if any(a.query.role == "requested" and id not in mapped for id, a in artifacts.items()):

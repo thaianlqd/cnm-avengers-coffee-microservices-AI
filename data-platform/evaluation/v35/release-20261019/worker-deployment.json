@@ -1,0 +1,8 @@
+{
+  "source_sha256": "44806fd96039ca211308ade093bdd95f73dd8bec6a4204381c718495b6da701e",
+  "governed": true,
+  "environment": "production",
+  "image": "sha256:4b80f75e2a4ea47ef818e39333bf49f6e6ce0d0d2b1aa405f3375b5d1ca3daf7",
+  "cpus": 0.2,
+  "memory_mib": 384
+}

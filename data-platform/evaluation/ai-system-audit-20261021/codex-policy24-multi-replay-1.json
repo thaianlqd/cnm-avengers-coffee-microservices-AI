@@ -1,0 +1,5653 @@
+[
+  {
+    "id": "multi-clause",
+    "payload": {
+      "question": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026; phân tích chi nhánh và phương thức thanh toán chỉ trong 5 tỉnh này",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep",
+      "refresh": true
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "revenue",
+            "label": "Doanh thu",
+            "unit": "VND",
+            "historical": true,
+            "forecastable": true,
+            "canonical": true,
+            "alternatives": [],
+            "specialized": [
+              {
+                "id": "item_revenue",
+                "label": "Doanh thu món"
+              },
+              {
+                "id": "payment_revenue",
+                "label": "Doanh thu thanh toán"
+              },
+              {
+                "id": "product_revenue",
+                "label": "Doanh thu sản phẩm"
+              },
+              {
+                "id": "store_revenue",
+                "label": "Doanh thu chi nhánh"
+              },
+              {
+                "id": "voucher_revenue",
+                "label": "Doanh thu đơn có khuyến mãi"
+              }
+            ]
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "store",
+            "label": "Chi nhánh"
+          },
+          {
+            "id": "payment_method",
+            "label": "Phương thức thanh toán"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "ranking",
+          "label": "Xếp hạng"
+        }
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "canonical_metric",
+          "message": "“doanh thu” được hiểu là doanh thu (chỉ số chuẩn). Chỉ số chuyên biệt như doanh thu món, doanh thu thanh toán, doanh thu sản phẩm, doanh thu chi nhánh, doanh thu đơn có khuyến mãi chỉ dùng khi bạn nêu rõ.",
+          "fixes": [],
+          "metric": "revenue"
+        },
+        {
+          "level": "info",
+          "code": "source_coverage_unknown",
+          "message": "Đơn hàng chi tiết và doanh thu: dữ liệu quan sát đến 2026-10-18; độ đầy đủ nguồn chưa được chứng minh.",
+          "fixes": [],
+          "source": "silver.don_hang",
+          "completeness": "reconciled"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "chi nhánh",
+          "payment_method",
+          "revenue",
+          "store",
+          "subject:orders",
+          "subject:payments",
+          "subject:stores",
+          "thanh toán"
+        ],
+        "analytical": [
+          "ranking",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "f2af3d137301e1c55bb2a8f6e3905d203f33d41e83c923ceac6f144af5ad2e4b",
+        "fingerprint": "4c66d99c835d9b0c35f36f088c8599741bba1b68a98822fcc9a38299c555a767",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 47,
+            "slot_ids": [],
+            "state": "BOUND"
+          },
+          {
+            "id": "c2",
+            "start": 48,
+            "end": 115,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": "ranking",
+        "metric_locks": [
+          {
+            "phrase": "doanh thu",
+            "metric_id": "revenue",
+            "explicitly_qualified": [
+              "payment_revenue",
+              "store_revenue"
+            ]
+          }
+        ],
+        "metrics": [
+          "revenue"
+        ],
+        "dimensions": [
+          "store",
+          "payment_method"
+        ],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "lookup_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "a7fed9b2a0dde9b01593f8aad690c30577b7cfde5ed293de28883ecebf7ab44d",
+      "elapsed_ms": 355.25
+    },
+    "job": {
+      "job_id": "aj_015cc408071a486d9becc92537b261e8",
+      "state": "completed",
+      "provider_call_count": 2,
+      "physical_http": 2,
+      "stage_timings_ms": {
+        "queue": 3.89,
+        "accepted": 729.57,
+        "planning": 1795.51,
+        "repairing": 2096.11,
+        "validating": 597.29,
+        "executing": 1617.89,
+        "verifying": 511.37
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "success",
+      "outcome": "SUCCESS",
+      "message": null,
+      "title": "Đơn hàng và doanh thu",
+      "session_id": "59a80a88-6064-4275-855f-44bf04917fc2",
+      "revision": 1,
+      "analysis_mission": null,
+      "analysis_coverage": {
+        "version": "4.0.0",
+        "policy_version": "4.0.0",
+        "effective_depth": "deep",
+        "selection_origin": "explicit",
+        "family": "overview",
+        "targets": {
+          "core": 4,
+          "diagnostic": 2,
+          "extended": 0
+        },
+        "target_total": 6,
+        "rendered": {
+          "core": 2,
+          "diagnostic": 0,
+          "extended": 0
+        },
+        "counted": {
+          "core": 2,
+          "diagnostic": 0,
+          "extended": 0
+        },
+        "rendered_total": 2,
+        "requested_views": 1,
+        "status": "partial",
+        "gap_kind": "PLANNING_GAP",
+        "shortfall": {
+          "core": 2,
+          "diagnostic": 2
+        },
+        "lenses": [
+          {
+            "id": "trend@repair_add_3",
+            "role": "core",
+            "kind": "trend",
+            "question": "Chỉ số biến động thế nào theo thời gian?",
+            "status": "rendered",
+            "reason": null,
+            "chart_id": "visual_2"
+          },
+          {
+            "id": "cross_tab:payment_method:city@repair_add_3",
+            "role": "diagnostic",
+            "kind": "cross_tab",
+            "question": "Doanh thu thay đổi thế nào khi kết hợp phương thức thanh toán và tỉnh/thành trong dữ liệu?",
+            "status": "rejected",
+            "reason": "category_budget",
+            "chart_id": null
+          },
+          {
+            "id": "cross_tab:city:order_type@repair_add_2",
+            "role": "diagnostic",
+            "kind": "cross_tab",
+            "question": "Doanh thu thay đổi thế nào khi kết hợp tỉnh/thành trong dữ liệu và hình thức nhận hàng?",
+            "status": "rejected",
+            "reason": "category_budget",
+            "chart_id": null
+          },
+          {
+            "id": "segmented_trend:store_type@repair_add_1",
+            "role": "diagnostic",
+            "kind": "segmented_trend",
+            "question": "Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?",
+            "status": "rejected",
+            "reason": "singleton",
+            "chart_id": null
+          }
+        ],
+        "summary": "Số liệu đã kiểm chứng · 2/6 góc nhìn; còn thiếu 4 do hệ thống chưa lập được góc nhìn và vượt ngân sách truy vấn"
+      },
+      "analytical_queries": [
+        {
+          "id": "q_769c8994e929285eac64a45f",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [
+            "city"
+          ],
+          "filters": [],
+          "project": [],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "order_by": [],
+          "limit": 100,
+          "role": "requested",
+          "parent_id": null,
+          "purpose": "answer",
+          "lens_id": "sales_overview",
+          "population_relation": "same",
+          "cohort_query_id": null,
+          "cohort_scope_query_id": null,
+          "replaces": null,
+          "changed_fields": [],
+          "subject": "orders",
+          "operation": "ranking",
+          "ranking": {
+            "metric": "revenue",
+            "direction": "ASC",
+            "top_n": 5,
+            "per_group": []
+          },
+          "granularity": "day"
+        },
+        {
+          "id": "q_58e14634dad79d4235e6b30a",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [
+            "city",
+            "payment_method"
+          ],
+          "filters": [],
+          "project": [],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "order_by": [],
+          "limit": 100,
+          "role": "requested",
+          "parent_id": null,
+          "purpose": "answer",
+          "lens_id": null,
+          "population_relation": "same",
+          "cohort_query_id": null,
+          "cohort_scope_query_id": null,
+          "replaces": null,
+          "changed_fields": [],
+          "subject": "orders",
+          "operation": "aggregate",
+          "ranking": null,
+          "granularity": "day"
+        },
+        {
+          "id": "q_c9282e19c268797eb5665238",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [
+            "city",
+            "store"
+          ],
+          "filters": [],
+          "project": [],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "order_by": [],
+          "limit": 100,
+          "role": "requested",
+          "parent_id": null,
+          "purpose": "answer",
+          "lens_id": null,
+          "population_relation": "same",
+          "cohort_query_id": null,
+          "cohort_scope_query_id": null,
+          "replaces": null,
+          "changed_fields": [],
+          "subject": "orders",
+          "operation": "aggregate",
+          "ranking": null,
+          "granularity": "day"
+        },
+        {
+          "id": "q_3ffcc874f569dd0cba0fe87c",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [
+            "city",
+            "order_type"
+          ],
+          "filters": [],
+          "project": [],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "order_by": [],
+          "limit": 100,
+          "role": "supporting",
+          "parent_id": "q_c9282e19c268797eb5665238",
+          "purpose": "context",
+          "lens_id": null,
+          "population_relation": "related",
+          "cohort_query_id": null,
+          "cohort_scope_query_id": null,
+          "replaces": null,
+          "changed_fields": [],
+          "subject": "orders",
+          "operation": "cross_tab",
+          "ranking": null,
+          "granularity": "day"
+        },
+        {
+          "id": "q_458f6da2fb920baadcad4f0d",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [
+            "city",
+            "payment_method"
+          ],
+          "filters": [],
+          "project": [],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "order_by": [],
+          "limit": 100,
+          "role": "supporting",
+          "parent_id": "q_58e14634dad79d4235e6b30a",
+          "purpose": "context",
+          "lens_id": null,
+          "population_relation": "related",
+          "cohort_query_id": null,
+          "cohort_scope_query_id": null,
+          "replaces": null,
+          "changed_fields": [],
+          "subject": "orders",
+          "operation": "cross_tab",
+          "ranking": null,
+          "granularity": "day"
+        },
+        {
+          "id": "q_87dc752eadcc78583bc23cea",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [],
+          "filters": [],
+          "project": [],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "order_by": [],
+          "limit": 100,
+          "role": "supporting",
+          "parent_id": "q_58e14634dad79d4235e6b30a",
+          "purpose": "context",
+          "lens_id": "channel_mix",
+          "population_relation": "related",
+          "cohort_query_id": null,
+          "cohort_scope_query_id": null,
+          "replaces": null,
+          "changed_fields": [],
+          "subject": "orders",
+          "operation": "trend",
+          "ranking": null,
+          "granularity": "day"
+        },
+        {
+          "id": "q_a21ceec82aaf7dcdb5bd4341",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [
+            "store_type"
+          ],
+          "filters": [],
+          "project": [],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "order_by": [],
+          "limit": 100,
+          "role": "supporting",
+          "parent_id": "q_769c8994e929285eac64a45f",
+          "purpose": "context",
+          "lens_id": null,
+          "population_relation": "related",
+          "cohort_query_id": null,
+          "cohort_scope_query_id": "q_769c8994e929285eac64a45f",
+          "replaces": null,
+          "changed_fields": [],
+          "subject": "orders",
+          "operation": "trend",
+          "ranking": null,
+          "granularity": "day"
+        }
+      ],
+      "sql_by_query": {
+        "q_769c8994e929285eac64a45f": "SELECT t1.thanh_pho AS \"city\", SUM(t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS t0 JOIN silver.chi_nhanh AS t1 ON t0.co_so_ma = t1.ma_chi_nhanh WHERE (t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AND (t0.ngay_tao >= DATE '2026-09-01') AND (t0.ngay_tao < DATE '2026-10-01') GROUP BY t1.thanh_pho ORDER BY \"revenue\" ASC NULLS LAST, \"city\" ASC NULLS LAST LIMIT 5",
+        "q_58e14634dad79d4235e6b30a": "SELECT t1.thanh_pho AS \"city\", t0.phuong_thuc_thanh_toan AS \"payment_method\", SUM(t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS t0 JOIN silver.chi_nhanh AS t1 ON t0.co_so_ma = t1.ma_chi_nhanh WHERE (t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AND (t0.ngay_tao >= DATE '2026-09-01') AND (t0.ngay_tao < DATE '2026-10-01') GROUP BY t1.thanh_pho, t0.phuong_thuc_thanh_toan ORDER BY \"city\" ASC NULLS LAST, \"payment_method\" ASC NULLS LAST LIMIT 50001",
+        "q_c9282e19c268797eb5665238": "SELECT t1.thanh_pho AS \"city\", t1.ten_chi_nhanh AS \"store\", t1.ma_chi_nhanh AS \"store_id\", SUM(t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS t0 JOIN silver.chi_nhanh AS t1 ON t0.co_so_ma = t1.ma_chi_nhanh WHERE (t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AND (t0.ngay_tao >= DATE '2026-09-01') AND (t0.ngay_tao < DATE '2026-10-01') GROUP BY t1.thanh_pho, t1.ten_chi_nhanh, t1.ma_chi_nhanh ORDER BY \"city\" ASC NULLS LAST, \"store\" ASC NULLS LAST, \"store_id\" ASC NULLS LAST LIMIT 50001",
+        "q_3ffcc874f569dd0cba0fe87c": "SELECT t1.thanh_pho AS \"city\", t0.loai_don_hang AS \"order_type\", SUM(t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS t0 JOIN silver.chi_nhanh AS t1 ON t0.co_so_ma = t1.ma_chi_nhanh WHERE (t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AND (t0.ngay_tao >= DATE '2026-09-01') AND (t0.ngay_tao < DATE '2026-10-01') GROUP BY t1.thanh_pho, t0.loai_don_hang ORDER BY \"city\" ASC NULLS LAST, \"order_type\" ASC NULLS LAST LIMIT 50001",
+        "q_458f6da2fb920baadcad4f0d": "SELECT t1.thanh_pho AS \"city\", t0.phuong_thuc_thanh_toan AS \"payment_method\", SUM(t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS t0 JOIN silver.chi_nhanh AS t1 ON t0.co_so_ma = t1.ma_chi_nhanh WHERE (t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AND (t0.ngay_tao >= DATE '2026-09-01') AND (t0.ngay_tao < DATE '2026-10-01') GROUP BY t1.thanh_pho, t0.phuong_thuc_thanh_toan ORDER BY \"city\" ASC NULLS LAST, \"payment_method\" ASC NULLS LAST LIMIT 50001",
+        "q_87dc752eadcc78583bc23cea": "SELECT DATE_TRUNC('day', t0.ngay_tao) AS period, SUM(t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS t0 WHERE (t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AND (t0.ngay_tao >= DATE '2026-09-01') AND (t0.ngay_tao < DATE '2026-10-01') GROUP BY DATE_TRUNC('day', t0.ngay_tao) ORDER BY period ASC LIMIT 50001",
+        "q_a21ceec82aaf7dcdb5bd4341": "WITH scoped_rows AS (SELECT DATE_TRUNC('DAY', t0.ngay_tao) AS period, t1.loai_diem_ban AS \"store_type\", t1.thanh_pho AS \"city\", SUM(t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS t0 JOIN silver.chi_nhanh AS t1 ON t0.co_so_ma = t1.ma_chi_nhanh WHERE (t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AND (t0.ngay_tao >= CAST('2026-09-01' AS DATE)) AND (t0.ngay_tao < CAST('2026-10-01' AS DATE)) GROUP BY DATE_TRUNC('DAY', t0.ngay_tao), t1.loai_diem_ban, t1.thanh_pho), ranked_cohort AS (SELECT rc_t1.thanh_pho AS \"city\", SUM(rc_t0.tong_tien) AS \"revenue\" FROM silver.don_hang AS rc_t0 JOIN silver.chi_nhanh AS rc_t1 ON rc_t0.co_so_ma = rc_t1.ma_chi_nhanh WHERE (rc_t0.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AND (rc_t0.ngay_tao >= CAST('2026-09-01' AS DATE)) AND (rc_t0.ngay_tao < CAST('2026-10-01' AS DATE)) GROUP BY rc_t1.thanh_pho ORDER BY \"revenue\" ASC, \"city\" ASC LIMIT 5) SELECT s.\"period\", s.\"store_type\", SUM(s.revenue) AS \"revenue\" FROM scoped_rows AS s JOIN ranked_cohort AS r ON (s.\"city\" = r.\"city\" OR (s.\"city\" IS NULL AND r.\"city\" IS NULL)) GROUP BY s.\"period\", s.\"store_type\" ORDER BY \"period\" ASC NULLS LAST, \"store_type\" ASC NULLS LAST LIMIT 50000"
+      },
+      "quality_limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_769c8994e929285eac64a45f"
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_769c8994e929285eac64a45f"
+        },
+        {
+          "id": "topn:q_769c8994e929285eac64a45f",
+          "label": "Tập Bottom N được chọn; không đại diện cơ cấu toàn bộ.",
+          "scope_ref": "q_769c8994e929285eac64a45f"
+        },
+        {
+          "id": "related:q_3ffcc874f569dd0cba0fe87c",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_3ffcc874f569dd0cba0fe87c"
+        },
+        {
+          "id": "related:q_458f6da2fb920baadcad4f0d",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_458f6da2fb920baadcad4f0d"
+        },
+        {
+          "id": "related:q_87dc752eadcc78583bc23cea",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_87dc752eadcc78583bc23cea"
+        },
+        {
+          "id": "related:q_a21ceec82aaf7dcdb5bd4341",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_a21ceec82aaf7dcdb5bd4341"
+        },
+        {
+          "id": "omission:0",
+          "label": "Một góc nhìn dùng bảng dữ liệu đầy đủ vì cấu trúc chưa phù hợp biểu đồ.",
+          "scope_ref": null
+        },
+        {
+          "id": "omission:1",
+          "label": "Một góc nhìn dùng bảng dữ liệu đầy đủ vì cấu trúc chưa phù hợp biểu đồ.",
+          "scope_ref": null
+        }
+      ],
+      "failure": null,
+      "interaction_contract": {
+        "version": 1,
+        "session_id": "59a80a88-6064-4275-855f-44bf04917fc2",
+        "revision": 1,
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "snapshot_fingerprint": "4d281c5c115c7f6bc51cd6620d2b3ebc3bb2a699ca8b11ef72f0eadca5d8188a",
+        "charts": [
+          {
+            "chart_id": "visual_1",
+            "dimension_id": "city",
+            "label": "Tỉnh/thành trong dữ liệu",
+            "selection_behavior": "population_filter",
+            "options": [
+              {
+                "label": "Ninh Thuận",
+                "selection": {
+                  "chart_id": "visual_1",
+                  "query_id": "q_769c8994e929285eac64a45f",
+                  "lens_id": null,
+                  "dimension_id": "city",
+                  "operator": "eq",
+                  "values": [
+                    {
+                      "type": "string",
+                      "value": "Ninh Thuận"
+                    }
+                  ]
+                }
+              },
+              {
+                "label": "Sóc Trăng",
+                "selection": {
+                  "chart_id": "visual_1",
+                  "query_id": "q_769c8994e929285eac64a45f",
+                  "lens_id": null,
+                  "dimension_id": "city",
+                  "operator": "eq",
+                  "values": [
+                    {
+                      "type": "string",
+                      "value": "Sóc Trăng"
+                    }
+                  ]
+                }
+              },
+              {
+                "label": "Bạc Liêu",
+                "selection": {
+                  "chart_id": "visual_1",
+                  "query_id": "q_769c8994e929285eac64a45f",
+                  "lens_id": null,
+                  "dimension_id": "city",
+                  "operator": "eq",
+                  "values": [
+                    {
+                      "type": "string",
+                      "value": "Bạc Liêu"
+                    }
+                  ]
+                }
+              },
+              {
+                "label": "Trà Vinh",
+                "selection": {
+                  "chart_id": "visual_1",
+                  "query_id": "q_769c8994e929285eac64a45f",
+                  "lens_id": null,
+                  "dimension_id": "city",
+                  "operator": "eq",
+                  "values": [
+                    {
+                      "type": "string",
+                      "value": "Trà Vinh"
+                    }
+                  ]
+                }
+              },
+              {
+                "label": "Quảng Trị",
+                "selection": {
+                  "chart_id": "visual_1",
+                  "query_id": "q_769c8994e929285eac64a45f",
+                  "lens_id": null,
+                  "dimension_id": "city",
+                  "operator": "eq",
+                  "values": [
+                    {
+                      "type": "string",
+                      "value": "Quảng Trị"
+                    }
+                  ]
+                }
+              }
+            ],
+            "next_levels": [],
+            "options_truncated": false
+          }
+        ]
+      },
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      }
+    },
+    "diagnostics": {
+      "request_id": "req_2d1783d5dcd043dc96398602be9b7d1a",
+      "input_policy_version": "1.2.1",
+      "terminal_error": null,
+      "error_category": null,
+      "failure_code": null,
+      "failure_stage": null,
+      "contract_issues": [],
+      "provider_call_count": 2,
+      "provider_physical_attempts": 0,
+      "input_tokens": 9394,
+      "output_tokens": 631,
+      "db_query_count": 7,
+      "execution_status": "passed",
+      "result_status": "passed",
+      "guided_contract_used": false,
+      "preflight_state": "READY_FOR_AI",
+      "interpreted_shapes": [
+        {
+          "requirement_id": "req_1",
+          "analysis_kind": "ranking",
+          "dimension_count": 1,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ]
+        },
+        {
+          "requirement_id": "req_2",
+          "analysis_kind": "cross_tab",
+          "dimension_count": 3,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city",
+            "store",
+            "payment_method"
+          ]
+        },
+        {
+          "requirement_id": "repair_add_1",
+          "analysis_kind": "ranking",
+          "dimension_count": 1,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ]
+        },
+        {
+          "requirement_id": "repair_add_2",
+          "analysis_kind": "aggregate",
+          "dimension_count": 2,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city",
+            "store"
+          ]
+        },
+        {
+          "requirement_id": "repair_add_3",
+          "analysis_kind": "aggregate",
+          "dimension_count": 2,
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city",
+            "payment_method"
+          ]
+        }
+      ],
+      "draft_shapes": [
+        {
+          "phase": "primary",
+          "requirements": [
+            {
+              "requirement_id": "req_1",
+              "analysis_kind": "ranking",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "derived_features": [
+                "selected_total",
+                "leader",
+                "top_gap"
+              ],
+              "filters": []
+            },
+            {
+              "requirement_id": "req_2",
+              "analysis_kind": "cross_tab",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city",
+                "store",
+                "payment_method"
+              ],
+              "derived_features": [],
+              "filters": []
+            }
+          ]
+        },
+        {
+          "phase": "repair",
+          "requirements": [
+            {
+              "requirement_id": "repair_add_1",
+              "analysis_kind": "ranking",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "derived_features": [],
+              "filters": []
+            },
+            {
+              "requirement_id": "repair_add_2",
+              "analysis_kind": "aggregate",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city",
+                "store"
+              ],
+              "derived_features": [],
+              "filters": []
+            },
+            {
+              "requirement_id": "repair_add_3",
+              "analysis_kind": "aggregate",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city",
+                "payment_method"
+              ],
+              "derived_features": [],
+              "filters": []
+            }
+          ]
+        }
+      ],
+      "root_contract_issues": [
+        {
+          "requirement_id": null,
+          "field": "dimension_ids",
+          "code": "explicit_dimensions_missing",
+          "candidate_ids": [
+            "store"
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "dimension_ids",
+          "code": "explicit_dimensions_missing",
+          "candidate_ids": [
+            "payment_method"
+          ]
+        }
+      ],
+      "semantic_issue_history": [
+        [
+          {
+            "requirement_id": null,
+            "field": "dimension_ids",
+            "code": "explicit_dimensions_missing",
+            "candidate_ids": [
+              "store"
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "dimension_ids",
+            "code": "explicit_dimensions_missing",
+            "candidate_ids": [
+              "payment_method"
+            ]
+          }
+        ]
+      ],
+      "guided_source": null
+    },
+    "provider_attempts": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": null,
+        "latency_ms": 1775.13,
+        "tokens": {
+          "input": 3717,
+          "output": 213
+        }
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "http_status": null,
+        "error_category": null,
+        "latency_ms": 2074.53,
+        "tokens": {
+          "input": 5677,
+          "output": 418
+        }
+      }
+    ],
+    "charts": [
+      {
+        "id": "visual_1",
+        "title": "Bottom 5 — Doanh thu theo tỉnh/thành trong dữ liệu — Đơn hàng và doanh thu",
+        "query_id": "q_769c8994e929285eac64a45f",
+        "metrics": [
+          "revenue"
+        ],
+        "x_field": "city",
+        "selection": "Top N",
+        "analysis_lens_role": null,
+        "ranking_direction": "ASC",
+        "displayed_rows": 5
+      },
+      {
+        "id": "visual_2",
+        "title": "Doanh thu theo ngày — Đơn hàng và doanh thu",
+        "query_id": "q_87dc752eadcc78583bc23cea",
+        "metrics": [
+          "revenue"
+        ],
+        "x_field": "period",
+        "selection": "complete",
+        "analysis_lens_role": "core",
+        "ranking_direction": null,
+        "displayed_rows": 30
+      }
+    ],
+    "result_summary": {
+      "q_769c8994e929285eac64a45f": {
+        "rows": 5,
+        "metric_totals": {},
+        "not_summed_metrics": []
+      },
+      "q_58e14634dad79d4235e6b30a": {
+        "rows": 50,
+        "metric_totals": {},
+        "not_summed_metrics": []
+      },
+      "q_c9282e19c268797eb5665238": {
+        "rows": 50,
+        "metric_totals": {},
+        "not_summed_metrics": []
+      },
+      "q_3ffcc874f569dd0cba0fe87c": {
+        "rows": 50,
+        "metric_totals": {},
+        "not_summed_metrics": []
+      },
+      "q_458f6da2fb920baadcad4f0d": {
+        "rows": 50,
+        "metric_totals": {},
+        "not_summed_metrics": []
+      },
+      "q_87dc752eadcc78583bc23cea": {
+        "rows": 30,
+        "metric_totals": {},
+        "not_summed_metrics": []
+      },
+      "q_a21ceec82aaf7dcdb5bd4341": {
+        "rows": 8,
+        "metric_totals": {},
+        "not_summed_metrics": []
+      }
+    },
+    "semantic_evidence": {
+      "query_plans": [
+        {
+          "id": "q_769c8994e929285eac64a45f",
+          "kind": "ranking",
+          "subject": "orders",
+          "source": "silver.don_hang",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_expressions": {
+            "revenue": "SUM(silver.don_hang.tong_tien)"
+          },
+          "group_by": [
+            "city"
+          ],
+          "output_columns": [
+            "city",
+            "revenue"
+          ],
+          "order_by": [
+            {
+              "field": "revenue",
+              "direction": "ASC"
+            },
+            {
+              "field": "city",
+              "direction": "ASC"
+            }
+          ],
+          "ctes": [],
+          "scope_ref": "q_769c8994e929285eac64a45f",
+          "joins": [
+            {
+              "from_table": "silver.don_hang",
+              "to_table": "silver.chi_nhanh",
+              "on": "silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh",
+              "cardinality": "many_to_one",
+              "provenance": "curated_view_relationship"
+            }
+          ],
+          "time_column": "silver.don_hang.ngay_tao",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "granularity": "day",
+          "ranking": {
+            "metric": "revenue",
+            "direction": "ASC",
+            "top_n": 5,
+            "per_group": []
+          },
+          "row_limit": 5,
+          "group": null,
+          "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+          "explicit_limit": false
+        },
+        {
+          "id": "q_58e14634dad79d4235e6b30a",
+          "kind": "aggregate",
+          "subject": "orders",
+          "source": "silver.don_hang",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city",
+            "payment_method"
+          ],
+          "filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_expressions": {
+            "revenue": "SUM(silver.don_hang.tong_tien)"
+          },
+          "group_by": [
+            "city",
+            "payment_method"
+          ],
+          "output_columns": [
+            "city",
+            "payment_method",
+            "revenue"
+          ],
+          "order_by": [
+            {
+              "field": "city",
+              "direction": "ASC"
+            },
+            {
+              "field": "payment_method",
+              "direction": "ASC"
+            }
+          ],
+          "ctes": [],
+          "scope_ref": "q_58e14634dad79d4235e6b30a",
+          "joins": [
+            {
+              "from_table": "silver.don_hang",
+              "to_table": "silver.chi_nhanh",
+              "on": "silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh",
+              "cardinality": "many_to_one",
+              "provenance": "curated_view_relationship"
+            }
+          ],
+          "time_column": "silver.don_hang.ngay_tao",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "granularity": "day",
+          "ranking": null,
+          "row_limit": 50000,
+          "group": null,
+          "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+          "explicit_limit": false
+        },
+        {
+          "id": "q_c9282e19c268797eb5665238",
+          "kind": "aggregate",
+          "subject": "orders",
+          "source": "silver.don_hang",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city",
+            "store",
+            "store_id"
+          ],
+          "filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_expressions": {
+            "revenue": "SUM(silver.don_hang.tong_tien)"
+          },
+          "group_by": [
+            "city",
+            "store",
+            "store_id"
+          ],
+          "output_columns": [
+            "city",
+            "store",
+            "store_id",
+            "revenue"
+          ],
+          "order_by": [
+            {
+              "field": "city",
+              "direction": "ASC"
+            },
+            {
+              "field": "store",
+              "direction": "ASC"
+            },
+            {
+              "field": "store_id",
+              "direction": "ASC"
+            }
+          ],
+          "ctes": [],
+          "scope_ref": "q_c9282e19c268797eb5665238",
+          "joins": [
+            {
+              "from_table": "silver.don_hang",
+              "to_table": "silver.chi_nhanh",
+              "on": "silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh",
+              "cardinality": "many_to_one",
+              "provenance": "curated_view_relationship"
+            }
+          ],
+          "time_column": "silver.don_hang.ngay_tao",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "granularity": "day",
+          "ranking": null,
+          "row_limit": 50000,
+          "group": null,
+          "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+          "explicit_limit": false
+        },
+        {
+          "id": "q_3ffcc874f569dd0cba0fe87c",
+          "kind": "heatmap",
+          "subject": "orders",
+          "source": "silver.don_hang",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city",
+            "order_type"
+          ],
+          "filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_expressions": {
+            "revenue": "SUM(silver.don_hang.tong_tien)"
+          },
+          "group_by": [
+            "city",
+            "order_type"
+          ],
+          "output_columns": [
+            "city",
+            "order_type",
+            "revenue"
+          ],
+          "order_by": [
+            {
+              "field": "city",
+              "direction": "ASC"
+            },
+            {
+              "field": "order_type",
+              "direction": "ASC"
+            }
+          ],
+          "ctes": [],
+          "scope_ref": "q_3ffcc874f569dd0cba0fe87c",
+          "joins": [
+            {
+              "from_table": "silver.don_hang",
+              "to_table": "silver.chi_nhanh",
+              "on": "silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh",
+              "cardinality": "many_to_one",
+              "provenance": "curated_view_relationship"
+            }
+          ],
+          "time_column": "silver.don_hang.ngay_tao",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "granularity": "day",
+          "ranking": null,
+          "row_limit": 50000,
+          "group": null,
+          "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+          "explicit_limit": false
+        },
+        {
+          "id": "q_458f6da2fb920baadcad4f0d",
+          "kind": "heatmap",
+          "subject": "orders",
+          "source": "silver.don_hang",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "city",
+            "payment_method"
+          ],
+          "filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_expressions": {
+            "revenue": "SUM(silver.don_hang.tong_tien)"
+          },
+          "group_by": [
+            "city",
+            "payment_method"
+          ],
+          "output_columns": [
+            "city",
+            "payment_method",
+            "revenue"
+          ],
+          "order_by": [
+            {
+              "field": "city",
+              "direction": "ASC"
+            },
+            {
+              "field": "payment_method",
+              "direction": "ASC"
+            }
+          ],
+          "ctes": [],
+          "scope_ref": "q_458f6da2fb920baadcad4f0d",
+          "joins": [
+            {
+              "from_table": "silver.don_hang",
+              "to_table": "silver.chi_nhanh",
+              "on": "silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh",
+              "cardinality": "many_to_one",
+              "provenance": "curated_view_relationship"
+            }
+          ],
+          "time_column": "silver.don_hang.ngay_tao",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "granularity": "day",
+          "ranking": null,
+          "row_limit": 50000,
+          "group": null,
+          "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+          "explicit_limit": false
+        },
+        {
+          "id": "q_87dc752eadcc78583bc23cea",
+          "kind": "trend",
+          "subject": "orders",
+          "source": "silver.don_hang",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [],
+          "filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_expressions": {
+            "revenue": "SUM(silver.don_hang.tong_tien)"
+          },
+          "group_by": [
+            "period"
+          ],
+          "output_columns": [
+            "period",
+            "revenue"
+          ],
+          "order_by": [
+            {
+              "field": "period",
+              "direction": "ASC"
+            }
+          ],
+          "ctes": [],
+          "scope_ref": "q_87dc752eadcc78583bc23cea",
+          "joins": [],
+          "time_column": "silver.don_hang.ngay_tao",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "granularity": "day",
+          "ranking": null,
+          "row_limit": 50000,
+          "group": null,
+          "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+          "explicit_limit": false
+        },
+        {
+          "id": "q_a21ceec82aaf7dcdb5bd4341",
+          "kind": "trend",
+          "subject": "orders",
+          "source": "silver.don_hang",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": [
+            "store_type"
+          ],
+          "filters": [
+            {
+              "dimension": "order_status",
+              "operator": "in",
+              "value": [
+                "HOAN_THANH",
+                "DANG_GIAO"
+              ]
+            }
+          ],
+          "metric_expressions": {
+            "revenue": "SUM(silver.don_hang.tong_tien)"
+          },
+          "group_by": [
+            "period",
+            "store_type"
+          ],
+          "output_columns": [
+            "period",
+            "store_type",
+            "revenue"
+          ],
+          "order_by": [
+            {
+              "field": "period",
+              "direction": "ASC"
+            },
+            {
+              "field": "store_type",
+              "direction": "ASC"
+            }
+          ],
+          "ctes": [],
+          "scope_ref": "q_a21ceec82aaf7dcdb5bd4341",
+          "joins": [
+            {
+              "from_table": "silver.don_hang",
+              "to_table": "silver.chi_nhanh",
+              "on": "silver.don_hang.co_so_ma = silver.chi_nhanh.ma_chi_nhanh",
+              "cardinality": "many_to_one",
+              "provenance": "curated_view_relationship"
+            }
+          ],
+          "time_column": "silver.don_hang.ngay_tao",
+          "period": {
+            "mode": "custom",
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "end_exclusive": "2026-10-01",
+            "timezone": "Asia/Ho_Chi_Minh"
+          },
+          "granularity": "day",
+          "ranking": null,
+          "row_limit": 50000,
+          "group": null,
+          "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+          "explicit_limit": false
+        }
+      ],
+      "result_sets": {
+        "q_769c8994e929285eac64a45f": {
+          "columns": [
+            "city",
+            "revenue"
+          ],
+          "rows": [
+            {
+              "city": "Ninh Thuận",
+              "revenue": 112000.0
+            },
+            {
+              "city": "Sóc Trăng",
+              "revenue": 183000.0
+            },
+            {
+              "city": "Bạc Liêu",
+              "revenue": 206000.0
+            },
+            {
+              "city": "Trà Vinh",
+              "revenue": 270000.0
+            },
+            {
+              "city": "Quảng Trị",
+              "revenue": 300000.0
+            }
+          ],
+          "count": 5,
+          "truncated": false,
+          "duration_ms": 72.72,
+          "total_rows": 5,
+          "displayed_count": 5,
+          "artifact_ref": {
+            "artifact_id": "ra_9edbb74287f44e7391e9aac3deace824",
+            "query_fingerprint": "e521eca9f4f21864f7756b5895e10e853ef54af6a815d02272fba90794fb15e5",
+            "plan_fingerprint": "f9f5df56d3760029b3db5a9e7074e5776eda74be51b249a64a6bf853d11e052b",
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "created_at": "2026-10-21T17:48:55.647465+00:00",
+            "expires_at": "2026-10-21T19:48:55.647465+00:00",
+            "columns": [
+              "city",
+              "revenue"
+            ],
+            "row_count": 5,
+            "byte_size": 298,
+            "content_hash": "b3a000da8096e8ca6e6e457d12632cbd8fc5eba3c014841a5d97ce177ea3f6aa",
+            "storage_backend": "redis",
+            "provenance": {
+              "dimensions": [
+                "city"
+              ],
+              "subject": "orders",
+              "time": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "observed_at": "2026-10-21T17:48:55.647334+00:00",
+              "data_snapshot": "374e589f3ea8480daa708cf2448766d5"
+            }
+          },
+          "computation_scope": "FULL_QUERY_POPULATION",
+          "presentation_scope": "BOUNDED_PREVIEW",
+          "column_labels": {
+            "city": "Tỉnh/thành trong dữ liệu",
+            "revenue": "Doanh thu"
+          },
+          "role": "requested",
+          "as_of": "2026-10-21T17:48:55.647334+00:00"
+        },
+        "q_58e14634dad79d4235e6b30a": {
+          "columns": [
+            "city",
+            "payment_method",
+            "revenue"
+          ],
+          "rows": [
+            {
+              "city": "An Giang",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 213000.0
+            },
+            {
+              "city": "An Giang",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 313000.0
+            },
+            {
+              "city": "An Giang",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 49000.0
+            },
+            {
+              "city": "An Giang",
+              "payment_method": "VNPAY",
+              "revenue": 130000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 143000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 55000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 484000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "payment_method": "VNPAY",
+              "revenue": 85000.0
+            },
+            {
+              "city": "Bạc Liêu",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 206000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 285000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 3572000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 2302000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "payment_method": "VNPAY",
+              "revenue": 2009000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 498000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 2703000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 2029000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "payment_method": "VNPAY",
+              "revenue": 1490000.0
+            },
+            {
+              "city": "Bến Tre",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 490000.0
+            },
+            {
+              "city": "Bến Tre",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 328000.0
+            },
+            {
+              "city": "Bến Tre",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 119000.0
+            },
+            {
+              "city": "Bến Tre",
+              "payment_method": "VNPAY",
+              "revenue": 329000.0
+            },
+            {
+              "city": "Bình Định",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 605000.0
+            },
+            {
+              "city": "Bình Định",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 938000.0
+            },
+            {
+              "city": "Bình Định",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 1033000.0
+            },
+            {
+              "city": "Bình Định",
+              "payment_method": "VNPAY",
+              "revenue": 1073000.0
+            },
+            {
+              "city": "Bình Dương",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 1728000.0
+            },
+            {
+              "city": "Bình Dương",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 4908000.0
+            },
+            {
+              "city": "Bình Dương",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 3482000.0
+            },
+            {
+              "city": "Bình Dương",
+              "payment_method": "VNPAY",
+              "revenue": 1951000.0
+            },
+            {
+              "city": "Bình Phước",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 333000.0
+            },
+            {
+              "city": "Bình Phước",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 780000.0
+            },
+            {
+              "city": "Bình Phước",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 503000.0
+            },
+            {
+              "city": "Bình Phước",
+              "payment_method": "VNPAY",
+              "revenue": 517000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 233000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 590000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 378000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "payment_method": "VNPAY",
+              "revenue": 498000.0
+            },
+            {
+              "city": "Cà Mau",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 65000.0
+            },
+            {
+              "city": "Cà Mau",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 241000.0
+            },
+            {
+              "city": "Cà Mau",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 216000.0
+            },
+            {
+              "city": "Cà Mau",
+              "payment_method": "VNPAY",
+              "revenue": 248000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 281000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 3663000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 2563000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "payment_method": "VNPAY",
+              "revenue": 2078000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 175000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 1569000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 388000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "payment_method": "VNPAY",
+              "revenue": 758000.0
+            },
+            {
+              "city": "Đà Nẵng",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 1205000.0
+            }
+          ],
+          "count": 190,
+          "truncated": false,
+          "duration_ms": 40.95,
+          "total_rows": 190,
+          "displayed_count": 50,
+          "artifact_ref": {
+            "artifact_id": "ra_61ca443c04244110abf8815ada417a74",
+            "query_fingerprint": "b3a37f391cc33570566b5fa92b44b2c2fc0b19fcdd74d865953bec71d8fa57a3",
+            "plan_fingerprint": "6f4712d2ff6f6fab9465342106200a75858cb687b92bab090dfaf91857ebabb6",
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "created_at": "2026-10-21T17:48:55.671037+00:00",
+            "expires_at": "2026-10-21T19:48:55.671037+00:00",
+            "columns": [
+              "city",
+              "payment_method",
+              "revenue"
+            ],
+            "row_count": 190,
+            "byte_size": 14449,
+            "content_hash": "9e292ea67d10ec83caa7a4fc11d3a1cf0412c9303e65ce0d9613eb654436c934",
+            "storage_backend": "redis",
+            "provenance": {
+              "dimensions": [
+                "city",
+                "payment_method"
+              ],
+              "subject": "orders",
+              "time": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "observed_at": "2026-10-21T17:48:55.670517+00:00",
+              "data_snapshot": "374e589f3ea8480daa708cf2448766d5"
+            }
+          },
+          "computation_scope": "FULL_QUERY_POPULATION",
+          "presentation_scope": "BOUNDED_PREVIEW",
+          "column_labels": {
+            "city": "Tỉnh/thành trong dữ liệu",
+            "payment_method": "Phương thức thanh toán",
+            "revenue": "Doanh thu"
+          },
+          "role": "requested",
+          "as_of": "2026-10-21T17:48:55.670517+00:00"
+        },
+        "q_c9282e19c268797eb5665238": {
+          "columns": [
+            "city",
+            "store",
+            "store_id",
+            "revenue"
+          ],
+          "rows": [
+            {
+              "city": "An Giang",
+              "store": "Highlands Coffee Đông Xuyên Hotel",
+              "store_id": "HC_AGIANG_ONG_XUYEN_HOTEL_310",
+              "revenue": 296000.0
+            },
+            {
+              "city": "An Giang",
+              "store": "Highlands Coffee Lý Thái Tổ - Long Xuyên",
+              "store_id": "HC_AGIANG_LY_THAI_TO_LONG_XU_757",
+              "revenue": 355000.0
+            },
+            {
+              "city": "An Giang",
+              "store": "Highlands Coffee Tran Hung Dao LX",
+              "store_id": "HC_AGIANG_TRAN_HUNG_DAO_LX_377",
+              "revenue": 54000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "store": "98 Ngô Gia Tự",
+              "store_id": "HC_KHONG__98_NGO_GIA_TU_340",
+              "revenue": 65000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "store": "Highlands Coffee Go&#33; Mall Bắc Giang",
+              "store_id": "HC_KHONG__GO_33_MALL_BAC_GIA_498",
+              "revenue": 189000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "store": "Highlands Coffee KCN Van Trung Bac Giang",
+              "store_id": "HC_KHONG__KCN_VAN_TRUNG_BAC__1354",
+              "revenue": 198000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "store": "Highlands Coffee Nguyễn Thị Lưu Bắc Giang",
+              "store_id": "HC_KHONG__NGUYEN_THI_LUU_BAC_695",
+              "revenue": 315000.0
+            },
+            {
+              "city": "Bạc Liêu",
+              "store": "Highlands Coffee Vincom Bạc Liêu",
+              "store_id": "HC_KHONG__VINCOM_BAC_LIEU_504",
+              "revenue": 206000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee 148 Ly Anh Tong Bac Ninh",
+              "store_id": "HC_BNIN_148_LY_ANH_TONG_BA_1193",
+              "revenue": 257000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee 386 Trần Phú Từ Sơn BN",
+              "store_id": "HC_BNIN_386_TRAN_PHU_TU_SO_476",
+              "revenue": 490000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Frasers 2 KCN Yen Phong BN",
+              "store_id": "HC_BNIN_FRASERS_2_KCN_YEN__909",
+              "revenue": 713000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Frasers KCN Yen Phong BN",
+              "store_id": "HC_BNIN_FRASERS_KCN_YEN_PH_907",
+              "revenue": 573000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Golden Park BN",
+              "store_id": "HC_BNIN_GOLDEN_PARK_BN_497",
+              "revenue": 654000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee KCN Quang Chau Bac Giang",
+              "store_id": "HC_BNIN_KCN_QUANG_CHAU_BAC_1377",
+              "revenue": 1244000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Lotte Bac Giang",
+              "store_id": "HC_BNIN_LOTTE_BAC_GIANG_1319",
+              "revenue": 565000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Mandala Bac Ninh",
+              "store_id": "HC_BNIN_MANDALA_BAC_NINH_378",
+              "revenue": 486000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Nguyễn Cao - Bắc Ninh",
+              "store_id": "HC_BNIN_NGUYEN_CAO_BAC_NIN_266",
+              "revenue": 432000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Samsung V1 Bac Ninh",
+              "store_id": "HC_BNIN_SAMSUNG_V1_BAC_NIN_1321",
+              "revenue": 261000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Samsung V3 Bac Ninh",
+              "store_id": "HC_BNIN_SAMSUNG_V3_BAC_NIN_1322",
+              "revenue": 157000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Thanh Bình Bắc Ninh",
+              "store_id": "HC_BNIN_THANH_BINH_BAC_NIN_521",
+              "revenue": 239000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Viglacera Bắc Ninh",
+              "store_id": "HC_BNIN_VIGLACERA_BAC_NINH_545",
+              "revenue": 544000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Highlands Coffee Vincom Bắc Ninh",
+              "store_id": "HC_BNIN_VINCOM_BAC_NINH_265",
+              "revenue": 177000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Him Lam",
+              "store_id": "HC_BNIN_HIM_LAM_24",
+              "revenue": 599000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "store": "Từ Sơn",
+              "store_id": "HC_BNIN_TU_SON_25",
+              "revenue": 777000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "304 Le Hong Phong",
+              "store_id": "HC_KHONG__304_LE_HONG_PHONG_221",
+              "revenue": 120000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee 150 Ha Long VT",
+              "store_id": "HC_BRVT_150_HA_LONG_VT_439",
+              "revenue": 125000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee 24 Hạ Long - Vũng Tàu",
+              "store_id": "HC_BRVT_24_HA_LONG_VUNG_TA_771",
+              "revenue": 869000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee 252 Quốc Lộ 55 - Xuyên Mộc",
+              "store_id": "HC_BRVT_252_QUOC_LO_55_XUY_689",
+              "revenue": 830000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee 30 Tháng 4 - Vũng Tàu",
+              "store_id": "HC_BRVT_30_THANG_4_VUNG_TA_677",
+              "revenue": 612000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee 30 thang 4 Vung Tau 2",
+              "store_id": "HC_BRVT_30_THANG_4_VUNG_TA_737",
+              "revenue": 65000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee 72 Hung Vuong Ba Ria",
+              "store_id": "HC_KHONG__72_HUNG_VUONG_BA_R_558",
+              "revenue": 218000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee 75 Thuy Van Vung Tau",
+              "store_id": "HC_BRVT_75_THUY_VAN_VUNG_T_559",
+              "revenue": 108000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee Chi Linh Vung Tau",
+              "store_id": "HC_BRVT_CHI_LINH_VUNG_TAU_575",
+              "revenue": 312000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee CMT8 Ba Ria",
+              "store_id": "HC_KHONG__CMT8_BA_RIA_591",
+              "revenue": 195000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee Điện Biên Phủ - Bà Rịa Vũng Tàu",
+              "store_id": "HC_KHONG__IEN_BIEN_PHU_BA_RI_652",
+              "revenue": 164000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee GO&#33; Mall - Thành Phố Bà Rịa",
+              "store_id": "HC_KHONG__GO_33_MALL_THANH_P_463",
+              "revenue": 163000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee KNG Phu My",
+              "store_id": "HC_BRVT_KNG_PHU_MY_438",
+              "revenue": 288000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee Nguyen An Ninh-VTA",
+              "store_id": "HC_BRVT_NGUYEN_AN_NINH_VTA_715",
+              "revenue": 75000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands Coffee Vũng Tàu Center",
+              "store_id": "HC_BRVT_VUNG_TAU_CENTER_486",
+              "revenue": 110000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands PVoil No.12 QL51 VT",
+              "store_id": "HC_KHONG__HIGHLANDS_PVOIL_NO_887",
+              "revenue": 303000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Highlands PVoil No.7 QL51 VT",
+              "store_id": "HC_KHONG__HIGHLANDS_PVOIL_NO_886",
+              "revenue": 545000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Hoàng Hoa Thám",
+              "store_id": "HC_BRVT_HOANG_HOA_THAM_219",
+              "revenue": 762000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Lotte Vũng Tàu",
+              "store_id": "HC_BRVT_LOTTE_VUNG_TAU_319",
+              "revenue": 262000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Nguyễn Thái Học Vũng Tàu",
+              "store_id": "HC_BRVT_NGUYEN_THAI_HOC_VU_218",
+              "revenue": 529000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "store": "Tân Hoàng Mão",
+              "store_id": "HC_KHONG__TAN_HOANG_MAO_220",
+              "revenue": 65000.0
+            },
+            {
+              "city": "Bến Tre",
+              "store": "Highlands Coffee Đồng Khởi Bến Tre",
+              "store_id": "HC_BTRE_ONG_KHOI_BEN_TRE_717",
+              "revenue": 830000.0
+            },
+            {
+              "city": "Bến Tre",
+              "store": "Highlands Coffee Sense Bến Tre",
+              "store_id": "HC_BTRE_SENSE_BEN_TRE_509",
+              "revenue": 436000.0
+            },
+            {
+              "city": "Bình Định",
+              "store": "162A Nguyễn Huệ",
+              "store_id": "HC_KHONG__162A_NGUYEN_HUE_238",
+              "revenue": 128000.0
+            },
+            {
+              "city": "Bình Định",
+              "store": "Highlands Coffee 111 Hoa Lu Quy Nhon",
+              "store_id": "HC_KHONG__111_HOA_LU_QUY_NHO_655",
+              "revenue": 610000.0
+            },
+            {
+              "city": "Bình Định",
+              "store": "Highlands Coffee An Phú Thịnh - Quy Nhơn",
+              "store_id": "HC_KHONG__AN_PHU_THINH_QUY_N_366",
+              "revenue": 50000.0
+            }
+          ],
+          "count": 1175,
+          "truncated": false,
+          "duration_ms": 77.81,
+          "total_rows": 1175,
+          "displayed_count": 50,
+          "artifact_ref": {
+            "artifact_id": "ra_fdd7f0e490f8422799a7d7984f05ceb5",
+            "query_fingerprint": "fe1415f2d895f0ba37c456135b9b57433894ce8728f66d1dbd98598c320a959e",
+            "plan_fingerprint": "bb867faf0a120eee9a7029767149e73007e53d41f26ad32601851539bbb23992",
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "created_at": "2026-10-21T17:48:55.840328+00:00",
+            "expires_at": "2026-10-21T19:48:55.840328+00:00",
+            "columns": [
+              "city",
+              "store",
+              "store_id",
+              "revenue"
+            ],
+            "row_count": 1175,
+            "byte_size": 148247,
+            "content_hash": "08dddbbd8034ded867ac315034cfcad6f18df13845a14bc1b7198233a7d86f9f",
+            "storage_backend": "redis",
+            "provenance": {
+              "dimensions": [
+                "city",
+                "store",
+                "store_id"
+              ],
+              "subject": "orders",
+              "time": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "observed_at": "2026-10-21T17:48:55.838511+00:00",
+              "data_snapshot": "374e589f3ea8480daa708cf2448766d5"
+            }
+          },
+          "computation_scope": "FULL_QUERY_POPULATION",
+          "presentation_scope": "BOUNDED_PREVIEW",
+          "column_labels": {
+            "city": "Tỉnh/thành trong dữ liệu",
+            "store": "Chi nhánh",
+            "store_id": "Mã chi nhánh",
+            "revenue": "Doanh thu"
+          },
+          "role": "requested",
+          "as_of": "2026-10-21T17:48:55.838511+00:00"
+        },
+        "q_3ffcc874f569dd0cba0fe87c": {
+          "columns": [
+            "city",
+            "order_type",
+            "revenue"
+          ],
+          "rows": [
+            {
+              "city": "An Giang",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 148000.0
+            },
+            {
+              "city": "An Giang",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 438000.0
+            },
+            {
+              "city": "An Giang",
+              "order_type": "MANG_DI",
+              "revenue": 119000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 393000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 124000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "order_type": "MANG_DI",
+              "revenue": 250000.0
+            },
+            {
+              "city": "Bạc Liêu",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 39000.0
+            },
+            {
+              "city": "Bạc Liêu",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 167000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 3761000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 624000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "order_type": "MANG_DI",
+              "revenue": 3783000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 2950000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 1700000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "order_type": "MANG_DI",
+              "revenue": 2070000.0
+            },
+            {
+              "city": "Bến Tre",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 852000.0
+            },
+            {
+              "city": "Bến Tre",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 369000.0
+            },
+            {
+              "city": "Bến Tre",
+              "order_type": "MANG_DI",
+              "revenue": 45000.0
+            },
+            {
+              "city": "Bình Định",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 1390000.0
+            },
+            {
+              "city": "Bình Định",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 733000.0
+            },
+            {
+              "city": "Bình Định",
+              "order_type": "MANG_DI",
+              "revenue": 1526000.0
+            },
+            {
+              "city": "Bình Dương",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 5127000.0
+            },
+            {
+              "city": "Bình Dương",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 1182000.0
+            },
+            {
+              "city": "Bình Dương",
+              "order_type": "MANG_DI",
+              "revenue": 5760000.0
+            },
+            {
+              "city": "Bình Phước",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 1480000.0
+            },
+            {
+              "city": "Bình Phước",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 65000.0
+            },
+            {
+              "city": "Bình Phước",
+              "order_type": "MANG_DI",
+              "revenue": 588000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 1029000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 144000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "order_type": "MANG_DI",
+              "revenue": 526000.0
+            },
+            {
+              "city": "Cà Mau",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 207000.0
+            },
+            {
+              "city": "Cà Mau",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 330000.0
+            },
+            {
+              "city": "Cà Mau",
+              "order_type": "MANG_DI",
+              "revenue": 233000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 3980000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 1967000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "order_type": "MANG_DI",
+              "revenue": 2638000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 1258000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 166000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "order_type": "MANG_DI",
+              "revenue": 1466000.0
+            },
+            {
+              "city": "Đà Nẵng",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 8927000.0
+            },
+            {
+              "city": "Đà Nẵng",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 4931000.0
+            },
+            {
+              "city": "Đà Nẵng",
+              "order_type": "MANG_DI",
+              "revenue": 10432000.0
+            },
+            {
+              "city": "Điện Biên",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 256000.0
+            },
+            {
+              "city": "Điện Biên",
+              "order_type": "MANG_DI",
+              "revenue": 318000.0
+            },
+            {
+              "city": "Đồng Nai",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 4135000.0
+            },
+            {
+              "city": "Đồng Nai",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 1943000.0
+            },
+            {
+              "city": "Đồng Nai",
+              "order_type": "MANG_DI",
+              "revenue": 4782000.0
+            },
+            {
+              "city": "Đồng Tháp",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 160000.0
+            },
+            {
+              "city": "Đồng Tháp",
+              "order_type": "GIAO_TAN_NOI",
+              "revenue": 110000.0
+            },
+            {
+              "city": "Đồng Tháp",
+              "order_type": "MANG_DI",
+              "revenue": 421000.0
+            },
+            {
+              "city": "Gia Lai",
+              "order_type": "DUNG_TAI_CHO",
+              "revenue": 188000.0
+            }
+          ],
+          "count": 154,
+          "truncated": false,
+          "duration_ms": 186.05,
+          "total_rows": 154,
+          "displayed_count": 50,
+          "artifact_ref": {
+            "artifact_id": "ra_193771af5bc844e88a548cce249261af",
+            "query_fingerprint": "1b0d4d426f07d66a72f1d9ad1b1dbe3f92ad8dc78c4e0a183ef0bc1892462912",
+            "plan_fingerprint": "f4cb3b708851c3a917ce86962f80a1627350df0a03a8712a4d620a0b16c5f11c",
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "created_at": "2026-10-21T17:48:55.966921+00:00",
+            "expires_at": "2026-10-21T19:48:55.966921+00:00",
+            "columns": [
+              "city",
+              "order_type",
+              "revenue"
+            ],
+            "row_count": 154,
+            "byte_size": 10714,
+            "content_hash": "d57e3a231363fe11a51d4e29abd11dd61442c02813dcf0057ec8e238dae473af",
+            "storage_backend": "redis",
+            "provenance": {
+              "dimensions": [
+                "city",
+                "order_type"
+              ],
+              "subject": "orders",
+              "time": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "observed_at": "2026-10-21T17:48:55.966606+00:00",
+              "data_snapshot": "374e589f3ea8480daa708cf2448766d5"
+            }
+          },
+          "computation_scope": "FULL_QUERY_POPULATION",
+          "presentation_scope": "BOUNDED_PREVIEW",
+          "column_labels": {
+            "city": "Tỉnh/thành trong dữ liệu",
+            "order_type": "Hình thức nhận hàng",
+            "revenue": "Doanh thu"
+          },
+          "role": "supporting",
+          "as_of": "2026-10-21T17:48:55.966606+00:00"
+        },
+        "q_458f6da2fb920baadcad4f0d": {
+          "columns": [
+            "city",
+            "payment_method",
+            "revenue"
+          ],
+          "rows": [
+            {
+              "city": "An Giang",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 213000.0
+            },
+            {
+              "city": "An Giang",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 313000.0
+            },
+            {
+              "city": "An Giang",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 49000.0
+            },
+            {
+              "city": "An Giang",
+              "payment_method": "VNPAY",
+              "revenue": 130000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 143000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 55000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 484000.0
+            },
+            {
+              "city": "Bắc Giang",
+              "payment_method": "VNPAY",
+              "revenue": 85000.0
+            },
+            {
+              "city": "Bạc Liêu",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 206000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 285000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 3572000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 2302000.0
+            },
+            {
+              "city": "Bắc Ninh",
+              "payment_method": "VNPAY",
+              "revenue": 2009000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 498000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 2703000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 2029000.0
+            },
+            {
+              "city": "Bà Rịa - Vũng Tàu",
+              "payment_method": "VNPAY",
+              "revenue": 1490000.0
+            },
+            {
+              "city": "Bến Tre",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 490000.0
+            },
+            {
+              "city": "Bến Tre",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 328000.0
+            },
+            {
+              "city": "Bến Tre",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 119000.0
+            },
+            {
+              "city": "Bến Tre",
+              "payment_method": "VNPAY",
+              "revenue": 329000.0
+            },
+            {
+              "city": "Bình Định",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 605000.0
+            },
+            {
+              "city": "Bình Định",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 938000.0
+            },
+            {
+              "city": "Bình Định",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 1033000.0
+            },
+            {
+              "city": "Bình Định",
+              "payment_method": "VNPAY",
+              "revenue": 1073000.0
+            },
+            {
+              "city": "Bình Dương",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 1728000.0
+            },
+            {
+              "city": "Bình Dương",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 4908000.0
+            },
+            {
+              "city": "Bình Dương",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 3482000.0
+            },
+            {
+              "city": "Bình Dương",
+              "payment_method": "VNPAY",
+              "revenue": 1951000.0
+            },
+            {
+              "city": "Bình Phước",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 333000.0
+            },
+            {
+              "city": "Bình Phước",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 780000.0
+            },
+            {
+              "city": "Bình Phước",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 503000.0
+            },
+            {
+              "city": "Bình Phước",
+              "payment_method": "VNPAY",
+              "revenue": 517000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 233000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 590000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 378000.0
+            },
+            {
+              "city": "Bình Thuận",
+              "payment_method": "VNPAY",
+              "revenue": 498000.0
+            },
+            {
+              "city": "Cà Mau",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 65000.0
+            },
+            {
+              "city": "Cà Mau",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 241000.0
+            },
+            {
+              "city": "Cà Mau",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 216000.0
+            },
+            {
+              "city": "Cà Mau",
+              "payment_method": "VNPAY",
+              "revenue": 248000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 281000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 3663000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 2563000.0
+            },
+            {
+              "city": "Cần Thơ",
+              "payment_method": "VNPAY",
+              "revenue": 2078000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 175000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+              "revenue": 1569000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "payment_method": "VI_DIEN_TU",
+              "revenue": 388000.0
+            },
+            {
+              "city": "Đắk Lắk",
+              "payment_method": "VNPAY",
+              "revenue": 758000.0
+            },
+            {
+              "city": "Đà Nẵng",
+              "payment_method": "NGAN_HANG_QR",
+              "revenue": 1205000.0
+            }
+          ],
+          "count": 190,
+          "truncated": false,
+          "duration_ms": 70.34,
+          "total_rows": 190,
+          "displayed_count": 50,
+          "artifact_ref": {
+            "artifact_id": "ra_5e98ea036701401aa48f423017f11c99",
+            "query_fingerprint": "6f13fa8410ee9e829562e2c4cee46fdec793ec9d763329ce54e4ae3e4e80fe2b",
+            "plan_fingerprint": "5ce7f29e4cf003dc60475dab8a0918223d787f87c855a5baf92c67e94b4881cf",
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "created_at": "2026-10-21T17:48:56.130293+00:00",
+            "expires_at": "2026-10-21T19:48:56.130293+00:00",
+            "columns": [
+              "city",
+              "payment_method",
+              "revenue"
+            ],
+            "row_count": 190,
+            "byte_size": 14449,
+            "content_hash": "3bb5fbcc83546d4c2b8a66fb7b0d4e5fef49cbd9b3b681091ed8a5f8652ca83c",
+            "storage_backend": "redis",
+            "provenance": {
+              "dimensions": [
+                "city",
+                "payment_method"
+              ],
+              "subject": "orders",
+              "time": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "observed_at": "2026-10-21T17:48:56.129985+00:00",
+              "data_snapshot": "374e589f3ea8480daa708cf2448766d5"
+            }
+          },
+          "computation_scope": "FULL_QUERY_POPULATION",
+          "presentation_scope": "BOUNDED_PREVIEW",
+          "column_labels": {
+            "city": "Tỉnh/thành trong dữ liệu",
+            "payment_method": "Phương thức thanh toán",
+            "revenue": "Doanh thu"
+          },
+          "role": "supporting",
+          "as_of": "2026-10-21T17:48:56.129985+00:00"
+        },
+        "q_87dc752eadcc78583bc23cea": {
+          "columns": [
+            "period",
+            "revenue"
+          ],
+          "rows": [
+            {
+              "period": "2026-09-01T00:00:00",
+              "revenue": 12826000.0
+            },
+            {
+              "period": "2026-09-02T00:00:00",
+              "revenue": 13703000.0
+            },
+            {
+              "period": "2026-09-03T00:00:00",
+              "revenue": 14465000.0
+            },
+            {
+              "period": "2026-09-04T00:00:00",
+              "revenue": 14699000.0
+            },
+            {
+              "period": "2026-09-05T00:00:00",
+              "revenue": 19313000.0
+            },
+            {
+              "period": "2026-09-06T00:00:00",
+              "revenue": 18360000.0
+            },
+            {
+              "period": "2026-09-07T00:00:00",
+              "revenue": 12516000.0
+            },
+            {
+              "period": "2026-09-08T00:00:00",
+              "revenue": 9812000.0
+            },
+            {
+              "period": "2026-09-09T00:00:00",
+              "revenue": 14879000.0
+            },
+            {
+              "period": "2026-09-10T00:00:00",
+              "revenue": 14902000.0
+            },
+            {
+              "period": "2026-09-11T00:00:00",
+              "revenue": 16045000.0
+            },
+            {
+              "period": "2026-09-12T00:00:00",
+              "revenue": 15598000.0
+            },
+            {
+              "period": "2026-09-13T00:00:00",
+              "revenue": 18541000.0
+            },
+            {
+              "period": "2026-09-14T00:00:00",
+              "revenue": 15085000.0
+            },
+            {
+              "period": "2026-09-15T00:00:00",
+              "revenue": 12794000.0
+            },
+            {
+              "period": "2026-09-16T00:00:00",
+              "revenue": 15071000.0
+            },
+            {
+              "period": "2026-09-17T00:00:00",
+              "revenue": 12518000.0
+            },
+            {
+              "period": "2026-09-18T00:00:00",
+              "revenue": 12693000.0
+            },
+            {
+              "period": "2026-09-19T00:00:00",
+              "revenue": 21004000.0
+            },
+            {
+              "period": "2026-09-20T00:00:00",
+              "revenue": 16074000.0
+            },
+            {
+              "period": "2026-09-21T00:00:00",
+              "revenue": 13924000.0
+            },
+            {
+              "period": "2026-09-22T00:00:00",
+              "revenue": 10960000.0
+            },
+            {
+              "period": "2026-09-23T00:00:00",
+              "revenue": 11769000.0
+            },
+            {
+              "period": "2026-09-24T00:00:00",
+              "revenue": 14005000.0
+            },
+            {
+              "period": "2026-09-25T00:00:00",
+              "revenue": 13107000.0
+            },
+            {
+              "period": "2026-09-26T00:00:00",
+              "revenue": 16919000.0
+            },
+            {
+              "period": "2026-09-27T00:00:00",
+              "revenue": 19477000.0
+            },
+            {
+              "period": "2026-09-28T00:00:00",
+              "revenue": 11709000.0
+            },
+            {
+              "period": "2026-09-29T00:00:00",
+              "revenue": 14012000.0
+            },
+            {
+              "period": "2026-09-30T00:00:00",
+              "revenue": 13292000.0
+            }
+          ],
+          "count": 30,
+          "truncated": false,
+          "duration_ms": 25.02,
+          "total_rows": 30,
+          "displayed_count": 30,
+          "artifact_ref": {
+            "artifact_id": "ra_ca64aad7e044422690f0b8a816708b27",
+            "query_fingerprint": "206f19f669d97393273feea41df3d0fffe598fc89163015ab74f985a587edd5b",
+            "plan_fingerprint": "4276a00c5c74a376f4ef663faf008060d4a23f65e218270027e9c94242c84131",
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "created_at": "2026-10-21T17:48:56.161394+00:00",
+            "expires_at": "2026-10-21T19:48:56.161394+00:00",
+            "columns": [
+              "period",
+              "revenue"
+            ],
+            "row_count": 30,
+            "byte_size": 1709,
+            "content_hash": "f5ab0bc4ecd8237f669573538dbff026608bad2d82822c1c9562f363e3e9c636",
+            "storage_backend": "redis",
+            "provenance": {
+              "dimensions": [],
+              "subject": "orders",
+              "time": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "observed_at": "2026-10-21T17:48:56.161288+00:00",
+              "data_snapshot": "374e589f3ea8480daa708cf2448766d5"
+            }
+          },
+          "computation_scope": "FULL_QUERY_POPULATION",
+          "presentation_scope": "BOUNDED_PREVIEW",
+          "column_labels": {
+            "period": "Thời gian",
+            "revenue": "Doanh thu"
+          },
+          "role": "supporting",
+          "as_of": "2026-10-21T17:48:56.161288+00:00"
+        },
+        "q_a21ceec82aaf7dcdb5bd4341": {
+          "columns": [
+            "period",
+            "store_type",
+            "revenue"
+          ],
+          "rows": [
+            {
+              "period": "2026-09-07T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 110000.0
+            },
+            {
+              "period": "2026-09-08T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 167000.0
+            },
+            {
+              "period": "2026-09-09T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 39000.0
+            },
+            {
+              "period": "2026-09-16T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 95000.0
+            },
+            {
+              "period": "2026-09-19T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 235000.0
+            },
+            {
+              "period": "2026-09-22T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 97000.0
+            },
+            {
+              "period": "2026-09-27T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 130000.0
+            },
+            {
+              "period": "2026-09-28T00:00:00",
+              "store_type": "CHI_NHANH_CHINH",
+              "revenue": 198000.0
+            }
+          ],
+          "count": 8,
+          "truncated": false,
+          "duration_ms": 30.99,
+          "total_rows": 8,
+          "displayed_count": 8,
+          "artifact_ref": {
+            "artifact_id": "ra_fe6fa4ab149c445cbda357f7488c2db7",
+            "query_fingerprint": "a84d9afca40ca9649774f572016ec26e564785175680b6c7ab60e9889f0d157d",
+            "plan_fingerprint": "7ee115b4f8bd5a00d97560079e8b332580e2c2f431f638bd21cb889e9340a3c1",
+            "schema_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+            "created_at": "2026-10-21T17:48:56.257926+00:00",
+            "expires_at": "2026-10-21T19:48:56.257926+00:00",
+            "columns": [
+              "period",
+              "store_type",
+              "revenue"
+            ],
+            "row_count": 8,
+            "byte_size": 763,
+            "content_hash": "78dd0083a180cfa94e9d364e175e31727fcad373848bcdd7466a1c8bd146c757",
+            "storage_backend": "redis",
+            "provenance": {
+              "dimensions": [
+                "store_type"
+              ],
+              "subject": "orders",
+              "time": {
+                "mode": "custom",
+                "start": "2026-09-01",
+                "end": "2026-09-30",
+                "end_exclusive": "2026-10-01",
+                "timezone": "Asia/Ho_Chi_Minh"
+              },
+              "observed_at": "2026-10-21T17:48:56.257827+00:00",
+              "data_snapshot": "374e589f3ea8480daa708cf2448766d5"
+            }
+          },
+          "computation_scope": "FULL_QUERY_POPULATION",
+          "presentation_scope": "BOUNDED_PREVIEW",
+          "column_labels": {
+            "period": "Thời gian",
+            "store_type": "Loại điểm bán",
+            "revenue": "Doanh thu"
+          },
+          "role": "supporting",
+          "as_of": "2026-10-21T17:48:56.257827+00:00"
+        }
+      },
+      "result_contracts": {
+        "q_769c8994e929285eac64a45f": {
+          "valid": true,
+          "category": "result_contract",
+          "errors": []
+        },
+        "q_58e14634dad79d4235e6b30a": {
+          "valid": true,
+          "category": "result_contract",
+          "errors": []
+        },
+        "q_c9282e19c268797eb5665238": {
+          "valid": true,
+          "category": "result_contract",
+          "errors": []
+        },
+        "q_3ffcc874f569dd0cba0fe87c": {
+          "valid": true,
+          "category": "result_contract",
+          "errors": []
+        },
+        "q_458f6da2fb920baadcad4f0d": {
+          "valid": true,
+          "category": "result_contract",
+          "errors": []
+        },
+        "q_87dc752eadcc78583bc23cea": {
+          "valid": true,
+          "category": "result_contract",
+          "errors": []
+        },
+        "q_a21ceec82aaf7dcdb5bd4341": {
+          "valid": true,
+          "category": "result_contract",
+          "errors": []
+        }
+      },
+      "evidence": [
+        {
+          "id": "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+          "scope_ref": "q_769c8994e929285eac64a45f",
+          "metric": "revenue",
+          "claim_type": "ranking",
+          "feature": "leader",
+          "values": {
+            "value": 112000.0,
+            "entity": "Ninh Thuận"
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "Bottom N"
+          },
+          "statement": "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu."
+        },
+        {
+          "id": "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b",
+          "scope_ref": "q_769c8994e929285eac64a45f",
+          "metric": "revenue",
+          "claim_type": "ranking",
+          "feature": "top_gap",
+          "values": {
+            "gap": 71000.0,
+            "relative_gap_pct": 38.79781420765027,
+            "top1": 112000.0,
+            "top2": 183000.0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "Bottom N"
+          },
+          "statement": "Chênh lệch hạng 1 và hạng 2 là 71,000 VND (38.8% so với hạng 2)."
+        },
+        {
+          "id": "q_769c8994e929285eac64a45f:revenue:selected_total:6230060e3b",
+          "scope_ref": "q_769c8994e929285eac64a45f",
+          "metric": "revenue",
+          "claim_type": "ranking",
+          "feature": "selected_total",
+          "values": {
+            "total": 1071000.0,
+            "spread": 188000.0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "Bottom N"
+          },
+          "statement": "Tổng doanh thu của 5 mục trong xếp hạng: 1,071,000 VND; đây là tổng của tập Top N đã trả về."
+        },
+        {
+          "id": "q_58e14634dad79d4235e6b30a:revenue:scope_total:6230060e3b",
+          "scope_ref": "q_58e14634dad79d4235e6b30a",
+          "metric": "revenue",
+          "claim_type": "aggregate",
+          "feature": "scope_total",
+          "values": {
+            "total": 440072000.0,
+            "observed_groups": 190
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (190 nhóm có dữ liệu)."
+        },
+        {
+          "id": "q_58e14634dad79d4235e6b30a:revenue:group_comparison:6230060e3b",
+          "scope_ref": "q_58e14634dad79d4235e6b30a",
+          "metric": "revenue",
+          "claim_type": "comparison",
+          "feature": "group_comparison",
+          "values": {
+            "largest": "Hồ Chí Minh / Thanh toán khi nhận hàng",
+            "largest_value": 55564000.0,
+            "smallest": "Ninh Thuận / Ví điện tử",
+            "smallest_value": 15000.0,
+            "gap": 55549000.0,
+            "observed_groups": 190
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Trong 190 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh / Thanh toán khi nhận hàng (55,564,000 VND), thấp nhất ở Ninh Thuận / Ví điện tử (15,000 VND); chênh lệch là 55,549,000 VND."
+        },
+        {
+          "id": "q_c9282e19c268797eb5665238:revenue:scope_total:6230060e3b",
+          "scope_ref": "q_c9282e19c268797eb5665238",
+          "metric": "revenue",
+          "claim_type": "aggregate",
+          "feature": "scope_total",
+          "values": {
+            "total": 440072000.0,
+            "observed_groups": 1175
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu)."
+        },
+        {
+          "id": "q_c9282e19c268797eb5665238:revenue:group_comparison:6230060e3b",
+          "scope_ref": "q_c9282e19c268797eb5665238",
+          "metric": "revenue",
+          "claim_type": "comparison",
+          "feature": "group_comparison",
+          "values": {
+            "largest": "Quảng Ninh / Highlands Coffee Big C Hạ Long",
+            "largest_value": 1428000.0,
+            "smallest": "Đà Nẵng / Highlands Coffee Nguyen Tat Thanh DNG",
+            "smallest_value": 15000.0,
+            "gap": 1413000.0,
+            "observed_groups": 1175
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Trong 1175 nhóm quan sát đã trả về, doanh thu cao nhất ở Quảng Ninh / Highlands Coffee Big C Hạ Long (1,428,000 VND), thấp nhất ở Đà Nẵng / Highlands Coffee Nguyen Tat Thanh DNG (15,000 VND); chênh lệch là 1,413,000 VND."
+        },
+        {
+          "id": "q_3ffcc874f569dd0cba0fe87c:revenue:group_comparison:6230060e3b",
+          "scope_ref": "q_3ffcc874f569dd0cba0fe87c",
+          "metric": "revenue",
+          "claim_type": "comparison",
+          "feature": "group_comparison",
+          "values": {
+            "largest": "Hồ Chí Minh / Dùng tại chỗ",
+            "largest_value": 70514000.0,
+            "smallest": "Bạc Liêu / Dùng tại chỗ",
+            "smallest_value": 39000.0,
+            "gap": 70475000.0,
+            "observed_groups": 154
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Trong 154 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh / Dùng tại chỗ (70,514,000 VND), thấp nhất ở Bạc Liêu / Dùng tại chỗ (39,000 VND); chênh lệch là 70,475,000 VND."
+        },
+        {
+          "id": "q_458f6da2fb920baadcad4f0d:revenue:group_comparison:6230060e3b",
+          "scope_ref": "q_458f6da2fb920baadcad4f0d",
+          "metric": "revenue",
+          "claim_type": "comparison",
+          "feature": "group_comparison",
+          "values": {
+            "largest": "Hồ Chí Minh / Thanh toán khi nhận hàng",
+            "largest_value": 55564000.0,
+            "smallest": "Ninh Thuận / Ví điện tử",
+            "smallest_value": 15000.0,
+            "gap": 55549000.0,
+            "observed_groups": 190
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Trong 190 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh / Thanh toán khi nhận hàng (55,564,000 VND), thấp nhất ở Ninh Thuận / Ví điện tử (15,000 VND); chênh lệch là 55,549,000 VND."
+        },
+        {
+          "id": "q_87dc752eadcc78583bc23cea:revenue:change:6230060e3b",
+          "scope_ref": "q_87dc752eadcc78583bc23cea",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "change",
+          "values": {
+            "first": 12826000.0,
+            "last": 13292000.0,
+            "change": 466000.0,
+            "change_pct": 3.633244971152347,
+            "direction": "up",
+            "first_period": "2026-09-01T00:00:00",
+            "last_period": "2026-09-30T00:00:00",
+            "comparison_basis": "observed_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 0,
+            "complete_buckets": 30,
+            "peak_period": "2026-09-19T00:00:00",
+            "peak": 21004000.0,
+            "trough_period": "2026-09-08T00:00:00",
+            "trough": 9812000.0,
+            "slope_per_day": -20206.45161290323,
+            "volatility": 2614030.6416634745,
+            "observed_buckets": 30,
+            "null_buckets": 0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Doanh thu thay đổi từ 12,826,000 thành 13,292,000 VND giữa kỳ 2026-09-01 và 2026-09-30 (3.63%)."
+        },
+        {
+          "id": "q_87dc752eadcc78583bc23cea:revenue:extrema:6230060e3b",
+          "scope_ref": "q_87dc752eadcc78583bc23cea",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "extrema",
+          "values": {
+            "peak": 21004000.0,
+            "trough": 9812000.0,
+            "volatility": 2614030.6416634745,
+            "excluded_partial_buckets": 0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Doanh thu đạt đỉnh 21,004,000 VND ở 2026-09-19T00:00:00; thấp nhất 9,812,000 VND ở 2026-09-08T00:00:00."
+        },
+        {
+          "id": "q_a21ceec82aaf7dcdb5bd4341:revenue:change:fe21c339fa",
+          "scope_ref": "q_a21ceec82aaf7dcdb5bd4341",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "change",
+          "values": {
+            "first": 110000.0,
+            "last": 198000.0,
+            "change": 88000.0,
+            "change_pct": 80.0,
+            "direction": "up",
+            "first_period": "2026-09-07T00:00:00",
+            "last_period": "2026-09-28T00:00:00",
+            "comparison_basis": "observed_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 0,
+            "complete_buckets": 8,
+            "peak_period": "2026-09-19T00:00:00",
+            "peak": 235000.0,
+            "trough_period": "2026-09-09T00:00:00",
+            "trough": 39000.0,
+            "slope_per_day": 2868.951612903226,
+            "volatility": 59047.51794106167,
+            "observed_buckets": 8,
+            "null_buckets": 0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {
+              "store_type": "CHI_NHANH_CHINH"
+            },
+            "selection": "ranked_cohort",
+            "population_scope": "ranked_cohort",
+            "cohort_scope_query_id": "q_769c8994e929285eac64a45f"
+          },
+          "statement": "Doanh thu (CHI_NHANH_CHINH) thay đổi từ 110,000 thành 198,000 VND giữa kỳ 2026-09-07 và 2026-09-28 (80%). Phạm vi: trong Bottom 5 của xếp hạng chính."
+        },
+        {
+          "id": "q_a21ceec82aaf7dcdb5bd4341:revenue:extrema:fe21c339fa",
+          "scope_ref": "q_a21ceec82aaf7dcdb5bd4341",
+          "metric": "revenue",
+          "claim_type": "trend",
+          "feature": "extrema",
+          "values": {
+            "peak": 235000.0,
+            "trough": 39000.0,
+            "volatility": 59047.51794106167,
+            "excluded_partial_buckets": 0
+          },
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "related",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {
+              "store_type": "CHI_NHANH_CHINH"
+            },
+            "selection": "ranked_cohort",
+            "population_scope": "ranked_cohort",
+            "cohort_scope_query_id": "q_769c8994e929285eac64a45f"
+          },
+          "statement": "Doanh thu (CHI_NHANH_CHINH) đạt đỉnh 235,000 VND ở 2026-09-19T00:00:00; thấp nhất 39,000 VND ở 2026-09-09T00:00:00. Phạm vi: trong Bottom 5 của xếp hạng chính."
+        }
+      ],
+      "kpi_cards": [
+        {
+          "label": "Chênh lệch hạng 1–2",
+          "value": 71000.0,
+          "unit": "VND",
+          "metric": "revenue",
+          "scope_ref": "q_769c8994e929285eac64a45f",
+          "evidence_id": "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b"
+        },
+        {
+          "label": "Tổng của tập Bottom N",
+          "value": 1071000.0,
+          "unit": "VND",
+          "metric": "revenue",
+          "scope_ref": "q_769c8994e929285eac64a45f",
+          "evidence_id": "q_769c8994e929285eac64a45f:revenue:selected_total:6230060e3b"
+        }
+      ],
+      "key_findings": [
+        {
+          "finding": "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: tập Bottom N. Xem bằng chứng và phép tính kèm theo.",
+          "value": 112000.0,
+          "value_details": {
+            "value": 112000.0,
+            "entity": "Ninh Thuận"
+          },
+          "evidence_id": "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+          "scope_ref": "q_769c8994e929285eac64a45f",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (190 nhóm có dữ liệu).",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": null,
+          "value_details": {
+            "total": 440072000.0,
+            "observed_groups": 190
+          },
+          "evidence_id": "q_58e14634dad79d4235e6b30a:revenue:scope_total:6230060e3b",
+          "scope_ref": "q_58e14634dad79d4235e6b30a",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu).",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": null,
+          "value_details": {
+            "total": 440072000.0,
+            "observed_groups": 1175
+          },
+          "evidence_id": "q_c9282e19c268797eb5665238:revenue:scope_total:6230060e3b",
+          "scope_ref": "q_c9282e19c268797eb5665238",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Trong 154 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh / Dùng tại chỗ (70,514,000 VND), thấp nhất ở Bạc Liêu / Dùng tại chỗ (39,000 VND); chênh lệch là 70,475,000 VND.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": 70475000.0,
+          "value_details": {
+            "largest": "Hồ Chí Minh / Dùng tại chỗ",
+            "largest_value": 70514000.0,
+            "smallest": "Bạc Liêu / Dùng tại chỗ",
+            "smallest_value": 39000.0,
+            "gap": 70475000.0,
+            "observed_groups": 154
+          },
+          "evidence_id": "q_3ffcc874f569dd0cba0fe87c:revenue:group_comparison:6230060e3b",
+          "scope_ref": "q_3ffcc874f569dd0cba0fe87c",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Trong 190 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh / Thanh toán khi nhận hàng (55,564,000 VND), thấp nhất ở Ninh Thuận / Ví điện tử (15,000 VND); chênh lệch là 55,549,000 VND.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": 55549000.0,
+          "value_details": {
+            "largest": "Hồ Chí Minh / Thanh toán khi nhận hàng",
+            "largest_value": 55564000.0,
+            "smallest": "Ninh Thuận / Ví điện tử",
+            "smallest_value": 15000.0,
+            "gap": 55549000.0,
+            "observed_groups": 190
+          },
+          "evidence_id": "q_458f6da2fb920baadcad4f0d:revenue:group_comparison:6230060e3b",
+          "scope_ref": "q_458f6da2fb920baadcad4f0d",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu thay đổi từ 12,826,000 thành 13,292,000 VND giữa kỳ 2026-09-01 và 2026-09-30 (3.63%).",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": 466000.0,
+          "value_details": {
+            "first": 12826000.0,
+            "last": 13292000.0,
+            "change": 466000.0,
+            "change_pct": 3.633244971152347,
+            "direction": "up",
+            "first_period": "2026-09-01T00:00:00",
+            "last_period": "2026-09-30T00:00:00",
+            "comparison_basis": "observed_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 0,
+            "complete_buckets": 30,
+            "peak_period": "2026-09-19T00:00:00",
+            "peak": 21004000.0,
+            "trough_period": "2026-09-08T00:00:00",
+            "trough": 9812000.0,
+            "slope_per_day": -20206.45161290323,
+            "volatility": 2614030.6416634745,
+            "observed_buckets": 30,
+            "null_buckets": 0
+          },
+          "evidence_id": "q_87dc752eadcc78583bc23cea:revenue:change:6230060e3b",
+          "scope_ref": "q_87dc752eadcc78583bc23cea",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu (CHI_NHANH_CHINH) thay đổi từ 110,000 thành 198,000 VND giữa kỳ 2026-09-07 và 2026-09-28 (80%). Phạm vi: trong Bottom 5 của xếp hạng chính.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: các đối tượng của xếp hạng chính. Xem bằng chứng và phép tính kèm theo.",
+          "value": 88000.0,
+          "value_details": {
+            "first": 110000.0,
+            "last": 198000.0,
+            "change": 88000.0,
+            "change_pct": 80.0,
+            "direction": "up",
+            "first_period": "2026-09-07T00:00:00",
+            "last_period": "2026-09-28T00:00:00",
+            "comparison_basis": "observed_periods",
+            "comparable": true,
+            "excluded_partial_buckets": 0,
+            "complete_buckets": 8,
+            "peak_period": "2026-09-19T00:00:00",
+            "peak": 235000.0,
+            "trough_period": "2026-09-09T00:00:00",
+            "trough": 39000.0,
+            "slope_per_day": 2868.951612903226,
+            "volatility": 59047.51794106167,
+            "observed_buckets": 8,
+            "null_buckets": 0
+          },
+          "evidence_id": "q_a21ceec82aaf7dcdb5bd4341:revenue:change:fe21c339fa",
+          "scope_ref": "q_a21ceec82aaf7dcdb5bd4341",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Chênh lệch hạng 1 và hạng 2 là 71,000 VND (38.8% so với hạng 2).",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: tập Bottom N. Xem bằng chứng và phép tính kèm theo.",
+          "value": 71000.0,
+          "value_details": {
+            "gap": 71000.0,
+            "relative_gap_pct": 38.79781420765027,
+            "top1": 112000.0,
+            "top2": 183000.0
+          },
+          "evidence_id": "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b",
+          "scope_ref": "q_769c8994e929285eac64a45f",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Trong 190 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh / Thanh toán khi nhận hàng (55,564,000 VND), thấp nhất ở Ninh Thuận / Ví điện tử (15,000 VND); chênh lệch là 55,549,000 VND.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": 55549000.0,
+          "value_details": {
+            "largest": "Hồ Chí Minh / Thanh toán khi nhận hàng",
+            "largest_value": 55564000.0,
+            "smallest": "Ninh Thuận / Ví điện tử",
+            "smallest_value": 15000.0,
+            "gap": 55549000.0,
+            "observed_groups": 190
+          },
+          "evidence_id": "q_58e14634dad79d4235e6b30a:revenue:group_comparison:6230060e3b",
+          "scope_ref": "q_58e14634dad79d4235e6b30a",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Trong 1175 nhóm quan sát đã trả về, doanh thu cao nhất ở Quảng Ninh / Highlands Coffee Big C Hạ Long (1,428,000 VND), thấp nhất ở Đà Nẵng / Highlands Coffee Nguyen Tat Thanh DNG (15,000 VND); chênh lệch là 1,413,000 VND.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": 1413000.0,
+          "value_details": {
+            "largest": "Quảng Ninh / Highlands Coffee Big C Hạ Long",
+            "largest_value": 1428000.0,
+            "smallest": "Đà Nẵng / Highlands Coffee Nguyen Tat Thanh DNG",
+            "smallest_value": 15000.0,
+            "gap": 1413000.0,
+            "observed_groups": 1175
+          },
+          "evidence_id": "q_c9282e19c268797eb5665238:revenue:group_comparison:6230060e3b",
+          "scope_ref": "q_c9282e19c268797eb5665238",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu đạt đỉnh 21,004,000 VND ở 2026-09-19T00:00:00; thấp nhất 9,812,000 VND ở 2026-09-08T00:00:00.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: toàn bộ nhóm trong phạm vi. Xem bằng chứng và phép tính kèm theo.",
+          "value": null,
+          "value_details": {
+            "peak": 21004000.0,
+            "trough": 9812000.0,
+            "volatility": 2614030.6416634745,
+            "excluded_partial_buckets": 0
+          },
+          "evidence_id": "q_87dc752eadcc78583bc23cea:revenue:extrema:6230060e3b",
+          "scope_ref": "q_87dc752eadcc78583bc23cea",
+          "metric": "revenue",
+          "unit": "VND"
+        },
+        {
+          "finding": "Doanh thu (CHI_NHANH_CHINH) đạt đỉnh 235,000 VND ở 2026-09-19T00:00:00; thấp nhất 39,000 VND ở 2026-09-09T00:00:00. Phạm vi: trong Bottom 5 của xếp hạng chính.",
+          "comment": "Căn cứ Đơn hàng và doanh thu; phạm vi: các đối tượng của xếp hạng chính. Xem bằng chứng và phép tính kèm theo.",
+          "value": null,
+          "value_details": {
+            "peak": 235000.0,
+            "trough": 39000.0,
+            "volatility": 59047.51794106167,
+            "excluded_partial_buckets": 0
+          },
+          "evidence_id": "q_a21ceec82aaf7dcdb5bd4341:revenue:extrema:fe21c339fa",
+          "scope_ref": "q_a21ceec82aaf7dcdb5bd4341",
+          "metric": "revenue",
+          "unit": "VND"
+        }
+      ],
+      "short_answer": [
+        "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu.",
+        "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu).",
+        "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (190 nhóm có dữ liệu)."
+      ],
+      "executive_summary": "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu. Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (190 nhóm có dữ liệu). Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu). Trong 154 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh / Dùng tại chỗ (70,514,000 VND), thấp nhất ở Bạc Liêu / Dùng tại chỗ (39,000 VND); chênh lệch là 70,475,000 VND. Trong 190 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh / Thanh toán khi nhận hàng (55,564,000 VND), thấp nhất ở Ninh Thuận / Ví điện tử (15,000 VND); chênh lệch là 55,549,000 VND.",
+      "conclusion": {
+        "version": "3.4",
+        "answer": "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu. Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu). Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (190 nhóm có dữ liệu).",
+        "answers": [
+          "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu.",
+          "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu).",
+          "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (190 nhóm có dữ liệu)."
+        ],
+        "findings": [
+          {
+            "statement": "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu.",
+            "evidence_id": "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+            "scope_ref": "q_769c8994e929285eac64a45f",
+            "metric": "revenue",
+            "unit": "VND"
+          },
+          {
+            "statement": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (190 nhóm có dữ liệu).",
+            "evidence_id": "q_58e14634dad79d4235e6b30a:revenue:scope_total:6230060e3b",
+            "scope_ref": "q_58e14634dad79d4235e6b30a",
+            "metric": "revenue",
+            "unit": "VND"
+          },
+          {
+            "statement": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu).",
+            "evidence_id": "q_c9282e19c268797eb5665238:revenue:scope_total:6230060e3b",
+            "scope_ref": "q_c9282e19c268797eb5665238",
+            "metric": "revenue",
+            "unit": "VND"
+          }
+        ],
+        "synthesis": [
+          "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu.",
+          "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu).",
+          "Từ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: tăng 466.000 VND (+3,6%)"
+        ],
+        "view_findings": [
+          {
+            "statement": "Từ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: tăng 466.000 VND (+3,6%)",
+            "evidence_id": null,
+            "chart_id": "visual_2",
+            "lens_id": "trend@repair_add_3",
+            "lens_role": "core",
+            "question": "Chỉ số biến động thế nào theo thời gian?"
+          }
+        ],
+        "caveats": [
+          "Một góc nhìn được trình bày trong bảng dữ liệu đầy đủ vì cấu trúc hoặc số nhóm chưa phù hợp với biểu đồ.",
+          "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "Tập Bottom N được chọn; không đại diện cơ cấu toàn bộ.",
+          "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "Một góc nhìn dùng bảng dữ liệu đầy đủ vì cấu trúc chưa phù hợp biểu đồ.",
+          "Biểu đồ chỉ gồm tập Bottom N được chọn (Bottom 5); không đại diện cơ cấu toàn bộ phạm vi."
+        ],
+        "actions": [
+          "Khoảng cách giữa nhóm dẫn đầu và phần còn lại rõ rệt: Đề xuất nghiên cứu mô hình của nhóm đạt chỉ số cao nhất để tối ưu toàn chuỗi."
+        ],
+        "evidence_ids": [
+          "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+          "q_58e14634dad79d4235e6b30a:revenue:scope_total:6230060e3b",
+          "q_c9282e19c268797eb5665238:revenue:scope_total:6230060e3b"
+        ],
+        "unanswered": []
+      },
+      "quality_assessment": {
+        "publication_checks": [
+          {
+            "id": "chart_contract",
+            "label": "Phạm vi và dữ liệu biểu đồ",
+            "passed": 2,
+            "total": 2,
+            "status": "passed",
+            "summary": "Binding và biểu diễn của từng biểu đồ thực tế; độ bao phủ được công bố riêng."
+          }
+        ],
+        "score": 90.0,
+        "grade": "partial",
+        "status": "partially_verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "repair_add_1",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "repair_add_2",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_c9282e19c268797eb5665238:revenue:scope_total:6230060e3b",
+              "q_c9282e19c268797eb5665238:revenue:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "repair_add_3",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_58e14634dad79d4235e6b30a:revenue:scope_total:6230060e3b",
+              "q_58e14634dad79d4235e6b30a:revenue:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "req_1",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "causes",
+            "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+            "evidence_refs": []
+          },
+          {
+            "id": "analysis_breadth",
+            "label": "Số liệu đã kiểm chứng · 2/6 góc nhìn; còn thiếu 4 do hệ thống chưa lập được góc nhìn và vượt ngân sách truy vấn.",
+            "evidence_refs": []
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "source_coverage:silver.don_hang",
+            "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+            "evidence_refs": []
+          },
+          {
+            "id": "dimension_limit:city:source_geography_unverified_2025",
+            "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+            "evidence_refs": [
+              "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:revenue",
+            "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+            "evidence_refs": [
+              "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_769c8994e929285eac64a45f",
+            "label": "Tập Bottom N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b",
+              "q_769c8994e929285eac64a45f:revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_3ffcc874f569dd0cba0fe87c",
+            "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+            "evidence_refs": [
+              "q_3ffcc874f569dd0cba0fe87c:revenue:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_458f6da2fb920baadcad4f0d",
+            "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+            "evidence_refs": [
+              "q_458f6da2fb920baadcad4f0d:revenue:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_87dc752eadcc78583bc23cea",
+            "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+            "evidence_refs": [
+              "q_87dc752eadcc78583bc23cea:revenue:change:6230060e3b",
+              "q_87dc752eadcc78583bc23cea:revenue:extrema:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_a21ceec82aaf7dcdb5bd4341",
+            "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+            "evidence_refs": [
+              "q_a21ceec82aaf7dcdb5bd4341:revenue:change:fe21c339fa",
+              "q_a21ceec82aaf7dcdb5bd4341:revenue:extrema:fe21c339fa"
+            ]
+          },
+          {
+            "id": "omission:0",
+            "label": "Một góc nhìn dùng bảng dữ liệu đầy đủ vì cấu trúc chưa phù hợp biểu đồ.",
+            "evidence_refs": []
+          },
+          {
+            "id": "omission:1",
+            "label": "Một góc nhìn dùng bảng dữ liệu đầy đủ vì cấu trúc chưa phù hợp biểu đồ.",
+            "evidence_refs": []
+          }
+        ],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 4,
+          "completed_count": 4,
+          "supporting_count": 4,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.6",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "4/4 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 7,
+            "total": 7,
+            "status": "passed",
+            "summary": "7 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 1752,
+            "total": 1752,
+            "status": "passed",
+            "summary": "1752/1752 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 74,
+            "total": 74,
+            "status": "passed",
+            "summary": "74/74 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "3/3 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 10,
+            "total": 10,
+            "status": "passed",
+            "summary": "10/10 giới hạn dữ liệu được công bố."
+          },
+          {
+            "id": "analysis_depth_coverage",
+            "label": "Yêu cầu bằng chứng",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "4/4 vai trò phân tích bắt buộc có bằng chứng."
+          },
+          {
+            "id": "population_correctness",
+            "label": "Quần thể và mẫu số",
+            "passed": 7,
+            "total": 7,
+            "status": "passed",
+            "summary": "Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm. Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ."
+          },
+          {
+            "id": "provenance_completeness",
+            "label": "Nguồn gốc kết quả",
+            "passed": 7,
+            "total": 7,
+            "status": "passed",
+            "summary": "Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v3",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 12.8571,
+            "possible_points": 12.8571,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 12.8571,
+            "possible_points": 12.8571,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "population_correctness",
+            "label": "Quần thể và mẫu số",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "provenance_completeness",
+            "label": "Nguồn gốc kết quả",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "analysis_depth_coverage",
+            "label": "Yêu cầu bằng chứng",
+            "earned_points": 12.8571,
+            "possible_points": 12.8571,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "trust_dimensions": [
+          {
+            "id": "reliability",
+            "label": "Độ tin cậy của kết quả",
+            "status": "passed",
+            "passed": 1841,
+            "total": 1841
+          },
+          {
+            "id": "reconciliation",
+            "label": "Đối soát quần thể và nguồn gốc",
+            "status": "passed",
+            "passed": 14,
+            "total": 14
+          },
+          {
+            "id": "presentation",
+            "label": "Trình bày và giới hạn",
+            "status": "passed",
+            "passed": 19,
+            "total": 19
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Đối chứng độc lập",
+            "status": "not_measured",
+            "passed": 0,
+            "total": 0
+          }
+        ],
+        "analysis_breadth": {
+          "id": "analysis_breadth_coverage",
+          "label": "Độ bao phủ góc nhìn",
+          "passed": 2,
+          "total": 6,
+          "summary": "Số liệu đã kiểm chứng · 2/6 góc nhìn; còn thiếu 4 do hệ thống chưa lập được góc nhìn và vượt ngân sách truy vấn.",
+          "status": "partial"
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      },
+      "answer_requirements": [
+        {
+          "requirement_id": "repair_add_1",
+          "role": "ranking",
+          "evidence_id": "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+          "query_id": "q_769c8994e929285eac64a45f",
+          "metric": "revenue",
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "Bottom N"
+          },
+          "statement": "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu."
+        },
+        {
+          "requirement_id": "repair_add_2",
+          "role": "grouped",
+          "evidence_id": "q_c9282e19c268797eb5665238:revenue:scope_total:6230060e3b",
+          "query_id": "q_c9282e19c268797eb5665238",
+          "metric": "revenue",
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (1175 nhóm có dữ liệu)."
+        },
+        {
+          "requirement_id": "repair_add_3",
+          "role": "grouped",
+          "evidence_id": "q_58e14634dad79d4235e6b30a:revenue:scope_total:6230060e3b",
+          "query_id": "q_58e14634dad79d4235e6b30a",
+          "metric": "revenue",
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (190 nhóm có dữ liệu)."
+        },
+        {
+          "requirement_id": "req_1",
+          "role": "ranking",
+          "evidence_id": "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+          "query_id": "q_769c8994e929285eac64a45f",
+          "metric": "revenue",
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "Bottom N"
+          },
+          "statement": "Ninh Thuận thấp nhất trong Bottom 5: 112,000 VND theo doanh thu."
+        }
+      ],
+      "resolved_requirement_coverage": [
+        {
+          "requirement_id": "repair_add_1",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_769c8994e929285eac64a45f"
+          ],
+          "derived_features": [],
+          "goal": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026",
+          "supporting_for": null,
+          "views": [
+            {
+              "kind": "ranking",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "required": true,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ]
+        },
+        {
+          "requirement_id": "repair_add_2",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_c9282e19c268797eb5665238"
+          ],
+          "derived_features": [],
+          "goal": "Phân tích chi nhánh chỉ trong 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026",
+          "supporting_for": null,
+          "views": [
+            {
+              "kind": "grouped",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city",
+                "store"
+              ],
+              "required": true,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ]
+        },
+        {
+          "requirement_id": "repair_add_3",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_58e14634dad79d4235e6b30a"
+          ],
+          "derived_features": [],
+          "goal": "Phân tích phương thức thanh toán chỉ trong 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026",
+          "supporting_for": null,
+          "views": [
+            {
+              "kind": "grouped",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city",
+                "payment_method"
+              ],
+              "required": true,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ]
+        },
+        {
+          "requirement_id": "req_1",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_769c8994e929285eac64a45f"
+          ],
+          "derived_features": [
+            "leader",
+            "selected_total",
+            "top_gap"
+          ],
+          "goal": "Phân tích yêu cầu",
+          "supporting_for": null,
+          "views": [
+            {
+              "kind": "ranking",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "required": true,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ]
+        },
+        {
+          "requirement_id": "support_337e81f9875ed84bf15ba172",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_458f6da2fb920baadcad4f0d"
+          ],
+          "derived_features": [],
+          "goal": "Tương tác hai chiều",
+          "supporting_for": "repair_add_3",
+          "views": [
+            {
+              "kind": "grouped",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city",
+                "payment_method"
+              ],
+              "required": false,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ],
+          "lenses": [
+            {
+              "id": "cross_tab:payment_method:city@repair_add_3",
+              "kind": "cross_tab",
+              "shape": "support_337e81f9875ed84bf15ba172",
+              "shape_key": [
+                "cross_tab",
+                [
+                  "payment_method",
+                  "city"
+                ]
+              ],
+              "metrics": [
+                "revenue"
+              ],
+              "axes": [
+                "payment_method",
+                "city"
+              ],
+              "question": "Doanh thu thay đổi thế nào khi kết hợp phương thức thanh toán và tỉnh/thành trong dữ liệu?",
+              "show": [
+                {
+                  "form": "heatmap",
+                  "metrics": [
+                    "revenue"
+                  ]
+                }
+              ],
+              "base_id": "cross_tab:payment_method:city",
+              "role": "diagnostic",
+              "position": 0,
+              "rank": [
+                1,
+                0
+              ],
+              "requirement_id": "repair_add_3"
+            }
+          ]
+        },
+        {
+          "requirement_id": "support_5b10a0c6f78ee500d454dff9",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_87dc752eadcc78583bc23cea"
+          ],
+          "derived_features": [],
+          "goal": "Diễn biến trong phạm vi đã chọn",
+          "supporting_for": "repair_add_3",
+          "views": [
+            {
+              "kind": "time_series",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [],
+              "required": false,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ],
+          "lenses": [
+            {
+              "id": "trend@repair_add_3",
+              "kind": "trend",
+              "shape": "support_5b10a0c6f78ee500d454dff9",
+              "shape_key": [
+                "trend",
+                []
+              ],
+              "metrics": [
+                "revenue"
+              ],
+              "granularity": "day",
+              "question": "Chỉ số biến động thế nào theo thời gian?",
+              "show": [
+                {
+                  "form": "line",
+                  "metrics": [
+                    "revenue"
+                  ]
+                }
+              ],
+              "base_id": "trend",
+              "role": "core",
+              "position": 0,
+              "rank": [
+                0,
+                0
+              ],
+              "requirement_id": "repair_add_3"
+            }
+          ]
+        },
+        {
+          "requirement_id": "support_d060e16371173afd932dad82",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_a21ceec82aaf7dcdb5bd4341"
+          ],
+          "derived_features": [],
+          "goal": "Diễn biến trong phạm vi đã chọn",
+          "supporting_for": "repair_add_1",
+          "views": [
+            {
+              "kind": "time_series",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "store_type"
+              ],
+              "required": false,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ],
+          "lenses": [
+            {
+              "id": "segmented_trend:store_type@repair_add_1",
+              "kind": "segmented_trend",
+              "shape": "support_d060e16371173afd932dad82",
+              "shape_key": [
+                "trend",
+                [
+                  "store_type"
+                ]
+              ],
+              "metrics": [
+                "revenue"
+              ],
+              "axes": [
+                "store_type"
+              ],
+              "granularity": "day",
+              "question": "Diễn biến doanh thu khác nhau thế nào giữa các loại điểm bán?",
+              "show": [
+                {
+                  "form": "multi_line",
+                  "metrics": [
+                    "revenue"
+                  ]
+                }
+              ],
+              "base_id": "segmented_trend:store_type",
+              "role": "diagnostic",
+              "position": 1,
+              "rank": [
+                1,
+                1
+              ],
+              "requirement_id": "repair_add_1"
+            }
+          ]
+        },
+        {
+          "requirement_id": "support_dd8342997e46dba8d855d015",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_3ffcc874f569dd0cba0fe87c"
+          ],
+          "derived_features": [],
+          "goal": "Tương tác hai chiều",
+          "supporting_for": "repair_add_2",
+          "views": [
+            {
+              "kind": "grouped",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city",
+                "order_type"
+              ],
+              "required": false,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ],
+          "lenses": [
+            {
+              "id": "cross_tab:city:order_type@repair_add_2",
+              "kind": "cross_tab",
+              "shape": "support_dd8342997e46dba8d855d015",
+              "shape_key": [
+                "cross_tab",
+                [
+                  "city",
+                  "order_type"
+                ]
+              ],
+              "metrics": [
+                "revenue"
+              ],
+              "axes": [
+                "city",
+                "order_type"
+              ],
+              "question": "Doanh thu thay đổi thế nào khi kết hợp tỉnh/thành trong dữ liệu và hình thức nhận hàng?",
+              "show": [
+                {
+                  "form": "heatmap",
+                  "metrics": [
+                    "revenue"
+                  ]
+                }
+              ],
+              "base_id": "cross_tab:city:order_type",
+              "role": "diagnostic",
+              "position": 0,
+              "rank": [
+                1,
+                0
+              ],
+              "requirement_id": "repair_add_2"
+            }
+          ]
+        }
+      ],
+      "semantic_intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "repair_add_3",
+            "goal": "Phân tích phương thức thanh toán chỉ trong 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026",
+            "domain_id": "domain_default",
+            "lens_hint": null,
+            "supporting_for": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city",
+              "payment_method"
+            ],
+            "analysis_kind": "aggregate",
+            "filters": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "req_1",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": null,
+            "lens_hint": null,
+            "supporting_for": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "ranking",
+            "filters": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": {
+              "direction": "bottom",
+              "limit": 5,
+              "metric_id": "revenue",
+              "per_group": []
+            },
+            "granularity": null,
+            "derived_features": [
+              "leader",
+              "selected_total",
+              "top_gap"
+            ],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "repair_add_2",
+            "goal": "Phân tích chi nhánh chỉ trong 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026",
+            "domain_id": "domain_default",
+            "lens_hint": null,
+            "supporting_for": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city",
+              "store"
+            ],
+            "analysis_kind": "aggregate",
+            "filters": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "repair_add_1",
+            "goal": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026",
+            "domain_id": "domain_default",
+            "lens_hint": null,
+            "supporting_for": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "ranking",
+            "filters": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": {
+              "direction": "bottom",
+              "limit": 5,
+              "metric_id": "revenue",
+              "per_group": []
+            },
+            "granularity": null,
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_337e81f9875ed84bf15ba172",
+            "goal": "Tương tác hai chiều",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "supporting_for": "repair_add_3",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city",
+              "payment_method"
+            ],
+            "analysis_kind": "cross_tab",
+            "filters": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_dd8342997e46dba8d855d015",
+            "goal": "Tương tác hai chiều",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "supporting_for": "repair_add_2",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city",
+              "order_type"
+            ],
+            "analysis_kind": "cross_tab",
+            "filters": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_d060e16371173afd932dad82",
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "supporting_for": "repair_add_1",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store_type"
+            ],
+            "analysis_kind": "trend",
+            "filters": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": null,
+            "granularity": "day",
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_5b10a0c6f78ee500d454dff9",
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "supporting_for": "repair_add_3",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "filters": [],
+            "time": {
+              "kind": "range",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "amount": null,
+              "unit": null
+            },
+            "comparison_time": null,
+            "ranking": null,
+            "granularity": "day",
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          }
+        ],
+        "clarification": null
+      },
+      "charts": [
+        {
+          "id": "visual_1",
+          "title": "Bottom 5 — Doanh thu theo tỉnh/thành trong dữ liệu — Đơn hàng và doanh thu",
+          "query_id": "q_769c8994e929285eac64a45f",
+          "scope_ref": "q_769c8994e929285eac64a45f",
+          "scope_refs": null,
+          "metrics": [
+            "revenue"
+          ],
+          "selection": "Top N",
+          "population_scope": null,
+          "scope_note": null,
+          "insight": {
+            "chart_id": "visual_1",
+            "why_relevant": "Trả lời trực tiếp yêu cầu: Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026.",
+            "what_it_shows": "Doanh thu của 5 tỉnh/thành trong dữ liệu, xếp từ cao đến thấp.",
+            "key_facts": [
+              {
+                "text": "Cao nhất: Quảng Trị với 300.000 VND (28% tổng).",
+                "value": 300000.0,
+                "unit": "VND",
+                "evidence_ref": "q_769c8994e929285eac64a45f:revenue:Quảng Trị"
+              },
+              {
+                "text": "Thấp nhất: Ninh Thuận với 112.000 VND.",
+                "value": 112000.0,
+                "unit": "VND",
+                "evidence_ref": "q_769c8994e929285eac64a45f:revenue:Ninh Thuận"
+              }
+            ],
+            "interpretation": "Ba nhóm dẫn đầu chiếm 72,5% tổng doanh thu của phạm vi.",
+            "caveats": [
+              "Biểu đồ chỉ gồm tập Bottom N được chọn (Bottom 5); không đại diện cơ cấu toàn bộ phạm vi."
+            ],
+            "next_checks": [],
+            "how_to_read": "Thanh dài hơn là giá trị lớn hơn; nhãn hiển thị đơn vị của chỉ số.",
+            "definition": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+            "source": {
+              "query_id": "q_769c8994e929285eac64a45f",
+              "metric": "revenue",
+              "rows": 5
+            },
+            "verification_context": {
+              "chart": {
+                "id": "visual_1",
+                "chart_type": "horizontal_bar",
+                "scope_ref": "q_769c8994e929285eac64a45f",
+                "query_id": "q_769c8994e929285eac64a45f",
+                "metric": "revenue",
+                "metrics": [
+                  "revenue"
+                ],
+                "unit": "VND",
+                "x_field": "city",
+                "series_field": null,
+                "title": "Bottom 5 — Doanh thu theo tỉnh/thành trong dữ liệu — Đơn hàng và doanh thu",
+                "purpose": "Quy mô doanh thu trong phạm vi đã chọn?",
+                "role": "requested",
+                "priority": 80,
+                "cardinality": 5,
+                "chart_type_label": "Cột ngang",
+                "x_label": "Tỉnh/thành trong dữ liệu",
+                "category_fields": [
+                  "city"
+                ],
+                "semantic_view_key": "b9a09bdb8a635b5cfffe8fa162eb4978c61fe4c7d055b5e6329b5c168770b498",
+                "series_label": "",
+                "ranking_metric": "revenue",
+                "ranking_metric_label": "Doanh thu",
+                "ranking_direction": "ASC",
+                "ranking_limit": 5,
+                "ranking_per_group": [],
+                "selection": "Top N",
+                "layout": "standard",
+                "data": [
+                  {
+                    "label": "Ninh Thuận",
+                    "value": 112000.0,
+                    "color": "#6366f1",
+                    "entity_ref": {
+                      "query_id": "q_769c8994e929285eac64a45f",
+                      "filters": {
+                        "city": "Ninh Thuận"
+                      }
+                    }
+                  },
+                  {
+                    "label": "Sóc Trăng",
+                    "value": 183000.0,
+                    "color": "#10b981",
+                    "entity_ref": {
+                      "query_id": "q_769c8994e929285eac64a45f",
+                      "filters": {
+                        "city": "Sóc Trăng"
+                      }
+                    }
+                  },
+                  {
+                    "label": "Bạc Liêu",
+                    "value": 206000.0,
+                    "color": "#f59e0b",
+                    "entity_ref": {
+                      "query_id": "q_769c8994e929285eac64a45f",
+                      "filters": {
+                        "city": "Bạc Liêu"
+                      }
+                    }
+                  },
+                  {
+                    "label": "Trà Vinh",
+                    "value": 270000.0,
+                    "color": "#ec4899",
+                    "entity_ref": {
+                      "query_id": "q_769c8994e929285eac64a45f",
+                      "filters": {
+                        "city": "Trà Vinh"
+                      }
+                    }
+                  },
+                  {
+                    "label": "Quảng Trị",
+                    "value": 300000.0,
+                    "color": "#06b6d4",
+                    "entity_ref": {
+                      "query_id": "q_769c8994e929285eac64a45f",
+                      "filters": {
+                        "city": "Quảng Trị"
+                      }
+                    }
+                  }
+                ],
+                "domain_id": "orders",
+                "domain_label": "Đơn hàng và doanh thu",
+                "lens_id": "sales_overview",
+                "lens_label": "Quy mô doanh thu",
+                "story_section": "So sánh và xếp hạng",
+                "requirement_id": "repair_add_1",
+                "mission": null,
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "relevance_role": "primary",
+                "requirement_goal": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026",
+                "evidence_refs": [
+                  "q_769c8994e929285eac64a45f:revenue:leader:6230060e3b",
+                  "q_769c8994e929285eac64a45f:revenue:top_gap:6230060e3b",
+                  "q_769c8994e929285eac64a45f:revenue:selected_total:6230060e3b"
+                ]
+              },
+              "reference": "2026-10-21",
+              "mission_id": null
+            }
+          },
+          "analysis_lens_role": null,
+          "ranking_direction": "ASC"
+        },
+        {
+          "id": "visual_2",
+          "title": "Doanh thu theo ngày — Đơn hàng và doanh thu",
+          "query_id": "q_87dc752eadcc78583bc23cea",
+          "scope_ref": "q_87dc752eadcc78583bc23cea",
+          "scope_refs": null,
+          "metrics": [
+            "revenue"
+          ],
+          "selection": "complete",
+          "population_scope": null,
+          "scope_note": null,
+          "insight": {
+            "chart_id": "visual_2",
+            "why_relevant": "Góc nhìn hỗ trợ cho yêu cầu: Chỉ số biến động thế nào theo thời gian?.",
+            "what_it_shows": "Diễn biến doanh thu qua 30 kỳ.",
+            "key_facts": [
+              {
+                "text": "Từ kỳ 2026-09-01 đến kỳ đầy đủ gần nhất 2026-09-30: tăng 466.000 VND (+3,6%)",
+                "value": 466000.0,
+                "unit": "VND",
+                "evidence_ref": "q_87dc752eadcc78583bc23cea:revenue:all@2026-09-30",
+                "calc": {
+                  "kind": "change",
+                  "query_id": "q_87dc752eadcc78583bc23cea",
+                  "metric": "revenue",
+                  "group_key": "all",
+                  "dims": [],
+                  "first_bucket": "2026-09-01",
+                  "last_bucket": "2026-09-30",
+                  "direction": "tăng",
+                  "pct": 3.633245
+                }
+              },
+              {
+                "text": "Kỳ cao nhất: 2026-09-19 với 21 triệu VND.",
+                "value": 21004000.0,
+                "unit": "VND",
+                "evidence_ref": "q_87dc752eadcc78583bc23cea:revenue:all@2026-09-19"
+              }
+            ],
+            "interpretation": "Doanh thu tăng giữa kỳ đầu và kỳ đầy đủ gần nhất trong phạm vi đã chọn.",
+            "caveats": [],
+            "next_checks": [],
+            "how_to_read": "Trục ngang là thời gian; điểm mờ/dấu * là kỳ chưa đủ ngày.",
+            "definition": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+            "source": {
+              "query_id": "q_87dc752eadcc78583bc23cea",
+              "metric": "revenue",
+              "rows": 30
+            },
+            "verification_context": {
+              "chart": {
+                "id": "visual_2",
+                "chart_type": "area",
+                "scope_ref": "q_87dc752eadcc78583bc23cea",
+                "query_id": "q_87dc752eadcc78583bc23cea",
+                "metric": "revenue",
+                "metrics": [
+                  "revenue"
+                ],
+                "unit": "VND",
+                "x_field": "period",
+                "series_field": null,
+                "title": "Doanh thu theo ngày — Đơn hàng và doanh thu",
+                "purpose": "Cơ cấu kênh bán trong phạm vi đã chọn?",
+                "role": "supporting",
+                "priority": 90,
+                "cardinality": 30,
+                "chart_type_label": "Xu hướng",
+                "x_label": "Thời gian",
+                "semantic_view_key": "d511466c5a260b48414126830de1424cfaa1619565f28e5bc896e913d3b62657",
+                "series_label": "",
+                "selection": "complete",
+                "layout": "wide",
+                "granularity": "day",
+                "period": {
+                  "mode": "custom",
+                  "start": "2026-09-01",
+                  "end": "2026-09-30",
+                  "end_exclusive": "2026-10-01",
+                  "timezone": "Asia/Ho_Chi_Minh"
+                },
+                "data": [
+                  {
+                    "label": "2026-09-01T00:00:00",
+                    "value": 12826000.0,
+                    "color": "#6366f1"
+                  },
+                  {
+                    "label": "2026-09-02T00:00:00",
+                    "value": 13703000.0,
+                    "color": "#10b981"
+                  },
+                  {
+                    "label": "2026-09-03T00:00:00",
+                    "value": 14465000.0,
+                    "color": "#f59e0b"
+                  },
+                  {
+                    "label": "2026-09-04T00:00:00",
+                    "value": 14699000.0,
+                    "color": "#ec4899"
+                  },
+                  {
+                    "label": "2026-09-05T00:00:00",
+                    "value": 19313000.0,
+                    "color": "#06b6d4"
+                  },
+                  {
+                    "label": "2026-09-06T00:00:00",
+                    "value": 18360000.0,
+                    "color": "#8b5cf6"
+                  },
+                  {
+                    "label": "2026-09-07T00:00:00",
+                    "value": 12516000.0,
+                    "color": "#ef4444"
+                  },
+                  {
+                    "label": "2026-09-08T00:00:00",
+                    "value": 9812000.0,
+                    "color": "#64748b"
+                  },
+                  {
+                    "label": "2026-09-09T00:00:00",
+                    "value": 14879000.0,
+                    "color": "#6366f1"
+                  },
+                  {
+                    "label": "2026-09-10T00:00:00",
+                    "value": 14902000.0,
+                    "color": "#10b981"
+                  },
+                  {
+                    "label": "2026-09-11T00:00:00",
+                    "value": 16045000.0,
+                    "color": "#f59e0b"
+                  },
+                  {
+                    "label": "2026-09-12T00:00:00",
+                    "value": 15598000.0,
+                    "color": "#ec4899"
+                  },
+                  {
+                    "label": "2026-09-13T00:00:00",
+                    "value": 18541000.0,
+                    "color": "#06b6d4"
+                  },
+                  {
+                    "label": "2026-09-14T00:00:00",
+                    "value": 15085000.0,
+                    "color": "#8b5cf6"
+                  },
+                  {
+                    "label": "2026-09-15T00:00:00",
+                    "value": 12794000.0,
+                    "color": "#ef4444"
+                  },
+                  {
+                    "label": "2026-09-16T00:00:00",
+                    "value": 15071000.0,
+                    "color": "#64748b"
+                  },
+                  {
+                    "label": "2026-09-17T00:00:00",
+                    "value": 12518000.0,
+                    "color": "#6366f1"
+                  },
+                  {
+                    "label": "2026-09-18T00:00:00",
+                    "value": 12693000.0,
+                    "color": "#10b981"
+                  },
+                  {
+                    "label": "2026-09-19T00:00:00",
+                    "value": 21004000.0,
+                    "color": "#f59e0b"
+                  },
+                  {
+                    "label": "2026-09-20T00:00:00",
+                    "value": 16074000.0,
+                    "color": "#ec4899"
+                  },
+                  {
+                    "label": "2026-09-21T00:00:00",
+                    "value": 13924000.0,
+                    "color": "#06b6d4"
+                  },
+                  {
+                    "label": "2026-09-22T00:00:00",
+                    "value": 10960000.0,
+                    "color": "#8b5cf6"
+                  },
+                  {
+                    "label": "2026-09-23T00:00:00",
+                    "value": 11769000.0,
+                    "color": "#ef4444"
+                  },
+                  {
+                    "label": "2026-09-24T00:00:00",
+                    "value": 14005000.0,
+                    "color": "#64748b"
+                  },
+                  {
+                    "label": "2026-09-25T00:00:00",
+                    "value": 13107000.0,
+                    "color": "#6366f1"
+                  },
+                  {
+                    "label": "2026-09-26T00:00:00",
+                    "value": 16919000.0,
+                    "color": "#10b981"
+                  },
+                  {
+                    "label": "2026-09-27T00:00:00",
+                    "value": 19477000.0,
+                    "color": "#f59e0b"
+                  },
+                  {
+                    "label": "2026-09-28T00:00:00",
+                    "value": 11709000.0,
+                    "color": "#ec4899"
+                  },
+                  {
+                    "label": "2026-09-29T00:00:00",
+                    "value": 14012000.0,
+                    "color": "#06b6d4"
+                  },
+                  {
+                    "label": "2026-09-30T00:00:00",
+                    "value": 13292000.0,
+                    "color": "#8b5cf6"
+                  }
+                ],
+                "analysis_lens_id": "trend@repair_add_3",
+                "analysis_lens_role": "core",
+                "analysis_lens_kind": "trend",
+                "analysis_lens_question": "Chỉ số biến động thế nào theo thời gian?",
+                "domain_id": "orders",
+                "domain_label": "Đơn hàng và doanh thu",
+                "lens_id": "channel_mix",
+                "lens_label": "Cơ cấu kênh bán",
+                "story_section": "Diễn biến theo thời gian",
+                "requirement_id": "support_5b10a0c6f78ee500d454dff9",
+                "mission": null,
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "relevance_role": "supporting",
+                "requirement_goal": "Chỉ số biến động thế nào theo thời gian?",
+                "evidence_refs": [
+                  "q_87dc752eadcc78583bc23cea:revenue:change:6230060e3b",
+                  "q_87dc752eadcc78583bc23cea:revenue:extrema:6230060e3b"
+                ]
+              },
+              "reference": "2026-10-21",
+              "mission_id": null
+            }
+          },
+          "analysis_lens_role": "core",
+          "ranking_direction": null
+        }
+      ]
+    },
+    "elapsed_seconds": 9.361
+  }
+]

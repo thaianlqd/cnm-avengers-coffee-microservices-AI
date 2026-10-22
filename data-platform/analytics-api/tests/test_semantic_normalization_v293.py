@@ -132,7 +132,7 @@ class NormalizationTests(f.unittest.TestCase):
             req('a',['revenue'],['order_type'],days=45),req('b',['revenue'],['order_type'],days=60),
             req('c',['revenue'],['order_type'],days=45,filters=[dict(dimension='city',value='Hà Nội')]),
             req('d',['aov'],['store'],days=45),req('e',['store_aov'],['store'],days=45))))
-        self.assertEqual(len(r['operations']),5)
+        self.assertEqual(len(r['operations']),7)  # two canonical whole-scope AOV aggregates preserve separate populations
 
     def test_genuine_nine_distinct_operations_still_fail_closed(self):
         raw=f.envelope(*[req('scope_'+str(i),['revenue'],['order_type'],days=i+1) for i in range(9)])

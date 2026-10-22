@@ -1,0 +1,14 @@
+[
+  {
+    "harness": "codex_acceptance_properties",
+    "returncode": 0,
+    "seconds": 16.51,
+    "reason": "Required tmp fixture absent in fresh container; frozen fixture reseeded, no product change"
+  },
+  {
+    "harness": "codex_identity_holdouts",
+    "returncode": 0,
+    "seconds": 4.09,
+    "reason": "Required tmp fixture absent in fresh container; frozen fixture reseeded, no product change"
+  }
+]

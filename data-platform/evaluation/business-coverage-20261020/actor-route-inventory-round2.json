@@ -1,0 +1,2240 @@
+{
+  "observed_at": "2026-10-20T03:21:06.357162+00:00",
+  "scope": "Static declaration inventory and selected traced call paths; not all endpoints live-tested or proven registered",
+  "human_actor_contexts": [
+    "GUEST",
+    "CUSTOMER",
+    "ADMIN",
+    "MANAGER",
+    "STAFF",
+    "KIOSK_STAFF",
+    "FRANCHISEE",
+    "FRANCHISE_STAFF",
+    "ACCOUNTANT",
+    "SHIPPER_SEPARATE_AUTH"
+  ],
+  "technical_actor_contexts": [
+    "PAYMENT_CALLBACK",
+    "DELIVERY_CALLBACK",
+    "CHECKOUT_OUTBOX_WORKER",
+    "INGESTION_WORKER",
+    "AI_COMMERCE_SERVICE"
+  ],
+  "source_column_types_from_first_audit": {
+    "uuid": 92,
+    "character varying": 293,
+    "jsonb": 43,
+    "timestamp with time zone": 80,
+    "bigint": 12,
+    "integer": 76,
+    "text": 69,
+    "boolean": 21,
+    "timestamp without time zone": 70,
+    "ARRAY": 2,
+    "date": 13,
+    "numeric": 89,
+    "smallint": 4,
+    "json": 1,
+    "double precision": 3,
+    "USER-DEFINED": 1
+  },
+  "declaration_files": [
+    {
+      "path": "avengers-coffee-system/api-gateway/gateway-root/src/app.controller.ts",
+      "sha256": "260f889b9e2b69f77be1155348eb345166aec664b3efff6720053c6844a41f28",
+      "declarations": [
+        {
+          "line": 4,
+          "decorator": "@Controller()"
+        },
+        {
+          "line": 8,
+          "decorator": "@Get()"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/api-gateway/gateway-root/src/app.module.ts",
+      "sha256": "e25b0e3fb27e38859628b862ac5ec701371e60214334f5be7894bfbe58784ea6",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/api-gateway/gateway-root/src/health.controller.ts",
+      "sha256": "ac74917b20896f3df4630899aec185a64af5e521c9c9c3f1df5fc8b6f4a22b65",
+      "declarations": [
+        {
+          "line": 3,
+          "decorator": "@Controller('health')"
+        },
+        {
+          "line": 7,
+          "decorator": "@Get('live')"
+        },
+        {
+          "line": 9,
+          "decorator": "@Get('ready')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/app.controller.ts",
+      "sha256": "93e0a0e0d018621d12d3956764ab5b06e5912426fb47fe5f9b19a26081e15631",
+      "declarations": [
+        {
+          "line": 4,
+          "decorator": "@Controller()"
+        },
+        {
+          "line": 8,
+          "decorator": "@Get()"
+        },
+        {
+          "line": 13,
+          "decorator": "@Post('auth/register')"
+        },
+        {
+          "line": 28,
+          "decorator": "@Post('auth/login')"
+        },
+        {
+          "line": 39,
+          "decorator": "@Patch('users/:id/profile')"
+        },
+        {
+          "line": 53,
+          "decorator": "@Patch('users/:id/password')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/app.module.ts",
+      "sha256": "495aa987842011a06af65e90864436943e3b8d561d1f22fc6b9944c0db5d0af7",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/health.controller.ts",
+      "sha256": "8a780f2e89767398a37217121b3acfc9a0789c62dc5b2cdc0f50e6e2375504ec",
+      "declarations": [
+        {
+          "line": 7,
+          "decorator": "@Controller('health')"
+        },
+        {
+          "line": 15,
+          "decorator": "@Get('live')"
+        },
+        {
+          "line": 18,
+          "decorator": "@Get('ready')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/email/email.module.ts",
+      "sha256": "66fda43324f9ed7e683522c9929d9fa93901cfd740c265bdc76f5d06ac41979d",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/audit-log.entity.ts",
+      "sha256": "fd611c6d23ef0a296ff126ee042ec3d69dc7168888ae7403d5b03bd4c07cfdab",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/bien-ban-vi-pham.entity.ts",
+      "sha256": "c30083a408f66252bcc5710d5a916724ca32e2b3c08419f6bc47517612d67a14",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/combo-nguyen-lieu.entity.ts",
+      "sha256": "115964cc0bbe8016758522f0cc46683e75c15d7954d057697dee8940aa915bee",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/cong-no.entity.ts",
+      "sha256": "c9b3fcf6d87d731cafe2edd13e0d4b49bdaed25beb8dd700204c0891c4f77985",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/doi-soat.entity.ts",
+      "sha256": "90fd88c054b30c5c404b8a4f0ae0944d69cc1399830c489a90b8c822f5125e4f",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/don-mua-combo.entity.ts",
+      "sha256": "28aae64a2b5587aaae9b8f9ed24455cce8c0aebe7dd1f23da6847c956881b9b3",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/ho-so-dang-ky.entity.ts",
+      "sha256": "385a996011758b729e3da56b83beabb568528177b4d5987394a8c9602ee42c5a",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/hop-dong.entity.ts",
+      "sha256": "fc9519f7db5b65a87dd669801024a3da2364a6d938450e1946ee574e73aac77e",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/kiosk.entity.ts",
+      "sha256": "373084902802561226fa2d4ffbfdbf87a609771535adafdc2cfad30b48c36e28",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/royalty.entity.ts",
+      "sha256": "2d1bac64a9d32c6fe121649478a80c2281a9c6dbb278bcb5ff2842c84b075aa1",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/entities/thu-chi.entity.ts",
+      "sha256": "04803f6df3d3e5f6be43b8344617e8b7655e1624038847fb3327d5e9d0a1c392",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/franchise.controller.ts",
+      "sha256": "2054c4a80d048857131332e34d6df71aaf0f72a2b5cee7b386633ca154e258c4",
+      "declarations": [
+        {
+          "line": 6,
+          "decorator": "@Controller('franchise')"
+        },
+        {
+          "line": 13,
+          "decorator": "@Post('dang-ky')"
+        },
+        {
+          "line": 19,
+          "decorator": "@Post('dang-ky-noi-bo')"
+        },
+        {
+          "line": 25,
+          "decorator": "@Get('ho-so/tra-cuu')"
+        },
+        {
+          "line": 31,
+          "decorator": "@Get('ho-so')"
+        },
+        {
+          "line": 37,
+          "decorator": "@Patch('ho-so/:id/yeu-cau-coc')"
+        },
+        {
+          "line": 43,
+          "decorator": "@Patch('ho-so/:id/duyet')"
+        },
+        {
+          "line": 49,
+          "decorator": "@Patch('ho-so/:id/duyet-noi-bo')"
+        },
+        {
+          "line": 55,
+          "decorator": "@Patch('ho-so/:id/tu-choi')"
+        },
+        {
+          "line": 61,
+          "decorator": "@Patch('ho-so/:id/huy')"
+        },
+        {
+          "line": 68,
+          "decorator": "@Get('kiosk/public')"
+        },
+        {
+          "line": 74,
+          "decorator": "@Get('kiosk')"
+        },
+        {
+          "line": 80,
+          "decorator": "@Get('kiosk/cua-toi')"
+        },
+        {
+          "line": 86,
+          "decorator": "@Post('kiosk/:id/hop-dong')"
+        },
+        {
+          "line": 92,
+          "decorator": "@Patch('kiosk/:id/khai-truong')"
+        },
+        {
+          "line": 99,
+          "decorator": "@Get('combo')"
+        },
+        {
+          "line": 105,
+          "decorator": "@Post('don-mua-combo')"
+        },
+        {
+          "line": 111,
+          "decorator": "@Get('don-mua-combo')"
+        },
+        {
+          "line": 117,
+          "decorator": "@Get('don-mua-combo/cua-toi')"
+        },
+        {
+          "line": 123,
+          "decorator": "@Get('vnpay/return')"
+        },
+        {
+          "line": 133,
+          "decorator": "@Patch('don-mua-combo/:id/giao')"
+        },
+        {
+          "line": 139,
+          "decorator": "@Patch('don-mua-combo/:id/tam-hoan')"
+        },
+        {
+          "line": 146,
+          "decorator": "@Get('cong-no')"
+        },
+        {
+          "line": 152,
+          "decorator": "@Get('cong-no/cua-toi')"
+        },
+        {
+          "line": 158,
+          "decorator": "@Patch('cong-no/:id/xac-nhan-thanh-toan')"
+        },
+        {
+          "line": 164,
+          "decorator": "@Patch('cong-no/:id/thanh-toan-vi')"
+        },
+        {
+          "line": 171,
+          "decorator": "@Get('royalty')"
+        },
+        {
+          "line": 177,
+          "decorator": "@Get('royalty/cua-toi')"
+        },
+        {
+          "line": 183,
+          "decorator": "@Post('royalty/tinh-thang')"
+        },
+        {
+          "line": 189,
+          "decorator": "@Patch('royalty/:id/xac-nhan')"
+        },
+        {
+          "line": 195,
+          "decorator": "@Patch('royalty/:id/thanh-toan')"
+        },
+        {
+          "line": 202,
+          "decorator": "@Get('doi-soat')"
+        },
+        {
+          "line": 208,
+          "decorator": "@Post('doi-soat/chay-thang-nay')"
+        },
+        {
+          "line": 215,
+          "decorator": "@Get('thu-chi')"
+        },
+        {
+          "line": 221,
+          "decorator": "@Post('thu-chi')"
+        },
+        {
+          "line": 228,
+          "decorator": "@Patch('kiosk/:id/trang-thai')"
+        },
+        {
+          "line": 235,
+          "decorator": "@Delete('kiosk/:id')"
+        },
+        {
+          "line": 242,
+          "decorator": "@Post('cron/xu-ly-no-qua-han')"
+        },
+        {
+          "line": 248,
+          "decorator": "@Get('dashboard/admin')"
+        },
+        {
+          "line": 256,
+          "decorator": "@Post('doi-soat/:kiosk_id/lap-bien-ban')"
+        },
+        {
+          "line": 263,
+          "decorator": "@Post('cong-no/:id/tua-nhanh')"
+        },
+        {
+          "line": 270,
+          "decorator": "@Post('kiosk/:id/gia-han')"
+        },
+        {
+          "line": 276,
+          "decorator": "@Post('kiosk/:id/cham-dut')"
+        },
+        {
+          "line": 283,
+          "decorator": "@Get('audit-logs')"
+        },
+        {
+          "line": 291,
+          "decorator": "@Get('staff')"
+        },
+        {
+          "line": 301,
+          "decorator": "@Post('staff')"
+        },
+        {
+          "line": 310,
+          "decorator": "@Patch('staff/:id')"
+        },
+        {
+          "line": 320,
+          "decorator": "@Post('staff/:id/reset-password')"
+        },
+        {
+          "line": 330,
+          "decorator": "@Delete('staff/:id')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/franchise/franchise.module.ts",
+      "sha256": "ab40074b41174a888ea78a09fd3bcb767cc94efb14fab2897391ab98d831dfd0",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/branch.entity.ts",
+      "sha256": "89facd28d633579694649d03a726e51c4a64cc1d0190547af787eb6779b63706",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/delivery-address.entity.ts",
+      "sha256": "ce6c0e8c1d528ad0153d8327a3f787e6aa2025404cadf3f749c0001a0562ce2a",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/khu-vuc.entity.ts",
+      "sha256": "98e335127fe2dd4f867a959cfc4c26dc6a4f4731c284e6a6ca307907855ee06d",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/membership-config.entity.ts",
+      "sha256": "bbb23978b82574c6c76ae3c846468ceb57a8aea138c19f0eaae47c7231d174cb",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/order-voucher-claim.entity.ts",
+      "sha256": "ae23c30f1d794ba7f6e46d382732ed6c932b0aedb3bb52d8fd8e9b29585ec3a5",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/promotion-usage.entity.ts",
+      "sha256": "b5b62546174f9570d2c86969e93c4c144197ae7e5d7da91c9b3b8be9d3c40150",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/promotion.entity.ts",
+      "sha256": "f535a5037ff9a09528525e04c00f4adc8a91b34e74f1c8cdea62bf3678d4c37f",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/user.controller.ts",
+      "sha256": "3906059673bf3fa1f5e832af17d5b0a87f2a862be687434008237835ba879176",
+      "declarations": [
+        {
+          "line": 8,
+          "decorator": "@Controller()"
+        },
+        {
+          "line": 29,
+          "decorator": "@Post('auth/register')"
+        },
+        {
+          "line": 35,
+          "decorator": "@Post('auth/login')"
+        },
+        {
+          "line": 41,
+          "decorator": "@Post('auth/forgot-password/request')"
+        },
+        {
+          "line": 47,
+          "decorator": "@Post('auth/forgot-password/reset')"
+        },
+        {
+          "line": 56,
+          "decorator": "@Post('auth/google')"
+        },
+        {
+          "line": 62,
+          "decorator": "@Post('auth/facebook')"
+        },
+        {
+          "line": 68,
+          "decorator": "@Post('recaptcha/verify')"
+        },
+        {
+          "line": 73,
+          "decorator": "@Get('users/me')"
+        },
+        {
+          "line": 80,
+          "decorator": "@Get('users/workforce')"
+        },
+        {
+          "line": 86,
+          "decorator": "@Get('users/admin/accounts')"
+        },
+        {
+          "line": 96,
+          "decorator": "@Post('users/admin/accounts')"
+        },
+        {
+          "line": 112,
+          "decorator": "@Post('users/manager/kiosk-staff')"
+        },
+        {
+          "line": 130,
+          "decorator": "@Patch('users/admin/accounts/:userId')"
+        },
+        {
+          "line": 148,
+          "decorator": "@Delete('users/admin/accounts/:userId')"
+        },
+        {
+          "line": 154,
+          "decorator": "@Get('users/admin/stats')"
+        },
+        {
+          "line": 160,
+          "decorator": "@Get('users/admin/branches')"
+        },
+        {
+          "line": 166,
+          "decorator": "@Get(['branches/public', 'users/branches/public'])"
+        },
+        {
+          "line": 172,
+          "decorator": "@Post('users/admin/branches')"
+        },
+        {
+          "line": 192,
+          "decorator": "@Patch('users/admin/branches/:branchCode')"
+        },
+        {
+          "line": 212,
+          "decorator": "@Delete('users/admin/branches/:branchCode')"
+        },
+        {
+          "line": 218,
+          "decorator": "@Get('users/:userId/profile')"
+        },
+        {
+          "line": 225,
+          "decorator": "@Patch('users/:userId/profile')"
+        },
+        {
+          "line": 236,
+          "decorator": "@Post('users/:userId/change-password')"
+        },
+        {
+          "line": 247,
+          "decorator": "@Get('users/:userId/addresses')"
+        },
+        {
+          "line": 254,
+          "decorator": "@Post('users/:userId/addresses')"
+        },
+        {
+          "line": 265,
+          "decorator": "@Patch('users/:userId/addresses/:addressId')"
+        },
+        {
+          "line": 277,
+          "decorator": "@Patch('users/:userId/addresses/:addressId/default')"
+        },
+        {
+          "line": 288,
+          "decorator": "@Delete('users/:userId/addresses/:addressId')"
+        },
+        {
+          "line": 299,
+          "decorator": "@Get('users/:userId/loyalty')"
+        },
+        {
+          "line": 307,
+          "decorator": "@Post('users/:userId/loyalty/cong-diem')"
+        },
+        {
+          "line": 320,
+          "decorator": "@Get('promotions/admin')"
+        },
+        {
+          "line": 326,
+          "decorator": "@Post('promotions/admin')"
+        },
+        {
+          "line": 332,
+          "decorator": "@Patch('promotions/admin/:code')"
+        },
+        {
+          "line": 338,
+          "decorator": "@Delete('promotions/admin/:code')"
+        },
+        {
+          "line": 345,
+          "decorator": "@Get('promotions/vouchers')"
+        },
+        {
+          "line": 352,
+          "decorator": "@Post('promotions/kiem-tra')"
+        },
+        {
+          "line": 367,
+          "decorator": "@Post('promotions/xac-nhan-su-dung')"
+        },
+        {
+          "line": 381,
+          "decorator": "@Get('promotions/luot-dung-user')"
+        },
+        {
+          "line": 391,
+          "decorator": "@Post('promotions/internal/phat-hanh')"
+        },
+        {
+          "line": 403,
+          "decorator": "@Get('users/lucky-wheel/prizes')"
+        },
+        {
+          "line": 409,
+          "decorator": "@Post('users/:userId/lucky-wheel/spin')"
+        },
+        {
+          "line": 421,
+          "decorator": "@Get('users/:userId/membership')"
+        },
+        {
+          "line": 428,
+          "decorator": "@Patch('users/:userId/birthday')"
+        },
+        {
+          "line": 439,
+          "decorator": "@Post('admin/birthday-vouchers/trigger')"
+        },
+        {
+          "line": 445,
+          "decorator": "@Get('users/admin/membership-config')"
+        },
+        {
+          "line": 451,
+          "decorator": "@Patch('users/admin/membership-config')"
+        },
+        {
+          "line": 457,
+          "decorator": "@Patch('users/admin/accounts/:userId/membership')"
+        },
+        {
+          "line": 476,
+          "decorator": "@Get('admin/zones')"
+        },
+        {
+          "line": 482,
+          "decorator": "@Post('admin/zones')"
+        },
+        {
+          "line": 488,
+          "decorator": "@Patch('admin/zones/:id')"
+        },
+        {
+          "line": 494,
+          "decorator": "@Get('admin/satellite-kiosks')"
+        },
+        {
+          "line": 507,
+          "decorator": "@Get('admin/satellite-kiosks/stats')"
+        },
+        {
+          "line": 515,
+          "decorator": "@Post('admin/satellite-kiosks')"
+        },
+        {
+          "line": 521,
+          "decorator": "@Patch('admin/satellite-kiosks/:ma')"
+        },
+        {
+          "line": 532,
+          "decorator": "@Get('wallet/info')"
+        },
+        {
+          "line": 539,
+          "decorator": "@Post('wallet/deposit')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/user.entity.ts",
+      "sha256": "cc2ee27d20b5bfe34f165c20cf00ddc4248ab4d33d9b18fcf51b7e97b1830502",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/user.module.ts",
+      "sha256": "fd7cf29512976da2447eb544c6c08e23b4d2187892e3c5f3070d09b942d3cd9d",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/identity-service/src/modules/user/wallet-transaction.entity.ts",
+      "sha256": "3a9d8d4a530654118756f3eeaf83eb0e1d4c7ffb3d0a50390b536c7c99d9b5c2",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/inventory-service/src/app.controller.ts",
+      "sha256": "260f889b9e2b69f77be1155348eb345166aec664b3efff6720053c6844a41f28",
+      "declarations": [
+        {
+          "line": 4,
+          "decorator": "@Controller()"
+        },
+        {
+          "line": 8,
+          "decorator": "@Get()"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/inventory-service/src/app.module.ts",
+      "sha256": "a182b5d48c436ea15be9d312856765f36cd545af74167024919e1da45d4fd261",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/inventory-service/src/health.controller.ts",
+      "sha256": "577353d6e27abc039524e7aebc6f9cb5189655e5e163be5a01bf3e7c045f201f",
+      "declarations": [
+        {
+          "line": 6,
+          "decorator": "@Controller('health')"
+        },
+        {
+          "line": 13,
+          "decorator": "@Get('live')"
+        },
+        {
+          "line": 16,
+          "decorator": "@Get('ready')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/inventory-service/src/modules/inventory/inventory-item.entity.ts",
+      "sha256": "f4ac50ffb43ba74774d4a7d45fd9f7df78a37698a3e0a485d3d626319930d938",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/inventory-service/src/modules/inventory/inventory.controller.ts",
+      "sha256": "37f69faea0b0aea33d511ead8ee022b68673d88bf53d7be382d1bcff91db818d",
+      "declarations": [
+        {
+          "line": 4,
+          "decorator": "@Controller('inventory')"
+        },
+        {
+          "line": 8,
+          "decorator": "@Get('items')"
+        },
+        {
+          "line": 13,
+          "decorator": "@Post('items')"
+        },
+        {
+          "line": 20,
+          "decorator": "@Patch('items/:maSanPham/adjust')"
+        },
+        {
+          "line": 31,
+          "decorator": "@Post('kiosk-combos')"
+        },
+        {
+          "line": 39,
+          "decorator": "@Get('kiosk-combos')"
+        },
+        {
+          "line": 49,
+          "decorator": "@Patch('kiosk-combos/:id/receive')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/inventory-service/src/modules/inventory/inventory.module.ts",
+      "sha256": "2e4f6c1ef9ffda74fc1b6ab31fd000da2fd26f6c2c188f3dfbbec24f00ae3eb0",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/inventory-service/src/modules/inventory/kiosk-combo-delivery.entity.ts",
+      "sha256": "8bed3dd383f8c7471934fde0005ebff9157fdb22046aaadce8ffdda0cd7cb38a",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/menu-service/src/app.controller.ts",
+      "sha256": "4327d36a2a985f2d093cdf0c3898ff98010ed58af32b7f4187a1a38dfa027cbe",
+      "declarations": [
+        {
+          "line": 5,
+          "decorator": "@Controller()"
+        },
+        {
+          "line": 9,
+          "decorator": "@Get()"
+        },
+        {
+          "line": 14,
+          "decorator": "@Get('menu/categories')"
+        },
+        {
+          "line": 19,
+          "decorator": "@Get('menu/attributes')"
+        },
+        {
+          "line": 24,
+          "decorator": "@Post('menu/categories')"
+        },
+        {
+          "line": 37,
+          "decorator": "@Patch('menu/categories/:categoryId')"
+        },
+        {
+          "line": 51,
+          "decorator": "@Delete('menu/categories/:categoryId')"
+        },
+        {
+          "line": 56,
+          "decorator": "@Get('menu/items')"
+        },
+        {
+          "line": 65,
+          "decorator": "@Get('menu/suggestions/:userId')"
+        },
+        {
+          "line": 70,
+          "decorator": "@Patch('menu/items/:itemId/status')"
+        },
+        {
+          "line": 78,
+          "decorator": "@Post('menu/items')"
+        },
+        {
+          "line": 101,
+          "decorator": "@Post('menu/upload-image')"
+        },
+        {
+          "line": 110,
+          "decorator": "@Patch('menu/items/:itemId')"
+        },
+        {
+          "line": 134,
+          "decorator": "@Delete('menu/items/:itemId')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/menu-service/src/app.module.ts",
+      "sha256": "137029e4498bb36dbbf6d597bd2488b0789783dc3109da7c0aadf129a6133125",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/menu-service/src/health.controller.ts",
+      "sha256": "577353d6e27abc039524e7aebc6f9cb5189655e5e163be5a01bf3e7c045f201f",
+      "declarations": [
+        {
+          "line": 6,
+          "decorator": "@Controller('health')"
+        },
+        {
+          "line": 13,
+          "decorator": "@Get('live')"
+        },
+        {
+          "line": 16,
+          "decorator": "@Get('ready')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/menu-service/src/modules/menu/bien-the-san-pham.entity.ts",
+      "sha256": "0721902eb4451c4b82ff88ae79ae67001f18ef525026596f5d732e5407577048",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/menu-service/src/modules/menu/danh-muc.entity.ts",
+      "sha256": "84a95bc9cb325801ab1b2c9ff48b84ebc2a7cb2159bab4cd5da16bc46279542a",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/menu-service/src/modules/menu/menu.controller.ts",
+      "sha256": "1dc899f2827e9d4e08cdea737422346711e8b25bf41d67529665ec659655a3c1",
+      "declarations": [
+        {
+          "line": 6,
+          "decorator": "@Controller('menu')"
+        },
+        {
+          "line": 11,
+          "decorator": "@Get('san-pham')"
+        },
+        {
+          "line": 16,
+          "decorator": "@Get('danh-muc')"
+        },
+        {
+          "line": 21,
+          "decorator": "@Get('san-pham/:id')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/menu-service/src/modules/menu/menu.module.ts",
+      "sha256": "dc5eeaccd23e12b20ea3276e680d8bcb9ac86bf47f46ac16be051066b673fe09",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/menu-service/src/modules/menu/san-pham.entity.ts",
+      "sha256": "d1b7848be03af9d3e530b2bdcc7f418610c4f024ea458928d1c5cd8f70723710",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/menu-service/src/modules/menu/thuoc-tinh.entity.ts",
+      "sha256": "92e335d2708af6d70f4fc846c2683095b89bdef0878c89a618f01cebdf15f7d7",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/news-service/src/app.module.ts",
+      "sha256": "f74326c0d35fac3b70fb1f2790b85a9d1cca76ad2378e571e1c014218f5ef5c0",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/news-service/src/health.controller.ts",
+      "sha256": "577353d6e27abc039524e7aebc6f9cb5189655e5e163be5a01bf3e7c045f201f",
+      "declarations": [
+        {
+          "line": 6,
+          "decorator": "@Controller('health')"
+        },
+        {
+          "line": 13,
+          "decorator": "@Get('live')"
+        },
+        {
+          "line": 16,
+          "decorator": "@Get('ready')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/news-service/src/modules/news/entities/article.entity.ts",
+      "sha256": "4da1511756594eb2d49ac1968dd0fca6aa0fe8808dd936d096b6f2ce28db1707",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/news-service/src/modules/news/news.controller.ts",
+      "sha256": "ec4e33081d6854a5e4bc283373526a19f1865cb5c594bc032a924cd9b5196869",
+      "declarations": [
+        {
+          "line": 56,
+          "decorator": "@Controller('news')"
+        },
+        {
+          "line": 61,
+          "decorator": "@Get()"
+        },
+        {
+          "line": 75,
+          "decorator": "@Get('featured/list')"
+        },
+        {
+          "line": 80,
+          "decorator": "@Get('category/:category')"
+        },
+        {
+          "line": 93,
+          "decorator": "@Get('admin/list')"
+        },
+        {
+          "line": 100,
+          "decorator": "@Post('admin/create')"
+        },
+        {
+          "line": 120,
+          "decorator": "@Put('admin/:id')"
+        },
+        {
+          "line": 141,
+          "decorator": "@Delete('admin/:id')"
+        },
+        {
+          "line": 148,
+          "decorator": "@Get(':id')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/news-service/src/modules/news/news.module.ts",
+      "sha256": "ec3691e848cdd7aeecf782b97f53791bf0a18a9d1eefa55cc37ebbf7a9be7205",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/app.controller.ts",
+      "sha256": "772a4c336d707785b8a9994098226660f0631ea3dd74657cb243ce3e35c29259",
+      "declarations": [
+        {
+          "line": 17,
+          "decorator": "@Controller()"
+        },
+        {
+          "line": 69,
+          "decorator": "@Get()"
+        },
+        {
+          "line": 74,
+          "decorator": "@Get('customers/:customerId/cart')"
+        },
+        {
+          "line": 79,
+          "decorator": "@Post('customers/:customerId/cart/items')"
+        },
+        {
+          "line": 94,
+          "decorator": "@Patch('customers/:customerId/cart/items/:itemId')"
+        },
+        {
+          "line": 103,
+          "decorator": "@Delete('customers/:customerId/cart/items/:itemId')"
+        },
+        {
+          "line": 109,
+          "decorator": "@Post('customers/:customerId/orders')"
+        },
+        {
+          "line": 120,
+          "decorator": "@Post('orders')"
+        },
+        {
+          "line": 127,
+          "decorator": "@Post('customers/:customerId/orders/ai-create')"
+        },
+        {
+          "line": 136,
+          "decorator": "@Get('customers/:customerId/favorites')"
+        },
+        {
+          "line": 144,
+          "decorator": "@Post('customers/:customerId/favorites/toggle')"
+        },
+        {
+          "line": 163,
+          "decorator": "@Get('customers/:customerId/orders')"
+        },
+        {
+          "line": 187,
+          "decorator": "@Get('customers/:customerId/orders/:orderId')"
+        },
+        {
+          "line": 195,
+          "decorator": "@Post('customers/:customerId/orders/:orderId/reorder-preview')"
+        },
+        {
+          "line": 203,
+          "decorator": "@Patch('customers/:customerId/orders/:orderId')"
+        },
+        {
+          "line": 233,
+          "decorator": "@Patch('customers/:customerId/orders/:orderId/link')"
+        },
+        {
+          "line": 245,
+          "decorator": "@Post('customers/:customerId/orders/link-guest-orders')"
+        },
+        {
+          "line": 257,
+          "decorator": "@Get('customers/:customerId/notifications')"
+        },
+        {
+          "line": 273,
+          "decorator": "@Patch('customers/:customerId/notifications/:notificationId/read')"
+        },
+        {
+          "line": 285,
+          "decorator": "@Patch('customers/:customerId/notifications/read-all')"
+        },
+        {
+          "line": 293,
+          "decorator": "@Patch('customers/:customerId/orders/:orderId/cancel')"
+        },
+        {
+          "line": 306,
+          "decorator": "@Patch('customers/:customerId/orders/:orderId/status')"
+        },
+        {
+          "line": 319,
+          "decorator": "@Get('staff/orders')"
+        },
+        {
+          "line": 349,
+          "decorator": "@Patch('staff/orders/:orderId/status')"
+        },
+        {
+          "line": 359,
+          "decorator": "@Patch('staff/orders/:orderId')"
+        },
+        {
+          "line": 385,
+          "decorator": "@Delete('staff/orders/:orderId')"
+        },
+        {
+          "line": 396,
+          "decorator": "@Post('staff/orders/:orderId/refund-void')"
+        },
+        {
+          "line": 411,
+          "decorator": "@Get('staff/orders/:orderId/refund-eligibility')"
+        },
+        {
+          "line": 421,
+          "decorator": "@Post('staff/orders')"
+        },
+        {
+          "line": 449,
+          "decorator": "@Get('staff/shifts/preview')"
+        },
+        {
+          "line": 470,
+          "decorator": "@Post('staff/shifts/close')"
+        },
+        {
+          "line": 489,
+          "decorator": "@Get('staff/shifts/history')"
+        },
+        {
+          "line": 496,
+          "decorator": "@Patch('staff/shifts/:id')"
+        },
+        {
+          "line": 506,
+          "decorator": "@Delete('staff/shifts/:id')"
+        },
+        {
+          "line": 514,
+          "decorator": "@Post('staff/kiosk-shifts/open')"
+        },
+        {
+          "line": 535,
+          "decorator": "@Post('staff/kiosk-shifts/close')"
+        },
+        {
+          "line": 554,
+          "decorator": "@Post('staff/kiosk-shifts/force-close')"
+        },
+        {
+          "line": 572,
+          "decorator": "@Get('staff/kiosk-shifts/active')"
+        },
+        {
+          "line": 579,
+          "decorator": "@Get('staff/kiosk-shifts/history')"
+        },
+        {
+          "line": 589,
+          "decorator": "@Patch('manager/shifts/:id/approval')"
+        },
+        {
+          "line": 599,
+          "decorator": "@Post('manager/work-shifts')"
+        },
+        {
+          "line": 619,
+          "decorator": "@Get('manager/work-shifts')"
+        },
+        {
+          "line": 636,
+          "decorator": "@Patch('manager/work-shifts/:id/attendance')"
+        },
+        {
+          "line": 653,
+          "decorator": "@Delete('manager/work-shifts/:id')"
+        },
+        {
+          "line": 660,
+          "decorator": "@Get('staff/work-shifts')"
+        },
+        {
+          "line": 675,
+          "decorator": "@Post('staff/work-shifts/requests')"
+        },
+        {
+          "line": 704,
+          "decorator": "@Get('manager/work-shifts/requests')"
+        },
+        {
+          "line": 717,
+          "decorator": "@Patch('manager/work-shifts/requests/:id')"
+        },
+        {
+          "line": 739,
+          "decorator": "@Delete('staff/work-shifts/requests/:id')"
+        },
+        {
+          "line": 746,
+          "decorator": "@Delete('manager/work-shifts/requests/:id')"
+        },
+        {
+          "line": 753,
+          "decorator": "@Post('manager/self/work-shifts/requests')"
+        },
+        {
+          "line": 773,
+          "decorator": "@Patch('staff/work-shifts/self/attendance')"
+        },
+        {
+          "line": 791,
+          "decorator": "@Post('manager/attendance/verify/:shiftId')"
+        },
+        {
+          "line": 811,
+          "decorator": "@Get('staff/analytics/realtime')"
+        },
+        {
+          "line": 823,
+          "decorator": "@Get('customers/orders/:orderId/delivery')"
+        },
+        {
+          "line": 832,
+          "decorator": "@Post('customers/:userId/orders/:orderId/rate-shipper')"
+        },
+        {
+          "line": 840,
+          "decorator": "@Get('debug-db')"
+        },
+        {
+          "line": 854,
+          "decorator": "@Get('orders/kiosk-prices')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/app.module.ts",
+      "sha256": "f87ba75d630de6407b0a9464ace580e080704441d9a28cca20c6b35e048488b9",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/controllers/branch-review.controller.ts",
+      "sha256": "83e8af5acb77eef710f252e25a00899ad3de0faeb00d85d56d50ea6c0bc632ad",
+      "declarations": [
+        {
+          "line": 4,
+          "decorator": "@Controller('branch-reviews')"
+        },
+        {
+          "line": 8,
+          "decorator": "@Post()"
+        },
+        {
+          "line": 13,
+          "decorator": "@Get('branch/:ma_chi_nhanh')"
+        },
+        {
+          "line": 18,
+          "decorator": "@Delete(':id')"
+        },
+        {
+          "line": 23,
+          "decorator": "@Get('stats')"
+        },
+        {
+          "line": 28,
+          "decorator": "@Get('check')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/controllers/review.controller.ts",
+      "sha256": "1325889b43e6ecca20cf1bc0f3b095cfbfd3410e098e82b01b93b6280ab3a108",
+      "declarations": [
+        {
+          "line": 8,
+          "decorator": "@Controller()"
+        },
+        {
+          "line": 13,
+          "decorator": "@Post('products/:productId/reviews')"
+        },
+        {
+          "line": 30,
+          "decorator": "@Get('products/:productId/reviews')"
+        },
+        {
+          "line": 39,
+          "decorator": "@Get('products/:productId/reviews/my-review/:userId')"
+        },
+        {
+          "line": 49,
+          "decorator": "@Get('customers/:userId/reviews')"
+        },
+        {
+          "line": 55,
+          "decorator": "@Patch('reviews/:reviewId')"
+        },
+        {
+          "line": 67,
+          "decorator": "@Delete('reviews/:reviewId')"
+        },
+        {
+          "line": 74,
+          "decorator": "@Get('manager/reviews')"
+        },
+        {
+          "line": 87,
+          "decorator": "@Patch('manager/reviews/:reviewId/reply')"
+        },
+        {
+          "line": 101,
+          "decorator": "@Delete('manager/reviews/:reviewId/reply')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/controllers/survey.controller.ts",
+      "sha256": "21a998328abe0a9649b3f3717263870940f4bb5972fa30c57f25d4b37fa10158",
+      "declarations": [
+        {
+          "line": 8,
+          "decorator": "@Controller('surveys')"
+        },
+        {
+          "line": 16,
+          "decorator": "@Post('forms')"
+        },
+        {
+          "line": 24,
+          "decorator": "@Get('forms')"
+        },
+        {
+          "line": 29,
+          "decorator": "@Get('forms/active')"
+        },
+        {
+          "line": 34,
+          "decorator": "@Patch('forms/:id/activate')"
+        },
+        {
+          "line": 39,
+          "decorator": "@Put('forms/:id')"
+        },
+        {
+          "line": 47,
+          "decorator": "@Delete('forms/:id')"
+        },
+        {
+          "line": 56,
+          "decorator": "@Post('responses')"
+        },
+        {
+          "line": 73,
+          "decorator": "@Get('responses')"
+        },
+        {
+          "line": 78,
+          "decorator": "@Get('check-status')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/entities/branch-review.entity.ts",
+      "sha256": "34d63af915528219ae47237923315cd7195c15f778860690507dc0660d7d6aff",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/entities/review.entity.ts",
+      "sha256": "848b0bb3deece1274df011d643acead36468c0b58158005c4e26771cd59504be",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/entities/survey-form.entity.ts",
+      "sha256": "fd6d06727362c23781bc577c063d00e285d0aced512d377d237e4497bbc47d2f",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/entities/survey-response.entity.ts",
+      "sha256": "f4a810ce5b0a067b4f1691d3f17533b7d5e24feb80f77d3195f280c33d83d107",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/health.controller.ts",
+      "sha256": "891e6265fbaad1a78c62f5cc88126cb582c07b5f0d4c30c01d2a57fa8cdbaa28",
+      "declarations": [
+        {
+          "line": 7,
+          "decorator": "@Controller('health')"
+        },
+        {
+          "line": 14,
+          "decorator": "@Get('live')"
+        },
+        {
+          "line": 17,
+          "decorator": "@Get('ready')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/infrastructure/infrastructure.module.ts",
+      "sha256": "cbb198451ce0f0b6e119d65875135c57447f943157b9fa7c3695c5fb0b45cd30",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/cart/cart.controller.ts",
+      "sha256": "c1b791f8cacbc51e8999063c90475da27a98eab34b5aa8aeef1adfbcf0304ac3",
+      "declarations": [
+        {
+          "line": 20,
+          "decorator": "@Controller('cart')"
+        },
+        {
+          "line": 41,
+          "decorator": "@Get(':userId')"
+        },
+        {
+          "line": 47,
+          "decorator": "@Post(':userId/quote')"
+        },
+        {
+          "line": 61,
+          "decorator": "@Post(':userId/reorder')"
+        },
+        {
+          "line": 70,
+          "decorator": "@Post('merge-guest')"
+        },
+        {
+          "line": 87,
+          "decorator": "@Post()"
+        },
+        {
+          "line": 105,
+          "decorator": "@Patch(':id')"
+        },
+        {
+          "line": 131,
+          "decorator": "@Delete('clear/:userId')"
+        },
+        {
+          "line": 141,
+          "decorator": "@Delete('users/:userId/products/:productId')"
+        },
+        {
+          "line": 165,
+          "decorator": "@Delete(':id')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/cart/cart.entity.ts",
+      "sha256": "237db68b68689774c95a1c4473c1001d3d4cbcf48c163fcee96300b05c89905d",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/cart/cart.module.ts",
+      "sha256": "fad28fab713547b783e94cfe059f346a7d5c884fd25ec7ea68cd89461bb3071b",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/chat/chat.controller.ts",
+      "sha256": "51b929fcf3df3e570cc3d2928a75bf2a0133aa5fcab0bf06f944a7b5457d49d9",
+      "declarations": [
+        {
+          "line": 4,
+          "decorator": "@Controller('chat')"
+        },
+        {
+          "line": 8,
+          "decorator": "@Post('conversations/open')"
+        },
+        {
+          "line": 13,
+          "decorator": "@Get('conversations')"
+        },
+        {
+          "line": 21,
+          "decorator": "@Get('conversations/:id/messages')"
+        },
+        {
+          "line": 30,
+          "decorator": "@Post('conversations/:id/messages')"
+        },
+        {
+          "line": 44,
+          "decorator": "@Patch('conversations/:id/read')"
+        },
+        {
+          "line": 52,
+          "decorator": "@Patch('conversations/:id/close')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/chat/chat.gateway.ts",
+      "sha256": "e1da27722849817979f3f02fffd16fc8c63c15640ec2aa08fa5a26058f98058f",
+      "declarations": [
+        {
+          "line": 34,
+          "decorator": "@SubscribeMessage('chat:subscribe')"
+        },
+        {
+          "line": 50,
+          "decorator": "@SubscribeMessage('chat:conversation:join')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/chat/chat.module.ts",
+      "sha256": "e58f77adf60efc181a85a8101421bdc475bb6e89745807c2b0ece57c90bd62d5",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/chat/entities/chat-conversation.entity.ts",
+      "sha256": "7711b2b8d360d67fd69885ded71f7ab7091a9942ff5876169e041eb2d509854f",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/chat/entities/chat-message.entity.ts",
+      "sha256": "4323924648f929e878c92eb99adf9878f2db0403db2452d4425f10aedeea50b9",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/customer-wallet/customer-wallet.controller.ts",
+      "sha256": "a12274978d18f7e2749943de9f6babfb28665698ee5ae86f87222a652950901f",
+      "declarations": [
+        {
+          "line": 7,
+          "decorator": "@Controller('customers/:customerId/wallet')"
+        },
+        {
+          "line": 12,
+          "decorator": "@Get()"
+        },
+        {
+          "line": 18,
+          "decorator": "@Get('topup/:transactionId')"
+        },
+        {
+          "line": 25,
+          "decorator": "@Post('topup')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/customer-wallet/customer-wallet.module.ts",
+      "sha256": "f95ed791f822d3d2ccb673e36c2e4e11aef09932c45e784198a08a458e9ca23a",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/customer-wallet/entities/customer-wallet-transaction.entity.ts",
+      "sha256": "5929bf44e9d5d8797ca48fb60baef6764a595502b92a298589620e91c633ec78",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/customer-wallet/entities/customer-wallet.entity.ts",
+      "sha256": "9dc3f4b112fd0c692c4c1fc21d9e86a8ccc12383302a1bbda0747c0a7e05cf05",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/favorite/entities/favorite-item.entity.ts",
+      "sha256": "4ed3b52ba13553501f8ba137a8f01b48eba14bbe647548ea387bda88d19227b5",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/favorite/favorite.module.ts",
+      "sha256": "f6b726c9609eb56a3af2a115d19a6f8684e987298acb10982b5f4fc5daa83487",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/gift-card/entities/gift-card-theme.entity.ts",
+      "sha256": "7fff030ff239859caa4a39484dea6e4aef0d1e9d2df2a9d42114742055202493",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/gift-card/entities/gift-card.entity.ts",
+      "sha256": "0d023586146c1d57d369d98747aaf91a84aa21a0399a659b18107515bcf9f21c",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/gift-card/gift-card.controller.ts",
+      "sha256": "d44f40138b651521290f7793d18f804517e00628e9f5255ac61d708fb409dd86",
+      "declarations": [
+        {
+          "line": 5,
+          "decorator": "@Controller('gift-cards')"
+        },
+        {
+          "line": 9,
+          "decorator": "@Get('themes')"
+        },
+        {
+          "line": 14,
+          "decorator": "@Post('purchase')"
+        },
+        {
+          "line": 19,
+          "decorator": "@Post('redeem')"
+        },
+        {
+          "line": 24,
+          "decorator": "@Get(':code')"
+        },
+        {
+          "line": 29,
+          "decorator": "@Get('my-cards/:customerId')"
+        },
+        {
+          "line": 34,
+          "decorator": "@Post('transfer-balance')"
+        },
+        {
+          "line": 39,
+          "decorator": "@Delete(':id')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/gift-card/gift-card.module.ts",
+      "sha256": "b9f47fdf1c554736353adc8b99f3f0f9f599ba3194b0c04b450600402111fd3f",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/notification/entities/thong-bao.entity.ts",
+      "sha256": "d7e57b85dc12a35152f4c4811de46ff92af3e50fc2abe36cf8ed77b4972e64da",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/notification/notification.gateway.ts",
+      "sha256": "0b0c8f48d585533c4286e4996ed5cfc8558d93cf9e8fb00db9d40ac714fb9d55",
+      "declarations": [
+        {
+          "line": 42,
+          "decorator": "@SubscribeMessage('notifications:subscribe')"
+        },
+        {
+          "line": 53,
+          "decorator": "@SubscribeMessage('workforce:subscribe')"
+        },
+        {
+          "line": 67,
+          "decorator": "@SubscribeMessage('orders:subscribe')"
+        },
+        {
+          "line": 80,
+          "decorator": "@SubscribeMessage('tracking:subscribe')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/notification/notification.module.ts",
+      "sha256": "e122b55998661a6f5a6f3a9cb0d828e93236a193b2f043df8a106aa356c292e1",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/entities/shipper-cod-remit.entity.ts",
+      "sha256": "fee9b262657f6fdabe8b3915a6e2ca099dcbf6df3c66bcf04876119a892d9f09",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/entities/shipper-delivery.entity.ts",
+      "sha256": "46024051b5a8c11f4d56f4e0f68bc09a41a1f780ffc2754a688384b6c8c61696",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/entities/shipper-exception.entity.ts",
+      "sha256": "f99df1dfae327c551313ede447b3e45b8cff645e82bc35e14bac789bb8cbb328",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/entities/shipper-schedule.entity.ts",
+      "sha256": "4e06a7023bc4a018598756e26b8ad1cb25135920f33e2efb02f2bd4016282528",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/entities/shipper-wallet.entity.ts",
+      "sha256": "1da17be3077730eb360a2428e417d1ea814d66618a1f486827ac5ff4b354a711",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/entities/shipper.entity.ts",
+      "sha256": "d73cab176ce51b3502db372ae2cbd64872728930b7943f1e045cc2e7f07c5355",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/features_thaian/delivery-tracking.controller.ts",
+      "sha256": "0ded74e8ed8186cf6c90f576c80885e23050cc8c3d6a7a5a53f4a7294a4c8e7b",
+      "declarations": [
+        {
+          "line": 8,
+          "decorator": "@Controller('shippers/delivery/tracking')"
+        },
+        {
+          "line": 16,
+          "decorator": "@Post('create')"
+        },
+        {
+          "line": 46,
+          "decorator": "@Get('by-code/lookup')"
+        },
+        {
+          "line": 55,
+          "decorator": "@Get(':maDonHang')"
+        },
+        {
+          "line": 64,
+          "decorator": "@Get(':maDonHang/shipper-location')"
+        },
+        {
+          "line": 73,
+          "decorator": "@Get('user/:maNguoiDung/all')"
+        },
+        {
+          "line": 82,
+          "decorator": "@Post(':maDonHang/lalamove-info')"
+        },
+        {
+          "line": 95,
+          "decorator": "@Post(':maDonHang/shipper-delivery-id')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/features_thaian/delivery-tracking.entity.ts",
+      "sha256": "0e96c7ac09ab4b27f193919255011268697db52e35cc1dc998fd29f92361aa1d",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/features_thaian/features_thaian.module.ts",
+      "sha256": "084c7546e0c214e175688b7591260f70060242da31f3b923fdd8631ceb6b4e52",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/features_thaian/lalamove.controller.ts",
+      "sha256": "4c5356d82dbe5e0e89956eecf892ca97f8c6d73788d9a3909bbc3fea3253d8e2",
+      "declarations": [
+        {
+          "line": 9,
+          "decorator": "@Controller('shippers/delivery/lalamove')"
+        },
+        {
+          "line": 19,
+          "decorator": "@Get('test-market')"
+        },
+        {
+          "line": 31,
+          "decorator": "@Get('test-quotation-hk')"
+        },
+        {
+          "line": 46,
+          "decorator": "@Get('webhook')"
+        },
+        {
+          "line": 56,
+          "decorator": "@Post('webhook')"
+        },
+        {
+          "line": 73,
+          "decorator": "@Post('quotation')"
+        },
+        {
+          "line": 95,
+          "decorator": "@Post('order')"
+        },
+        {
+          "line": 138,
+          "decorator": "@Get('order/:orderId')"
+        },
+        {
+          "line": 148,
+          "decorator": "@Get('order/:orderId/driver/:driverId/location')"
+        },
+        {
+          "line": 161,
+          "decorator": "@Delete('order/:orderId')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/shipper.controller.ts",
+      "sha256": "fc3d111ba33fbbc1a2428b6716ad5cc3505943da5ecaba94fe7783b07fe3440d",
+      "declarations": [
+        {
+          "line": 4,
+          "decorator": "@Controller('shippers')"
+        },
+        {
+          "line": 8,
+          "decorator": "@Post('login')"
+        },
+        {
+          "line": 15,
+          "decorator": "@Get()"
+        },
+        {
+          "line": 24,
+          "decorator": "@Get('all')"
+        },
+        {
+          "line": 33,
+          "decorator": "@Get('config')"
+        },
+        {
+          "line": 38,
+          "decorator": "@Put('config')"
+        },
+        {
+          "line": 43,
+          "decorator": "@Put('commission-rate')"
+        },
+        {
+          "line": 44,
+          "decorator": "@Post('commission-rate')"
+        },
+        {
+          "line": 49,
+          "decorator": "@Get('kpi')"
+        },
+        {
+          "line": 54,
+          "decorator": "@Get('finance')"
+        },
+        {
+          "line": 59,
+          "decorator": "@Get('exceptions')"
+        },
+        {
+          "line": 64,
+          "decorator": "@Post('exceptions/:id/:action')"
+        },
+        {
+          "line": 75,
+          "decorator": "@Get('cod-remits')"
+        },
+        {
+          "line": 83,
+          "decorator": "@Post('cod-remits/:remitId/confirm')"
+        },
+        {
+          "line": 101,
+          "decorator": "@Get('available-orders')"
+        },
+        {
+          "line": 109,
+          "decorator": "@Get(':shipperId/available-orders')"
+        },
+        {
+          "line": 121,
+          "decorator": "@Post('orders/:orderId/mark-ready')"
+        },
+        {
+          "line": 126,
+          "decorator": "@Post('assign-order')"
+        },
+        {
+          "line": 135,
+          "decorator": "@Post()"
+        },
+        {
+          "line": 140,
+          "decorator": "@Get(':id')"
+        },
+        {
+          "line": 145,
+          "decorator": "@Patch(':id')"
+        },
+        {
+          "line": 153,
+          "decorator": "@Put(':id')"
+        },
+        {
+          "line": 161,
+          "decorator": "@Delete(':id')"
+        },
+        {
+          "line": 166,
+          "decorator": "@Post(':id/reset-account')"
+        },
+        {
+          "line": 174,
+          "decorator": "@Post(':shipperId/deliveries')"
+        },
+        {
+          "line": 184,
+          "decorator": "@Get(':shipperId/profile')"
+        },
+        {
+          "line": 189,
+          "decorator": "@Patch(':shipperId/status')"
+        },
+        {
+          "line": 197,
+          "decorator": "@Patch(':shipperId/location')"
+        },
+        {
+          "line": 207,
+          "decorator": "@Get(':shipperId/deliveries')"
+        },
+        {
+          "line": 215,
+          "decorator": "@Get(':shipperId/deliveries/:deliveryId')"
+        },
+        {
+          "line": 227,
+          "decorator": "@Post(':shipperId/accept/:maDonHang')"
+        },
+        {
+          "line": 235,
+          "decorator": "@Post(':shipperId/deliveries/:deliveryId/confirm-pickup')"
+        },
+        {
+          "line": 243,
+          "decorator": "@Post(':shipperId/deliveries/:deliveryId/start')"
+        },
+        {
+          "line": 252,
+          "decorator": "@Post(':shipperId/deliveries/:deliveryId/complete')"
+        },
+        {
+          "line": 261,
+          "decorator": "@Post(':shipperId/deliveries/:deliveryId/fail')"
+        },
+        {
+          "line": 272,
+          "decorator": "@Get(':shipperId/stats')"
+        },
+        {
+          "line": 277,
+          "decorator": "@Get(':shipperId/nearby-deliveries')"
+        },
+        {
+          "line": 287,
+          "decorator": "@Get(':shipperId/wallet')"
+        },
+        {
+          "line": 292,
+          "decorator": "@Get(':shipperId/schedule')"
+        },
+        {
+          "line": 297,
+          "decorator": "@Post(':shipperId/exceptions')"
+        },
+        {
+          "line": 305,
+          "decorator": "@Get(':shipperId/vehicle')"
+        },
+        {
+          "line": 310,
+          "decorator": "@Patch(':shipperId/vehicle')"
+        },
+        {
+          "line": 318,
+          "decorator": "@Get(':shipperId/notifications')"
+        },
+        {
+          "line": 325,
+          "decorator": "@Get(':shipperId/batch-orders')"
+        },
+        {
+          "line": 330,
+          "decorator": "@Get(':shipperId/active-batch')"
+        },
+        {
+          "line": 335,
+          "decorator": "@Post(':shipperId/batch-orders/create')"
+        },
+        {
+          "line": 344,
+          "decorator": "@Post(':shipperId/batch-orders/:batchId/accept')"
+        },
+        {
+          "line": 354,
+          "decorator": "@Post(':shipperId/batch-orders/:batchId/cancel')"
+        },
+        {
+          "line": 368,
+          "decorator": "@Post(':shipperId/cod-remit')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/shipper.module.ts",
+      "sha256": "1a3e424e68b450504742313cc83b09045a8a841de223a6d1d8d4f0e43ef0b9e0",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/smtp/smtp-config.entity.ts",
+      "sha256": "73285246f84a0590d6536173a639f7509f046c90c1369f545431cf0754f813bd",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/smtp/smtp.controller.ts",
+      "sha256": "ecfbf5f9e7efb4563218d8fae278d59f7c257504ef5ca99223dfa3ec4cc81950",
+      "declarations": [
+        {
+          "line": 4,
+          "decorator": "@Controller('smtp')"
+        },
+        {
+          "line": 8,
+          "decorator": "@Get('config')"
+        },
+        {
+          "line": 13,
+          "decorator": "@Put('config')"
+        },
+        {
+          "line": 35,
+          "decorator": "@Post('test')"
+        },
+        {
+          "line": 62,
+          "decorator": "@Post('send')"
+        },
+        {
+          "line": 77,
+          "decorator": "@Get('internal-config')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/smtp/smtp.module.ts",
+      "sha256": "a76d688c750b707483f70242f1e04c974f9c17038cfc35fd701b507d123e777a",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/thanh-toan/entities/ca-doi-soat.entity.ts",
+      "sha256": "8f7065bdac60473a797d2809387dca75782f00e6bbdf5937bab5ca7b595d67b1",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/thanh-toan/entities/ca-lam-viec-nhan-vien.entity.ts",
+      "sha256": "c99fea3bb4d086013d588f0dc579e6199e97b709d9792246c2d8142b40a6d4fc",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/thanh-toan/entities/chi-tiet-don-hang.entity.ts",
+      "sha256": "9a5ab78b4a9270d09640350f2e0253fc1b7a6b4b6c4cf374e2820ec4d2a994fa",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/thanh-toan/entities/don-hang.entity.ts",
+      "sha256": "24d9f7723a75c81c79439a7706a2e224d88e49d54d81bd984b697f478e3fae95",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/thanh-toan/entities/giao-dich-thanh-toan.entity.ts",
+      "sha256": "436bf71b3c2bffa1a49ba30728b4393d9e3516edef1bef6a9d917b5403168067",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/thanh-toan/entities/kiosk-shift-session.entity.ts",
+      "sha256": "5fdd614814d34bec759a510d5f31a49d8aa678bcd1e3e8e4de836094443fcba3",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/thanh-toan/thanh-toan.controller.ts",
+      "sha256": "7c14e0fe309db251add357f688fb4f94986fe8d9d4a4c5addf3068c633c2488a",
+      "declarations": [
+        {
+          "line": 7,
+          "decorator": "@Controller('customers/:customerId/thanh-toan')"
+        },
+        {
+          "line": 12,
+          "decorator": "@Post('khoi-tao')"
+        },
+        {
+          "line": 41,
+          "decorator": "@Get('vnpay/ket-qua')"
+        },
+        {
+          "line": 63,
+          "decorator": "@Get('don-hang/:maDonHang/trang-thai')"
+        },
+        {
+          "line": 69,
+          "decorator": "@Controller('customers/thanh-toan/he-thong')"
+        },
+        {
+          "line": 73,
+          "decorator": "@Get('vnpay/ipn')"
+        },
+        {
+          "line": 78,
+          "decorator": "@Get('logs')"
+        },
+        {
+          "line": 88,
+          "decorator": "@Post('sepay/webhook')"
+        },
+        {
+          "line": 100,
+          "decorator": "@Controller()"
+        },
+        {
+          "line": 109,
+          "decorator": "@Post('sepay_webhook.php')"
+        },
+        {
+          "line": 119,
+          "decorator": "@Post('ANTHAI_TEST/sepay_webhook.php')"
+        },
+        {
+          "line": 129,
+          "decorator": "@Post('GD_Full_ChucNang/public/sepay_webhook.php')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/thanh-toan/thanh-toan.module.ts",
+      "sha256": "b4fed18203b873b58e253ee721f786d62101f932abd65f703c4c6a10e0a03439",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/voucher/voucher.controller.ts",
+      "sha256": "fe714ddbc17066a5fa2f8afe547d71084b6b97d3a5b7d8de0961b5926686b1f0",
+      "declarations": [
+        {
+          "line": 6,
+          "decorator": "@Controller('vouchers')"
+        },
+        {
+          "line": 10,
+          "decorator": "@Get()"
+        },
+        {
+          "line": 15,
+          "decorator": "@Get('admin')"
+        },
+        {
+          "line": 20,
+          "decorator": "@Post('admin')"
+        },
+        {
+          "line": 25,
+          "decorator": "@Patch('admin/:code')"
+        },
+        {
+          "line": 30,
+          "decorator": "@Delete('admin/:code')"
+        },
+        {
+          "line": 35,
+          "decorator": "@Get('templates')"
+        },
+        {
+          "line": 44,
+          "decorator": "@Post('kiem-tra')"
+        },
+        {
+          "line": 71,
+          "decorator": "@Post('eligible')"
+        }
+      ]
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/voucher/voucher.entity.ts",
+      "sha256": "4372caa359b69421b8d337d11f0abfda27a77945e140ffc689af15c81b2d33a3",
+      "declarations": []
+    },
+    {
+      "path": "avengers-coffee-system/services/order-service/src/modules/voucher/voucher.module.ts",
+      "sha256": "5d1d3e223c9c0f81dea94904d707fac9b82819de9d770119581225f5261022ab",
+      "declarations": []
+    }
+  ],
+  "traced_evidence": {
+    "actor_workspaces": {
+      "path": "avengers-coffee-system/services/identity-service/src/auth/workspace-policy.ts",
+      "sha256": "948e6b71264d677f7247415b633d51aeeef29623d23be6de82b57a5ef0964766",
+      "line": 8,
+      "symbol_or_marker": "assertLoginWorkspace"
+    },
+    "mobile_role_navigation": {
+      "path": "avengers-coffee-system/apps/admin-mobile/src/components/DrawerMenu.js",
+      "sha256": "58ac704a1504087c209970c87275cd48592e5f3d5210f6b4bbe2e945f213b0d4",
+      "line": 44,
+      "symbol_or_marker": "const staffTabs"
+    },
+    "shipper_service": {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/shipper.service.ts",
+      "sha256": "330bd078b2720f1d562b17e166c89cd0461c9fa093e621bc5fab851b78faba4c",
+      "line": 1049,
+      "symbol_or_marker": "async getKpiData"
+    },
+    "shipper_rating": {
+      "path": "avengers-coffee-system/services/order-service/src/modules/shipper/shipper.service.ts",
+      "sha256": "330bd078b2720f1d562b17e166c89cd0461c9fa093e621bc5fab851b78faba4c",
+      "line": 1215,
+      "symbol_or_marker": "async rateShipper"
+    },
+    "shipper_ui": {
+      "path": "avengers-coffee-system/apps/web-admin/src/features/actor-admin/components/AdminShipperPanel.jsx",
+      "sha256": "bc3d4dc0a80f7f428dccb00dfacd04a937f05f5a119225793c955428f8c34c17",
+      "line": 285,
+      "symbol_or_marker": "const loadKpi"
+    },
+    "gift_transfer": {
+      "path": "avengers-coffee-system/services/order-service/src/modules/gift-card/gift-card.service.ts",
+      "sha256": "db422f9382ad8b0561eff75d64b5ca2de2d401c716f82417d7382ccd2dfca529",
+      "line": 130,
+      "symbol_or_marker": "async transferGiftCardBalance"
+    },
+    "wallet_topup": {
+      "path": "avengers-coffee-system/services/order-service/src/modules/customer-wallet/customer-wallet.service.ts",
+      "sha256": "30fc282941cc731eb32ef2c9de78b65511b23494668d4ac9a01d7acaba201b26",
+      "line": 43,
+      "symbol_or_marker": "async topUp"
+    },
+    "guest_link": {
+      "path": "avengers-coffee-system/services/order-service/src/modules/thanh-toan/thanh-toan.service.ts",
+      "sha256": "378f427bee970e82532841331d5b5f06d539e5c3ca058b11bf5e0e814683c2d9",
+      "line": 4104,
+      "symbol_or_marker": "async lienKetDonHangGuest"
+    },
+    "ai_ui": {
+      "path": "avengers-coffee-system/apps/web-admin/src/features/actor-admin/hooks/useAiAnalytics.js",
+      "sha256": "a01fface1231d18a85123518e8b8bf78bf81cabafb5fd9a11f266ee459d39a73",
+      "line": 35,
+      "symbol_or_marker": "const forecastQuery"
+    },
+    "ai_mobile_ui": {
+      "path": "avengers-coffee-system/apps/admin-mobile/src/screens/AdminAnalyticsScreen.js",
+      "sha256": "9404290b1afe37a4b25780afcaed63680484d0be9b6641b52305cf73ba82ce5a",
+      "line": 68,
+      "symbol_or_marker": "apiClient.get('/ai/model/stats')"
+    },
+    "rag_source": {
+      "path": "avengers-coffee-system/services/ai-service/src/rag/data_ingestion.py",
+      "sha256": "5d6348d53bfa4ac5ee3cd9c96c2d5962ee8ac7fa388caf1fe85f0e5b53eb3621",
+      "line": 10,
+      "symbol_or_marker": "RAW_DATA_DIR"
+    },
+    "rag_index": {
+      "path": "avengers-coffee-system/services/ai-service/src/rag/rag_service.py",
+      "sha256": "b4a7cdfcce66ccb978f0a4bff2ed940e04d34d7188c7c8c2877d577aaee4581f",
+      "line": 21,
+      "symbol_or_marker": "class IndexSnapshot"
+    },
+    "customer_mobile_navigation": {
+      "path": "avengers-coffee-system/apps/customer-mobile/src/navigation/AppNavigator.js",
+      "sha256": "ca5bdcad651bf9e83c52381284440f79d8dd61439005f415cef3eecf4ff41ef6",
+      "line": 1,
+      "symbol_or_marker": "file"
+    },
+    "shipper_mobile_navigation": {
+      "path": "avengers-coffee-system/apps/shipper-mobile/src/navigation/AppNavigator.js",
+      "sha256": "6de49c49f5c9dcd7ecde2f3e95003a6d978fa90464f31138b3c05b3c8c41c8e2",
+      "line": 1,
+      "symbol_or_marker": "file"
+    },
+    "ai_routes": {
+      "path": "avengers-coffee-system/services/ai-service/main.py",
+      "sha256": "ee73e1eb2b7fb299159ad448fb42a14e902790480efe94963149697fdeec0420",
+      "line": 1,
+      "symbol_or_marker": "file"
+    }
+  }
+}

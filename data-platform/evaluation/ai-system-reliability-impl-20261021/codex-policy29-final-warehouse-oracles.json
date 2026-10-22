@@ -1,0 +1,293 @@
+{
+  "method": "Independent SQL + Python raw-record aggregation, READ ONLY REPEATABLE READ, rollback",
+  "epoch": {
+    "status": "observed",
+    "sources": [
+      {
+        "dataset_id": "replica.identity.chi_nhanh",
+        "generation": 593,
+        "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+      },
+      {
+        "dataset_id": "replica.orders.don_hang",
+        "generation": 585,
+        "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+      }
+    ],
+    "fingerprint": "43a185a82ac8296fc6e3651cce1229b64d960c1c28e2bb27d5ece9b83eb7f618",
+    "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+  },
+  "observations": {
+    "bottom_five": {
+      "sql": "WITH selected AS (\n SELECT b.thanh_pho AS city,SUM(o.tong_tien) AS revenue\n FROM silver.don_hang o JOIN silver.chi_nhanh b ON o.co_so_ma=b.ma_chi_nhanh\n WHERE o.ngay_tao >= DATE '2026-09-01' AND o.ngay_tao < DATE '2026-10-01' AND o.trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO') GROUP BY b.thanh_pho\n ORDER BY revenue ASC NULLS LAST,city ASC NULLS LAST LIMIT 5)\n SELECT r.city,r.revenue,b.ma_chi_nhanh AS store_id,b.ten_chi_nhanh AS store,\n o.tong_tien AS amount,o.loai_don_hang AS order_type,o.phuong_thuc_thanh_toan AS payment_method,\n o.ngay_tao AS created_at\n FROM silver.don_hang o JOIN silver.chi_nhanh b ON o.co_so_ma=b.ma_chi_nhanh\n JOIN selected r ON b.thanh_pho=r.city OR (b.thanh_pho IS NULL AND r.city IS NULL)\n WHERE o.ngay_tao >= DATE '2026-09-01' AND o.ngay_tao < DATE '2026-10-01' AND o.trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO') ORDER BY r.city,o.ngay_tao LIMIT 501",
+      "rows": [
+        {
+          "city": "Bạc Liêu",
+          "revenue": 206000.0,
+          "store_id": "HC_KHONG__VINCOM_BAC_LIEU_504",
+          "store": "Highlands Coffee Vincom Bạc Liêu",
+          "amount": 167000.0,
+          "order_type": "GIAO_TAN_NOI",
+          "payment_method": "VI_DIEN_TU",
+          "created_at": "2026-09-08T16:00:59"
+        },
+        {
+          "city": "Bạc Liêu",
+          "revenue": 206000.0,
+          "store_id": "HC_KHONG__VINCOM_BAC_LIEU_504",
+          "store": "Highlands Coffee Vincom Bạc Liêu",
+          "amount": 39000.0,
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "VI_DIEN_TU",
+          "created_at": "2026-09-09T19:22:47"
+        },
+        {
+          "city": "Ninh Thuận",
+          "revenue": 112000.0,
+          "store_id": "HC_KHONG__16_THANG_4_PHAN_RA_738",
+          "store": "Highlands Coffee 16 Thang 4 Phan Rang",
+          "amount": 97000.0,
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+          "created_at": "2026-09-22T19:39:01"
+        },
+        {
+          "city": "Ninh Thuận",
+          "revenue": 112000.0,
+          "store_id": "HC_KHONG__16_THANG_4_PHAN_RA_738",
+          "store": "Highlands Coffee 16 Thang 4 Phan Rang",
+          "amount": 15000.0,
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "VI_DIEN_TU",
+          "created_at": "2026-09-28T18:13:09"
+        },
+        {
+          "city": "Quảng Trị",
+          "revenue": 300000.0,
+          "store_id": "HC_KHONG__29_NGUYEN_TRI_PHUO_465",
+          "store": "Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị",
+          "amount": 55000.0,
+          "order_type": "GIAO_TAN_NOI",
+          "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+          "created_at": "2026-09-19T08:07:04"
+        },
+        {
+          "city": "Quảng Trị",
+          "revenue": 300000.0,
+          "store_id": "HC_KHONG__29_NGUYEN_TRI_PHUO_465",
+          "store": "Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị",
+          "amount": 115000.0,
+          "order_type": "MANG_DI",
+          "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+          "created_at": "2026-09-19T09:43:45"
+        },
+        {
+          "city": "Quảng Trị",
+          "revenue": 300000.0,
+          "store_id": "HC_KHONG__29_NGUYEN_TRI_PHUO_465",
+          "store": "Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị",
+          "amount": 130000.0,
+          "order_type": "MANG_DI",
+          "payment_method": "NGAN_HANG_QR",
+          "created_at": "2026-09-27T16:28:09"
+        },
+        {
+          "city": "Sóc Trăng",
+          "revenue": 183000.0,
+          "store_id": "HC_KHONG__VINCOM_SOC_TRANG_471",
+          "store": "Highlands Coffee Vincom Sóc Trăng",
+          "amount": 183000.0,
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "NGAN_HANG_QR",
+          "created_at": "2026-09-28T16:03:59"
+        },
+        {
+          "city": "Trà Vinh",
+          "revenue": 270000.0,
+          "store_id": "HC_KHONG__VINCOM_TRA_VINH_483",
+          "store": "Highlands Coffee Vincom Trà Vinh",
+          "amount": 66000.0,
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "VNPAY",
+          "created_at": "2026-09-07T13:19:45"
+        },
+        {
+          "city": "Trà Vinh",
+          "revenue": 270000.0,
+          "store_id": "HC_KHONG__VINCOM_TRA_VINH_483",
+          "store": "Highlands Coffee Vincom Trà Vinh",
+          "amount": 44000.0,
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "VNPAY",
+          "created_at": "2026-09-07T16:54:31"
+        },
+        {
+          "city": "Trà Vinh",
+          "revenue": 270000.0,
+          "store_id": "HC_KHONG__IEN_BIEN_PHU_TRA_V_733",
+          "store": "Highlands Coffee Điện Biên Phủ - Trà Vinh",
+          "amount": 95000.0,
+          "order_type": "MANG_DI",
+          "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+          "created_at": "2026-09-16T10:31:39"
+        },
+        {
+          "city": "Trà Vinh",
+          "revenue": 270000.0,
+          "store_id": "HC_KHONG__IEN_BIEN_PHU_TRA_V_733",
+          "store": "Highlands Coffee Điện Biên Phủ - Trà Vinh",
+          "amount": 65000.0,
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "VI_DIEN_TU",
+          "created_at": "2026-09-19T08:20:26"
+        }
+      ]
+    },
+    "cancellation_top_five": {
+      "sql": "WITH selected AS (\n SELECT b.ma_chi_nhanh AS store_id,b.ten_chi_nhanh AS store,COUNT(*) AS terminal_orders,\n COUNT(*) FILTER(WHERE o.trang_thai_don_hang='DA_HUY') AS cancelled_orders,\n ROUND(100.0*COUNT(*) FILTER(WHERE o.trang_thai_don_hang='DA_HUY')/NULLIF(COUNT(*),0),2) AS rate\n FROM silver.don_hang o JOIN silver.chi_nhanh b ON o.co_so_ma=b.ma_chi_nhanh\n WHERE o.ngay_tao >= DATE '2026-09-01' AND o.ngay_tao < DATE '2026-10-01' AND o.trang_thai_don_hang IN ('HOAN_THANH','DA_HUY') AND b.thanh_pho='Hồ Chí Minh'\n GROUP BY b.ma_chi_nhanh,b.ten_chi_nhanh\n ORDER BY rate DESC NULLS LAST,store ASC NULLS LAST,store_id ASC NULLS LAST LIMIT 5)\n SELECT r.store_id,r.store,r.rate,r.terminal_orders,r.cancelled_orders,\n o.trang_thai_don_hang AS status,o.loai_don_hang AS order_type,\n o.phuong_thuc_thanh_toan AS payment_method,o.ngay_tao AS created_at\n FROM silver.don_hang o JOIN selected r ON o.co_so_ma=r.store_id\n WHERE o.ngay_tao >= DATE '2026-09-01' AND o.ngay_tao < DATE '2026-10-01' AND o.trang_thai_don_hang IN ('HOAN_THANH','DA_HUY') ORDER BY r.store_id,o.ngay_tao LIMIT 501",
+      "rows": [
+        {
+          "store_id": "HC_HCM_236_TO_NGOC_VAN_466",
+          "store": "Highlands Coffee 236 Tô Ngọc Vân",
+          "rate": 50.0,
+          "terminal_orders": 2,
+          "cancelled_orders": 1,
+          "status": "HOAN_THANH",
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "VNPAY",
+          "created_at": "2026-09-06T07:47:25"
+        },
+        {
+          "store_id": "HC_HCM_236_TO_NGOC_VAN_466",
+          "store": "Highlands Coffee 236 Tô Ngọc Vân",
+          "rate": 50.0,
+          "terminal_orders": 2,
+          "cancelled_orders": 1,
+          "status": "DA_HUY",
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+          "created_at": "2026-09-24T12:38:10"
+        },
+        {
+          "store_id": "HC_HCM_CANTAVIL_205",
+          "store": "Cantavil",
+          "rate": 50.0,
+          "terminal_orders": 2,
+          "cancelled_orders": 1,
+          "status": "DA_HUY",
+          "order_type": "MANG_DI",
+          "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+          "created_at": "2026-09-19T20:59:59"
+        },
+        {
+          "store_id": "HC_HCM_CANTAVIL_205",
+          "store": "Cantavil",
+          "rate": 50.0,
+          "terminal_orders": 2,
+          "cancelled_orders": 1,
+          "status": "HOAN_THANH",
+          "order_type": "MANG_DI",
+          "payment_method": "VI_DIEN_TU",
+          "created_at": "2026-09-30T15:05:55"
+        },
+        {
+          "store_id": "HC_HCM_CENTRAL_GARDEN_D1_1212",
+          "store": "Highlands Coffee Central Garden D1",
+          "rate": 100.0,
+          "terminal_orders": 1,
+          "cancelled_orders": 1,
+          "status": "DA_HUY",
+          "order_type": "MANG_DI",
+          "payment_method": "VNPAY",
+          "created_at": "2026-09-07T20:06:41"
+        },
+        {
+          "store_id": "HC_HCM_KCN_BAU_BANG_DINH__1290",
+          "store": "Highlands Coffee KCN Bau Bang Dinh Duong",
+          "rate": 75.0,
+          "terminal_orders": 4,
+          "cancelled_orders": 3,
+          "status": "HOAN_THANH",
+          "order_type": "MANG_DI",
+          "payment_method": "VI_DIEN_TU",
+          "created_at": "2026-09-01T18:08:02"
+        },
+        {
+          "store_id": "HC_HCM_KCN_BAU_BANG_DINH__1290",
+          "store": "Highlands Coffee KCN Bau Bang Dinh Duong",
+          "rate": 75.0,
+          "terminal_orders": 4,
+          "cancelled_orders": 3,
+          "status": "DA_HUY",
+          "order_type": "MANG_DI",
+          "payment_method": "VNPAY",
+          "created_at": "2026-09-05T07:42:11"
+        },
+        {
+          "store_id": "HC_HCM_KCN_BAU_BANG_DINH__1290",
+          "store": "Highlands Coffee KCN Bau Bang Dinh Duong",
+          "rate": 75.0,
+          "terminal_orders": 4,
+          "cancelled_orders": 3,
+          "status": "DA_HUY",
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "VI_DIEN_TU",
+          "created_at": "2026-09-14T08:56:43"
+        },
+        {
+          "store_id": "HC_HCM_KCN_BAU_BANG_DINH__1290",
+          "store": "Highlands Coffee KCN Bau Bang Dinh Duong",
+          "rate": 75.0,
+          "terminal_orders": 4,
+          "cancelled_orders": 3,
+          "status": "DA_HUY",
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "VNPAY",
+          "created_at": "2026-09-29T21:08:10"
+        },
+        {
+          "store_id": "KVT002",
+          "store": "Avengers Coffee - Vincom Đồng Khởi",
+          "rate": 66.67,
+          "terminal_orders": 3,
+          "cancelled_orders": 2,
+          "status": "DA_HUY",
+          "order_type": "MANG_DI",
+          "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+          "created_at": "2026-09-10T15:22:02"
+        },
+        {
+          "store_id": "KVT002",
+          "store": "Avengers Coffee - Vincom Đồng Khởi",
+          "rate": 66.67,
+          "terminal_orders": 3,
+          "cancelled_orders": 2,
+          "status": "HOAN_THANH",
+          "order_type": "MANG_DI",
+          "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+          "created_at": "2026-09-16T12:51:43"
+        },
+        {
+          "store_id": "KVT002",
+          "store": "Avengers Coffee - Vincom Đồng Khởi",
+          "rate": 66.67,
+          "terminal_orders": 3,
+          "cancelled_orders": 2,
+          "status": "DA_HUY",
+          "order_type": "DUNG_TAI_CHO",
+          "payment_method": "THANH_TOAN_KHI_NHAN_HANG",
+          "created_at": "2026-09-18T11:17:00"
+        }
+      ]
+    },
+    "hcm_revenue": {
+      "sql": "SELECT SUM(o.tong_tien) AS revenue,COUNT(*) AS valid_orders\n FROM silver.don_hang o JOIN silver.chi_nhanh b ON o.co_so_ma=b.ma_chi_nhanh\n WHERE o.ngay_tao >= DATE '2026-09-01' AND o.ngay_tao < DATE '2026-10-01' AND o.trang_thai_don_hang IN ('HOAN_THANH','DANG_GIAO') AND b.thanh_pho='Hồ Chí Minh' LIMIT 1",
+      "rows": [
+        {
+          "revenue": 154577000.0,
+          "valid_orders": 1364
+        }
+      ]
+    }
+  }
+}

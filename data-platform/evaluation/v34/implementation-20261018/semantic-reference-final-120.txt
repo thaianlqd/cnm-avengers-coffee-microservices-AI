@@ -1,0 +1,1 @@
+{"mode": "offline_authored_reference", "case_count": 120, "compiled_intents": 83, "passed": 120, "failed": 0, "reference_sha256": "e9e464153791acb5b2847afbd849a3810f33504819bf4bd85ab9f2b677224b74", "claim": "Authored expected meanings compiled through production resolver/validators; not LLM understanding accuracy"}

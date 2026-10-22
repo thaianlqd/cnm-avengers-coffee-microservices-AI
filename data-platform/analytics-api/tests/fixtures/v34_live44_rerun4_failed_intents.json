@@ -1,0 +1,267 @@
+{
+ "note": "Normalized interpreter outputs from failed live run4 (evaluation/v34/live44-20261019-r4). Paid evidence is unchanged; fixtures are copies.",
+ "cases": [
+  {
+   "id": "L06",
+   "question": "Tỷ lệ hủy đơn theo chi nhánh quý trước",
+   "outputs": [
+    {
+     "decision": "analyze",
+     "clarification": {},
+     "requirements": [
+      {
+       "derived_features": [
+        "selected_total"
+       ],
+       "analysis_kind": "aggregate",
+       "dimension_ids": [
+        "store"
+       ],
+       "id": "order_cancellation_rate_by_store_previous_quarter",
+       "metric_ids": [
+        "order_cancellation_rate"
+       ],
+       "availability": "requested",
+       "time": {
+        "mode": "previous_quarter",
+        "kind": "relative"
+       }
+      }
+     ]
+    },
+    {
+     "decision": "analyze",
+     "clarification": {},
+     "requirements": [
+      {
+       "derived_features": [
+        "scalar"
+       ],
+       "id": "r_7a9f53a12f09aef1118143e8"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "L21",
+   "question": "Dự báo doanh thu 3 tháng tới, độ chính xác tối thiểu 95%",
+   "outputs": [
+    {
+     "decision": "unsupported",
+     "clarification": {},
+     "requirements": [
+      {
+       "reason": "historical_data_unavailable",
+       "metric_ids": [
+        "revenue"
+       ],
+       "id": "req_1",
+       "time": {
+        "kind": "relative",
+        "mode": "current_month"
+       },
+       "forecast": {
+        "horizon": 3,
+        "unit": "month"
+       },
+       "availability": "unsupported"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "L29",
+   "question": "So sánh doanh thu miền Bắc với miền Nam tháng 9 năm 2026",
+   "outputs": [
+    {
+     "decision": "analyze",
+     "clarification": {},
+     "requirements": [
+      {
+       "dimension_ids": [
+        "city"
+       ],
+       "analysis_kind": "comparison",
+       "metric_ids": [
+        "revenue"
+       ],
+       "availability": "requested",
+       "id": "req_1",
+       "time": {
+        "month": 9,
+        "year": 2026,
+        "kind": "month"
+       },
+       "filters": [
+        {
+         "operator": "in",
+         "dimension": "city",
+         "value": [
+          "Bà Rịa - Vũng Tàu",
+          "Bình Dương",
+          "Bắc Ninh",
+          "Cần Thơ",
+          "Hà Nội",
+          "Hải Phòng",
+          "Hồ Chí Minh",
+          "Kiên Giang",
+          "Quảng Ninh",
+          "Đồng Nai"
+         ]
+        }
+       ],
+       "derived_features": [
+        "change_pct"
+       ]
+      }
+     ]
+    },
+    {
+     "decision": "analyze",
+     "clarification": {},
+     "requirements": [
+      {
+       "metric_ids": [
+        "revenue"
+       ],
+       "dimension_ids": [
+        "reporting_region"
+       ],
+       "analysis_kind": "comparison",
+       "filters": [
+        {
+         "dimension": "city",
+         "value": [
+          "Bà Rịa - Vũng Tàu",
+          "Bình Dương",
+          "Bắc Ninh",
+          "Cần Thơ",
+          "Hà Nội",
+          "Hải Phòng",
+          "Hồ Chí Minh",
+          "Kiên Giang",
+          "Quảng Ninh",
+          "Đồng Nai"
+         ],
+         "operator": "in"
+        }
+       ],
+       "time": {
+        "month": 9,
+        "year": 2026,
+        "kind": "month"
+       },
+       "id": "req_1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "L41",
+   "question": "So sánh doanh thu tháng 8 với tháng 9 năm 2026",
+   "outputs": [
+    {
+     "decision": "analyze",
+     "clarification": {},
+     "requirements": [
+      {
+       "derived_features": [
+        "change",
+        "change_pct"
+       ],
+       "id": "req_1",
+       "comparison_time": {
+        "end": "2026-08-31",
+        "kind": "range",
+        "start": "2026-08-01"
+       },
+       "metric_ids": [
+        "revenue"
+       ],
+       "availability": "requested",
+       "analysis_kind": "aggregate",
+       "time": {
+        "end": "2026-09-30",
+        "start": "2026-09-01",
+        "kind": "range"
+       }
+      }
+     ]
+    },
+    {
+     "decision": "analyze",
+     "clarification": {},
+     "requirements": [
+      {
+       "derived_features": [
+        "scalar",
+        "change",
+        "change_pct"
+       ],
+       "id": "req_1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "L43",
+   "question": "Top 5 chi nhánh có tỷ lệ hủy đơn cao nhất tháng 9 năm 2026, kèm số đơn để xem quy mô.",
+   "outputs": [
+    {
+     "decision": "unsupported",
+     "clarification": {},
+     "requirements": []
+    }
+   ]
+  },
+  {
+   "id": "L30",
+   "question": "doanh thu thang 9 nam 2026 theo thanh pho",
+   "outputs": [
+    {
+     "decision": "analyze",
+     "clarification": {},
+     "requirements": [
+      {
+       "metric_ids": [
+        "revenue"
+       ],
+       "id": "req_1",
+       "availability": "requested",
+       "time": {
+        "year": 2026,
+        "month": 9,
+        "kind": "month"
+       },
+       "analysis_kind": "aggregate",
+       "dimension_ids": [
+        "city"
+       ]
+      },
+      {
+       "analysis_kind": "aggregate",
+       "metric_ids": [
+        "store_revenue"
+       ],
+       "dimension_ids": [
+        "city"
+       ],
+       "time": {
+        "kind": "month",
+        "month": 9,
+        "year": 2026
+       },
+       "availability": "requested",
+       "id": "req_2"
+      }
+     ]
+    }
+   ],
+   "source": "live44-20261019-r5"
+  }
+ ]
+}

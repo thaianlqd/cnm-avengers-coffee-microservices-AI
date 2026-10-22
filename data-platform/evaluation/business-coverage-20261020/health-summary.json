@@ -1,0 +1,406 @@
+{
+  "freshness": {
+    "mode": "batch",
+    "label": "Cập nhật theo đợt",
+    "last_sync": null,
+    "last_sync_status": null,
+    "max_data_timestamp": "2026-10-18",
+    "sync_lag_hours": null,
+    "data_lag_hours": 50.8,
+    "stale_after_hours": 48,
+    "stale": true
+  },
+  "datasets": {
+    "identity.chi_nhanh": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:40:58.518392+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:20:58.263403+00:00",
+      "generation": 208,
+      "observed_rows": 50,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "identity.khu_vuc": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:40:59.107824+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:20:58.639618+00:00",
+      "generation": 208,
+      "observed_rows": 3,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "identity.khuyen_mai": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:40:59.484052+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:20:59.022527+00:00",
+      "generation": 208,
+      "observed_rows": 1,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "identity.khuyen_mai_su_dung": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:23.967229+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:41:23.967229+00:00",
+      "generation": 207,
+      "observed_rows": 4013,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "identity.nguoi_dung": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:00.324082+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:41:00.324082+00:00",
+      "generation": 208,
+      "observed_rows": 342,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "inventory.ton_kho_san_pham": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:01.920115+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:21:01.768205+00:00",
+      "generation": 208,
+      "observed_rows": 2500,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "menu.bien_the_san_pham": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:42:01.364903+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:42:01.364903+00:00",
+      "generation": 206,
+      "observed_rows": 1393,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "menu.danh_muc": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:02.294969+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:41:02.294969+00:00",
+      "generation": 210,
+      "observed_rows": 25,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "menu.san_pham": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:24.561319+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:41:24.561319+00:00",
+      "generation": 208,
+      "observed_rows": 118,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.ca_doi_soat": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:08.910662+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:41:08.910662+00:00",
+      "generation": 207,
+      "observed_rows": 4140,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.ca_lam_viec_nhan_vien": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:11.409970+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:21:11.363346+00:00",
+      "generation": 207,
+      "observed_rows": 30,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.chi_tiet_don_hang": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:43:08.962039+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:43:08.962039+00:00",
+      "generation": 205,
+      "observed_rows": 72063,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.customer_wallet_transaction": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:11.901452+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:41:11.901452+00:00",
+      "generation": 207,
+      "observed_rows": 112,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.danh_gia_chi_nhanh": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:13.205126+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:21:14.378352+00:00",
+      "generation": 207,
+      "observed_rows": 2,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.danh_gia_san_pham": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:14.999694+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:21:16.969013+00:00",
+      "generation": 207,
+      "observed_rows": 1,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.delivery_tracking": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:19.405989+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:21:27.168886+00:00",
+      "generation": 207,
+      "observed_rows": 1,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.don_hang": {
+      "status": "healthy",
+      "completeness": "partial",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:55.252105+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:22:28.362185+00:00",
+      "generation": 206,
+      "observed_rows": 1,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.giao_dich_thanh_toan": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:43:29.946014+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:43:29.946014+00:00",
+      "generation": 199,
+      "observed_rows": 38843,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.khao_sat_phan_hoi": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:19.975464+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:41:19.975464+00:00",
+      "generation": 207,
+      "observed_rows": 12,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.shipper": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:20.373114+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:21:28.072204+00:00",
+      "generation": 207,
+      "observed_rows": 1,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.shipper_delivery": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:42:00.418627+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:22:38.023894+00:00",
+      "generation": 206,
+      "observed_rows": 1,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.voucher": {
+      "status": "healthy",
+      "completeness": "unknown",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:20.735523+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:21:28.435897+00:00",
+      "generation": 207,
+      "observed_rows": 3,
+      "observed_rows_basis": "last load, not source total"
+    },
+    "orders.yeu_thich_san_pham": {
+      "status": "healthy",
+      "completeness": "complete",
+      "reasons": [],
+      "last_success_at": "2026-10-20T02:41:21.404220+00:00",
+      "last_full_reconcile_at": "2026-10-20T02:41:21.404220+00:00",
+      "generation": 207,
+      "observed_rows": 637,
+      "observed_rows_basis": "last load, not source total"
+    }
+  },
+  "sync_history_reader_access": [
+    {
+      "table_select": false,
+      "finished_at_select": false,
+      "status_select": false
+    }
+  ],
+  "silver_review_counts": [
+    {
+      "product": 3005,
+      "branch": 2077
+    }
+  ],
+  "views_columns": [
+    {
+      "table_name": "danh_gia_chi_nhanh",
+      "column_name": "id"
+    },
+    {
+      "table_name": "danh_gia_chi_nhanh",
+      "column_name": "ma_chi_nhanh"
+    },
+    {
+      "table_name": "danh_gia_chi_nhanh",
+      "column_name": "ten_chi_nhanh"
+    },
+    {
+      "table_name": "danh_gia_chi_nhanh",
+      "column_name": "ma_nguoi_dung"
+    },
+    {
+      "table_name": "danh_gia_chi_nhanh",
+      "column_name": "so_sao"
+    },
+    {
+      "table_name": "danh_gia_chi_nhanh",
+      "column_name": "nhan_xet"
+    },
+    {
+      "table_name": "danh_gia_chi_nhanh",
+      "column_name": "ma_don_hang"
+    },
+    {
+      "table_name": "danh_gia_chi_nhanh",
+      "column_name": "ngay_tao"
+    },
+    {
+      "table_name": "danh_gia_san_pham",
+      "column_name": "id"
+    },
+    {
+      "table_name": "danh_gia_san_pham",
+      "column_name": "ma_san_pham"
+    },
+    {
+      "table_name": "danh_gia_san_pham",
+      "column_name": "ten_san_pham"
+    },
+    {
+      "table_name": "danh_gia_san_pham",
+      "column_name": "ma_nguoi_dung"
+    },
+    {
+      "table_name": "danh_gia_san_pham",
+      "column_name": "so_sao"
+    },
+    {
+      "table_name": "danh_gia_san_pham",
+      "column_name": "binh_luan"
+    },
+    {
+      "table_name": "danh_gia_san_pham",
+      "column_name": "ma_don_hang"
+    },
+    {
+      "table_name": "danh_gia_san_pham",
+      "column_name": "ngay_tao"
+    },
+    {
+      "table_name": "danh_gia_san_pham",
+      "column_name": "phan_hoi_quan_ly"
+    },
+    {
+      "table_name": "khao_sat_phan_hoi",
+      "column_name": "id"
+    },
+    {
+      "table_name": "khao_sat_phan_hoi",
+      "column_name": "ma_bieu_mau"
+    },
+    {
+      "table_name": "khao_sat_phan_hoi",
+      "column_name": "ma_nguoi_dung"
+    },
+    {
+      "table_name": "khao_sat_phan_hoi",
+      "column_name": "ma_don_hang"
+    },
+    {
+      "table_name": "khao_sat_phan_hoi",
+      "column_name": "co_so_ma"
+    },
+    {
+      "table_name": "khao_sat_phan_hoi",
+      "column_name": "tra_loi"
+    },
+    {
+      "table_name": "khao_sat_phan_hoi",
+      "column_name": "trang_thai_voucher"
+    },
+    {
+      "table_name": "khao_sat_phan_hoi",
+      "column_name": "ngay_tao"
+    },
+    {
+      "table_name": "ton_kho_san_pham",
+      "column_name": "id"
+    },
+    {
+      "table_name": "ton_kho_san_pham",
+      "column_name": "co_so_ma"
+    },
+    {
+      "table_name": "ton_kho_san_pham",
+      "column_name": "ma_san_pham"
+    },
+    {
+      "table_name": "ton_kho_san_pham",
+      "column_name": "ten_san_pham"
+    },
+    {
+      "table_name": "ton_kho_san_pham",
+      "column_name": "so_luong_ton"
+    },
+    {
+      "table_name": "ton_kho_san_pham",
+      "column_name": "muc_canh_bao"
+    },
+    {
+      "table_name": "ton_kho_san_pham",
+      "column_name": "dang_kinh_doanh"
+    },
+    {
+      "table_name": "ton_kho_san_pham",
+      "column_name": "cap_nhat_luc"
+    }
+  ],
+  "certificate_summary": [
+    {
+      "dataset_id": "replica.orders.don_hang",
+      "completeness": "partial",
+      "snapshot_present": false,
+      "closed_period_count": 1
+    },
+    {
+      "dataset_id": "replica.orders.danh_gia_san_pham",
+      "completeness": "unknown",
+      "snapshot_present": false,
+      "closed_period_count": 0
+    }
+  ]
+}

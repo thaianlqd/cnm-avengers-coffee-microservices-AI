@@ -1,0 +1,44 @@
+{
+  "status": "LOCAL_ACCEPTED_REMOTE_PENDING",
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "completed": [
+    "Gitleaks 36 false positives reproduced; JSON values preserved; normal scan 0; positive generic-api-key + github-pat exit42",
+    "P6 backend 12 tests; full non-AI lifecycle transport0; browser targeted3; web targeted7; typecheck",
+    "Depth16; semantic146 + V33 33/33 + V34 120/120; authored reference120/120",
+    "Acceptance76/76 before final oracle tightening",
+    "Locked oracle: exact failure categories, requested meaning hashes across depth, 0 singleton fake views; D10 metadata-pinned answer preserved in validated table (17 depth/edge regression tests passed)",
+    "Capacity/P6/edge targeted29 PASS; 1–20000 groups and 25 Apply revisions without changing budgets",
+    "Final P6/edge/depth targeted38 PASS; identity metadata pinning and date-exact ratio/exposure oracles",
+    "Current UI fixture regenerated from production; targeted web7/typecheck/browser3 PASS",
+    "Versioned cohort-pinning-v1: immutable query/cache signature; old rendering preserved; expanded targeted 158/158 PASS (131.562s)",
+    "Current source-frozen acceptance 78/78: domain32/family18/edge28; 193 depth runs; 155 complete,34 honest limited,4 expected typed errors",
+    "Current frozen full backend1367/1367 PASS 560.560s; semantic146 no failures + V33 33/33 + V34 120/120 + authored reference120/120",
+    "Full web191/191 + typecheck + build PASS",
+    "Full mocked browser40/40 + actual FastAPI browser5/5 PASS; HTTP metrics external_http0",
+    "Pipeline isolated unit65/65 PASS",
+    "Pipeline integration41/41 + PostgreSQL/Redis API33/33 PASS",
+    "Actual two-process P6 same-revision race: exactly1 publish, stale reject, atomic result set, provider0; existing ownership/idempotency/CAS/crash-reservation PASS",
+    "Two-process load15/15 PASS:111 completed,24 expected429; owner4/global12 fairness preserved",
+    "Fixed900.105-second soak PASS:1541/1541 operations,60/60 controlled jobs,0 failures, exact two-target counters, external/provider0",
+    "Fault matrix PASS:5 crash windows, actual PostgreSQL cancel0.596s,4 revoke stages, ceilings/circuit, reader-pressure/drain, Redis failclosed503; external0",
+    "Web8501 served bundle03750e54297a… exact localdist; existing API typed route present; only web-ui recreated; disposable fixtures stopped",
+    "Final candidate full-source/evidence Gitleaks0; positive controls2findings/exit42; all checksums preserved, no allowlist changes",
+    "Sealing full source/evidence scan PASS:1036 files,0 findings; positive control exit42; source fingerprint reverified"
+  ],
+  "active": "Local work complete; pending user commit/push and exact pushed-SHA Data Platform CI",
+  "remaining": [
+    "User commit/push; then verify all terminal Data Platform CI jobs on exact pushed SHA"
+  ],
+  "provider_sends_this_turn": 0,
+  "production_db_schema_changes": 0,
+  "acceptance_manifest_sha256": "8440a1c7f80192081f7584658ffc33acb67fa1035469a4b3d75d7c9e07d25aed",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "planned_acceptance_counts": {
+    "domain": 32,
+    "family": 18,
+    "edge": 28,
+    "total": 78
+  },
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00",
+  "marker": "LOCAL_READY_FOR_USER_PUSH"
+}

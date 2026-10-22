@@ -1,0 +1,836 @@
+{
+  "kind": "working_tree_checkpoint_NOT_RELEASE",
+  "observed_at": "2026-10-18T09:18:28.541544+00:00",
+  "branch": "branch_thaian",
+  "head": "f9a1a6ff8d3c88e1bc9954c134d7cef8bdcd050b",
+  "source_files": [
+    {
+      "path": ".claude/scripts/dp-fixture-http.sh",
+      "bytes": 694,
+      "sha256": "ea8d7fcc0f71174cf9cf06b3a2c78c6c519178d5d53eff5f7f525cc00efd1134",
+      "tracked": true
+    },
+    {
+      "path": ".claude/scripts/dp-pipeline-test.sh",
+      "bytes": 1689,
+      "sha256": "9c8470344b4c98e8493b4d26f831e42f21c1d730c85900c1232df1ae0ffbc254",
+      "tracked": false
+    },
+    {
+      "path": ".claude/scripts/dp-test.sh",
+      "bytes": 4253,
+      "sha256": "333d98b6cf5d3ae0b62b00d50e16b0251547fffcd56b8108f2a6a5790795cbbc",
+      "tracked": true
+    },
+    {
+      "path": ".github/workflows/data-platform-ci.yml",
+      "bytes": 3825,
+      "sha256": "35c00c0b085abf1fe74caa1f5e93666da8d242460bacc41a0c63c5a62cb9b069",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/.dockerignore",
+      "bytes": 192,
+      "sha256": "d3a2cad511cab449f14997ef9b7be30039c1a1a1cb67fda9495d91e1e5b7e615",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/AI_V34_PLATFORM_MATURITY_PLAN.md",
+      "bytes": 127032,
+      "sha256": "451ab2d71e0c6eb5242d0b977f915f81ca4202d342f894037fe5a82dae96dc11",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/AI_V34_PLATFORM_MATURITY_PLAN.progress.md",
+      "bytes": 17188,
+      "sha256": "60fcabbfb26770881b1149524cc304750f5feb07dcb39b6a950d6ff522ea6d7f",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/airflow/Dockerfile",
+      "bytes": 670,
+      "sha256": "78c8562e006c21729f869591e5ef255f3eeac6b078da0cc12ef090b3aba36071",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/airflow/dags/daily_pipeline_dag.py",
+      "bytes": 4234,
+      "sha256": "eff620611259d6e3cfbef1a8f5a3a9b4739201681b5bd2c4debbf057928546f6",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/airflow/requirements.txt",
+      "bytes": 92,
+      "sha256": "4d528ebe5caea480dd12e645dc51a8f0e68b82b6276451ab6f7afd0ec7dceb23",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/.dockerignore",
+      "bytes": 77,
+      "sha256": "4e3167a1204e6412238f5456392ad95adefb5c9e9bfb3ebc409ed34e04ed6953",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/db.py",
+      "bytes": 7566,
+      "sha256": "d90d8440227b4558b58f9e7bf98aab2bf0d854537a347f63dcafd9885295aa4b",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/evals/semantic_cases_v34.json",
+      "bytes": 43930,
+      "sha256": "12959e3daef9e07d9941ba60abef564a64ad73203bc386a452e28b4783067fa4",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/evals/semantic_eval_v30.py",
+      "bytes": 22077,
+      "sha256": "f7b0c9449b20d245de98df6115929a6511d656d6c2039d2daeb1872fd28e5c7a",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/evals/semantic_eval_v34.py",
+      "bytes": 4419,
+      "sha256": "c81171a7767f0b2f588fc69016680e8817554136ccd9734638baacfc0f418067",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/metadata/access_policy.json",
+      "bytes": 235,
+      "sha256": "62d14944387f36f1dbe3b80f22403c6ed973fb117c22094662f24869420334fc",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/metadata/data_health_contracts.json",
+      "bytes": 78749,
+      "sha256": "f46d59e9399d3ec7a788129fdbac897d39bcaacb8d438d621b30260d4b0d94af",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/metadata/semantic_catalog.json",
+      "bytes": 531894,
+      "sha256": "7dc4086d13bb22ae16493ad3c3c9b22ee7b05c3a1680f34f89aa07760a37035f",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/metadata/warehouse_views.json",
+      "bytes": 17617,
+      "sha256": "fcdeef08c35855aae5f21dd41ff3a30b67070299f2209bd98ca190d4178a9230",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/migrations/027_platform_governance.sql",
+      "bytes": 7243,
+      "sha256": "9aaed6d44fbda7dc755d57e0c19961ccc7f17dc8bc4a9c3166d8cc8381fcffac",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/routers/ai.py",
+      "bytes": 23115,
+      "sha256": "3ff7a7b2ac8bf7b557e75b62ffcada8be7a3312bafb5fce7b9151e9bd979d302",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/routers/analysis_modules.py",
+      "bytes": 3498,
+      "sha256": "ac53c6e5bd89bd1a6c400de7b5b32f20ec0e179ed7e7cdc8fbcdce6e8c45ee4a",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/routers/platform.py",
+      "bytes": 33728,
+      "sha256": "4dda358f27564a830c501bd7aa080deb8847d71a0d1d6b125fdb7e58a0cd2c06",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/routers/query.py",
+      "bytes": 12512,
+      "sha256": "24cef50085111cd756d0d9781a0ce8c2a2830fb0522e8d24f4c8892aaf0a3ea5",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/routers/reports.py",
+      "bytes": 17892,
+      "sha256": "a4e26bcccc15bd066774a4db57af211c1f750002533aad8dff5b2632893f9c1f",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/server.py",
+      "bytes": 9707,
+      "sha256": "6093b22a12d5791e3ade07299cf186f70fe654aa2e18ed751581b70beea4cf4b",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/access_policy.py",
+      "bytes": 20705,
+      "sha256": "8f41ca4cf2d61fbf4afdcad3a5e98a4ecc37227e181fb9b1219fd9a151bd1117",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/services/agent_pipeline.py",
+      "bytes": 82494,
+      "sha256": "d694b2298c047db4d563157de0ff79d8ccac59517e42f5a7d303165b5ff5dde0",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_catalog.py",
+      "bytes": 26943,
+      "sha256": "7bf6f5dc5bcb56a32d51a14e8abee2c5f6cc74f3655ff4af7f145efc969d7806",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_job_service.py",
+      "bytes": 20549,
+      "sha256": "efdf404d3357836dab370e6fa4f305c55d627403a52a01faa03a0bf78a95f6e1",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_module_repository.py",
+      "bytes": 2933,
+      "sha256": "d984d6b24c23f4e7107a6c454bf349ad88c19da92bf8468dfea3b62f8c8b54ec",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_module_service.py",
+      "bytes": 14954,
+      "sha256": "d2cb94f5617885425368e51a97ff2c93114e5838d0e784f21371b38e51682724",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/analytical_query_service.py",
+      "bytes": 27264,
+      "sha256": "3c28856a3fb313b24aa568a1468e5621bb5ac547a5910debb264dc44ccfd6cc4",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/browser_owner.py",
+      "bytes": 1311,
+      "sha256": "b53c7c5635cf08cb099da9767823f0070b4fcc47eed567754395419bdb681591",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/dashboard_planner_service.py",
+      "bytes": 39341,
+      "sha256": "fbc0c19af0dc975ad8b48b96c55c08321b87d9ce49f7e03f164d6cfec1b72ad8",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/data_coverage_service.py",
+      "bytes": 22978,
+      "sha256": "7a7af976ec57dbd38d02404c95f2d3927e6bae7083c0e6892307692cd15e1cea",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/domain_intelligence_service.py",
+      "bytes": 35654,
+      "sha256": "27502a4d6c957fa02accceb329aaa4ca4a0b44ee1630c932da6c992c9dafc011",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/forecast_service.py",
+      "bytes": 18129,
+      "sha256": "a258319d319637347cc3286962859194f0464e842d8bda9ee1df02ecd27d7fa1",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/hybrid_analyst_planner.py",
+      "bytes": 78585,
+      "sha256": "82a8d20ac050253f313cba1cb7203d9265bdf70c4bcfbddf303e4da7e14065a3",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/insight_service.py",
+      "bytes": 49078,
+      "sha256": "584b56f08e4d841c739f3c2e3cbcf5bff00b23038b061c9144b345c155d59caf",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/one_shot_planner.py",
+      "bytes": 44739,
+      "sha256": "2c248b7180d0688163172adfa72309499189c276cb1d0820050e219b312a3876",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/preflight_service.py",
+      "bytes": 49793,
+      "sha256": "3086b3cbfddb458396b5d252262b0577c34638801eb5f8c7cc60ec136e6c285c",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/provider_health_service.py",
+      "bytes": 4326,
+      "sha256": "bbc65e1008e3d4ee4e2c0f326bbb72a28a2148957dbc3e75c0d78c4ed36c53dc",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/query_execution_batch.py",
+      "bytes": 7180,
+      "sha256": "10339d8adf0a4a5b0a278b37ec522c219803b05f4a7758f7bc02e2c0c0890cb3",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/readiness_service.py",
+      "bytes": 5451,
+      "sha256": "6e839057b20785d9ce88c962598f301bd4e7d8d5639a0a7d441034db35014e74",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/report_sql_policy.py",
+      "bytes": 2540,
+      "sha256": "163d1b7e50fc54780ff8c7b5b366b669ad1a89e2ae1ad5e174a7e2b86b73da1b",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/request_anchors.py",
+      "bytes": 58037,
+      "sha256": "cd12f2c1371ec50187fb132ea1f2d042a9a2ae155203b877e9efba694a61acca",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/risk_watch_service.py",
+      "bytes": 16820,
+      "sha256": "594139e2f5f5f3c8ba6369849016519c0221c2a1f13f5ae354fc9fab6d2903ad",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/scope_resolution_service.py",
+      "bytes": 9852,
+      "sha256": "db91673f74689241cb23857f61011b8363a57e9e22e70cf53788767d686c75aa",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/semantic_catalog_validation.py",
+      "bytes": 22008,
+      "sha256": "9b5a3c0583c5e0c701b9ba6fe48b4de0f393b25d8db27ef6721e6db824322b2c",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/sql_service.py",
+      "bytes": 23760,
+      "sha256": "4e040b0f0b22010702f4a170e1873a0707bc66fa66be1302a71442035c7126bc",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/telemetry.py",
+      "bytes": 5688,
+      "sha256": "58471056de6420523f15142fde077527b88b9a130b0b4dfe569f7a596551323c",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/services/verification_reconciliation_service.py",
+      "bytes": 18983,
+      "sha256": "51ee961146d032236784bae011c9eb91dfb2bc523c56102c0b9cc54b018d2e09",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/services/workspace_service.py",
+      "bytes": 18752,
+      "sha256": "95a061de72d36723f9c5f3d6b3d487457c64ed269d53a7201a8936ae1a64e629",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/tests/fixtures/capabilities_v31.json",
+      "bytes": 267554,
+      "sha256": "a462116b1118a5bf720a56533cc01d777d0bbfcdc5454d834a008cd5ac479b01",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/tests/fixtures/v34_l03_intents.json",
+      "bytes": 1896,
+      "sha256": "b344bc5a49ca06de5dbd18a0ed82129ad2efe54d5530eb1db40c2caf6ad78337",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/http_fixture.py",
+      "bytes": 2191,
+      "sha256": "cbf7b6788661f1f7e200ecaec4e6a7425db18d5679a73f76ffe7fa89fdc021e6",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_access_policy.py",
+      "bytes": 7630,
+      "sha256": "e6b4b368ba2a34c47ad63e8aa6c8571ce51e611203e1e3e2a49b14f2c402bd4e",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_anomalies.py",
+      "bytes": 4069,
+      "sha256": "0d54db6fd9703cba716e2910abaeda0d8070e0972067888cb69d94e7594a2363",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_architecture.py",
+      "bytes": 2639,
+      "sha256": "80cb230dc5af7600bd70dba82e5815ddc8a146d497c8fafb6db6bc2422a787fb",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_audit.py",
+      "bytes": 3333,
+      "sha256": "2cbdab0a5258d082346e1d72d4d938487587ac54547ce231e83a9a9baf7ef4ad",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_auth_boundary.py",
+      "bytes": 7336,
+      "sha256": "0b741e6822fea90a01ab49d0c2613713c8e6afd77da82a9b929282ba11cbdb51",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_catalog_lifecycle.py",
+      "bytes": 5653,
+      "sha256": "c88163e550d746e522fbf742f1f99909cf977cdd92396e067c6915be23a41480",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_data_health.py",
+      "bytes": 8631,
+      "sha256": "961fbe6662d5abb509895b05cc22d2884ed668e8b01df38b27831599008cc894",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_entity_inspect.py",
+      "bytes": 3643,
+      "sha256": "a3b1c67706b24053a31a3f20126488215d9c17666bcfe7967dc7db67759497f9",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_forecast_diagnostics.py",
+      "bytes": 2814,
+      "sha256": "0977db885ded90d2428b54eecc36ab3076f72c58f802ba64d289d88d5d0e86e8",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_oracle_consistency.py",
+      "bytes": 3778,
+      "sha256": "0e302ad6066a650e9703890ef1c7f24d0626b6dbb6ae0f6bcc168c3b90b9cd01",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_platform_routes.py",
+      "bytes": 2904,
+      "sha256": "8d06cb658094bdc5b0d730de3e99ea7a540d2a6d67fa0242f5dec1b3483d1179",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_provider_observability.py",
+      "bytes": 3287,
+      "sha256": "cfb30e5215b68ea7994b8f4ae69103bd5f9444240b4ac8f00de82766ef7888a4",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_query_security.py",
+      "bytes": 2855,
+      "sha256": "174ed89d610a570a32ed9a4bd32451a289605196105b359d651b39e195f0a6e8",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_relationship.py",
+      "bytes": 2500,
+      "sha256": "7d63e30d8ba73047118527342e5af626e8efb0d982e1e02aedbf669322bfb722",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_semantic_corpus.py",
+      "bytes": 2240,
+      "sha256": "fad70db2c22045c7b8e48441127f1dcf74c6c6044355a51ea4e9e91578ecb0a6",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_semantic_repair.py",
+      "bytes": 3704,
+      "sha256": "bfb4ae733f79b27a0ff3f94d1b13ccba55ff13fc48912d8ae9c3ab9bfd5916f8",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_workspace_v31.py",
+      "bytes": 47001,
+      "sha256": "f02e6331133862bca7dd4fef5f73458deb4d4b89ae0e78a973e9ea7a0acff3fc",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/tools/architecture_inventory.py",
+      "bytes": 6081,
+      "sha256": "b0cf0c4f34d89599bcbbbdee37722d3475253a32da5e84a222a05d6f70ad8f92",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tools/catalog_contract_diff.py",
+      "bytes": 1002,
+      "sha256": "ca5f7f3c40bb0fb56a17cd12e98ee49ce044989b0376fcf6e57b659420e59816",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tools/regenerate_capabilities_fixture.py",
+      "bytes": 1010,
+      "sha256": "666ac612f7c9b6aff5a2e21fdaeb3fa0a56fb2db4bff4013a3f420d3ad0d5861",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/tools/regenerate_pipeline_metadata.py",
+      "bytes": 1398,
+      "sha256": "95ade7b1dae60380c4d036fc36fc1179fd3d803e18fb7214663112925877833f",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/analytics-api/tools/run_tests_v29.py",
+      "bytes": 1230,
+      "sha256": "d1c6955a3ea4cb8add04a6c3c34cdf5b26bc5b811fec1279dd7573fe30a1b194",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/analytics-api/tools/v33_fixture_server.py",
+      "bytes": 6131,
+      "sha256": "09f0cbf3b05f8473e995d46006cc2adb702f9f865ddf4bbf49bd77b17282a9d3",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/data-sync/Dockerfile",
+      "bytes": 396,
+      "sha256": "aad9e36699aa6cb23728f52ac2d74a1a564444b35713cf46f6b5679e14881d8a",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/data-sync/sync.py",
+      "bytes": 33843,
+      "sha256": "14a562e3f4314d51da86d37284dc6edaad7894cf788472e2e1d756bcff7b24a3",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/kafka-consumer/Dockerfile",
+      "bytes": 524,
+      "sha256": "328447978c5fb77dc5d2669ce7828a6d663abc62add90866d7f3c7a7f8c8a011",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/kafka-consumer/consumer.py",
+      "bytes": 6849,
+      "sha256": "78c490ce4b09d771b3bf1a9b92915cd31583d9d867ad9aa62aa46669e83c31f0",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/kafka-consumer/requirements.txt",
+      "bytes": 82,
+      "sha256": "9dd630c3d3d2a9f8d14fbefecff7110e13010c9a480ac901cb53a42f6a11016d",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/kafka-producer/Dockerfile",
+      "bytes": 524,
+      "sha256": "72fa98d2c900fba76ae9ea34f458aced66cd3602abf2865ddbf56aef4cf81cf1",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/kafka-producer/producer.py",
+      "bytes": 3638,
+      "sha256": "361326c0aa2b2f4d0138cf5ace4db472beaf88ed9c91662278bcbded7cc2eb33",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/metadata/data_contracts.json",
+      "bytes": 96007,
+      "sha256": "f5ee47143df1ed2b5d28dbbf7cc334dedfc01dd1dc6cd8bd41d63c403d25a16f",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/metadata/stream_contracts.json",
+      "bytes": 1392,
+      "sha256": "9e6d11da8d138027dd7a0666eb8c993edc41ca2732dfcb36c5ecb7962f76bd0f",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/metadata/warehouse_views.json",
+      "bytes": 17617,
+      "sha256": "fcdeef08c35855aae5f21dd41ff3a30b67070299f2209bd98ca190d4178a9230",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-common/batch_runtime.py",
+      "bytes": 12345,
+      "sha256": "6e6e7bbb548c4f1ad630a5a591eb1d8d4ea7c648c8cf1944320ac540ddae7b6d",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-common/pipeline_runtime.py",
+      "bytes": 17003,
+      "sha256": "26d2aafed2aeca53ee26a1a4aa36ba8d6838e2a9daef6ab328c6bcf8c3384c61",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-common/producer_runtime.py",
+      "bytes": 7749,
+      "sha256": "1f4e9f6ec9e6dc1ef6d5365337d912db6151f957eb99aabff1d9bab2f825d0a9",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-common/stream_runtime.py",
+      "bytes": 6651,
+      "sha256": "b067714a762667f2be593713c025cf809e682f52661287b8a29f554978af6a65",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/Dockerfile",
+      "bytes": 330,
+      "sha256": "e9330be9e28b1d8cb65b5b6f46d5a8727398adad768c330a43aa5e8cff504410",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/acceptance_api_ownership.py",
+      "bytes": 10580,
+      "sha256": "f2440f151b1c90c906d8f571fe9230c572b0f0c2eb595188b74020a9d603ca7b",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/compose.fixture.yml",
+      "bytes": 3558,
+      "sha256": "25f93c0a8fa11d62f77a6dc07f8be1055fe1ef82258cdceb2f74b60f4130b3b8",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/integration_batch.py",
+      "bytes": 10302,
+      "sha256": "90138cd75504e3e63d1c0816e0611eb72b9e732c5d334f498b1c67d0214524d4",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/integration_kafka.py",
+      "bytes": 7348,
+      "sha256": "3d36245de096e7db6671ee3bfb55a4f13906e6f529c8ee74e134402ef47c88c2",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/integration_minio.py",
+      "bytes": 4799,
+      "sha256": "1659c3e6dc712f4a1b28e881252ccedfda8503a613fd62f2c090b1d1895dc307",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/integration_sync_pg.py",
+      "bytes": 19682,
+      "sha256": "5c44d2f5739fdc0451ed1a912cfd09915f0e526b2709320b94c60ab0a359f130",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/requirements.txt",
+      "bytes": 107,
+      "sha256": "1036ce202b7f609256a891bda601f4cfb71803edaccfca094d50a7ca57980f96",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_batch_quality.py",
+      "bytes": 3260,
+      "sha256": "854a6284ab8093d55c3f711bf7020dfe39ee70f27a2a32043cd0ad2ba5a1c07b",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_data_contracts.py",
+      "bytes": 4352,
+      "sha256": "03cfbb4b50835a717fcf6947c884bd5812759129e2569330d2a02d825f7d4bb6",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_run_publication.py",
+      "bytes": 7265,
+      "sha256": "fcf80e87126d8ea3ec7121725bb35e70fc9d27d52b2cc5f28990dc33bbe9135a",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_stream_delivery.py",
+      "bytes": 5369,
+      "sha256": "ea4f2fd38de5dff86a83bdff404843a0a748b91bf323eee0fe145cbb8a88fef9",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_views_registry.py",
+      "bytes": 1615,
+      "sha256": "e14126aef7143e25b02e0c98ffb372e5f3a17d7937b2f4d079d3feadc0fa99a3",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/spark-jobs/Dockerfile",
+      "bytes": 636,
+      "sha256": "d755a825284c0841ab80ca0426800a62ab2a2030c747588fb0df49e60879c14e",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/spark-jobs/bronze_ingestion.py",
+      "bytes": 6756,
+      "sha256": "63c8c0d98c8074cff0cfaa580d3c700fd2b6452e6e96ca37e8def9c1d1bd8864",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/spark-jobs/entrypoint.sh",
+      "bytes": 706,
+      "sha256": "269aed431befb3fdbbb35a2759453356a688080f91f59955904d89c6c7e58829",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/spark-jobs/gold_aggregation.py",
+      "bytes": 19187,
+      "sha256": "63ba072eb3ecc92bd5574ae8851e1cb8f1ba085fff4eeff1ef8225cabf35ea40",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/spark-jobs/silver_transform.py",
+      "bytes": 6123,
+      "sha256": "2311ebccfddc8869b48c12c2318b0ab09037cb9016928394985bd961f5df2125",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/App.tsx",
+      "bytes": 7130,
+      "sha256": "9f89ccbc774e05273f3a04fe0091a3e920244a38457651dfd447adf44550912e",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/components/AnalystDashboardSummary.tsx",
+      "bytes": 44482,
+      "sha256": "bad2a6273b3d18f97b4c69a158e7c43495d78ac403a5a8ad78ec8a38513794cc",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/components/Charts.tsx",
+      "bytes": 67687,
+      "sha256": "c198104a76d743ebb8be2a53fa82f5742cf21ba73502bb931c56ef9a204043dc",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/components/report/VerificationPanel.tsx",
+      "bytes": 10640,
+      "sha256": "58fa68b2ee08a9580444a5197e65b483767ca2cb628e3791c242d1978c3fef5c",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/components/workspace/AnalysisScopePanel.tsx",
+      "bytes": 8654,
+      "sha256": "f8ca73167c6234547102034c252fca384b8d5d43c7658219917de25436c642e0",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/components/workspace/DataCoverageBar.tsx",
+      "bytes": 1887,
+      "sha256": "6738b8be9e979f110aa27e4d475aa84ff4a204a658b3505cf7c86b7feff43ae1",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/hooks/useAnalysisLifecycle.ts",
+      "bytes": 1369,
+      "sha256": "3c0e806137cc5ee6c51baccc5670e8affd98519fe69041c01183c43ef64712f1",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/web-ui/src/main.tsx",
+      "bytes": 875,
+      "sha256": "45aa4503f161ca18be2042b6b271025d47a199a436f26087dacb61965a63e835",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/analysisJobs.mjs",
+      "bytes": 2153,
+      "sha256": "6b42fdce791cbf32dde655b5a41386ef87c63aeaa5f41cc4c0540131d1bc43a8",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/analysisJobs.test.mjs",
+      "bytes": 2847,
+      "sha256": "6d6da53b2b7d1371b92b22f275098024c644411d7f7c1110aba1d5f9f2e2b5b0",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/analysisQuality.test.mjs",
+      "bytes": 7003,
+      "sha256": "0f8c0be3c27257485cb34fbfbfba35741b720310838ef5fbb7b2e8d18a7a4e92",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/authSession.d.mts",
+      "bytes": 562,
+      "sha256": "3adce68f15c815fffcbfa0c45d8e851533fea6a9b8e2e962c311f912a9a6a635",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/authSession.mjs",
+      "bytes": 1188,
+      "sha256": "38a5d55a97266669cd0443722936940102f0b631c35d2da43bfe94176e013c21",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/authSession.test.mjs",
+      "bytes": 1716,
+      "sha256": "f434b3415d9d426ad22ce526e45b28e5d42b17405bbb43b145048823c87a4838",
+      "tracked": false
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/reportPersistence.mjs",
+      "bytes": 913,
+      "sha256": "25ada4161e2778592aced04103cb9b1a2c80feb79faeb77faa6a0689252661c4",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/verificationPresentation.mjs",
+      "bytes": 4769,
+      "sha256": "5f36eb2d839f05395b154bbb4da53198c6bc4ca02f0f0f218bddab712d4b9ae2",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/src/views/AnalyticsView.tsx",
+      "bytes": 173659,
+      "sha256": "e7d032c67cad7ffdbb10d15014d81c3d807d18bfb8fe1a27f2aad38580fd3bd8",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/tests/e2e/helpers.ts",
+      "bytes": 3641,
+      "sha256": "7748bb2e721569c95dcde77313a169cf9da5837a94cb9ec5b6e981cd4de76e32",
+      "tracked": true
+    },
+    {
+      "path": "data-platform/web-ui/tests/e2e/platform-v34.spec.ts",
+      "bytes": 8505,
+      "sha256": "004f8715a5c9350310b0ae234cbbcdbeb114c2d65cd250374c79e6b5c947d8cc",
+      "tracked": false
+    },
+    {
+      "path": "docker-compose.data.yml",
+      "bytes": 15789,
+      "sha256": "d1c51aa39a8e62041c965a0ebbbb3c589f942a5ca6e6179b0da9d0990465007d",
+      "tracked": true
+    }
+  ],
+  "source_file_count": 132,
+  "existing_changed_files": 72,
+  "new_files": 60,
+  "tracked_diff_sha256": "3b5ef062ea93ef4fdd2f7279ed9d8385e823d7bb3e40115aaea1d20617adabff",
+  "architecture": {
+    "service_modules": 81,
+    "service_import_edges": 378,
+    "router_import_reachable": 78
+  },
+  "largest_static_scc": 53,
+  "local_build_assets": [
+    {
+      "path": "data-platform/web-ui/dist/assets/index-C7LhEk_e.css",
+      "bytes": 50552,
+      "sha256": "0968441b9941703bc4cd93ed2e119c74f5c88882b3f03bb92e730d1fd2a2dfc6"
+    },
+    {
+      "path": "data-platform/web-ui/dist/assets/index-CXwdHPxg.js",
+      "bytes": 534770,
+      "sha256": "dbb16669db9b2c7736ba0bca72f59fd56af288aee214490e12696891d4e7f694"
+    },
+    {
+      "path": "data-platform/web-ui/dist/index.html",
+      "bytes": 1424,
+      "sha256": "7142bb5e2b42b10ade7d987ba30c5628a592085402781e9a1810de2e99df3f2b"
+    }
+  ],
+  "served_revision_match": "NOT_MEASURED",
+  "production_migration": "NOT_APPLIED",
+  "live_provider_calls_this_implementation": 0,
+  "release_acceptance": "INCOMPLETE",
+  "goal_tracker": "usageLimited",
+  "tracked_added_lines": 5136,
+  "tracked_deleted_lines": 2266,
+  "new_file_lines": 13698,
+  "line_count_scope": "All source/config/docs/test/generated metadata; not production LOC only; excludes evidence directory"
+}

@@ -1,0 +1,31 @@
+{
+  "status": "PLAN_UPDATED_WITH_DIAGNOSED_INCIDENT_NOT_IMPLEMENTED",
+  "planned_scenarios": 56,
+  "relative_links_valid": true,
+  "source_drift": [],
+  "new_provider_calls": 0,
+  "new_business_queries": 0,
+  "product_edits": false,
+  "files": [
+    {
+      "path": "data-platform/AI_DATA_ANALYST_COMPARISON_WORKSPACE_PLAN_20261022.md",
+      "sha256": "00aefcb2804bcd51553ac42ac6ab0a1ff5ccf3e27744d35d278c944abb937222"
+    },
+    {
+      "path": "data-platform/AI_DATA_ANALYST_COMPARISON_WORKSPACE_GOALS_20261022.md",
+      "sha256": "ba9ae1dc721b978d15111b31f8c86a92d8d59e5581eadaebf2af9c2aed2407d5"
+    },
+    {
+      "path": "data-platform/AI_DATA_ANALYST_COMPARISON_SELECTION_ADDENDUM_20261022.md",
+      "sha256": "b5cbd52e5fa3e9c3310b8470294df0049b674c378346203aeabe1635d7fe6a4c"
+    },
+    {
+      "path": "data-platform/evaluation/comparison-workspace-20261022/README.md",
+      "sha256": "77f6169cf085a5f78313c1098d2f88e75476400cda44711234427097bee5de3b"
+    },
+    {
+      "path": "data-platform/evaluation/comparison-workspace-20261022/stability-selection-incident/REVIEW.md",
+      "sha256": "a59d86a5fba6499c1ce4f84fe9bb88502a90fbe7c17011caa106b474251a9f0d"
+    }
+  ]
+}

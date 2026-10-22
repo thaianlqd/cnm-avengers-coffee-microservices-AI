@@ -1,0 +1,30 @@
+2026-10-18 08:43:15,958 [INFO] matplotlib.font_manager - generated new fontManager
+2026-10-18 08:43:16,343 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_4f8b2685f54b489bb115d2ee49cbf97b","job_id":null,"duration_ms":53.665}
+.2026-10-18 08:43:16,358 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":"req_2e24a88cf3ab4d9b98dafbf08d338b37","job_id":null}
+2026-10-18 08:43:16,362 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_2e24a88cf3ab4d9b98dafbf08d338b37","job_id":null,"duration_ms":10.835}
+.2026-10-18 08:43:16,381 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_baa290695eb74f82a7b0b7b333f64f64","job_id":null,"duration_ms":4.111}
+2026-10-18 08:43:16,387 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_cde7dc455b32413ea025e36b1d57fc98","job_id":null,"duration_ms":4.061}
+2026-10-18 08:43:16,391 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_19b552dcd9f14b64a9a8bed14945196c","job_id":null,"duration_ms":3.918}
+2026-10-18 08:43:16,396 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":"req_1297f75d74e24827a6c925de88369cf3","job_id":null}
+2026-10-18 08:43:16,400 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_1297f75d74e24827a6c925de88369cf3","job_id":null,"duration_ms":7.685}
+.2026-10-18 08:43:16,413 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":"req_8fdbc8dd770d4d559ef1d48069911166","job_id":null}
+2026-10-18 08:43:16,416 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_8fdbc8dd770d4d559ef1d48069911166","job_id":null,"duration_ms":7.673}
+2026-10-18 08:43:16,421 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_a2a58882198643aaac33934d41d926b7","job_id":null,"duration_ms":3.502}
+2026-10-18 08:43:16,425 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":"req_e4f9cf7c0a2f49f0a76a01d44b122135","job_id":null}
+2026-10-18 08:43:16,429 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_e4f9cf7c0a2f49f0a76a01d44b122135","job_id":null,"duration_ms":8.083}
+.2026-10-18 08:43:16,440 [INFO] analytics.events - {"stage":"audit","status":"failed","request_id":"req_8bee6fd52b244587968e75b844fea2b6","job_id":null}
+2026-10-18 08:43:16,440 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_8bee6fd52b244587968e75b844fea2b6","job_id":null,"duration_ms":1.172}
+.2026-10-18 08:43:16,456 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":"req_479e097af045457db531fdd555081f0c","job_id":null}
+2026-10-18 08:43:16,460 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_479e097af045457db531fdd555081f0c","job_id":null,"duration_ms":8.26}
+2026-10-18 08:43:16,464 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_1e607038f64643a5ae9e538180f4e9fa","job_id":null,"duration_ms":3.948}
+2026-10-18 08:43:16,469 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_2f8eae8ee00146669a8119fc988d34c1","job_id":null,"duration_ms":3.629}
+2026-10-18 08:43:16,473 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":"req_84c0093c3a2446168297e241e0106252","job_id":null}
+2026-10-18 08:43:16,477 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_84c0093c3a2446168297e241e0106252","job_id":null,"duration_ms":7.185}
+2026-10-18 08:43:16,481 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":"req_17595b8aacfd4f1ab6a1e24e0e36373a","job_id":null}
+2026-10-18 08:43:16,485 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_17595b8aacfd4f1ab6a1e24e0e36373a","job_id":null,"duration_ms":8.099}
+2026-10-18 08:43:16,490 [INFO] analytics.events - {"stage":"request","status":"completed","request_id":"req_72804b1cedea4837a6fea7ab22099632","job_id":null,"duration_ms":3.871}
+.
+----------------------------------------------------------------------
+Ran 6 tests in 0.306s
+
+OK

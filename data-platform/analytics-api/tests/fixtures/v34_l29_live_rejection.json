@@ -1,0 +1,49 @@
+{
+  "question": "So sánh doanh thu miền Bắc với miền Nam tháng 9 năm 2026",
+  "basis": "Normalized interpreter shape from frozen full live run; rejected repair retained. No raw transport/rows/PII. This fixture verifies rejection safety, not successful understanding.",
+  "outputs": [
+    {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "derived_features": [
+            "group_gap"
+          ],
+          "metric_ids": [
+            "revenue"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "id": "req_1",
+          "availability": "requested",
+          "analysis_kind": "comparison",
+          "time": {
+            "kind": "month",
+            "month": 9,
+            "year": 2026
+          }
+        }
+      ]
+    },
+    {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "ranking": {
+            "limit": 10,
+            "metric_id": "revenue"
+          },
+          "time": {
+            "year": 2026,
+            "kind": "month",
+            "month": 9
+          },
+          "id": "req_1"
+        }
+      ]
+    }
+  ],
+  "expected_rejection": "semantic_intent_invalid",
+  "physical_http": 2
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "cohort",
+    "sha256": "b1518e834371fb4719f4184318674a5e31c3a34e28edf7127a57a858fca2b135",
+    "bytes": 197147,
+    "path": "/tmp/codex-word-policy31-cohort.docx"
+  },
+  {
+    "name": "preview",
+    "sha256": "719ad70fb2b3d8abe3de2b52f79a8c16b13919f348d5a31ebd48059ce6724b45",
+    "bytes": 40306,
+    "path": "/tmp/codex-word-policy31-preview.docx"
+  }
+]

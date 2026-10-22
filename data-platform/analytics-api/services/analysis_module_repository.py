@@ -4,7 +4,7 @@ from services.analysis_catalog import AnalysisError
 
 class PostgresModuleRepository:
     def execute(self, sql, params, many=False):
-        from db import get_db_conn
+        from db import get_report_writer_conn as get_db_conn
         try:
             with get_db_conn() as conn:
                 with conn.cursor() as cur:

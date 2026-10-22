@@ -1,0 +1,159 @@
+{
+ "note": "Rescored with corpus v2 oracle fixes (history in evals/business_coverage_cases.json); first_pass = first attempt, eventual = last bounded retest",
+ "campaign_reserved_sends": 98,
+ "actual_http": 86,
+ "measured_tokens": 248151,
+ "unmeasured": "pilot-1: 12 HTTP, tokens not captured (parser bug); est. <=50k",
+ "cases": 63,
+ "first_pass": 47,
+ "eventual": 60,
+ "holdout": 42,
+ "holdout_first_pass": 29,
+ "holdout_eventual": 39,
+ "mandatory": {
+  "BC-REV-001": [
+   true,
+   true
+  ],
+  "BC-REV-002": [
+   true,
+   true
+  ],
+  "BC-REV-003": [
+   false,
+   true
+  ],
+  "BC-REV-004": [
+   true,
+   true
+  ],
+  "BC-REV-007": [
+   false,
+   true
+  ],
+  "BC-REV-008": [
+   true,
+   true
+  ],
+  "BC-REV-013": [
+   false,
+   true
+  ]
+ },
+ "domains_without_pass": [],
+ "per_domain": {
+  "(limitation/privacy)": [
+   8,
+   8
+  ],
+  "cashier_reconciliation": [
+   2,
+   2
+  ],
+  "customer_care": [
+   2,
+   2
+  ],
+  "customer_surveys": [
+   2,
+   2
+  ],
+  "customer_wallet": [
+   2,
+   2
+  ],
+  "customers": [
+   2,
+   2
+  ],
+  "delivery": [
+   2,
+   1
+  ],
+  "franchise_finance": [
+   2,
+   2
+  ],
+  "franchise_network": [
+   2,
+   1
+  ],
+  "gift_cards": [
+   2,
+   2
+  ],
+  "hourly": [
+   1,
+   1
+  ],
+  "inventory": [
+   2,
+   2
+  ],
+  "kiosk_operations": [
+   2,
+   2
+  ],
+  "loyalty_awards": [
+   2,
+   2
+  ],
+  "news_content": [
+   2,
+   2
+  ],
+  "order_items": [
+   1,
+   1
+  ],
+  "orders": [
+   3,
+   3
+  ],
+  "payments": [
+   2,
+   1
+  ],
+  "product_reviews": [
+   6,
+   6
+  ],
+  "products": [
+   2,
+   2
+  ],
+  "promotions": [
+   2,
+   2
+  ],
+  "shipper_finance": [
+   2,
+   2
+  ],
+  "staff_shifts": [
+   2,
+   2
+  ],
+  "store_reviews": [
+   3,
+   3
+  ],
+  "stores": [
+   1,
+   1
+  ],
+  "survey_answers": [
+   2,
+   2
+  ],
+  "wishlist_favorites": [
+   2,
+   2
+  ]
+ },
+ "still_failing": [
+  "BC-B14-006",
+  "BC-B18-005",
+  "BC-B22-006"
+ ]
+}

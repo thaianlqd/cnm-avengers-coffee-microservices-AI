@@ -1,0 +1,212 @@
+{
+  "title": "Kiểm bảng trích khi phân trang",
+  "table_data": {
+    "columns": [
+      "city",
+      "revenue"
+    ],
+    "rows": [
+      {
+        "city": "Tỉnh thử nghiệm 0",
+        "revenue": 0
+      },
+      {
+        "city": "Tỉnh thử nghiệm 1",
+        "revenue": 1000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 2",
+        "revenue": 2000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 3",
+        "revenue": 3000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 4",
+        "revenue": 4000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 5",
+        "revenue": 5000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 6",
+        "revenue": 6000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 7",
+        "revenue": 7000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 8",
+        "revenue": 8000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 9",
+        "revenue": 9000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 10",
+        "revenue": 10000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 11",
+        "revenue": 11000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 12",
+        "revenue": 12000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 13",
+        "revenue": 13000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 14",
+        "revenue": 14000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 15",
+        "revenue": 15000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 16",
+        "revenue": 16000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 17",
+        "revenue": 17000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 18",
+        "revenue": 18000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 19",
+        "revenue": 19000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 20",
+        "revenue": 20000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 21",
+        "revenue": 21000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 22",
+        "revenue": 22000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 23",
+        "revenue": 23000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 24",
+        "revenue": 24000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 25",
+        "revenue": 25000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 26",
+        "revenue": 26000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 27",
+        "revenue": 27000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 28",
+        "revenue": 28000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 29",
+        "revenue": 29000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 30",
+        "revenue": 30000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 31",
+        "revenue": 31000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 32",
+        "revenue": 32000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 33",
+        "revenue": 33000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 34",
+        "revenue": 34000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 35",
+        "revenue": 35000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 36",
+        "revenue": 36000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 37",
+        "revenue": 37000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 38",
+        "revenue": 38000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 39",
+        "revenue": 39000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 40",
+        "revenue": 40000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 41",
+        "revenue": 41000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 42",
+        "revenue": 42000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 43",
+        "revenue": 43000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 44",
+        "revenue": 44000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 45",
+        "revenue": 45000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 46",
+        "revenue": 46000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 47",
+        "revenue": 47000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 48",
+        "revenue": 48000
+      },
+      {
+        "city": "Tỉnh thử nghiệm 49",
+        "revenue": 49000
+      }
+    ],
+    "total_rows": 80
+  }
+}

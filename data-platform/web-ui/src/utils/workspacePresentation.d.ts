@@ -1,0 +1,27 @@
+export function formatDate(iso?: string | null): string;
+export function formatDateTime(iso?: string | null): string;
+export function formatMagnitude(value: any, unit?: string): string;
+export function formatValue(value: any, unit?: string): string;
+export function coverageSummary(capabilities: any): { status: string; range: string; freshness: string; lastSync: string; stale: boolean; facts: any[]; lagging?: string[] };
+export interface MetricCapability { semantics: string; unit: string; grain?: string; additive: boolean; additive_over: string[]; non_additive_over: string[]; ratio_parts?: string[] | null }
+export function missionCards(capabilities: any): Array<{ id: string; label: string; description: string; status: string; disabled: boolean; reason?: string; caveat?: string; examples: string[] }>;
+export function metricIndex(capabilities: any): Record<string, any>;
+export function missionMetrics(capabilities: any, missionId: string): any[];
+export function monthOptions(capabilities: any, count?: number): Array<{ id: string; label: string; phrase: string }>;
+export function timeOptions(capabilities: any): Array<{ id: string; label: string; phrase: string }>;
+export function buildQuestion(capabilities: any, missionId: string, slots?: Record<string, any>): string;
+export function suggestionChips(capabilities: any, missionId?: string | null, limit?: number): string[];
+export function capabilityGroups(capabilities: any, search?: string): any[];
+export function unsupportedItems(capabilities: any, search?: string): any[];
+export function missionTabs(tabs: any[], layout?: any, extras?: { forecast?: boolean; risk?: boolean }): any[];
+export function orderChartsByMission(charts: any[], layout?: any): any[];
+export function groupDifference(rows: any[], labelField: string, valueField: string, unit?: string): any;
+export function kpiStrip(highlights: any[], report?: any): Array<{ label: string; value: string; unit?: string; comparison: string | null; direction: string | null; context: string; evidence_id?: string }>;
+export function reportContext(report: any, capabilities?: any): { question: string; mission: string | null; scope: string; time: string; sources: string[] };
+export function metricDefinition(capabilities: any, metricId: string): { label: string; unit: string; definition: string } | null;
+export function riskRows(result: any): any[];
+export function riskBreachChart(result: any): Array<{ label: string; value: number }>;
+export function templateDefaults(capabilities: any, missionId: string, metric: any): Record<string, any>;
+export function riskSummary(result: any): { status: string; breached: number; total: number; selected: number; unavailable: number; headline: string; entities: Array<{ signal: string; label: string; value: string }>; followUps: Array<{ mission: string; text: string; scope?: any[]; time?: any }> };
+export function visibleMissionId(capabilities: any, missionId: string | null): string | null;
+export function additivityBadges(capability?: MetricCapability | null): string[];

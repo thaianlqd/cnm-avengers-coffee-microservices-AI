@@ -44,17 +44,18 @@ class ReliabilityTests(f.unittest.TestCase):
     def response(self, meaning=None):
         return Mock(ok=True,json=Mock(return_value={'candidates':[{'content':{'parts':[{'text':json.dumps(meaning or recorded())}]}}]}))
 
-    def test_primary_19_seconds_has_23_second_read_window_and_succeeds(self):
+    def test_primary_attempt_is_capped_at_12_seconds_and_a_slow_success_still_succeeds(self):
         clock=[100.0]
         def post(*args,**kwargs):
-            self.assertGreaterEqual(kwargs['timeout'].read_timeout,23)
-            clock[0]+=19
+            timeout=kwargs['timeout']
+            self.assertLessEqual(timeout.total,12);self.assertGreaterEqual(timeout.read_timeout,9)
+            clock[0]+=11
             return self.response()
         http=self.native(post)
         with patch('services.provider_budget.time.monotonic',side_effect=lambda:clock[0]):
             p=self.pipeline(NativeAgentProvider());r=p.propose(self.request(OVERVIEW_45D))
         self.assertEqual(r['status'],'proposal_ready');self.assertEqual(http.call_count,1)
-        self.assertEqual(r['diagnostics']['provider_attempt_latencies'],[19000])
+        self.assertEqual(r['diagnostics']['provider_attempt_latencies'],[11000])
         p.executor.assert_not_called()
 
     def test_early_connection_reset_can_recover_once(self):
@@ -65,10 +66,37 @@ class ReliabilityTests(f.unittest.TestCase):
         self.assertEqual(r['diagnostics']['transport_retry_count'],1)
         self.assertEqual(r['diagnostics']['semantic_repair_count'],0)
 
+    def test_503_then_success_recovers_in_the_same_submission_without_nested_error(self):
+        bad=Mock(ok=False,status_code=503,headers={});bad.json.return_value={}
+        http=self.native([bad,self.response()])
+        with patch('services.agent_provider.time.sleep'):
+            p=self.pipeline(NativeAgentProvider());r=p.propose(self.request(OVERVIEW_45D))
+        self.assertEqual(r['status'],'proposal_ready');self.assertEqual(http.call_count,2)
+        d=r['diagnostics']
+        self.assertEqual((d['transport_retry_count'],d['semantic_repair_count'],d['provider_physical_attempts']),(1,0,2))
+        self.assertEqual(len(set(d['provider_physical_payload_hashes'])),1)  # same payload resent
+
+    def test_recovery_then_semantic_repair_stays_within_three_physical_http(self):
+        first=deepcopy(recorded());first['requirements'][0]['metric_ids'].remove('aov')
+        bad=Mock(ok=False,status_code=503,headers={});bad.json.return_value={}
+        http=self.native([bad,self.response(first),self.response(f.envelope(req('repair_add_1',['aov'],days=45,features=['scalar'])))])
+        with patch('services.agent_provider.time.sleep'):
+            p=self.pipeline(NativeAgentProvider());r=p.propose(self.request(OVERVIEW_45D))
+        self.assertEqual(http.call_count,3);self.assertEqual(r['diagnostics']['provider_physical_attempts'],3)
+        self.assertEqual((r['diagnostics']['transport_retry_count'],r['diagnostics']['semantic_repair_count']),(1,1))
+
+    def test_a_second_transport_failure_after_the_single_recovery_is_final(self):
+        bad=Mock(ok=False,status_code=503,headers={});bad.json.return_value={}
+        http=self.native([bad,bad,bad,bad])
+        with patch('services.agent_provider.time.sleep'):
+            p=self.pipeline(NativeAgentProvider())
+            with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D))
+        self.assertEqual(http.call_count,2);self.assertEqual(p.semantic_info['semantic_repair_count'],0)
+
     def test_long_primary_timeout_is_transport_failure_without_resend(self):
         clock=[100.0]
         def post(*args,**kwargs):
-            clock[0]+=23
+            clock[0]+=11
             raise requests.exceptions.ReadTimeout('fixture')
         http=self.native(post)
         with patch('services.provider_budget.time.monotonic',side_effect=lambda:clock[0]):
@@ -92,11 +120,12 @@ class ReliabilityTests(f.unittest.TestCase):
         clock=[100.0]
         with patch('services.provider_budget.time.monotonic',side_effect=lambda:clock[0]):
             b=ProviderBudget({},3);b.start_deadline();b.consume()
-            self.assertEqual(b.http_timeout().total,25)
-            clock[0]+=19;b.start_deadline()
+            self.assertEqual(b.http_timeout().total,12)   # one attempt never exceeds 12 s
+            clock[0]+=12;b.start_deadline()               # start_deadline never restarts the allowance
             self.assertTrue(b.recovery_available());b.consume()
-            self.assertEqual(b.http_timeout().total,6)
-            clock[0]+=1;self.assertFalse(b.recovery_available())
+            self.assertEqual(b.http_timeout().total,12)
+            clock[0]+=18                                  # 30 s spent: 10 s left minus 5 s local reserve < 6 s window
+            self.assertFalse(b.recovery_available())
             clock[0]+=8
             with self.assertRaises(AnalysisError):b.consume()
             self.assertEqual(b.used,2)
@@ -112,7 +141,20 @@ class ReliabilityTests(f.unittest.TestCase):
             p=self.pipeline(NativeAgentProvider());r=p.propose(self.request(OVERVIEW_45D))
         self.assertEqual(http.call_count,2);self.assertEqual(r['diagnostics']['semantic_repair_count'],1)
         self.assertEqual(r['diagnostics']['transport_retry_count'],0)
-        self.assertLess(calls[1],calls[0])
+        self.assertLessEqual(calls[1],calls[0]);self.assertLessEqual(calls[1],12)
+        sent=http.call_args_list[1].kwargs['json']
+        self.assertEqual(len(sent['contents']),1)
+        self.assertEqual(sent['contents'][0]['role'],'user')
+        corrective=json.loads(sent['contents'][0]['parts'][0]['text'])
+        self.assertTrue(corrective.get('validation_issues'))
+        self.assertIn('affected_requirements',corrective)
+        self.assertNotIn('semantic_candidate_packet',corrective)
+
+    def test_deadline_table_matches_the_v33_policy(self):
+        from services import provider_budget as pb
+        from services.analysis_job_service import JOB_SECONDS
+        self.assertEqual((pb.PLANNING_SECONDS,pb.HTTP_DEADLINE_SECONDS,JOB_SECONDS,pb.PROVIDER_TOTAL_SECONDS),(40,41,70,30))
+        self.assertEqual((pb.ATTEMPT_SECONDS,pb.CONNECT_SECONDS,pb.DETERMINISTIC_RESERVE,pb.MIN_RECOVERY_SECONDS),(12,2,5,6))
 
     def test_cancellation_blocks_provider_and_persistence(self):
         cancellation=threading.Event();cancellation.set()
@@ -129,15 +171,16 @@ class ReliabilityTests(f.unittest.TestCase):
         from services.provider_budget import check_request_deadline
         late=[]
         def blocked_worker(*args):
-            time.sleep(29.4)
+            time.sleep(2.4)
             check_request_deadline()
             late.append('persisted')
         async def request():
             start=time.perf_counter()
             result=await bounded_propose_plan(self.request())
-            self.assertLess(time.perf_counter()-start,29.25)
+            self.assertLess(time.perf_counter()-start,2.25)
             self.assertEqual(result['diagnostics']['error_category'],'planning_timeout')
-        with patch('routers.ai._invoke',side_effect=blocked_worker):
+        # The mechanism is envelope-size independent; scale the envelope down (production table is asserted separately).
+        with patch('services.provider_budget.HTTP_DEADLINE_SECONDS',2.0),patch('services.provider_budget.PLANNING_SECONDS',1.9),patch('routers.ai._invoke',side_effect=blocked_worker):
             asyncio.run(request())
         self.assertEqual(late,[])
 
@@ -149,7 +192,7 @@ class ReliabilityTests(f.unittest.TestCase):
         self.assertEqual(result['diagnostics']['error_category'],'provider_invalid_json')
         self.assertEqual(result['failure']['stage'],'PROVIDER_FORMAT')
         self.assertEqual(p.semantic_info['transport_retry_count'],0)
-        self.assertEqual(http.call_count,3);p.executor.assert_not_called()
+        self.assertEqual(http.call_count,2);p.executor.assert_not_called()
 
     def test_context_contains_protected_relevant_product_candidates(self):
         p=self.pipeline(f.scripted(f.envelope(f.requirement(ranking={'limit':5,'metric_id':'quantity_sold'},derived_features=[]))))
@@ -161,7 +204,7 @@ class ReliabilityTests(f.unittest.TestCase):
         self.assertEqual(packet['time'],{'kind':'rolling','amount':30,'unit':'day'})
         self.assertEqual(packet['protected_input_facts']['rankings'],[{'direction':'top','limit':5,
             'metric_candidates':['quantity_sold'],'metric_id':'quantity_sold',
-            'dimension_id':'product','partition_requested':False}])
+            'dimension_id':'product','partition_requested':False,'partition_dimensions':[]}])
         self.assertFalse(set(packet['candidate_domains']) & {'payments','inventory','customers','promotions'})
         self.assertNotIn('global_metric_directory',payload)
         self.assertLess(r['diagnostics']['primary_context_chars'],17602*.75)
@@ -170,7 +213,8 @@ class ReliabilityTests(f.unittest.TestCase):
         wrong=f.envelope(f.requirement(ranking={'limit':5,'metric_id':'product_revenue'},derived_features=[]))
         p=self.pipeline(f.scripted(wrong,wrong,wrong))
         with self.assertRaises(AnalysisError):p.propose(self.request(PRODUCT_30D))
-        self.assertEqual(p.provider.call_count,3)
+        # V3.0: the repeated identical ordering is no progress (2, not 3 calls).
+        self.assertEqual(p.provider.call_count,2)
         p.executor.assert_not_called()
 
     def test_broad_expansion_is_metadata_owned_and_verified(self):
@@ -181,7 +225,9 @@ class ReliabilityTests(f.unittest.TestCase):
         self.assertEqual(proposal['diagnostics']['supporting_operation_count'],3)
         f.approve(request,proposal);report=p.generate(request)
         self.assertEqual(report['outcome'],'SUCCESS');self.assertEqual(p.provider.call_count,1)
-        self.assertGreaterEqual(len(report['charts']),6)
+        # FINAL 2026-10-19: tiny fixture; every planned lens is drawn or rejected with a typed data/capacity reason.
+        self.assertGreaterEqual(len(report['charts']),5)
+        self.assertTrue(all(o.get('reason') for o in report['dashboard_plan']['omitted_visuals'] if o.get('lens_id')))
         self.assertGreaterEqual(len({c['chart_type'] for c in report['charts']}),3)
         self.assertEqual(verify_saved_report(report,self.catalog),report['quality_assessment'])
         self.assertTrue(all(r['supporting_for'] for r in report['semantic_intent']['requirements'] if r['id'].startswith('support_')))

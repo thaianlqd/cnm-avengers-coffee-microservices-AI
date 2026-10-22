@@ -1,0 +1,552 @@
+{
+  "job_id": "aj_7636154e31c34a1aac3925b68451e64d",
+  "state": "failed",
+  "version": "3",
+  "created_at": 1792604611.3017678,
+  "deadline_at": 1792604681.3017683,
+  "provider_call_count": 2,
+  "physical_http": 2,
+  "recovery_used": false,
+  "result": {
+    "decision": "READY",
+    "capability": {
+      "decision": "READY",
+      "policy_version": "3.3.1",
+      "constraints": [],
+      "views": [],
+      "stage": "input",
+      "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+      "interpretation_required": true,
+      "reason": null,
+      "message": "",
+      "actions": []
+    },
+    "actions": [],
+    "outcome": "SYSTEM_ERROR",
+    "analysis_stage": "SEMANTIC_CONTRACT_FAILURE",
+    "error_type": "SEMANTIC_CONTRACT_INVALID",
+    "analysis_state": "UNDERSTANDING_FAILURE",
+    "retryable": false,
+    "quality_assessment": {
+      "publication_checks": [],
+      "score": null,
+      "grade": "needs_attention",
+      "status": "not_scored",
+      "components": [],
+      "completed": [],
+      "missing": [],
+      "unverified": [],
+      "limitations": [],
+      "suggested_next_actions": [],
+      "coverage": {
+        "requested_count": 0,
+        "completed_count": 0,
+        "supporting_count": 0,
+        "omitted_count": 0
+      },
+      "generated_by": "deterministic_verifier",
+      "version": "2.8.6",
+      "reason": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+      "measurement_mode": "legacy_weighted_checks",
+      "verification_checks": [],
+      "score_method": null,
+      "score_breakdown": [],
+      "accuracy_assessment": {
+        "status": "not_measured",
+        "matched_count": null,
+        "reference_count": 0,
+        "accuracy_pct": null,
+        "reference_source": null,
+        "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+      },
+      "trust_dimensions": [],
+      "analysis_breadth": null,
+      "confidence_probability": null,
+      "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+    },
+    "issue": {
+      "category": "SEMANTIC_INTERPRETATION_ERROR",
+      "title": "Hệ thống chưa hoàn tất diễn giải phân tích",
+      "what_is_known": [],
+      "error_type": "SEMANTIC_CONTRACT_INVALID",
+      "retryable": false,
+      "what_is_missing": [
+        "Một trường trong phản hồi AI chưa đúng cấu trúc dữ liệu được hỗ trợ.",
+        "Kế hoạch còn thiếu cách nhóm trong câu hỏi.",
+        "Lượt phục hồi đã thay đổi phạm vi ngoài phần cần sửa; hệ thống đã chặn thay đổi này."
+      ],
+      "suggested_actions": [
+        {
+          "type": "edit_question",
+          "label": "Chỉnh câu hỏi",
+          "followup": null
+        }
+      ],
+      "resolution_guidance": "Giữ nguyên câu hỏi. Máy chủ cần sửa phần diễn giải được nêu ở trên; hệ thống chưa chạy các truy vấn báo cáo của lượt này.",
+      "recovery_summary": "Đã thực hiện 2 lượt gọi AI trong lần yêu cầu này.",
+      "next_action": "edit_question"
+    },
+    "status": "error",
+    "question": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+    "message": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+    "assistant_reply": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+    "options": [],
+    "clarification": null,
+    "interpretation": null,
+    "diagnostics": {
+      "provider_status": "success",
+      "provider_error_category": null,
+      "agent_contract_status": "invalid",
+      "agent_contract_error": "semantic_intent_invalid",
+      "semantic_status": "not_started",
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "request_id": "req_217352286dfe45ab99a02418dcf7359c",
+      "provider_primary_ms": 1772.55,
+      "provider_repair_ms": 2240.61,
+      "local_grounding_ms": 11.74,
+      "metadata_retrieval_ms": 82.47,
+      "resolver_ms": 0,
+      "proposal_persistence_ms": 0,
+      "analysis_mission": null,
+      "input_validation_fingerprint": "bfb67014c65fe9f6a499532d441c0529368515c50366bdda64bfe97257803dc7",
+      "input_policy_version": "1.2.1",
+      "lookup_queries": 0,
+      "input_mode": "free_text",
+      "guided_contract_used": false,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "c1bbdae3211005a12d37cca27db4b6559a8412957cd7ba0c8b479141862f3283",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "preflight_state": "READY_FOR_AI",
+      "local_metadata_ms": 362.95,
+      "catalog_fingerprint_prefix": "c1bbdae32110",
+      "planning_mode": "hybrid_verifiable",
+      "pipeline_version": "2.8",
+      "provider_calls": [
+        {
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "status": "success",
+          "tokens": {
+            "input": 3604,
+            "output": 214
+          },
+          "credential_slot": "primary",
+          "api_style": "openai",
+          "tool_schema_chars": 4804,
+          "latency_ms": 1772.57
+        },
+        {
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "status": "success",
+          "tokens": {
+            "input": 5712,
+            "output": 361
+          },
+          "credential_slot": "primary",
+          "api_style": "openai",
+          "tool_schema_chars": 6113,
+          "latency_ms": 2240.62
+        }
+      ],
+      "terminal_error": "semantic_intent_invalid",
+      "db_query_count": 0,
+      "value_lookup_count": 0,
+      "contract_repair_count": 1,
+      "contract_rejection_count": 2,
+      "contract_normalization_count": 0,
+      "contract_normalizations": [],
+      "model_escalation_count": 0,
+      "provider_fallback_count": 0,
+      "post_result_provider_call_count": 0,
+      "semantic_tool_calls": 0,
+      "analytical_tool_calls": 0,
+      "analytical_cache_hits": 0,
+      "agent_rounds": 2,
+      "cost_rounds": [],
+      "tool_trace": [],
+      "limitations": [],
+      "omitted_supporting_operations": [],
+      "omitted_supporting_operation_count": 0,
+      "requested_operation_count": 0,
+      "supporting_operation_count": 0,
+      "input_tokens": 9316,
+      "output_tokens": 575,
+      "cumulative_planning_input_tokens": null,
+      "cumulative_planning_output_tokens": null,
+      "provider_call_budget": 3,
+      "provider_call_count": 2,
+      "provider_attempt_count": 2,
+      "provider_call_budget_block_count": 0,
+      "provider_physical_attempts": 2,
+      "provider_physical_ceiling": 3,
+      "reliability_version": "2.13.0",
+      "primary_call_count": 1,
+      "semantic_repair_count": 1,
+      "targeted_resolution_count": 0,
+      "transport_retry_count": 0,
+      "failure_stage": "SEMANTIC_INTENT",
+      "failure_requirement_id": "req_2",
+      "failure_field": "analysis_kind",
+      "failure_code": "untargeted_field_changed",
+      "fixed_grouping_policy": "cohort-pinning-v1",
+      "planning_budget_ms": 40000,
+      "provider_attempt_timeout_ms": 12000,
+      "provider_recovery_timeout_ms": 12000,
+      "provider_total_ms": 30000,
+      "semantic_metric_locks": [
+        {
+          "phrase": "doanh thu",
+          "metric_id": "revenue"
+        }
+      ],
+      "request_anchors": {
+        "metrics": [
+          {
+            "phrase": "doanh thu",
+            "candidate_ids": [
+              "item_revenue",
+              "payment_revenue",
+              "product_revenue",
+              "revenue",
+              "store_revenue",
+              "voucher_revenue"
+            ],
+            "start": 11,
+            "end": 20
+          }
+        ],
+        "dimensions": [
+          {
+            "phrase": "chi nhanh",
+            "candidate_ids": [
+              "store"
+            ],
+            "start": 58,
+            "end": 67
+          },
+          {
+            "phrase": "phuong thuc thanh toan",
+            "candidate_ids": [
+              "payment_method"
+            ],
+            "start": 71,
+            "end": 93
+          }
+        ],
+        "metric_constraints": [],
+        "population_scopes": [],
+        "features": [],
+        "capability_constraints": [],
+        "capabilities": [],
+        "values": [],
+        "excluded_values": [],
+        "analysis_breadth": null,
+        "rankings": [
+          {
+            "direction": "bottom",
+            "limit": 5,
+            "metric_candidates": [
+              "item_revenue",
+              "payment_revenue",
+              "product_revenue",
+              "revenue",
+              "store_revenue",
+              "voucher_revenue"
+            ],
+            "partition_requested": false,
+            "partition_dimensions": []
+          }
+        ],
+        "forecasts": [],
+        "times": [
+          {
+            "kind": "month",
+            "year": 2026,
+            "month": 9
+          }
+        ],
+        "clause_bindings": [],
+        "period_comparisons": [],
+        "time_bindings": [
+          {
+            "metric_candidates": [
+              "item_revenue",
+              "payment_revenue",
+              "product_revenue",
+              "revenue",
+              "store_revenue",
+              "voucher_revenue"
+            ],
+            "time": {
+              "kind": "month",
+              "year": 2026,
+              "month": 9
+            }
+          }
+        ],
+        "trend_bindings": [],
+        "granularities": [],
+        "ui": {
+          "required_domain": null,
+          "required_period": {
+            "start": "2026-09-01",
+            "end": "2026-09-30"
+          },
+          "required_filters": []
+        },
+        "scope_resolution": {
+          "state": "unspecified",
+          "filters": [],
+          "bindings": [],
+          "source": [],
+          "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+          "requested_phrase": null
+        },
+        "cohort_references": [
+          {
+            "dimension": "city",
+            "start": 106,
+            "end": 110,
+            "goal_dimensions": [
+              "payment_method",
+              "store"
+            ],
+            "goal_metrics": []
+          }
+        ],
+        "coordinated_dimensions": [
+          [
+            "store",
+            "payment_method"
+          ]
+        ]
+      },
+      "candidate_packet_chars": 3983,
+      "required_domain_pack_ids": [
+        "orders",
+        "stores"
+      ],
+      "supporting_domain_pack_ids": [
+        "payments"
+      ],
+      "detailed_domain_ids": [
+        "orders",
+        "payments",
+        "stores"
+      ],
+      "pruned_optional_domain_ids": [],
+      "retrieval_confidence": "high",
+      "retrieval_candidate_count": 2,
+      "global_domain_count": 16,
+      "context_char_budget": 24000,
+      "pruned_optional_context_fields": [],
+      "total_context_chars": 13658,
+      "primary_context_chars": 13658,
+      "provider_body_chars": {
+        "native": 13519,
+        "compat": 13658
+      },
+      "decision_schema_chars": 5059,
+      "schema_chars": 4909,
+      "provider_body_headroom_chars": 10342,
+      "provider_schema_chars": 4909,
+      "system_chars": 2731,
+      "coverage_contract_chars": 0,
+      "provider_call_reasons": [
+        "INITIAL_UNDERSTANDING",
+        "CONTRACT_REPAIR"
+      ],
+      "planning_remaining_ms": 35628.64,
+      "provider_physical_payload_hashes": [
+        "f36da000154b",
+        "9a57a056c767"
+      ],
+      "logical_provider_calls": 2,
+      "provider_http_attempts": 2,
+      "credential_slot": "primary",
+      "provider_output_digests": [
+        "4e35ca6aab9c56622c4da6edb1a74b14cb7c6fdf94784194a7207d374b3f3f50",
+        "4bb1a91b213d6e17e408aa09a970a7e2ed89a4d6c94d6ebd9837f05c0940a350"
+      ],
+      "contract_issues": [
+        {
+          "requirement_id": "req_2",
+          "field": "analysis_kind",
+          "code": "untargeted_field_changed"
+        }
+      ],
+      "resolver_action": "targeted_repair",
+      "root_contract_issues": [
+        {
+          "requirement_id": "req_2",
+          "field": "filters",
+          "code": "invalid_intent_shape",
+          "validation_type": "value_error"
+        },
+        {
+          "requirement_id": null,
+          "field": "dimension_ids",
+          "code": "explicit_dimensions_missing",
+          "candidate_ids": [
+            "store"
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "dimension_ids",
+          "code": "explicit_dimensions_missing",
+          "candidate_ids": [
+            "payment_method"
+          ]
+        }
+      ],
+      "semantic_issue_history": [
+        [
+          {
+            "requirement_id": "req_2",
+            "field": "filters",
+            "code": "invalid_intent_shape",
+            "validation_type": "value_error"
+          },
+          {
+            "requirement_id": null,
+            "field": "dimension_ids",
+            "code": "explicit_dimensions_missing",
+            "candidate_ids": [
+              "store"
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "dimension_ids",
+            "code": "explicit_dimensions_missing",
+            "candidate_ids": [
+              "payment_method"
+            ]
+          }
+        ],
+        [
+          {
+            "requirement_id": "req_2",
+            "field": "analysis_kind",
+            "code": "untargeted_field_changed"
+          }
+        ]
+      ],
+      "semantic_issue_fingerprints": [
+        [
+          [
+            "None",
+            "dimension_ids",
+            "explicit_dimensions_missing"
+          ],
+          [
+            "req_2",
+            "filters",
+            "invalid_intent_shape"
+          ]
+        ],
+        [
+          [
+            "req_2",
+            "analysis_kind",
+            "untargeted_field_changed"
+          ]
+        ]
+      ],
+      "semantic_unknown_id_counts": [
+        0,
+        0
+      ],
+      "repaired_contract_issues": [
+        {
+          "requirement_id": "req_2",
+          "field": "filters",
+          "code": "invalid_intent_shape",
+          "validation_type": "value_error"
+        },
+        {
+          "requirement_id": null,
+          "field": "dimension_ids",
+          "code": "explicit_dimensions_missing",
+          "candidate_ids": [
+            "store"
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "dimension_ids",
+          "code": "explicit_dimensions_missing",
+          "candidate_ids": [
+            "payment_method"
+          ]
+        }
+      ],
+      "repair_context_chars": 21870,
+      "recovery_progress": [
+        {
+          "resolved_issue_count": 2,
+          "new_issue_count": 1,
+          "repeated_issue_count": 0
+        }
+      ],
+      "semantic_stop_reason": "repair_limit",
+      "capability_status": "INVALID_CONTRACT",
+      "planning_latency_ms": 4143.99,
+      "provider_attempt_latencies": [
+        1772.57,
+        2240.62
+      ],
+      "provider_attempt_categories": [
+        "success",
+        "success"
+      ],
+      "provider_ms": 4013.16,
+      "agent_round_count": 2,
+      "repair_round_count": 1,
+      "error_category": "semantic_intent_invalid",
+      "missing_fields": [],
+      "ambiguity_count": 0
+    },
+    "charts": [],
+    "failure": {
+      "stage": "SEMANTIC_INTENT",
+      "code": "semantic_intent_invalid",
+      "user_impact": "SYSTEM_ERROR",
+      "what_is_known": {
+        "semantic_status": "not_started",
+        "execution_status": "not_started",
+        "result_status": "not_started",
+        "provider_attempt_count": 2
+      },
+      "what_failed": "semantic_intent_invalid",
+      "retry_helps": false,
+      "error_type": "SEMANTIC_CONTRACT_INVALID",
+      "analysis_state": "UNDERSTANDING_FAILURE",
+      "analysis_stage": "SEMANTIC_CONTRACT_FAILURE",
+      "guidance": {
+        "title": "Hệ thống chưa hoàn tất diễn giải phân tích",
+        "description": "Diễn giải của AI chưa vượt qua kiểm tra ngữ nghĩa của máy chủ.",
+        "next_action": "edit_question"
+      },
+      "needs_user_input": false,
+      "recommended_server_action": "inspect_failed_stage"
+    }
+  },
+  "stage_timings_ms": {
+    "queue": 3.97,
+    "accepted": 488.36,
+    "planning": 1795.93
+  }
+}

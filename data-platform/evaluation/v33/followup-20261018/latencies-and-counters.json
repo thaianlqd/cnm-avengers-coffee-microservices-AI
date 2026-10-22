@@ -1,0 +1,609 @@
+{
+  "cold_catalog": "preflight-benchmark.json",
+  "live_first_case": {
+    "id": "L01",
+    "group": "happy",
+    "passed": true,
+    "logical_calls": 0,
+    "physical_http": 1,
+    "repair": 0,
+    "recovery": 0,
+    "terminal_state": "completed",
+    "planning_ms": 2620.4,
+    "job_latency_ms": 3281.97,
+    "stage_timings_ms": {
+      "queue": 4.07,
+      "accepted": 451.95,
+      "planning": 2508.18,
+      "validating": 41.63,
+      "executing": 136.28,
+      "verifying": 139.85
+    }
+  },
+  "live_recovery": [
+    {
+      "id": "L22",
+      "group": "recovery",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 2,
+      "repair": 0,
+      "recovery": 1,
+      "terminal_state": "completed",
+      "planning_ms": 1416.33,
+      "job_latency_ms": 1773.64,
+      "stage_timings_ms": {
+        "queue": 2.65,
+        "accepted": 238.6,
+        "planning": 1347.67,
+        "validating": 29.26,
+        "executing": 83.89,
+        "verifying": 71.57
+      }
+    }
+  ],
+  "all_cases": [
+    {
+      "id": "L01",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 2620.4,
+      "job_latency_ms": 3281.97,
+      "stage_timings_ms": {
+        "queue": 4.07,
+        "accepted": 451.95,
+        "planning": 2508.18,
+        "validating": 41.63,
+        "executing": 136.28,
+        "verifying": 139.85
+      }
+    },
+    {
+      "id": "L02",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1538.71,
+      "job_latency_ms": 1917.82,
+      "stage_timings_ms": {
+        "queue": 1.44,
+        "accepted": 201.94,
+        "planning": 1470.64,
+        "validating": 30.43,
+        "executing": 137.32,
+        "verifying": 76.05
+      }
+    },
+    {
+      "id": "L03",
+      "group": "happy",
+      "passed": false,
+      "logical_calls": 2,
+      "physical_http": 2,
+      "repair": 1,
+      "recovery": 0,
+      "terminal_state": "failed",
+      "planning_ms": 3158.01,
+      "job_latency_ms": null,
+      "stage_timings_ms": {
+        "queue": 1.53,
+        "accepted": 213.94,
+        "planning": 1538.03
+      }
+    },
+    {
+      "id": "L04",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 2644.94,
+      "job_latency_ms": 3395.5,
+      "stage_timings_ms": {
+        "queue": 1.7,
+        "accepted": 238.09,
+        "planning": 2475.09,
+        "validating": 153.92,
+        "executing": 282.57,
+        "verifying": 244.13
+      }
+    },
+    {
+      "id": "L05",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1339.27,
+      "job_latency_ms": 1716.38,
+      "stage_timings_ms": {
+        "queue": 1.6,
+        "accepted": 226.77,
+        "planning": 1278.18,
+        "validating": 33.99,
+        "executing": 112.03,
+        "verifying": 63.82
+      }
+    },
+    {
+      "id": "L06",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1516.47,
+      "job_latency_ms": 2021.85,
+      "stage_timings_ms": {
+        "queue": 1.54,
+        "accepted": 223.79,
+        "planning": 1428.47,
+        "validating": 59.54,
+        "executing": 152.12,
+        "verifying": 156.39
+      }
+    },
+    {
+      "id": "L07",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1525.58,
+      "job_latency_ms": 2684.28,
+      "stage_timings_ms": {
+        "queue": 1.81,
+        "accepted": 312.04,
+        "planning": 1373.96,
+        "validating": 139.46,
+        "executing": 392.0,
+        "verifying": 465.01
+      }
+    },
+    {
+      "id": "L08",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1467.24,
+      "job_latency_ms": 2312.58,
+      "stage_timings_ms": {
+        "queue": 2.13,
+        "accepted": 213.2,
+        "planning": 1324.23,
+        "validating": 164.49,
+        "executing": 299.52,
+        "verifying": 309.02
+      }
+    },
+    {
+      "id": "L09",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1683.02,
+      "job_latency_ms": 2430.01,
+      "stage_timings_ms": {
+        "queue": 1.69,
+        "accepted": 206.5,
+        "planning": 1555.14,
+        "validating": 149.34,
+        "executing": 244.52,
+        "verifying": 272.82
+      }
+    },
+    {
+      "id": "L10",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 2000.9,
+      "job_latency_ms": 2363.99,
+      "stage_timings_ms": {
+        "queue": 1.63,
+        "accepted": 197.35,
+        "planning": 1932.57,
+        "validating": 34.88,
+        "executing": 130.56,
+        "verifying": 67.0
+      }
+    },
+    {
+      "id": "L11",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 2,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 2452.77,
+      "job_latency_ms": 2995.79,
+      "stage_timings_ms": {
+        "queue": 1.58,
+        "accepted": 207.76,
+        "planning": 1289.79,
+        "repairing": 1060.96,
+        "validating": 103.58,
+        "executing": 152.01,
+        "verifying": 180.11
+      }
+    },
+    {
+      "id": "L12",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 2,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 2792.68,
+      "job_latency_ms": 3711.24,
+      "stage_timings_ms": {
+        "queue": 2.02,
+        "accepted": 266.55,
+        "planning": 1194.65,
+        "repairing": 1462.36,
+        "validating": 131.39,
+        "executing": 340.78,
+        "verifying": 313.5
+      }
+    },
+    {
+      "id": "L13",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1545.78,
+      "job_latency_ms": 2016.01,
+      "stage_timings_ms": {
+        "queue": 1.96,
+        "accepted": 223.07,
+        "planning": 1471.85,
+        "validating": 31.19,
+        "executing": 181.74,
+        "verifying": 106.21
+      }
+    },
+    {
+      "id": "L14",
+      "group": "happy",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1757.77,
+      "job_latency_ms": 2504.16,
+      "stage_timings_ms": {
+        "queue": 2.01,
+        "accepted": 207.73,
+        "planning": 1617.27,
+        "validating": 153.67,
+        "executing": 279.74,
+        "verifying": 243.75
+      }
+    },
+    {
+      "id": "L15",
+      "group": "ambiguity",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 0,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "needs_input",
+      "planning_ms": null,
+      "job_latency_ms": null,
+      "stage_timings_ms": {
+        "queue": 1.49
+      }
+    },
+    {
+      "id": "L16",
+      "group": "ambiguity",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 0,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "needs_input",
+      "planning_ms": null,
+      "job_latency_ms": null,
+      "stage_timings_ms": {
+        "queue": 1.46
+      }
+    },
+    {
+      "id": "L17",
+      "group": "ambiguity",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 0,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "needs_input",
+      "planning_ms": null,
+      "job_latency_ms": null,
+      "stage_timings_ms": {
+        "queue": 1.65
+      }
+    },
+    {
+      "id": "L18",
+      "group": "ambiguity",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 0,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "needs_input",
+      "planning_ms": null,
+      "job_latency_ms": null,
+      "stage_timings_ms": {
+        "queue": 1.79
+      }
+    },
+    {
+      "id": "L19",
+      "group": "association",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1568.62,
+      "job_latency_ms": 2537.89,
+      "stage_timings_ms": {
+        "queue": 1.66,
+        "accepted": 214.74,
+        "planning": 1429.63,
+        "validating": 150.49,
+        "executing": 277.04,
+        "verifying": 464.33
+      }
+    },
+    {
+      "id": "L20",
+      "group": "driver",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 2297.18,
+      "job_latency_ms": 3779.95,
+      "stage_timings_ms": {
+        "queue": 1.72,
+        "accepted": 266.98,
+        "planning": 2084.48,
+        "validating": 166.7,
+        "executing": 409.67,
+        "verifying": 850.42
+      }
+    },
+    {
+      "id": "L21",
+      "group": "expectation",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1516.31,
+      "job_latency_ms": 2417.45,
+      "stage_timings_ms": {
+        "queue": 2.52,
+        "accepted": 272.06,
+        "planning": 1359.09,
+        "validating": 122.56,
+        "executing": 291.37,
+        "verifying": 369.85
+      }
+    },
+    {
+      "id": "L22",
+      "group": "recovery",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 2,
+      "repair": 0,
+      "recovery": 1,
+      "terminal_state": "completed",
+      "planning_ms": 1416.33,
+      "job_latency_ms": 1773.64,
+      "stage_timings_ms": {
+        "queue": 2.65,
+        "accepted": 238.6,
+        "planning": 1347.67,
+        "validating": 29.26,
+        "executing": 83.89,
+        "verifying": 71.57
+      }
+    },
+    {
+      "id": "L23",
+      "group": "geography",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1455.49,
+      "job_latency_ms": 1958.06,
+      "stage_timings_ms": {
+        "queue": 2.61,
+        "accepted": 231.92,
+        "planning": 1366.48,
+        "validating": 32.68,
+        "executing": 121.42,
+        "verifying": 202.98
+      }
+    },
+    {
+      "id": "L24",
+      "group": "geography",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1676.24,
+      "job_latency_ms": 2049.73,
+      "stage_timings_ms": {
+        "queue": 2.12,
+        "accepted": 208.51,
+        "planning": 1606.7,
+        "validating": 35.75,
+        "executing": 125.81,
+        "verifying": 70.84
+      }
+    },
+    {
+      "id": "L25",
+      "group": "geography",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1771.12,
+      "job_latency_ms": 2531.4,
+      "stage_timings_ms": {
+        "queue": 1.54,
+        "accepted": 217.53,
+        "planning": 1619.03,
+        "validating": 168.01,
+        "executing": 273.75,
+        "verifying": 251.55
+      }
+    },
+    {
+      "id": "L26",
+      "group": "geography",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 1,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 1767.01,
+      "job_latency_ms": 2489.79,
+      "stage_timings_ms": {
+        "queue": 1.48,
+        "accepted": 220.44,
+        "planning": 1623.87,
+        "validating": 143.23,
+        "executing": 265.05,
+        "verifying": 235.72
+      }
+    },
+    {
+      "id": "L27",
+      "group": "geography",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 2,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 3073.98,
+      "job_latency_ms": 3886.12,
+      "stage_timings_ms": {
+        "queue": 1.74,
+        "accepted": 220.2,
+        "planning": 1172.25,
+        "repairing": 1752.84,
+        "validating": 148.76,
+        "executing": 337.78,
+        "verifying": 252.55
+      }
+    },
+    {
+      "id": "L28",
+      "group": "geography",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 2,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 3040.89,
+      "job_latency_ms": 3455.45,
+      "stage_timings_ms": {
+        "queue": 1.76,
+        "accepted": 203.64,
+        "planning": 1572.2,
+        "repairing": 1402.9,
+        "validating": 32.28,
+        "executing": 130.73,
+        "verifying": 111.96
+      }
+    },
+    {
+      "id": "L29",
+      "group": "geography",
+      "passed": true,
+      "logical_calls": 0,
+      "physical_http": 2,
+      "repair": 0,
+      "recovery": 0,
+      "terminal_state": "completed",
+      "planning_ms": 3233.68,
+      "job_latency_ms": 3986.69,
+      "stage_timings_ms": {
+        "queue": 1.61,
+        "accepted": 194.99,
+        "planning": 1517.97,
+        "repairing": 1545.86,
+        "validating": 196.87,
+        "executing": 271.41,
+        "verifying": 257.98
+      }
+    }
+  ]
+}

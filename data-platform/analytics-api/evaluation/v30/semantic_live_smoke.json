@@ -1,0 +1,2593 @@
+{
+  "mode": "live",
+  "selection": "smoke",
+  "generated_at": "2026-10-15T16:25:32.964202+00:00",
+  "case_count": 12,
+  "status": "RUN",
+  "provider_calls_used": 12,
+  "budget": 30,
+  "provider": {
+    "gemini": {
+      "configured": true
+    },
+    "groq": {
+      "configured": true
+    }
+  },
+  "registry_fingerprint": "0ed3a7927c527a87ff255c1fcefd3248da17988c5448f06d62f3299e78d21755",
+  "prompt_fingerprint": "5ca50d6925b2bb5b",
+  "overall": {
+    "passed": 11,
+    "total": 12,
+    "rate": 0.9167
+  },
+  "by_expected_status": {
+    "AMBIGUOUS": {
+      "passed": 1,
+      "total": 1,
+      "rate": 1.0
+    },
+    "FORECAST": {
+      "passed": 1,
+      "total": 1,
+      "rate": 1.0
+    },
+    "FORECAST_UNSUPPORTED": {
+      "passed": 1,
+      "total": 1,
+      "rate": 1.0
+    },
+    "OUT_OF_SCOPE": {
+      "passed": 1,
+      "total": 1,
+      "rate": 1.0
+    },
+    "SUPPORTED": {
+      "passed": 7,
+      "total": 7,
+      "rate": 1.0
+    },
+    "UNSUPPORTED": {
+      "passed": 0,
+      "total": 1,
+      "rate": 0.0
+    }
+  },
+  "supported_median_calls": 1.0,
+  "supported_p95_calls": 1,
+  "no_progress_stops": 0,
+  "max_calls_any_case": 1,
+  "cases": [
+    {
+      "id": "ship_01",
+      "category": "delivery",
+      "expected": "SUPPORTED",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 6356,
+      "result": {
+        "status": "proposal_ready",
+        "outcome": "SUCCESS",
+        "semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "delivery_success_rate_overall",
+              "goal": "Tỷ lệ giao hàng thành công của shipper ở trong hệ thống",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_2a7e715312c04d339104f9a8",
+              "goal": "Đối chiếu bổ sung · Chi nhánh",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "delivery_success_rate_overall",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "store"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_34bd333fa139a520857d8f5a",
+              "goal": "Đối chiếu bổ sung · Trạng thái chuyến giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "delivery_success_rate_overall",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "delivery_status"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_37c7b24e7f923606a84edc8f",
+              "goal": "Đối chiếu bổ sung · Mã người giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "delivery_success_rate_overall",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "driver_id"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_986e247d6cb7d48519bcdf78",
+              "goal": "Diễn biến trong phạm vi đã chọn",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "delivery_success_rate_overall",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": "week",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_1631962bd283094331097d8d",
+              "goal": "Góc nhìn bổ sung · Kết quả chuyến giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "delivery_success_rate_overall",
+              "metric_ids": [
+                "delivery_count"
+              ],
+              "dimension_ids": [
+                "delivery_status"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "analysis_components": [
+          {
+            "id": "delivery_success_rate_overall",
+            "business_goal": "Tỷ lệ giao hàng thành công của shipper ở trong hệ thống",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_94294230a16c81c4c9c26905"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_1631962bd283094331097d8d",
+            "business_goal": "Góc nhìn bổ sung · Kết quả chuyến giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_f1517f69713ddc6833074dc5"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_2a7e715312c04d339104f9a8",
+            "business_goal": "Đối chiếu bổ sung · Chi nhánh",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_de406c58be5b179da9ed65b5"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_34bd333fa139a520857d8f5a",
+            "business_goal": "Đối chiếu bổ sung · Trạng thái chuyến giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_e402acf887c73bc59530859e"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_37c7b24e7f923606a84edc8f",
+            "business_goal": "Đối chiếu bổ sung · Mã người giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_71bb15d16ee6b7ab7a52f3e8"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_986e247d6cb7d48519bcdf78",
+            "business_goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_c0248c19b12a2f0f486bf0cb"
+            ],
+            "status": "planned",
+            "reason": null
+          }
+        ],
+        "execution": {
+          "status": "success",
+          "rows": 1,
+          "preview": [
+            {
+              "delivery_success_rate": 95.73
+            }
+          ],
+          "forecasts": []
+        }
+      }
+    },
+    {
+      "id": "ship_07",
+      "category": "informal",
+      "expected": "SUPPORTED",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 4926,
+      "result": {
+        "status": "proposal_ready",
+        "outcome": "SUCCESS",
+        "semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "req_1",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_b2fc17531bea0e4b7e80ff2f",
+              "goal": "Góc nhìn bổ sung · Kết quả chuyến giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_count"
+              ],
+              "dimension_ids": [
+                "delivery_status"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_7c202956757b0944d01a1ae1",
+              "goal": "Diễn biến trong phạm vi đã chọn",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": "week",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_bbf8d6d4d51c9cc7a7287ab1",
+              "goal": "Đối chiếu bổ sung · Chi nhánh",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "store"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_d0944e1e5fef03a1f5d80c1d",
+              "goal": "Đối chiếu bổ sung · Mã người giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "driver_id"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_416c10e66caa47dd07f1239d",
+              "goal": "Đối chiếu bổ sung · Trạng thái chuyến giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "delivery_status"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "analysis_components": [
+          {
+            "id": "req_1",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_1c640aa15108bccb761e92e8"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_416c10e66caa47dd07f1239d",
+            "business_goal": "Đối chiếu bổ sung · Trạng thái chuyến giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_0e9d1718600ab5c55eb20cc1"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_7c202956757b0944d01a1ae1",
+            "business_goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_aa20c849715afcf6626ed7d8"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_b2fc17531bea0e4b7e80ff2f",
+            "business_goal": "Góc nhìn bổ sung · Kết quả chuyến giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_b29eff62b604963cdd8c94c4"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_bbf8d6d4d51c9cc7a7287ab1",
+            "business_goal": "Đối chiếu bổ sung · Chi nhánh",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_538b15ad9db0658950512844"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_d0944e1e5fef03a1f5d80c1d",
+            "business_goal": "Đối chiếu bổ sung · Mã người giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_8902a937730cb323ab2feaa4"
+            ],
+            "status": "planned",
+            "reason": null
+          }
+        ],
+        "execution": {
+          "status": "success",
+          "rows": 1,
+          "preview": [
+            {
+              "delivery_success_rate": 95.73
+            }
+          ],
+          "forecasts": []
+        }
+      }
+    },
+    {
+      "id": "ship_08",
+      "category": "ranking",
+      "expected": "SUPPORTED",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 5641,
+      "result": {
+        "status": "proposal_ready",
+        "outcome": "SUCCESS",
+        "semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "req_1",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "driver_id"
+              ],
+              "analysis_kind": "ranking",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": {
+                "direction": "top",
+                "limit": 10,
+                "metric_id": "delivery_success_rate",
+                "per_group": []
+              },
+              "granularity": null,
+              "derived_features": [
+                "leader"
+              ],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_7c202956757b0944d01a1ae1",
+              "goal": "Diễn biến trong phạm vi đã chọn",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": "week",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_bbf8d6d4d51c9cc7a7287ab1",
+              "goal": "Đối chiếu bổ sung · Chi nhánh",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "store"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_d0944e1e5fef03a1f5d80c1d",
+              "goal": "Đối chiếu bổ sung · Mã người giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "driver_id"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_ec9ea7408f625e56c3771b22",
+              "goal": "Chỉ số toàn phạm vi",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "avg_delivery_minutes",
+                "delivered_count",
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "analysis_components": [
+          {
+            "id": "req_1",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_899161f7dc56cc9be68f4e4f"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_7c202956757b0944d01a1ae1",
+            "business_goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_aa20c849715afcf6626ed7d8"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_bbf8d6d4d51c9cc7a7287ab1",
+            "business_goal": "Đối chiếu bổ sung · Chi nhánh",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_538b15ad9db0658950512844"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_d0944e1e5fef03a1f5d80c1d",
+            "business_goal": "Đối chiếu bổ sung · Mã người giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_8902a937730cb323ab2feaa4"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_ec9ea7408f625e56c3771b22",
+            "business_goal": "Chỉ số toàn phạm vi",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_009eb9be9f7c868ad691f12a",
+              "q_14c4c9d6a81e7ceff1edfa60",
+              "q_388475022ae7c05b07f9d355"
+            ],
+            "status": "planned",
+            "reason": null
+          }
+        ],
+        "execution": {
+          "status": "success",
+          "rows": 10,
+          "preview": [
+            {
+              "driver_id": "000d68fe-bb97-480f-ac61-d04557ef2fdf",
+              "delivery_success_rate": 100.0
+            },
+            {
+              "driver_id": "02f48133-8d9e-48bb-9f97-0ae78f0ff8f7",
+              "delivery_success_rate": 100.0
+            },
+            {
+              "driver_id": "04fb3df8-0b86-4890-86b4-b24fc17d0829",
+              "delivery_success_rate": 100.0
+            }
+          ],
+          "forecasts": []
+        }
+      }
+    },
+    {
+      "id": "rev_02",
+      "category": "relative_time",
+      "expected": "SUPPORTED",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 4948,
+      "result": {
+        "status": "proposal_ready",
+        "outcome": "SUCCESS",
+        "semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "req_1",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {
+                "scalar": [
+                  "revenue"
+                ]
+              },
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "req_3",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "payment_revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {
+                "scalar": [
+                  "payment_revenue"
+                ]
+              },
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "req_2",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "item_revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {
+                "scalar": [
+                  "item_revenue"
+                ]
+              },
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "req_4",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "product_revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {
+                "scalar": [
+                  "product_revenue"
+                ]
+              },
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "req_6",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "voucher_revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {
+                "scalar": [
+                  "voucher_revenue"
+                ]
+              },
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "req_5",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "store_revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {
+                "scalar": [
+                  "store_revenue"
+                ]
+              },
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_68c8331064cb72b3e187b1ba",
+              "goal": "Chỉ số toàn phạm vi",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "req_3",
+              "metric_ids": [
+                "payment_count",
+                "payment_revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_1cd613f3da079602afc23cf6",
+              "goal": "Diễn biến trong phạm vi đã chọn",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "req_3",
+              "metric_ids": [
+                "payment_revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": "week",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "analysis_components": [
+          {
+            "id": "req_1",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_245be1446947f1cedb0e036a"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "req_2",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "order_items",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_0b6130f0ccaf68dc239911a9"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "req_3",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "payments",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_2dff242d43fe942ab7697428"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "req_4",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "products",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_f620bc0d46581493945c0ce8"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "req_5",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "stores",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_db81697bcc842529367bf868"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "req_6",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "promotions",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_b0c3b6912ed50af66d802f80"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_1cd613f3da079602afc23cf6",
+            "business_goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "payments",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_9a28001adb9bc61bd647c790"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_68c8331064cb72b3e187b1ba",
+            "business_goal": "Chỉ số toàn phạm vi",
+            "domain_id": "payments",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_9e4502e55d7dacd7a820587c"
+            ],
+            "status": "planned",
+            "reason": null
+          }
+        ],
+        "execution": {
+          "status": "success",
+          "rows": 1,
+          "preview": [
+            {
+              "item_revenue": 19928000.0
+            }
+          ],
+          "forecasts": []
+        }
+      }
+    },
+    {
+      "id": "prod_01",
+      "category": "ranking",
+      "expected": "SUPPORTED",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 2324,
+      "result": {
+        "status": "proposal_ready",
+        "outcome": "SUCCESS",
+        "semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "req_1",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "quantity_sold"
+              ],
+              "dimension_ids": [
+                "product"
+              ],
+              "analysis_kind": "ranking",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": {
+                "direction": "top",
+                "limit": 5,
+                "metric_id": "quantity_sold",
+                "per_group": []
+              },
+              "granularity": null,
+              "derived_features": [
+                "leader"
+              ],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_d5e6fb6f10421b4ed5faf299",
+              "goal": "Đối chiếu bổ sung · Sản phẩm",
+              "domain_id": "order_items",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "quantity_sold"
+              ],
+              "dimension_ids": [
+                "product"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_e73bc9fbb884a3130a680a44",
+              "goal": "Đối chiếu bổ sung · Thành phố",
+              "domain_id": "order_items",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "quantity_sold"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_100871c895821f1dc752b502",
+              "goal": "Chỉ số toàn phạm vi",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "item_revenue",
+                "product_revenue",
+                "quantity_sold"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_7c202956757b0944d01a1ae1",
+              "goal": "Diễn biến trong phạm vi đã chọn",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "quantity_sold"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": "week",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_bb3a67b008479dd5677d9fe4",
+              "goal": "Đối chiếu bổ sung · Danh mục",
+              "domain_id": "order_items",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "quantity_sold"
+              ],
+              "dimension_ids": [
+                "category"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "analysis_components": [
+          {
+            "id": "req_1",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "order_items",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_a0053098868174c01e7ea8bf"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_100871c895821f1dc752b502",
+            "business_goal": "Chỉ số toàn phạm vi",
+            "domain_id": null,
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_8aac03b540ebce8a9e1b62ec",
+              "q_c26ec3ba30b808fa91b196f0"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_7c202956757b0944d01a1ae1",
+            "business_goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "order_items",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_5022faf293dfffd23c794b32"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_bb3a67b008479dd5677d9fe4",
+            "business_goal": "Đối chiếu bổ sung · Danh mục",
+            "domain_id": "order_items",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_21fd8bc222a293a5c6cc9e35"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_d5e6fb6f10421b4ed5faf299",
+            "business_goal": "Đối chiếu bổ sung · Sản phẩm",
+            "domain_id": "order_items",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_4a3786f2df9cb9bee262bf31"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_e73bc9fbb884a3130a680a44",
+            "business_goal": "Đối chiếu bổ sung · Thành phố",
+            "domain_id": "order_items",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_50ea3297b77d245c3052fcc2"
+            ],
+            "status": "planned",
+            "reason": null
+          }
+        ],
+        "execution": {
+          "status": "success",
+          "rows": 5,
+          "preview": [
+            {
+              "product": "Bạc Xỉu",
+              "product_id": 35,
+              "quantity_sold": 846
+            },
+            {
+              "product": "Cappuccino Đá",
+              "product_id": 44,
+              "quantity_sold": 839
+            },
+            {
+              "product": "Kem Phô Mai Macchiato (Lẻ)",
+              "product_id": 87,
+              "quantity_sold": 829
+            }
+          ],
+          "forecasts": []
+        }
+      }
+    },
+    {
+      "id": "store_03",
+      "category": "ambiguous",
+      "expected": "AMBIGUOUS",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 2134,
+      "result": {
+        "status": "needs_clarification",
+        "outcome": "NEEDS_INPUT",
+        "analysis_state": "SUPPORTED_BUT_NEEDS_CLARIFICATION",
+        "error_type": "AMBIGUOUS_REQUEST",
+        "error_category": "metric_ambiguous",
+        "retryable": false,
+        "semantic_intent": null
+      }
+    },
+    {
+      "id": "pay_01",
+      "category": "distribution",
+      "expected": "SUPPORTED",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 4054,
+      "result": {
+        "status": "proposal_ready",
+        "outcome": "SUCCESS",
+        "semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "payment_gateway_distribution",
+              "goal": "Tỷ trọng các kênh thanh toán theo số giao dịch và doanh thu thanh toán",
+              "domain_id": "payments",
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "payment_count",
+                "payment_revenue"
+              ],
+              "dimension_ids": [
+                "payment_gateway"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "concentration",
+                "contribution_share"
+              ],
+              "feature_metrics": {
+                "contribution_share": [
+                  "payment_count",
+                  "payment_revenue"
+                ]
+              },
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_d594bfdb80a077923a870f6c",
+              "goal": "Đối chiếu bổ sung · Trạng thái thanh toán",
+              "domain_id": "payments",
+              "lens_hint": null,
+              "supporting_for": "payment_gateway_distribution",
+              "metric_ids": [
+                "payment_count",
+                "payment_revenue"
+              ],
+              "dimension_ids": [
+                "payment_status"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_4bbe5d91f1f074fc8ca0376c",
+              "goal": "Diễn biến trong phạm vi đã chọn",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "payment_gateway_distribution",
+              "metric_ids": [
+                "payment_count",
+                "payment_revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": "week",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "analysis_components": [
+          {
+            "id": "payment_gateway_distribution",
+            "business_goal": "Tỷ trọng các kênh thanh toán theo số giao dịch và doanh thu thanh toán",
+            "domain_id": "payments",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_1f0e594136d5ee2054d36026",
+              "q_ec8759581862fe82e1adb642"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_4bbe5d91f1f074fc8ca0376c",
+            "business_goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "payments",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_5c396d9858dca7f57c02a605"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_d594bfdb80a077923a870f6c",
+            "business_goal": "Đối chiếu bổ sung · Trạng thái thanh toán",
+            "domain_id": "payments",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_38763e35e3eb2af01dd1536b"
+            ],
+            "status": "planned",
+            "reason": null
+          }
+        ],
+        "execution": {
+          "status": "success",
+          "rows": 1,
+          "preview": [
+            {
+              "payment_count": 38833,
+              "payment_revenue": 4376032300.0
+            }
+          ],
+          "forecasts": []
+        }
+      }
+    },
+    {
+      "id": "cust_05",
+      "category": "unsupported",
+      "expected": "UNSUPPORTED",
+      "passed": false,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 1474,
+      "result": {
+        "status": "needs_clarification",
+        "outcome": "NEEDS_INPUT",
+        "analysis_state": "SUPPORTED_BUT_NEEDS_CLARIFICATION",
+        "error_type": "AMBIGUOUS_REQUEST",
+        "error_category": "metric_ambiguous",
+        "retryable": false,
+        "semantic_intent": null
+      }
+    },
+    {
+      "id": "fc_01",
+      "category": "forecast",
+      "expected": "FORECAST",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 3792,
+      "result": {
+        "status": "proposal_ready",
+        "outcome": "SUCCESS",
+        "semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "forecast_revenue",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": "day",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": {
+                "horizon": 30,
+                "unit": "day"
+              },
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_daab213c6d2471b3e18c88b5",
+              "goal": "Chỉ số toàn phạm vi",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "forecast_revenue",
+              "metric_ids": [
+                "aov",
+                "order_count",
+                "revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [
+                "scalar"
+              ],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_5d8650950eac5c197c5865a7",
+              "goal": "Đối chiếu bổ sung · Thành phố",
+              "domain_id": "orders",
+              "lens_hint": null,
+              "supporting_for": "forecast_revenue",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_cc2c40742ca952c3976bf63e",
+              "goal": "Diễn biến trong phạm vi đã chọn",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "forecast_revenue",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": "week",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_c1ed086433d64e2a61d7a113",
+              "goal": "Đối chiếu bổ sung · Chi nhánh",
+              "domain_id": "orders",
+              "lens_hint": null,
+              "supporting_for": "forecast_revenue",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "store"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_405b0668336fa70581786a4a",
+              "goal": "Đối chiếu bổ sung · Phương thức thanh toán",
+              "domain_id": "orders",
+              "lens_hint": null,
+              "supporting_for": "forecast_revenue",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "payment_method"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "current_month",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "analysis_components": [
+          {
+            "id": "forecast_revenue",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_0479b50004a8b392b3bb723f"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_405b0668336fa70581786a4a",
+            "business_goal": "Đối chiếu bổ sung · Phương thức thanh toán",
+            "domain_id": "orders",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_0420b9e28ca248494bcc7aa8"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_5d8650950eac5c197c5865a7",
+            "business_goal": "Đối chiếu bổ sung · Thành phố",
+            "domain_id": "orders",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_51ea3e7ed508d27e50d91697"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_c1ed086433d64e2a61d7a113",
+            "business_goal": "Đối chiếu bổ sung · Chi nhánh",
+            "domain_id": "orders",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_ac3ef64561768abdd959f037"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_cc2c40742ca952c3976bf63e",
+            "business_goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "orders",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_1938840da4f0aef5c33d0420"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_daab213c6d2471b3e18c88b5",
+            "business_goal": "Chỉ số toàn phạm vi",
+            "domain_id": "orders",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_952a32497a5cb17b04e6c740",
+              "q_ed11e8ad63560398e1f162e7"
+            ],
+            "status": "planned",
+            "reason": null
+          }
+        ],
+        "execution": {
+          "status": "failed",
+          "error_type": "FORECAST_INSUFFICIENT_HISTORY",
+          "category": "forecast_insufficient_history"
+        }
+      }
+    },
+    {
+      "id": "fc_06",
+      "category": "forecast_unsupported",
+      "expected": "FORECAST_UNSUPPORTED",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 12945,
+      "result": {
+        "status": "needs_clarification",
+        "outcome": "UNSUPPORTED",
+        "analysis_state": "UNSUPPORTED_CAPABILITY",
+        "error_type": "FORECAST_UNAVAILABLE",
+        "error_category": "forecast_unsupported",
+        "retryable": false,
+        "semantic_intent": null
+      }
+    },
+    {
+      "id": "oos_01",
+      "category": "out_of_scope",
+      "expected": "OUT_OF_SCOPE",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 4655,
+      "result": {
+        "status": "needs_clarification",
+        "outcome": "NEEDS_INPUT",
+        "analysis_state": "UNSUPPORTED_CAPABILITY",
+        "error_type": "OUT_OF_SCOPE",
+        "error_category": "not_analytical_request",
+        "retryable": false,
+        "semantic_intent": null
+      }
+    },
+    {
+      "id": "typo_03",
+      "category": "typo",
+      "expected": "SUPPORTED",
+      "passed": true,
+      "provider_calls": 1,
+      "call_reasons": [
+        "INITIAL_UNDERSTANDING"
+      ],
+      "stop_reason": null,
+      "latency_ms": 6317,
+      "result": {
+        "status": "proposal_ready",
+        "outcome": "SUCCESS",
+        "semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "req_1",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_b2fc17531bea0e4b7e80ff2f",
+              "goal": "Góc nhìn bổ sung · Kết quả chuyến giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_count"
+              ],
+              "dimension_ids": [
+                "delivery_status"
+              ],
+              "analysis_kind": "distribution",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_7c202956757b0944d01a1ae1",
+              "goal": "Diễn biến trong phạm vi đã chọn",
+              "domain_id": null,
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": "week",
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_bbf8d6d4d51c9cc7a7287ab1",
+              "goal": "Đối chiếu bổ sung · Chi nhánh",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "store"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_d0944e1e5fef03a1f5d80c1d",
+              "goal": "Đối chiếu bổ sung · Mã người giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "driver_id"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            },
+            {
+              "id": "support_416c10e66caa47dd07f1239d",
+              "goal": "Đối chiếu bổ sung · Trạng thái chuyến giao",
+              "domain_id": "delivery",
+              "lens_hint": null,
+              "supporting_for": "req_1",
+              "metric_ids": [
+                "delivery_success_rate"
+              ],
+              "dimension_ids": [
+                "delivery_status"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "analysis_components": [
+          {
+            "id": "req_1",
+            "business_goal": "Phân tích yêu cầu",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "requested",
+            "operation_ids": [
+              "q_94294230a16c81c4c9c26905"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_416c10e66caa47dd07f1239d",
+            "business_goal": "Đối chiếu bổ sung · Trạng thái chuyến giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_0e9d1718600ab5c55eb20cc1"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_7c202956757b0944d01a1ae1",
+            "business_goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_aa20c849715afcf6626ed7d8"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_b2fc17531bea0e4b7e80ff2f",
+            "business_goal": "Góc nhìn bổ sung · Kết quả chuyến giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_b29eff62b604963cdd8c94c4"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_bbf8d6d4d51c9cc7a7287ab1",
+            "business_goal": "Đối chiếu bổ sung · Chi nhánh",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_538b15ad9db0658950512844"
+            ],
+            "status": "planned",
+            "reason": null
+          },
+          {
+            "id": "support_d0944e1e5fef03a1f5d80c1d",
+            "business_goal": "Đối chiếu bổ sung · Mã người giao",
+            "domain_id": "delivery",
+            "lens_id": null,
+            "requested_or_supporting": "supporting",
+            "operation_ids": [
+              "q_8902a937730cb323ab2feaa4"
+            ],
+            "status": "planned",
+            "reason": null
+          }
+        ],
+        "execution": {
+          "status": "success",
+          "rows": 1,
+          "preview": [
+            {
+              "delivery_success_rate": 95.73
+            }
+          ],
+          "forecasts": []
+        }
+      }
+    }
+  ]
+}

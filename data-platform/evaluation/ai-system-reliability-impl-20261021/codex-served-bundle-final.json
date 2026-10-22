@@ -1,0 +1,32 @@
+{
+  "url": "http://127.0.0.1:8501",
+  "assets": [
+    {
+      "url": "/assets/index-BB2R2CT4.js",
+      "sha256": "0b68ff28ebbf9c1d43a8331e9612080fc888cdb720498fc7181d8c870558781b",
+      "bytes": 759929,
+      "markers": {
+        "Nhận định từ biểu đồ": true,
+        "Trong": true,
+        "Toàn phạm vi": true,
+        "Phạm vi số liệu:": true
+      }
+    },
+    {
+      "url": "/assets/index-CzRz9zWn.css",
+      "sha256": "7c8d701cdde011472733d3ed42cba0e08b051337b92fc7e1b65755cef17a12f7",
+      "bytes": 89617,
+      "markers": {
+        "Nhận định từ biểu đồ": false,
+        "Trong": false,
+        "Toàn phạm vi": false,
+        "Phạm vi số liệu:": false
+      }
+    }
+  ],
+  "backend": {
+    "image": "sha256:9b32691a99e3d9035e660cb045a70cdb34a6afa9181a3b4956171b342056acfb",
+    "started_at": "2026-10-21T16:59:53.608314597Z",
+    "health": "healthy"
+  }
+}

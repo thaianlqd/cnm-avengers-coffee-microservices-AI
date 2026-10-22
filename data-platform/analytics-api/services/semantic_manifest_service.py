@@ -10,7 +10,9 @@ from services.value_grounding_service import dimension_values
 
 _cache = OrderedDict()
 _lock = Lock()
-AGGREGATION_CODES = {"sum": "s", "average": "a", "count": "c", "conditional_count": "f", "distinct_count": "d", "catalog_defined": "x"}
+AGGREGATION_CODES = {"sum": "s", "average": "a", "ratio": "r", "count": "c", "conditional_count": "f", "distinct_count": "d", "catalog_defined": "x"}
+# Averages and ratios are recomputed per group; never summed or averaged across groups.
+NON_ADDITIVE_SEMANTICS = frozenset({"average", "ratio"})
 DIRECTION_CODES = {"higher_better": "h", "lower_better": "l", "neutral": "n", "contextual": "c"}
 
 
@@ -25,9 +27,11 @@ def char_limit(name, default, maximum):
         raise AnalysisError("context_configuration", "Invalid context allowance") from None
 
 
-def build_manifest(catalog, max_chars=None, subject_priority=()):
-    maximum = max_chars if max_chars is not None else char_limit("DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS", 10000, 20000)
-    key = (catalog.fingerprint, maximum, tuple(subject_priority))
+def build_manifest(catalog, max_chars=None, subject_priority=(), include_components=False):
+    """`component_only` metrics (numerators/denominators/exposure of governed ratios and averages) exist for the
+    compiler and the server-side lens planner only; they are never offered to the interpreter or to the UI."""
+    maximum = max_chars if max_chars is not None else char_limit("DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS", 14000, 20000)
+    key = (catalog.fingerprint, maximum, tuple(subject_priority), bool(include_components))
     with _lock:
         if key in _cache:
             _cache.move_to_end(key)
@@ -35,6 +39,8 @@ def build_manifest(catalog, max_chars=None, subject_priority=()):
     r = catalog.registry
     dims, metrics, subjects = {}, {}, {}
     for id, d in sorted(r["dimensions"].items()):
+        if d.get("lifecycle", {}).get("status") == "deprecated" and not include_components:
+            continue
         try:
             catalog.check_column(d["table"], d["column"])
             if d.get("expression"):
@@ -42,10 +48,12 @@ def build_manifest(catalog, max_chars=None, subject_priority=()):
         except AnalysisError:
             continue
         column = next(c for c in catalog.tables[d["table"]]["columns"] if c["name"] == d["column"])
-        dtype = column.get("data_type", "text").lower()
-        dtype = "number" if any(t in dtype for t in ("int", "numeric", "decimal", "float", "double")) else "date" if "date" in dtype or "timestamp" in dtype else "category"
+        from services.semantic_preflight_contract import dimension_logical_type
+        dtype = dimension_logical_type(id,d)
         dims[id] = [id, d["business_name"], dtype, d.get("value_grounding", {}).get("mode", "lookup")]
     for id, m in sorted(r["metrics"].items()):
+        if (m.get("component_only") or m.get("lifecycle", {}).get("status") == "deprecated") and not include_components:
+            continue
         try:
             if m["source"] not in catalog.tables:
                 continue
@@ -172,7 +180,7 @@ def provider_manifest(manifest):
     # here. No execution references are removed by this wire-only projection.
     value["subjects"] = [[s[0], *s[3:]] for s in manifest["subjects"]]
     value["metrics"] = [[m[0], m[1], m[2], *m[5:]] for m in manifest["metrics"]]
-    value["columns"]["subjects"] = "id,metrics,default_dimension,detail_fields,historical_detail; labels in domain directory"
+    value["columns"]["subjects"] = "id,metrics,default_dimension,detail_fields,historical_detail"
     value["columns"]["metrics"] = "id,label,unit,additive,historical,dimension_set,population_group,aggregation,quality_direction"
     # Lossless, single-level sharing for overlapping compatibility sets. Bases
     # always refer to an earlier literal list, so no cyclic/recursive grammar.
@@ -189,5 +197,5 @@ def provider_manifest(manifest):
                 best = candidate
         sets.append(best)
     value["dimension_sets"] = sets
-    value["columns"]["dimension_sets"] = "List of IDs or base list index + add/remove IDs; exact metric compatibility."
+    value["columns"]["dimension_sets"] = "IDs or {base: earlier list index,add: IDs,remove: IDs}; exact compatibility"
     return value

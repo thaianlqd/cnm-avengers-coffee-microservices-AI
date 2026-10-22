@@ -1,0 +1,25 @@
+{
+  "version": "3.4.0",
+  "purpose": "event observability; does not write canonical Silver facts",
+  "completeness": "unknown",
+  "streams": [
+    {
+      "stream_id": "orders-events", "source_table": "orders.don_hang",
+      "primary_key": ["ma_don_hang"], "update_clock": "ngay_cap_nhat", "clock_type": "timestamp without time zone",
+      "columns": ["ma_don_hang", "tong_tien", "co_so_ma", "loai_don_hang", "phuong_thuc_thanh_toan", "trang_thai_thanh_toan", "trang_thai_don_hang", "ngay_tao", "ngay_cap_nhat"],
+      "event_type": "order_observed", "overlap_seconds": 600, "full_reconcile_seconds": 3600
+    },
+    {
+      "stream_id": "order-items-events", "source_table": "orders.chi_tiet_don_hang",
+      "primary_key": ["id"], "update_clock": null,
+      "columns": ["id", "ma_don_hang", "ma_san_pham", "ten_san_pham", "gia_ban", "so_luong", "kich_co"],
+      "event_type": "order_item_observed", "overlap_seconds": 600, "full_reconcile_seconds": 3600
+    },
+    {
+      "stream_id": "shipper-events", "source_table": "orders.shipper_delivery",
+      "primary_key": ["id"], "update_clock": "updated_at", "clock_type": "timestamp without time zone",
+      "columns": ["id", "ma_don_hang", "status", "delivery_fee", "assigned_at", "picked_up_at", "delivered_at", "updated_at"],
+      "event_type": "delivery_observed", "overlap_seconds": 600, "full_reconcile_seconds": 3600
+    }
+  ]
+}

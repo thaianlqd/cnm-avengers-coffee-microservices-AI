@@ -1,0 +1,90 @@
+{
+  "status": "FINAL_VERIFIED_RELEASE_READY",
+  "acceptance_state": "FINAL_ACCEPTED",
+  "observed_at": "2026-10-19T15:20:03.942274+00:00",
+  "validated_source_commit": "0e6fa9f96173ec9850f442cb5b3b831dabe3f073",
+  "branch": "branch_thaian",
+  "source_tree_sha256": "7a7d975b5f920ef56384bfc510904701df65b64dcd1c9eae666ab450a60f658c",
+  "remote_workflow": {
+    "run_id": 39273979348,
+    "url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348",
+    "head_sha": "0e6fa9f96173ec9850f442cb5b3b831dabe3f073",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 118133358121,
+        "name": "DP browser / actual HTTP fixture (zero external I/O)",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348/job/118133358121"
+      },
+      {
+        "id": 118133358286,
+        "name": "DP web / types / build / mocked browser",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348/job/118133358286"
+      },
+      {
+        "id": 118133358307,
+        "name": "DP source and evidence / Gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348/job/118133358307"
+      },
+      {
+        "id": 118133358333,
+        "name": "DP backend / semantic offline",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348/job/118133358333"
+      },
+      {
+        "id": 118133358396,
+        "name": "DP pipeline / PostgreSQL / MinIO / Kafka fixtures",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348/job/118133358396"
+      },
+      {
+        "id": 118133358566,
+        "name": "DP V35 / two processes / load / faults / 15min soak",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348/job/118133358566"
+      }
+    ],
+    "status": "REMOTE_CI_VERIFIED",
+    "validated_source_commit": "0e6fa9f96173ec9850f442cb5b3b831dabe3f073",
+    "source_tree_sha256": "7a7d975b5f920ef56384bfc510904701df65b64dcd1c9eae666ab450a60f658c",
+    "candidate_identity_artifact": {
+      "id": 12197390435,
+      "name": "dp-candidate-identity",
+      "sha256": "d6d8024102d48aef0a90fd346a4b496d36840a31d312273de9bc0aca9c82438b"
+    }
+  },
+  "local_validation": "local-validation.json",
+  "runtime_observation": "runtime-release.json",
+  "served_ui": "served-ui.json",
+  "policy_version": "3.5.0-local-admin-governed",
+  "policy_sha256": "62d14944387f36f1dbe3b80f22403c6ed973fb117c22094662f24869420334fc",
+  "ledger": {
+    "reserved": 457,
+    "events": 457,
+    "sha256": "b3c07acb5db22752fd0f69937e42fa49f64ac9cba448332ff8e22dcb490db40d"
+  },
+  "repository_governance": {
+    "protected": false,
+    "applicable_rules": [],
+    "limitation": "required branch checks not enforced by repository settings"
+  },
+  "limitations": [
+    "Local fixture qualification, not production HA/SLO",
+    "Kafka backlog is not claimed caught-up or realtime Silver",
+    "Source completeness is measured per generation; unknown/partial is never inferred complete",
+    "No new paid-provider/model-accuracy evaluation",
+    "Word visual QA deferred by user",
+    "Repository-wide API CI has pre-existing Order/Menu failures"
+  ],
+  "delivery_identity": "The commit containing this receipt cannot contain its own hash. Resolve delivery SHA from git HEAD and the six-job CI run whose scanned dp-candidate-identity matches that HEAD; all539 source hashes must equal this verified source commit."
+}

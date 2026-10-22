@@ -1,0 +1,32 @@
+F
+======================================================================
+FAIL: test_locked_complete_request_does_not_require_an_unspecified_clarification (tests.test_v34_semantic_repair.CohortRepairTests.test_locked_complete_request_does_not_require_an_unspecified_clarification)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_semantic_repair.py", line 189, in test_locked_complete_request_does_not_require_an_unspecified_clarification
+    proposal=pipeline.propose(self.request(capture['question']).model_copy(update={'reference_date':f.date(2026,10,18)}))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 451, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 471, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 588, in run
+    raw=self.read_response(response,delta=tools[0]["name"] == "submit_analysis_delta")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 237, in read_response
+    raise AnalysisError(code,"Provider interpretation unavailable")
+services.analysis_catalog.AnalysisError: Provider interpretation unavailable
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/tests/test_v34_semantic_repair.py", line 191, in test_locked_complete_request_does_not_require_an_unspecified_clarification
+    self.fail(json.dumps({k:pipeline.semantic_info.get(k) for k in ['root_contract_issues','semantic_normalizations']},ensure_ascii=False))
+AssertionError: {"root_contract_issues": [{"requirement_id": "req_1", "field": "analysis_kind", "code": "analysis_kind_required"}], "semantic_normalizations": [{"requirement_id": "req_1", "field": "availability", "rule": "fully_bound_unexplained_limitation"}, {"field": "decision", "rule": "complete_locked_meaning"}]}
+
+----------------------------------------------------------------------
+Ran 1 test in 0.425s
+
+FAILED (failures=1)

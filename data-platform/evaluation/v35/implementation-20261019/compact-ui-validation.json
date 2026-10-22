@@ -1,0 +1,72 @@
+{
+  "status": "passed",
+  "provider_http": 0,
+  "web_tests": 183,
+  "browser_journeys": 35,
+  "browser_seconds": 52.3,
+  "widths": [
+    1680,
+    900,
+    390
+  ],
+  "narratives_default_closed": [
+    "short_answer",
+    "conclusion",
+    "limitations",
+    "chart_details",
+    "chart_insight",
+    "kpi_context",
+    "legacy_executive_summary",
+    "legacy_conclusions",
+    "legacy_recommendations"
+  ],
+  "plot_height_px": 214,
+  "card_height_assertion_px": 395,
+  "bar_chart_has_no_vertical_overflow": true,
+  "same_data_after_expansion": true,
+  "screenshots": {
+    "/tmp/v35-compact-bi.png": "7816a75b36994c7fb218b8b0ff551d49932c9dd2f76d31953cb7f0db92233d9f",
+    "/tmp/v35-clean-ai-charts.png": "95a15c40dd6f8a0ff06e2b8bba3599f17d24dcdadb8ecaa81b24e9808a3f01e7",
+    "/tmp/v35-compact-mobile.png": "bb5f036c2a2ec159df3c5856e8db6dcd854e1e86b69a517b0a36ebde4be878eb"
+  },
+  "served_ui": {
+    "asset": "/assets/index-BaIpSnt1.js",
+    "sha256": "0d2b79cad711bd6f4a296ab83f846c5ae9992c33267da73e353efc61512830bc",
+    "architecture_tab": true,
+    "collapsed_details": true,
+    "bounded_chart_viewport": true,
+    "grouped_report_disclosures": true,
+    "fixed_plot_height": 214,
+    "asymmetric_grid": true,
+    "served_at": "2026-10-19T12:56:37.343517+00:00",
+    "ranking_currency_single_line": true
+  },
+  "created_at": "2026-10-19T12:46:21.393911+00:00",
+  "report_notes_grouped": true,
+  "rankings_start_at_first_row": true,
+  "ranking_regression": {
+    "before": "failed: 10 long currency rows overflowed",
+    "after": "passed",
+    "browser_seconds": 5.5,
+    "log": "/tmp/v35-rank-compact-after.log",
+    "assertions": [
+      "10 first-page rows remain visible without vertical overflow",
+      "long currency values stay on one line",
+      "BI/AI desktop/mobile disclosure and chart sizing remain valid"
+    ]
+  },
+  "typecheck_build_after_ranking_fix": "passed",
+  "actual_chrome_d03": {
+    "status": "passed",
+    "kpi_count": 4,
+    "chart_count": 4,
+    "collapsed": [
+      "short_answer",
+      "findings",
+      "conclusion",
+      "limitations"
+    ],
+    "checked_on": "2026-10-19",
+    "presentation_before_final_currency_width_only": true
+  }
+}

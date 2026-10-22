@@ -1,0 +1,150 @@
+
+> data-platform-web-ui@1.0.0 test:e2e
+> playwright test
+
+[2m[WebServer] [22m(node:11658) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 20 tests using 1 worker
+
+  ✓   1 [ui] › tests/e2e/analyst-workspace.spec.ts:8:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › shows exactly seven modes and keeps hidden legacy missions out of the picker (1.7s)
+  ✓   2 [ui] › tests/e2e/analyst-workspace.spec.ts:19:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › "Phân tích" runs one job through /analysis-jobs without opening the plan step; double click = one submission (1.3s)
+  ✓   3 [ui] › tests/e2e/analyst-workspace.spec.ts:37:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › "Xem kế hoạch" keeps the optional preview/approve flow on its own endpoint (849ms)
+  ✓   4 [ui] › tests/e2e/analyst-workspace.spec.ts:49:3 › State isolation - stale responses never come back › propose is slow, the user goes back to edit, the old plan arrives later: no plan appears (1.3s)
+  ✓   5 [ui] › tests/e2e/analyst-workspace.spec.ts:64:3 › State isolation - stale responses never come back › generate is slow, the user stops: the late report is dropped and the workspace is reset (1.3s)
+  ✓   6 [ui] › tests/e2e/analyst-workspace.spec.ts:80:3 › State isolation - stale responses never come back › lost POST response: reconnect resumes the SAME idempotency key and never starts a new interpretation (1.7s)
+  ✓   7 [ui] › tests/e2e/analyst-workspace.spec.ts:103:3 › State isolation - stale responses never come back › changing the period after a plan was proposed drops that plan (903ms)
+  ✓   8 [ui] › tests/e2e/analyst-workspace.spec.ts:117:3 › Risk scan, redirect and typed actions › a slow Risk scan is dropped when the mission changes (no scan published into another mission) (1.4s)
+  ✓   9 [ui] › tests/e2e/analyst-workspace.spec.ts:134:3 › Risk scan, redirect and typed actions › a REDIRECT fix switches the mission but keeps the deliberate question (1.8s)
+  ✓  10 [ui] › tests/e2e/analyst-workspace.spec.ts:167:3 › Guided input and typed clarification › untouched guided builder sends a guided contract; editing the text sends free text only (no stale guided intent) (2.1s)
+  ✓  11 [ui] › tests/e2e/analyst-workspace.spec.ts:203:3 › Refinement and reset on a finished report › a slow refinement that finishes after "Hỏi câu mới" does not resurrect the old report (2.3s)
+  ✓  12 [ui] › tests/e2e/analyst-workspace.spec.ts:226:3 › Refinement and reset on a finished report › cancelling while the job HTTP is still running cancels the owned task and publishes nothing late (1.5s)
+  ✓  13 [ui] › tests/e2e/platform-v34.spec.ts:27:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › anonymous login gate makes no protected platform requests (798ms)
+  ✓  14 [ui] › tests/e2e/platform-v34.spec.ts:35:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › identity login returns account state and never stores a token in browser storage (833ms)
+  ✓  15 [ui] › tests/e2e/platform-v34.spec.ts:50:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › expired protected session returns to sign in before a report can appear (862ms)
+  ✓  16 [ui] › tests/e2e/platform-v34.spec.ts:62:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › permission denial keeps the signed-in workspace and the draft (832ms)
+  ✘  17 [ui] › tests/e2e/platform-v34.spec.ts:74:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › logout removes the report before a different account can sign in (6.0s)
+  ✘  18 [ui] › tests/e2e/platform-v34.spec.ts:83:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › keyboard group inspect uses the exact composite artifact key and makes no new AI request (6.1s)
+  ✘  19 [ui] › tests/e2e/platform-v34.spec.ts:106:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › mobile group inspect shows revoked access without a generic AI retry (6.1s)
+  ✓  20 [ui] › tests/e2e/platform-v34.spec.ts:120:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › blocked and unknown sources disclose measured health and unknown completeness (966ms)
+
+
+  1) [ui] › tests/e2e/platform-v34.spec.ts:74:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › logout removes the report before a different account can sign in 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('BÁO CÁO GROUP').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('BÁO CÁO GROUP').first()[22m
+
+
+      21 |   await page.locator('textarea').first().fill('Doanh thu 7 ngày qua');
+      22 |   await page.getByRole('button', { name: 'Phân tích', exact: true }).click();
+    > 23 |   await expect(page.getByText('BÁO CÁO GROUP').first()).toBeVisible();
+         |                                                         ^
+      24 | }
+      25 |
+      26 | test.describe('V3.4 auth, health and artifact inspection (mocked API; real browser)', () => {
+        at analyze (/Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/platform-v34.spec.ts:23:57)
+        at /Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/platform-v34.spec.ts:77:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/platform-v34-V3-4-auth-hea-a7aa5-fferent-account-can-sign-in-ui/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/platform-v34-V3-4-auth-hea-a7aa5-fferent-account-can-sign-in-ui/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/platform-v34-V3-4-auth-hea-a7aa5-fferent-account-can-sign-in-ui/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/platform-v34-V3-4-auth-hea-a7aa5-fferent-account-can-sign-in-ui/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [ui] › tests/e2e/platform-v34.spec.ts:83:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › keyboard group inspect uses the exact composite artifact key and makes no new AI request 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('BÁO CÁO GROUP').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('BÁO CÁO GROUP').first()[22m
+
+
+      21 |   await page.locator('textarea').first().fill('Doanh thu 7 ngày qua');
+      22 |   await page.getByRole('button', { name: 'Phân tích', exact: true }).click();
+    > 23 |   await expect(page.getByText('BÁO CÁO GROUP').first()).toBeVisible();
+         |                                                         ^
+      24 | }
+      25 |
+      26 | test.describe('V3.4 auth, health and artifact inspection (mocked API; real browser)', () => {
+        at analyze (/Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/platform-v34.spec.ts:23:57)
+        at /Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/platform-v34.spec.ts:92:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/platform-v34-V3-4-auth-hea-00627-and-makes-no-new-AI-request-ui/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/platform-v34-V3-4-auth-hea-00627-and-makes-no-new-AI-request-ui/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/platform-v34-V3-4-auth-hea-00627-and-makes-no-new-AI-request-ui/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/platform-v34-V3-4-auth-hea-00627-and-makes-no-new-AI-request-ui/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [ui] › tests/e2e/platform-v34.spec.ts:106:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › mobile group inspect shows revoked access without a generic AI retry 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('BÁO CÁO GROUP').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('BÁO CÁO GROUP').first()[22m
+
+
+      21 |   await page.locator('textarea').first().fill('Doanh thu 7 ngày qua');
+      22 |   await page.getByRole('button', { name: 'Phân tích', exact: true }).click();
+    > 23 |   await expect(page.getByText('BÁO CÁO GROUP').first()).toBeVisible();
+         |                                                         ^
+      24 | }
+      25 |
+      26 | test.describe('V3.4 auth, health and artifact inspection (mocked API; real browser)', () => {
+        at analyze (/Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/platform-v34.spec.ts:23:57)
+        at /Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI/data-platform/web-ui/tests/e2e/platform-v34.spec.ts:110:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/platform-v34-V3-4-auth-hea-3076a--without-a-generic-AI-retry-ui/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/platform-v34-V3-4-auth-hea-3076a--without-a-generic-AI-retry-ui/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/platform-v34-V3-4-auth-hea-3076a--without-a-generic-AI-retry-ui/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/platform-v34-V3-4-auth-hea-3076a--without-a-generic-AI-retry-ui/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [ui] › tests/e2e/platform-v34.spec.ts:74:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › logout removes the report before a different account can sign in 
+    [ui] › tests/e2e/platform-v34.spec.ts:83:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › keyboard group inspect uses the exact composite artifact key and makes no new AI request 
+    [ui] › tests/e2e/platform-v34.spec.ts:106:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › mobile group inspect shows revoked access without a generic AI retry 
+  17 passed (49.3s)

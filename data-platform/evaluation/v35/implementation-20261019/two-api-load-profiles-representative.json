@@ -1,0 +1,576 @@
+{
+  "event": "load_profiles_complete",
+  "version": "3.5.0",
+  "status": "passed",
+  "profiles": [
+    {
+      "offered": 1,
+      "repeat": 1,
+      "admitted": 1,
+      "rejected_429": 0,
+      "observed_global_active": 1,
+      "per_owner_counts": [
+        1
+      ],
+      "completed": 1,
+      "p95_ms": 2521.981,
+      "p99_ms": 2521.981,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 163656
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 153008
+        }
+      ]
+    },
+    {
+      "offered": 1,
+      "repeat": 2,
+      "admitted": 1,
+      "rejected_429": 0,
+      "observed_global_active": 1,
+      "per_owner_counts": [
+        1
+      ],
+      "completed": 1,
+      "p95_ms": 2082.884,
+      "p99_ms": 2082.884,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 167272
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 153008
+        }
+      ]
+    },
+    {
+      "offered": 1,
+      "repeat": 3,
+      "admitted": 1,
+      "rejected_429": 0,
+      "observed_global_active": 1,
+      "per_owner_counts": [
+        1
+      ],
+      "completed": 1,
+      "p95_ms": 1896.367,
+      "p99_ms": 1896.367,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 167996
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 153136
+        }
+      ]
+    },
+    {
+      "offered": 4,
+      "repeat": 1,
+      "admitted": 4,
+      "rejected_429": 0,
+      "observed_global_active": 4,
+      "per_owner_counts": [
+        1,
+        1,
+        2
+      ],
+      "completed": 4,
+      "p95_ms": 5274.435,
+      "p99_ms": 5274.435,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 173556
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 177028
+        }
+      ]
+    },
+    {
+      "offered": 4,
+      "repeat": 2,
+      "admitted": 4,
+      "rejected_429": 0,
+      "observed_global_active": 4,
+      "per_owner_counts": [
+        1,
+        1,
+        2
+      ],
+      "completed": 4,
+      "p95_ms": 3940.811,
+      "p99_ms": 3940.811,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 175980
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 179140
+        }
+      ]
+    },
+    {
+      "offered": 4,
+      "repeat": 3,
+      "admitted": 4,
+      "rejected_429": 0,
+      "observed_global_active": 4,
+      "per_owner_counts": [
+        1,
+        1,
+        2
+      ],
+      "completed": 4,
+      "p95_ms": 5808.874,
+      "p99_ms": 5808.874,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 176076
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 180684
+        }
+      ]
+    },
+    {
+      "offered": 8,
+      "repeat": 1,
+      "admitted": 8,
+      "rejected_429": 0,
+      "observed_global_active": 8,
+      "per_owner_counts": [
+        2,
+        3,
+        3
+      ],
+      "completed": 8,
+      "p95_ms": 8253.571,
+      "p99_ms": 8253.571,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 176816
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 182392
+        }
+      ]
+    },
+    {
+      "offered": 8,
+      "repeat": 2,
+      "admitted": 8,
+      "rejected_429": 0,
+      "observed_global_active": 8,
+      "per_owner_counts": [
+        2,
+        3,
+        3
+      ],
+      "completed": 8,
+      "p95_ms": 8752.459,
+      "p99_ms": 8752.459,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 176816
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 183604
+        }
+      ]
+    },
+    {
+      "offered": 8,
+      "repeat": 3,
+      "admitted": 8,
+      "rejected_429": 0,
+      "observed_global_active": 8,
+      "per_owner_counts": [
+        2,
+        3,
+        3
+      ],
+      "completed": 8,
+      "p95_ms": 7955.967,
+      "p99_ms": 7955.967,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 177452
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 184600
+        }
+      ]
+    },
+    {
+      "offered": 12,
+      "repeat": 1,
+      "admitted": 12,
+      "rejected_429": 0,
+      "observed_global_active": 12,
+      "per_owner_counts": [
+        4,
+        4,
+        4
+      ],
+      "completed": 12,
+      "p95_ms": 13698.378,
+      "p99_ms": 13698.378,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 178652
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 186280
+        }
+      ]
+    },
+    {
+      "offered": 12,
+      "repeat": 2,
+      "admitted": 12,
+      "rejected_429": 0,
+      "observed_global_active": 12,
+      "per_owner_counts": [
+        4,
+        4,
+        4
+      ],
+      "completed": 12,
+      "p95_ms": 13788.884,
+      "p99_ms": 13788.884,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 178820
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 187620
+        }
+      ]
+    },
+    {
+      "offered": 12,
+      "repeat": 3,
+      "admitted": 12,
+      "rejected_429": 0,
+      "observed_global_active": 12,
+      "per_owner_counts": [
+        4,
+        4,
+        4
+      ],
+      "completed": 12,
+      "p95_ms": 16069.279,
+      "p99_ms": 16069.279,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 179808
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 187620
+        }
+      ]
+    },
+    {
+      "offered": 20,
+      "repeat": 1,
+      "admitted": 12,
+      "rejected_429": 8,
+      "observed_global_active": 12,
+      "per_owner_counts": [
+        2,
+        2,
+        2,
+        3,
+        3
+      ],
+      "completed": 12,
+      "p95_ms": 18435.38,
+      "p99_ms": 18435.38,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 180784
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 188728
+        }
+      ]
+    },
+    {
+      "offered": 20,
+      "repeat": 2,
+      "admitted": 12,
+      "rejected_429": 8,
+      "observed_global_active": 12,
+      "per_owner_counts": [
+        2,
+        2,
+        2,
+        3,
+        3
+      ],
+      "completed": 12,
+      "p95_ms": 13150.222,
+      "p99_ms": 13150.222,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 180836
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 189276
+        }
+      ]
+    },
+    {
+      "offered": 20,
+      "repeat": 3,
+      "admitted": 12,
+      "rejected_429": 8,
+      "observed_global_active": 12,
+      "per_owner_counts": [
+        2,
+        2,
+        2,
+        3,
+        3
+      ],
+      "completed": 12,
+      "p95_ms": 24613.077,
+      "p99_ms": 24613.077,
+      "provider_calls": 0,
+      "physical_http": 0,
+      "instances": [
+        {
+          "instance": "v35-fixture-api-a",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 180836
+        },
+        {
+          "instance": "v35-fixture-api-b",
+          "pid": 1,
+          "redis_db": 15,
+          "session_backend": "redis",
+          "artifact_backend": "redis",
+          "physical_http": 0,
+          "peak_rss_kib": 191068
+        }
+      ]
+    }
+  ],
+  "owner_cap": 4,
+  "global_cap": 12,
+  "fairness_headroom": true,
+  "external_provider_http": 0,
+  "limitations": [
+    "SQLite adapter; PostgreSQL reader-pool pressure is not qualified",
+    "No provider transport/crash/revocation assertion from this command",
+    "Local capacity observation; not a production SLO"
+  ],
+  "observed_at": "2026-10-19T13:25:35.014980+00:00",
+  "api_resource_limits": {
+    "cpu_each": 0.5,
+    "memory_mib_each": 384
+  }
+}

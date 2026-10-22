@@ -1,0 +1,6 @@
+Analysis rejected action=propose category=unsupported_metric stage=PRECHECK provider_calls=0 root_contract_issues=[] contract_issues=[] issue_history=[] resolver_diagnostic={}
+Analysis rejected action=propose category=unsupported_metric stage=PRECHECK provider_calls=0 root_contract_issues=[] contract_issues=[] issue_history=[] resolver_diagnostic={}
+Analysis rejected action=propose category=unsupported_metric stage=PRECHECK provider_calls=0 root_contract_issues=[] contract_issues=[] issue_history=[] resolver_diagnostic={}
+Analysis rejected action=propose category=unsupported_metric stage=PRECHECK provider_calls=0 root_contract_issues=[] contract_issues=[] issue_history=[] resolver_diagnostic={}
+Analysis rejected action=propose category=unsupported_metric stage=PRECHECK provider_calls=0 root_contract_issues=[] contract_issues=[] issue_history=[] resolver_diagnostic={}
+Analysis rejected action=propose category=unsupported_metric stage=PRECHECK provider_calls=0 root_contract_issues=[] contract_issues=[] issue_history=[] resolver_diagnostic={}

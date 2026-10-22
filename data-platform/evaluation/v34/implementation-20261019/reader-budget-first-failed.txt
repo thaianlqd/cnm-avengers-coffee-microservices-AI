@@ -1,0 +1,81 @@
+ Container avengers-v34-fixture-postgres-1 Running 
+ Container avengers-v34-fixture-redis-1 Running 
+ Container avengers-v34-fixture-postgres-1 Waiting 
+ Container avengers-v34-fixture-postgres-1 Healthy 
+ Container avengers-v34-fixture-redis-1 Waiting 
+ Container avengers-v34-fixture-postgres-1 Waiting 
+ Container avengers-v34-fixture-redis-1 Healthy 
+ Container avengers-v34-fixture-postgres-1 Healthy 
+ Container avengers-v34-fixture-api-tests-run-223f84474f24 Creating 
+ Container avengers-v34-fixture-api-tests-run-223f84474f24 Created 
+2026-10-19 02:08:19,527 [INFO] analytics.events - {"stage":"sql_metadata","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,550 [INFO] analytics.events - {"stage":"sql_metadata","status":"completed","request_id":null,"job_id":null,"duration_ms":23.687}
+2026-10-19 02:08:19,551 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,551 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.545,"rows":64}
+2026-10-19 02:08:19,551 [INFO] analytics.events - {"stage":"sql_metadata","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,561 [INFO] analytics.events - {"stage":"sql_metadata","status":"completed","request_id":null,"job_id":null,"duration_ms":9.297}
+2026-10-19 02:08:19,561 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,564 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":3.365,"rows":440}
+2026-10-19 02:08:19,565 [INFO] analytics.events - {"stage":"sql_metadata","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,574 [INFO] analytics.events - {"stage":"sql_metadata","status":"completed","request_id":null,"job_id":null,"duration_ms":8.655}
+2026-10-19 02:08:19,574 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,574 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.053,"rows":0}
+2026-10-19 02:08:19,574 [INFO] analytics.events - {"stage":"sql_metadata","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,584 [INFO] analytics.events - {"stage":"sql_metadata","status":"completed","request_id":null,"job_id":null,"duration_ms":10.244}
+2026-10-19 02:08:19,584 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,584 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.055,"rows":0}
+2026-10-19 02:08:19,584 [INFO] analytics.events - {"stage":"sql_metadata","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,586 [INFO] analytics.events - {"stage":"sql_metadata","status":"completed","request_id":null,"job_id":null,"duration_ms":1.844}
+2026-10-19 02:08:19,586 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,587 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.073,"rows":0}
+2026-10-19 02:08:19,590 [INFO] analytics.events - {"stage":"sql_reader","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,591 [INFO] analytics.events - {"stage":"sql_reader","status":"completed","request_id":null,"job_id":null,"duration_ms":0.767}
+2026-10-19 02:08:19,591 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,591 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.059,"rows":1}
+2026-10-19 02:08:19,591 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,591 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.029,"rows":1}
+2026-10-19 02:08:19,591 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,591 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.029,"rows":1}
+2026-10-19 02:08:19,591 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,592 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.041,"rows":0}
+2026-10-19 02:08:19,592 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,592 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.04,"rows":0}
+2026-10-19 02:08:19,594 [INFO] analytics.events - {"stage":"sql_reader","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,594 [INFO] analytics.events - {"stage":"sql_reader","status":"failed","request_id":null,"job_id":null,"duration_ms":0.579}
+2026-10-19 02:08:19,595 [INFO] analytics.events - {"stage":"sql_dry_run","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,595 [INFO] analytics.events - {"stage":"db_acquire","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,597 [INFO] analytics.events - {"stage":"db_acquire","status":"completed","request_id":null,"job_id":null,"duration_ms":2.033}
+2026-10-19 02:08:19,598 [INFO] analytics.events - {"stage":"sql_dry_run","status":"completed","request_id":null,"job_id":null,"duration_ms":3.213}
+2026-10-19 02:08:19,599 [INFO] analytics.events - {"stage":"sql","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,599 [INFO] analytics.events - {"stage":"db_acquire","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,601 [INFO] analytics.events - {"stage":"db_acquire","status":"completed","request_id":null,"job_id":null,"duration_ms":1.948}
+2026-10-19 02:08:19,602 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,602 [INFO] analytics.events - {"stage":"db_fetch","status":"completed","request_id":null,"job_id":null,"duration_ms":0.088,"rows":1}
+2026-10-19 02:08:19,602 [INFO] analytics.events - {"stage":"sql","status":"completed","request_id":null,"job_id":null,"duration_ms":3.653,"rows":1}
+.2026-10-19 02:08:19,610 [INFO] analytics.events - {"stage":"sql_reader","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,610 [INFO] analytics.events - {"stage":"sql_reader","status":"completed","request_id":null,"job_id":null,"duration_ms":0.646}
+2026-10-19 02:08:19,611 [INFO] analytics.events - {"stage":"db_fetch","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,611 [INFO] analytics.events - {"stage":"db_fetch","status":"failed","request_id":null,"job_id":null,"duration_ms":0.071}
+2026-10-19 02:08:19,611 [INFO] analytics.events - {"stage":"sql_reader","status":"started","request_id":null,"job_id":null}
+2026-10-19 02:08:19,611 [INFO] analytics.events - {"stage":"sql_reader","status":"completed","request_id":null,"job_id":null,"duration_ms":0.077}
+E
+======================================================================
+ERROR: test_reader_attempt_failure_fetch_failure_and_population_bounds_are_counted (acceptance_snapshot_reader.SnapshotReaderPostgresTests.test_reader_attempt_failure_fetch_failure_and_population_bounds_are_counted)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/pipeline-tests/acceptance_snapshot_reader.py", line 129, in test_reader_attempt_failure_fetch_failure_and_population_bounds_are_counted
+    with c.cursor() as q:q.execute('SELECT 1')
+                         ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/db.py", line 73, in execute
+    budget.finish(identity)
+  File "/app/services/analytical_capacity_planner.py", line 93, in finish
+    self._consume(rows,bytes_)
+  File "/app/services/analytical_capacity_planner.py", line 100, in _consume
+    raise AnalysisError('capacity_requires_choice','Physical result population exceeds request capacity')
+services.analysis_catalog.AnalysisError: Physical result population exceeds request capacity
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.404s
+
+FAILED (errors=1)
+

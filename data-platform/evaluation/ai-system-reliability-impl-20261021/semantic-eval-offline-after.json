@@ -1,0 +1,3259 @@
+{
+  "v33_cases": {
+    "passed": 33,
+    "total": 33,
+    "rate": 1.0
+  },
+  "v33_rows": [
+    {
+      "id": "IN-14a",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "blocking_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-14b",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "blocking_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-14c",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_horizon_exceeded"
+      ],
+      "blocking_codes": [
+        "forecast_horizon_exceeded"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-14d",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "blocking_codes": [
+        "forecast_grouped_unsupported",
+        "forecast_horizon_exceeded"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-16",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_scope_unsupported"
+      ],
+      "blocking_codes": [
+        "forecast_scope_unsupported"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-16b",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_scope_unsupported"
+      ],
+      "blocking_codes": [
+        "forecast_scope_unsupported"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-14e",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "forecast_metric_unsupported"
+      ],
+      "blocking_codes": [
+        "forecast_metric_unsupported"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-15",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-15b",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-17",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "risk_signal_required"
+      ],
+      "blocking_codes": [
+        "risk_signal_required"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-11",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "trend_range_too_short"
+      ],
+      "blocking_codes": [
+        "trend_range_too_short"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-1",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-2",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-01",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "unrecognized_question"
+      ],
+      "blocking_codes": [
+        "input_residual_unresolved",
+        "unrecognized_question"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-01b",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "unrecognized_question"
+      ],
+      "blocking_codes": [
+        "unrecognized_question"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-02",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "metric_needed"
+      ],
+      "blocking_codes": [
+        "metric_needed"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-03",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "mission_mismatch"
+      ],
+      "blocking_codes": [
+        "mission_mismatch"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-04",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "cohort_criterion_needed"
+      ],
+      "blocking_codes": [
+        "cohort_criterion_needed",
+        "input_lookup_required"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-05",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "compare_mixed_units"
+      ],
+      "blocking_codes": [
+        "compare_mixed_units"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-06",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "unsupported_predicate"
+      ],
+      "blocking_codes": [
+        "unsupported_predicate"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-09",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "composition_non_additive"
+      ],
+      "blocking_codes": [
+        "composition_non_additive"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-10",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "composition_non_additive"
+      ],
+      "blocking_codes": [
+        "composition_non_additive"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-21",
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "expected_codes": [
+        "association_category_variable"
+      ],
+      "blocking_codes": [
+        "association_category_variable",
+        "input_value_missing"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35",
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "expected_codes": [
+        "unsupported_predicate"
+      ],
+      "blocking_codes": [
+        "input_lookup_required",
+        "unsupported_predicate"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-3",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-4",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-5",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-6",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35b",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35c",
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "expected_codes": [
+        "composition_non_additive"
+      ],
+      "blocking_codes": [
+        "composition_non_additive"
+      ],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35d",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "IN-35e",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "OK-7",
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "expected_codes": [],
+      "blocking_codes": [],
+      "ok": true,
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    }
+  ],
+  "v34_cases": {
+    "passed": 117,
+    "total": 120,
+    "rate": 0.975
+  },
+  "v34_rows": [
+    {
+      "id": "V34-001",
+      "category": "paraphrase",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-002",
+      "category": "paraphrase",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-003",
+      "category": "paraphrase",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-004",
+      "category": "paraphrase",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov"
+      ],
+      "expected_metric_anchors": [
+        "aov"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-005",
+      "category": "paraphrase",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "quantity_sold"
+      ],
+      "expected_metric_anchors": [
+        "quantity_sold"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-006",
+      "category": "paraphrase",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-007",
+      "category": "paraphrase",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-008",
+      "category": "paraphrase",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-009",
+      "category": "paraphrase",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-010",
+      "category": "paraphrase",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_count",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_order_count",
+        "store_revenue",
+        "voucher_order_count",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-011",
+      "category": "ambiguity",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "metric_needed"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-012",
+      "category": "ambiguity",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "metric_needed"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-013",
+      "category": "ambiguity",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "scope_unresolved",
+        "scope_conflict"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-014",
+      "category": "ambiguity",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "scope_unresolved",
+        "scope_conflict"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-015",
+      "category": "ambiguity",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "scope_unresolved",
+        "scope_conflict"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-016",
+      "category": "ambiguity",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "association_category_variable",
+        "input_value_missing"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-017",
+      "category": "ambiguity",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_cancellation_rate",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "compare_mixed_units"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-018",
+      "category": "ambiguity",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "cohort_criterion_needed",
+        "input_lookup_required"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-019",
+      "category": "mixed_multi_clause",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_count",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_order_count",
+        "store_revenue",
+        "voucher_order_count",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-020",
+      "category": "mixed_multi_clause",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov",
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "aov"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-021",
+      "category": "mixed_multi_clause",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_count",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_order_count",
+        "store_revenue",
+        "voucher_order_count",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "order_count",
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-022",
+      "category": "mixed_multi_clause",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_count",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_order_count",
+        "store_revenue",
+        "voucher_order_count",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-023",
+      "category": "mixed_multi_clause",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov",
+        "item_revenue",
+        "order_count",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_order_count",
+        "store_revenue",
+        "voucher_order_count",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_count",
+        "aov"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-024",
+      "category": "mixed_multi_clause",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov",
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "aov"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-025",
+      "category": "mixed_multi_clause",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_cancellation_rate",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "order_cancellation_rate",
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-026",
+      "category": "mixed_multi_clause",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_count",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_order_count",
+        "store_revenue",
+        "voucher_order_count",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-027",
+      "category": "unsupported",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unsupported_concept",
+        "unsupported_only"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-028",
+      "category": "unsupported",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unsupported_concept",
+        "unsupported_only"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-029",
+      "category": "unsupported",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unsupported_predicate"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-030",
+      "category": "unsupported",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "forecast_horizon_exceeded",
+        "forecast_grouped_unsupported"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-031",
+      "category": "unsupported",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "forecast_metric_unsupported"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-032",
+      "category": "unsupported",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "scope_unsupported",
+        "input_time_unresolved",
+        "input_residual_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-033",
+      "category": "unsupported",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unsupported_predicate",
+        "input_lookup_required"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-034",
+      "category": "unsupported",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "late_shift_rate"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "forecast_metric_unsupported"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-035",
+      "category": "geography",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-036",
+      "category": "geography",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-037",
+      "category": "geography",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-038",
+      "category": "geography",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-039",
+      "category": "geography",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-040",
+      "category": "geography",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-041",
+      "category": "geography",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-042",
+      "category": "geography",
+      "split": "holdout",
+      "ok": false,
+      "expected_decision": "READY",
+      "actual_decision": "CLARIFY",
+      "failures": [
+        "decision"
+      ],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [
+        "input_entity_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-043",
+      "category": "geography",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-044",
+      "category": "geography",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-045",
+      "category": "geography",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-046",
+      "category": "geography",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-047",
+      "category": "time",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-048",
+      "category": "time",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-049",
+      "category": "time",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-050",
+      "category": "time",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-051",
+      "category": "time",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-052",
+      "category": "time",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-053",
+      "category": "time",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-054",
+      "category": "time",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-055",
+      "category": "time",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-056",
+      "category": "time",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-057",
+      "category": "ranking",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-058",
+      "category": "ranking",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-059",
+      "category": "ranking",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-060",
+      "category": "ranking",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "quantity_sold"
+      ],
+      "expected_metric_anchors": [
+        "quantity_sold"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-061",
+      "category": "ranking",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-062",
+      "category": "ranking",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-063",
+      "category": "compare",
+      "split": "holdout",
+      "ok": false,
+      "expected_decision": "READY",
+      "actual_decision": "CLARIFY",
+      "failures": [
+        "decision"
+      ],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [
+        "input_entity_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-064",
+      "category": "compare",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-065",
+      "category": "compare",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-066",
+      "category": "compare",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov"
+      ],
+      "expected_metric_anchors": [
+        "aov"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-067",
+      "category": "compare",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-068",
+      "category": "compare",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-069",
+      "category": "compare",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_count",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_order_count",
+        "store_revenue",
+        "voucher_order_count",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-070",
+      "category": "compare",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_cancellation_rate"
+      ],
+      "expected_metric_anchors": [
+        "order_cancellation_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-071",
+      "category": "trend",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-072",
+      "category": "trend",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-073",
+      "category": "trend",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov"
+      ],
+      "expected_metric_anchors": [
+        "aov"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-074",
+      "category": "trend",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-075",
+      "category": "trend",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_cancellation_rate"
+      ],
+      "expected_metric_anchors": [
+        "order_cancellation_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-076",
+      "category": "trend",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "trend_range_too_short"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-077",
+      "category": "forecast",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-078",
+      "category": "forecast",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-079",
+      "category": "forecast",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-080",
+      "category": "forecast",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-081",
+      "category": "forecast",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "forecast_grouped_unsupported",
+        "input_entity_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-082",
+      "category": "forecast",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "forecast_scope_unsupported"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-083",
+      "category": "forecast",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "forecast_horizon_exceeded"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-084",
+      "category": "forecast",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "quantity_sold"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unsupported_concept",
+        "forecast_metric_unsupported"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-085",
+      "category": "risk",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "risk_signal_required"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-086",
+      "category": "risk",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "risk_signal_required"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-087",
+      "category": "risk",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_cancellation_rate"
+      ],
+      "expected_metric_anchors": [
+        "order_cancellation_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-088",
+      "category": "risk",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "late_shift_rate"
+      ],
+      "expected_metric_anchors": [
+        "late_shift_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-089",
+      "category": "risk",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "delivery_success_rate"
+      ],
+      "expected_metric_anchors": [
+        "delivery_success_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-090",
+      "category": "risk",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "large_cash_discrepancy_shift_count"
+      ],
+      "expected_metric_anchors": [
+        "large_cash_discrepancy_shift_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-091",
+      "category": "relationship",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_cancellation_rate",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_cancellation_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-092",
+      "category": "relationship",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_cancellation_rate",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_cancellation_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-093",
+      "category": "relationship",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "association_category_variable",
+        "input_value_missing"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-094",
+      "category": "relationship",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "association_category_variable",
+        "input_value_missing"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-095",
+      "category": "relationship",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_cancellation_rate",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_cancellation_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-096",
+      "category": "relationship",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_cancellation_rate",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_cancellation_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-097",
+      "category": "multi_metric",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_count",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_order_count",
+        "store_revenue",
+        "voucher_order_count",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-098",
+      "category": "multi_metric",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov",
+        "item_revenue",
+        "order_count",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_order_count",
+        "store_revenue",
+        "voucher_order_count",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_count",
+        "aov"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-099",
+      "category": "multi_metric",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov",
+        "order_cancellation_rate"
+      ],
+      "expected_metric_anchors": [
+        "aov",
+        "order_cancellation_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-100",
+      "category": "multi_metric",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "order_completion_rate",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue",
+        "order_completion_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-101",
+      "category": "multi_metric",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "product_revenue",
+        "quantity_sold"
+      ],
+      "expected_metric_anchors": [
+        "quantity_sold"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-102",
+      "category": "multi_metric",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "late_count",
+        "late_shift_rate"
+      ],
+      "expected_metric_anchors": [
+        "late_count",
+        "late_shift_rate"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-103",
+      "category": "typo",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unrecognized_question",
+        "input_residual_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-104",
+      "category": "typo",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unrecognized_question",
+        "input_residual_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-105",
+      "category": "typo",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unrecognized_question",
+        "input_residual_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-106",
+      "category": "typo",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "CLARIFY",
+      "actual_decision": "CLARIFY",
+      "failures": [],
+      "actual_metric_anchors": [],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unrecognized_question",
+        "input_residual_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-107",
+      "category": "unaccented",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-108",
+      "category": "unaccented",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [
+        "order_count"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-109",
+      "category": "unaccented",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov"
+      ],
+      "expected_metric_anchors": [
+        "aov"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-110",
+      "category": "unaccented",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-111",
+      "category": "unaccented",
+      "split": "holdout",
+      "ok": false,
+      "expected_decision": "READY",
+      "actual_decision": "CLARIFY",
+      "failures": [
+        "decision"
+      ],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [
+        "input_entity_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-112",
+      "category": "unaccented",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "READY",
+      "actual_decision": "READY",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-113",
+      "category": "partial",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unsupported_concept"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-114",
+      "category": "partial",
+      "split": "holdout",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "order_count",
+        "store_order_count",
+        "voucher_order_count"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unsupported_concept"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-115",
+      "category": "partial",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "UNSUPPORTED",
+      "actual_decision": "UNSUPPORTED",
+      "failures": [],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "unsupported_predicate"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-116",
+      "category": "partial",
+      "split": "development",
+      "ok": true,
+      "expected_decision": "REDIRECT",
+      "actual_decision": "REDIRECT",
+      "failures": [],
+      "actual_metric_anchors": [
+        "aov",
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [],
+      "blocking_codes": [
+        "composition_non_additive"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-117",
+      "category": "contradiction",
+      "split": "holdout",
+      "ok": true,
+      "failures": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-118",
+      "category": "contradiction",
+      "split": "development",
+      "ok": true,
+      "failures": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-119",
+      "category": "contradiction",
+      "split": "development",
+      "ok": true,
+      "failures": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-120",
+      "category": "contradiction",
+      "split": "holdout",
+      "ok": true,
+      "failures": [],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    }
+  ],
+  "v34_corpus_sha256": "12959e3daef9e07d9941ba60abef564a64ad73203bc386a452e28b4783067fa4",
+  "v34_claim": "Deterministic safety/meaning-anchor contracts; no measured LLM understanding or paid-provider accuracy",
+  "mode": "offline",
+  "measures_natural_language_understanding": false,
+  "generated_at": "2026-10-21T13:22:53.366223+00:00",
+  "registry_fingerprint": "880611511c8663c244abae0911f6dc2a7496889a2ba86128a460a68a91f9b1c8",
+  "case_count": 146,
+  "dataset_errors": [],
+  "categories": [
+    "ambiguous",
+    "cash_reconciliation",
+    "comparison",
+    "cross_domain",
+    "delivery",
+    "distribution",
+    "favorites",
+    "filters",
+    "followup",
+    "forecast",
+    "forecast_unsupported",
+    "informal",
+    "inventory",
+    "multi_dimension",
+    "orders_quality",
+    "out_of_scope",
+    "promotions",
+    "ranking",
+    "relative_time",
+    "restricted",
+    "reviews",
+    "shifts",
+    "simple",
+    "surveys",
+    "time_coverage",
+    "trend",
+    "typo",
+    "unsupported",
+    "weekday"
+  ],
+  "retrieval_domain": {
+    "passed": 110,
+    "total": 110,
+    "rate": 1.0
+  },
+  "retrieval_metric": {
+    "passed": 110,
+    "total": 110,
+    "rate": 1.0
+  },
+  "regression_retrieval": {
+    "passed": 6,
+    "total": 6,
+    "rate": 1.0
+  },
+  "compile_level2": {
+    "passed": 105,
+    "total": 105,
+    "rate": 1.0
+  },
+  "forecast_capability_rejections": {
+    "passed": 6,
+    "total": 6,
+    "rate": 1.0
+  },
+  "max_context_chars": 13936,
+  "preflight_expectations": {
+    "passed": 20,
+    "total": 20,
+    "rate": 1.0
+  },
+  "unsupported_preflight": {
+    "passed": 8,
+    "total": 8,
+    "rate": 1.0
+  },
+  "failures": [
+    {
+      "id": "V34-042",
+      "category": "geography",
+      "split": "holdout",
+      "ok": false,
+      "expected_decision": "READY",
+      "actual_decision": "CLARIFY",
+      "failures": [
+        "decision"
+      ],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [
+        "input_entity_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-063",
+      "category": "compare",
+      "split": "holdout",
+      "ok": false,
+      "expected_decision": "READY",
+      "actual_decision": "CLARIFY",
+      "failures": [
+        "decision"
+      ],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [
+        "input_entity_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    },
+    {
+      "id": "V34-111",
+      "category": "unaccented",
+      "split": "holdout",
+      "ok": false,
+      "expected_decision": "READY",
+      "actual_decision": "CLARIFY",
+      "failures": [
+        "decision"
+      ],
+      "actual_metric_anchors": [
+        "item_revenue",
+        "payment_revenue",
+        "product_revenue",
+        "revenue",
+        "store_revenue",
+        "voucher_revenue"
+      ],
+      "expected_metric_anchors": [
+        "revenue"
+      ],
+      "blocking_codes": [
+        "input_entity_unresolved"
+      ],
+      "provider_calls": 0,
+      "warehouse_queries": 0
+    }
+  ],
+  "by_version": {
+    "3.0": {
+      "case_count": 113,
+      "retrieval_domain": {
+        "passed": 86,
+        "total": 86,
+        "rate": 1.0
+      },
+      "retrieval_metric": {
+        "passed": 86,
+        "total": 86,
+        "rate": 1.0
+      },
+      "compile_level2": {
+        "passed": 81,
+        "total": 81,
+        "rate": 1.0
+      },
+      "forecast_capability_rejections": {
+        "passed": 3,
+        "total": 3,
+        "rate": 1.0
+      }
+    },
+    "3.1": {
+      "case_count": 33,
+      "retrieval_domain": {
+        "passed": 24,
+        "total": 24,
+        "rate": 1.0
+      },
+      "retrieval_metric": {
+        "passed": 24,
+        "total": 24,
+        "rate": 1.0
+      },
+      "compile_level2": {
+        "passed": 24,
+        "total": 24,
+        "rate": 1.0
+      },
+      "forecast_capability_rejections": {
+        "passed": 3,
+        "total": 3,
+        "rate": 1.0
+      }
+    }
+  }
+}

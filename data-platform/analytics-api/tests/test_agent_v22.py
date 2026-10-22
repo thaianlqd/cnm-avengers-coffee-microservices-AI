@@ -429,7 +429,8 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(r["interpretation"]["time_range"]["start"], "2026-09-01")
         self.assertEqual(
             {c["id"] for c in r["options"]},
-            set(self.catalog.registry["subjects"]["stores"]["metrics"]),
+            {m for m in self.catalog.registry["subjects"]["stores"]["metrics"]
+             if not self.catalog.registry["metrics"][m].get("component_only")},  # components are never user choices
         )
         p.executor.assert_not_called()
 
@@ -1693,6 +1694,8 @@ class AgentTests(unittest.TestCase):
         with patch.dict(os.environ, {"AI_OFFLINE": "0"}), patch(
             "services.llm_service.GEMINI_API_KEY", "fixture"
         ), patch("services.llm_service.GROQ_API_KEY", "fixture"), patch(
+            "services.llm_service.GEMINI_MODELS", ["fixture-model"]  # env-independent: one Gemini model, then explicit legacy Groq
+        ), patch(
             "services.agent_provider.requests.post", side_effect=[bad, good]
         ) as post:
             answer = NativeAgentProvider(legacy_policy=True)(

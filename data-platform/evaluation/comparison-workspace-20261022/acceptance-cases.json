@@ -1,0 +1,648 @@
+{
+  "version": "draft.1",
+  "status": "PLANNED_NOT_EXECUTED",
+  "source_baseline": "planning-baseline.json",
+  "cases": [
+    {
+      "id": "C01",
+      "partition": "development",
+      "category": "comparison_contract",
+      "scenario": "Hai đối tượng entity cùng metric",
+      "expected_assertions": [
+        "comparison frame có canonical member IDs và input refs",
+        "supporting giữ member axis, không chỉ IN filter"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C02",
+      "partition": "development",
+      "category": "comparison_contract",
+      "scenario": "Tổng quan có scope hai tỉnh nhưng không yêu cầu so sánh",
+      "expected_assertions": [
+        "mặc định tổng hợp, cho phép chuyển mode nếu capability hợp lệ",
+        "không giả user đã yêu cầu comparison"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C03",
+      "partition": "development",
+      "category": "comparison_contract",
+      "scenario": "So sánh hai kỳ",
+      "expected_assertions": [
+        "căn chỉnh bucket theo policy rõ",
+        "cả ngày gốc/kỳ nguồn giữ nguyên",
+        "không trộn hai kỳ thành một tổng"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C04",
+      "partition": "development",
+      "category": "comparison_contract",
+      "scenario": "So sánh nhiều metric khác đơn vị",
+      "expected_assertions": [
+        "tách panel hoặc normalization có baseline",
+        "không cộng VND với % và không ép chung trục"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C05",
+      "partition": "development",
+      "category": "comparison_contract",
+      "scenario": "Hai mục tiêu độc lập trong một câu",
+      "expected_assertions": [
+        "mỗi requirement frame riêng",
+        "chart local không lọc goal khác"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C06",
+      "partition": "development",
+      "category": "comparison_contract",
+      "scenario": "Mode không áp dụng cho chart/metric",
+      "expected_assertions": [
+        "server khai báo unavailable kèm lý do",
+        "không nút giả hoạt động hoặc âm thầm đổi nghĩa"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C07",
+      "partition": "development",
+      "category": "numeric",
+      "scenario": "Additive mode so sánh/tổng/xem riêng",
+      "expected_assertions": [
+        "từng member/key/giá trị khớp raw fixture",
+        "tổngunion=1000, Alpha300 Beta700"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C08",
+      "partition": "development",
+      "category": "numeric",
+      "scenario": "AOV khác số đơn mỗi nhóm",
+      "expected_assertions": [
+        "Alpha150 Beta700/3, union200",
+        "không average hai AOV"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C09",
+      "partition": "development",
+      "category": "numeric",
+      "scenario": "Tỷ lệ khác exposure và status",
+      "expected_assertions": [
+        "Alpha1/3, Beta2/5, union3/8=37.5%",
+        "không sum/avg ratio",
+        "DANG_GIAO control riêng"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C10",
+      "partition": "development",
+      "category": "numeric",
+      "scenario": "Distinct cùng khách xuất hiện hai nhóm",
+      "expected_assertions": [
+        "Alpha1 Beta2 nhưng union2",
+        "không cộng distinct=3"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C11",
+      "partition": "development",
+      "category": "numeric",
+      "scenario": "Nhóm so sánh chồng lấn",
+      "expected_assertions": [
+        "gộp union raw keys hoặc disable tổng có lý do",
+        "không double count"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C12",
+      "partition": "development",
+      "category": "numeric",
+      "scenario": "Cơ cấu tuyệt đối và tỷ trọng từng member",
+      "expected_assertions": [
+        "share per member dùng mẫu số member",
+        "share toànscope dùng denominator khác có nhãn rõ"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C13",
+      "partition": "development",
+      "category": "numeric",
+      "scenario": "Missing/zero/negative/zero baseline",
+      "expected_assertions": [
+        "missing không thành0",
+        "negative theo metric policy",
+        "delta baseline0 không có phần trăm giả"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C14",
+      "partition": "development",
+      "category": "shape",
+      "scenario": "Trend có cùng member ở nhiều bucket",
+      "expected_assertions": [
+        "hai series tên canonical, thứ tự ngày/khoảng cách thực/gaps chuẩn",
+        "tổng mỗi bucket khớp union"
+      ],
+      "critical": false,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C15",
+      "partition": "development",
+      "category": "shape",
+      "scenario": "Category × member",
+      "expected_assertions": [
+        "grouped bar hoặc bảng",
+        "không đưa 2series vào một donut không phân biệt"
+      ],
+      "critical": false,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C16",
+      "partition": "development",
+      "category": "shape",
+      "scenario": "Time × store_type × member",
+      "expected_assertions": [
+        "chọn một chiều series, chiều kia facet/filter",
+        "không cố vẽ mọi tích Descartes"
+      ],
+      "critical": false,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C17",
+      "partition": "development",
+      "category": "shape",
+      "scenario": "Nhiều member và actual<N",
+      "expected_assertions": [
+        "không rơi member im lặng",
+        "limit có disclosure, search/pagination hoặc facets",
+        "không tính total từ trang đầu"
+      ],
+      "critical": false,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C18",
+      "partition": "development",
+      "category": "shape",
+      "scenario": "Store/payment view bị grammar loại",
+      "expected_assertions": [
+        "quyết định theo semantic role/shape, có chart hoặc bảng hữu ích và lý do đúng",
+        "không nới grammar tất cả"
+      ],
+      "critical": false,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C19",
+      "partition": "development",
+      "category": "interaction",
+      "scenario": "Đổi mode trên một chart",
+      "expected_assertions": [
+        "chỉ chart đó đổi",
+        "report/other chart/map/primary answer không tự thay",
+        "rõ chip phạm vi cục bộ"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C20",
+      "partition": "development",
+      "category": "interaction",
+      "scenario": "Áp dụng lựa chọn cho toàn báo cáo",
+      "expected_assertions": [
+        "explicit Apply tạo report revision mới, cả KPI/map/claims đồng bộ atomic",
+        "không widen base scope"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C21",
+      "partition": "development",
+      "category": "interaction",
+      "scenario": "Tắt legend khác lọc dữ liệu",
+      "expected_assertions": [
+        "hide series không tự đổi denominator/summary",
+        "UI ghi đangẩn",
+        "chuyển Xem riêng mới đổi view semantics"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C22",
+      "partition": "development",
+      "category": "interaction",
+      "scenario": "A→B→Total nhanh, request trả ngược",
+      "expected_assertions": [
+        "chỉ view fingerprint mới publish",
+        "không giữ claim A khi đang hiển thị B",
+        "retry không nhân đôi query"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C23",
+      "partition": "development",
+      "category": "interaction",
+      "scenario": "Report revision thay khi đang chờ view",
+      "expected_assertions": [
+        "reject/drop stale response",
+        "local view state reset/rebind theo policy",
+        "chart thuộc revision cũ không sống lại"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C24",
+      "partition": "development",
+      "category": "interaction",
+      "scenario": "Đổi mode cache đầy đủ/thiếu grain",
+      "expected_assertions": [
+        "artifact đủ:0LLM0warehousequery",
+        "thiếugrain:bounded server SQL0LLM, loading giữ old view có nhãn"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C25",
+      "partition": "development",
+      "category": "security",
+      "scenario": "Tamper member/filter/query/viewID/artifact",
+      "expected_assertions": [
+        "reject forged/out-of-scope IDs và external SQL",
+        "owner/access recheck cả cache hit"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C26",
+      "partition": "development",
+      "category": "security",
+      "scenario": "Narrow permission sau khi cache/save",
+      "expected_assertions": [
+        "không đọc/hồi sinh member cũ",
+        "reject get/export/view artifact ngoài quyền hiện tại"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C27",
+      "partition": "development",
+      "category": "lifecycle",
+      "scenario": "Saved/reopen cùng mode và member",
+      "expected_assertions": [
+        "server-owned state đầy đủ fingerprint/activeview",
+        "legacy report không bịa data và cần refresh rõ nếu thiếu grain"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C28",
+      "partition": "development",
+      "category": "lifecycle",
+      "scenario": "Export activeview có local override",
+      "expected_assertions": [
+        "Word preview/export đúng mode/member/snapshot/facts",
+        "báo cáo gốc riêng tùy chọn rõ",
+        "không nhận client rows"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C29",
+      "partition": "development",
+      "category": "claims",
+      "scenario": "KPI priority của compare",
+      "expected_assertions": [
+        "memberA/memberB/delta/%base đúng cặp",
+        "không chọn maxstore thay totalcity, không giấu partition dưới details"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C30",
+      "partition": "development",
+      "category": "claims",
+      "scenario": "Đổi view cập nhật insight",
+      "expected_assertions": [
+        "mọi claim refs tới activeview",
+        "named subgroup",
+        "how_to_read vàsort khớp render"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C31",
+      "partition": "development",
+      "category": "claims",
+      "scenario": "Partial month và exposure",
+      "expected_assertions": [
+        "không dùng kỳ chưa đủ để so sánh full",
+        "warning/estimatedinterval/samples theo member vàmode"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C32",
+      "partition": "development",
+      "category": "claims",
+      "scenario": "Coverage nhiệm vụ so sánh",
+      "expected_assertions": [
+        "đếm logical lenses không đếm 3modes thành3bằngchứng",
+        "partial truthful, reason taxonomy nhấtquán"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C33",
+      "partition": "development",
+      "category": "browser",
+      "scenario": "1280/1440/1920/390 và keyboard/IME",
+      "expected_assertions": [
+        "controls ngoài plot, readable/wrap, aria pressed/label/focus",
+        "thao tác không sinh LLM/job ngoài dự kiến"
+      ],
+      "critical": false,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C34",
+      "partition": "development",
+      "category": "capacity",
+      "scenario": "Nhiều chart/member với click lặp",
+      "expected_assertions": [
+        "không N+1 unbounded",
+        "budget/row/byte/deadline giữ",
+        "cache keys đầyđủ,duplicate in-flight coalesce"
+      ],
+      "critical": false,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C35",
+      "partition": "development",
+      "category": "regression",
+      "scenario": "Ca người dùng ĐàNẵng/HCM và Bottom5",
+      "expected_assertions": [
+        "đúng số liệu nguồn đã ghi, có compare default/single/total",
+        "fixed cohort không tự rerank hoặc mởnational"
+      ],
+      "critical": false,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "C36",
+      "partition": "development",
+      "category": "entry_modes",
+      "scenario": "Free text/guided/preset/refine/saved và3độsâu",
+      "expected_assertions": [
+        "canonical meaning tươngđương→frame/view semantics tươngđương, inherited members giữ",
+        "noncompare regressions không đổi ý"
+      ],
+      "critical": false,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H01",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Sản phẩm hoặc danh mục, cùng chỉ số bán",
+      "expected_assertions": [
+        "cùng engine, không có nhánh tên tỉnh hay doanhthu mẫu"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H02",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Hai cửa hàng trùng tên có ID khác",
+      "expected_assertions": [
+        "membership và legend identity phân biệt",
+        "label không là key"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H03",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Risk theo hai nhóm với số mẫu khác",
+      "expected_assertions": [
+        "ngưỡng giữ policy, current snapshot rõ clock",
+        "exposure từng nhóm",
+        "không tự aggregate đèn đỏ"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H04",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Forecast nhiều nhóm",
+      "expected_assertions": [
+        "fit/backtest/interval/history từngmember",
+        "total series fit riêng theo governed policy hoặc disable",
+        "không cộng intervals giả"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H05",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Relationship/driver không cùng grain",
+      "expected_assertions": [
+        "so sánh chỉ nếu typed compatible",
+        "unsupported rõ, không tạo scatter giả"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H06",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Một member rỗng và member có dữ liệu",
+      "expected_assertions": [
+        "giữ member rỗng có no_data",
+        "không lặnglọai, zero khôngđồngnhất missing"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H07",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Customer/voucher distinct với giao nhau",
+      "expected_assertions": [
+        "union raw population, khôngsum distinct hoặc joinfanout"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H08",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Thêm/thay đổi dữ liệu ngoài approved cohort",
+      "expected_assertions": [
+        "mọi view/narrative của scopecốđịnh không đổi",
+        "ranking parent đổi có chủđích phải revision rõ"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H09",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Đổi người dùng/access fingerprint/epoch/schema",
+      "expected_assertions": [
+        "cachemiss/reject đúng taxonomy",
+        "không lẫn data/claimcũ với mới"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H10",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Multi-scope include/exclude/composite groups",
+      "expected_assertions": [
+        "nhóm con dùng AND trong group/OR giữaunion",
+        "không widen scope hoặc drop exclusion"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H11",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Temporal hai tháng khác số ngày/partial",
+      "expected_assertions": [
+        "alignment/normalization chỉ khi policy",
+        "hiển thị exact dates",
+        "baseline direction giữ"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    },
+    {
+      "id": "H12",
+      "partition": "reserved_transfer",
+      "category": "transfer",
+      "scenario": "Metric class/domain inventory mới hoặc unavailable",
+      "expected_assertions": [
+        "case inventory sinh từ capability hiện hành",
+        "mọiclass/domain có supported mode hoặc typedunsupported, không hardcode26/55"
+      ],
+      "critical": true,
+      "status": "NOT_RUN",
+      "receipt": null
+    }
+  ],
+  "development_count": 36,
+  "reserved_transfer_count": 12,
+  "holdout_policy": "12/48 reserved transfer scenarios: do not tune implementation against their raw fixture/oracle during repair. Listed scenario descriptions are not a blind evaluation; independently authored raw fixture values must be frozen before implementation.",
+  "expansion": "Parameterize by 3 depths, eligible missions, metric class and rich/sparse/empty. Generate current capability/domain inventory; declare explicit coverage totals at execution, never infer48scenario rows equal full matrix.",
+  "no_provider_calls_yet": true
+}

@@ -1,0 +1,12 @@
+
+> data-platform-web-ui@1.0.0 test:e2e
+> playwright test
+
+[2m[WebServer] [22merror when starting dev server:
+[2m[WebServer] [22mError: listen EPERM: operation not permitted 127.0.0.1:4173
+[2m[WebServer] [22m    at Server.setupListenHandle [as _listen2] (node:net:1886:21)
+[2m[WebServer] [22m    at listenInCluster (node:net:1965:12)
+[2m[WebServer] [22m    at doListen (node:net:2139:7)
+[2m[WebServer] [22m    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+Error: Process from config.webServer was not able to start. Exit code: 1
+

@@ -1,0 +1,9 @@
+[2m[WebServer] [22m(node:15173) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+  ✓  1 [ui] › tests/e2e/capability-catalog.spec.ts:3:1 › catalog keeps stable panes, filters, closes with Escape and fits mobile (2.0s)
+  ✓  2 [ui] › tests/e2e/refinement-composer.spec.ts:11:1 › top composer fills examples without running, applies one revision and preserves the report on HTTP failure (1.5s)
+
+  2 passed (7.1s)

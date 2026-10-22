@@ -1,0 +1,876 @@
+{
+  "at": "2026-10-22T11:54:11.538352+00:00",
+  "request": "Lower CPU and RAM without altering source or interrupting existing application/data work.",
+  "baseline_observed": {
+    "r2_cpu_percent": 97.62,
+    "r3_cpu_percent": 98.38,
+    "r2_memory_mib": 175.2,
+    "r3_memory_mib": 156,
+    "source": "tool measurement before change; instantaneous, not controlled benchmark"
+  },
+  "actions": [
+    {
+      "action": "r2 superseded runner",
+      "result": "Completed naturally before stop command. Container auto-removed; stop made no change. All module logs and manifest retained.",
+      "finished_at": 1792669912.6049986,
+      "passed": false,
+      "modules": 108
+    },
+    {
+      "action": "docker update --cpus 0.5 --cpu-shares 128 pedantic_noether",
+      "result": "applied",
+      "after_config": {
+        "NanoCpus": 500000000,
+        "CpuShares": 128,
+        "Memory": 1610612736,
+        "MemoryReservation": 0,
+        "MemorySwap": 3221225472
+      }
+    },
+    {
+      "action": "Playwright final runner",
+      "result": "Completed naturally: 104 passed, 2 skipped; its temporary browser/dev server exited."
+    },
+    {
+      "action": "Close Docker Desktop statistics window via native close button",
+      "result": "No application windows remain; engine still responds to docker stats."
+    }
+  ],
+  "after_samples": [
+    {
+      "at": "2026-10-22T11:54:01.097998+00:00",
+      "cpu_percent_total": 121.17,
+      "memory_mib_total": 3973.5,
+      "containers": [
+        {
+          "BlockIO": "7.25MB / 8.19kB",
+          "CPUPerc": "0.00%",
+          "Container": "38decc9a0945966f6c8700a222b01b51156476db7ee303f1a736bd796a732199",
+          "ID": "38decc9a0945",
+          "MemPerc": "0.11%",
+          "MemUsage": "8.367MiB / 7.748GiB",
+          "Name": "avengers_analytics_web",
+          "NetIO": "872B / 126B",
+          "PIDs": "9"
+        },
+        {
+          "BlockIO": "52.7MB / 32.8kB",
+          "CPUPerc": "49.28%",
+          "Container": "f6fafe38b22a5408e5b2f9fabc410f1e0bce347b0ed8b39dbc575ec3b04f15d0",
+          "ID": "f6fafe38b22a",
+          "MemPerc": "4.67%",
+          "MemUsage": "71.74MiB / 1.5GiB",
+          "Name": "pedantic_noether",
+          "NetIO": "0B / 0B",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "15.4MB / 0B",
+          "CPUPerc": "0.26%",
+          "Container": "5ba06494496c08edd2fcf950acd5d1e201df86c5fa680f72590a4612697d122f",
+          "ID": "5ba06494496c",
+          "MemPerc": "24.28%",
+          "MemUsage": "248.6MiB / 1GiB",
+          "Name": "avengers_analytics_api",
+          "NetIO": "7.73MB / 454kB",
+          "PIDs": "21"
+        },
+        {
+          "BlockIO": "679MB / 754MB",
+          "CPUPerc": "2.12%",
+          "Container": "30a990607d75aff286803770d636e7749bd120578a3525857931caa9f09e6bbd",
+          "ID": "30a990607d75",
+          "MemPerc": "7.32%",
+          "MemUsage": "580.8MiB / 7.748GiB",
+          "Name": "avengers_airflow",
+          "NetIO": "6kB / 126B",
+          "PIDs": "9"
+        },
+        {
+          "BlockIO": "41.9MB / 35.1MB",
+          "CPUPerc": "20.32%",
+          "Container": "bfa7cc5e5c568eb735aac2dbb580132120606541fdfe8e8b80263169de568182",
+          "ID": "bfa7cc5e5c56",
+          "MemPerc": "16.82%",
+          "MemUsage": "64.57MiB / 384MiB",
+          "Name": "avengers_data_sync",
+          "NetIO": "6.61GB / 1.63GB",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "207GB / 11.9GB",
+          "CPUPerc": "18.90%",
+          "Container": "c77f5ce3ba74973c44cbefff82561c916f08687f4400d5b55d3fd84b03ec8b45",
+          "ID": "c77f5ce3ba74",
+          "MemPerc": "93.84%",
+          "MemUsage": "720.7MiB / 768MiB",
+          "Name": "avengers_minio",
+          "NetIO": "2.17GB / 1.72GB",
+          "PIDs": "11"
+        },
+        {
+          "BlockIO": "12.5MB / 3.2MB",
+          "CPUPerc": "1.85%",
+          "Container": "b29d010ca407f595ec0302bbe4a8ec97722e4b34185161d4282b4e4247e9c042",
+          "ID": "b29d010ca407",
+          "MemPerc": "6.76%",
+          "MemUsage": "17.32MiB / 256MiB",
+          "Name": "avengers_kafka_producer",
+          "NetIO": "221MB / 522MB",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "48.6MB / 27.8MB",
+          "CPUPerc": "7.80%",
+          "Container": "f8268c3c9f267af1d6b898aa3083b4b42a5cd815195f5a4a9ee4f94e401b0b81",
+          "ID": "f8268c3c9f26",
+          "MemPerc": "19.38%",
+          "MemUsage": "74.41MiB / 384MiB",
+          "Name": "avengers_kafka_consumer",
+          "NetIO": "2.2GB / 2.79GB",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "43MB / 312MB",
+          "CPUPerc": "0.48%",
+          "Container": "0922ab1dd07e34ccd19e76e7562f78763fb3c2756a2dae940d669004f4edc64d",
+          "ID": "0922ab1dd07e",
+          "MemPerc": "0.83%",
+          "MemUsage": "66.18MiB / 7.748GiB",
+          "Name": "avengers_analytics_redis",
+          "NetIO": "122MB / 79.1MB",
+          "PIDs": "6"
+        },
+        {
+          "BlockIO": "88.5MB / 45MB",
+          "CPUPerc": "2.08%",
+          "Container": "3d50b3a181e4b86bce1970420db84465f96cd68c68c619a03799731f1f96b933",
+          "ID": "3d50b3a181e4",
+          "MemPerc": "32.51%",
+          "MemUsage": "166.4MiB / 512MiB",
+          "Name": "avengers_web_admin",
+          "NetIO": "3.48kB / 126B",
+          "PIDs": "66"
+        },
+        {
+          "BlockIO": "206MB / 63.5MB",
+          "CPUPerc": "3.49%",
+          "Container": "4e5fee4b7a7d7b48cc9a8711d1b0948e6fbe73c7b8897309934271bf0d8f128c",
+          "ID": "4e5fee4b7a7d",
+          "MemPerc": "28.47%",
+          "MemUsage": "145.8MiB / 512MiB",
+          "Name": "avengers_web_customer",
+          "NetIO": "3.59kB / 126B",
+          "PIDs": "57"
+        },
+        {
+          "BlockIO": "52.8MB / 7.4MB",
+          "CPUPerc": "0.00%",
+          "Container": "cc73c32b4014977237efefcd7e472c4262c330a599af2602d3b5936d67b468ce",
+          "ID": "cc73c32b4014",
+          "MemPerc": "5.91%",
+          "MemUsage": "22.71MiB / 384MiB",
+          "Name": "avengers_api_gateway",
+          "NetIO": "15.5kB / 12kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "56MB / 25.3MB",
+          "CPUPerc": "0.00%",
+          "Container": "7fbaf4af2f515722017f04d8f95e1b395cad7d1f7858398ac621850997177742",
+          "ID": "7fbaf4af2f51",
+          "MemPerc": "11.49%",
+          "MemUsage": "29.42MiB / 256MiB",
+          "Name": "avengers_identity_service",
+          "NetIO": "47.3kB / 31.3kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "14MB / 13.9MB",
+          "CPUPerc": "0.00%",
+          "Container": "c1533ced9b6ec040e3d6955f5e996eaabf1f9326a9915349e1f04362c86672ea",
+          "ID": "c1533ced9b6e",
+          "MemPerc": "8.51%",
+          "MemUsage": "21.77MiB / 256MiB",
+          "Name": "avengers_menu_service",
+          "NetIO": "118kB / 54.7kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "47.6MB / 17.7MB",
+          "CPUPerc": "0.00%",
+          "Container": "af173205fde3103b57cf61dd8e3a459c59ce04ab55a3a6d69aacfad83747df03",
+          "ID": "af173205fde3",
+          "MemPerc": "7.58%",
+          "MemUsage": "19.41MiB / 256MiB",
+          "Name": "avengers_news_service",
+          "NetIO": "11.2kB / 8.75kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "43.8MB / 14.4MB",
+          "CPUPerc": "0.00%",
+          "Container": "43d82d57c861599feddb9b2d11cf6d1900aac0e9d61203df31818e2eedb993a8",
+          "ID": "43d82d57c861",
+          "MemPerc": "8.00%",
+          "MemUsage": "20.47MiB / 256MiB",
+          "Name": "avengers_inventory_service",
+          "NetIO": "9.49kB / 2.33kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "59.3MB / 24.2MB",
+          "CPUPerc": "0.00%",
+          "Container": "954c233cbcc90b3cccb3871277b42a801e3575f5f12932132b4c124d076b337b",
+          "ID": "954c233cbcc9",
+          "MemPerc": "14.05%",
+          "MemUsage": "53.94MiB / 384MiB",
+          "Name": "avengers_order_service",
+          "NetIO": "3.84MB / 2.1MB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "232MB / 102MB",
+          "CPUPerc": "0.15%",
+          "Container": "72570b119537a219ebcb53fac8d4c83078245caaee5472898b5cc9ea3f99125c",
+          "ID": "72570b119537",
+          "MemPerc": "8.84%",
+          "MemUsage": "90.51MiB / 1GiB",
+          "Name": "avengers_ai_service",
+          "NetIO": "5.54MB / 98.6kB",
+          "PIDs": "21"
+        },
+        {
+          "BlockIO": "79.6MB / 6.12MB",
+          "CPUPerc": "0.00%",
+          "Container": "e873d477b03fae11ee682082f0163141ca3266bd3bb0e603991c171666b7ff1f",
+          "ID": "e873d477b03f",
+          "MemPerc": "0.18%",
+          "MemUsage": "14.55MiB / 7.748GiB",
+          "Name": "avengers_db",
+          "NetIO": "3.16kB / 126B",
+          "PIDs": "6"
+        },
+        {
+          "BlockIO": "26.3MB / 840kB",
+          "CPUPerc": "0.47%",
+          "Container": "6f2540c2185a0577663d638884005e5864d32325a4097d1b2edcf395f93a7643",
+          "ID": "6f2540c2185a",
+          "MemPerc": "7.17%",
+          "MemUsage": "9.18MiB / 128MiB",
+          "Name": "avengers_redis",
+          "NetIO": "23.8kB / 25.7kB",
+          "PIDs": "6"
+        },
+        {
+          "BlockIO": "128MB / 66.7MB",
+          "CPUPerc": "0.27%",
+          "Container": "4aaaa333ab6ce1c50a2247ebb2757a285408c8e6c8db7c300e00592de9c7f392",
+          "ID": "4aaaa333ab6c",
+          "MemPerc": "11.97%",
+          "MemUsage": "61.3MiB / 512MiB",
+          "Name": "avengers_mq",
+          "NetIO": "3.19kB / 264B",
+          "PIDs": "40"
+        },
+        {
+          "BlockIO": "2.96GB / 631MB",
+          "CPUPerc": "3.91%",
+          "Container": "0d423af88ad2651c8c10c1f5ee6137b37cc0ca586d768a9b6d97b8b2fbf8dcde",
+          "ID": "0d423af88ad2",
+          "MemPerc": "12.70%",
+          "MemUsage": "1008MiB / 7.748GiB",
+          "Name": "avengers_kafka",
+          "NetIO": "524MB / 508MB",
+          "PIDs": "85"
+        },
+        {
+          "BlockIO": "2.26GB / 4.71GB",
+          "CPUPerc": "9.69%",
+          "Container": "e350a839e795e9a4cc83c43e956296272cdd2c587065c99a1c30907dc8e1a685",
+          "ID": "e350a839e795",
+          "MemPerc": "2.48%",
+          "MemUsage": "196.8MiB / 7.748GiB",
+          "Name": "avengers_analytics_db",
+          "NetIO": "2.25GB / 4.34GB",
+          "PIDs": "10"
+        },
+        {
+          "BlockIO": "85.8MB / 64.6MB",
+          "CPUPerc": "0.10%",
+          "Container": "15e025e22ddcb0de2ff1ca5dad749640e8271c3263633ac524ef257097b8ff85",
+          "ID": "15e025e22ddc",
+          "MemPerc": "3.28%",
+          "MemUsage": "260.6MiB / 7.748GiB",
+          "Name": "avengers_zookeeper",
+          "NetIO": "487kB / 309kB",
+          "PIDs": "60"
+        }
+      ]
+    },
+    {
+      "at": "2026-10-22T11:54:06.294123+00:00",
+      "cpu_percent_total": 185.31,
+      "memory_mib_total": 4055.4,
+      "containers": [
+        {
+          "BlockIO": "7.25MB / 8.19kB",
+          "CPUPerc": "0.00%",
+          "Container": "38decc9a0945966f6c8700a222b01b51156476db7ee303f1a736bd796a732199",
+          "ID": "38decc9a0945",
+          "MemPerc": "0.11%",
+          "MemUsage": "8.367MiB / 7.748GiB",
+          "Name": "avengers_analytics_web",
+          "NetIO": "872B / 126B",
+          "PIDs": "9"
+        },
+        {
+          "BlockIO": "52.7MB / 32.8kB",
+          "CPUPerc": "48.99%",
+          "Container": "f6fafe38b22a5408e5b2f9fabc410f1e0bce347b0ed8b39dbc575ec3b04f15d0",
+          "ID": "f6fafe38b22a",
+          "MemPerc": "8.89%",
+          "MemUsage": "136.6MiB / 1.5GiB",
+          "Name": "pedantic_noether",
+          "NetIO": "0B / 0B",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "15.4MB / 0B",
+          "CPUPerc": "5.89%",
+          "Container": "5ba06494496c08edd2fcf950acd5d1e201df86c5fa680f72590a4612697d122f",
+          "ID": "5ba06494496c",
+          "MemPerc": "24.30%",
+          "MemUsage": "248.8MiB / 1GiB",
+          "Name": "avengers_analytics_api",
+          "NetIO": "7.74MB / 457kB",
+          "PIDs": "21"
+        },
+        {
+          "BlockIO": "679MB / 754MB",
+          "CPUPerc": "2.31%",
+          "Container": "30a990607d75aff286803770d636e7749bd120578a3525857931caa9f09e6bbd",
+          "ID": "30a990607d75",
+          "MemPerc": "7.32%",
+          "MemUsage": "580.8MiB / 7.748GiB",
+          "Name": "avengers_airflow",
+          "NetIO": "6kB / 126B",
+          "PIDs": "9"
+        },
+        {
+          "BlockIO": "41.9MB / 35.1MB",
+          "CPUPerc": "21.20%",
+          "Container": "bfa7cc5e5c568eb735aac2dbb580132120606541fdfe8e8b80263169de568182",
+          "ID": "bfa7cc5e5c56",
+          "MemPerc": "16.82%",
+          "MemUsage": "64.57MiB / 384MiB",
+          "Name": "avengers_data_sync",
+          "NetIO": "6.61GB / 1.63GB",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "207GB / 11.9GB",
+          "CPUPerc": "20.05%",
+          "Container": "c77f5ce3ba74973c44cbefff82561c916f08687f4400d5b55d3fd84b03ec8b45",
+          "ID": "c77f5ce3ba74",
+          "MemPerc": "93.99%",
+          "MemUsage": "721.9MiB / 768MiB",
+          "Name": "avengers_minio",
+          "NetIO": "2.17GB / 1.72GB",
+          "PIDs": "10"
+        },
+        {
+          "BlockIO": "12.5MB / 3.2MB",
+          "CPUPerc": "9.84%",
+          "Container": "b29d010ca407f595ec0302bbe4a8ec97722e4b34185161d4282b4e4247e9c042",
+          "ID": "b29d010ca407",
+          "MemPerc": "7.06%",
+          "MemUsage": "18.08MiB / 256MiB",
+          "Name": "avengers_kafka_producer",
+          "NetIO": "222MB / 523MB",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "48.6MB / 27.8MB",
+          "CPUPerc": "14.75%",
+          "Container": "f8268c3c9f267af1d6b898aa3083b4b42a5cd815195f5a4a9ee4f94e401b0b81",
+          "ID": "f8268c3c9f26",
+          "MemPerc": "19.25%",
+          "MemUsage": "73.91MiB / 384MiB",
+          "Name": "avengers_kafka_consumer",
+          "NetIO": "2.2GB / 2.8GB",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "43MB / 312MB",
+          "CPUPerc": "0.46%",
+          "Container": "0922ab1dd07e34ccd19e76e7562f78763fb3c2756a2dae940d669004f4edc64d",
+          "ID": "0922ab1dd07e",
+          "MemPerc": "0.83%",
+          "MemUsage": "65.93MiB / 7.748GiB",
+          "Name": "avengers_analytics_redis",
+          "NetIO": "122MB / 79.1MB",
+          "PIDs": "6"
+        },
+        {
+          "BlockIO": "88.5MB / 45MB",
+          "CPUPerc": "1.89%",
+          "Container": "3d50b3a181e4b86bce1970420db84465f96cd68c68c619a03799731f1f96b933",
+          "ID": "3d50b3a181e4",
+          "MemPerc": "32.46%",
+          "MemUsage": "166.2MiB / 512MiB",
+          "Name": "avengers_web_admin",
+          "NetIO": "3.48kB / 126B",
+          "PIDs": "66"
+        },
+        {
+          "BlockIO": "206MB / 63.5MB",
+          "CPUPerc": "2.94%",
+          "Container": "4e5fee4b7a7d7b48cc9a8711d1b0948e6fbe73c7b8897309934271bf0d8f128c",
+          "ID": "4e5fee4b7a7d",
+          "MemPerc": "28.38%",
+          "MemUsage": "145.3MiB / 512MiB",
+          "Name": "avengers_web_customer",
+          "NetIO": "3.59kB / 126B",
+          "PIDs": "57"
+        },
+        {
+          "BlockIO": "52.8MB / 7.4MB",
+          "CPUPerc": "0.00%",
+          "Container": "cc73c32b4014977237efefcd7e472c4262c330a599af2602d3b5936d67b468ce",
+          "ID": "cc73c32b4014",
+          "MemPerc": "5.91%",
+          "MemUsage": "22.71MiB / 384MiB",
+          "Name": "avengers_api_gateway",
+          "NetIO": "15.5kB / 12kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "56MB / 25.3MB",
+          "CPUPerc": "0.00%",
+          "Container": "7fbaf4af2f515722017f04d8f95e1b395cad7d1f7858398ac621850997177742",
+          "ID": "7fbaf4af2f51",
+          "MemPerc": "11.49%",
+          "MemUsage": "29.42MiB / 256MiB",
+          "Name": "avengers_identity_service",
+          "NetIO": "47.3kB / 31.3kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "14MB / 13.9MB",
+          "CPUPerc": "0.00%",
+          "Container": "c1533ced9b6ec040e3d6955f5e996eaabf1f9326a9915349e1f04362c86672ea",
+          "ID": "c1533ced9b6e",
+          "MemPerc": "8.51%",
+          "MemUsage": "21.77MiB / 256MiB",
+          "Name": "avengers_menu_service",
+          "NetIO": "118kB / 54.7kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "47.6MB / 17.7MB",
+          "CPUPerc": "0.00%",
+          "Container": "af173205fde3103b57cf61dd8e3a459c59ce04ab55a3a6d69aacfad83747df03",
+          "ID": "af173205fde3",
+          "MemPerc": "7.58%",
+          "MemUsage": "19.41MiB / 256MiB",
+          "Name": "avengers_news_service",
+          "NetIO": "11.2kB / 8.75kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "43.8MB / 14.4MB",
+          "CPUPerc": "0.00%",
+          "Container": "43d82d57c861599feddb9b2d11cf6d1900aac0e9d61203df31818e2eedb993a8",
+          "ID": "43d82d57c861",
+          "MemPerc": "8.00%",
+          "MemUsage": "20.47MiB / 256MiB",
+          "Name": "avengers_inventory_service",
+          "NetIO": "9.49kB / 2.33kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "59.3MB / 24.2MB",
+          "CPUPerc": "0.00%",
+          "Container": "954c233cbcc90b3cccb3871277b42a801e3575f5f12932132b4c124d076b337b",
+          "ID": "954c233cbcc9",
+          "MemPerc": "14.04%",
+          "MemUsage": "53.93MiB / 384MiB",
+          "Name": "avengers_order_service",
+          "NetIO": "3.84MB / 2.1MB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "232MB / 102MB",
+          "CPUPerc": "0.08%",
+          "Container": "72570b119537a219ebcb53fac8d4c83078245caaee5472898b5cc9ea3f99125c",
+          "ID": "72570b119537",
+          "MemPerc": "8.84%",
+          "MemUsage": "90.51MiB / 1GiB",
+          "Name": "avengers_ai_service",
+          "NetIO": "5.54MB / 98.7kB",
+          "PIDs": "21"
+        },
+        {
+          "BlockIO": "79.6MB / 6.12MB",
+          "CPUPerc": "0.00%",
+          "Container": "e873d477b03fae11ee682082f0163141ca3266bd3bb0e603991c171666b7ff1f",
+          "ID": "e873d477b03f",
+          "MemPerc": "0.18%",
+          "MemUsage": "14.28MiB / 7.748GiB",
+          "Name": "avengers_db",
+          "NetIO": "3.16kB / 126B",
+          "PIDs": "6"
+        },
+        {
+          "BlockIO": "26.3MB / 840kB",
+          "CPUPerc": "0.39%",
+          "Container": "6f2540c2185a0577663d638884005e5864d32325a4097d1b2edcf395f93a7643",
+          "ID": "6f2540c2185a",
+          "MemPerc": "6.98%",
+          "MemUsage": "8.93MiB / 128MiB",
+          "Name": "avengers_redis",
+          "NetIO": "23.8kB / 25.7kB",
+          "PIDs": "6"
+        },
+        {
+          "BlockIO": "128MB / 66.7MB",
+          "CPUPerc": "0.22%",
+          "Container": "4aaaa333ab6ce1c50a2247ebb2757a285408c8e6c8db7c300e00592de9c7f392",
+          "ID": "4aaaa333ab6c",
+          "MemPerc": "11.97%",
+          "MemUsage": "61.3MiB / 512MiB",
+          "Name": "avengers_mq",
+          "NetIO": "3.19kB / 264B",
+          "PIDs": "40"
+        },
+        {
+          "BlockIO": "2.96GB / 632MB",
+          "CPUPerc": "54.47%",
+          "Container": "0d423af88ad2651c8c10c1f5ee6137b37cc0ca586d768a9b6d97b8b2fbf8dcde",
+          "ID": "0d423af88ad2",
+          "MemPerc": "12.90%",
+          "MemUsage": "1024MiB / 7.748GiB",
+          "Name": "avengers_kafka",
+          "NetIO": "524MB / 508MB",
+          "PIDs": "93"
+        },
+        {
+          "BlockIO": "2.26GB / 4.71GB",
+          "CPUPerc": "1.76%",
+          "Container": "e350a839e795e9a4cc83c43e956296272cdd2c587065c99a1c30907dc8e1a685",
+          "ID": "e350a839e795",
+          "MemPerc": "2.49%",
+          "MemUsage": "197.6MiB / 7.748GiB",
+          "Name": "avengers_analytics_db",
+          "NetIO": "2.25GB / 4.35GB",
+          "PIDs": "10"
+        },
+        {
+          "BlockIO": "85.8MB / 64.6MB",
+          "CPUPerc": "0.07%",
+          "Container": "15e025e22ddcb0de2ff1ca5dad749640e8271c3263633ac524ef257097b8ff85",
+          "ID": "15e025e22ddc",
+          "MemPerc": "3.28%",
+          "MemUsage": "260.6MiB / 7.748GiB",
+          "Name": "avengers_zookeeper",
+          "NetIO": "488kB / 309kB",
+          "PIDs": "60"
+        }
+      ]
+    },
+    {
+      "at": "2026-10-22T11:54:11.474217+00:00",
+      "cpu_percent_total": 126.77,
+      "memory_mib_total": 4030.1,
+      "containers": [
+        {
+          "BlockIO": "7.25MB / 8.19kB",
+          "CPUPerc": "0.00%",
+          "Container": "38decc9a0945966f6c8700a222b01b51156476db7ee303f1a736bd796a732199",
+          "ID": "38decc9a0945",
+          "MemPerc": "0.11%",
+          "MemUsage": "8.367MiB / 7.748GiB",
+          "Name": "avengers_analytics_web",
+          "NetIO": "872B / 126B",
+          "PIDs": "9"
+        },
+        {
+          "BlockIO": "52.7MB / 32.8kB",
+          "CPUPerc": "49.00%",
+          "Container": "f6fafe38b22a5408e5b2f9fabc410f1e0bce347b0ed8b39dbc575ec3b04f15d0",
+          "ID": "f6fafe38b22a",
+          "MemPerc": "8.07%",
+          "MemUsage": "123.9MiB / 1.5GiB",
+          "Name": "pedantic_noether",
+          "NetIO": "0B / 0B",
+          "PIDs": "9"
+        },
+        {
+          "BlockIO": "15.4MB / 0B",
+          "CPUPerc": "0.14%",
+          "Container": "5ba06494496c08edd2fcf950acd5d1e201df86c5fa680f72590a4612697d122f",
+          "ID": "5ba06494496c",
+          "MemPerc": "24.28%",
+          "MemUsage": "248.6MiB / 1GiB",
+          "Name": "avengers_analytics_api",
+          "NetIO": "7.74MB / 457kB",
+          "PIDs": "21"
+        },
+        {
+          "BlockIO": "679MB / 754MB",
+          "CPUPerc": "1.35%",
+          "Container": "30a990607d75aff286803770d636e7749bd120578a3525857931caa9f09e6bbd",
+          "ID": "30a990607d75",
+          "MemPerc": "7.32%",
+          "MemUsage": "580.6MiB / 7.748GiB",
+          "Name": "avengers_airflow",
+          "NetIO": "6kB / 126B",
+          "PIDs": "9"
+        },
+        {
+          "BlockIO": "41.9MB / 35.1MB",
+          "CPUPerc": "20.90%",
+          "Container": "bfa7cc5e5c568eb735aac2dbb580132120606541fdfe8e8b80263169de568182",
+          "ID": "bfa7cc5e5c56",
+          "MemPerc": "16.88%",
+          "MemUsage": "64.82MiB / 384MiB",
+          "Name": "avengers_data_sync",
+          "NetIO": "6.62GB / 1.63GB",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "207GB / 11.9GB",
+          "CPUPerc": "19.44%",
+          "Container": "c77f5ce3ba74973c44cbefff82561c916f08687f4400d5b55d3fd84b03ec8b45",
+          "ID": "c77f5ce3ba74",
+          "MemPerc": "94.36%",
+          "MemUsage": "724.7MiB / 768MiB",
+          "Name": "avengers_minio",
+          "NetIO": "2.17GB / 1.72GB",
+          "PIDs": "10"
+        },
+        {
+          "BlockIO": "12.5MB / 3.2MB",
+          "CPUPerc": "8.65%",
+          "Container": "b29d010ca407f595ec0302bbe4a8ec97722e4b34185161d4282b4e4247e9c042",
+          "ID": "b29d010ca407",
+          "MemPerc": "6.87%",
+          "MemUsage": "17.59MiB / 256MiB",
+          "Name": "avengers_kafka_producer",
+          "NetIO": "222MB / 523MB",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "48.6MB / 27.8MB",
+          "CPUPerc": "14.23%",
+          "Container": "f8268c3c9f267af1d6b898aa3083b4b42a5cd815195f5a4a9ee4f94e401b0b81",
+          "ID": "f8268c3c9f26",
+          "MemPerc": "19.31%",
+          "MemUsage": "74.16MiB / 384MiB",
+          "Name": "avengers_kafka_consumer",
+          "NetIO": "2.2GB / 2.8GB",
+          "PIDs": "2"
+        },
+        {
+          "BlockIO": "43MB / 312MB",
+          "CPUPerc": "0.43%",
+          "Container": "0922ab1dd07e34ccd19e76e7562f78763fb3c2756a2dae940d669004f4edc64d",
+          "ID": "0922ab1dd07e",
+          "MemPerc": "0.83%",
+          "MemUsage": "65.68MiB / 7.748GiB",
+          "Name": "avengers_analytics_redis",
+          "NetIO": "122MB / 79.1MB",
+          "PIDs": "6"
+        },
+        {
+          "BlockIO": "88.5MB / 45MB",
+          "CPUPerc": "1.90%",
+          "Container": "3d50b3a181e4b86bce1970420db84465f96cd68c68c619a03799731f1f96b933",
+          "ID": "3d50b3a181e4",
+          "MemPerc": "32.46%",
+          "MemUsage": "166.2MiB / 512MiB",
+          "Name": "avengers_web_admin",
+          "NetIO": "3.48kB / 126B",
+          "PIDs": "66"
+        },
+        {
+          "BlockIO": "206MB / 63.5MB",
+          "CPUPerc": "2.92%",
+          "Container": "4e5fee4b7a7d7b48cc9a8711d1b0948e6fbe73c7b8897309934271bf0d8f128c",
+          "ID": "4e5fee4b7a7d",
+          "MemPerc": "28.57%",
+          "MemUsage": "146.3MiB / 512MiB",
+          "Name": "avengers_web_customer",
+          "NetIO": "3.59kB / 126B",
+          "PIDs": "57"
+        },
+        {
+          "BlockIO": "52.8MB / 7.4MB",
+          "CPUPerc": "0.00%",
+          "Container": "cc73c32b4014977237efefcd7e472c4262c330a599af2602d3b5936d67b468ce",
+          "ID": "cc73c32b4014",
+          "MemPerc": "5.91%",
+          "MemUsage": "22.71MiB / 384MiB",
+          "Name": "avengers_api_gateway",
+          "NetIO": "15.5kB / 12kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "56MB / 25.3MB",
+          "CPUPerc": "0.00%",
+          "Container": "7fbaf4af2f515722017f04d8f95e1b395cad7d1f7858398ac621850997177742",
+          "ID": "7fbaf4af2f51",
+          "MemPerc": "11.49%",
+          "MemUsage": "29.42MiB / 256MiB",
+          "Name": "avengers_identity_service",
+          "NetIO": "47.3kB / 31.3kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "14MB / 13.9MB",
+          "CPUPerc": "0.00%",
+          "Container": "c1533ced9b6ec040e3d6955f5e996eaabf1f9326a9915349e1f04362c86672ea",
+          "ID": "c1533ced9b6e",
+          "MemPerc": "8.51%",
+          "MemUsage": "21.77MiB / 256MiB",
+          "Name": "avengers_menu_service",
+          "NetIO": "118kB / 54.7kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "47.6MB / 17.7MB",
+          "CPUPerc": "0.00%",
+          "Container": "af173205fde3103b57cf61dd8e3a459c59ce04ab55a3a6d69aacfad83747df03",
+          "ID": "af173205fde3",
+          "MemPerc": "7.58%",
+          "MemUsage": "19.41MiB / 256MiB",
+          "Name": "avengers_news_service",
+          "NetIO": "11.2kB / 8.75kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "43.8MB / 14.4MB",
+          "CPUPerc": "0.00%",
+          "Container": "43d82d57c861599feddb9b2d11cf6d1900aac0e9d61203df31818e2eedb993a8",
+          "ID": "43d82d57c861",
+          "MemPerc": "8.00%",
+          "MemUsage": "20.47MiB / 256MiB",
+          "Name": "avengers_inventory_service",
+          "NetIO": "9.49kB / 2.33kB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "59.3MB / 24.2MB",
+          "CPUPerc": "0.00%",
+          "Container": "954c233cbcc90b3cccb3871277b42a801e3575f5f12932132b4c124d076b337b",
+          "ID": "954c233cbcc9",
+          "MemPerc": "14.04%",
+          "MemUsage": "53.93MiB / 384MiB",
+          "Name": "avengers_order_service",
+          "NetIO": "3.84MB / 2.1MB",
+          "PIDs": "12"
+        },
+        {
+          "BlockIO": "232MB / 102MB",
+          "CPUPerc": "0.07%",
+          "Container": "72570b119537a219ebcb53fac8d4c83078245caaee5472898b5cc9ea3f99125c",
+          "ID": "72570b119537",
+          "MemPerc": "8.84%",
+          "MemUsage": "90.51MiB / 1GiB",
+          "Name": "avengers_ai_service",
+          "NetIO": "5.54MB / 98.8kB",
+          "PIDs": "21"
+        },
+        {
+          "BlockIO": "79.6MB / 6.12MB",
+          "CPUPerc": "0.00%",
+          "Container": "e873d477b03fae11ee682082f0163141ca3266bd3bb0e603991c171666b7ff1f",
+          "ID": "e873d477b03f",
+          "MemPerc": "0.18%",
+          "MemUsage": "14.28MiB / 7.748GiB",
+          "Name": "avengers_db",
+          "NetIO": "3.16kB / 126B",
+          "PIDs": "6"
+        },
+        {
+          "BlockIO": "26.3MB / 840kB",
+          "CPUPerc": "0.39%",
+          "Container": "6f2540c2185a0577663d638884005e5864d32325a4097d1b2edcf395f93a7643",
+          "ID": "6f2540c2185a",
+          "MemPerc": "6.98%",
+          "MemUsage": "8.93MiB / 128MiB",
+          "Name": "avengers_redis",
+          "NetIO": "23.8kB / 25.7kB",
+          "PIDs": "6"
+        },
+        {
+          "BlockIO": "128MB / 66.7MB",
+          "CPUPerc": "0.15%",
+          "Container": "4aaaa333ab6ce1c50a2247ebb2757a285408c8e6c8db7c300e00592de9c7f392",
+          "ID": "4aaaa333ab6c",
+          "MemPerc": "11.97%",
+          "MemUsage": "61.3MiB / 512MiB",
+          "Name": "avengers_mq",
+          "NetIO": "3.19kB / 264B",
+          "PIDs": "40"
+        },
+        {
+          "BlockIO": "2.96GB / 632MB",
+          "CPUPerc": "6.45%",
+          "Container": "0d423af88ad2651c8c10c1f5ee6137b37cc0ca586d768a9b6d97b8b2fbf8dcde",
+          "ID": "0d423af88ad2",
+          "MemPerc": "12.72%",
+          "MemUsage": "1009MiB / 7.748GiB",
+          "Name": "avengers_kafka",
+          "NetIO": "524MB / 508MB",
+          "PIDs": "85"
+        },
+        {
+          "BlockIO": "2.26GB / 4.71GB",
+          "CPUPerc": "0.67%",
+          "Container": "e350a839e795e9a4cc83c43e956296272cdd2c587065c99a1c30907dc8e1a685",
+          "ID": "e350a839e795",
+          "MemPerc": "2.48%",
+          "MemUsage": "196.9MiB / 7.748GiB",
+          "Name": "avengers_analytics_db",
+          "NetIO": "2.25GB / 4.35GB",
+          "PIDs": "10"
+        },
+        {
+          "BlockIO": "85.8MB / 64.6MB",
+          "CPUPerc": "0.08%",
+          "Container": "15e025e22ddcb0de2ff1ca5dad749640e8271c3263633ac524ef257097b8ff85",
+          "ID": "15e025e22ddc",
+          "MemPerc": "3.28%",
+          "MemUsage": "260.6MiB / 7.748GiB",
+          "Name": "avengers_zookeeper",
+          "NetIO": "488kB / 309kB",
+          "PIDs": "60"
+        }
+      ]
+    }
+  ],
+  "health": [
+    {
+      "url": "http://localhost:8501/",
+      "status": 200,
+      "content_type": "text/html"
+    },
+    {
+      "url": "http://localhost:8502/health",
+      "status": 200,
+      "content_type": "application/json"
+    },
+    {
+      "url": "http://localhost:8502/healthz",
+      "error": "HTTP Error 404: Not Found"
+    }
+  ],
+  "limits": [
+    "No product code, compose files, volumes, database, credentials or user Chrome tabs changed by this resource adjustment.",
+    "Current tests run slower under CPU cap; latency assertions under this cap are not qualification evidence and need an idle dedicated allocation.",
+    "Hard memory limit retained at 1.5 GiB to avoid OOM; actual test usage far below this ceiling.",
+    "No persistent infrastructure service stopped or restarted; lowering their memory safely would require a separate measured configuration/restart."
+  ]
+}

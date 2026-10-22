@@ -1,0 +1,5 @@
+[
+  "tests/test_natural_v26.py",
+  "tests/test_v35_dashboards.py",
+  "tests/fixtures/capabilities_v31.json"
+]

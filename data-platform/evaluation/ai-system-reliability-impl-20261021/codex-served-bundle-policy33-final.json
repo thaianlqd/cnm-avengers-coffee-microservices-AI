@@ -1,0 +1,58 @@
+{
+  "url": "http://127.0.0.1:8501",
+  "assets": [
+    {
+      "url": "/assets/index-CzRz9zWn.css",
+      "sha256": "7c8d701cdde011472733d3ed42cba0e08b051337b92fc7e1b65755cef17a12f7",
+      "bytes": 89617,
+      "matches_web_container": true,
+      "markers": {
+        "valid_orders": false,
+        "Nhận định từ biểu đồ": false,
+        "Toàn phạm vi": false,
+        "Thời gian chưa theo thứ tự hoặc không hợp lệ; hiển thị bảng dữ liệu quan sát.": false
+      }
+    },
+    {
+      "url": "/assets/index-De_3FNyr.js",
+      "sha256": "affb0ebfe63b79d7704576e596fb0e4fc5b1a234437ebd56f5588d8bed7984f1",
+      "bytes": 761993,
+      "matches_web_container": true,
+      "markers": {
+        "valid_orders": true,
+        "Nhận định từ biểu đồ": true,
+        "Toàn phạm vi": true,
+        "Thời gian chưa theo thứ tự hoặc không hợp lệ; hiển thị bảng dữ liệu quan sát.": true
+      }
+    }
+  ],
+  "containers": {
+    "avengers_analytics_api": {
+      "image": "sha256:8aab3df2dd087ec434035eee9acf6e0f92cf6821541dc73cce1b7fbb26e9acec",
+      "started_at": "2026-10-22T03:04:19.918073417Z",
+      "status": "running",
+      "oom_killed": false,
+      "health": "healthy"
+    },
+    "avengers_analytics_web": {
+      "image": "sha256:b8cd65c80ad39f819ccc4d9c0d38ed292aff835fad99ae0f5b7274bcc2a41780",
+      "started_at": "2026-10-22T02:29:22.888325335Z",
+      "status": "running",
+      "oom_killed": false,
+      "health": "healthy"
+    },
+    "avengers_reliability_policy33_final_codex": {
+      "image": "sha256:8aab3df2dd087ec434035eee9acf6e0f92cf6821541dc73cce1b7fbb26e9acec",
+      "started_at": "2026-10-22T03:04:23.747919252Z",
+      "status": "running",
+      "oom_killed": false,
+      "health": ""
+    }
+  },
+  "versions": {
+    "plan": "2026-10-22.cohort-scope.33",
+    "input": "1.2.5",
+    "verifier": "2.8.8"
+  },
+  "passed": true
+}

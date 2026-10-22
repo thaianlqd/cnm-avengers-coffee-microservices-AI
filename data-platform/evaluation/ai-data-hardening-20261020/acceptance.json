@@ -1,0 +1,589 @@
+{
+  "head": "790eae42026441bb74bc6a53dc29e08934846944",
+  "source_fingerprint": "5859dbc2f480af0737590d6adeb823b93b1e0d55ea6981895886d18db7d32194",
+  "generated_at": "2026-10-20T01:49:47+0000",
+  "mode": "offline_scripted_intent_rich_fixture",
+  "manifest_sha256": "8440a1c7f80192081f7584658ffc33acb67fa1035469a4b3d75d7c9e07d25aed",
+  "raw_receipt_sha256": "f1a5b45fe05f89aee1074d4a44b8b18f109e230225497d5e790803beb60c794e",
+  "summary": {
+    "total": 78,
+    "passed": 78,
+    "by_kind": {
+      "domain": [
+        32,
+        32
+      ],
+      "family": [
+        18,
+        18
+      ],
+      "edge": [
+        28,
+        28
+      ]
+    },
+    "rich_full": 155,
+    "runs": 193,
+    "elapsed_s": 154.8
+  },
+  "depth_outcomes": {
+    "COMPLETE": 155,
+    "LIMITED_BY_SOURCE_CAPABILITY": 18,
+    "LIMITED_DATA": 4,
+    "CAPACITY_LIMITED": 12,
+    "error:insufficient_data": 2,
+    "error:historical_metric_unavailable": 1,
+    "error:clarification": 1
+  },
+  "cases": [
+    {
+      "id": "D01",
+      "kind": "domain",
+      "family": "kpi",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D02",
+      "kind": "domain",
+      "family": "comparison",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D03",
+      "kind": "domain",
+      "family": "ranking",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D04",
+      "kind": "domain",
+      "family": "overview",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D05",
+      "kind": "domain",
+      "family": "ranking",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "D06",
+      "kind": "domain",
+      "family": "trend",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D07",
+      "kind": "domain",
+      "family": "comparison",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D08",
+      "kind": "domain",
+      "family": "kpi",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "D09",
+      "kind": "domain",
+      "family": "trend",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D10",
+      "kind": "domain",
+      "family": "composition",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D11",
+      "kind": "domain",
+      "family": "ranking",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D12",
+      "kind": "domain",
+      "family": "kpi",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "D13",
+      "kind": "domain",
+      "family": "composition",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D14",
+      "kind": "domain",
+      "family": "trend",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D15",
+      "kind": "domain",
+      "family": "kpi",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D16",
+      "kind": "domain",
+      "family": "comparison",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "D17",
+      "kind": "domain",
+      "family": "composition",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D18",
+      "kind": "domain",
+      "family": "risk",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D19",
+      "kind": "domain",
+      "family": "kpi",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D20",
+      "kind": "domain",
+      "family": "composition",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D21",
+      "kind": "domain",
+      "family": "comparison",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D22",
+      "kind": "domain",
+      "family": "trend",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "D23",
+      "kind": "domain",
+      "family": "kpi",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D24",
+      "kind": "domain",
+      "family": "composition",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D25",
+      "kind": "domain",
+      "family": "comparison",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D26",
+      "kind": "domain",
+      "family": "kpi",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D27",
+      "kind": "domain",
+      "family": "kpi",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D28",
+      "kind": "domain",
+      "family": "comparison",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "D29",
+      "kind": "domain",
+      "family": "ranking",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D30",
+      "kind": "domain",
+      "family": "composition",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D31",
+      "kind": "domain",
+      "family": "composition",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "D32",
+      "kind": "domain",
+      "family": "kpi",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "F01",
+      "kind": "family",
+      "family": "overview",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F02",
+      "kind": "family",
+      "family": "overview",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F03",
+      "kind": "family",
+      "family": "kpi",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F04",
+      "kind": "family",
+      "family": "kpi",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "F05",
+      "kind": "family",
+      "family": "ranking",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F06",
+      "kind": "family",
+      "family": "ranking",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "F07",
+      "kind": "family",
+      "family": "trend",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F08",
+      "kind": "family",
+      "family": "trend",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F09",
+      "kind": "family",
+      "family": "comparison",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F10",
+      "kind": "family",
+      "family": "comparison",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F11",
+      "kind": "family",
+      "family": "composition",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F12",
+      "kind": "family",
+      "family": "composition",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "F13",
+      "kind": "family",
+      "family": "forecast",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F14",
+      "kind": "family",
+      "family": "forecast",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F15",
+      "kind": "family",
+      "family": "risk",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F16",
+      "kind": "family",
+      "family": "risk",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F17",
+      "kind": "family",
+      "family": "relationship",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "F18",
+      "kind": "family",
+      "family": "relationship",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E01",
+      "kind": "edge",
+      "family": "no_rows",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E02",
+      "kind": "edge",
+      "family": "one_time_point",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E03",
+      "kind": "edge",
+      "family": "snapshot_trend",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E04",
+      "kind": "edge",
+      "family": "pinned_axes",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E05",
+      "kind": "edge",
+      "family": "multi_requirement",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E06",
+      "kind": "edge",
+      "family": "duplicate_requirement",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E07",
+      "kind": "edge",
+      "family": "unequal_exposure",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E08",
+      "kind": "edge",
+      "family": "high_cardinality_entity",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E09",
+      "kind": "edge",
+      "family": "zero_numerator_scope",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E11",
+      "kind": "edge",
+      "family": "zero_denominator",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E12",
+      "kind": "edge",
+      "family": "period_comparison",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E13",
+      "kind": "edge",
+      "family": "top_n_vs_full_denominator",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E14",
+      "kind": "edge",
+      "family": "cross_domain_multi_requirement",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E15",
+      "kind": "edge",
+      "family": "partial_future_period",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E16",
+      "kind": "edge",
+      "family": "excluded_value_scope",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E17",
+      "kind": "edge",
+      "family": "degenerate_pinned_grouping",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E10",
+      "kind": "edge",
+      "family": "mission_grammar",
+      "holdout": false,
+      "passed": true
+    },
+    {
+      "id": "E18",
+      "kind": "edge",
+      "family": "all_null",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E19",
+      "kind": "edge",
+      "family": "source_missing",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E20",
+      "kind": "edge",
+      "family": "source_stale_incomplete",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E21",
+      "kind": "edge",
+      "family": "access_denied",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E22",
+      "kind": "edge",
+      "family": "join_fanout",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E23",
+      "kind": "edge",
+      "family": "budget_timeout",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E24",
+      "kind": "edge",
+      "family": "saved_tamper",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E25",
+      "kind": "edge",
+      "family": "ui_response_race",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E26",
+      "kind": "edge",
+      "family": "cancel_revoke",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E27",
+      "kind": "edge",
+      "family": "identity_filter_scope",
+      "holdout": true,
+      "passed": true
+    },
+    {
+      "id": "E29",
+      "kind": "edge",
+      "family": "filtered_ratio_population",
+      "holdout": true,
+      "passed": true
+    }
+  ],
+  "external_provider_sends": 0,
+  "production_db_connections": 0,
+  "sealed_at": "2026-10-20T02:28:08.733552+00:00"
+}

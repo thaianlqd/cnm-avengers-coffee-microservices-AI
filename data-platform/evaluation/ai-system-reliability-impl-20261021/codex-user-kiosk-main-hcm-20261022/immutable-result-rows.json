@@ -1,0 +1,2570 @@
+{
+  "q_613429020d4cb87336968512": [
+    {
+      "revenue": 1490749500.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "revenue": 28270000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "revenue": 36640000.0,
+      "store_type": "KIOSK_VE_TINH"
+    }
+  ],
+  "q_45181ba2a68e8580ef7df16c": [
+    {
+      "period": "2026-01-01T00:00:00",
+      "revenue": 189457000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-01-01T00:00:00",
+      "revenue": 4311000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-01-01T00:00:00",
+      "revenue": 4486000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "period": "2026-02-01T00:00:00",
+      "revenue": 152452000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-02-01T00:00:00",
+      "revenue": 2810000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-02-01T00:00:00",
+      "revenue": 3899000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "period": "2026-03-01T00:00:00",
+      "revenue": 149572000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-03-01T00:00:00",
+      "revenue": 2665000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-03-01T00:00:00",
+      "revenue": 2698000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "period": "2026-04-01T00:00:00",
+      "revenue": 149673000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-04-01T00:00:00",
+      "revenue": 3014000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-04-01T00:00:00",
+      "revenue": 3274000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "period": "2026-05-01T00:00:00",
+      "revenue": 188143000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-05-01T00:00:00",
+      "revenue": 3252000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-05-01T00:00:00",
+      "revenue": 4509000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "period": "2026-06-01T00:00:00",
+      "revenue": 168229000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-06-01T00:00:00",
+      "revenue": 3863000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-06-01T00:00:00",
+      "revenue": 5262000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "period": "2026-07-01T00:00:00",
+      "revenue": 181843000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-07-01T00:00:00",
+      "revenue": 2580000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-07-01T00:00:00",
+      "revenue": 4589000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "period": "2026-08-01T00:00:00",
+      "revenue": 155825000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-08-01T00:00:00",
+      "revenue": 2552000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-08-01T00:00:00",
+      "revenue": 4549000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "period": "2026-09-01T00:00:00",
+      "revenue": 148295000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-09-01T00:00:00",
+      "revenue": 3158000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-09-01T00:00:00",
+      "revenue": 3124000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "period": "2026-10-01T00:00:00",
+      "revenue": 7260500.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "period": "2026-10-01T00:00:00",
+      "revenue": 65000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "period": "2026-10-01T00:00:00",
+      "revenue": 250000.0,
+      "store_type": "KIOSK_VE_TINH"
+    }
+  ],
+  "q_57e43f1ec0ad7b28b3456f23": [
+    {
+      "revenue": 3393000.0,
+      "store": "117 Nguyễn Văn Quá",
+      "store_id": "HC_KHONG__117_NGUYEN_VAN_QUA_308"
+    },
+    {
+      "revenue": 3427000.0,
+      "store": "1180 Quang Trung",
+      "store_id": "HC_HCM_1180_QUANG_TRUNG_284"
+    },
+    {
+      "revenue": 3883000.0,
+      "store": "132A Nguyễn Thái Học",
+      "store_id": "HC_HCM_132A_NGUYEN_THAI_H_324"
+    },
+    {
+      "revenue": 2754000.0,
+      "store": "134 Tạ Uyên",
+      "store_id": "HC_HCM_134_TA_UYEN_230"
+    },
+    {
+      "revenue": 3179000.0,
+      "store": "180 Thạch Lam",
+      "store_id": "HC_HCM_180_THACH_LAM_235"
+    },
+    {
+      "revenue": 3835000.0,
+      "store": "184 Lâm Văn Bền",
+      "store_id": "HC_HCM_184_LAM_VAN_BEN_239"
+    },
+    {
+      "revenue": 3464000.0,
+      "store": "225 Nguyễn Đình Chiểu",
+      "store_id": "HC_HCM_225_NGUYEN_INH_CHI_233"
+    },
+    {
+      "revenue": 4329000.0,
+      "store": "240 Nguyễn Văn Luông, Quận 6",
+      "store_id": "HC_HCM_240_NGUYEN_VAN_LUO_246"
+    },
+    {
+      "revenue": 3663000.0,
+      "store": "26 Liêu Bình Hương Củ Chi",
+      "store_id": "HC_HCM_26_LIEU_BINH_HUONG_1260"
+    },
+    {
+      "revenue": 2609000.0,
+      "store": "287 Âu Cơ",
+      "store_id": "HC_KHONG__287_AU_CO_317"
+    },
+    {
+      "revenue": 2052000.0,
+      "store": "310 Cây Trâm",
+      "store_id": "HC_HCM_310_CAY_TRAM_283"
+    },
+    {
+      "revenue": 3358000.0,
+      "store": "359A Lê Quang Định",
+      "store_id": "HC_HCM_359A_LE_QUANG_INH_314"
+    },
+    {
+      "revenue": 3621000.0,
+      "store": "399 Phan Huy Ích",
+      "store_id": "HC_HCM_399_PHAN_HUY_ICH_282"
+    },
+    {
+      "revenue": 3680000.0,
+      "store": "41 Trần Não",
+      "store_id": "HC_HCM_41_TRAN_NAO_271"
+    },
+    {
+      "revenue": 3124000.0,
+      "store": "45 Lý Chính Thắng",
+      "store_id": "HC_HCM_45_LY_CHINH_THANG_281"
+    },
+    {
+      "revenue": 3682000.0,
+      "store": "506 Trường Chinh",
+      "store_id": "HC_HCM_506_TRUONG_CHINH_276"
+    },
+    {
+      "revenue": 5038000.0,
+      "store": "57 Lê Đức Thọ",
+      "store_id": "HC_HCM_57_LE_UC_THO_245"
+    },
+    {
+      "revenue": 4891000.0,
+      "store": "58E Bach Dang",
+      "store_id": "HC_HCM_58E_BACH_DANG_191"
+    },
+    {
+      "revenue": 3273000.0,
+      "store": "601 CMT8",
+      "store_id": "HC_HCM_601_CMT8_272"
+    },
+    {
+      "revenue": 5186000.0,
+      "store": "721 Huỳnh Tấn Phát",
+      "store_id": "HC_HCM_721_HUYNH_TAN_PHAT_237"
+    },
+    {
+      "revenue": 3257000.0,
+      "store": "90 CMT8",
+      "store_id": "HC_HCM_90_CMT8_161"
+    },
+    {
+      "revenue": 3353000.0,
+      "store": "Aeon Bình Tân",
+      "store_id": "HC_HCM_AEON_BINH_TAN_172"
+    },
+    {
+      "revenue": 3043000.0,
+      "store": "Aeon Tân Phú",
+      "store_id": "HC_HCM_AEON_TAN_PHU_277"
+    },
+    {
+      "revenue": 2447000.0,
+      "store": "Avengers Coffee - Chi nhánh Bình Tân",
+      "store_id": "CN-BINH-TAN"
+    },
+    {
+      "revenue": 3159000.0,
+      "store": "Avengers Coffee - Chi nhánh Bình Thạnh",
+      "store_id": "CN-BINH-THANH"
+    },
+    {
+      "revenue": 3121000.0,
+      "store": "Avengers Coffee - Chi nhánh Quận 1",
+      "store_id": "CN-QUAN1"
+    },
+    {
+      "revenue": 4327000.0,
+      "store": "Avengers Coffee - Chi nhánh Quận 7",
+      "store_id": "CN-QUAN7"
+    },
+    {
+      "revenue": 2621000.0,
+      "store": "Avengers Coffee - Chi nhánh Thủ Đức",
+      "store_id": "CN-THU-DUC"
+    },
+    {
+      "revenue": 3322000.0,
+      "store": "Avengers Coffee - Crescent Mall",
+      "store_id": "KVT004"
+    },
+    {
+      "revenue": 2806000.0,
+      "store": "Avengers Coffee - ĐH Bách Khoa",
+      "store_id": "KVT006"
+    },
+    {
+      "revenue": 6297000.0,
+      "store": "Avengers Coffee - ĐH Tôn Đức Thắng",
+      "store_id": "KVT003"
+    },
+    {
+      "revenue": 2538000.0,
+      "store": "Avengers Coffee - Etown",
+      "store_id": "KVT010"
+    },
+    {
+      "revenue": 4360000.0,
+      "store": "Avengers Coffee - Flagship Đồng Khởi",
+      "store_id": "HCM_DK"
+    },
+    {
+      "revenue": 4687000.0,
+      "store": "Avengers Coffee - Landmark 81",
+      "store_id": "KVT001"
+    },
+    {
+      "revenue": 3384000.0,
+      "store": "Avengers Coffee - Phố đi bộ",
+      "store_id": "KVT005"
+    },
+    {
+      "revenue": 3314000.0,
+      "store": "Avengers Coffee - Phú Mỹ Hưng",
+      "store_id": "KVT009"
+    },
+    {
+      "revenue": 3875000.0,
+      "store": "Avengers Coffee - Vạn Hạnh Mall",
+      "store_id": "KVT007"
+    },
+    {
+      "revenue": 3103000.0,
+      "store": "Avengers Coffee - Vincom Đồng Khởi",
+      "store_id": "KVT002"
+    },
+    {
+      "revenue": 3314000.0,
+      "store": "Avengers Coffee - Vinhome Central Park",
+      "store_id": "KVT008"
+    },
+    {
+      "revenue": 4195000.0,
+      "store": "Ba Tháng Hai",
+      "store_id": "HC_HCM_BA_THANG_HAI_179"
+    },
+    {
+      "revenue": 4573000.0,
+      "store": "Bàu Cát",
+      "store_id": "HC_HCM_BAU_CAT_215"
+    },
+    {
+      "revenue": 3842000.0,
+      "store": "Big C An Lạc",
+      "store_id": "HC_HCM_BIG_C_AN_LAC_175"
+    },
+    {
+      "revenue": 3748000.0,
+      "store": "Big C Cityland",
+      "store_id": "HC_HCM_BIG_C_CITYLAND_143"
+    },
+    {
+      "revenue": 4166000.0,
+      "store": "Bitexco",
+      "store_id": "HC_HCM_BITEXCO_167"
+    },
+    {
+      "revenue": 4128000.0,
+      "store": "Botanica",
+      "store_id": "HC_HCM_BOTANICA_203"
+    },
+    {
+      "revenue": 4021000.0,
+      "store": "Cantavil",
+      "store_id": "HC_HCM_CANTAVIL_205"
+    },
+    {
+      "revenue": 3348000.0,
+      "store": "Central Mall  Bình Chánh",
+      "store_id": "HC_HCM_CENTRAL_MALL_BINH__254"
+    },
+    {
+      "revenue": 3066000.0,
+      "store": "Central Mall Củ Chi",
+      "store_id": "HC_HCM_CENTRAL_MALL_CU_CH_275"
+    },
+    {
+      "revenue": 3328000.0,
+      "store": "Central Point",
+      "store_id": "HC_HCM_CENTRAL_POINT_198"
+    },
+    {
+      "revenue": 3864000.0,
+      "store": "Citi Ground",
+      "store_id": "HC_HCM_CITI_GROUND_187"
+    },
+    {
+      "revenue": 2313000.0,
+      "store": "City Museum",
+      "store_id": "HC_HCM_CITY_MUSEUM_164"
+    },
+    {
+      "revenue": 3693000.0,
+      "store": "Crescent Mall",
+      "store_id": "HC_HCM_CRESCENT_MALL_144"
+    },
+    {
+      "revenue": 2667000.0,
+      "store": "CT Lầu 4",
+      "store_id": "HC_HCM_CT_LAU_4_186"
+    },
+    {
+      "revenue": 3715000.0,
+      "store": "Diamond",
+      "store_id": "HC_HCM_DIAMOND_134"
+    },
+    {
+      "revenue": 5537000.0,
+      "store": "Etown",
+      "store_id": "HC_KHONG__ETOWN_216"
+    },
+    {
+      "revenue": 4295000.0,
+      "store": "Fideco",
+      "store_id": "HC_HCM_FIDECO_137"
+    },
+    {
+      "revenue": 3065000.0,
+      "store": "Garden Plaza",
+      "store_id": "HC_HCM_GARDEN_PLAZA_138"
+    },
+    {
+      "revenue": 4185000.0,
+      "store": "Hai Bà Trưng",
+      "store_id": "HC_HCM_HAI_BA_TRUNG_129"
+    },
+    {
+      "revenue": 4288000.0,
+      "store": "Hàn Hải Nguyên",
+      "store_id": "HC_HCM_HAN_HAI_NGUYEN_273"
+    },
+    {
+      "revenue": 3533000.0,
+      "store": "HCSHCM0201 Friendship Tower D1",
+      "store_id": "HC_HCM_HCSHCM0201_FRIENDS_552"
+    },
+    {
+      "revenue": 2728000.0,
+      "store": "Highlands Coffee",
+      "store_id": "HC_HCM_HIGHLANDS_COFFEE_1220"
+    },
+    {
+      "revenue": 3067000.0,
+      "store": "Highlands Coffee 105 Doc Lap Tan Phu",
+      "store_id": "HC_HCM_105_DOC_LAP_TAN_PH_576"
+    },
+    {
+      "revenue": 3536000.0,
+      "store": "Highlands Coffee 110 Hậu Giang - Quận 6",
+      "store_id": "HC_HCM_110_HAU_GIANG_QUAN_835"
+    },
+    {
+      "revenue": 3672000.0,
+      "store": "Highlands Coffee 119 Ham Nghi",
+      "store_id": "HC_HCM_119_HAM_NGHI_405"
+    },
+    {
+      "revenue": 3493000.0,
+      "store": "Highlands Coffee 1215 Ba Tháng Hai - Quận 11",
+      "store_id": "HC_HCM_1215_BA_THANG_HAI__812"
+    },
+    {
+      "revenue": 3254000.0,
+      "store": "Highlands Coffee 123 Hoang Hoa Tham",
+      "store_id": "HC_HCM_123_HOANG_HOA_THAM_588"
+    },
+    {
+      "revenue": 5452000.0,
+      "store": "Highlands Coffee 127C Dinh Tien Hoang",
+      "store_id": "HC_HCM_127C_DINH_TIEN_HOA_419"
+    },
+    {
+      "revenue": 2857000.0,
+      "store": "Highlands Coffee 140 Trường Chinh - Tân Bình",
+      "store_id": "HC_HCM_140_TRUONG_CHINH_T_898"
+    },
+    {
+      "revenue": 3970000.0,
+      "store": "Highlands Coffee 14B1 Ngo Tat To HCM",
+      "store_id": "HC_HCM_14B1_NGO_TAT_TO_HC_1371"
+    },
+    {
+      "revenue": 3531000.0,
+      "store": "Highlands Coffee 158 Pham Van Chieu",
+      "store_id": "HC_HCM_158_PHAM_VAN_CHIEU_420"
+    },
+    {
+      "revenue": 4593000.0,
+      "store": "Highlands Coffee 160 Lê Văn Việt - Thủ Đức",
+      "store_id": "HC_HCM_160_LE_VAN_VIET_TH_767"
+    },
+    {
+      "revenue": 4762000.0,
+      "store": "Highlands Coffee 163 Hoàng Hoa Thám - Tân Bình",
+      "store_id": "HC_HCM_163_HOANG_HOA_THAM_848"
+    },
+    {
+      "revenue": 3380000.0,
+      "store": "Highlands Coffee 166 Nguyễn Công Trứ",
+      "store_id": "HC_HCM_166_NGUYEN_CONG_TR_448"
+    },
+    {
+      "revenue": 3176000.0,
+      "store": "Highlands Coffee 170 Đinh Bộ Lĩnh",
+      "store_id": "HC_KHONG__170_INH_BO_LINH_540"
+    },
+    {
+      "revenue": 3988000.0,
+      "store": "Highlands Coffee 173 Dang Van Bi",
+      "store_id": "HC_HCM_173_DANG_VAN_BI_423"
+    },
+    {
+      "revenue": 5307000.0,
+      "store": "Highlands Coffee 175B Cao Thắng - Quận 10",
+      "store_id": "HC_HCM_175B_CAO_THANG_QUA_882"
+    },
+    {
+      "revenue": 3924000.0,
+      "store": "Highlands Coffee 1800 Nguyen Anh Thu",
+      "store_id": "HC_HCM_1800_NGUYEN_ANH_TH_789"
+    },
+    {
+      "revenue": 3813000.0,
+      "store": "Highlands Coffee 18E Phan Van Tri Go Vap",
+      "store_id": "HC_HCM_18E_PHAN_VAN_TRI_G_1250"
+    },
+    {
+      "revenue": 3625000.0,
+      "store": "Highlands Coffee 194 Nguyễn Tất Thành",
+      "store_id": "HC_HCM_194_NGUYEN_TAT_THA_496"
+    },
+    {
+      "revenue": 3020000.0,
+      "store": "Highlands Coffee 195 Trung Sơn",
+      "store_id": "HC_KHONG__195_TRUNG_SON_351"
+    },
+    {
+      "revenue": 2207000.0,
+      "store": "Highlands Coffee 1B Phổ Quang",
+      "store_id": "HC_HCM_1B_PHO_QUANG_490"
+    },
+    {
+      "revenue": 3849000.0,
+      "store": "Highlands Coffee 206 Cao Lỗ",
+      "store_id": "HC_HCM_206_CAO_LO_488"
+    },
+    {
+      "revenue": 2671000.0,
+      "store": "Highlands Coffee 210 Nguyen Trai HCM",
+      "store_id": "HC_HCM_210_NGUYEN_TRAI_HC_403"
+    },
+    {
+      "revenue": 3431000.0,
+      "store": "Highlands Coffee 213 Hoang Van Thu",
+      "store_id": "HC_HCM_213_HOANG_VAN_THU_618"
+    },
+    {
+      "revenue": 3170000.0,
+      "store": "Highlands Coffee 230 Nguyễn Duy Trinh",
+      "store_id": "HC_KHONG__230_NGUYEN_DUY_TRI_491"
+    },
+    {
+      "revenue": 3763000.0,
+      "store": "Highlands Coffee 236 Tô Ngọc Vân",
+      "store_id": "HC_HCM_236_TO_NGOC_VAN_466"
+    },
+    {
+      "revenue": 2948000.0,
+      "store": "Highlands Coffee 249 Hoàng Văn Thụ - Tân Bình",
+      "store_id": "HC_HCM_249_HOANG_VAN_THU__899"
+    },
+    {
+      "revenue": 2423000.0,
+      "store": "Highlands Coffee 252 Ly Thuong Kiet HCM",
+      "store_id": "HC_HCM_252_LY_THUONG_KIET_1345"
+    },
+    {
+      "revenue": 3372000.0,
+      "store": "Highlands Coffee 255 Lũy Bán Bích",
+      "store_id": "HC_HCM_255_LUY_BAN_BICH_456"
+    },
+    {
+      "revenue": 3621000.0,
+      "store": "Highlands Coffee 25 Nơ Trang Long",
+      "store_id": "HC_HCM_25_NO_TRANG_LONG_515"
+    },
+    {
+      "revenue": 3397000.0,
+      "store": "Highlands Coffee 261 Tran Phu D5",
+      "store_id": "HC_HCM_261_TRAN_PHU_D5_829"
+    },
+    {
+      "revenue": 3280000.0,
+      "store": "Highlands Coffee 26A Hoang Viet HCM",
+      "store_id": "HC_HCM_26A_HOANG_VIET_HCM_422"
+    },
+    {
+      "revenue": 3712000.0,
+      "store": "Highlands Coffee 26 Dong Khoi D1",
+      "store_id": "HC_HCM_26_DONG_KHOI_D1_1288"
+    },
+    {
+      "revenue": 2665000.0,
+      "store": "Highlands Coffee 270C Bach Dang HCMC",
+      "store_id": "HC_HCM_270C_BACH_DANG_HCM_554"
+    },
+    {
+      "revenue": 3562000.0,
+      "store": "Highlands Coffee 270 Võ Thị Sáu - Quận 3",
+      "store_id": "HC_HCM_270_VO_THI_SAU_QUA_901"
+    },
+    {
+      "revenue": 2981000.0,
+      "store": "Highlands Coffee 284 Hoa Binh Tan Phu",
+      "store_id": "HC_HCM_284_HOA_BINH_TAN_P_666"
+    },
+    {
+      "revenue": 4225000.0,
+      "store": "Highlands Coffee 287 Liên Phường - Thủ Đức",
+      "store_id": "HC_HCM_287_LIEN_PHUONG_TH_842"
+    },
+    {
+      "revenue": 2582000.0,
+      "store": "Highlands Coffee 288 Thống Nhất",
+      "store_id": "HC_HCM_288_THONG_NHAT_485"
+    },
+    {
+      "revenue": 3549000.0,
+      "store": "Highlands Coffee 28 Tran Phu VT",
+      "store_id": "HC_HCM_28_TRAN_PHU_VT_1370"
+    },
+    {
+      "revenue": 3509000.0,
+      "store": "Highlands Coffee 2B Lê Duẩn",
+      "store_id": "HC_HCM_2B_LE_DUAN_312"
+    },
+    {
+      "revenue": 3955000.0,
+      "store": "Highlands Coffee 301 Ngo Gia Tu D10",
+      "store_id": "HC_HCM_301_NGO_GIA_TU_D10_1307"
+    },
+    {
+      "revenue": 3477000.0,
+      "store": "Highlands Coffee 312 Điện Biên Phủ HCM",
+      "store_id": "HC_HCM_312_IEN_BIEN_PHU_H_742"
+    },
+    {
+      "revenue": 3666000.0,
+      "store": "Highlands Coffee 323 Do Xuan Hop",
+      "store_id": "HC_HCM_323_DO_XUAN_HOP_412"
+    },
+    {
+      "revenue": 3158000.0,
+      "store": "Highlands Coffee 331 Le Van Viet",
+      "store_id": "HC_HCM_331_LE_VAN_VIET_214"
+    },
+    {
+      "revenue": 3584000.0,
+      "store": "Highlands Coffee 33 LE QUY DON D3",
+      "store_id": "HC_HCM_33_LE_QUY_DON_D3_442"
+    },
+    {
+      "revenue": 3942000.0,
+      "store": "Highlands Coffee 33 Lê Văn Khương D12",
+      "store_id": "HC_HCM_33_LE_VAN_KHUONG_D_457"
+    },
+    {
+      "revenue": 2757000.0,
+      "store": "Highlands Coffee 343 Ben Binh Dong D8",
+      "store_id": "HC_HCM_343_BEN_BINH_DONG__664"
+    },
+    {
+      "revenue": 1880000.0,
+      "store": "Highlands Coffee 359 Kinh Dương Vương - Bình Tân",
+      "store_id": "HC_HCM_359_KINH_DUONG_VUO_755"
+    },
+    {
+      "revenue": 2399000.0,
+      "store": "Highlands Coffee 35 Thăng Long - Tân Bình",
+      "store_id": "HC_HCM_35_THANG_LONG_TAN__454"
+    },
+    {
+      "revenue": 3660000.0,
+      "store": "Highlands Coffee 366 Le Van Quoi HCM",
+      "store_id": "HC_HCM_366_LE_VAN_QUOI_HC_639"
+    },
+    {
+      "revenue": 3245000.0,
+      "store": "Highlands Coffee 377 Tân Kỳ Tân Quý",
+      "store_id": "HC_HCM_377_TAN_KY_TAN_QUY_440"
+    },
+    {
+      "revenue": 2783000.0,
+      "store": "Highlands Coffee 384 Hoang Dieu HCM",
+      "store_id": "HC_HCM_384_HOANG_DIEU_HCM_1347"
+    },
+    {
+      "revenue": 3719000.0,
+      "store": "Highlands Coffee 384 Hoang Dieu HCM [1329]",
+      "store_id": "HC_HCM_384_HOANG_DIEU_HCM_1329"
+    },
+    {
+      "revenue": 2975000.0,
+      "store": "Highlands Coffee 398 Nguyễn Xí - Bình Thạnh",
+      "store_id": "HC_HCM_398_NGUYEN_XI_BINH_836"
+    },
+    {
+      "revenue": 4203000.0,
+      "store": "Highlands Coffee 402 Trần Hưng Đạo B",
+      "store_id": "HC_HCM_402_TRAN_HUNG_AO_B_359"
+    },
+    {
+      "revenue": 3579000.0,
+      "store": "Highlands Coffee 415 Le Dai Hanh D11",
+      "store_id": "HC_HCM_415_LE_DAI_HANH_D1_791"
+    },
+    {
+      "revenue": 3559000.0,
+      "store": "Highlands Coffee 416 Phạm Văn Đồng - Bình Thạnh",
+      "store_id": "HC_HCM_416_PHAM_VAN_ONG_B_719"
+    },
+    {
+      "revenue": 4792000.0,
+      "store": "Highlands Coffee 417 Dien Bien Phu",
+      "store_id": "HC_HCM_417_DIEN_BIEN_PHU_555"
+    },
+    {
+      "revenue": 3805000.0,
+      "store": "Highlands Coffee 425 Nguyen Oanh Go Vap",
+      "store_id": "HC_HCM_425_NGUYEN_OANH_GO_1327"
+    },
+    {
+      "revenue": 2532000.0,
+      "store": "Highlands Coffee 425 Nguyen Oanh HCM",
+      "store_id": "HC_HCM_425_NGUYEN_OANH_HC_1334"
+    },
+    {
+      "revenue": 3510000.0,
+      "store": "Highlands Coffee 433 Le Duc Tho Go Vap",
+      "store_id": "HC_HCM_433_LE_DUC_THO_GO__551"
+    },
+    {
+      "revenue": 3403000.0,
+      "store": "Highlands Coffee 43 Phan Dang Luu",
+      "store_id": "HC_HCM_43_PHAN_DANG_LUU_772"
+    },
+    {
+      "revenue": 4091000.0,
+      "store": "Highlands Coffee 43 Truong Chinh D12",
+      "store_id": "HC_HCM_43_TRUONG_CHINH_D1_834"
+    },
+    {
+      "revenue": 4366000.0,
+      "store": "Highlands Coffee 45 Ly Chinh Thang",
+      "store_id": "HC_HCM_45_LY_CHINH_THANG_409"
+    },
+    {
+      "revenue": 4046000.0,
+      "store": "Highlands Coffee 46 Bùi Thị Xuân",
+      "store_id": "HC_HCM_46_BUI_THI_XUAN_453"
+    },
+    {
+      "revenue": 4562000.0,
+      "store": "Highlands Coffee 46 Vo Van Tan D3",
+      "store_id": "HC_HCM_46_VO_VAN_TAN_D3_592"
+    },
+    {
+      "revenue": 2274000.0,
+      "store": "Highlands Coffee 48 Le Thi Cho D7",
+      "store_id": "HC_HCM_48_LE_THI_CHO_D7_1137"
+    },
+    {
+      "revenue": 3051000.0,
+      "store": "Highlands Coffee 49B Thảo Điền - Thủ Đức",
+      "store_id": "HC_HCM_49B_THAO_IEN_THU_U_787"
+    },
+    {
+      "revenue": 3751000.0,
+      "store": "Highlands Coffee 4 Tô Ký D12",
+      "store_id": "HC_HCM_4_TO_KY_D12_518"
+    },
+    {
+      "revenue": 3083000.0,
+      "store": "Highlands Coffee 533 Nguyen Tri Phuong",
+      "store_id": "HC_HCM_533_NGUYEN_TRI_PHU_790"
+    },
+    {
+      "revenue": 5157000.0,
+      "store": "Highlands Coffee 540 Cong Hoa Tan Binh",
+      "store_id": "HC_HCM_540_CONG_HOA_TAN_B_1269"
+    },
+    {
+      "revenue": 3998000.0,
+      "store": "Highlands Coffee 55 Vườn Lài",
+      "store_id": "HC_HCM_55_VUON_LAI_447"
+    },
+    {
+      "revenue": 3050000.0,
+      "store": "Highlands Coffee 565 Tinh Lo 10",
+      "store_id": "HC_HCM_565_TINH_LO_10_553"
+    },
+    {
+      "revenue": 3951000.0,
+      "store": "Highlands Coffee 606 Dien Bien Phu",
+      "store_id": "HC_HCM_606_DIEN_BIEN_PHU_814"
+    },
+    {
+      "revenue": 3835000.0,
+      "store": "Highlands Coffee 631 Le Duc Tho Go Vap",
+      "store_id": "HC_HCM_631_LE_DUC_THO_GO__1149"
+    },
+    {
+      "revenue": 3393000.0,
+      "store": "Highlands Coffee 63 Pham Van Hai HCM",
+      "store_id": "HC_HCM_63_PHAM_VAN_HAI_HC_1331"
+    },
+    {
+      "revenue": 3797000.0,
+      "store": "Highlands Coffee 659 XVNT Binh Thanh",
+      "store_id": "HC_HCM_659_XVNT_BINH_THAN_828"
+    },
+    {
+      "revenue": 4116000.0,
+      "store": "Highlands Coffee 66 Nguyễn Huệ - Quận 1",
+      "store_id": "HC_HCM_66_NGUYEN_HUE_QUAN_813"
+    },
+    {
+      "revenue": 3248000.0,
+      "store": "Highlands Coffee 686 Truong Chinh Tan Binh",
+      "store_id": "HC_HCM_686_TRUONG_CHINH_T_1285"
+    },
+    {
+      "revenue": 4373000.0,
+      "store": "Highlands Coffee 71 Lý Tự Trọng",
+      "store_id": "HCM_LY_TU_TRONG"
+    },
+    {
+      "revenue": 2704000.0,
+      "store": "Highlands Coffee 71 Lý Tự Trọng [492]",
+      "store_id": "HC_HCM_71_LY_TU_TRONG_492"
+    },
+    {
+      "revenue": 4711000.0,
+      "store": "Highlands Coffee 72 Le Thuc Hoach Tan Phu",
+      "store_id": "HC_HCM_72_LE_THUC_HOACH_T_1258"
+    },
+    {
+      "revenue": 4639000.0,
+      "store": "Highlands Coffee 77 Hoàng Văn Thái D7",
+      "store_id": "HC_HCM_77_HOANG_VAN_THAI__526"
+    },
+    {
+      "revenue": 4890000.0,
+      "store": "Highlands Coffee 803 Hoàng Sa",
+      "store_id": "HC_HCM_803_HOANG_SA_796"
+    },
+    {
+      "revenue": 3467000.0,
+      "store": "Highlands Coffee 827 Au Co Tan Phu",
+      "store_id": "HC_HCM_827_AU_CO_TAN_PHU_1256"
+    },
+    {
+      "revenue": 2821000.0,
+      "store": "Highlands Coffee 82 Ng Chi Thanh D10",
+      "store_id": "HC_HCM_82_NG_CHI_THANH_D1_414"
+    },
+    {
+      "revenue": 3769000.0,
+      "store": "Highlands Coffee 830 Truong Sa D3",
+      "store_id": "HC_HCM_830_TRUONG_SA_D3_1287"
+    },
+    {
+      "revenue": 3173000.0,
+      "store": "Highlands Coffee 85 No.3 Binh Tan",
+      "store_id": "HC_HCM_85_NO_3_BINH_TAN_800"
+    },
+    {
+      "revenue": 4385000.0,
+      "store": "Highlands Coffee 891 Kha Vạn Cân",
+      "store_id": "HC_KHONG__891_KHA_VAN_CAN_473"
+    },
+    {
+      "revenue": 3724000.0,
+      "store": "Highlands Coffee 8G Lâm Văn Bền - Quận 7",
+      "store_id": "HC_HCM_8G_LAM_VAN_BEN_QUA_832"
+    },
+    {
+      "revenue": 2755000.0,
+      "store": "Highlands Coffee 925 Tan Ky Tan Quy",
+      "store_id": "HC_HCM_925_TAN_KY_TAN_QUY_609"
+    },
+    {
+      "revenue": 4112000.0,
+      "store": "Highlands Coffee 962 Pham Van Dong",
+      "store_id": "HC_HCM_962_PHAM_VAN_DONG_542"
+    },
+    {
+      "revenue": 2713000.0,
+      "store": "Highlands Coffee 972 Nguyen Van Qua HCM",
+      "store_id": "HC_HCM_972_NGUYEN_VAN_QUA_1328"
+    },
+    {
+      "revenue": 3350000.0,
+      "store": "Highlands Coffee 97 Ung Van Khiem",
+      "store_id": "HC_HCM_97_UNG_VAN_KHIEM_774"
+    },
+    {
+      "revenue": 4416000.0,
+      "store": "Highlands Coffee 99 Ngô Quyền - Quận 5",
+      "store_id": "HC_HCM_99_NGO_QUYEN_QUAN__840"
+    },
+    {
+      "revenue": 3480000.0,
+      "store": "Highlands Coffee 99 Quach Dieu HCM",
+      "store_id": "HC_HCM_99_QUACH_DIEU_HCM_1363"
+    },
+    {
+      "revenue": 2472000.0,
+      "store": "Highlands Coffee 9A Ky Dong D3",
+      "store_id": "HC_HCM_9A_KY_DONG_D3_1176"
+    },
+    {
+      "revenue": 4136000.0,
+      "store": "Highlands Coffee AB Tower HCM",
+      "store_id": "HC_HCM_AB_TOWER_HCM_503"
+    },
+    {
+      "revenue": 3644000.0,
+      "store": "Highlands Coffee Aeon Tân Phú 2F HCM",
+      "store_id": "HC_HCM_AEON_TAN_PHU_2F_HC_1352"
+    },
+    {
+      "revenue": 3385000.0,
+      "store": "Highlands Coffee Akari City Binh Tan",
+      "store_id": "HC_HCM_AKARI_CITY_BINH_TA_744"
+    },
+    {
+      "revenue": 4600000.0,
+      "store": "Highlands Coffee Bà Hom - Quận 6",
+      "store_id": "HC_HCM_BA_HOM_QUAN_6_797"
+    },
+    {
+      "revenue": 2601000.0,
+      "store": "Highlands Coffee Bamboo Airways - Phú Nhuận",
+      "store_id": "HC_HCM_BAMBOO_AIRWAYS_PHU_786"
+    },
+    {
+      "revenue": 3833000.0,
+      "store": "Highlands Coffee Bao Minh Tower HCM",
+      "store_id": "HC_HCM_BAO_MINH_TOWER_HCM_202"
+    },
+    {
+      "revenue": 2403000.0,
+      "store": "Highlands Coffee Bến Bạch Đằng",
+      "store_id": "HC_HCM_BEN_BACH_ANG_810"
+    },
+    {
+      "revenue": 2330000.0,
+      "store": "Highlands Coffee Ben Bach Dang D1",
+      "store_id": "HC_HCM_BEN_BACH_DANG_D1_1214"
+    },
+    {
+      "revenue": 4224000.0,
+      "store": "Highlands Coffee Ben Van Don HCM",
+      "store_id": "HC_HCM_BEN_VAN_DON_HCM_638"
+    },
+    {
+      "revenue": 3823000.0,
+      "store": "Highlands Coffee Bến Xe Miền Đông Cũ - Bình Thạnh",
+      "store_id": "HC_HCM_BEN_XE_MIEN_ONG_CU_868"
+    },
+    {
+      "revenue": 2895000.0,
+      "store": "Highlands Coffee Bến Xe Miền Tây",
+      "store_id": "HC_HCM_BEN_XE_MIEN_TAY_455"
+    },
+    {
+      "revenue": 2262000.0,
+      "store": "Highlands Coffee Bitexco D1",
+      "store_id": "HC_HCM_BITEXCO_D1_1257"
+    },
+    {
+      "revenue": 4381000.0,
+      "store": "Highlands Coffee Botanica 2 Tan Binh",
+      "store_id": "HC_HCM_BOTANICA_2_TAN_BIN_1283"
+    },
+    {
+      "revenue": 3178000.0,
+      "store": "Highlands Coffee BV DH Y Duoc TPHCM - 3F",
+      "store_id": "HC_HCM_BV_DH_Y_DUOC_TPHCM_1282"
+    },
+    {
+      "revenue": 3157000.0,
+      "store": "Highlands Coffee BV DH Y Duoc TPHCM - GF",
+      "store_id": "HC_HCM_BV_DH_Y_DUOC_TPHCM_1281"
+    },
+    {
+      "revenue": 3964000.0,
+      "store": "Highlands Coffee BV Nhi Dong TPHCM",
+      "store_id": "HC_HCM_BV_NHI_DONG_TPHCM_622"
+    },
+    {
+      "revenue": 3625000.0,
+      "store": "Highlands Coffee Celadon - Tân Phú",
+      "store_id": "HC_HCM_CELADON_TAN_PHU_855"
+    },
+    {
+      "revenue": 3739000.0,
+      "store": "Highlands Coffee Central Garden D1",
+      "store_id": "HC_HCM_CENTRAL_GARDEN_D1_1212"
+    },
+    {
+      "revenue": 2849000.0,
+      "store": "Highlands Coffee Central Premium - Quận 8",
+      "store_id": "HC_HCM_CENTRAL_PREMIUM_QU_854"
+    },
+    {
+      "revenue": 3974000.0,
+      "store": "Highlands Coffee Central Retail Phu Nhuan",
+      "store_id": "HC_HCM_CENTRAL_RETAIL_PHU_1225"
+    },
+    {
+      "revenue": 4021000.0,
+      "store": "Highlands Coffee Cho Lon Post Office",
+      "store_id": "HC_HCM_CHO_LON_POST_OFFIC_1147"
+    },
+    {
+      "revenue": 3309000.0,
+      "store": "Highlands Coffee Chung Cu Bo Cong An",
+      "store_id": "HC_HCM_CHUNG_CU_BO_CONG_A_647"
+    },
+    {
+      "revenue": 3049000.0,
+      "store": "Highlands Coffee Chung cu Phu My HCM",
+      "store_id": "HC_HCM_CHUNG_CU_PHU_MY_HC_1365"
+    },
+    {
+      "revenue": 4727000.0,
+      "store": "Highlands Coffee Chung Cư Vĩnh Hội",
+      "store_id": "HC_HCM_CHUNG_CU_VINH_HOI_740"
+    },
+    {
+      "revenue": 2724000.0,
+      "store": "Highlands Coffee CMC Space D7",
+      "store_id": "HC_HCM_CMC_SPACE_D7_816"
+    },
+    {
+      "revenue": 2404000.0,
+      "store": "Highlands Coffee Coop Ly Thuong Kiet HCM",
+      "store_id": "HC_HCM_COOP_LY_THUONG_KIE_557"
+    },
+    {
+      "revenue": 3227000.0,
+      "store": "Highlands Coffee CoopXtra Linh Trung",
+      "store_id": "HC_KHONG__COOPXTRA_LINH_TRUN_608"
+    },
+    {
+      "revenue": 5786000.0,
+      "store": "Highlands Coffee Crescent Mall",
+      "store_id": "HC_HCM_CRESCENT_MALL_703"
+    },
+    {
+      "revenue": 3188000.0,
+      "store": "Highlands Coffee Crescent Residence",
+      "store_id": "HC_HCM_CRESCENT_RESIDENCE_507"
+    },
+    {
+      "revenue": 4131000.0,
+      "store": "Highlands Coffee CVPM Quang Trung HCM",
+      "store_id": "HC_HCM_CVPM_QUANG_TRUNG_H_632"
+    },
+    {
+      "revenue": 2989000.0,
+      "store": "Highlands Coffee D23 Cong Hoa Tan Binh",
+      "store_id": "HC_HCM_D23_CONG_HOA_TAN_B_1292"
+    },
+    {
+      "revenue": 2887000.0,
+      "store": "Highlands Coffee D5 Binh Thanh",
+      "store_id": "HC_HCM_D5_BINH_THANH_1348"
+    },
+    {
+      "revenue": 3304000.0,
+      "store": "Highlands Coffee D9 Tân Phú",
+      "store_id": "HC_HCM_D9_TAN_PHU_704"
+    },
+    {
+      "revenue": 5044500.0,
+      "store": "Highlands Coffee Dai Hoc Hutech",
+      "store_id": "HC_HCM_DAI_HOC_HUTECH_418"
+    },
+    {
+      "revenue": 4561000.0,
+      "store": "Highlands Coffee Đại Phúc Bình Chánh",
+      "store_id": "HC_KHONG__AI_PHUC_BINH_CHANH_698"
+    },
+    {
+      "revenue": 3279000.0,
+      "store": "Highlands Coffee Đặng Thúc Vịnh - Hóc Môn",
+      "store_id": "HC_HCM_ANG_THUC_VINH_HOC__753"
+    },
+    {
+      "revenue": 3147000.0,
+      "store": "Highlands Coffee DHA - Quận 7",
+      "store_id": "HC_HCM_DHA_QUAN_7_884"
+    },
+    {
+      "revenue": 4146000.0,
+      "store": "Highlands Coffee DHSP Ky Thuat TPHCM",
+      "store_id": "HC_HCM_DHSP_KY_THUAT_TPHC_830"
+    },
+    {
+      "revenue": 5172000.0,
+      "store": "Highlands Coffee Điện Biên Phủ",
+      "store_id": "HCM_DIEN_BIEN_PHU"
+    },
+    {
+      "revenue": 3746000.0,
+      "store": "Highlands Coffee Dinh Doc Lap 2",
+      "store_id": "HC_HCM_DINH_DOC_LAP_2_404"
+    },
+    {
+      "revenue": 2930000.0,
+      "store": "Highlands Coffee Dragon Hill 1 Nha Be",
+      "store_id": "HC_HCM_DRAGON_HILL_1_NHA__525"
+    },
+    {
+      "revenue": 2950000.0,
+      "store": "Highlands Coffee Duong 35-CL Cat Lai D2",
+      "store_id": "HC_HCM_DUONG_35_CL_CAT_LA_1264"
+    },
+    {
+      "revenue": 3115000.0,
+      "store": "Highlands Coffee Dương Bá Trạc - Quận 8",
+      "store_id": "HC_HCM_DUONG_BA_TRAC_QUAN_811"
+    },
+    {
+      "revenue": 4517000.0,
+      "store": "Highlands Coffee Eco Green D7",
+      "store_id": "HC_KHONG__ECO_GREEN_D7_736"
+    },
+    {
+      "revenue": 3763000.0,
+      "store": "Highlands Coffee Emart Phan Van Tri Go Vap",
+      "store_id": "HC_HCM_EMART_PHAN_VAN_TRI_1228"
+    },
+    {
+      "revenue": 3374000.0,
+      "store": "Highlands Coffee Faifo Lane Thu Thiem",
+      "store_id": "HC_HCM_FAIFO_LANE_THU_THI_590"
+    },
+    {
+      "revenue": 2412000.0,
+      "store": "Highlands Coffee Flora Thủ Đức",
+      "store_id": "HC_HCM_FLORA_THU_UC_365"
+    },
+    {
+      "revenue": 6194000.0,
+      "store": "Highlands Coffee Fulbright University",
+      "store_id": "HC_HCM_FULBRIGHT_UNIVERSI_1135"
+    },
+    {
+      "revenue": 3530000.0,
+      "store": "Highlands Coffee G4-G8 Truong Son",
+      "store_id": "HC_HCM_G4_G8_TRUONG_SON_413"
+    },
+    {
+      "revenue": 4237000.0,
+      "store": "Highlands Coffee Galleria Thu Thiem HCM",
+      "store_id": "HC_KHONG__GALLERIA_THU_THIEM_570"
+    },
+    {
+      "revenue": 2689000.0,
+      "store": "Highlands Coffee Gateway",
+      "store_id": "HC_HCM_GATEWAY_795"
+    },
+    {
+      "revenue": 4111000.0,
+      "store": "Highlands Coffee Ga Xe Lua Saigon",
+      "store_id": "HC_HCM_GA_XE_LUA_SAIGON_1169"
+    },
+    {
+      "revenue": 4756000.0,
+      "store": "Highlands Coffee Go Đại Lộ Bình Dương",
+      "store_id": "HC_HCM_GO_AI_LO_BINH_DUON_1349"
+    },
+    {
+      "revenue": 3705000.0,
+      "store": "Highlands Coffee Golden King D7",
+      "store_id": "HC_HCM_GOLDEN_KING_D7_745"
+    },
+    {
+      "revenue": 3173000.0,
+      "store": "Highlands Coffee - GO Mall Huế",
+      "store_id": "HC_HUE_GO_MALL_HUE_464"
+    },
+    {
+      "revenue": 3232000.0,
+      "store": "Highlands Coffee GREEN RIVER D8",
+      "store_id": "HC_KHONG__GREEN_RIVER_D8_574"
+    },
+    {
+      "revenue": 4756000.0,
+      "store": "Highlands Coffee Hà Đô Centrosa",
+      "store_id": "HC_KHONG__HA_O_CENTROSA_711"
+    },
+    {
+      "revenue": 4864000.0,
+      "store": "Highlands Coffee Ha Huy Giap D12",
+      "store_id": "HC_HCM_HA_HUY_GIAP_D12_1289"
+    },
+    {
+      "revenue": 3375000.0,
+      "store": "Highlands Coffee Hiệp Bình - Thủ Đức",
+      "store_id": "HC_HCM_HIEP_BINH_THU_UC_754"
+    },
+    {
+      "revenue": 3240000.0,
+      "store": "Highlands Coffee Highlands Roastery BRVT",
+      "store_id": "HC_HCM_HIGHLANDS_ROASTERY_1336"
+    },
+    {
+      "revenue": 3162000.0,
+      "store": "Highlands Coffee Historical Museum HCMC",
+      "store_id": "HC_KHONG__HISTORICAL_MUSEUM__1170"
+    },
+    {
+      "revenue": 3449000.0,
+      "store": "Highlands Coffee HMC Tower D1",
+      "store_id": "HC_HCM_HMC_TOWER_D1_1222"
+    },
+    {
+      "revenue": 3639000.0,
+      "store": "Highlands Coffee Hoang Minh Giam Phu Nhuan",
+      "store_id": "HC_HCM_HOANG_MINH_GIAM_PH_1218"
+    },
+    {
+      "revenue": 5607000.0,
+      "store": "Highlands Coffee Hoan My Hospital Thu Duc",
+      "store_id": "HC_HCM_HOAN_MY_HOSPITAL_T_1192"
+    },
+    {
+      "revenue": 3631000.0,
+      "store": "Highlands Coffee Hong Bang University",
+      "store_id": "HC_HCM_HONG_BANG_UNIVERSI_1326"
+    },
+    {
+      "revenue": 2949000.0,
+      "store": "Highlands Coffee Hong Lac Tan Binh",
+      "store_id": "HC_HCM_HONG_LAC_TAN_BINH_841"
+    },
+    {
+      "revenue": 4296000.0,
+      "store": "Highlands Coffee Hùng Vương D5",
+      "store_id": "HC_HCM_HUNG_VUONG_D5_712"
+    },
+    {
+      "revenue": 2874000.0,
+      "store": "Highlands Coffee Hung Vuong Plaza D5",
+      "store_id": "HC_HCM_HUNG_VUONG_PLAZA_D_1291"
+    },
+    {
+      "revenue": 3841000.0,
+      "store": "Highlands Coffee Huong Lo 3 Binh Tan",
+      "store_id": "HC_HCM_HUONG_LO_3_BINH_TA_1196"
+    },
+    {
+      "revenue": 2949000.0,
+      "store": "Highlands Coffee Hutech D9",
+      "store_id": "HC_HCM_HUTECH_D9_354"
+    },
+    {
+      "revenue": 2860000.0,
+      "store": "Highlands Coffee Huy Can Thu Duc HCM",
+      "store_id": "HC_HCM_HUY_CAN_THU_DUC_HC_564"
+    },
+    {
+      "revenue": 3852000.0,
+      "store": "Highlands Coffee Huynh Tan Phat Nha Be",
+      "store_id": "HC_HCM_HUYNH_TAN_PHAT_NHA_1150"
+    },
+    {
+      "revenue": 2916000.0,
+      "store": "Highlands Coffee H Zone Nguyen Huu Tho D7",
+      "store_id": "HC_HCM_H_ZONE_NGUYEN_HUU__1367"
+    },
+    {
+      "revenue": 4714000.0,
+      "store": "Highlands Coffee KCN Bau Bang Dinh Duong",
+      "store_id": "HC_HCM_KCN_BAU_BANG_DINH__1290"
+    },
+    {
+      "revenue": 4281000.0,
+      "store": "Highlands Coffee KCN My Phuoc 2 Ben Cat",
+      "store_id": "HC_HCM_KCN_MY_PHUOC_2_BEN_1286"
+    },
+    {
+      "revenue": 2691000.0,
+      "store": "Highlands Coffee KCN My Phuoc 3 Ben Cat BD",
+      "store_id": "HC_HCM_KCN_MY_PHUOC_3_BEN_1223"
+    },
+    {
+      "revenue": 4659000.0,
+      "store": "Highlands Coffee KCN VSIP 2",
+      "store_id": "HC_HCM_KCN_VSIP_2_1259"
+    },
+    {
+      "revenue": 3063000.0,
+      "store": "Highlands Coffee Kenh Tan Hoa Tan Phu",
+      "store_id": "HC_HCM_KENH_TAN_HOA_TAN_P_773"
+    },
+    {
+      "revenue": 4051000.0,
+      "store": "Highlands Coffee K Home Binh Duong",
+      "store_id": "HC_HCM_K_HOME_BINH_DUONG_1299"
+    },
+    {
+      "revenue": 2742000.0,
+      "store": "Highlands Coffee Kinh Duong Vuong D6",
+      "store_id": "HC_HCM_KINH_DUONG_VUONG_D_775"
+    },
+    {
+      "revenue": 5055000.0,
+      "store": "Highlands Coffee Kiosk VJET G24 - Tân Sơn Nhất Airport",
+      "store_id": "HC_HCM_KIOSK_VJET_G24_TAN_785"
+    },
+    {
+      "revenue": 4544000.0,
+      "store": "Highlands Coffee Lạc Long Quân - Quận 11",
+      "store_id": "HC_HCM_LAC_LONG_QUAN_QUAN_793"
+    },
+    {
+      "revenue": 3099000.0,
+      "store": "Highlands Coffee Landmark 4 - Bình Thạnh",
+      "store_id": "HC_HCM_LANDMARK_4_BINH_TH_843"
+    },
+    {
+      "revenue": 3570000.0,
+      "store": "Highlands Coffee Lanh Binh Thang D11",
+      "store_id": "HC_HCM_LANH_BINH_THANG_D1_415"
+    },
+    {
+      "revenue": 3671000.0,
+      "store": "Highlands Coffee Lê Thị Hà - Hóc Môn",
+      "store_id": "HC_HCM_LE_THI_HA_HOC_MON_663"
+    },
+    {
+      "revenue": 3228000.0,
+      "store": "Highlands Coffee Le Thi Rieng D12",
+      "store_id": "HC_HCM_LE_THI_RIENG_D12_1227"
+    },
+    {
+      "revenue": 3730000.0,
+      "store": "Highlands Coffee Lê Trọng Tấn",
+      "store_id": "HC_HCM_LE_TRONG_TAN_468"
+    },
+    {
+      "revenue": 5104000.0,
+      "store": "Highlands Coffee Le Trung Nghia Tan Binh",
+      "store_id": "HC_HCM_LE_TRUNG_NGHIA_TAN_1305"
+    },
+    {
+      "revenue": 2583000.0,
+      "store": "Highlands Coffee Lê Văn Thọ - Gò Vấp",
+      "store_id": "HC_HCM_LE_VAN_THO_GO_VAP_701"
+    },
+    {
+      "revenue": 3551000.0,
+      "store": "Highlands Coffee Lexington D2",
+      "store_id": "HC_HCM_LEXINGTON_D2_407"
+    },
+    {
+      "revenue": 3182000.0,
+      "store": "Highlands Coffee Long Tower Binh Thanh",
+      "store_id": "HC_HCM_LONG_TOWER_BINH_TH_1138"
+    },
+    {
+      "revenue": 2896000.0,
+      "store": "Highlands Coffee Lucky Palace D6",
+      "store_id": "HC_HCM_LUCKY_PALACE_D6_1293"
+    },
+    {
+      "revenue": 1965000.0,
+      "store": "Highlands Coffee Lumiere Riverside D2",
+      "store_id": "HC_HCM_LUMIERE_RIVERSIDE__827"
+    },
+    {
+      "revenue": 3566000.0,
+      "store": "Highlands Coffee Lương Khải Siêu - Thủ Đức",
+      "store_id": "HC_HCM_LUONG_KHAI_SIEU_TH_900"
+    },
+    {
+      "revenue": 4178000.0,
+      "store": "Highlands Coffee Ly Thuong Kiet D11",
+      "store_id": "HC_HCM_LY_THUONG_KIET_D11_416"
+    },
+    {
+      "revenue": 4045000.0,
+      "store": "Highlands Coffee Ly Thuong Kiet HM",
+      "store_id": "HC_HCM_LY_THUONG_KIET_HM_421"
+    },
+    {
+      "revenue": 4318000.0,
+      "store": "Highlands Coffee Marina Central D1",
+      "store_id": "HC_HCM_MARINA_CENTRAL_D1_1167"
+    },
+    {
+      "revenue": 1598000.0,
+      "store": "Highlands Coffee Mới 133",
+      "store_id": "HC_HCM_IMG_1005_133"
+    },
+    {
+      "revenue": 2702000.0,
+      "store": "Highlands Coffee Mới 139",
+      "store_id": "HC_HCM_IMG_1676_139"
+    },
+    {
+      "revenue": 4017000.0,
+      "store": "Highlands Coffee Mới 151",
+      "store_id": "HC_HCM_IMG_1165_151"
+    },
+    {
+      "revenue": 4247000.0,
+      "store": "Highlands Coffee Mới 152",
+      "store_id": "HC_HCM_IMG_1067_152"
+    },
+    {
+      "revenue": 3350000.0,
+      "store": "Highlands Coffee Mới 171",
+      "store_id": "HC_HCM_IMG_1196_171"
+    },
+    {
+      "revenue": 2988000.0,
+      "store": "Highlands Coffee Mới 182",
+      "store_id": "HC_HCM_IMG_7392_182"
+    },
+    {
+      "revenue": 3310000.0,
+      "store": "Highlands Coffee Mới 183",
+      "store_id": "HC_HCM_IMG_2306_183"
+    },
+    {
+      "revenue": 2636000.0,
+      "store": "Highlands Coffee Mới 232",
+      "store_id": "HC_HCM_IMG_1010_232"
+    },
+    {
+      "revenue": 3546000.0,
+      "store": "Highlands Coffee Muong Thanh Sai Gon Centre",
+      "store_id": "HC_HCM_MUONG_THANH_SAI_GO_1197"
+    },
+    {
+      "revenue": 2661000.0,
+      "store": "Highlands Coffee Nguyen Anh Thu D12-2",
+      "store_id": "HC_HCM_NGUYEN_ANH_THU_D12_686"
+    },
+    {
+      "revenue": 4626000.0,
+      "store": "Highlands Coffee - Nguyễn Bỉnh Khiêm",
+      "store_id": "HC_HCM_NGUYEN_BINH_KHIEM_461"
+    },
+    {
+      "revenue": 3355000.0,
+      "store": "Highlands Coffee Nguyễn Đức Cảnh D7",
+      "store_id": "HC_KHONG__NGUYEN_UC_CANH_D7_725"
+    },
+    {
+      "revenue": 2213000.0,
+      "store": "Highlands Coffee Nguyễn Kiệm - Phú Nhuận",
+      "store_id": "HC_HCM_NGUYEN_KIEM_PHU_NH_837"
+    },
+    {
+      "revenue": 5769000.0,
+      "store": "Highlands Coffee Nguyễn Thái Sơn",
+      "store_id": "HC_HCM_NGUYEN_THAI_SON_472"
+    },
+    {
+      "revenue": 3322000.0,
+      "store": "Highlands Coffee Nguyen Thi Dinh HCM",
+      "store_id": "HC_HCM_NGUYEN_THI_DINH_HC_511"
+    },
+    {
+      "revenue": 3227000.0,
+      "store": "Highlands Coffee Nguyễn Thị Thập - Quận 7",
+      "store_id": "HC_HCM_NGUYEN_THI_THAP_QU_831"
+    },
+    {
+      "revenue": 3837000.0,
+      "store": "Highlands Coffee Nguyen Thi Tu Binh Tan",
+      "store_id": "HC_HCM_NGUYEN_THI_TU_BINH_1263"
+    },
+    {
+      "revenue": 2227000.0,
+      "store": "Highlands Coffee Nguyen Tri Phuong Di An HCM",
+      "store_id": "HC_HCM_NGUYEN_TRI_PHUONG__1241"
+    },
+    {
+      "revenue": 3935000.0,
+      "store": "Highlands Coffee Nguyễn Văn Tăng - Thủ Đức",
+      "store_id": "HC_HCM_NGUYEN_VAN_TANG_TH_662"
+    },
+    {
+      "revenue": 2217000.0,
+      "store": "Highlands Coffee Nguyễn Văn Trỗi HCM",
+      "store_id": "HC_HCM_NGUYEN_VAN_TROI_HC_729"
+    },
+    {
+      "revenue": 3551000.0,
+      "store": "Highlands Coffee No.1 Bình Chánh",
+      "store_id": "HC_HCM_NO_1_BINH_CHANH_683"
+    },
+    {
+      "revenue": 3850000.0,
+      "store": "Highlands Coffee No.1 Binh Tan",
+      "store_id": "HC_HCM_NO_1_BINH_TAN_1136"
+    },
+    {
+      "revenue": 4294000.0,
+      "store": "Highlands Coffee No.2 Truong Tho Thu Duc",
+      "store_id": "HC_HCM_NO_2_TRUONG_THO_TH_1166"
+    },
+    {
+      "revenue": 2935000.0,
+      "store": "Highlands Coffee Nowzone HCM",
+      "store_id": "HC_HCM_NOWZONE_HCM_743"
+    },
+    {
+      "revenue": 2350000.0,
+      "store": "Highlands Coffee Onehub - Thủ Đức",
+      "store_id": "HC_HCM_ONEHUB_THU_UC_885"
+    },
+    {
+      "revenue": 4056000.0,
+      "store": "Highlands Coffee Origami VH Grand Park D9",
+      "store_id": "HC_HCM_ORIGAMI_VH_GRAND_P_1330"
+    },
+    {
+      "revenue": 3817000.0,
+      "store": "Highlands Coffee Parc Mall D8",
+      "store_id": "HC_HCM_PARC_MALL_D8_815"
+    },
+    {
+      "revenue": 4709000.0,
+      "store": "Highlands Coffee Pegasuite - Quận 8",
+      "store_id": "HC_HCM_PEGASUITE_QUAN_8_846"
+    },
+    {
+      "revenue": 3929000.0,
+      "store": "Highlands Coffee Phạm Đình Hổ",
+      "store_id": "HC_HCM_PHAM_INH_HO_513"
+    },
+    {
+      "revenue": 4956000.0,
+      "store": "Highlands Coffee Phạm Văn Nghị",
+      "store_id": "HC_HCM_PHAM_VAN_NGHI_474"
+    },
+    {
+      "revenue": 4193000.0,
+      "store": "Highlands Coffee Phan Huy Ích 2 - Tân Bình",
+      "store_id": "HC_HCM_PHAN_HUY_ICH_2_TAN_702"
+    },
+    {
+      "revenue": 3687000.0,
+      "store": "Highlands Coffee Phan Van Hon Hoc Mon",
+      "store_id": "HC_HCM_PHAN_VAN_HON_HOC_M_1215"
+    },
+    {
+      "revenue": 4540000.0,
+      "store": "Highlands Coffee Phan Van Tri Go Vap",
+      "store_id": "HC_HCM_PHAN_VAN_TRI_GO_VA_1195"
+    },
+    {
+      "revenue": 3541000.0,
+      "store": "Highlands Coffee Phu Thuan Post Office D7",
+      "store_id": "HC_HCM_PHU_THUAN_POST_OFF_1296"
+    },
+    {
+      "revenue": 4094000.0,
+      "store": "Highlands Coffee Privia Khang Dien Binh Tan",
+      "store_id": "HC_HCM_PRIVIA_KHANG_DIEN__1270"
+    },
+    {
+      "revenue": 4455000.0,
+      "store": "Highlands Coffee PV Gas Tower Nha Be",
+      "store_id": "HC_HCM_PV_GAS_TOWER_NHA_B_1306"
+    },
+    {
+      "revenue": 3542000.0,
+      "store": "Highlands Coffee PVoil CHXD Bình Thọ - Thủ Đức",
+      "store_id": "HC_HCM_PVOIL_CHXD_BINH_TH_861"
+    },
+    {
+      "revenue": 3681000.0,
+      "store": "Highlands Coffee PVoil CHXD Số 4 - Thủ Đức",
+      "store_id": "HC_HCM_PVOIL_CHXD_SO_4_TH_859"
+    },
+    {
+      "revenue": 3592000.0,
+      "store": "Highlands Coffee PVoil CHXD Số 5 - Thủ Đức",
+      "store_id": "HC_HCM_PVOIL_CHXD_SO_5_TH_860"
+    },
+    {
+      "revenue": 3944000.0,
+      "store": "Highlands Coffee PVoil CHXD Số 61 - Thủ Đức",
+      "store_id": "HC_HCM_PVOIL_CHXD_SO_61_T_857"
+    },
+    {
+      "revenue": 3218000.0,
+      "store": "Highlands Coffee PVoil CHXD Số 7 - Thủ Đức",
+      "store_id": "HC_HCM_PVOIL_CHXD_SO_7_TH_858"
+    },
+    {
+      "revenue": 2411000.0,
+      "store": "Highlands Coffee Quoc Lo 13 ThuDuc",
+      "store_id": "HC_HCM_QUOC_LO_13_THUDUC_623"
+    },
+    {
+      "revenue": 3574000.0,
+      "store": "Highlands Coffee Rac Xiec Phu Tho HCM",
+      "store_id": "HC_HCM_RAC_XIEC_PHU_THO_H_1372"
+    },
+    {
+      "revenue": 4501000.0,
+      "store": "Highlands Coffee Ree Tower HCM",
+      "store_id": "HC_HCM_REE_TOWER_HCM_1366"
+    },
+    {
+      "revenue": 4588000.0,
+      "store": "Highlands COffee Richmond City Binh Thanh",
+      "store_id": "HC_HCM_RICHMOND_CITY_BINH_1268"
+    },
+    {
+      "revenue": 3510000.0,
+      "store": "Highlands Coffee Riverside Complex - Quận 7",
+      "store_id": "HC_HCM_RIVERSIDE_COMPLEX__881"
+    },
+    {
+      "revenue": 3818000.0,
+      "store": "Highlands Coffee Riviera Point D7",
+      "store_id": "HC_HCM_RIVIERA_POINT_D7_411"
+    },
+    {
+      "revenue": 4175000.0,
+      "store": "Highlands Coffee S2.02 VH Grand Park",
+      "store_id": "HC_HCM_S2_02_VH_GRAND_PAR_543"
+    },
+    {
+      "revenue": 3185000.0,
+      "store": "Highlands Coffee Sadora Thu Thiem",
+      "store_id": "HC_HCM_SADORA_THU_THIEM_823"
+    },
+    {
+      "revenue": 2999000.0,
+      "store": "Highlands Coffee Saigon Royal",
+      "store_id": "HC_HCM_SAIGON_ROYAL_410"
+    },
+    {
+      "revenue": 3565000.0,
+      "store": "Highlands Coffee Sarica Sala",
+      "store_id": "HC_HCM_SARICA_SALA_487"
+    },
+    {
+      "revenue": 4535000.0,
+      "store": "Highlands Coffee Sarimi Sala Thu Duc",
+      "store_id": "HC_HCM_SARIMI_SALA_THU_DU_1297"
+    },
+    {
+      "revenue": 5607000.0,
+      "store": "Highlands Coffee Sarimi Sala Thu Duc [1346]",
+      "store_id": "HC_HCM_SARIMI_SALA_THU_DU_1346"
+    },
+    {
+      "revenue": 2952000.0,
+      "store": "Highlands Coffee Sari Town Sala",
+      "store_id": "HC_HCM_SARI_TOWN_SALA_690"
+    },
+    {
+      "revenue": 3160000.0,
+      "store": "Highlands Coffee Satra Mall - Quận 6",
+      "store_id": "HC_HCM_SATRA_MALL_QUAN_6_847"
+    },
+    {
+      "revenue": 3198000.0,
+      "store": "Highlands Coffee Số 7 Bình Tân",
+      "store_id": "HC_HCM_SO_7_BINH_TAN_153"
+    },
+    {
+      "revenue": 3136000.0,
+      "store": "Highlands Coffee Song Hành - Thủ Đức",
+      "store_id": "HC_HCM_SONG_HANH_THU_UC_838"
+    },
+    {
+      "revenue": 3667000.0,
+      "store": "Highlands Coffee Sun Village",
+      "store_id": "HC_HCM_SUN_VILLAGE_417"
+    },
+    {
+      "revenue": 2864000.0,
+      "store": "Highlands Coffee Sunwah Pearl",
+      "store_id": "HC_HCM_SUNWAH_PEARL_826"
+    },
+    {
+      "revenue": 2793000.0,
+      "store": "Highlands Coffee Suối Tiên HCM",
+      "store_id": "HC_HCM_SUOI_TIEN_HCM_1353"
+    },
+    {
+      "revenue": 4469000.0,
+      "store": "Highlands Coffee Tạ Hiện - Thủ Đức",
+      "store_id": "HC_HCM_TA_HIEN_THU_UC_866"
+    },
+    {
+      "revenue": 4238000.0,
+      "store": "Highlands Coffee Tan Binh Post Office",
+      "store_id": "HC_HCM_TAN_BINH_POST_OFFI_1219"
+    },
+    {
+      "revenue": 4395000.0,
+      "store": "Highlands Coffee Tan Son Nhat International Airport (Ga Quốc Tế)",
+      "store_id": "HC_HCM_TAN_SON_NHAT_INTER_681"
+    },
+    {
+      "revenue": 3703000.0,
+      "store": "Highlands Coffee Tạ Quang Bửu",
+      "store_id": "HC_HCM_TA_QUANG_BUU_508"
+    },
+    {
+      "revenue": 2892000.0,
+      "store": "Highlands Coffee Ten Lua HCM",
+      "store_id": "HC_HCM_TEN_LUA_HCM_603"
+    },
+    {
+      "revenue": 3637000.0,
+      "store": "Highlands Coffee The Crest Thủ Thiêm",
+      "store_id": "HC_HCM_THE_CREST_THU_THIE_853"
+    },
+    {
+      "revenue": 2981000.0,
+      "store": "Highlands Coffee The Emporium - Quận 11",
+      "store_id": "HC_HCM_THE_EMPORIUM_QUAN__839"
+    },
+    {
+      "revenue": 3553000.0,
+      "store": "Highlands Coffee The Origami VH Grand Park HCM",
+      "store_id": "HC_HCM_THE_ORIGAMI_VH_GRA_1369"
+    },
+    {
+      "revenue": 3629000.0,
+      "store": "Highlands Coffee The Sun Avenue",
+      "store_id": "HC_HCM_THE_SUN_AVENUE_408"
+    },
+    {
+      "revenue": 3852000.0,
+      "store": "Highlands Coffee - The Vista An Phú",
+      "store_id": "HC_HCM_THE_VISTA_AN_PHU_856"
+    },
+    {
+      "revenue": 4532000.0,
+      "store": "Highlands Coffee Thi Nghe Post Office",
+      "store_id": "HC_HCM_THI_NGHE_POST_OFFI_1204"
+    },
+    {
+      "revenue": 3726000.0,
+      "store": "Highlands Coffee Thiso Mall Thu Thiem",
+      "store_id": "HC_HCM_THISO_MALL_THU_THI_569"
+    },
+    {
+      "revenue": 4653000.0,
+      "store": "Highlands Coffee Thoai Ngoc Hau HCM",
+      "store_id": "HC_HCM_THOAI_NGOC_HAU_HCM_631"
+    },
+    {
+      "revenue": 4167000.0,
+      "store": "Highlands Coffee Thu Thiem Park",
+      "store_id": "HC_HCM_THU_THIEM_PARK_801"
+    },
+    {
+      "revenue": 3626000.0,
+      "store": "Highlands Coffee Tỉnh lộ 8 - Củ Chi",
+      "store_id": "HC_HCM_TINH_LO_8_CU_CHI_883"
+    },
+    {
+      "revenue": 2174000.0,
+      "store": "Highlands Coffee Tòa nhà Sài Gòn Giải Phóng",
+      "store_id": "HC_KHONG__TOA_NHA_SAI_GON_GI_321"
+    },
+    {
+      "revenue": 3858000.0,
+      "store": "Highlands Coffee To Ky 2 D12",
+      "store_id": "HC_HCM_TO_KY_2_D12_687"
+    },
+    {
+      "revenue": 3625000.0,
+      "store": "Highlands Coffee Tôn Thất Thiệp",
+      "store_id": "HCM_TON_THAT_THIEP"
+    },
+    {
+      "revenue": 3179000.0,
+      "store": "Highlands Coffee Tops Market Au Co",
+      "store_id": "HC_HCM_TOPS_MARKET_AU_CO_550"
+    },
+    {
+      "revenue": 4630000.0,
+      "store": "Highlands Coffee Trade Center D10",
+      "store_id": "HC_HCM_TRADE_CENTER_D10_184"
+    },
+    {
+      "revenue": 4614000.0,
+      "store": "Highlands Coffee Trà Khúc - Tân Bình",
+      "store_id": "HC_HCM_TRA_KHUC_TAN_BINH_865"
+    },
+    {
+      "revenue": 3805000.0,
+      "store": "Highlands Coffee Tran Thi Nam HCM",
+      "store_id": "HC_HCM_TRAN_THI_NAM_HCM_1364"
+    },
+    {
+      "revenue": 5258000.0,
+      "store": "Highlands Coffee Tropical VH Grand Park D9",
+      "store_id": "HC_HCM_TROPICAL_VH_GRAND__1179"
+    },
+    {
+      "revenue": 3702000.0,
+      "store": "Highlands Coffee Trường Sa HCM",
+      "store_id": "HC_HCM_TRUONG_SA_HCM_741"
+    },
+    {
+      "revenue": 3972000.0,
+      "store": "Highlands Coffee TSN Airport-K4",
+      "store_id": "HC_HCM_TSN_AIRPORT_K4_661"
+    },
+    {
+      "revenue": 3967000.0,
+      "store": "Highlands Coffee TSN T3 Airport - Arrival",
+      "store_id": "HC_HCM_TSN_T3_AIRPORT_ARR_1294"
+    },
+    {
+      "revenue": 3288000.0,
+      "store": "Highlands Coffee TSN T3 Airport - Departure",
+      "store_id": "HC_HCM_TSN_T3_AIRPORT_DEP_1295"
+    },
+    {
+      "revenue": 4534000.0,
+      "store": "Highlands Coffee UOA Tower D7",
+      "store_id": "HC_HCM_UOA_TOWER_D7_586"
+    },
+    {
+      "revenue": 3921000.0,
+      "store": "Highlands Coffee UrBan Hill D7",
+      "store_id": "HC_HCM_URBAN_HILL_D7_358"
+    },
+    {
+      "revenue": 3710000.0,
+      "store": "Highlands Coffee VH Grand Park 2",
+      "store_id": "HC_HCM_VH_GRAND_PARK_2_629"
+    },
+    {
+      "revenue": 3343000.0,
+      "store": "Highlands Coffee VH Grand Park D9 - Lumiere Camellia",
+      "store_id": "HC_HCM_VH_GRAND_PARK_D9_L_1308"
+    },
+    {
+      "revenue": 3614000.0,
+      "store": "Highlands Coffee Victory Hotel D3",
+      "store_id": "HC_HCM_VICTORY_HOTEL_D3_1298"
+    },
+    {
+      "revenue": 3584000.0,
+      "store": "Highlands Coffee Vincom 3 Tháng 2 - Quận 10",
+      "store_id": "HC_HCM_VINCOM_3_THANG_2_Q_798"
+    },
+    {
+      "revenue": 4345000.0,
+      "store": "Highlands Coffee Vincom Grandpark D9",
+      "store_id": "HC_HCM_VINCOM_GRANDPARK_D_799"
+    },
+    {
+      "revenue": 4723000.0,
+      "store": "Highlands Coffee Vincom Lê Văn Việt",
+      "store_id": "HC_HCM_VINCOM_LE_VAN_VIET_734"
+    },
+    {
+      "revenue": 4595000.0,
+      "store": "Highlands Coffee Vinhomes Ba Son",
+      "store_id": "HC_HCM_VINHOMES_BA_SON_406"
+    },
+    {
+      "revenue": 3182000.0,
+      "store": "Highlands Coffee VNG Campus D7",
+      "store_id": "HC_HCM_VNG_CAMPUS_D7_355"
+    },
+    {
+      "revenue": 3858000.0,
+      "store": "Highlands Coffee Vo Van Ngan Thu Duc",
+      "store_id": "HC_HCM_VO_VAN_NGAN_THU_DU_1162"
+    },
+    {
+      "revenue": 2716000.0,
+      "store": "Highlands Coffee VTI LIC Nguyen Co Thach",
+      "store_id": "HC_HCM_VTI_LIC_NGUYEN_CO__1251"
+    },
+    {
+      "revenue": 4111000.0,
+      "store": "Highlands Coffee VTV Hue",
+      "store_id": "HC_HUE_VTV_HUE_759"
+    },
+    {
+      "revenue": 3172000.0,
+      "store": "Highlands Coffee West Gate Binh Chanh",
+      "store_id": "HC_HCM_WEST_GATE_BINH_CHA_1284"
+    },
+    {
+      "revenue": 4041000.0,
+      "store": "Highlands Tan Thang Tan Phu HCM",
+      "store_id": "HC_HCM_HIGHLANDS_TAN_THAN_585"
+    },
+    {
+      "revenue": 3742000.0,
+      "store": "Hoa Hồng",
+      "store_id": "HC_HCM_HOA_HONG_320"
+    },
+    {
+      "revenue": 3541000.0,
+      "store": "Hoàng Diệu 2",
+      "store_id": "HC_HCM_HOANG_DIEU_2_207"
+    },
+    {
+      "revenue": 3631000.0,
+      "store": "Hùng Vương Food Court",
+      "store_id": "HC_HCM_HUNG_VUONG_FOOD_CO_173"
+    },
+    {
+      "revenue": 4232000.0,
+      "store": "Hùng Vương trệt",
+      "store_id": "HC_HCM_HUNG_VUONG_TRET_174"
+    },
+    {
+      "revenue": 3750000.0,
+      "store": "Joy Citypoint",
+      "store_id": "HC_HCM_JOY_CITYPOINT_210"
+    },
+    {
+      "revenue": 3694000.0,
+      "store": "Kiosk Avengers Hồ Chí Minh 100",
+      "store_id": "KSK-100"
+    },
+    {
+      "revenue": 2668000.0,
+      "store": "Kiosk Avengers Hồ Chí Minh 103",
+      "store_id": "KSK-103"
+    },
+    {
+      "revenue": 2592000.0,
+      "store": "Kiosk Avengers Hồ Chí Minh 105",
+      "store_id": "KSK-105"
+    },
+    {
+      "revenue": 2611000.0,
+      "store": "Kiosk Avengers Hồ Chí Minh 117",
+      "store_id": "KSK-117"
+    },
+    {
+      "revenue": 1729000.0,
+      "store": "Kiosk Avengers Hồ Chí Minh 121",
+      "store_id": "KSK-121"
+    },
+    {
+      "revenue": 3188000.0,
+      "store": "Kiosk Avengers Hồ Chí Minh 135",
+      "store_id": "KSK-135"
+    },
+    {
+      "revenue": 4727000.0,
+      "store": "Kiosk Avengers Hồ Chí Minh 145",
+      "store_id": "KSK-145"
+    },
+    {
+      "revenue": 3425000.0,
+      "store": "Kiosk Avengers Hồ Chí Minh 146",
+      "store_id": "KSK-146"
+    },
+    {
+      "revenue": 3636000.0,
+      "store": "Kiosk Avengers Hồ Chí Minh 148",
+      "store_id": "KSK-148"
+    },
+    {
+      "revenue": 3971000.0,
+      "store": "L16 Him Lam",
+      "store_id": "HC_HCM_L16_HIM_LAM_147"
+    },
+    {
+      "revenue": 1928000.0,
+      "store": "Lakai",
+      "store_id": "HC_HCM_LAKAI_149"
+    },
+    {
+      "revenue": 4466000.0,
+      "store": "Lê Thánh Tôn",
+      "store_id": "HC_HCM_LE_THANH_TON_135"
+    },
+    {
+      "revenue": 3298000.0,
+      "store": "Lê Văn Sỹ",
+      "store_id": "HC_HCM_LE_VAN_SY_196"
+    },
+    {
+      "revenue": 3830000.0,
+      "store": "Lexington",
+      "store_id": "HC_HCM_LEXINGTON_322"
+    },
+    {
+      "revenue": 3990000.0,
+      "store": "Liberty",
+      "store_id": "HC_HCM_LIBERTY_169"
+    },
+    {
+      "revenue": 3519000.0,
+      "store": "Lotte Mart Gò Vấp",
+      "store_id": "HC_HCM_LOTTE_MART_GO_VAP_190"
+    },
+    {
+      "revenue": 4991000.0,
+      "store": "Lũy Bán Bích",
+      "store_id": "HC_HCM_LUY_BAN_BICH_155"
+    },
+    {
+      "revenue": 3779000.0,
+      "store": "Mạc Đĩnh Chi",
+      "store_id": "HC_HCM_MAC_INH_CHI_158"
+    },
+    {
+      "revenue": 2930000.0,
+      "store": "Maxi 3/2",
+      "store_id": "HC_HCM_MAXI_3_2_148"
+    },
+    {
+      "revenue": 2673000.0,
+      "store": "Maxi Cộng Hòa",
+      "store_id": "HC_HCM_MAXI_CONG_HOA_197"
+    },
+    {
+      "revenue": 2550000.0,
+      "store": "New City",
+      "store_id": "HC_HCM_NEW_CITY_213"
+    },
+    {
+      "revenue": 3739000.0,
+      "store": "Ngô Đức Kế",
+      "store_id": "HC_HCM_NGO_UC_KE_136"
+    },
+    {
+      "revenue": 4066000.0,
+      "store": "Nguyễn Ảnh Thủ",
+      "store_id": "HC_HCM_NGUYEN_ANH_THU_279"
+    },
+    {
+      "revenue": 4526000.0,
+      "store": "Nguyễn Đình Chiểu",
+      "store_id": "HC_HCM_NGUYEN_INH_CHIEU_157"
+    },
+    {
+      "revenue": 3936000.0,
+      "store": "Nguyễn Du",
+      "store_id": "HC_HCM_NGUYEN_DU_177"
+    },
+    {
+      "revenue": 3301000.0,
+      "store": "Nguyễn Trọng Tuyển",
+      "store_id": "HC_HCM_NGUYEN_TRONG_TUYEN_280"
+    },
+    {
+      "revenue": 2372000.0,
+      "store": "Nguyễn Xí",
+      "store_id": "HC_KHONG__NGUYEN_XI_318"
+    },
+    {
+      "revenue": 3308000.0,
+      "store": "NKKN",
+      "store_id": "HC_HCM_NKKN_170"
+    },
+    {
+      "revenue": 4406000.0,
+      "store": "Opera House",
+      "store_id": "HC_HCM_OPERA_HOUSE_165"
+    },
+    {
+      "revenue": 3632000.0,
+      "store": "Parkson Lê Thánh Tôn",
+      "store_id": "HC_HCM_PARKSON_LE_THANH_T_176"
+    },
+    {
+      "revenue": 3957000.0,
+      "store": "Pearl Plaza",
+      "store_id": "HC_HCM_PEARL_PLAZA_130"
+    },
+    {
+      "revenue": 4716000.0,
+      "store": "Phan Xích Long",
+      "store_id": "HC_HCM_PHAN_XICH_LONG_200"
+    },
+    {
+      "revenue": 4485000.0,
+      "store": "Phổ Quang",
+      "store_id": "HC_HCM_PHO_QUANG_195"
+    },
+    {
+      "revenue": 4982000.0,
+      "store": "Pico",
+      "store_id": "HC_HCM_PICO_201"
+    },
+    {
+      "revenue": 6232000.0,
+      "store": "Riverside D7",
+      "store_id": "HC_HCM_RIVERSIDE_D7_146"
+    },
+    {
+      "revenue": 3809000.0,
+      "store": "RMIT",
+      "store_id": "HC_HCM_RMIT_140"
+    },
+    {
+      "revenue": 3328000.0,
+      "store": "Saigon Pavillon",
+      "store_id": "HC_HCM_SAIGON_PAVILLON_163"
+    },
+    {
+      "revenue": 4644000.0,
+      "store": "Saigon Pearl",
+      "store_id": "HC_HCM_SAIGON_PEARL_131"
+    },
+    {
+      "revenue": 3606000.0,
+      "store": "Saigon South",
+      "store_id": "HC_HCM_SAIGON_SOUTH_141"
+    },
+    {
+      "revenue": 4771000.0,
+      "store": "Saigon Trade",
+      "store_id": "HC_HCM_SAIGON_TRADE_162"
+    },
+    {
+      "revenue": 3547000.0,
+      "store": "Sala",
+      "store_id": "HC_HCM_SALA_209"
+    },
+    {
+      "revenue": 2957000.0,
+      "store": "Sân Bay Tân Sơn Nhất",
+      "store_id": "HC_HCM_SAN_BAY_TAN_SON_NH_188"
+    },
+    {
+      "revenue": 3812000.0,
+      "store": "Satra 3/2",
+      "store_id": "HC_HCM_SATRA_3_2_181"
+    },
+    {
+      "revenue": 3404000.0,
+      "store": "Sense City Thủ Đức",
+      "store_id": "HC_HCM_SENSE_CITY_THU_UC_243"
+    },
+    {
+      "revenue": 5092000.0,
+      "store": "SG Centre",
+      "store_id": "HC_HCM_SG_CENTRE_168"
+    },
+    {
+      "revenue": 2923000.0,
+      "store": "SG Mall",
+      "store_id": "HC_HCM_SG_MALL_194"
+    },
+    {
+      "revenue": 4202000.0,
+      "store": "SG Tower",
+      "store_id": "HC_HCM_SG_TOWER_156"
+    },
+    {
+      "revenue": 3550000.0,
+      "store": "SUNRISE CITY VIEW D7",
+      "store_id": "HC_HCM_SUNRISE_CITY_VIEW__311"
+    },
+    {
+      "revenue": 4843000.0,
+      "store": "Tân Sơn Nhì",
+      "store_id": "HC_HCM_TAN_SON_NHI_154"
+    },
+    {
+      "revenue": 3697000.0,
+      "store": "The Manor",
+      "store_id": "HC_HCM_THE_MANOR_132"
+    },
+    {
+      "revenue": 3661000.0,
+      "store": "Tòa nhà CIENCO 4",
+      "store_id": "HC_HCM_TOA_NHA_CIENCO_4_323"
+    },
+    {
+      "revenue": 2395000.0,
+      "store": "Trần Hưng Đạo",
+      "store_id": "HC_HCM_TRAN_HUNG_AO_159"
+    },
+    {
+      "revenue": 3110000.0,
+      "store": "Trần Quang Khải",
+      "store_id": "HC_HCM_TRAN_QUANG_KHAI_160"
+    },
+    {
+      "revenue": 1939000.0,
+      "store": "Trung Mỹ Tây",
+      "store_id": "HC_KHONG__TRUNG_MY_TAY_278"
+    },
+    {
+      "revenue": 4767000.0,
+      "store": "TTC Ung Văn Khiêm",
+      "store_id": "HC_HCM_TTC_UNG_VAN_KHIEM_274"
+    },
+    {
+      "revenue": 4277000.0,
+      "store": "Tùng Thiện Vương",
+      "store_id": "HC_HCM_TUNG_THIEN_VUONG_180"
+    },
+    {
+      "revenue": 3752000.0,
+      "store": "Viettel CMT8",
+      "store_id": "HC_HCM_VIETTEL_CMT8_150"
+    },
+    {
+      "revenue": 3446000.0,
+      "store": "Vincom B3",
+      "store_id": "HC_HCM_VINCOM_B3_178"
+    },
+    {
+      "revenue": 2759000.0,
+      "store": "Vincom Gò Vấp",
+      "store_id": "HC_HCM_VINCOM_GO_VAP_193"
+    },
+    {
+      "revenue": 3252000.0,
+      "store": "Vincom Lê Văn Việt",
+      "store_id": "HC_HCM_VINCOM_LE_VAN_VIET_204"
+    },
+    {
+      "revenue": 2894000.0,
+      "store": "Vincom Nam Long",
+      "store_id": "HC_HCM_VINCOM_NAM_LONG_145"
+    },
+    {
+      "revenue": 3966000.0,
+      "store": "Vincom Nguyễn Duy Trinh",
+      "store_id": "HC_HCM_VINCOM_NGUYEN_DUY__211"
+    },
+    {
+      "revenue": 4102000.0,
+      "store": "Vincom Quang Trung",
+      "store_id": "HC_HCM_VINCOM_QUANG_TRUNG_192"
+    },
+    {
+      "revenue": 3275000.0,
+      "store": "Vincom Saigonres",
+      "store_id": "HC_HCM_VINCOM_SAIGONRES_189"
+    },
+    {
+      "revenue": 2481000.0,
+      "store": "Vincom Thảo Điền",
+      "store_id": "HC_HCM_VINCOM_THAO_IEN_208"
+    },
+    {
+      "revenue": 3568000.0,
+      "store": "Vincom Thủ Đức",
+      "store_id": "HC_HCM_VINCOM_THU_UC_206"
+    },
+    {
+      "revenue": 2239000.0,
+      "store": "Vivo City",
+      "store_id": "HC_HCM_VIVO_CITY_142"
+    },
+    {
+      "revenue": 2325000.0,
+      "store": "Xuân Thủy",
+      "store_id": "HC_HCM_XUAN_THUY_212"
+    }
+  ],
+  "q_5d9d8a977b4b9ad88e195a7e": [
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "revenue": 676338000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "revenue": 11485000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "revenue": 17994000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "revenue": 294875500.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "revenue": 6989000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "revenue": 7492000.0,
+      "store_type": "KIOSK_VE_TINH"
+    },
+    {
+      "order_type": "MANG_DI",
+      "revenue": 519536000.0,
+      "store_type": "CHI_NHANH_CHINH"
+    },
+    {
+      "order_type": "MANG_DI",
+      "revenue": 9796000.0,
+      "store_type": "KIOSK_NHUONG_QUYEN"
+    },
+    {
+      "order_type": "MANG_DI",
+      "revenue": 11154000.0,
+      "store_type": "KIOSK_VE_TINH"
+    }
+  ],
+  "q_6a7a6736f31ba9a8650edae0": [
+    {
+      "period": "2026-01-01T00:00:00",
+      "revenue": 198254000.0
+    },
+    {
+      "period": "2026-02-01T00:00:00",
+      "revenue": 159161000.0
+    },
+    {
+      "period": "2026-03-01T00:00:00",
+      "revenue": 154935000.0
+    },
+    {
+      "period": "2026-04-01T00:00:00",
+      "revenue": 155961000.0
+    },
+    {
+      "period": "2026-05-01T00:00:00",
+      "revenue": 195904000.0
+    },
+    {
+      "period": "2026-06-01T00:00:00",
+      "revenue": 177354000.0
+    },
+    {
+      "period": "2026-07-01T00:00:00",
+      "revenue": 189012000.0
+    },
+    {
+      "period": "2026-08-01T00:00:00",
+      "revenue": 162926000.0
+    },
+    {
+      "period": "2026-09-01T00:00:00",
+      "revenue": 154577000.0
+    },
+    {
+      "period": "2026-10-01T00:00:00",
+      "revenue": 7575500.0
+    }
+  ],
+  "q_d9627d2dcab358aa395cd91f": [
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "revenue": 705817000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "revenue": 309356500.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "revenue": 540486000.0
+    }
+  ],
+  "q_f1739454257b6bae950d8a62": [
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-01-01T00:00:00",
+      "revenue": 94050000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-01-01T00:00:00",
+      "revenue": 40498000.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-01-01T00:00:00",
+      "revenue": 63706000.0
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-02-01T00:00:00",
+      "revenue": 71385000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-02-01T00:00:00",
+      "revenue": 32079000.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-02-01T00:00:00",
+      "revenue": 55697000.0
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-03-01T00:00:00",
+      "revenue": 69664000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-03-01T00:00:00",
+      "revenue": 28164000.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-03-01T00:00:00",
+      "revenue": 57107000.0
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-04-01T00:00:00",
+      "revenue": 67994000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-04-01T00:00:00",
+      "revenue": 29947000.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-04-01T00:00:00",
+      "revenue": 58020000.0
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-05-01T00:00:00",
+      "revenue": 86810000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-05-01T00:00:00",
+      "revenue": 43694000.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-05-01T00:00:00",
+      "revenue": 65400000.0
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-06-01T00:00:00",
+      "revenue": 80935000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-06-01T00:00:00",
+      "revenue": 33697000.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-06-01T00:00:00",
+      "revenue": 62722000.0
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-07-01T00:00:00",
+      "revenue": 88768000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-07-01T00:00:00",
+      "revenue": 36208000.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-07-01T00:00:00",
+      "revenue": 64036000.0
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-08-01T00:00:00",
+      "revenue": 73277000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-08-01T00:00:00",
+      "revenue": 31790000.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-08-01T00:00:00",
+      "revenue": 57859000.0
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-09-01T00:00:00",
+      "revenue": 70514000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-09-01T00:00:00",
+      "revenue": 30861000.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-09-01T00:00:00",
+      "revenue": 53202000.0
+    },
+    {
+      "order_type": "DUNG_TAI_CHO",
+      "period": "2026-10-01T00:00:00",
+      "revenue": 2420000.0
+    },
+    {
+      "order_type": "GIAO_TAN_NOI",
+      "period": "2026-10-01T00:00:00",
+      "revenue": 2418500.0
+    },
+    {
+      "order_type": "MANG_DI",
+      "period": "2026-10-01T00:00:00",
+      "revenue": 2737000.0
+    }
+  ]
+}

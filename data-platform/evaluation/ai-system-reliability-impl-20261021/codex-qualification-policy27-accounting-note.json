@@ -1,0 +1,12 @@
+{
+  "campaign": "codex-qualification-policy27-live-20261022",
+  "actual_prior_sends_in_qualification": 0,
+  "actual_measured_sends": 10,
+  "actual_campaign_ceiling": 36,
+  "legacy_runner_argument_physical_spent": 12,
+  "legacy_argument_meaning_in_this_run": "Reserved12 out of runner hard48 to enforce actual36 ceiling. This was an admission offset, not12 measured sends.",
+  "future_command_arguments": ["--physical-spent", "0", "--physical-limit", "36"],
+  "repair_campaign_actual_sends": 46,
+  "combined_actual_for_these_two_campaigns": 56,
+  "historical_receipt_modified": false
+}

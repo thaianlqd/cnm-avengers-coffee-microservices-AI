@@ -1,0 +1,21 @@
+{
+  "transaction": "READ ONLY",
+  "database": "analytics",
+  "connection_role": "analytics",
+  "role_flags": {
+    "rolsuper": true,
+    "rolcreaterole": true,
+    "rolcreatedb": true
+  },
+  "saved_reports_has_owner_columns": false,
+  "analysis_modules_present": false,
+  "sync_metadata_cursor_field": "last_synced_at; target wall-clock legacy checkpoint",
+  "inspected_tables": [
+    "analytics.saved_reports",
+    "analytics.analysis_modules",
+    "public.sync_metadata",
+    "public.sync_history"
+  ],
+  "warehouse_rows_read": 0,
+  "ddl_executed": false
+}

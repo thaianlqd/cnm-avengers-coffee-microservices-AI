@@ -1,0 +1,52 @@
+{
+  "event": "soak_complete",
+  "status": "passed",
+  "duration_seconds": 900.104,
+  "sample_interval_seconds": 5,
+  "instances": [
+    {
+      "instance": "v35-fixture-api-a",
+      "pid": 1,
+      "redis_db": 15,
+      "session_backend": "redis",
+      "artifact_backend": "redis",
+      "physical_http": 0,
+      "peak_rss_kib": 182488
+    },
+    {
+      "instance": "v35-fixture-api-b",
+      "pid": 1,
+      "redis_db": 15,
+      "session_backend": "redis",
+      "artifact_backend": "redis",
+      "physical_http": 0,
+      "peak_rss_kib": 190932
+    }
+  ],
+  "eligible_operations": 1922,
+  "outcomes": {
+    "completed": 1922,
+    "failed": 0
+  },
+  "request_counter_deltas": {
+    "http://127.0.0.1:18881": 965,
+    "http://127.0.0.1:18882": 957
+  },
+  "expected_request_counts": {
+    "http://127.0.0.1:18881": 965,
+    "http://127.0.0.1:18882": 957
+  },
+  "p95_ms": 46.134124999298365,
+  "p99_ms": 86.37495800030592,
+  "controlled_jobs": 60,
+  "jobs_with_request_context": 60,
+  "external_http": 0,
+  "physical_provider_sends": 0,
+  "shared_gauge_aggregation": "max; never summed",
+  "errors": [],
+  "limitations": [
+    "Local isolated fixture measurement; not a production SLO",
+    "Source freshness and worker restarts captured separately",
+    "No deployed multi-API traffic claim"
+  ]
+}

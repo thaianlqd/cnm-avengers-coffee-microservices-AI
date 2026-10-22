@@ -1,0 +1,13 @@
+{
+  "at_utc": "2026-10-21T09:11:24.122898+00:00",
+  "checks": {
+    "audit_python_compilation": "PASS",
+    "json_parsed": 22,
+    "acceptance_matrix_40_specs_8_published_seeds": "PASS_NOT_PRODUCT_EXECUTION",
+    "independent_synthetic_fixture_arithmetic": "PASS_FIXTURE_ONLY",
+    "handoff_markdown_links": "PASS",
+    "summary_receipt_counts": "PASS",
+    "source_hashes": "PASS"
+  },
+  "product_acceptance": false
+}

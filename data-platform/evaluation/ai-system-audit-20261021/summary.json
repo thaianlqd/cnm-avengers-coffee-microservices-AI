@@ -1,0 +1,153 @@
+{
+  "audit_status": "DIAGNOSED_AND_PLANNED_NOT_PRODUCT_ACCEPTANCE",
+  "product_changes_by_this_audit": false,
+  "offline_backend": {
+    "modules_attempted": 100,
+    "monolithic_attempt_exit_codes": [
+      137,
+      137
+    ],
+    "module_completed_before_rechecks": 99,
+    "capacity_methods_completed_separately": 8,
+    "tests_run_deduplicated": 1621,
+    "failures": 2,
+    "errors_including_subtests": 7,
+    "unresolved_checks": [
+      {
+        "module": "tests.test_comparison_score_v282",
+        "returncode": 1,
+        "failed_ids": [],
+        "error_ids": [
+          "tests.test_comparison_score_v282.ComparisonScoreTests.test_comparison_executes_correct_populations_and_three_metric_views",
+          "tests.test_comparison_score_v282.ComparisonScoreTests.test_comparison_refines_to_one_city_by_store_without_losing_window",
+          "tests.test_comparison_score_v282.ComparisonScoreTests.test_reported_one_axis_cross_tab_canonicalizes_without_retry_or_scope_loss",
+          "tests.test_comparison_score_v282.ComparisonScoreTests.test_selected_share_is_not_renormalized_to_one_hundred_percent"
+        ]
+      },
+      {
+        "module": "tests.test_natural_v26",
+        "returncode": 1,
+        "failed_ids": [],
+        "error_ids": [
+          "tests.test_natural_v26.NaturalV26Tests.test_four_input_sections_optional_context_and_model_breadth"
+        ]
+      },
+      {
+        "module": "tests.test_v35_dashboards",
+        "returncode": 1,
+        "failed_ids": [
+          "tests.test_v35_dashboards.DashboardTests.test_metadata_only_returns_honest_unknown_without_triggering_jobs"
+        ],
+        "error_ids": [
+          "tests.test_v35_dashboards.DashboardTests.test_all_sixteen_presets_resolve_through_existing_pipeline_without_provider_or_sql (dashboard='D50')",
+          "tests.test_v35_dashboards.DashboardTests.test_all_sixteen_presets_resolve_through_existing_pipeline_without_provider_or_sql (dashboard='D53')"
+        ]
+      },
+      {
+        "module": "tests.test_workspace_v31",
+        "returncode": 1,
+        "failed_ids": [
+          "tests.test_workspace_v31.CapabilityTests.test_web_ui_fixture_matches_current_capabilities"
+        ],
+        "error_ids": []
+      }
+    ],
+    "monolithic_qualified": false,
+    "note": "Subtest errors are not distinct test-method counts; no derived overall accuracy percentage."
+  },
+  "offline_frontend": {
+    "unit_tests": 222,
+    "pass": 222,
+    "typecheck_exit_code": 0,
+    "full_browser_qualification_in_this_audit": false
+  },
+  "preflight": {
+    "cases": 28,
+    "observed_states": {
+      "READY_GUIDED": 9,
+      "NEEDS_INPUT": 10,
+      "READY_FOR_AI": 6,
+      "BLOCKED": 3
+    }
+  },
+  "guided": {
+    "cases": 23,
+    "domain_representatives": 16,
+    "observed_states": {
+      "completed": 19,
+      "http_400": 1,
+      "insufficient_data": 3
+    },
+    "provider_calls": 0
+  },
+  "presets": {
+    "registry_declarations": 53,
+    "advertised_in_session": 41,
+    "executed": 41,
+    "not_advertised": [
+      "D17",
+      "D18",
+      "D19",
+      "D20",
+      "D21",
+      "D22",
+      "D24",
+      "D25",
+      "D26",
+      "D34",
+      "D43",
+      "D45"
+    ],
+    "observed_job_states": {
+      "completed": 41
+    },
+    "quality_statuses_are_internal_checks_only": {
+      "verified": 39,
+      "partially_verified": 2
+    },
+    "provider_calls": 0,
+    "relevance_independently_qualified_for_every_filter_period_role": false
+  },
+  "gemini_campaign": {
+    "cases": 12,
+    "states": {
+      "failed": 10,
+      "http_400": 2
+    },
+    "logical_calls": 10,
+    "physical_sends": 20,
+    "semantic_accuracy_measured": false,
+    "token_usage_and_billing_measured": false
+  },
+  "gemini_canary_after_isolation": [
+    {
+      "case": "risk-edited",
+      "state": "failed",
+      "error": "semantic_resolution_failed",
+      "logical_calls": 2,
+      "physical_sends": 2
+    }
+  ],
+  "gemini_responsive_replay": {
+    "cases": 12,
+    "states": {
+      "failed": 1,
+      "needs_input": 1,
+      "completed": 7,
+      "http_400": 2,
+      "insufficient_data": 1
+    },
+    "logical_calls": 12,
+    "physical_sends": 12,
+    "returned_input_tokens": 41972,
+    "returned_output_tokens": 1145,
+    "whole_report_relevance_accuracy_measured": false,
+    "note": "Responsive replay is a separate condition; the earlier timeouts remain in the campaign ledger. Completed is not a correctness assertion."
+  },
+  "gemini_total_recorded_physical_sends": 32,
+  "planned_acceptance_cases": {
+    "cases": 40,
+    "reserved_structural_holdouts": 8,
+    "executed_against_fixed_product": false
+  }
+}

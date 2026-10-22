@@ -13,6 +13,72 @@ from services.provider_budget import request_deadline
 
 
 class QueryBatchTests(TestCase):
+    def test_two_instance_reference_envelope_stays_within_twelve_readers(self):
+        from services import query_execution_batch as batch
+        from services.analysis_job_service import AnalysisJobs
+        from unittest.mock import Mock
+        self.assertEqual(batch.SQL_CONNECTIONS,6)
+        self.assertEqual(batch.SQL_CONNECTIONS*2,12)
+        with patch('services.analysis_job_service.ThreadPoolExecutor') as executor:
+            jobs=AnalysisJobs(Mock())
+            self.assertEqual(executor.call_args.kwargs['max_workers'],2)
+
+    def test_snapshot_exporters_leave_connection_capacity_for_their_two_readers(self):
+        from services import query_execution_batch as batch
+        self.assertEqual(batch.SQL_CONNECTIONS//(batch.SQL_QUERY_CONCURRENCY+1),2)
+        slots=threading.BoundedSemaphore(2)
+        entered=threading.Event();release=threading.Event();count=[];lock=threading.Lock()
+        def enter():
+            with batch.snapshot_admission():
+                with lock:
+                    count.append(1)
+                    if len(count)==2:entered.set()
+                release.wait(3)
+        with patch.object(batch,'_snapshot_slots',slots):
+            workers=[threading.Thread(target=enter) for _ in range(2)]
+            for worker in workers:worker.start()
+            try:
+                self.assertTrue(entered.wait(2));self.assertFalse(slots.acquire(blocking=False))
+                cancelled=threading.Event();cancelled.set()
+                from services.provider_budget import request_cancelled
+                token=request_cancelled.set(cancelled)
+                try:
+                    from services.analysis_catalog import AnalysisError
+                    with self.assertRaises(AnalysisError) as caught:
+                        with batch.snapshot_admission():self.fail('Cancelled wait must not acquire')
+                    self.assertEqual(caught.exception.category,'planning_timeout')
+                finally:request_cancelled.reset(token)
+            finally:
+                release.set()
+                for worker in workers:worker.join(2)
+            for _ in range(2):self.assertTrue(slots.acquire(blocking=False))
+            for _ in range(2):slots.release()
+
+    def test_failed_snapshot_body_releases_its_admission_slot(self):
+        from services import query_execution_batch as batch
+        slots=threading.BoundedSemaphore(1)
+        with patch.object(batch,'_snapshot_slots',slots):
+            with self.assertRaises(ValueError):
+                with batch.snapshot_admission():raise ValueError('fixture snapshot error')
+            self.assertTrue(slots.acquire(blocking=False));slots.release()
+
+    def test_restricted_reader_maps_only_compiler_known_views_to_constant_lock_guards(self):
+        from services.query_execution_batch import snapshot_lock_relations
+        from services.analysis_catalog import AnalysisError
+        with patch('db.connection_credentials',return_value=('fixture-reader','fixture-password')):
+            self.assertEqual(snapshot_lock_relations({'silver.don_hang','silver.chi_nhanh'}),
+                ['analytics.snapshot_lock__chi_nhanh','analytics.snapshot_lock__don_hang'])
+            for relation in ('orders.don_hang','silver.arbitrary_table','silver.don_hang; SELECT 1','analytics.audit_events'):
+                with self.subTest(relation=relation),self.assertRaises(AnalysisError):snapshot_lock_relations([relation])
+
+    def test_approved_snapshot_ddl_matches_catalog_and_cannot_apply_without_specific_approval(self):
+        from tools.deploy_v34_governance import snapshot_guard_sql,deploy_snapshot_guards,ROOT
+        self.assertEqual((ROOT/'migrations/028_snapshot_lock_guards.sql').read_text(),snapshot_guard_sql())
+        with patch('tools.deploy_v34_governance.psycopg2.connect') as connection:
+            self.assertEqual(deploy_snapshot_guards()['guard_count'],21)
+            with self.assertRaises(RuntimeError):deploy_snapshot_guards(apply=True)
+            connection.assert_not_called()
+
     def queries(self, signatures):
         def transport(*args):raise AssertionError('Only scheduler fixture should run')
         q=AnalyticalQueries.__new__(AnalyticalQueries)

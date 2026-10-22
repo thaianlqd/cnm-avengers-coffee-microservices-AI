@@ -1,0 +1,622 @@
+[
+  {
+    "question": "Phân tích đánh giá của khách hàng về các sản phẩm",
+    "result": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "8d40f8bb0a5c2026951ffbb82afee396db822939d71fa8f9ffa600b5a801f600",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [
+          {
+            "id": "product",
+            "label": "Sản phẩm"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "khách",
+          "khách hàng",
+          "product",
+          "đánh giá"
+        ],
+        "analytical": []
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [
+          "product"
+        ],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "not_loaded",
+      "registry_fingerprint": "ac5315ce984e58a0ca22e31798bb1e72d9233c07d29ae494e40edd0d1c3dcf55",
+      "elapsed_ms": 1133.96
+    }
+  },
+  {
+    "question": "Phân tích đánh giá sản phẩm",
+    "result": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "8d40f8bb0a5c2026951ffbb82afee396db822939d71fa8f9ffa600b5a801f600",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [
+          {
+            "id": "product",
+            "label": "Sản phẩm"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "product",
+          "đánh giá"
+        ],
+        "analytical": []
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [
+          "product"
+        ],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "not_loaded",
+      "registry_fingerprint": "ac5315ce984e58a0ca22e31798bb1e72d9233c07d29ae494e40edd0d1c3dcf55",
+      "elapsed_ms": 15.06
+    }
+  },
+  {
+    "question": "Điểm đánh giá trung bình theo sản phẩm",
+    "result": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "8d40f8bb0a5c2026951ffbb82afee396db822939d71fa8f9ffa600b5a801f600",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "avg_product_rating",
+            "label": "Điểm đánh giá trung bình",
+            "unit": "điểm",
+            "historical": true,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [
+              {
+                "id": "avg_store_rating",
+                "label": "Điểm phục vụ trung bình"
+              },
+              {
+                "id": "driver_rating",
+                "label": "Điểm đánh giá trung bình"
+              }
+            ],
+            "specialized": []
+          }
+        ],
+        "dimensions": [
+          {
+            "id": "product",
+            "label": "Sản phẩm"
+          }
+        ],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "ambiguous_metric",
+          "message": "“Điểm đánh giá trung bình” được hiểu là điểm đánh giá trung bình; còn 2 chỉ số cùng tên, AI chọn theo ngữ cảnh.",
+          "fixes": [],
+          "candidates": [
+            {
+              "id": "avg_product_rating",
+              "label": "Điểm đánh giá trung bình"
+            },
+            {
+              "id": "avg_store_rating",
+              "label": "Điểm phục vụ trung bình"
+            },
+            {
+              "id": "driver_rating",
+              "label": "Điểm đánh giá trung bình"
+            }
+          ]
+        }
+      ],
+      "recognition": {
+        "business": [
+          "avg_product_rating",
+          "product",
+          "đánh giá"
+        ],
+        "analytical": []
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [
+          {
+            "phrase": "diem danh gia trung binh",
+            "metric_id": "avg_product_rating",
+            "explicitly_qualified": []
+          }
+        ],
+        "metrics": [
+          "avg_product_rating"
+        ],
+        "dimensions": [
+          "product"
+        ],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "not_loaded",
+      "registry_fingerprint": "ac5315ce984e58a0ca22e31798bb1e72d9233c07d29ae494e40edd0d1c3dcf55",
+      "elapsed_ms": 60.13
+    }
+  },
+  {
+    "question": "Phân tích đánh giá chi nhánh",
+    "result": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "8d40f8bb0a5c2026951ffbb82afee396db822939d71fa8f9ffa600b5a801f600",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "avg_store_rating",
+            "label": "Điểm phục vụ trung bình",
+            "unit": "điểm",
+            "historical": true,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [],
+      "recognition": {
+        "business": [
+          "avg_store_rating",
+          "chi nhánh",
+          "đánh giá"
+        ],
+        "analytical": []
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [
+          "avg_store_rating"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "not_loaded",
+      "registry_fingerprint": "ac5315ce984e58a0ca22e31798bb1e72d9233c07d29ae494e40edd0d1c3dcf55",
+      "elapsed_ms": 14.97
+    }
+  },
+  {
+    "question": "Phân tích ví điện tử khách hàng",
+    "result": {
+      "version": "3.2.0",
+      "status": "ok",
+      "state": "READY_FOR_AI",
+      "state_label": "Có thể gửi để AI diễn giải",
+      "can_submit": true,
+      "capability": {
+        "decision": "READY",
+        "policy_version": "3.3.1",
+        "constraints": [],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "8d40f8bb0a5c2026951ffbb82afee396db822939d71fa8f9ffa600b5a801f600",
+        "interpretation_required": true,
+        "reason": null,
+        "message": "",
+        "actions": []
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "payment_method",
+            "label": "Phương thức thanh toán",
+            "value": "VI_DIEN_TU",
+            "display": "Ví điện tử"
+          }
+        ],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "info",
+          "code": "no_metric_detected",
+          "message": "Chưa nhận ra chỉ số cụ thể trong câu hỏi; AI sẽ diễn giải ý định (tối đa một lượt), hoặc chọn chỉ số trong “Hỏi được gì?”.",
+          "fixes": []
+        }
+      ],
+      "recognition": {
+        "business": [
+          "khách",
+          "khách hàng",
+          "payment_method"
+        ],
+        "analytical": []
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "dimension": "payment_method",
+            "label": "Phương thức thanh toán",
+            "value": "VI_DIEN_TU",
+            "display": "Ví điện tử"
+          }
+        ],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "not_loaded",
+      "registry_fingerprint": "ac5315ce984e58a0ca22e31798bb1e72d9233c07d29ae494e40edd0d1c3dcf55",
+      "elapsed_ms": 14.02
+    }
+  },
+  {
+    "question": "Phân tích công nợ nhượng quyền",
+    "result": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "BLOCKED",
+      "state_label": "Chưa nhận ra bài toán phân tích",
+      "can_submit": false,
+      "capability": {
+        "decision": "CLARIFY",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "unrecognized_question",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "8d40f8bb0a5c2026951ffbb82afee396db822939d71fa8f9ffa600b5a801f600",
+        "interpretation_required": false,
+        "reason": "unrecognized_question",
+        "message": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi.",
+        "actions": [
+          {
+            "label": "Mở “Hỏi được gì?” để chọn chỉ số",
+            "kind": "advice",
+            "constraint_code": "unrecognized_question",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": null
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "unrecognized_question",
+          "message": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi.",
+          "fixes": [
+            {
+              "label": "Mở “Hỏi được gì?” để chọn chỉ số",
+              "kind": "advice"
+            }
+          ]
+        }
+      ],
+      "recognition": {
+        "business": [],
+        "analytical": []
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": null,
+        "metric_locks": [],
+        "metrics": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "default",
+          "start": null,
+          "end": null,
+          "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."
+        },
+        "forecast": null,
+        "confidence": "partial",
+        "unresolved": [
+          "metric"
+        ]
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "not_loaded",
+      "registry_fingerprint": "ac5315ce984e58a0ca22e31798bb1e72d9233c07d29ae494e40edd0d1c3dcf55",
+      "elapsed_ms": 61.24
+    }
+  }
+]

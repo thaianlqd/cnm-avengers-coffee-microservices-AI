@@ -1,0 +1,37 @@
+{
+  "user_approval": "Duyệt triển khai21viewkhóasnapshot; Duyệt trần240TOTAL theoGoogleGemini/câu hỏi+governedbusinessmetadata/noPII scope",
+  "migration": "028_snapshot_lock_guards.sql",
+  "migration_sha256": "4f115ebb45ce4cd497fd2218df31c54e81d28c8530a97e3049e02af757b15f1d",
+  "captured_request_failure": "658a9d6ef6d84c77af16f365dd06837c",
+  "root_cause": "PostgreSQL LOCK TABLE needs relation-level SELECT; column-only reader correctly denied direct view lock",
+  "fix": "Zero-row constant-only guard views; recursively lock underlying approved views before first snapshot SELECT; no wider source column privileges",
+  "runtime_readonly_replay": {
+    "status": "success",
+    "verification": "verified",
+    "revenue_september2026": 440072000,
+    "query_count": 7,
+    "external_http": 0,
+    "fact_writes": 0,
+    "source_completeness": "unknown"
+  },
+  "full_suite_after_fix": "running, not yet PASS",
+  "live_status": "not_run",
+  "ledger_before_run": {
+    "reserved": 160,
+    "approved_ceiling": 240,
+    "historical_count": 151,
+    "known_unmetered_manual_transports": 4,
+    "conservative_unknown_reservations": 5,
+    "legacy_file_preserved": true
+  },
+  "live_corpus_sha256": "5fc5eb47fd515d314c5d1d7186a9306c5c262bfac4dca3c1d1ccc206d29bda2c",
+  "latest_checkpoint": {
+    "backend_after_snapshot": "1171 PASS, before subsequent Phase7 edits",
+    "current_source_final_suite": "pending",
+    "live_l03": "diagnostic PASS, 1 physical HTTP, not full acceptance",
+    "provider_reserved_total": 161,
+    "approved_total": 240,
+    "remaining": 79,
+    "full_live_44": "not_run"
+  }
+}

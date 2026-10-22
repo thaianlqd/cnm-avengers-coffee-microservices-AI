@@ -1,0 +1,74 @@
+{
+  "source_case_id": "ranking-guided",
+  "review_contract": "bottom-five (same requested meaning, guided0AI)",
+  "same_observed_generations": true,
+  "report_epoch": {
+    "status": "observed",
+    "sources": [
+      {
+        "dataset_id": "replica.identity.chi_nhanh",
+        "generation": 594,
+        "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+      },
+      {
+        "dataset_id": "replica.orders.don_hang",
+        "generation": 586,
+        "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+      }
+    ],
+    "fingerprint": "20fb9a4384510d4ac362f7d32979166cb57cc05cdbe8d6424ee22b70e55a6397",
+    "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+  },
+  "oracle_epoch": {
+    "status": "observed",
+    "sources": [
+      {
+        "dataset_id": "replica.identity.chi_nhanh",
+        "generation": 594,
+        "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+      },
+      {
+        "dataset_id": "replica.orders.don_hang",
+        "generation": 586,
+        "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+      }
+    ],
+    "fingerprint": "20fb9a4384510d4ac362f7d32979166cb57cc05cdbe8d6424ee22b70e55a6397",
+    "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+  },
+  "checks": [
+    {
+      "assertion": "report completed with bound requested work",
+      "passed": true
+    },
+    {
+      "assertion": "critical verifier checks passed",
+      "passed": true
+    },
+    {
+      "assertion": "all result contracts valid",
+      "passed": true
+    },
+    {
+      "assertion": "historical queries keep September; snapshot explicitly current",
+      "passed": true
+    },
+    {
+      "assertion": "no requested specialized revenue substitution",
+      "passed": true
+    },
+    {
+      "assertion": "one correctly directed ranking",
+      "passed": true
+    },
+    {
+      "assertion": "every dependent query explicitly bound to ranked cohort",
+      "passed": true
+    },
+    {
+      "assertion": "all additive views reconcile with independent selected orders",
+      "passed": true
+    }
+  ],
+  "status": "PASS_SAME_OBSERVED_GENERATIONS"
+}

@@ -1,0 +1,26 @@
+AVENGERS COFFEE SUPPLY CHAIN & BI PLATFORM DỮ LIỆU TẦNG SILVER LAKE
+• Kỳ cao nhất: 2026-09-29 với 400 VND.
+• Lưu ý: Chỉ tính trên Bottom 2 đối tượng của xếp hạng chính.
+• Lưu ý: Đường của mỗi nhóm có quy mô khác nhau; so sánh xu hướng, không cộng dồn giữa các nhóm tỷ lệ.
+V. BẢNG TRÍCH XUẤT DỮ LIỆU TẦNG SILVER
+Hiển thị 2 trên tổng số 2 dòng kết quả truy vấn. Bảng hiển thị toàn bộ kết quả.
+city revenue
+Hồ Chí Minh 300
+Hà Nội 400
+* Bản trích xuất hiển thị các dòng dữ liệu tiêu biểu từ kho lưu trữ Delta Lake Silver.
+VI. NHẬN ĐỊNH CHIẾN LƯỢC & HÀM Ý KINH DOANH
+01 Hồ Chí Minh thấp nhất trong Bottom 2
+300 VND theo doanh thu.
+02 Doanh thu thay đổi từ 100 thành 400 VND giữa kỳ 2026-09-01 và 2026-09-29 (300%). Phạm vi
+trong Bottom 2 của xếp hạng chính.
+03 Tổng doanh thu
+700 VND trong phạm vi đã chọn (3 nhóm có dữ liệu). Phạm vi: trong Bottom 2 của xếp hạng chính.
+04 Tổng doanh thu
+700 VND trong phạm vi đã chọn (2 nhóm có dữ liệu). Phạm vi: trong Bottom 2 của xếp hạng chính.
+05 Doanh thu (STORE) thay đổi từ 100 thành 200 VND giữa kỳ 2026-09-01 và 2026-09-15 (100%). Phạm vi
+trong Bottom 2 của xếp hạng chính.
+06 Nhận định chiến lược 06
+Chênh lệch hạng 1 và hạng 2 là 100 VND (25% so với hạng 2).
+Tài liệu nội bộ bảo mật • Bản quyền thuộc Avengers Coffee Data
+Platform
+Định dạng chuẩn Microsoft Word (.docx)

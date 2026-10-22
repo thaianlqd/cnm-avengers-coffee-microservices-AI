@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "relative_document_links_valid": true,
+  "goal_gates": 13,
+  "product_source_drift": [],
+  "documents": [
+    {
+      "path": "data-platform/AI_DATA_ANALYST_NGHIEM_THU_20261022.md",
+      "sha256": "42961dc39d794b0a66eee5be871c7d09c68203a5701747dcfaca873c4829b299"
+    },
+    {
+      "path": "data-platform/AI_DATA_ANALYST_CODEX_QUALIFICATION_20261022.md",
+      "sha256": "fa31a2e87a0c7b8f2fdb5f4ba12f43c30bf9146ae5d29bf3a7e83562bbf8be93"
+    },
+    {
+      "path": "data-platform/AI_DATA_ANALYST_SYSTEM_RELIABILITY_GOALS_20261021.md",
+      "sha256": "17329d8a7aa27a50e8f32d6360a293dd84e62ebe47b5e476f66e1908d15fd7ed"
+    },
+    {
+      "path": "data-platform/AI_DATA_ANALYST_RELIABILITY_HANDOFF_CODEX_20261022.md",
+      "sha256": "467d58a306cc75f26de3d0dcf18515a1e81dedc8437cd49299ed3e2baf6eab5c"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "cases": [
+    {
+      "id": "multi-clause",
+      "checks": [
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "one correctly directed ranking",
+          "passed": true
+        },
+        {
+          "assertion": "every dependent query explicitly bound to ranked cohort",
+          "passed": false
+        },
+        {
+          "assertion": "all additive views reconcile with independent selected orders",
+          "passed": false
+        },
+        {
+          "assertion": "both dependent axes requested",
+          "passed": true
+        }
+      ],
+      "status": "FAIL"
+    }
+  ],
+  "passed": 0,
+  "total": 1,
+  "arithmetic_basis": "Independent raw SQL observations. Same-generation proof must be reported separately; matching numbers alone do not pin source generation."
+}

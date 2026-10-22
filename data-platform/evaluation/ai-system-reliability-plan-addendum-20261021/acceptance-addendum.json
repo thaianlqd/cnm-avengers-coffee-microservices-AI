@@ -1,0 +1,336 @@
+{
+  "version": "1.0.0",
+  "created_local_date": "2026-10-21",
+  "status": "PLANNED_ACCEPTANCE_NOT_EXECUTED",
+  "purpose": "Supplement PLAN section 19; preserve immutable baseline audit receipts",
+  "baseline_cases": "../ai-system-audit-20261021/acceptance-matrix.json",
+  "cases": [
+    {
+      "id": "A01",
+      "goal": "G01",
+      "category": "Meaning preservation",
+      "scenario": "Text, guided, preset and follow-up express the same scoped task",
+      "required_assertions": [
+        "Exact metric/scope/period/task preserved",
+        "Unresolved constraints produce targeted clarification",
+        "Every requested goal has input provenance"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A02",
+      "goal": "G05",
+      "category": "Depth relevance",
+      "scenario": "Same task across all three depths",
+      "required_assertions": [
+        "Primary keys and values identical on fixed snapshot",
+        "Every added view answers an explicit useful subquestion",
+        "No quota filler or specialized metric substituted"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A03",
+      "goal": "G06",
+      "category": "Claim provenance",
+      "scenario": "Expand every generated chart explanation",
+      "required_assertions": [
+        "Each number and entity binds to verified fact IDs",
+        "Facts match goal/cohort/period/clock/revision",
+        "Unsupported claims removed or deterministic fallback used"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A04",
+      "goal": "G06",
+      "category": "Ranking language",
+      "scenario": "Bottom N, Top N, ties, actual<N and pagination",
+      "required_assertions": [
+        "Claim universe and direction correct",
+        "No global highest claim from a Bottom N subset",
+        "Pagination does not change ranking conclusions"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A05",
+      "goal": "G06",
+      "category": "Shares and denominators",
+      "scenario": "Revenue, all orders, valid orders, AOV and payment shares",
+      "required_assertions": [
+        "Raw numerator and denominator match metric definitions",
+        "Share base explicit and not current page by default",
+        "No averaging rates or summing distinct counts across overlaps"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A06",
+      "goal": "G06",
+      "category": "Change and uncertainty",
+      "scenario": "Zero/negative/missing baseline, incomplete periods and forecast",
+      "required_assertions": [
+        "Metric-specific change policy followed",
+        "Percentage points differ from relative change",
+        "No factual future claims or invented confidence",
+        "Incomplete coverage limits the associated claim"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A07",
+      "goal": "G06",
+      "category": "Causal restraint",
+      "scenario": "Correlation and operational risk breakdown",
+      "required_assertions": [
+        "Paired data grain proven",
+        "No causal statement from observational breakdown alone",
+        "Hypotheses and actions labeled and linked to signals"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A08",
+      "goal": "G08",
+      "category": "Explanation lifecycle",
+      "scenario": "Open/close, switch selection, paginate, resize and change layout",
+      "required_assertions": [
+        "Opening explanation triggers no new provider call by default",
+        "Selection keys and base are explicit",
+        "Layout changes do not change facts or conclusions"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A09",
+      "goal": "G07",
+      "category": "Stale and concurrent responses",
+      "scenario": "Refine/filter/depth changes while explanation A is loading",
+      "required_assertions": [
+        "A cannot overwrite explanation B",
+        "Cache binds report/chart/revision/selection signatures",
+        "No previous-report narrative fallback"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A10",
+      "goal": "G06",
+      "category": "Metamorphic locality",
+      "scenario": "Modify outside-cohort data then modify inside-cohort data",
+      "required_assertions": [
+        "Outside data preserves dependent values and explanations when membership fixed",
+        "Inside changes update values and claims atomically",
+        "Independent requested national goal may legitimately change"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A11",
+      "goal": "G06",
+      "category": "Mutation rejection",
+      "scenario": "Inject wrong fact, period, base, unit, direction, chart ID or causal claim",
+      "required_assertions": [
+        "Each incompatible mutation rejected before publication/export",
+        "Correct numeric results do not hide irrelevant scope",
+        "Removal of required coverage caveat fails validation"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A12",
+      "goal": "G05",
+      "category": "Chart semantics",
+      "scenario": "Time gaps, singleton, nonadditive shares, long labels, multiple series",
+      "required_assertions": [
+        "Plot encoding preserves ordering/time distance/unit/values",
+        "Smoothing cannot invent extrema",
+        "Invalid representation falls back to valid chart/table with reason",
+        "Chart-type change cannot silently change aggregation"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A13",
+      "goal": "G08",
+      "category": "Report consistency",
+      "scenario": "Chart accordion, short answer, map, export and reopened report",
+      "required_assertions": [
+        "All surfaces share selected report revision and approved goal references",
+        "Full artifact rather than preview supplies claims",
+        "Missing core answer yields partial/unavailable status rather than full success"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    },
+    {
+      "id": "A14",
+      "goal": "G09",
+      "category": "Coverage and replay",
+      "scenario": "Advertised missions and metric families with rich/sparse/empty cases",
+      "required_assertions": [
+        "Run all three depths on chosen critical fixtures",
+        "Include structured and free-text paths, multiple scopes and independent goals",
+        "Offline and live outcomes recorded separately",
+        "After changes replay failure, same family variant and regression; retain all attempts"
+      ],
+      "depths": [
+        "focused",
+        "deep",
+        "comprehensive"
+      ],
+      "implementation_status": "PLANNED_NOT_RUN",
+      "methods": [
+        "offline_independent_oracle",
+        "API_integration",
+        "browser_where_applicable"
+      ],
+      "live_provider_policy": "Only semantic cases needing provider use authorized Gemini context; retain existing limits"
+    }
+  ],
+  "holdout_policy": "Published implementation seeds, not blind holdouts. Independently author and freeze unseen variants before tuning.",
+  "acceptance": "All critical scope/metric/time/claim/revision cases pass; finite corpus evidence, not universal accuracy guarantee."
+}

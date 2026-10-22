@@ -1,0 +1,3 @@
+== module tests.test_v34_provider_observability tests.test_v33_provider_faults tests.test_v32_mission_reliability tests.test_reliability_v210 (log: /tmp/v34-provider-probe/module.log)
+Ran 84 tests in 29.692s
+OK

@@ -1,10 +1,15 @@
 FROM python:3.11-slim
 
 WORKDIR /app
+ENV DATA_ANALYST_ENV=production DATA_PLATFORM_GOVERNED_INGESTION=1
 
-COPY requirements.txt .
+COPY data-sync/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY sync.py .
+COPY data-sync/sync.py .
+
+COPY pipeline-common/ /opt/pipeline-common/
+COPY metadata/ /opt/data-platform-metadata/
+ENV PYTHONPATH=/opt/pipeline-common DATA_PLATFORM_DATA_CONTRACTS_PATH=/opt/data-platform-metadata/runtime_data_contracts.json
 
 CMD ["python", "-u", "sync.py"]

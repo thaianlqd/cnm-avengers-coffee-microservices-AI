@@ -1,0 +1,14 @@
+{
+  "cases": 33,
+  "requests": 99,
+  "cold_catalog_ms": 1903.5,
+  "first_request_ms": 696.3,
+  "warm_p50_ms": 5.24,
+  "warm_p95_ms": 83.46,
+  "warm_max_ms": 96.38,
+  "environment": {
+    "python": "3.11.17",
+    "machine": "aarch64",
+    "note": "analytics-api container, warm, single thread"
+  }
+}

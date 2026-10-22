@@ -1,0 +1,245 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: AC
+      - generic [ref=e7]:
+        - generic [ref=e8]: Avengers Coffee
+        - generic [ref=e9]: Data Analytics Platform
+    - generic [ref=e10]: Điều hướng chính
+    - navigation "Điều hướng chính" [ref=e11]:
+      - button "Tổng quan" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: Tổng quan
+      - button "Báo cáo & Phân tích" [ref=e14] [cursor=pointer]:
+        - generic [ref=e15]: Báo cáo & Phân tích
+      - button "Trợ lý AI" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: Trợ lý AI
+      - button "Quản lý Báo cáo" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: Quản lý Báo cáo
+      - button "Khám phá dữ liệu" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: Khám phá dữ liệu
+      - button "Kiến trúc hệ thống" [ref=e23] [cursor=pointer]:
+        - generic [ref=e24]: Kiến trúc hệ thống
+      - button "Quản trị hệ thống" [ref=e25] [cursor=pointer]:
+        - generic [ref=e26]: Quản trị hệ thống
+    - button "Hệ thống phân tích Xem kiến trúc & luồng dữ liệu" [ref=e28] [cursor=pointer]:
+      - generic [ref=e29]:
+        - generic [ref=e30]: Hệ thống phân tích
+        - generic [ref=e31]: Xem kiến trúc & luồng dữ liệu
+  - generic [ref=e33]:
+    - banner [ref=e34]:
+      - textbox "Tìm bài toán phân tích toàn hệ thống" [ref=e36]:
+        - /placeholder: Tìm bài toán, báo cáo phân tích…
+      - generic [ref=e37]:
+        - generic "Kho phân tích được đồng bộ định kỳ (data-sync), không phải thời gian thực" [ref=e40]: Cập nhật theo đợt
+        - group "Hồ sơ và phiên đăng nhập" [ref=e42]:
+          - generic [ref=e43]:
+            - generic [ref=e44]: AC
+            - generic [ref=e45]:
+              - generic [ref=e46]: Ban Điều Hành
+              - generic [ref=e47]: Avengers Analytics
+          - button "Đăng xuất tài khoản phân tích" [ref=e49] [cursor=pointer]:
+            - img [ref=e50]
+            - generic [ref=e52]: Đăng xuất
+    - main [ref=e53]:
+      - generic [ref=e55]:
+        - button "← Tất cả dashboard" [ref=e56] [cursor=pointer]
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - heading "Bản đồ doanh thu & đơn hàng" [level=1] [ref=e60]
+              - paragraph [ref=e61]: Kinh doanh / D36
+            - generic [ref=e62]:
+              - paragraph [ref=e63]: Bản đồ
+              - group [ref=e64]:
+                - generic "Định nghĩa & phạm vi" [ref=e65] [cursor=pointer]
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - text: Kỳ báo cáo
+              - combobox "Kỳ báo cáo dashboard" [ref=e68]:
+                - option "30 ngày gần nhất" [selected]
+                - option "7 ngày gần nhất"
+                - option "Tháng trước"
+                - option "Tháng này"
+                - option "Toàn bộ dữ liệu"
+                - option "Tùy chọn"
+            - button "Cập nhật dashboard" [ref=e69] [cursor=pointer]
+        - button "Ẩn bản đồ khu vực" [pressed] [ref=e70] [cursor=pointer]
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - paragraph [ref=e73]: "Phạm vi: Toàn hệ thống"
+            - paragraph [ref=e74]: "Thời gian: Toàn bộ dữ liệu hiện có"
+          - tablist "Phần báo cáo" [ref=e75]:
+            - tab "Báo cáo" [selected] [ref=e76] [cursor=pointer]
+            - tab "Kiểm chứng & nguồn" [ref=e77] [cursor=pointer]
+            - tab "Dữ liệu / SQL" [ref=e78] [cursor=pointer]
+            - tab "Lưu & xuất" [ref=e79] [cursor=pointer]
+          - tabpanel "Báo cáo" [ref=e80]:
+            - generic [ref=e81]:
+              - generic [ref=e82]:
+                - generic [ref=e83]:
+                  - paragraph [ref=e84]: Geographic intelligence
+                  - heading "Bản đồ tỉnh/thành & khu vực" [level=2] [ref=e85]
+                  - paragraph [ref=e86]: Từ tỉnh/thành đến từng cửa hàng · Zoom để xem các điểm bán và doanh số
+                - generic [ref=e87]:
+                  - text: Chỉ số trên bản đồ
+                  - combobox "Chỉ số trên bản đồ" [ref=e88]:
+                    - option "Doanh thu riêng từng tỉnh · VND" [selected]
+                    - option "Số điểm bán trong dữ liệu · điểm bán"
+                    - option "Số đơn riêng từng tỉnh · đơn"
+                    - option "Giá trị đơn trung bình từng tỉnh · VND"
+                    - option "Doanh thu theo miền · VND"
+              - generic [ref=e89]:
+                - generic [ref=e90]:
+                  - generic [ref=e91]: 3 tỉnh/thành có điểm bán trong phạm vi
+                  - generic [ref=e92]: 2026-09-21 → 2026-10-20 · Mạng lưới hiện tại
+                - generic [ref=e93]:
+                  - generic [ref=e94]:
+                    - generic [ref=e95]: Doanh thu trong kỳ
+                    - strong [ref=e96]: 97.000.000 ₫
+                  - generic [ref=e97]:
+                    - generic [ref=e98]: Tổng đơn trong kỳ
+                    - strong [ref=e99]: 194 đơn
+                  - generic [ref=e100]:
+                    - generic [ref=e101]: Giá trị đơn trung bình
+                    - strong [ref=e102]: 500.000 ₫
+                  - generic [ref=e103]:
+                    - generic [ref=e104]: Điểm bán hiện có
+                    - strong [ref=e105]: 14 điểm
+                - paragraph [ref=e106]: Chọn tỉnh để mở cửa hàng, thứ hạng và phân tích sâu. Màu mặc định là doanh thu của riêng tỉnh.
+              - generic [ref=e107]:
+                - navigation "Chế độ bản đồ" [ref=e108]:
+                  - button "Doanh số tỉnh" [pressed] [ref=e109] [cursor=pointer]
+                  - button "Mạng lưới cửa hàng" [ref=e110] [cursor=pointer]
+                - generic [ref=e111]:
+                  - text: Nền bản đồ
+                  - combobox "Nền bản đồ" [ref=e112]:
+                    - option "Streets · hiện đại" [selected]
+                    - option "Đường phố · chi tiết"
+                    - option "Nền sáng"
+                    - option "Chỉ địa giới"
+                - generic [ref=e113]:
+                  - button "Phóng to bản đồ" [ref=e114] [cursor=pointer]: +
+                  - button "Thu nhỏ bản đồ" [ref=e115] [cursor=pointer]: −
+                  - button "Toàn cảnh" [ref=e116] [cursor=pointer]
+                  - button "Toàn màn hình" [ref=e117] [cursor=pointer]
+                  - button "Xuất SVG" [ref=e118] [cursor=pointer]
+                - group [ref=e119]:
+                  - generic "☷Tùy chỉnh hiển thị" [ref=e120] [cursor=pointer]
+                  - option "Xanh phân tích" [selected]
+                  - option "Đa sắc"
+                  - option "Đại dương"
+                  - option "Nhiệt"
+                  - option "Theo phân vị" [selected]
+                  - option "Khoảng đều"
+              - generic [ref=e121]:
+                - generic [ref=e124]:
+                  - combobox "Tìm cửa hàng trên bản đồ" [ref=e125]
+                  - button "Mở Tìm cửa hàng trên bản đồ" [ref=e126] [cursor=pointer]: ⌄
+                - paragraph [ref=e127]: 11/12 cửa hàng có tọa độ hợp lệ
+              - generic [ref=e128]:
+                - generic [ref=e129]:
+                  - generic [ref=e130]:
+                    - generic "Bản đồ đường phố tương tác; dùng mũi tên để di chuyển, cộng trừ để phóng to" [ref=e131]:
+                      - region "Map" [ref=e132]
+                      - generic:
+                        - generic [ref=e133]: 300 km
+                        - generic:
+                          - generic [ref=e134]:
+                            - button "Zoom in" [ref=e135] [cursor=pointer]
+                            - button "Zoom out" [ref=e137] [cursor=pointer]
+                          - group [ref=e139]:
+                            - generic "Toggle attribution" [ref=e140] [cursor=pointer]
+                            - generic [ref=e141]:
+                              - text: "Địa giới 2020: Government of Viet Nam / HDX · geoBoundaries ·"
+                              - link "Streets style" [ref=e142] [cursor=pointer]:
+                                - /url: /map-styles/README.md
+                    - status: Nền đường phố OpenFreeMap · Streets · 11 điểm bán trong khung nhìn
+                  - generic [ref=e143]:
+                    - generic [ref=e144]:
+                      - generic [ref=e145]: Phân vị · thấp → cao
+                      - generic [ref=e146]: VND
+                    - generic [ref=e147]:
+                      - generic "20000000 → 29500000" [ref=e148]
+                      - generic "29500000 → 39000000" [ref=e149]
+                      - generic "39000000 → 48500000" [ref=e150]
+                      - generic "48500000 → 58000000" [ref=e151]
+                      - generic "58000000 → 67500000" [ref=e152]
+                      - generic "67500000 → 77000000" [ref=e153]
+                    - generic [ref=e154]:
+                      - generic [ref=e155]: 20.000.000 VND
+                      - generic [ref=e156]: 77.000.000 VND
+                    - generic [ref=e157]:
+                      - generic [ref=e158]:
+                        - text: Chưa có điểm bán / chỉ số
+                        - text: Có điểm bán · chỉ số 0
+                      - generic [ref=e161]: 3/63 tỉnh/thành có chỉ số
+                - complementary [ref=e162]:
+                  - generic [ref=e163]:
+                    - paragraph [ref=e164]: Theo tỉnh/thành
+                    - generic [ref=e165]: 3 địa bàn trong báo cáo
+                  - paragraph [ref=e166]: Doanh thu riêng từng tỉnh
+                  - generic [ref=e168]:
+                    - combobox "Chọn tỉnh khám phá" [ref=e169]: Tất cả tỉnh/thành
+                    - button "Mở Chọn tỉnh khám phá" [ref=e170] [cursor=pointer]: ⌄
+                  - searchbox "Tìm địa bàn trên bản đồ" [ref=e171]
+                  - generic [ref=e172]:
+                    - text: Xếp hạng địa bàn
+                    - combobox "Sắp xếp tỉnh trên bản đồ" [ref=e173]:
+                      - option "Chỉ số cao → thấp" [selected]
+                      - option "Tên tỉnh A–Z"
+                  - generic [ref=e174]:
+                    - button "Hà Nội 77.000.000 VND" [ref=e175] [cursor=pointer]:
+                      - generic [ref=e177]: Hà Nội
+                      - generic [ref=e178]: 77.000.000 VND
+                    - button "Hồ Chí Minh 20.000.000 VND" [ref=e179] [cursor=pointer]:
+                      - generic [ref=e181]: Hồ Chí Minh
+                      - generic [ref=e182]: 20.000.000 VND
+                    - button "Hà Giang 0 VND" [ref=e183] [cursor=pointer]:
+                      - generic [ref=e185]: Hà Giang
+                      - generic [ref=e186]: 0 VND
+                  - paragraph [ref=e187]: Độ đậm thể hiện chỉ số của từng tỉnh. Chọn tỉnh để hiện các điểm bán và xếp hạng cửa hàng.
+              - generic [ref=e188]:
+                - paragraph [ref=e189]: Địa giới tham chiếu năm 2020 · 63 tỉnh/thành theo các tên lịch sử trong dữ liệu. Nơi chưa có giá trị được để xám; khác với giá trị 0.
+                - paragraph [ref=e190]:
+                  - text: "Địa giới: Government of Viet Nam / HDX qua"
+                  - link "geoBoundaries (CC BY 3.0 IGO)" [ref=e191] [cursor=pointer]:
+                    - /url: https://www.geoboundaries.org/
+                  - text: "· Nền đường phố:"
+                  - link "OpenFreeMap" [ref=e192] [cursor=pointer]:
+                    - /url: https://openfreemap.org/
+                  - text: / © OpenStreetMap contributors ·
+                  - link "Thiết kế Streets / OSM Bright" [ref=e193] [cursor=pointer]:
+                    - /url: /map-styles/README.md
+                  - text: .
+            - generic [ref=e194]:
+              - heading "Các góc nhìn phân tích · 1 biểu đồ" [level=3] [ref=e195]:
+                - text: Các góc nhìn phân tích
+                - generic [ref=e196]: · 1 biểu đồ
+              - tablist "Góc nhìn biểu đồ" [ref=e197]:
+                - tab "Tất cả · 1" [selected] [ref=e198] [cursor=pointer]
+                - tab "So sánh · 1" [ref=e199] [cursor=pointer]
+            - tabpanel "Tất cả · 1" [ref=e200]:
+              - article [ref=e203]:
+                - generic [ref=e204]:
+                  - generic [ref=e205]:
+                    - heading "Doanh thu theo miền" [level=5] [ref=e208]
+                    - paragraph [ref=e209]: Trong phạm vi đã chọn · VND
+                  - group [ref=e210]:
+                    - generic "Tùy chọn Doanh thu theo miền" [ref=e211] [cursor=pointer]: •••
+                - img "Biểu đồ cột nhóm" [ref=e215]:
+                  - generic [ref=e217]: "0"
+                  - generic [ref=e219]: 38,5 triệu
+                  - generic [ref=e221]: 77 triệu
+                  - generic [ref=e222]:
+                    - 'generic "Miền Bắc: Doanh thu theo miền — 77.000.000 VND" [ref=e223]'
+                    - generic "Miền Bắc" [ref=e224]
+                - group [ref=e227]:
+                  - generic "Chi tiết biểu đồ" [ref=e228] [cursor=pointer]
+            - group [ref=e229]:
+              - generic "Độ đầy đủ bằng chứng · Chưa đo" [ref=e230] [cursor=pointer]
+            - group [ref=e231]:
+              - generic "Kết luận phân tích" [ref=e232] [cursor=pointer]
+```

@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from fastapi import FastAPI
 from common import AiTextToReportRequest
 from services.analysis_pipeline import safe_failure
-from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline, historical_catalog
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
 from services.analysis_module_service import AnalysisModules
 from services.analysis_module_repository import PostgresModuleRepository
@@ -57,7 +57,7 @@ class NaturalV26Tests(unittest.TestCase):
     def setUp(self):
         for name in ("requests.sessions.Session.request","psycopg2.connect"):
             guard = patch(name,side_effect=AssertionError("External calls forbidden")); guard.start(); self.addCleanup(guard.stop)
-        config = patch.dict(os.environ,{"AI_OFFLINE":"1","DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS":"10000","DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"24000"});config.start();self.addCleanup(config.stop)
+        config = patch.dict(os.environ,{"AI_OFFLINE":"1","DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS":"14000","DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"24000"});config.start();self.addCleanup(config.stop)
         self.catalog = AnalysisCatalog(physical_metadata())
         self.repo = MemoryModules()
 
@@ -88,13 +88,21 @@ class NaturalV26Tests(unittest.TestCase):
 
     def test_four_input_sections_optional_context_and_model_breadth(self):
         for breadth in ("focused","deep","comprehensive"):
-            p=self.pipeline(plan(product(),breadth=breadth));req=self.request(analysis_context="Chỉ Hà Nội",analysis_expectation="Tập trung chất lượng diễn giải")
+            # Context is an effective constraint, not decorative prompt text.
+            # A scripted model that omits it must remain a scope rejection.
+            p=self.pipeline(plan(product(filters=[{"dimension":"city","value":"Hà Nội"}]),breadth=breadth));req=self.request(analysis_context="Chỉ Hà Nội",analysis_expectation="Tập trung chất lượng diễn giải")
             r=p.propose(req);payload=json.loads(p.provider.requests[0]["messages"][0]["content"])
             self.assertEqual(payload["question"],req.prompt);self.assertEqual(payload["analysis_context"],req.analysis_context)
             self.assertEqual(payload["analysis_expectation"],req.analysis_expectation);self.assertNotIn("analysis_depth",payload["ui"])
             self.assertEqual(r["diagnostics"]["analysis_breadth"],breadth);p.executor.assert_not_called()
         p=self.pipeline();p.propose(self.request());payload=json.loads(p.provider.requests[0]["messages"][0]["content"])
         self.assertNotIn("analysis_context",payload);self.assertNotIn("analysis_expectation",payload)
+
+    def test_context_scope_cannot_be_ignored_by_archived_model(self):
+        p=self.pipeline()
+        with self.assertRaises(AnalysisError):
+            p.propose(self.request(analysis_context="Chỉ Hà Nội"))
+        p.executor.assert_not_called()
 
     def test_explicit_time_injected_but_conflicts_not_overwritten(self):
         for mode in ("current_month","previous_quarter","current_year","previous_year","all_time"):
@@ -116,8 +124,10 @@ class NaturalV26Tests(unittest.TestCase):
 
     def test_blueprints_all_lenses_validate_or_true_ambiguity(self):
         intelligence=DomainIntelligence(self.catalog);count=0
-        for profile in intelligence.available().values():
-            for lens in profile["analytical_lenses"]:
+        legacy=DomainIntelligence(historical_catalog(self.catalog)).available()  # the archived planner serves the pre-round-3 scope
+        for id,profile in intelligence.available().items():
+            served={l["id"] for l in legacy.get(id,{}).get("analytical_lenses",[])}
+            for lens in [l for l in profile["analytical_lenses"] if l["id"] in served]:
                 with self.subTest(lens=lens["id"]):
                     p=self.pipeline(plan({"id":"main","lens_id":lens["id"]}));
                     if not lens["blueprint"]["default_metric_refs"]:
@@ -130,7 +140,7 @@ class NaturalV26Tests(unittest.TestCase):
                         agent=p.agent(self.catalog,date(2026,10,6),proposal=True);agent.queries.enforce_discovery=False
                         agent.queries.prepare({**raw,"role":"requested"})
                     count+=1
-        self.assertEqual(count,38)
+        self.assertEqual(count,44)  # V3.0 delivery lenses; V3.1 order_fulfilment, late_rate, cash_discrepancy_risk, promotion_redemption
 
     def test_synthetic_lens_requires_metadata_group_without_prompt_branch(self):
         overlay=deepcopy(self.catalog.overlay);profile=overlay["analysis_registry"]["domain_intelligence"]["profiles"]["products"]
@@ -185,7 +195,7 @@ class NaturalV26Tests(unittest.TestCase):
         p,req,r=self.approved();service=AnalysisModules(self.repo);module=service.save(p,r["session_id"],"Private")
         other=self.pipeline(owner="browser-b")
         self.assertEqual(service.list("browser-b"),[])
-        for action in (lambda:other.generate(req),lambda:service.save(other,r["session_id"],"Copy"),lambda:service.resolve("browser-b",module["module_id"],None,self.catalog)):
+        for action in (lambda:other.generate(req),lambda:service.save(other,r["session_id"],"Copy"),lambda:service.resolve("browser-b",module["module_id"],None,historical_catalog(self.catalog))):
             with self.assertRaises(AnalysisError):action()
         other.provider.requests.clear();other.executor.assert_not_called()
 
@@ -233,7 +243,7 @@ class NaturalV26Tests(unittest.TestCase):
         self.assertEqual(service.list("browser-a")[0]["name"],"Renamed")
         self.repo.patch("browser-a",m["module_id"],archived=True)
         self.assertEqual(service.list("browser-a"),[])
-        with self.assertRaises(AnalysisError):service.resolve("browser-a",m["module_id"],None,self.catalog)
+        with self.assertRaises(AnalysisError):service.resolve("browser-a",m["module_id"],None,historical_catalog(self.catalog))
 
     def test_snapshot_period_has_actionable_explicit_snapshot_choice(self):
         p=self.pipeline(plan({"id":"main","lens_id":"delivery_volume"}))
@@ -264,9 +274,9 @@ class NaturalV26Tests(unittest.TestCase):
 
     def test_name_resolution_unique_ambiguous_and_no_automatic_injection(self):
         p,_,r=self.approved();service=AnalysisModules(self.repo);m=service.save(p,r["session_id"],"Exact name")
-        self.assertEqual(service.resolve("browser-a",None,"Exact name",self.catalog)["module_id"],m["module_id"])
+        self.assertEqual(service.resolve("browser-a",None,"Exact name",historical_catalog(self.catalog))["module_id"],m["module_id"])
         service.save(p,r["session_id"],"Exact name")
-        with self.assertRaises(AnalysisError) as caught:service.resolve("browser-a",None,"Exact name",self.catalog)
+        with self.assertRaises(AnalysisError) as caught:service.resolve("browser-a",None,"Exact name",historical_catalog(self.catalog))
         self.assertEqual(len(caught.exception.choices),2)
         fresh=self.pipeline();fresh.propose(self.request());payload=json.loads(fresh.provider.requests[0]["messages"][0]["content"])
         self.assertEqual(payload["state"],[]);self.assertNotIn("module",payload["ui"])
@@ -295,9 +305,9 @@ class NaturalV26Tests(unittest.TestCase):
         self.assertNotIn("password",json.dumps(response));self.assertTrue(response["issue"]["suggested_actions"])
 
     def test_body_budget_both_adapters_with_multiple_strong_domains(self):
-        self.enterContext(patch.dict(os.environ,{"DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"32000"}))
+        self.enterContext(patch.dict(os.environ,{"DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"34000"}))  # V3.1 catalog growth (legacy planner)
         for context in ("", "chi nhánh sản phẩm voucher thanh toán", "khách hàng sản phẩm voucher thanh toán giao hàng"):
             p=self.pipeline();r=p.propose(self.request(analysis_context=context,analysis_expectation="Phân tích toàn diện nhiều góc nhìn"))
             self.assertEqual(p.provider.call_count,1)
-            for size in r["diagnostics"]["provider_body_chars"].values():self.assertLessEqual(size,32000)
+            for size in r["diagnostics"]["provider_body_chars"].values():self.assertLessEqual(size,34000)
             self.assertEqual(r["diagnostics"]["contract_repair_count"],0)

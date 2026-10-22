@@ -1,0 +1,265 @@
+[
+  {
+    "id": "relationship",
+    "payload": {
+      "question": "Liên hệ giữa tổng chuyến giao và điểm hồ sơ tài xế theo mã tài xế tháng 9 năm 2026",
+      "reference_date": "2026-10-21",
+      "time": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "input_mode": "free_text",
+      "allow_deterministic_upgrade": false,
+      "analysis_depth": "deep"
+    },
+    "preflight": {
+      "version": "3.2.0",
+      "status": "blocked",
+      "state": "BLOCKED",
+      "state_label": "Chưa thể gửi yêu cầu này",
+      "can_submit": false,
+      "capability": {
+        "decision": "UNSUPPORTED",
+        "policy_version": "3.3.1",
+        "constraints": [
+          {
+            "code": "snapshot_metric_period",
+            "stage": "static",
+            "blocking": true,
+            "subject": null,
+            "owner": "catalog",
+            "status": "failed",
+            "requirement_id": null,
+            "message": "Các chỉ số được hỏi là dữ liệu hiện trạng, không có lịch sử theo kỳ. Bỏ mốc thời gian (Toàn bộ thời gian) hoặc chọn chỉ số có lịch sử."
+          }
+        ],
+        "views": [],
+        "stage": "input",
+        "catalog_fingerprint": "6f66d73631fe2b116a0ac07b74a4caaf06cb1e0b42e8dfb371e83d7f1d2807b5",
+        "interpretation_required": false,
+        "reason": "snapshot_metric_period",
+        "message": "Các chỉ số được hỏi là dữ liệu hiện trạng, không có lịch sử theo kỳ. Bỏ mốc thời gian (Toàn bộ thời gian) hoặc chọn chỉ số có lịch sử.",
+        "actions": [
+          {
+            "label": "Bỏ mốc thời gian",
+            "kind": "advice",
+            "constraint_code": "snapshot_metric_period",
+            "preserves": []
+          }
+        ]
+      },
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "understood": {
+        "metrics": [
+          {
+            "id": "total_deliveries",
+            "label": "Tổng chuyến giao",
+            "unit": "lượt",
+            "historical": false,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          },
+          {
+            "id": "driver_rating",
+            "label": "Điểm hồ sơ tài xế",
+            "unit": "điểm",
+            "historical": false,
+            "forecastable": false,
+            "canonical": false,
+            "alternatives": [],
+            "specialized": []
+          }
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "mission": null,
+        "unsupported": [],
+        "inferred_mission": {
+          "id": "relationship",
+          "label": "Tương quan"
+        }
+      },
+      "findings": [
+        {
+          "level": "block",
+          "code": "snapshot_metric_period",
+          "message": "Các chỉ số được hỏi là dữ liệu hiện trạng, không có lịch sử theo kỳ. Bỏ mốc thời gian (Toàn bộ thời gian) hoặc chọn chỉ số có lịch sử.",
+          "fixes": [
+            {
+              "label": "Bỏ mốc thời gian",
+              "kind": "advice"
+            }
+          ]
+        },
+        {
+          "level": "warn",
+          "code": "snapshot_metric_trend",
+          "message": "Tổng chuyến giao là chỉ số hiện trạng (ảnh chụp), không có lịch sử theo thời gian; hệ thống chỉ trả giá trị hiện tại.",
+          "fixes": [
+            {
+              "label": "Bỏ mốc thời gian / xu hướng",
+              "kind": "advice"
+            }
+          ],
+          "metric": "total_deliveries"
+        },
+        {
+          "level": "warn",
+          "code": "snapshot_metric_trend",
+          "message": "Điểm hồ sơ tài xế là chỉ số hiện trạng (ảnh chụp), không có lịch sử theo thời gian; hệ thống chỉ trả giá trị hiện tại.",
+          "fixes": [
+            {
+              "label": "Bỏ mốc thời gian / xu hướng",
+              "kind": "advice"
+            }
+          ],
+          "metric": "driver_rating"
+        }
+      ],
+      "recognition": {
+        "business": [
+          "driver_rating",
+          "subject:delivery",
+          "total_deliveries"
+        ],
+        "analytical": [
+          "relationship",
+          "time"
+        ]
+      },
+      "input_validation": {
+        "version": "1.2.1",
+        "policy_fingerprint": "b846a69723af5b81b2e7cce97fbdf555ad1e79bc7fdf3425f73f8a1099ed3696",
+        "fingerprint": "e20f225610c27b8135f4819b466834a1bf09fb7a464582a30fa03fc0f6d1dfcf",
+        "catalog_fingerprint": "6f66d73631fe2b116a0ac07b74a4caaf06cb1e0b42e8dfb371e83d7f1d2807b5",
+        "access_fingerprint": "f7461f7227295c85d93f7c646aa3b5b72eed0ed5155fd9b1d61a3798dc217df0",
+        "clauses": [
+          {
+            "id": "c1",
+            "start": 0,
+            "end": 82,
+            "slot_ids": [],
+            "state": "BOUND"
+          }
+        ],
+        "slots": [],
+        "findings": [],
+        "can_submit": true,
+        "required_filters": [],
+        "provider_calls": 0,
+        "analytical_queries": 0,
+        "lookup_queries": 0
+      },
+      "guided_contract": null,
+      "semantic_contract": {
+        "version": "3.2",
+        "mission": null,
+        "inferred_mission": "relationship",
+        "metric_locks": [],
+        "metrics": [
+          "total_deliveries",
+          "driver_rating"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "source": "question",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "forecast": null,
+        "confidence": "high",
+        "unresolved": []
+      },
+      "provider_calls": 0,
+      "warehouse_queries": 0,
+      "coverage_status": "ready",
+      "registry_fingerprint": "880611511c8663c244abae0911f6dc2a7496889a2ba86128a460a68a91f9b1c8",
+      "elapsed_ms": 180.91
+    },
+    "job": {
+      "job_id": "aj_9ed2c5981d00451ca86bca0c00aa010a",
+      "state": "unsupported",
+      "provider_call_count": 0,
+      "physical_http": 0,
+      "stage_timings_ms": {
+        "queue": 4.16
+      },
+      "http_error": null,
+      "detail": null
+    },
+    "report": {
+      "status": "needs_clarification",
+      "outcome": "UNSUPPORTED",
+      "message": "Các chỉ số được hỏi là dữ liệu hiện trạng, không có lịch sử theo kỳ. Bỏ mốc thời gian (Toàn bộ thời gian) hoặc chọn chỉ số có lịch sử.",
+      "title": null,
+      "session_id": null,
+      "revision": null,
+      "analysis_mission": null,
+      "analysis_coverage": null,
+      "analytical_queries": null,
+      "sql_by_query": null,
+      "quality_limitations": null,
+      "failure": {
+        "stage": "PRECHECK",
+        "code": "unsupported_metric",
+        "user_impact": "UNSUPPORTED",
+        "what_is_known": {
+          "provider_attempt_count": 0
+        },
+        "what_failed": "unsupported_metric",
+        "retry_helps": false,
+        "error_type": "UNSUPPORTED_CAPABILITY",
+        "analysis_state": "UNSUPPORTED_CAPABILITY",
+        "analysis_stage": "SYSTEM_FAILURE",
+        "guidance": {
+          "title": "Chỉ số hoặc phép phân tích chưa được hỗ trợ",
+          "description": "Hiện dữ liệu phân tích chưa hỗ trợ yêu cầu này.",
+          "next_action": "choose_supported_capability"
+        },
+        "needs_user_input": false,
+        "recommended_server_action": "inspect_failed_stage"
+      },
+      "interaction_contract": null,
+      "source_completeness": null
+    },
+    "diagnostics": {
+      "request_id": "req_3b18bd0d6f984c6f97dd13ec56219d29",
+      "input_policy_version": "1.2.1",
+      "terminal_error": "unsupported_metric",
+      "error_category": "unsupported_metric",
+      "failure_code": null,
+      "failure_stage": "PRECHECK",
+      "contract_issues": null,
+      "provider_call_count": null,
+      "provider_physical_attempts": null,
+      "input_tokens": null,
+      "output_tokens": null,
+      "db_query_count": null,
+      "execution_status": "not_started",
+      "result_status": "not_started",
+      "guided_contract_used": false,
+      "preflight_state": "BLOCKED"
+    },
+    "provider_attempts": [],
+    "charts": [],
+    "result_summary": {},
+    "elapsed_seconds": 1.315
+  }
+]

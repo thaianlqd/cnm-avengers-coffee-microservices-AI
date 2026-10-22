@@ -1,0 +1,42 @@
+{
+  "version": "3.5.0",
+  "topology": [
+    {
+      "instance": "v35-fixture-api-a",
+      "pid": 1,
+      "redis_db": 15,
+      "session_backend": "redis",
+      "artifact_backend": "redis",
+      "physical_http": 0,
+      "peak_rss_kib": 148816
+    },
+    {
+      "instance": "v35-fixture-api-b",
+      "pid": 1,
+      "redis_db": 15,
+      "session_backend": "redis",
+      "artifact_backend": "redis",
+      "physical_http": 0,
+      "peak_rss_kib": 148664
+    }
+  ],
+  "duplicate_same_job": true,
+  "cross_process_artifact": true,
+  "cross_owner_denied": true,
+  "cross_process_cancel": true,
+  "external_http": 0,
+  "provider_call_count": 0,
+  "physical_http": 0,
+  "job_id": "aj_fb0ccd0efd274d68a72ab853c68b4e64",
+  "session_id": "eb9125bf-7b8b-4d12-9b84-54e6af5fdf21",
+  "status": "passed",
+  "limitations": [
+    "Fixture SQLite SQL adapter; no deployed dual-API traffic claim",
+    "15-minute soak not covered by this command"
+  ],
+  "session_cas": "exactly_one_save",
+  "crash_reservation_retained": true,
+  "crash_job_id": "aj_0797762da76c479a8e2b83e976ca095e",
+  "crash_physical_http": 1,
+  "injected_fault": "injected reservation before transport; no provider request"
+}

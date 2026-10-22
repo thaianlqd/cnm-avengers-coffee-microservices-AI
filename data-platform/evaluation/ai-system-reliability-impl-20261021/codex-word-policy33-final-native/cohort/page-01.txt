@@ -1,0 +1,38 @@
+AVENGERS COFFEE SUPPLY CHAIN & BI PLATFORM DỮ LIỆU TẦNG SILVER LAKE
+BÁO CÁO PHÂN TÍCH: ĐƠN HÀNG VÀ DOANH THU
+Tài liệu phân tích tự động trích xuất từ Kho dữ liệu Silver Lake • Doanh nghiệp Avengers Coffee
+NGÀY LẬP BÁO CÁO
+NGUỒN DỮ LIỆU
+ĐƠN VỊ PHỤ TRÁCH
+TRẠNG THÁI
+22/10/2026
+Delta Lake Silver
+AI Intelligence Center
+Đã kiểm chứng nội bộ
+I. TỔNG QUAN ĐIỀU HÀNH (EXECUTIVE SUMMARY)
+Bản tóm tắt điều hành được tổng hợp tự động dựa trên truy vấn dữ liệu thực tế tầng Silver.
+Hồ Chí Minh thấp nhất trong Bottom 2: 300 VND theo doanh thu. Doanh thu thay đổi từ 100 thành 400 VND giữa kỳ
+2026-09-01 và 2026-09-29 (300%). Phạm vi: trong Bottom 2 của xếp hạng chính. Tổng doanh thu: 700 VND trong
+phạm vi đã chọn (3 nhóm có dữ liệu). Phạm vi: trong Bottom 2 của xếp hạng chính. Tổng doanh thu: 700 VND trong
+phạm vi đã chọn (2 nhóm có dữ liệu). Phạm vi: trong Bottom 2 của xếp hạng chính. Doanh thu (STORE) thay đổi từ
+100 thành 200 VND giữa kỳ 2026-09-01 và 2026-09-15 (100%). Phạm vi: trong Bottom 2 của xếp hạng chính.
+• Hồ Chí Minh thấp nhất trong Bottom 2: 300 VND theo doanh thu.
+Mức độ kiểm chứng
+Yêu cầu được đáp ứng: 5/5
+Nhận định có bằng chứng: 9/9
+Biểu đồ đúng yêu cầu: 5/5
+Góc nhìn bắt buộc đã có: 1/1
+Kết luận có bằng chứng: 4/4
+Đối chiếu độc lập: Chưa đo đối chiếu độc lập.
+Mức hoàn tất kiểm chứng nội bộ: 90/100 (không phải độ chính xác AI)
+90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa
+cộng 10 điểm; kiểm tra không áp dụng không bị trừ.
+Xác suất trả lời đúng: Chưa hiệu chuẩn.
+Phạm vi yêu cầu: 1/1 đạt. 1/1 phần yêu cầu đã thực hiện.
+Ngữ nghĩa & kế hoạch: 1/1 đạt. Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa
+chứng minh mọi cách hiểu ngôn ngữ đều đúng.
+Kết quả dữ liệu: 5/5 đạt. 5 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng
+của dữ liệu nguồn.
+Tài liệu nội bộ bảo mật • Bản quyền thuộc Avengers Coffee Data
+Định dạng chuẩn Microsoft Word (.docx)
+Platform

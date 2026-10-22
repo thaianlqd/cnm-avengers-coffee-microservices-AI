@@ -1,0 +1,24 @@
+ Container avengers-v34-fixture-postgres-1 Running 
+ Container avengers-v34-fixture-postgres-1 Waiting 
+ Container avengers-v34-fixture-postgres-1 Healthy 
+ Container avengers-v34-fixture-api-tests-run-adfc24139460 Creating 
+ Container avengers-v34-fixture-api-tests-run-adfc24139460 Created 
+2026-10-18 11:00:55,762 [INFO] matplotlib.font_manager - generated new fontManager
+.2026-10-18 11:00:56,126 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+..2026-10-18 11:00:56,204 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+..2026-10-18 11:00:56,235 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+2026-10-18 11:00:56,249 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+.2026-10-18 11:00:56,266 [INFO] analytics.events - {"stage":"audit","status":"failed","request_id":null,"job_id":null}
+.2026-10-18 11:00:56,281 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+2026-10-18 11:00:56,296 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+2026-10-18 11:00:56,303 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+.2026-10-18 11:00:56,352 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+2026-10-18 11:00:56,361 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+.2026-10-18 11:00:56,401 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+2026-10-18 11:00:56,408 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+.2026-10-18 11:00:56,428 [INFO] analytics.events - {"stage":"audit","status":"failed","request_id":null,"job_id":null}
+.....
+----------------------------------------------------------------------
+Ran 15 tests in 0.473s
+
+OK

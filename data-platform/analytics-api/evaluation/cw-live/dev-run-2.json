@@ -1,0 +1,1243 @@
+{
+ "manifest_version": "cw-live-1",
+ "runs": [
+  {
+   "started_at": "2026-10-22T08:23:16.647513+00:00",
+   "cases": [
+    {
+     "id": "P02",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": true,
+      "view_modes": true,
+      "oracle_values": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "detail": {
+      "oracle": {
+       "expected": {
+        "Hải Phòng": 504,
+        "Cần Thơ": 298
+       },
+       "shown": {
+        "Cần Thơ": 317,
+        "Hải Phòng": 518
+       },
+       "period": null
+      },
+      "frames": [
+       {
+        "axis": "city",
+        "members": [
+         "Cần Thơ",
+         "Hải Phòng"
+        ]
+       }
+      ],
+      "charts": [
+       {
+        "role": "primary",
+        "dims": [
+         "city"
+        ],
+        "type": "bar",
+        "metric": "order_count"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city"
+        ],
+        "type": "multi_line",
+        "metric": "order_count"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "order_type"
+        ],
+        "type": "grouped_bar",
+        "metric": "order_count"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "store",
+         "store_id"
+        ],
+        "type": "grouped_bar",
+        "metric": "order_count"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "store_type"
+        ],
+        "type": "multi_line",
+        "metric": "order_count"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "payment_method"
+        ],
+        "type": "grouped_bar",
+        "metric": "order_count"
+       }
+      ]
+     },
+     "phase": "generate",
+     "latency_ms": 4479,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3540,
+     "output_tokens": 126,
+     "request_id": "6c3dfa9c0ef943ad96ba9b8a06546ddb",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "order_count_comparison_city",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "order_count"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "5ba576a5-26c4-44c9-9c25-3565496e7858",
+     "trace": null
+    },
+    {
+     "id": "P03",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": true,
+      "view_modes": true,
+      "oracle_values": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 3881,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3648,
+     "output_tokens": 129,
+     "request_id": "9576735e36134b0f8049fe9acebdc2ed",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "aov"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "662dc7ae-cdbd-49ea-9d29-527d8638eab7",
+     "trace": null
+    },
+    {
+     "id": "P04",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": true,
+      "view_modes": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 10839,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3657,
+     "output_tokens": 130,
+     "request_id": "2eea1fa1474c4e378a2ad72c17a6d0b3",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "order_cancellation_rate"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "6396772f-6da3-4d44-9d11-d5e74ea97b1a",
+     "trace": null
+    },
+    {
+     "id": "P09",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": true,
+      "view_modes": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 3824,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 4893,
+     "output_tokens": 116,
+     "request_id": "71ac2a33c4eb44578080dbca3f45bcc5",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "cross_tab",
+         "metric_ids": [
+          "item_revenue"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "e1440c69-c143-447f-8eaf-d1352d26a663",
+     "trace": null
+    },
+    {
+     "id": "P10",
+     "set": "positive",
+     "outcome": "insufficient",
+     "checks": {
+      "outcome": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "detail": {},
+     "phase": "propose",
+     "latency_ms": 2595,
+     "error_category": "insufficient_data",
+     "error_message": "Chỉ có 0 nhóm đủ điều kiện cho tiêu chí độ ổn định (cần 5, mỗi nhóm cần ít nhất 3 kỳ đầy đủ liên tiếp).",
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 4599,
+     "output_tokens": 137,
+     "request_id": "e8f70eaece2c4409a89d4b43bf038295",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": {
+          "limit": 5,
+          "metric_id": "store_revenue",
+          "direction": "top"
+         },
+         "analysis_kind": "ranking",
+         "metric_ids": [
+          "store_revenue"
+         ],
+         "dimension_ids": [
+          "store"
+         ],
+         "derived_features": [],
+         "filters": []
+        }
+       ]
+      }
+     ],
+     "session_id": null,
+     "trace": null
+    },
+    {
+     "id": "P11",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "ranking_census": true,
+      "exposure": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 6567,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3852,
+     "output_tokens": 136,
+     "request_id": "5d78ccfbcdb04d6b8c92e405090f9304",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": {
+          "metric_id": "delivery_success_rate",
+          "direction": "top",
+          "limit": 5
+         },
+         "analysis_kind": "ranking",
+         "metric_ids": [
+          "delivery_success_rate"
+         ],
+         "dimension_ids": [
+          "driver_id"
+         ],
+         "derived_features": [
+          "leader"
+         ],
+         "filters": []
+        }
+       ]
+      }
+     ],
+     "session_id": "3588d80a-72b0-4fb1-b131-d7980bc156d7",
+     "trace": null
+    },
+    {
+     "id": "P12",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "no_frame": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 11898,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3634,
+     "output_tokens": 111,
+     "request_id": "775a62bb498a4efca46ae6e5e0ab4f94",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "cross_tab",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "order_type"
+         ],
+         "derived_features": [],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "eq",
+           "value_kind": "str"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "3056550f-07bc-41d6-9ce8-0a1492354a61",
+     "trace": null
+    },
+    {
+     "id": "P13",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "no_frame": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 6633,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3499,
+     "output_tokens": 76,
+     "request_id": "155c71aba5f44d1ab5ec44e048c9b2b3",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "trend_req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "trend",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [],
+         "derived_features": [],
+         "filters": []
+        }
+       ]
+      }
+     ],
+     "session_id": "beafe512-10fd-4721-82d4-ddbdb102b218",
+     "trace": null
+    },
+    {
+     "id": "P16",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": true,
+      "view_modes": true,
+      "oracle_values": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "detail": {
+      "oracle": {
+       "expected": {
+        "Quảng Ninh": 75753000.0,
+        "Bắc Ninh": 57892000.0,
+        "Thừa Thiên - Huế": 68915000.0
+       },
+       "shown": {
+        "Bắc Ninh": 58142000.0,
+        "Quảng Ninh": 76252000.0,
+        "Thừa Thiên - Huế": 69108000.0
+       },
+       "period": null
+      },
+      "frames": [
+       {
+        "axis": "city",
+        "members": [
+         "Quảng Ninh",
+         "Bắc Ninh",
+         "Thừa Thiên - Huế"
+        ]
+       }
+      ],
+      "charts": [
+       {
+        "role": "primary",
+        "dims": [
+         "city"
+        ],
+        "type": "bar",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city"
+        ],
+        "type": "multi_line",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "order_type"
+        ],
+        "type": "grouped_bar",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "store",
+         "store_id"
+        ],
+        "type": "grouped_bar",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "store_type"
+        ],
+        "type": "multi_line",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "payment_method"
+        ],
+        "type": "grouped_bar",
+        "metric": "revenue"
+       }
+      ]
+     },
+     "phase": "generate",
+     "latency_ms": 8694,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3749,
+     "output_tokens": 127,
+     "request_id": "d2e4f81417bf402eb3fb65aa0eec1941",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "revenue_comparison_by_city",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "297484b1-9205-4575-8cab-6a70949eff33",
+     "trace": null
+    },
+    {
+     "id": "P17",
+     "set": "positive",
+     "outcome": "error",
+     "checks": {
+      "outcome": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "detail": {},
+     "phase": "propose",
+     "latency_ms": 10881,
+     "error_category": "semantic_intent_invalid",
+     "error_message": "Semantic interpretation needs targeted recovery",
+     "logical_calls": 2,
+     "http_attempts": 2,
+     "repairs": 1,
+     "input_tokens": 9411,
+     "output_tokens": 352,
+     "request_id": "4b3923406b914932830a7ed2211d09aa",
+     "contract_issues": [
+      {
+       "requirement_id": "req_1",
+       "field": "selection",
+       "code": "untargeted_field_changed"
+      }
+     ],
+     "issues": [
+      [
+       {
+        "requirement_id": "req_1",
+        "field": "filters",
+        "code": "scope_membership_mismatch",
+        "expected": [
+         [
+          "Đà Nẵng"
+         ],
+         [
+          "Cần Thơ"
+         ]
+        ]
+       },
+       {
+        "requirement_id": null,
+        "field": "filters",
+        "code": "scope_cohort_missing",
+        "expected": [
+         [
+          "Đà Nẵng"
+         ],
+         [
+          "Cần Thơ"
+         ]
+        ]
+       }
+      ],
+      [
+       {
+        "requirement_id": "req_1",
+        "field": "selection",
+        "code": "untargeted_field_changed"
+       }
+      ]
+     ],
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "payment_method",
+          "city"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "phase": "repair",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "city",
+          "payment_method"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": null,
+     "trace": null
+    },
+    {
+     "id": "P18",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "ranking_census": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "detail": {
+      "frames": [
+       {
+        "axis": "city",
+        "members": [
+         "Đồng Nai",
+         "Hà Nội",
+         "Hồ Chí Minh",
+         "Vĩnh Long",
+         "Hải Phòng"
+        ]
+       }
+      ],
+      "charts": [
+       {
+        "role": "primary",
+        "dims": [
+         "city"
+        ],
+        "type": "bar",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city"
+        ],
+        "type": "multi_line",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "order_type"
+        ],
+        "type": "grouped_bar",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "store_type"
+        ],
+        "type": "multi_line",
+        "metric": "revenue"
+       },
+       {
+        "role": "supporting",
+        "dims": [
+         "city",
+         "payment_method"
+        ],
+        "type": "grouped_bar",
+        "metric": "revenue"
+       }
+      ]
+     },
+     "phase": "generate",
+     "latency_ms": 6591,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3435,
+     "output_tokens": 127,
+     "request_id": "7f23704bd9d342b599b94e1675759614",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": {
+          "metric_id": "revenue",
+          "direction": "bottom",
+          "limit": 5
+         },
+         "analysis_kind": "ranking",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [],
+         "filters": []
+        }
+       ]
+      }
+     ],
+     "session_id": "8445d2c9-5959-4914-a027-887cb647e6db",
+     "trace": null
+    },
+    {
+     "id": "P20",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": true,
+      "view_modes": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 4379,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3350,
+     "output_tokens": 142,
+     "request_id": "f7b263c94e844c7d9b4cc1a26954c137",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "order_count"
+         ],
+         "dimension_ids": [
+          "store_type"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": [
+          {
+           "dimension": "store_type",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "421810c2-33c8-4623-bde4-456acc2ac3a2",
+     "trace": null
+    },
+    {
+     "id": "P23",
+     "set": "positive",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "supporting_keep_axis": true,
+      "view_modes": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 4636,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3456,
+     "output_tokens": 93,
+     "request_id": "90bfa3a741de4ba4aae57c5f497ad1f5",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "revenue",
+          "store_revenue"
+         ],
+         "dimension_ids": [
+          "store_type"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": []
+        }
+       ]
+      }
+     ],
+     "session_id": "7ed30839-db47-4b8d-916d-6349d0fcbd44",
+     "trace": null
+    },
+    {
+     "id": "P24",
+     "set": "positive",
+     "outcome": "error",
+     "checks": {
+      "outcome": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "detail": {},
+     "phase": "propose",
+     "latency_ms": 9174,
+     "error_category": "semantic_intent_invalid",
+     "error_message": "Semantic interpretation needs targeted recovery",
+     "logical_calls": 2,
+     "http_attempts": 2,
+     "repairs": 1,
+     "input_tokens": 6689,
+     "output_tokens": 162,
+     "request_id": "2926678eb53b490da6229dfb7f4932d8",
+     "contract_issues": [
+      {
+       "requirement_id": "req_1",
+       "field": "dimension_ids",
+       "code": "explicit_trend_grain_mismatch",
+       "expected": []
+      }
+     ],
+     "issues": [
+      [
+       {
+        "requirement_id": "req_1",
+        "field": "derived_features",
+        "code": "feature_shape_conflict",
+        "feature": "group_gap",
+        "expected_shapes": [
+         "aggregate",
+         "cross_tab"
+        ],
+        "protected_features": []
+       },
+       {
+        "requirement_id": "req_1",
+        "field": "feature_metrics",
+        "code": "feature_shape_binding_conflict",
+        "feature": "group_gap"
+       },
+       {
+        "requirement_id": "req_1",
+        "field": "dimension_ids",
+        "code": "explicit_trend_grain_mismatch",
+        "expected": []
+       }
+      ],
+      [
+       {
+        "requirement_id": "req_1",
+        "field": "dimension_ids",
+        "code": "explicit_trend_grain_mismatch",
+        "expected": []
+       }
+      ]
+     ],
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "trend",
+         "metric_ids": [
+          "revenue"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [],
+         "filters": []
+        }
+       ]
+      },
+      {
+       "phase": "repair",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": null,
+         "ranking": null,
+         "analysis_kind": null,
+         "metric_ids": [],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [],
+         "filters": []
+        }
+       ]
+      }
+     ],
+     "session_id": null,
+     "trace": null
+    },
+    {
+     "id": "T06",
+     "set": "transfer",
+     "outcome": "success",
+     "checks": {
+      "outcome": true,
+      "verified": true,
+      "frame_axis": true,
+      "members": true,
+      "supporting_keep_axis": true,
+      "view_modes": true
+     },
+     "passed": true,
+     "first_pass": true,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 3402,
+     "error_category": null,
+     "error_message": null,
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3614,
+     "output_tokens": 125,
+     "request_id": "1003b131db184cdf8521e5398e109dec",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "aov"
+         ],
+         "dimension_ids": [
+          "city"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": [
+          {
+           "dimension": "city",
+           "operator": "in",
+           "value_kind": "list"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "session_id": "a46b951c-e6bf-4c44-9f28-db256f24f99b",
+     "trace": null
+    },
+    {
+     "id": "T07",
+     "set": "transfer",
+     "outcome": "error",
+     "checks": {
+      "outcome": false
+     },
+     "passed": false,
+     "first_pass": false,
+     "detail": {},
+     "phase": "generate",
+     "latency_ms": 3391,
+     "error_category": "quality_verification",
+     "error_message": "Report provenance failed independent verification",
+     "logical_calls": 1,
+     "http_attempts": 1,
+     "repairs": 0,
+     "input_tokens": 3373,
+     "output_tokens": 91,
+     "request_id": "6f042c6ac3a6438cbfc9b4743fe1c4d2",
+     "contract_issues": null,
+     "issues": null,
+     "draft_shapes": [
+      {
+       "phase": "primary",
+       "requirements": [
+        {
+         "requirement_id": "req_1",
+         "supporting_for": null,
+         "availability": "requested",
+         "ranking": null,
+         "analysis_kind": "comparison",
+         "metric_ids": [
+          "order_completion_rate"
+         ],
+         "dimension_ids": [
+          "store_type"
+         ],
+         "derived_features": [
+          "group_gap"
+         ],
+         "filters": []
+        }
+       ]
+      }
+     ],
+     "session_id": null,
+     "trace": null
+    }
+   ],
+   "finished_at": "2026-10-22T08:24:58.725477+00:00"
+  }
+ ]
+}

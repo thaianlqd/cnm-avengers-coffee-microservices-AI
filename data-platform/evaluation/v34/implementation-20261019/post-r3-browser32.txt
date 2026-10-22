@@ -1,0 +1,44 @@
+
+> data-platform-web-ui@1.0.0 test:e2e
+> playwright test
+
+[2m[WebServer] [22m(node:13936) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 32 tests using 1 worker
+
+  ✓   1 [ui] › tests/e2e/analyst-workspace.spec.ts:8:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › shows exactly seven modes and keeps hidden legacy missions out of the picker (1.7s)
+  ✓   2 [ui] › tests/e2e/analyst-workspace.spec.ts:19:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › "Phân tích" runs one job through /analysis-jobs without opening the plan step; double click = one submission (1.8s)
+  ✓   3 [ui] › tests/e2e/analyst-workspace.spec.ts:37:3 › Analyst workspace - seven modes and one click (mocked API, real browser) › "Xem kế hoạch" keeps the optional preview/approve flow on its own endpoint (887ms)
+  ✓   4 [ui] › tests/e2e/analyst-workspace.spec.ts:49:3 › State isolation - stale responses never come back › propose is slow, the user goes back to edit, the old plan arrives later: no plan appears (1.3s)
+  ✓   5 [ui] › tests/e2e/analyst-workspace.spec.ts:64:3 › State isolation - stale responses never come back › generate is slow, the user stops: the late report is dropped and the workspace is reset (1.4s)
+  ✓   6 [ui] › tests/e2e/analyst-workspace.spec.ts:80:3 › State isolation - stale responses never come back › lost POST response: reconnect resumes the SAME idempotency key and never starts a new interpretation (2.2s)
+  ✓   7 [ui] › tests/e2e/analyst-workspace.spec.ts:103:3 › State isolation - stale responses never come back › changing the period after a plan was proposed drops that plan (1.2s)
+  ✓   8 [ui] › tests/e2e/analyst-workspace.spec.ts:117:3 › Risk scan, redirect and typed actions › a slow Risk scan is dropped when the mission changes (no scan published into another mission) (1.5s)
+  ✓   9 [ui] › tests/e2e/analyst-workspace.spec.ts:134:3 › Risk scan, redirect and typed actions › a REDIRECT fix switches the mission but keeps the deliberate question (1.8s)
+  ✓  10 [ui] › tests/e2e/analyst-workspace.spec.ts:167:3 › Guided input and typed clarification › untouched guided builder sends a guided contract; editing the text sends free text only (no stale guided intent) (1.6s)
+  ✓  11 [ui] › tests/e2e/analyst-workspace.spec.ts:203:3 › Refinement and reset on a finished report › a slow refinement that finishes after "Hỏi câu mới" does not resurrect the old report (2.4s)
+  ✓  12 [ui] › tests/e2e/analyst-workspace.spec.ts:226:3 › Refinement and reset on a finished report › cancelling while the job HTTP is still running cancels the owned task and publishes nothing late (2.3s)
+  ✓  13 [ui] › tests/e2e/platform-v34.spec.ts:30:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › anonymous login gate makes no protected platform requests (864ms)
+  ✓  14 [ui] › tests/e2e/platform-v34.spec.ts:38:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › identity login returns account state and never stores a token in browser storage (890ms)
+  ✓  15 [ui] › tests/e2e/platform-v34.spec.ts:53:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › expired protected session returns to sign in before a report can appear (863ms)
+  ✓  16 [ui] › tests/e2e/platform-v34.spec.ts:65:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › permission denial keeps the signed-in workspace and the draft (864ms)
+  ✓  17 [ui] › tests/e2e/platform-v34.spec.ts:77:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › logout removes the report before a different account can sign in (5.7s)
+  ✓  18 [ui] › tests/e2e/platform-v34.spec.ts:86:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › keyboard group inspect uses the exact composite artifact key and makes no new AI request (1.3s)
+  ✓  19 [ui] › tests/e2e/platform-v34.spec.ts:110:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › group analysis prepares a new governed request and waits for explicit submission (2.2s)
+  ✓  20 [ui] › tests/e2e/platform-v34.spec.ts:136:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › mobile group inspect shows revoked access without a generic AI retry (1.2s)
+  ✓  21 [ui] › tests/e2e/platform-v34.spec.ts:150:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › saved report reopens current server presentation with real donut rows and quarantines legacy claims (847ms)
+  ✓  22 [ui] › tests/e2e/platform-v34.spec.ts:173:3 › V3.4 auth, health and artifact inspection (mocked API; real browser) › blocked and unknown sources disclose measured health and unknown completeness (820ms)
+  ✓  23 [ui] › tests/e2e/platform-v34.spec.ts:187:3 › V3.4 BI data errors and measured values › marts503 is a visible error without zero KPI and retry recovers real data (848ms)
+  ✓  24 [ui] › tests/e2e/platform-v34.spec.ts:207:3 › V3.4 BI data errors and measured values › valid zero data is separate from a network error and never fabricates business rows (789ms)
+  ✓  25 [ui] › tests/e2e/platform-v34.spec.ts:220:1 › same-account reauthentication restores the draft without resubmitting paid work (1.0s)
+  ✓  26 [ui] › tests/e2e/platform-v34.spec.ts:237:1 › disabled SQL metadata is loaded only on Explorer and cannot show as a dashboard data failure (811ms)
+  ✓  27 [ui] › tests/e2e/platform-v34.spec.ts:255:1 › BI export fails visibly on denial and only reports success after receiving an actual CSV download (909ms)
+  ✓  28 [ui] › tests/e2e/platform-v34.spec.ts:279:1 › city share keeps the full population denominator and displays unscaled money (843ms)
+
+  ✓  29 [api] › tests/e2e/real-api.spec.ts:11:1 › South scope → optional proposal → generate → direct total and final conclusion (5.1s)
+  ✓  30 [api] › tests/e2e/real-api.spec.ts:51:1 › all public entry variants reject a known forbidden clause before interpretation or SQL (1.5s)
+  ✓  31 [api] › tests/e2e/real-api.spec.ts:69:1 › known mixed unsupported is blocked at real HTTP boundary with zero interpretation and SQL (139ms)
+  ✓  32 [api] › tests/e2e/real-api.spec.ts:77:1 › one-click API job retains same identity on reconnect and guided work uses zero AI (1.0s)
+
+  32 passed (55.8s)

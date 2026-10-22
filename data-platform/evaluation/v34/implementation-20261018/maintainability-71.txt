@@ -1,0 +1,3 @@
+== module tests.test_v34_semantic_repair tests.test_v34_architecture tests.test_v33_identity tests.test_hybrid_v28 (log: /tmp/v34-maintainability/module.log)
+Ran 71 tests in 67.959s
+OK

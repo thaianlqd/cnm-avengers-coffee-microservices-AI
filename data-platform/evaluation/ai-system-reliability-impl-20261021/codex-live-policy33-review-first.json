@@ -1,0 +1,2840 @@
+{
+  "passed": false,
+  "cases": [
+    {
+      "id": "risk-edited",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_341b4887313da8e842801c42:large_cash_discrepancy_shift_count:Avengers Coffee - Vincom Đồng Khởi|KVT002 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_341b4887313da8e842801c42:large_cash_discrepancy_shift_count:Avengers Coffee - Vincom Đồng Khởi|KVT002 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_341b4887313da8e842801c42:large_cash_discrepancy_shift_count:Tùng Thiện Vương|HC_HCM_TUNG_THIEN_VUONG_180 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_341b4887313da8e842801c42:large_cash_discrepancy_shift_count:Tùng Thiện Vương|HC_HCM_TUNG_THIEN_VUONG_180 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_341b4887313da8e842801c42:large_cash_discrepancy_shift_count:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_3a273ebe2d250d1f9a4f96a6:late_shift_rate:Lakai|HC_HCM_LAKAI_149 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_3a273ebe2d250d1f9a4f96a6:late_shift_rate:Lakai|HC_HCM_LAKAI_149 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_3a273ebe2d250d1f9a4f96a6:late_shift_rate:TTC Ung Văn Khiêm|HC_HCM_TTC_UNG_VAN_KHIEM_274 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_3a273ebe2d250d1f9a4f96a6:late_shift_rate:TTC Ung Văn Khiêm|HC_HCM_TTC_UNG_VAN_KHIEM_274 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_3a273ebe2d250d1f9a4f96a6:late_shift_rate:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_3 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_7132d9bb40ddc5062e7c92d5:avg_store_rating:1180 Quang Trung|HC_HCM_1180_QUANG_TRUNG_284 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_7132d9bb40ddc5062e7c92d5:avg_store_rating:1180 Quang Trung|HC_HCM_1180_QUANG_TRUNG_284 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_7132d9bb40ddc5062e7c92d5:avg_store_rating:L16 Him Lam|HC_HCM_L16_HIM_LAM_147 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_7132d9bb40ddc5062e7c92d5:avg_store_rating:L16 Him Lam|HC_HCM_L16_HIM_LAM_147 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_7132d9bb40ddc5062e7c92d5:avg_store_rating:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_4 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:Highlands Coffee Điện Biên Phủ|HCM_DIEN_BIEN_PHU recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:Highlands Coffee Điện Biên Phủ|HCM_DIEN_BIEN_PHU unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:Tùng Thiện Vương|HC_HCM_TUNG_THIEN_VUONG_180 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:Tùng Thiện Vương|HC_HCM_TUNG_THIEN_VUONG_180 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8f4eb150dc6a3b4582355fb3:paused_sale_positions:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_5 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c2b835971ae6b9acc6119690:delivery_success_rate:184 Lâm Văn Bền|HC_HCM_184_LAM_VAN_BEN_239 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c2b835971ae6b9acc6119690:delivery_success_rate:184 Lâm Văn Bền|HC_HCM_184_LAM_VAN_BEN_239 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c2b835971ae6b9acc6119690:delivery_success_rate:Highlands Coffee UrBan Hill D7|HC_HCM_URBAN_HILL_D7_358 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c2b835971ae6b9acc6119690:delivery_success_rate:Highlands Coffee UrBan Hill D7|HC_HCM_URBAN_HILL_D7_358 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c2b835971ae6b9acc6119690:delivery_success_rate:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_6 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_dafa5bfa16bca49db0eba765:order_cancellation_rate:Highlands Coffee Central Garden D1|HC_HCM_CENTRAL_GARDEN_D1_1212 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_dafa5bfa16bca49db0eba765:order_cancellation_rate:Highlands Coffee Central Garden D1|HC_HCM_CENTRAL_GARDEN_D1_1212 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_dafa5bfa16bca49db0eba765:order_cancellation_rate:Xuân Thủy|HC_HCM_XUAN_THUY_212 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_dafa5bfa16bca49db0eba765:order_cancellation_rate:Xuân Thủy|HC_HCM_XUAN_THUY_212 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_dafa5bfa16bca49db0eba765:order_cancellation_rate:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_0aa8328a6096cd1633362998:order_cancellation_rate:scalar:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_332502f988651c1246415411:delivery_success_rate:scalar:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_341b4887313da8e842801c42:large_cash_discrepancy_shift_count:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "Risk covers six signals without provider",
+          "passed": true
+        },
+        {
+          "assertion": "snapshot has current-state chart title",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.ca_doi_soat",
+            "label": "Đối soát kết ca thu ngân và chênh lệch tiền két",
+            "max_date": "2026-10-02",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "complete"
+          },
+          {
+            "source": "silver.ca_lam_viec_nhan_vien",
+            "label": "Ca làm việc và chấm công nhân sự",
+            "max_date": "2026-10-02",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "complete"
+          },
+          {
+            "source": "silver.danh_gia_chi_nhanh",
+            "label": "Đánh giá chất lượng dịch vụ chi nhánh",
+            "max_date": "2026-10-02",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "complete"
+          },
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          },
+          {
+            "source": "silver.giao_hang",
+            "label": "Chuyến giao hàng của shipper",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "complete"
+          },
+          {
+            "source": "silver.ton_kho_san_pham",
+            "label": "Tồn kho sản phẩm tại từng chi nhánh",
+            "max_date": null,
+            "stale": null,
+            "health_status": "healthy",
+            "completeness": "complete"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.ca_doi_soat",
+          "label": "Nguồn Đối soát kết ca thu ngân và chênh lệch tiền két: phát sinh nghiệp vụ mới nhất ngày 2026-10-02; bản sao đã đối soát đầy đủ với hệ thống nguồn, không có dữ liệu mới hơn.",
+          "scope_ref": null
+        },
+        {
+          "id": "source_coverage:silver.ca_lam_viec_nhan_vien",
+          "label": "Nguồn Ca làm việc và chấm công nhân sự: phát sinh nghiệp vụ mới nhất ngày 2026-10-02; bản sao đã đối soát đầy đủ với hệ thống nguồn, không có dữ liệu mới hơn.",
+          "scope_ref": null
+        },
+        {
+          "id": "source_coverage:silver.danh_gia_chi_nhanh",
+          "label": "Nguồn Đánh giá chất lượng dịch vụ chi nhánh: phát sinh nghiệp vụ mới nhất ngày 2026-10-02; bản sao đã đối soát đầy đủ với hệ thống nguồn, không có dữ liệu mới hơn.",
+          "scope_ref": null
+        },
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "source_coverage:silver.giao_hang",
+          "label": "Nguồn Chuyến giao hàng của shipper: phát sinh nghiệp vụ mới nhất ngày 2026-10-18; bản sao đã đối soát đầy đủ với hệ thống nguồn, không có dữ liệu mới hơn.",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_0aa8328a6096cd1633362998"
+        },
+        {
+          "id": "scope_taxonomy:q_0aa8328a6096cd1633362998",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_0aa8328a6096cd1633362998"
+        },
+        {
+          "id": "metric_population:order_cancellation_rate",
+          "label": "Tỷ lệ hủy đơn: DA_HUY / đơn đã kết thúc (HOAN_THANH, DA_HUY); không cộng tỷ lệ nhóm.",
+          "scope_ref": "q_0aa8328a6096cd1633362998"
+        },
+        {
+          "id": "nonadditive:q_0aa8328a6096cd1633362998",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_0aa8328a6096cd1633362998"
+        },
+        {
+          "id": "scope_taxonomy:q_332502f988651c1246415411",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_332502f988651c1246415411"
+        },
+        {
+          "id": "metric_population:delivery_success_rate",
+          "label": "Tỷ lệ giao thành công: DELIVERED / chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); không cộng tỷ lệ nhóm.",
+          "scope_ref": "q_332502f988651c1246415411"
+        },
+        {
+          "id": "nonadditive:q_332502f988651c1246415411",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_332502f988651c1246415411"
+        },
+        {
+          "id": "scope_taxonomy:q_341b4887313da8e842801c42",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_341b4887313da8e842801c42"
+        },
+        {
+          "id": "metric_population:large_cash_discrepancy_shift_count",
+          "label": "Số ca lệch tiền lớn: Số ca đối soát có |chênh lệch| > 500.000 VND (ngưỡng mặc định hệ thống, cấu hình trong danh mục).",
+          "scope_ref": "q_341b4887313da8e842801c42"
+        },
+        {
+          "id": "scope_taxonomy:q_3a273ebe2d250d1f9a4f96a6",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_3a273ebe2d250d1f9a4f96a6"
+        },
+        {
+          "id": "metric_population:late_shift_rate",
+          "label": "Tỷ lệ ca đi trễ: DI_TRE / ca đã chấm công vào ca (DUNG_GIO, DI_TRE, VE_SOM); không cộng tỷ lệ nhóm.",
+          "scope_ref": "q_3a273ebe2d250d1f9a4f96a6"
+        },
+        {
+          "id": "nonadditive:q_3a273ebe2d250d1f9a4f96a6",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_3a273ebe2d250d1f9a4f96a6"
+        },
+        {
+          "id": "scope_taxonomy:q_6dbc58a67f370c6682185663",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_6dbc58a67f370c6682185663"
+        },
+        {
+          "id": "metric_population:avg_store_rating",
+          "label": "Điểm phục vụ trung bình: Trung bình số sao đánh giá chi nhánh, làm tròn hai chữ số; đọc cùng cỡ mẫu đánh giá, không cộng trung bình nhóm.",
+          "scope_ref": "q_6dbc58a67f370c6682185663"
+        },
+        {
+          "id": "nonadditive:q_6dbc58a67f370c6682185663",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_6dbc58a67f370c6682185663"
+        },
+        {
+          "id": "scope_taxonomy:q_7132d9bb40ddc5062e7c92d5",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_7132d9bb40ddc5062e7c92d5"
+        },
+        {
+          "id": "nonadditive:q_7132d9bb40ddc5062e7c92d5",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_7132d9bb40ddc5062e7c92d5"
+        },
+        {
+          "id": "scope_taxonomy:q_87765795b9a5aa5fb23cc252",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_87765795b9a5aa5fb23cc252"
+        },
+        {
+          "id": "nonadditive:q_87765795b9a5aa5fb23cc252",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_87765795b9a5aa5fb23cc252"
+        },
+        {
+          "id": "scope_taxonomy:q_8f4eb150dc6a3b4582355fb3",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_8f4eb150dc6a3b4582355fb3"
+        },
+        {
+          "id": "metric_population:paused_sale_positions",
+          "label": "Vị trí tạm ngưng bán: Cặp món × điểm bán đang không mở bán (checkout chặn); không phải hết hàng.",
+          "scope_ref": "q_8f4eb150dc6a3b4582355fb3"
+        },
+        {
+          "id": "snapshot:q_8f4eb150dc6a3b4582355fb3",
+          "label": "Dữ liệu hiện trạng; không suy ra lịch sử theo kỳ.",
+          "scope_ref": "q_8f4eb150dc6a3b4582355fb3"
+        },
+        {
+          "id": "scope_taxonomy:q_c2b835971ae6b9acc6119690",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_c2b835971ae6b9acc6119690"
+        },
+        {
+          "id": "nonadditive:q_c2b835971ae6b9acc6119690",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_c2b835971ae6b9acc6119690"
+        },
+        {
+          "id": "scope_taxonomy:q_dafa5bfa16bca49db0eba765",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_dafa5bfa16bca49db0eba765"
+        },
+        {
+          "id": "nonadditive:q_dafa5bfa16bca49db0eba765",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_dafa5bfa16bca49db0eba765"
+        },
+        {
+          "id": "display_subset:q_c2b835971ae6b9acc6119690",
+          "label": "Biểu đồ hiển thị một phần nhóm; bảng và phép tính giữ toàn bộ kết quả.",
+          "scope_ref": "q_c2b835971ae6b9acc6119690"
+        },
+        {
+          "id": "display_subset:q_dafa5bfa16bca49db0eba765",
+          "label": "Biểu đồ hiển thị một phần nhóm; bảng và phép tính giữ toàn bộ kết quả.",
+          "scope_ref": "q_dafa5bfa16bca49db0eba765"
+        }
+      ]
+    },
+    {
+      "id": "risk-explicit-scope",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_6069a1d2d5d5f2dce619bc13:order_cancellation_rate:Highlands Coffee Central Garden D1|HC_HCM_CENTRAL_GARDEN_D1_1212 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_6069a1d2d5d5f2dce619bc13:order_cancellation_rate:Highlands Coffee Central Garden D1|HC_HCM_CENTRAL_GARDEN_D1_1212 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_6069a1d2d5d5f2dce619bc13:order_cancellation_rate:Xuân Thủy|HC_HCM_XUAN_THUY_212 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_6069a1d2d5d5f2dce619bc13:order_cancellation_rate:Xuân Thủy|HC_HCM_XUAN_THUY_212 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_6069a1d2d5d5f2dce619bc13:order_cancellation_rate:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8262b47f549ffd558ee65c16:late_shift_rate:Lakai|HC_HCM_LAKAI_149 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8262b47f549ffd558ee65c16:late_shift_rate:Lakai|HC_HCM_LAKAI_149 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8262b47f549ffd558ee65c16:late_shift_rate:TTC Ung Văn Khiêm|HC_HCM_TTC_UNG_VAN_KHIEM_274 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8262b47f549ffd558ee65c16:late_shift_rate:TTC Ung Văn Khiêm|HC_HCM_TTC_UNG_VAN_KHIEM_274 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8262b47f549ffd558ee65c16:late_shift_rate:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_3 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:Highlands Coffee Điện Biên Phủ|HCM_DIEN_BIEN_PHU recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:Highlands Coffee Điện Biên Phủ|HCM_DIEN_BIEN_PHU unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:Tùng Thiện Vương|HC_HCM_TUNG_THIEN_VUONG_180 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:Tùng Thiện Vương|HC_HCM_TUNG_THIEN_VUONG_180 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_8b89a232b3e4c1152dfa9cdf:paused_sale_positions:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_4 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_b1ab0d34325f99b53dac4bda:large_cash_discrepancy_shift_count:Avengers Coffee - Vincom Đồng Khởi|KVT002 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_b1ab0d34325f99b53dac4bda:large_cash_discrepancy_shift_count:Avengers Coffee - Vincom Đồng Khởi|KVT002 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_b1ab0d34325f99b53dac4bda:large_cash_discrepancy_shift_count:Tùng Thiện Vương|HC_HCM_TUNG_THIEN_VUONG_180 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_b1ab0d34325f99b53dac4bda:large_cash_discrepancy_shift_count:Tùng Thiện Vương|HC_HCM_TUNG_THIEN_VUONG_180 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_b1ab0d34325f99b53dac4bda:large_cash_discrepancy_shift_count:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_5 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_e1f89f588cb554b8efca1579:avg_store_rating:1180 Quang Trung|HC_HCM_1180_QUANG_TRUNG_284 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_e1f89f588cb554b8efca1579:avg_store_rating:1180 Quang Trung|HC_HCM_1180_QUANG_TRUNG_284 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_e1f89f588cb554b8efca1579:avg_store_rating:L16 Him Lam|HC_HCM_L16_HIM_LAM_147 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_e1f89f588cb554b8efca1579:avg_store_rating:L16 Him Lam|HC_HCM_L16_HIM_LAM_147 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_e1f89f588cb554b8efca1579:avg_store_rating:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_6 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f1abcaa54f995997add99272:delivery_success_rate:184 Lâm Văn Bền|HC_HCM_184_LAM_VAN_BEN_239 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f1abcaa54f995997add99272:delivery_success_rate:184 Lâm Văn Bền|HC_HCM_184_LAM_VAN_BEN_239 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f1abcaa54f995997add99272:delivery_success_rate:Highlands Coffee UrBan Hill D7|HC_HCM_URBAN_HILL_D7_358 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f1abcaa54f995997add99272:delivery_success_rate:Highlands Coffee UrBan Hill D7|HC_HCM_URBAN_HILL_D7_358 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f1abcaa54f995997add99272:delivery_success_rate:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_25d0e62bd2a64d52732223b4:delivery_success_rate:scalar:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_6069a1d2d5d5f2dce619bc13:order_cancellation_rate:group_comparison:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_8262b47f549ffd558ee65c16:late_shift_rate:group_comparison:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "Risk covers six signals without provider",
+          "passed": true
+        },
+        {
+          "assertion": "snapshot has current-state chart title",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.ca_doi_soat",
+            "label": "Đối soát kết ca thu ngân và chênh lệch tiền két",
+            "max_date": "2026-10-02",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "complete"
+          },
+          {
+            "source": "silver.ca_lam_viec_nhan_vien",
+            "label": "Ca làm việc và chấm công nhân sự",
+            "max_date": "2026-10-02",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "complete"
+          },
+          {
+            "source": "silver.danh_gia_chi_nhanh",
+            "label": "Đánh giá chất lượng dịch vụ chi nhánh",
+            "max_date": "2026-10-02",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "complete"
+          },
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          },
+          {
+            "source": "silver.giao_hang",
+            "label": "Chuyến giao hàng của shipper",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "complete"
+          },
+          {
+            "source": "silver.ton_kho_san_pham",
+            "label": "Tồn kho sản phẩm tại từng chi nhánh",
+            "max_date": null,
+            "stale": null,
+            "health_status": "healthy",
+            "completeness": "complete"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.ca_doi_soat",
+          "label": "Nguồn Đối soát kết ca thu ngân và chênh lệch tiền két: phát sinh nghiệp vụ mới nhất ngày 2026-10-02; bản sao đã đối soát đầy đủ với hệ thống nguồn, không có dữ liệu mới hơn.",
+          "scope_ref": null
+        },
+        {
+          "id": "source_coverage:silver.ca_lam_viec_nhan_vien",
+          "label": "Nguồn Ca làm việc và chấm công nhân sự: phát sinh nghiệp vụ mới nhất ngày 2026-10-02; bản sao đã đối soát đầy đủ với hệ thống nguồn, không có dữ liệu mới hơn.",
+          "scope_ref": null
+        },
+        {
+          "id": "source_coverage:silver.danh_gia_chi_nhanh",
+          "label": "Nguồn Đánh giá chất lượng dịch vụ chi nhánh: phát sinh nghiệp vụ mới nhất ngày 2026-10-02; bản sao đã đối soát đầy đủ với hệ thống nguồn, không có dữ liệu mới hơn.",
+          "scope_ref": null
+        },
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "source_coverage:silver.giao_hang",
+          "label": "Nguồn Chuyến giao hàng của shipper: phát sinh nghiệp vụ mới nhất ngày 2026-10-18; bản sao đã đối soát đầy đủ với hệ thống nguồn, không có dữ liệu mới hơn.",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_25d0e62bd2a64d52732223b4"
+        },
+        {
+          "id": "scope_taxonomy:q_25d0e62bd2a64d52732223b4",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_25d0e62bd2a64d52732223b4"
+        },
+        {
+          "id": "metric_population:delivery_success_rate",
+          "label": "Tỷ lệ giao thành công: DELIVERED / chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); không cộng tỷ lệ nhóm.",
+          "scope_ref": "q_25d0e62bd2a64d52732223b4"
+        },
+        {
+          "id": "nonadditive:q_25d0e62bd2a64d52732223b4",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_25d0e62bd2a64d52732223b4"
+        },
+        {
+          "id": "scope_taxonomy:q_6069a1d2d5d5f2dce619bc13",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_6069a1d2d5d5f2dce619bc13"
+        },
+        {
+          "id": "metric_population:order_cancellation_rate",
+          "label": "Tỷ lệ hủy đơn: DA_HUY / đơn đã kết thúc (HOAN_THANH, DA_HUY); không cộng tỷ lệ nhóm.",
+          "scope_ref": "q_6069a1d2d5d5f2dce619bc13"
+        },
+        {
+          "id": "nonadditive:q_6069a1d2d5d5f2dce619bc13",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_6069a1d2d5d5f2dce619bc13"
+        },
+        {
+          "id": "scope_taxonomy:q_8262b47f549ffd558ee65c16",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_8262b47f549ffd558ee65c16"
+        },
+        {
+          "id": "metric_population:late_shift_rate",
+          "label": "Tỷ lệ ca đi trễ: DI_TRE / ca đã chấm công vào ca (DUNG_GIO, DI_TRE, VE_SOM); không cộng tỷ lệ nhóm.",
+          "scope_ref": "q_8262b47f549ffd558ee65c16"
+        },
+        {
+          "id": "nonadditive:q_8262b47f549ffd558ee65c16",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_8262b47f549ffd558ee65c16"
+        },
+        {
+          "id": "scope_taxonomy:q_8b89a232b3e4c1152dfa9cdf",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_8b89a232b3e4c1152dfa9cdf"
+        },
+        {
+          "id": "metric_population:paused_sale_positions",
+          "label": "Vị trí tạm ngưng bán: Cặp món × điểm bán đang không mở bán (checkout chặn); không phải hết hàng.",
+          "scope_ref": "q_8b89a232b3e4c1152dfa9cdf"
+        },
+        {
+          "id": "snapshot:q_8b89a232b3e4c1152dfa9cdf",
+          "label": "Dữ liệu hiện trạng; không suy ra lịch sử theo kỳ.",
+          "scope_ref": "q_8b89a232b3e4c1152dfa9cdf"
+        },
+        {
+          "id": "scope_taxonomy:q_b1ab0d34325f99b53dac4bda",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_b1ab0d34325f99b53dac4bda"
+        },
+        {
+          "id": "metric_population:large_cash_discrepancy_shift_count",
+          "label": "Số ca lệch tiền lớn: Số ca đối soát có |chênh lệch| > 500.000 VND (ngưỡng mặc định hệ thống, cấu hình trong danh mục).",
+          "scope_ref": "q_b1ab0d34325f99b53dac4bda"
+        },
+        {
+          "id": "scope_taxonomy:q_e1f89f588cb554b8efca1579",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_e1f89f588cb554b8efca1579"
+        },
+        {
+          "id": "metric_population:avg_store_rating",
+          "label": "Điểm phục vụ trung bình: Trung bình số sao đánh giá chi nhánh, làm tròn hai chữ số; đọc cùng cỡ mẫu đánh giá, không cộng trung bình nhóm.",
+          "scope_ref": "q_e1f89f588cb554b8efca1579"
+        },
+        {
+          "id": "nonadditive:q_e1f89f588cb554b8efca1579",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_e1f89f588cb554b8efca1579"
+        },
+        {
+          "id": "scope_taxonomy:q_e9518e350b412f6e2be5a832",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_e9518e350b412f6e2be5a832"
+        },
+        {
+          "id": "nonadditive:q_e9518e350b412f6e2be5a832",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_e9518e350b412f6e2be5a832"
+        },
+        {
+          "id": "scope_taxonomy:q_f1abcaa54f995997add99272",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_f1abcaa54f995997add99272"
+        },
+        {
+          "id": "nonadditive:q_f1abcaa54f995997add99272",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_f1abcaa54f995997add99272"
+        },
+        {
+          "id": "scope_taxonomy:q_fdddae565e2b304bdb2890e3",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_fdddae565e2b304bdb2890e3"
+        },
+        {
+          "id": "nonadditive:q_fdddae565e2b304bdb2890e3",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_fdddae565e2b304bdb2890e3"
+        },
+        {
+          "id": "scope_taxonomy:q_ff52ad16576bed1961223b16",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_ff52ad16576bed1961223b16"
+        },
+        {
+          "id": "nonadditive:q_ff52ad16576bed1961223b16",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_ff52ad16576bed1961223b16"
+        },
+        {
+          "id": "display_subset:q_6069a1d2d5d5f2dce619bc13",
+          "label": "Biểu đồ hiển thị một phần nhóm; bảng và phép tính giữ toàn bộ kết quả.",
+          "scope_ref": "q_6069a1d2d5d5f2dce619bc13"
+        },
+        {
+          "id": "display_subset:q_f1abcaa54f995997add99272",
+          "label": "Biểu đồ hiển thị một phần nhóm; bảng và phép tính giữ toàn bộ kết quả.",
+          "scope_ref": "q_f1abcaa54f995997add99272"
+        }
+      ]
+    },
+    {
+      "id": "risk-followup",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_12127203073d1f0e80f7aadc:order_cancellation_rate:Highlands Coffee Central Garden D1|HC_HCM_CENTRAL_GARDEN_D1_1212 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_12127203073d1f0e80f7aadc:order_cancellation_rate:Highlands Coffee Central Garden D1|HC_HCM_CENTRAL_GARDEN_D1_1212 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_12127203073d1f0e80f7aadc:order_cancellation_rate:Highlands Coffee 236 Tô Ngọc Vân|HC_HCM_236_TO_NGOC_VAN_466 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_12127203073d1f0e80f7aadc:order_cancellation_rate:Highlands Coffee 236 Tô Ngọc Vân|HC_HCM_236_TO_NGOC_VAN_466 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_12127203073d1f0e80f7aadc:order_cancellation_rate:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_73da3e91c8598b7d60c5227f:order_cancellation_rate:all@2026-09-30 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_73da3e91c8598b7d60c5227f:order_cancellation_rate:all@2026-09-30 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_73da3e91c8598b7d60c5227f:order_cancellation_rate:all@2026-09-05 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_73da3e91c8598b7d60c5227f:order_cancellation_rate:all@2026-09-05 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_3 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_517856311a48d910045e4334:order_cancellation_rate:DUNG_TAI_CHO recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_517856311a48d910045e4334:order_cancellation_rate:DUNG_TAI_CHO unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_517856311a48d910045e4334:order_cancellation_rate:DUNG_TAI_CHO-MANG_DI recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_517856311a48d910045e4334:order_cancellation_rate:DUNG_TAI_CHO-MANG_DI unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_517856311a48d910045e4334:order_cancellation_rate:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_4 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_962619aa4433bc41bfc1b700:order_cancellation_rate:THANH_TOAN_KHI_NHAN_HANG recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_962619aa4433bc41bfc1b700:order_cancellation_rate:THANH_TOAN_KHI_NHAN_HANG unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_962619aa4433bc41bfc1b700:order_cancellation_rate:VI_DIEN_TU recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_962619aa4433bc41bfc1b700:order_cancellation_rate:VI_DIEN_TU unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_962619aa4433bc41bfc1b700:order_cancellation_rate:threshold_breaches recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_12127203073d1f0e80f7aadc:order_cancellation_rate:leader:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_517856311a48d910045e4334:cancelled_terminal_order_count:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_73da3e91c8598b7d60c5227f:order_cancellation_rate:change:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "one correctly directed ranking",
+          "passed": true
+        },
+        {
+          "assertion": "every dependent query explicitly bound to ranked cohort",
+          "passed": true
+        },
+        {
+          "assertion": "Top5 store identities equal independent warehouse oracle",
+          "passed": true
+        },
+        {
+          "assertion": "cohort ratio recomputed from raw numerator/denominator q_517856311a48d910045e4334",
+          "passed": true
+        },
+        {
+          "assertion": "cohort ratio recomputed from raw numerator/denominator q_73da3e91c8598b7d60c5227f",
+          "passed": true
+        },
+        {
+          "assertion": "cohort ratio recomputed from raw numerator/denominator q_962619aa4433bc41bfc1b700",
+          "passed": true
+        },
+        {
+          "assertion": "cohort ratio recomputed from raw numerator/denominator q_9b41fc91c188bd2816a8e406",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "after",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_12127203073d1f0e80f7aadc"
+        },
+        {
+          "id": "scope_taxonomy:q_12127203073d1f0e80f7aadc",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_12127203073d1f0e80f7aadc"
+        },
+        {
+          "id": "metric_population:order_cancellation_rate",
+          "label": "Tỷ lệ hủy đơn: DA_HUY / đơn đã kết thúc (HOAN_THANH, DA_HUY); không cộng tỷ lệ nhóm.",
+          "scope_ref": "q_12127203073d1f0e80f7aadc"
+        },
+        {
+          "id": "nonadditive:q_12127203073d1f0e80f7aadc",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_12127203073d1f0e80f7aadc"
+        },
+        {
+          "id": "topn:q_12127203073d1f0e80f7aadc",
+          "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+          "scope_ref": "q_12127203073d1f0e80f7aadc"
+        },
+        {
+          "id": "scope_taxonomy:q_517856311a48d910045e4334",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_517856311a48d910045e4334"
+        },
+        {
+          "id": "metric_population:cancelled_terminal_order_count",
+          "label": "Số đơn bị hủy (trên đơn đã kết thúc): Số đơn DA_HUY trong tập đơn đã kết thúc — tử số của tỷ lệ hủy đơn.",
+          "scope_ref": "q_517856311a48d910045e4334"
+        },
+        {
+          "id": "metric_population:terminal_order_count",
+          "label": "Số đơn đã kết thúc: Số đơn đã kết thúc (HOAN_THANH + DA_HUY) — mẫu số của tỷ lệ hủy/hoàn thành.",
+          "scope_ref": "q_517856311a48d910045e4334"
+        },
+        {
+          "id": "related:q_517856311a48d910045e4334",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_517856311a48d910045e4334"
+        },
+        {
+          "id": "nonadditive:q_517856311a48d910045e4334",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_517856311a48d910045e4334"
+        },
+        {
+          "id": "scope_taxonomy:q_73da3e91c8598b7d60c5227f",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_73da3e91c8598b7d60c5227f"
+        },
+        {
+          "id": "related:q_73da3e91c8598b7d60c5227f",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_73da3e91c8598b7d60c5227f"
+        },
+        {
+          "id": "nonadditive:q_73da3e91c8598b7d60c5227f",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_73da3e91c8598b7d60c5227f"
+        },
+        {
+          "id": "scope_taxonomy:q_962619aa4433bc41bfc1b700",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_962619aa4433bc41bfc1b700"
+        },
+        {
+          "id": "related:q_962619aa4433bc41bfc1b700",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_962619aa4433bc41bfc1b700"
+        },
+        {
+          "id": "nonadditive:q_962619aa4433bc41bfc1b700",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_962619aa4433bc41bfc1b700"
+        },
+        {
+          "id": "scope_taxonomy:q_9b41fc91c188bd2816a8e406",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_9b41fc91c188bd2816a8e406"
+        },
+        {
+          "id": "related:q_9b41fc91c188bd2816a8e406",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_9b41fc91c188bd2816a8e406"
+        },
+        {
+          "id": "nonadditive:q_9b41fc91c188bd2816a8e406",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "scope_ref": "q_9b41fc91c188bd2816a8e406"
+        }
+      ]
+    },
+    {
+      "id": "overview-scoped",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_60a8f23042dbe33eb7da9c84:revenue:all@2026-09-30 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_60a8f23042dbe33eb7da9c84:revenue:all@2026-09-30 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_60a8f23042dbe33eb7da9c84:revenue:all@2026-09-13 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_60a8f23042dbe33eb7da9c84:revenue:all@2026-09-13 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_9806a2589cacf65cfd4ff3d6:revenue:DUNG_TAI_CHO recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_9806a2589cacf65cfd4ff3d6:revenue:DUNG_TAI_CHO unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_9806a2589cacf65cfd4ff3d6:revenue:GIAO_TAN_NOI recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_9806a2589cacf65cfd4ff3d6:revenue:GIAO_TAN_NOI unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_5 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_0201bfffa1e7497e41dd3190:revenue:CHI_NHANH_CHINH@2026-09-30 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_0201bfffa1e7497e41dd3190:revenue:CHI_NHANH_CHINH@2026-09-30 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_0201bfffa1e7497e41dd3190:revenue:CHI_NHANH_CHINH@2026-09-13 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_0201bfffa1e7497e41dd3190:revenue:CHI_NHANH_CHINH@2026-09-13 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_6 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f930bbd51c0bf05f1302da7c:revenue:CHI_NHANH_CHINH recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f930bbd51c0bf05f1302da7c:revenue:CHI_NHANH_CHINH unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f930bbd51c0bf05f1302da7c:revenue:KIOSK_VE_TINH recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f930bbd51c0bf05f1302da7c:revenue:KIOSK_VE_TINH unit",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_ea540c253ef2f9217663c6e5:revenue:scalar:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_0201bfffa1e7497e41dd3190:revenue:change:fe21c339fa",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_28c46b0c3191023a62ee41ea:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "HCM primary revenue reconciles with independently read warehouse",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_ea540c253ef2f9217663c6e5"
+        },
+        {
+          "id": "scope_taxonomy:q_ea540c253ef2f9217663c6e5",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_ea540c253ef2f9217663c6e5"
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_ea540c253ef2f9217663c6e5"
+        },
+        {
+          "id": "scope_taxonomy:q_0201bfffa1e7497e41dd3190",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_0201bfffa1e7497e41dd3190"
+        },
+        {
+          "id": "related:q_0201bfffa1e7497e41dd3190",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_0201bfffa1e7497e41dd3190"
+        },
+        {
+          "id": "scope_taxonomy:q_28c46b0c3191023a62ee41ea",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_28c46b0c3191023a62ee41ea"
+        },
+        {
+          "id": "related:q_28c46b0c3191023a62ee41ea",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_28c46b0c3191023a62ee41ea"
+        },
+        {
+          "id": "scope_taxonomy:q_60a8f23042dbe33eb7da9c84",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_60a8f23042dbe33eb7da9c84"
+        },
+        {
+          "id": "related:q_60a8f23042dbe33eb7da9c84",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_60a8f23042dbe33eb7da9c84"
+        },
+        {
+          "id": "scope_taxonomy:q_9806a2589cacf65cfd4ff3d6",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_9806a2589cacf65cfd4ff3d6"
+        },
+        {
+          "id": "related:q_9806a2589cacf65cfd4ff3d6",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_9806a2589cacf65cfd4ff3d6"
+        },
+        {
+          "id": "scope_taxonomy:q_f930bbd51c0bf05f1302da7c",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_f930bbd51c0bf05f1302da7c"
+        },
+        {
+          "id": "related:q_f930bbd51c0bf05f1302da7c",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_f930bbd51c0bf05f1302da7c"
+        },
+        {
+          "id": "scope_taxonomy:q_fd61d5beb7e362b7633ef06d",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_fd61d5beb7e362b7633ef06d"
+        },
+        {
+          "id": "related:q_fd61d5beb7e362b7633ef06d",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_fd61d5beb7e362b7633ef06d"
+        }
+      ]
+    },
+    {
+      "id": "compare",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_bbbfd263f60514cc928b35c9:revenue:Hồ Chí Minh recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_bbbfd263f60514cc928b35c9:revenue:Hồ Chí Minh unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_bbbfd263f60514cc928b35c9:revenue:Hồ Chí Minh-Hà Nội recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_bbbfd263f60514cc928b35c9:revenue:Hồ Chí Minh-Hà Nội unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_cd69f672ea2c3fba345cc5e1:revenue:all@2026-09-30 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_cd69f672ea2c3fba345cc5e1:revenue:all@2026-09-30 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_cd69f672ea2c3fba345cc5e1:revenue:all@2026-09-19 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_cd69f672ea2c3fba345cc5e1:revenue:all@2026-09-19 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_4 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c14d2ad82e45d972a4931639:revenue:DUNG_TAI_CHO recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c14d2ad82e45d972a4931639:revenue:DUNG_TAI_CHO unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c14d2ad82e45d972a4931639:revenue:GIAO_TAN_NOI recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c14d2ad82e45d972a4931639:revenue:GIAO_TAN_NOI unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_5 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_855712105d039de029b8e8ee:revenue:CHI_NHANH_CHINH@2026-09-30 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_855712105d039de029b8e8ee:revenue:CHI_NHANH_CHINH@2026-09-30 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_855712105d039de029b8e8ee:revenue:CHI_NHANH_CHINH@2026-09-19 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_855712105d039de029b8e8ee:revenue:CHI_NHANH_CHINH@2026-09-19 unit",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_bbbfd263f60514cc928b35c9:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_658458f8f4057e47d1466dca:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_84b2dd79f1a9a607c63255b4:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "both requested comparison members and no others",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_bbbfd263f60514cc928b35c9"
+        },
+        {
+          "id": "scope_taxonomy:q_bbbfd263f60514cc928b35c9",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_bbbfd263f60514cc928b35c9"
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_bbbfd263f60514cc928b35c9"
+        },
+        {
+          "id": "scope_taxonomy:q_658458f8f4057e47d1466dca",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_658458f8f4057e47d1466dca"
+        },
+        {
+          "id": "related:q_658458f8f4057e47d1466dca",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_658458f8f4057e47d1466dca"
+        },
+        {
+          "id": "scope_taxonomy:q_84b2dd79f1a9a607c63255b4",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_84b2dd79f1a9a607c63255b4"
+        },
+        {
+          "id": "related:q_84b2dd79f1a9a607c63255b4",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_84b2dd79f1a9a607c63255b4"
+        },
+        {
+          "id": "scope_taxonomy:q_855712105d039de029b8e8ee",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_855712105d039de029b8e8ee"
+        },
+        {
+          "id": "related:q_855712105d039de029b8e8ee",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_855712105d039de029b8e8ee"
+        },
+        {
+          "id": "scope_taxonomy:q_c14d2ad82e45d972a4931639",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_c14d2ad82e45d972a4931639"
+        },
+        {
+          "id": "related:q_c14d2ad82e45d972a4931639",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_c14d2ad82e45d972a4931639"
+        },
+        {
+          "id": "scope_taxonomy:q_cd69f672ea2c3fba345cc5e1",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_cd69f672ea2c3fba345cc5e1"
+        },
+        {
+          "id": "related:q_cd69f672ea2c3fba345cc5e1",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_cd69f672ea2c3fba345cc5e1"
+        }
+      ]
+    },
+    {
+      "id": "bottom-five",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_84285c0c3a48633193b73f66:revenue:Quảng Trị recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_84285c0c3a48633193b73f66:revenue:Quảng Trị unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_84285c0c3a48633193b73f66:revenue:Ninh Thuận recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_84285c0c3a48633193b73f66:revenue:Ninh Thuận unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-28 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-28 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-19 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-19 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_3 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_6e5af6b96f89b7a06371c004:revenue:Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị|HC_KHONG__29_NGUYEN_TRI_PHUO_465 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_6e5af6b96f89b7a06371c004:revenue:Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị|HC_KHONG__29_NGUYEN_TRI_PHUO_465 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_6e5af6b96f89b7a06371c004:revenue:Highlands Coffee Vincom Trà Vinh|HC_KHONG__VINCOM_TRA_VINH_483 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_6e5af6b96f89b7a06371c004:revenue:Highlands Coffee Vincom Trà Vinh|HC_KHONG__VINCOM_TRA_VINH_483 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_4 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_cc356cc5d74b52502d8a3515:revenue:DUNG_TAI_CHO recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_cc356cc5d74b52502d8a3515:revenue:DUNG_TAI_CHO unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_cc356cc5d74b52502d8a3515:revenue:GIAO_TAN_NOI recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_cc356cc5d74b52502d8a3515:revenue:GIAO_TAN_NOI unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_5 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_dc1ffe12bcc26979caf7bef3:revenue:THANH_TOAN_KHI_NHAN_HANG recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_dc1ffe12bcc26979caf7bef3:revenue:THANH_TOAN_KHI_NHAN_HANG unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_dc1ffe12bcc26979caf7bef3:revenue:VNPAY recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_dc1ffe12bcc26979caf7bef3:revenue:VNPAY unit",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_84285c0c3a48633193b73f66:revenue:leader:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_1d18f72ca6c2102b54886980:revenue:change:fe21c339fa",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_6e5af6b96f89b7a06371c004:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "one correctly directed ranking",
+          "passed": true
+        },
+        {
+          "assertion": "every dependent query explicitly bound to ranked cohort",
+          "passed": true
+        },
+        {
+          "assertion": "all additive views reconcile with independent selected orders",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_84285c0c3a48633193b73f66"
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_84285c0c3a48633193b73f66"
+        },
+        {
+          "id": "topn:q_84285c0c3a48633193b73f66",
+          "label": "Tập Bottom N được chọn; không đại diện cơ cấu toàn bộ.",
+          "scope_ref": "q_84285c0c3a48633193b73f66"
+        },
+        {
+          "id": "related:q_1d18f72ca6c2102b54886980",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_1d18f72ca6c2102b54886980"
+        },
+        {
+          "id": "related:q_6e5af6b96f89b7a06371c004",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_6e5af6b96f89b7a06371c004"
+        },
+        {
+          "id": "related:q_c551db73f57b79989bb47245",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_c551db73f57b79989bb47245"
+        },
+        {
+          "id": "related:q_cc356cc5d74b52502d8a3515",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_cc356cc5d74b52502d8a3515"
+        },
+        {
+          "id": "related:q_dc1ffe12bcc26979caf7bef3",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_dc1ffe12bcc26979caf7bef3"
+        }
+      ]
+    },
+    {
+      "id": "trend-scoped",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_4b0811876de71f6cfc1d7c13:revenue:all@2026-09-21 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_4b0811876de71f6cfc1d7c13:revenue:all@2026-09-21 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_4b0811876de71f6cfc1d7c13:revenue:all@2026-09-07 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_4b0811876de71f6cfc1d7c13:revenue:all@2026-09-07 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_3 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_967a2c95167d70e0087bc8aa:revenue:DUNG_TAI_CHO recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_967a2c95167d70e0087bc8aa:revenue:DUNG_TAI_CHO unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_967a2c95167d70e0087bc8aa:revenue:GIAO_TAN_NOI recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_967a2c95167d70e0087bc8aa:revenue:GIAO_TAN_NOI unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_5 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ae534f37bc40d06918688ec4:revenue:CHI_NHANH_CHINH@2026-09-21 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ae534f37bc40d06918688ec4:revenue:CHI_NHANH_CHINH@2026-09-21 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ae534f37bc40d06918688ec4:revenue:CHI_NHANH_CHINH@2026-09-07 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ae534f37bc40d06918688ec4:revenue:CHI_NHANH_CHINH@2026-09-07 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_6 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ee0ec03ff243f64a69494ddc:revenue:CHI_NHANH_CHINH recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ee0ec03ff243f64a69494ddc:revenue:CHI_NHANH_CHINH unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ee0ec03ff243f64a69494ddc:revenue:KIOSK_VE_TINH recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ee0ec03ff243f64a69494ddc:revenue:KIOSK_VE_TINH unit",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_4b0811876de71f6cfc1d7c13:revenue:change:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_1fae057fcfaa597109d8e930:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_967a2c95167d70e0087bc8aa:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "weekly trend requested",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_4b0811876de71f6cfc1d7c13"
+        },
+        {
+          "id": "scope_taxonomy:q_4b0811876de71f6cfc1d7c13",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_4b0811876de71f6cfc1d7c13"
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_4b0811876de71f6cfc1d7c13"
+        },
+        {
+          "id": "partial_period:q_4b0811876de71f6cfc1d7c13",
+          "label": "Kỳ biên chưa đủ ngày; chỉ so sánh biến động giữa các kỳ đầy đủ.",
+          "scope_ref": "q_4b0811876de71f6cfc1d7c13"
+        },
+        {
+          "id": "scope_taxonomy:q_1fae057fcfaa597109d8e930",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_1fae057fcfaa597109d8e930"
+        },
+        {
+          "id": "related:q_1fae057fcfaa597109d8e930",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_1fae057fcfaa597109d8e930"
+        },
+        {
+          "id": "scope_taxonomy:q_967a2c95167d70e0087bc8aa",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_967a2c95167d70e0087bc8aa"
+        },
+        {
+          "id": "related:q_967a2c95167d70e0087bc8aa",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_967a2c95167d70e0087bc8aa"
+        },
+        {
+          "id": "scope_taxonomy:q_9ecb7ea01fc4ac865ad48734",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_9ecb7ea01fc4ac865ad48734"
+        },
+        {
+          "id": "related:q_9ecb7ea01fc4ac865ad48734",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_9ecb7ea01fc4ac865ad48734"
+        },
+        {
+          "id": "scope_taxonomy:q_ae534f37bc40d06918688ec4",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_ae534f37bc40d06918688ec4"
+        },
+        {
+          "id": "related:q_ae534f37bc40d06918688ec4",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_ae534f37bc40d06918688ec4"
+        },
+        {
+          "id": "partial_period:q_ae534f37bc40d06918688ec4",
+          "label": "Kỳ biên chưa đủ ngày; chỉ so sánh biến động giữa các kỳ đầy đủ.",
+          "scope_ref": "q_ae534f37bc40d06918688ec4"
+        },
+        {
+          "id": "scope_taxonomy:q_ee0ec03ff243f64a69494ddc",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_ee0ec03ff243f64a69494ddc"
+        },
+        {
+          "id": "related:q_ee0ec03ff243f64a69494ddc",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_ee0ec03ff243f64a69494ddc"
+        }
+      ]
+    },
+    {
+      "id": "composition",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_14769897035a9daa452ba2e6:revenue:THANH_TOAN_KHI_NHAN_HANG recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_14769897035a9daa452ba2e6:revenue:THANH_TOAN_KHI_NHAN_HANG unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_14769897035a9daa452ba2e6:revenue:NGAN_HANG_QR recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_14769897035a9daa452ba2e6:revenue:NGAN_HANG_QR unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-30 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-30 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-19 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-19 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_3 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ae2d228ea6c8cdd6f8a39ecd:revenue:DUNG_TAI_CHO recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ae2d228ea6c8cdd6f8a39ecd:revenue:DUNG_TAI_CHO unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ae2d228ea6c8cdd6f8a39ecd:revenue:GIAO_TAN_NOI recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_ae2d228ea6c8cdd6f8a39ecd:revenue:GIAO_TAN_NOI unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_5 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_1d18f72ca6c2102b54886980:revenue:CHI_NHANH_CHINH@2026-09-30 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_1d18f72ca6c2102b54886980:revenue:CHI_NHANH_CHINH@2026-09-30 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_1d18f72ca6c2102b54886980:revenue:CHI_NHANH_CHINH@2026-09-19 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_1d18f72ca6c2102b54886980:revenue:CHI_NHANH_CHINH@2026-09-19 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_6 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_2bc14c39c283a94a3d482730:revenue:CHI_NHANH_CHINH recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_2bc14c39c283a94a3d482730:revenue:CHI_NHANH_CHINH unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_2bc14c39c283a94a3d482730:revenue:KIOSK_VE_TINH recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_2bc14c39c283a94a3d482730:revenue:KIOSK_VE_TINH unit",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_14769897035a9daa452ba2e6:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_7ea5a3c1504cf524808515ec:revenue:scalar:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_1d18f72ca6c2102b54886980:revenue:change:fe21c339fa",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "payment-method composition requested",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_14769897035a9daa452ba2e6"
+        },
+        {
+          "id": "related:q_1d18f72ca6c2102b54886980",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_1d18f72ca6c2102b54886980"
+        },
+        {
+          "id": "related:q_2bc14c39c283a94a3d482730",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_2bc14c39c283a94a3d482730"
+        },
+        {
+          "id": "related:q_6e5af6b96f89b7a06371c004",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_6e5af6b96f89b7a06371c004"
+        },
+        {
+          "id": "related:q_ae2d228ea6c8cdd6f8a39ecd",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_ae2d228ea6c8cdd6f8a39ecd"
+        },
+        {
+          "id": "related:q_c551db73f57b79989bb47245",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_c551db73f57b79989bb47245"
+        }
+      ]
+    },
+    {
+      "id": "forecast",
+      "status": "FAIL",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_490363cd53014da1f1f16f68:revenue:all@2026-09-01 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_490363cd53014da1f1f16f68:revenue:all@2026-09-01 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_490363cd53014da1f1f16f68:revenue:all@2026-01-01 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_490363cd53014da1f1f16f68:revenue:all@2026-01-01 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_60ff47b5a4b0bd6c3574f6ea:revenue:CHI_NHANH_CHINH@2026-09-01 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_60ff47b5a4b0bd6c3574f6ea:revenue:CHI_NHANH_CHINH@2026-09-01 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_60ff47b5a4b0bd6c3574f6ea:revenue:CHI_NHANH_CHINH@2026-01-01 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_60ff47b5a4b0bd6c3574f6ea:revenue:CHI_NHANH_CHINH@2026-01-01 unit",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_490363cd53014da1f1f16f68:revenue:change:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_60ff47b5a4b0bd6c3574f6ea:revenue:change:fe21c339fa",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_490363cd53014da1f1f16f68:revenue:extrema:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical None",
+          "passed": false
+        },
+        {
+          "assertion": "conclusion finding canonical None",
+          "passed": false
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "three-month revenue forecast requested",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_490363cd53014da1f1f16f68"
+        },
+        {
+          "id": "related:q_60ff47b5a4b0bd6c3574f6ea",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_60ff47b5a4b0bd6c3574f6ea"
+        }
+      ]
+    },
+    {
+      "id": "relationship",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "unsupported event/snapshot pair blocked before provider/SQL",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": null,
+      "source_completeness": null,
+      "limitations": null
+    },
+    {
+      "id": "multi-clause",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_00aa56c9544c694a4b8fe56c:revenue:Quảng Trị recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_00aa56c9544c694a4b8fe56c:revenue:Quảng Trị unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_00aa56c9544c694a4b8fe56c:revenue:Ninh Thuận recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_00aa56c9544c694a4b8fe56c:revenue:Ninh Thuận unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_13b4871a3ba1b2d9a205d010:revenue:Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị|HC_KHONG__29_NGUYEN_TRI_PHUO_465 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_13b4871a3ba1b2d9a205d010:revenue:Highlands Coffee - 29 Nguyễn Tri Phương - Quảng Trị|HC_KHONG__29_NGUYEN_TRI_PHUO_465 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_13b4871a3ba1b2d9a205d010:revenue:Highlands Coffee Vincom Trà Vinh|HC_KHONG__VINCOM_TRA_VINH_483 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_13b4871a3ba1b2d9a205d010:revenue:Highlands Coffee Vincom Trà Vinh|HC_KHONG__VINCOM_TRA_VINH_483 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_3 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_4d01e4d9db160aa0a55402d5:revenue:THANH_TOAN_KHI_NHAN_HANG recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_4d01e4d9db160aa0a55402d5:revenue:THANH_TOAN_KHI_NHAN_HANG unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_4d01e4d9db160aa0a55402d5:revenue:VNPAY recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_4d01e4d9db160aa0a55402d5:revenue:VNPAY unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_4 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-28 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-28 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-19 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_c551db73f57b79989bb47245:revenue:all@2026-09-19 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_5 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_1a1f973307134af10ed8cc36:revenue:MANG_DI|THANH_TOAN_KHI_NHAN_HANG recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_1a1f973307134af10ed8cc36:revenue:MANG_DI|THANH_TOAN_KHI_NHAN_HANG unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_1a1f973307134af10ed8cc36:revenue:GIAO_TAN_NOI|THANH_TOAN_KHI_NHAN_HANG recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_1a1f973307134af10ed8cc36:revenue:GIAO_TAN_NOI|THANH_TOAN_KHI_NHAN_HANG unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_6 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_af27c95380796d3a6603bc2f:revenue:Quảng Trị|MANG_DI recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_af27c95380796d3a6603bc2f:revenue:Quảng Trị|MANG_DI unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_af27c95380796d3a6603bc2f:revenue:Bạc Liêu|DUNG_TAI_CHO recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_af27c95380796d3a6603bc2f:revenue:Bạc Liêu|DUNG_TAI_CHO unit",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_00aa56c9544c694a4b8fe56c:revenue:leader:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_13b4871a3ba1b2d9a205d010:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_4d01e4d9db160aa0a55402d5:revenue:scope_total:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "no requested specialized revenue substitution",
+          "passed": true
+        },
+        {
+          "assertion": "one correctly directed ranking",
+          "passed": true
+        },
+        {
+          "assertion": "every dependent query explicitly bound to ranked cohort",
+          "passed": true
+        },
+        {
+          "assertion": "all additive views reconcile with independent selected orders",
+          "passed": true
+        },
+        {
+          "assertion": "both dependent axes requested",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_00aa56c9544c694a4b8fe56c"
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_00aa56c9544c694a4b8fe56c"
+        },
+        {
+          "id": "topn:q_00aa56c9544c694a4b8fe56c",
+          "label": "Tập Bottom N được chọn; không đại diện cơ cấu toàn bộ.",
+          "scope_ref": "q_00aa56c9544c694a4b8fe56c"
+        },
+        {
+          "id": "related:q_1a1f973307134af10ed8cc36",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_1a1f973307134af10ed8cc36"
+        },
+        {
+          "id": "related:q_380fdcb57b2691ba3086fb93",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_380fdcb57b2691ba3086fb93"
+        },
+        {
+          "id": "related:q_af27c95380796d3a6603bc2f",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_af27c95380796d3a6603bc2f"
+        },
+        {
+          "id": "related:q_c551db73f57b79989bb47245",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_c551db73f57b79989bb47245"
+        }
+      ]
+    },
+    {
+      "id": "casual",
+      "status": "PASS",
+      "checks": [
+        {
+          "assertion": "warehouse order/directory observed generations and schemas match a captured oracle",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_1 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_5b534b3f78c6ba11d2fdb69c:order_count:all@2026-09-30 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_5b534b3f78c6ba11d2fdb69c:order_count:all@2026-09-30 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_5b534b3f78c6ba11d2fdb69c:order_count:all@2026-09-06 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_5b534b3f78c6ba11d2fdb69c:order_count:all@2026-09-06 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_2 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_fa96e52b480fdf4cff7747af:order_count:DUNG_TAI_CHO recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_fa96e52b480fdf4cff7747af:order_count:DUNG_TAI_CHO unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_fa96e52b480fdf4cff7747af:order_count:GIAO_TAN_NOI recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_fa96e52b480fdf4cff7747af:order_count:GIAO_TAN_NOI unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_3 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_e770bffa4edb19bedf0ad7e4:order_count:Garden Plaza|HC_HCM_GARDEN_PLAZA_138 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_e770bffa4edb19bedf0ad7e4:order_count:Garden Plaza|HC_HCM_GARDEN_PLAZA_138 unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_e770bffa4edb19bedf0ad7e4:order_count:Vivo City|HC_HCM_VIVO_CITY_142 recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_e770bffa4edb19bedf0ad7e4:order_count:Vivo City|HC_HCM_VIVO_CITY_142 unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_4 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f40f28d8d78acbbe828eef82:order_count:THANH_TOAN_KHI_NHAN_HANG recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f40f28d8d78acbbe828eef82:order_count:THANH_TOAN_KHI_NHAN_HANG unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f40f28d8d78acbbe828eef82:order_count:NGAN_HANG_QR recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_f40f28d8d78acbbe828eef82:order_count:NGAN_HANG_QR unit",
+          "passed": true
+        },
+        {
+          "assertion": "chart visual_5 goal/query bound",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_bee92801cae772dd28a61f1b:order_count:DUNG_TAI_CHO|THANH_TOAN_KHI_NHAN_HANG recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_bee92801cae772dd28a61f1b:order_count:DUNG_TAI_CHO|THANH_TOAN_KHI_NHAN_HANG unit",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_bee92801cae772dd28a61f1b:order_count:GIAO_TAN_NOI|NGAN_HANG_QR recomputed",
+          "passed": true
+        },
+        {
+          "assertion": "fact q_bee92801cae772dd28a61f1b:order_count:GIAO_TAN_NOI|NGAN_HANG_QR unit",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_5e5c491e98778a989d995107:revenue:scalar:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_730d0d82b4748e746fc99db3:order_count:scalar:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "conclusion finding canonical q_f3a80d47cfc2cad49f3d5c6d:quantity_sold:scalar:6230060e3b",
+          "passed": true
+        },
+        {
+          "assertion": "HCM primary revenue reconciles with independently read warehouse",
+          "passed": true
+        },
+        {
+          "assertion": "report completed with bound requested work",
+          "passed": true
+        },
+        {
+          "assertion": "critical verifier checks passed",
+          "passed": true
+        },
+        {
+          "assertion": "all result contracts valid",
+          "passed": true
+        },
+        {
+          "assertion": "HCM on every query",
+          "passed": true
+        },
+        {
+          "assertion": "historical queries keep September; snapshot explicitly current",
+          "passed": true
+        },
+        {
+          "assertion": "colloquial sales summary separates governed sales measures and units",
+          "passed": true
+        }
+      ],
+      "matched_order_directory_oracle": "before",
+      "source_completeness": {
+        "status": "reconciled",
+        "sources": [
+          {
+            "source": "silver.chi_tiet_don_hang",
+            "label": "Chi tiết từng món trong đơn",
+            "max_date": null,
+            "stale": null,
+            "health_status": "healthy",
+            "completeness": "complete"
+          },
+          {
+            "source": "silver.don_hang",
+            "label": "Đơn hàng chi tiết và doanh thu",
+            "max_date": "2026-10-18",
+            "stale": true,
+            "health_status": "healthy",
+            "completeness": "reconciled"
+          }
+        ]
+      },
+      "limitations": [
+        {
+          "id": "source_coverage:silver.don_hang",
+          "label": "Nguồn Đơn hàng chi tiết và doanh thu: đã đối soát đầy đủ với hệ thống nguồn ở lần đối soát toàn bộ gần nhất; thay đổi sau đó được nạp tăng dần (dữ liệu đến 2026-10-18).",
+          "scope_ref": null
+        },
+        {
+          "id": "dimension_limit:city:source_geography_unverified_2025",
+          "label": "Tỉnh/thành phản ánh nhãn trong dữ liệu nguồn; chưa đối chiếu đầy đủ theo địa giới sau sắp xếp năm 2025. Tên cửa hàng không xác nhận địa chỉ thực tế.",
+          "scope_ref": "q_5e5c491e98778a989d995107"
+        },
+        {
+          "id": "scope_taxonomy:q_5e5c491e98778a989d995107",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_5e5c491e98778a989d995107"
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "scope_ref": "q_5e5c491e98778a989d995107"
+        },
+        {
+          "id": "scope_taxonomy:q_730d0d82b4748e746fc99db3",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_730d0d82b4748e746fc99db3"
+        },
+        {
+          "id": "metric_population:order_count",
+          "label": "Số lượng đơn: Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.",
+          "scope_ref": "q_730d0d82b4748e746fc99db3"
+        },
+        {
+          "id": "scope_taxonomy:q_f3a80d47cfc2cad49f3d5c6d",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_f3a80d47cfc2cad49f3d5c6d"
+        },
+        {
+          "id": "metric_population:quantity_sold",
+          "label": "Số lượng sản phẩm bán: Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+          "scope_ref": "q_f3a80d47cfc2cad49f3d5c6d"
+        },
+        {
+          "id": "scope_taxonomy:q_5b534b3f78c6ba11d2fdb69c",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_5b534b3f78c6ba11d2fdb69c"
+        },
+        {
+          "id": "related:q_5b534b3f78c6ba11d2fdb69c",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_5b534b3f78c6ba11d2fdb69c"
+        },
+        {
+          "id": "scope_taxonomy:q_bee92801cae772dd28a61f1b",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_bee92801cae772dd28a61f1b"
+        },
+        {
+          "id": "related:q_bee92801cae772dd28a61f1b",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_bee92801cae772dd28a61f1b"
+        },
+        {
+          "id": "scope_taxonomy:q_e770bffa4edb19bedf0ad7e4",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_e770bffa4edb19bedf0ad7e4"
+        },
+        {
+          "id": "related:q_e770bffa4edb19bedf0ad7e4",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_e770bffa4edb19bedf0ad7e4"
+        },
+        {
+          "id": "scope_taxonomy:q_f40f28d8d78acbbe828eef82",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_f40f28d8d78acbbe828eef82"
+        },
+        {
+          "id": "related:q_f40f28d8d78acbbe828eef82",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_f40f28d8d78acbbe828eef82"
+        },
+        {
+          "id": "scope_taxonomy:q_fa96e52b480fdf4cff7747af",
+          "label": "Phân vùng báo cáo nội bộ: warehouse_reporting_geography_v1. Chỉ bao gồm tỉnh/thành có trong danh mục kho; không đại diện đầy đủ địa giới thực tế.",
+          "scope_ref": "q_fa96e52b480fdf4cff7747af"
+        },
+        {
+          "id": "related:q_fa96e52b480fdf4cff7747af",
+          "label": "Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.",
+          "scope_ref": "q_fa96e52b480fdf4cff7747af"
+        },
+        {
+          "id": "display_subset:q_e770bffa4edb19bedf0ad7e4",
+          "label": "Biểu đồ hiển thị một phần nhóm; bảng và phép tính giữ toàn bộ kết quả.",
+          "scope_ref": "q_e770bffa4edb19bedf0ad7e4"
+        }
+      ]
+    }
+  ],
+  "total": 12,
+  "semantic_passed": 11,
+  "completed": 11,
+  "unsupported": 1,
+  "positive_ai": 9,
+  "positive_ai_first_pass": 9,
+  "first_pass_percent": 100.0,
+  "physical_sends": 9,
+  "bounded_repair": 0,
+  "transport_failed": 0,
+  "immutable_pages_fetched": 34,
+  "charts": 51,
+  "key_facts_recomputed": 117,
+  "limitations": [
+    "Fixed known incident qualification replay, not blind unseen-language accuracy. All historical failures retained.",
+    "Same-generation SQL proof covers order/directory only; artifact arithmetic covers captured same-revision results, not upstream completeness.",
+    "Finite corpus, no universal reliability or production SLA assertion."
+  ]
+}

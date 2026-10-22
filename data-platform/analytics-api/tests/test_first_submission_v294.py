@@ -73,20 +73,21 @@ class FirstSubmissionTests(f.unittest.TestCase):
             fix=corrected_draft();fix['requirements'][0].update(attack)
             p=self.pipeline(f.scripted(combined_draft(),fix,fix))
             with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D))
-            self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+            self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
 
     def test_deadline_slices_shrink_and_never_reset_on_recovery(self):
+        # V3.3 table: planning 40 s, one attempt <= 12 s, 5 s local reserve; the allowance is never restarted.
         clock=[100.0]
         with patch('services.provider_budget.time.monotonic',side_effect=lambda:clock[0]):
             budget=ProviderBudget({},max_calls=3);budget.start_deadline()
-            budget.consume();self.assertEqual(budget.http_timeout().total,25)
-            clock[0]+=8;budget.consume();self.assertEqual(budget.http_timeout().total,17)
-            clock[0]+=14;budget.consume();self.assertEqual(budget.http_timeout().total,3)
-            clock[0]+=3
+            budget.consume();self.assertEqual(budget.http_timeout().total,12)
+            clock[0]+=20;budget.start_deadline();budget.consume();self.assertEqual(budget.http_timeout().total,12)
+            clock[0]+=14;budget.consume();self.assertEqual(budget.http_timeout().total,1)
+            clock[0]+=1
             with self.assertRaises(AnalysisError) as caught:budget.http_timeout()
             self.assertEqual(caught.exception.category,'planning_timeout')
             self.assertEqual(budget.used,3)
-            clock[0]+=3
+            clock[0]+=6
             with self.assertRaises(AnalysisError):budget.remaining()
 
     def test_slow_native_response_cannot_create_proposal_or_start_more_calls(self):
@@ -94,7 +95,7 @@ class FirstSubmissionTests(f.unittest.TestCase):
         from services import llm_service
         clock=[100.0]
         def slow_post(*args,**kwargs):
-            clock[0]+=28
+            clock[0]+=41   # the whole 40 s planning allowance is gone when the answer finally arrives
             body={'candidates':[{'content':{'parts':[{'text':json.dumps(f.envelope())}]}}]}
             return Mock(ok=True,json=Mock(return_value=body))
         with patch.dict(os.environ,{'AI_OFFLINE':'0','GEMINI_API_STYLE':'native','DATA_ANALYST_INTENT_TRANSPORT':'json'}),\
@@ -109,12 +110,12 @@ class FirstSubmissionTests(f.unittest.TestCase):
             failure=safe_failure(caught.exception,p.calls,p.semantic_info)
             self.assertEqual(failure['outcome'],'SYSTEM_ERROR')
             self.assertFalse(failure['failure']['needs_user_input'])
-            self.assertIn('30 giây',failure['message']);self.assertIsNone(failure['quality_assessment']['score'])
+            self.assertIn('40 giây',failure['message']);self.assertIsNone(failure['quality_assessment']['score'])
 
     def test_http_deadline_returns_controlled_failure_and_resets_context(self):
         from routers.ai import bounded_propose_plan
         async def expire(awaitable,timeout):
-            self.assertEqual(timeout,29)
+            self.assertEqual(timeout,41)
             self.assertIsNotNone(request_deadline.get())
             awaitable.close()
             raise asyncio.TimeoutError

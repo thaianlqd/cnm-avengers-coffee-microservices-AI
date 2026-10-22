@@ -1,0 +1,11 @@
+{
+  "path": "data-platform/analytics-api/tests/test_agent_v23.py",
+  "before_sha256": "096ea90d1bbf53295865bcb78efa3f4889a337f0e482ad5d7e9f9332b1b4f2d4",
+  "after_sha256": "f6ae6a75ba964e661e7667854e6056b5f27fa0f066c136489fef55513b239ed0",
+  "reason": "Replace cosmetic non-repetition with actual scoped-evidence equality plus accepted canonical claim and rejected unsupported causal claim through production grounded_narrative. Legacy archived graph reports intentionally lack modern saved-report verifier metadata.",
+  "attempts": [
+    "original full run:cosmetic assertion failure",
+    "rechecks:first fixture mistakenly used modern saved-report verifier; StopIteration retained",
+    "rechecks2:legacy-compatible production narrative kernel positive/negative controls"
+  ]
+}

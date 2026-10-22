@@ -1,0 +1,272 @@
+{
+  "goal_status": "IN_PROGRESS",
+  "qualification": "NOT_QUALIFIED",
+  "serving_policy": "2026-10-22.cohort-scope.29",
+  "input_policy": "1.2.2",
+  "backend": {
+    "modules_finished": 105,
+    "modules_expected": 105,
+    "tests": 1676,
+    "failures": 2,
+    "errors": 3,
+    "new_failure_ids": [],
+    "initial_new_failure_ids": [],
+    "rechecked_modules": [],
+    "existing_failure_ids": [
+      "tests.test_natural_v26.NaturalV26Tests.test_four_input_sections_optional_context_and_model_breadth",
+      "tests.test_v35_dashboards.DashboardTests.test_all_sixteen_presets_resolve_through_existing_pipeline_without_provider_or_sql (dashboard='D50')",
+      "tests.test_v35_dashboards.DashboardTests.test_all_sixteen_presets_resolve_through_existing_pipeline_without_provider_or_sql (dashboard='D53')",
+      "tests.test_v35_dashboards.DashboardTests.test_metadata_only_returns_honest_unknown_without_triggering_jobs",
+      "tests.test_workspace_v31.CapabilityTests.test_web_ui_fixture_matches_current_capabilities"
+    ],
+    "baseline_ids_passed_in_current_modules": [
+      "tests.test_business_coverage_corpus.BusinessCoverageCorpusTests.test_candidate_only_receipt",
+      "tests.test_comparison_score_v282.ComparisonScoreTests.test_comparison_executes_correct_populations_and_three_metric_views",
+      "tests.test_comparison_score_v282.ComparisonScoreTests.test_comparison_refines_to_one_city_by_store_without_losing_window",
+      "tests.test_comparison_score_v282.ComparisonScoreTests.test_reported_one_axis_cross_tab_canonicalizes_without_retry_or_scope_loss",
+      "tests.test_comparison_score_v282.ComparisonScoreTests.test_selected_share_is_not_renormalized_to_one_hundred_percent"
+    ],
+    "incomplete_modules": [],
+    "source_drift": [],
+    "qualification": "NO_NEW_REGRESSION_WITH_DOCUMENTED_BASELINE_FAILURES",
+    "isolation": "Fresh process per module; monolithic suite not qualified."
+  },
+  "frontend": {
+    "typecheck": "PASS",
+    "unit_tests": 225,
+    "e2e_passed": 77,
+    "e2e_optional_skipped": 2,
+    "real_journeys": 12,
+    "chart_explanations": 59,
+    "chart_key_facts_reviewed": 136,
+    "explanation_new_analytic_requests": 0
+  },
+  "offline_semantic": {
+    "cases": 146,
+    "failures": 0,
+    "v33": {
+      "passed": 33,
+      "total": 33
+    },
+    "v34": {
+      "passed": 120,
+      "total": 120
+    }
+  },
+  "finite_family_matrix": {
+    "passed": 63,
+    "total": 63
+  },
+  "source_city_members": {
+    "passed": 55,
+    "total": 55
+  },
+  "acceptance_matrix": {
+    "PARTIAL": 14,
+    "PASS_FINITE_ASSERTIONS": 40
+  },
+  "live": {
+    "source_policy": "2026-10-22.cohort-scope.27",
+    "finite_cases": 12,
+    "positive_AI_cases": 9,
+    "first_pass": 8,
+    "after_bounded_repair": 9,
+    "physical_sends": 10,
+    "timeout_cases": 0,
+    "finite_request_elapsed_seconds": {
+      "min": 3.269,
+      "median": 5.839,
+      "max": 6.602
+    },
+    "cases": [
+      {
+        "id": "risk-edited",
+        "state": "completed",
+        "provider_calls": 0,
+        "physical_sends": 0,
+        "elapsed_seconds": 5.529,
+        "stage_timings_ms": {
+          "queue": 11.04,
+          "accepted": 981.18,
+          "planning": 79.31,
+          "validating": 899.83,
+          "executing": 1840.52,
+          "verifying": 697.28
+        }
+      },
+      {
+        "id": "risk-explicit-scope",
+        "state": "completed",
+        "provider_calls": 0,
+        "physical_sends": 0,
+        "elapsed_seconds": 5.544,
+        "stage_timings_ms": {
+          "queue": 3.07,
+          "accepted": 397.35,
+          "planning": 70.55,
+          "validating": 999.98,
+          "executing": 2308.06,
+          "verifying": 606.21
+        }
+      },
+      {
+        "id": "risk-followup",
+        "state": "completed",
+        "provider_calls": 1,
+        "physical_sends": 1,
+        "elapsed_seconds": 6.419,
+        "stage_timings_ms": {
+          "queue": 2.91,
+          "accepted": 583.81,
+          "planning": 1784.07,
+          "validating": 1001.77,
+          "executing": 1547.85,
+          "verifying": 364.68
+        }
+      },
+      {
+        "id": "overview-scoped",
+        "state": "completed",
+        "provider_calls": 1,
+        "physical_sends": 1,
+        "elapsed_seconds": 5.315,
+        "stage_timings_ms": {
+          "queue": 3.56,
+          "accepted": 405.39,
+          "planning": 1811.13,
+          "validating": 760.79,
+          "executing": 1328.47,
+          "verifying": 707.09
+        }
+      },
+      {
+        "id": "compare",
+        "state": "completed",
+        "provider_calls": 2,
+        "physical_sends": 2,
+        "elapsed_seconds": 6.452,
+        "stage_timings_ms": {
+          "queue": 3.57,
+          "accepted": 529.44,
+          "planning": 1801.47,
+          "repairing": 1288.97,
+          "validating": 663.56,
+          "executing": 1156.57,
+          "verifying": 644.11
+        }
+      },
+      {
+        "id": "bottom-five",
+        "state": "completed",
+        "provider_calls": 1,
+        "physical_sends": 1,
+        "elapsed_seconds": 6.409,
+        "stage_timings_ms": {
+          "queue": 3.42,
+          "accepted": 585.36,
+          "planning": 1683.28,
+          "validating": 727.97,
+          "executing": 1979.29,
+          "verifying": 329.13
+        }
+      },
+      {
+        "id": "trend-scoped",
+        "state": "completed",
+        "provider_calls": 1,
+        "physical_sends": 1,
+        "elapsed_seconds": 5.369,
+        "stage_timings_ms": {
+          "queue": 7.66,
+          "accepted": 431.4,
+          "planning": 1411.88,
+          "validating": 467.79,
+          "executing": 1352.16,
+          "verifying": 551.11
+        }
+      },
+      {
+        "id": "composition",
+        "state": "completed",
+        "provider_calls": 1,
+        "physical_sends": 1,
+        "elapsed_seconds": 5.839,
+        "stage_timings_ms": {
+          "queue": 3.06,
+          "accepted": 403.67,
+          "planning": 1483.25,
+          "validating": 620.53,
+          "executing": 1295.14,
+          "verifying": 1075.97
+        }
+      },
+      {
+        "id": "forecast",
+        "state": "completed",
+        "provider_calls": 1,
+        "physical_sends": 1,
+        "elapsed_seconds": 3.269,
+        "stage_timings_ms": {
+          "queue": 3.62,
+          "accepted": 394.18,
+          "planning": 1493.61,
+          "validating": 115.28,
+          "executing": 785.49,
+          "verifying": 172.94
+        }
+      },
+      {
+        "id": "relationship",
+        "state": "unsupported",
+        "provider_calls": 0,
+        "physical_sends": 0,
+        "elapsed_seconds": 1.092,
+        "stage_timings_ms": {
+          "queue": 21.6
+        }
+      },
+      {
+        "id": "multi-clause",
+        "state": "completed",
+        "provider_calls": 1,
+        "physical_sends": 1,
+        "elapsed_seconds": 6.602,
+        "stage_timings_ms": {
+          "queue": 42.45,
+          "accepted": 641.77,
+          "planning": 1710.7,
+          "validating": 1024.03,
+          "executing": 1716.52,
+          "verifying": 373.9
+        }
+      },
+      {
+        "id": "casual",
+        "state": "completed",
+        "provider_calls": 1,
+        "physical_sends": 1,
+        "elapsed_seconds": 5.593,
+        "stage_timings_ms": {
+          "queue": 2.98,
+          "accepted": 527.17,
+          "planning": 1785.07,
+          "validating": 904.05,
+          "executing": 1591.58,
+          "verifying": 309.76
+        }
+      }
+    ],
+    "limits": "Finite local campaign on .27; later .28/.29 intake/export fixes qualified offline. Not SLA or universal model accuracy.",
+    "first_pass_rate": 0.8888888888888888,
+    "first_pass_gate_met": false
+  },
+  "source_drift": [],
+  "docx_content": "PASS_CONTENT_ONLY",
+  "docx_visual": "NOT_RUN_NO_BUNDLED_RENDER_RUNTIME",
+  "remaining_gate_reasons": [
+    "Live finite first-pass8/9=88.89% below95% on policy27; later29 intake/export fixes not remeasured with paid model.",
+    "14 of54 acceptance scenarios retain explicit unverified assertions; see acceptance matrix.",
+    "Word visual rendering not run with required bundled runtime.",
+    "I13 store geography lacks data-owner-confirmed mapping; source records unchanged."
+  ]
+}

@@ -1,0 +1,17 @@
+...............................Result rejected source=execution operation=ranking rows=1 limit=5 rules=projection_columns,projection_rows,sensitive_field dimensions=product,product_id granularity=day
+................E
+======================================================================
+ERROR: test_semantic_preflight_contract (unittest.loader._FailedTest.test_semantic_preflight_contract)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_semantic_preflight_contract
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/loader.py", line 162, in loadTestsFromName
+    module = __import__(module_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tests.test_semantic_preflight_contract'
+
+
+----------------------------------------------------------------------
+Ran 48 tests in 90.803s
+
+FAILED (errors=1)

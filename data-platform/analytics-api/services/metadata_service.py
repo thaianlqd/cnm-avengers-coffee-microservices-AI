@@ -10,7 +10,8 @@ from typing import Any, Callable, Dict, List, Optional
 import psycopg2
 import psycopg2.extras
 
-from db import get_db_conn
+from db import get_db_conn, AccountedReaderCursor
+from services.analytical_capacity_planner import reader_query_kind
 
 
 logger = logging.getLogger("ai-metadata")
@@ -80,12 +81,16 @@ def _source_conn():
         dbname=os.getenv("SOURCE_DB_NAME", "postgres"),
         sslmode=os.getenv("SOURCE_DB_SSLMODE", "require"),
         connect_timeout=10,
-        cursor_factory=psycopg2.extras.RealDictCursor,
+        cursor_factory=AccountedReaderCursor,
         options="-c statement_timeout=30000 -c default_transaction_read_only=on",
     )
 
 
+@reader_query_kind('metadata')
 def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[str]] = None) -> Dict[str, Any]:
+    # Structural catalog reads must not deparse view/index SQL: PostgreSQL
+    # deparsing acquires data-relation locks and races atomic replica TRUNCATE.
+    # Columns, keys and foreign keys below remain physically observed.
     params: List[Any] = []
     schema_filter = ""
     if schemas:
@@ -104,7 +109,7 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                             WHEN 'p' THEN 'partitioned_table' ELSE 'table' END AS object_type,
                        GREATEST(COALESCE(st.n_live_tup, c.reltuples)::bigint, 0) AS estimated_rows,
                        obj_description(c.oid, 'pg_class') AS comment,
-                       CASE WHEN c.relkind IN ('v', 'm') THEN pg_get_viewdef(c.oid, true) END AS view_definition
+                       NULL::text AS view_definition
                 FROM pg_class c
                 JOIN pg_namespace n ON n.oid = c.relnamespace
                 LEFT JOIN pg_stat_all_tables st ON st.relid = c.oid
@@ -175,9 +180,7 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                     f"""
                     SELECT n.nspname AS schema_name, t.relname AS object_name,
                            i.relname AS index_name,
-                           CASE WHEN am.amname IN ('btree', 'hash', 'gin', 'gist', 'spgist', 'brin')
-                                THEN pg_get_indexdef(ix.indexrelid)
-                                ELSE '' END AS definition
+                           NULL::text AS definition
                     FROM pg_index ix
                     JOIN pg_class t ON t.oid = ix.indrelid
                     JOIN pg_class i ON i.oid = ix.indexrelid
@@ -190,6 +193,8 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                 )
                 indexes = [dict(row) for row in cur.fetchall()]
             except Exception as idx_err:
+                from services.analysis_catalog import AnalysisError
+                if isinstance(idx_err,AnalysisError):raise
                 logger.warning("Could not introspect all index definitions: %s", idx_err)
                 indexes = []
 
@@ -290,6 +295,13 @@ def get_local_metadata(force: bool = False) -> Dict[str, Any]:
     return meta
 
 
+def peek_local_metadata() -> Optional[Dict[str, Any]]:
+    """Last introspected warehouse layout (possibly expired) without any I/O."""
+    with _lock:
+        entry = _cache.get("local")
+        return entry["value"] if entry else None
+
+
 def get_source_metadata(force: bool = False) -> Dict[str, Any]:
     return _cached("source", SOURCE_TTL_SECONDS, lambda: _introspect(_source_conn, SOURCE_SCHEMAS), force)
 
@@ -341,6 +353,7 @@ def cache_status() -> Dict[str, Any]:
     }
 
 
+@reader_query_kind('metadata')
 def lookup_dimension_values(table, column, search, limit=8):
     """Explicit entity lookup only: safe identifiers, bounded rows/time, read-only."""
     from psycopg2 import sql
@@ -354,9 +367,9 @@ def lookup_dimension_values(table, column, search, limit=8):
         conn.set_session(readonly=True, autocommit=False)
         with conn.cursor() as cur:
             cur.execute("SET LOCAL statement_timeout = 1500")
-            cur.execute(sql.SQL("SELECT DISTINCT {column} AS value FROM {table} WHERE {column}::text ILIKE %s ORDER BY {column} LIMIT %s").format(
+            cur.execute(sql.SQL("SELECT {column} AS value FROM {table} WHERE {column}::text ILIKE %s GROUP BY {column} ORDER BY (LOWER({column}::text) = LOWER(%s)) DESC, {column} LIMIT %s").format(
                 column=sql.Identifier(column), table=sql.Identifier(*table.split("."))),
-                ("%" + needle + "%", min(max(int(limit), 1), 8)))
+                ("%" + needle + "%", search.strip(), min(max(int(limit), 1), 8)))
             return [row["value"] for row in cur.fetchall() if row["value"] is not None]
     finally:
         conn.rollback()

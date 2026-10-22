@@ -336,7 +336,22 @@ class V23Tests(unittest.TestCase):
         self.assertEqual({c["unit"] for c in r["charts"] if c.get("query_id") == "main"}, {"sản phẩm", "VND"})
         self.assertTrue(all(c["chart_type"] != "donut" for c in r["charts"] if c.get("query_id") == "main"))
         self.assertEqual(r["dashboard_plan"]["quality"]["distinct_operations"], 6)
-        self.assertTrue(all(s not in r["conclusions"] for s in r["ai_insights"]))
+        # Conclusions now deliberately reuse scoped evidence rather than
+        # unsupported generic business prose. Check grounding, not paraphrase.
+        from services.insight_service import grounded_narrative
+        statements = {e["statement"] for e in r["evidence"]}
+        self.assertTrue(r["conclusions"])
+        self.assertTrue(all(text in statements for text in r["conclusions"]))
+        e = next(e for e in r["evidence"] if e["claim_type"] == "ranking")
+        claim = {"evidence_id": e["id"], "metric": e["metric"], "scope_ref": e["scope_ref"],
+                 "claim_type": e["claim_type"], "text": e["statement"]}
+        good = grounded_narrative(DashboardPlan(active_query_ids=[e["scope_ref"]], claims=[claim]), r["evidence"])
+        self.assertIn(e["statement"], good["conclusions"])
+        attack = "Doanh thu cao gây ra tỷ lệ hủy thấp trên toàn quốc."
+        bad = grounded_narrative(DashboardPlan(active_query_ids=[e["scope_ref"]],
+            claims=[{**claim, "text": attack}]), r["evidence"])
+        self.assertIn({"kind": "claim", "reason": "unsupported_evidence_or_statement"}, bad["rejected_narrative"])
+        self.assertNotIn(attack, bad["conclusions"])
 
     def test_safe_defaults_paired_and_same_unit_multi_metrics(self):
         a, _ = fixture_artifact(query("delivery", "total_deliveries", "relationship", metrics=["total_deliveries", "driver_rating"], group_by=["driver_id"]))

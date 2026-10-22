@@ -1,0 +1,252 @@
+{
+  "campaign_id": "codex-qualification-policy33-live-20261022",
+  "source_policy": "2026-10-22.cohort-scope.33",
+  "input_policy": "1.2.5",
+  "hypothesis": "Dropping only unasked shape-incompatible leader/top_gap prevents the observed compare repair; verify fixed12 sequentially after regression is idle. New per-goal provenance, factual conclusions and metric-name intake must retain existing outcomes.",
+  "frozen_cases": [
+    {
+      "id": "risk-edited",
+      "payload": {
+        "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026 của thành phố hồ chí minh",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "analysis_mission": "risk_watch",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "risk-explicit-scope",
+      "payload": {
+        "question": "Kiểm tra rủi ro vận hành tháng 9 năm 2026",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "analysis_scope": {
+          "mode": "selected",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh"
+              ]
+            }
+          ]
+        },
+        "analysis_mission": "risk_watch",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "risk-followup",
+      "payload": {
+        "question": "Top 5 chi nhánh có tỷ lệ hủy đơn cao nhất",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "analysis_scope": {
+          "mode": "selected",
+          "filters": [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hồ Chí Minh"
+              ]
+            }
+          ]
+        },
+        "analysis_mission": "ranking",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "overview-scoped",
+      "payload": {
+        "question": "Tình hình doanh thu tháng 9 năm 2026 tại Hồ Chí Minh",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "analysis_mission": "overview",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "compare",
+      "payload": {
+        "question": "So sánh doanh thu theo tỉnh/thành giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "analysis_mission": "compare",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "bottom-five",
+      "payload": {
+        "question": "Bottom 5 tỉnh/thành trong dữ liệu theo doanh thu tháng 9 năm 2026",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "analysis_mission": "ranking",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "trend-scoped",
+      "payload": {
+        "question": "Xu hướng doanh thu theo tuần tháng 9 năm 2026 tại Hồ Chí Minh",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "analysis_mission": "trend",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "composition",
+      "payload": {
+        "question": "Cơ cấu doanh thu theo phương thức thanh toán tháng 9 năm 2026",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "analysis_mission": "overview",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "forecast",
+      "payload": {
+        "question": "Dự báo doanh thu 3 tháng tới",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "auto"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "analysis_mission": "forecast",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "relationship",
+      "payload": {
+        "question": "Liên hệ giữa tổng chuyến giao và điểm hồ sơ tài xế theo mã tài xế tháng 9 năm 2026",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "refresh": true
+      },
+      "expected_job_state": "unsupported"
+    },
+    {
+      "id": "multi-clause",
+      "payload": {
+        "question": "Top 5 tỉnh doanh thu thấp nhất tháng 9 năm 2026; phân tích chi nhánh và phương thức thanh toán chỉ trong 5 tỉnh này",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    },
+    {
+      "id": "casual",
+      "payload": {
+        "question": "tháng 9 năm 2026 ở HCM bán được bao nhiêu?",
+        "reference_date": "2026-10-21",
+        "time": {
+          "mode": "custom",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        },
+        "input_mode": "free_text",
+        "allow_deterministic_upgrade": false,
+        "analysis_depth": "deep",
+        "refresh": true
+      },
+      "expected_job_state": "completed"
+    }
+  ],
+  "max_physical_sends": 36,
+  "prior_measured_campaigns": {
+    "repair": 46,
+    "qualification27": 10
+  },
+  "prior_measured_sends": 56,
+  "audit_runtime_sha256": "a59206cee0bd3ac2d1e6f945b55000304eff79d25141f4d544381fc1a19b063d",
+  "oracle_policy": "Capture independent read-only raw SQL before and after each fixed case; compare only exact matching observed dataset generations. No paid reruns to obtain a matching epoch.",
+  "limits": "Frozen qualification replay corpus includes development incidents; not an unseen-language accuracy estimate. All prior attempts retained; no prompt exclusions or campaign reruns just to replace failure."
+}

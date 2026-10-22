@@ -1,0 +1,94 @@
+{
+  "method": "independent SELECT and Python aggregation, READ ONLY, rollback",
+  "sql": "SELECT b.ma_chi_nhanh store_id,b.ten_chi_nhanh store,b.thanh_pho city,\n  COUNT(*) terminal_orders,COUNT(*) FILTER(WHERE o.trang_thai_don_hang='DA_HUY') cancelled\n  FROM silver.don_hang o JOIN silver.chi_nhanh b ON o.co_so_ma=b.ma_chi_nhanh\n  WHERE b.thanh_pho='Hồ Chí Minh' AND o.ngay_tao >= DATE '2026-09-01'\n  AND o.ngay_tao < DATE '2026-10-01' AND o.trang_thai_don_hang IN ('HOAN_THANH','DA_HUY')\n  GROUP BY 1,2,3 ORDER BY 1",
+  "scope": [
+    "Hồ Chí Minh"
+  ],
+  "terminal_orders": 1431,
+  "cancelled_orders": 67,
+  "rate": 4.68,
+  "groups": 417,
+  "groups_in_breach": 58,
+  "worst": [
+    {
+      "store_id": "HC_HCM_CENTRAL_GARDEN_D1_1212",
+      "store": "Highlands Coffee Central Garden D1",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 1,
+      "cancelled": 1,
+      "rate": 100.0
+    },
+    {
+      "store_id": "HC_HCM_KCN_BAU_BANG_DINH__1290",
+      "store": "Highlands Coffee KCN Bau Bang Dinh Duong",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 4,
+      "cancelled": 3,
+      "rate": 75.0
+    },
+    {
+      "store_id": "KVT002",
+      "store": "Avengers Coffee - Vincom Đồng Khởi",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 3,
+      "cancelled": 2,
+      "rate": 66.67
+    },
+    {
+      "store_id": "HC_HCM_236_TO_NGOC_VAN_466",
+      "store": "Highlands Coffee 236 Tô Ngọc Vân",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 2,
+      "cancelled": 1,
+      "rate": 50.0
+    },
+    {
+      "store_id": "HC_HCM_366_LE_VAN_QUOI_HC_639",
+      "store": "Highlands Coffee 366 Le Van Quoi HCM",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 2,
+      "cancelled": 1,
+      "rate": 50.0
+    },
+    {
+      "store_id": "HC_HCM_377_TAN_KY_TAN_QUY_440",
+      "store": "Highlands Coffee 377 Tân Kỳ Tân Quý",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 6,
+      "cancelled": 3,
+      "rate": 50.0
+    },
+    {
+      "store_id": "HC_HCM_49B_THAO_IEN_THU_U_787",
+      "store": "Highlands Coffee 49B Thảo Điền - Thủ Đức",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 2,
+      "cancelled": 1,
+      "rate": 50.0
+    },
+    {
+      "store_id": "HC_HCM_9A_KY_DONG_D3_1176",
+      "store": "Highlands Coffee 9A Ky Dong D3",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 2,
+      "cancelled": 1,
+      "rate": 50.0
+    },
+    {
+      "store_id": "HC_HCM_CANTAVIL_205",
+      "store": "Cantavil",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 2,
+      "cancelled": 1,
+      "rate": 50.0
+    },
+    {
+      "store_id": "HC_HCM_CENTRAL_RETAIL_PHU_1225",
+      "store": "Highlands Coffee Central Retail Phu Nhuan",
+      "city": "Hồ Chí Minh",
+      "terminal_orders": 2,
+      "cancelled": 1,
+      "rate": 50.0
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+ Container avengers_analytics_api Restarting 
+ Container avengers_analytics_api Started 

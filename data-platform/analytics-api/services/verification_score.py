@@ -51,3 +51,30 @@ def verification_score(checks, *, independent_accuracy=None):
         method.id = 'verification_evidence_v3'
     return dict(score=round(earned+external,1),score_method=method.model_dump(mode='json'),
         score_breakdown=[p.model_dump(mode='json') for p in parts])
+
+
+TRUST_GROUPS = (
+    ('reliability', 'Độ tin cậy của kết quả', ('request_coverage', 'semantic_consistency', 'result_integrity', 'observed_values', 'derived_features', 'evidence_grounding')),
+    ('reconciliation', 'Đối soát quần thể và nguồn gốc', ('population_correctness', 'provenance_completeness')),
+    ('presentation', 'Trình bày và giới hạn', ('visualization_appropriateness', 'limitation_disclosure', 'analysis_depth_coverage')),
+)
+
+
+def trust_dimensions(checks, independent_accuracy=None):
+    """Separate trust dimensions (never blended into one accuracy figure).
+
+    Forecast quality and independent accuracy are 'not_measured' unless a server
+    reference exists; a not-measured dimension is never reported as passed."""
+    by_id = {c['id'] if isinstance(c, dict) else c.id: c for c in checks}
+    out = []
+    for id, label, members in TRUST_GROUPS:
+        rows = [by_id[m] for m in members if m in by_id]
+        total = sum((r['total'] if isinstance(r, dict) else r.total) for r in rows)
+        passed = sum((r['passed'] if isinstance(r, dict) else r.passed) for r in rows)
+        status = 'not_measured' if not rows else 'not_applicable' if not total else 'passed' if passed == total else 'partial'
+        out.append(dict(id=id, label=label, status=status, passed=passed, total=total))
+    accuracy = AccuracyAssessment.model_validate(independent_accuracy or {})
+    measured = accuracy.status == 'measured' and accuracy.reference_count > 0 and bool(accuracy.reference_source)
+    out.append(dict(id='independent_accuracy', label='Đối chứng độc lập', status='measured' if measured else 'not_measured',
+                    passed=accuracy.matched_count or 0 if measured else 0, total=accuracy.reference_count if measured else 0))
+    return out

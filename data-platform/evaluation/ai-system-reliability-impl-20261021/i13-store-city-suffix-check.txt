@@ -1,0 +1,15 @@
+    19
+    Highlands Coffee KCN Quang Chau Bac Giang | Bắc Ninh | Bắc Giang
+    Highlands Coffee Lotte Bac Giang | Bắc Ninh | Bắc Giang
+    Highlands Coffee 109 Tran Hung Dao Binh Phuoc | Đồng Nai | Bình Phước
+    Highlands Coffee Ga Da Nang | Hải Phòng | Đà Nẵng
+    Highlands Coffee Hoàng Anh Gia Lai | Đà Nẵng | Gia Lai
+    Highlands Coffee Go Đại Lộ Bình Dương | Hồ Chí Minh | Bình Dương
+    Highlands Coffee K Home Binh Duong | Hồ Chí Minh | Bình Dương
+    Highlands Coffee 296 Nguyen Viet Xuan Ha Nam | Ninh Bình | Hà Nam
+    Highlands Coffee AEON Tan An Long An | Tây Ninh | Long An
+    Highlands Coffee BT04 KDT Det Nam Dinh | Ninh Bình | Nam Định
+    Highlands Coffee Hòa Bình - Bạc Liêu | Hòa Bình | Bạc Liêu
+    Highlands Coffee  Huu Nghi Lac Viet Hospital Vinh Phuc | Phú Thọ | Vĩnh Phúc
+    Highlands Coffee KCN Long Hau Long An | Tây Ninh | Long An
+    Highlands Coffee KCN Thuan Dao Long An | Tây Ninh | Long An
