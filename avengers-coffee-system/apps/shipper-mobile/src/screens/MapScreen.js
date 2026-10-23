@@ -1,4 +1,3 @@
-import { nativeTileUrl, detailedNativeStyle } from '../../../shared-ui/nativeBasemap'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import React, { useState, useEffect, useRef } from 'react'
 import { View, StyleSheet, TouchableOpacity, Text, Linking, Platform, Alert, ScrollView, Modal, Image, Animated, useWindowDimensions, PanResponder } from 'react-native'
@@ -16,14 +15,13 @@ import { openGoogleMapsNavigation } from '../lib/navigationHelper'
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../lib/backgroundLocationManager'
 import { uploadProofImage } from '../lib/imageStorage'
 
-let MapView, Marker, Polyline, UrlTile
+let MapView, Marker, Polyline
 if (Platform.OS !== 'web') {
   try {
     const maps = require('react-native-maps')
     MapView = maps.default
     Marker = maps.Marker
     Polyline = maps.Polyline
-    UrlTile = maps.UrlTile
   } catch (e) {
     console.warn('react-native-maps not found')
   }
@@ -43,7 +41,6 @@ if (Platform.OS !== 'web') {
 
 const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION !== 'false'
 const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
-const tileUrl = nativeTileUrl(process.env.EXPO_PUBLIC_VIETMAP_TILE_KEY);
 
 
 function formatETA(distanceKm) {
@@ -572,13 +569,13 @@ export function MapScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {tileUrl && <Text style={{position:'absolute',right:5,top:5,zIndex:100,fontSize:10,backgroundColor:'#fffffff0',paddingHorizontal:4}}>© Vietmap</Text>}
+
       {MapView && mapRegion.latitude != null && mapRegion.longitude != null && (
-        <MapView ref={nativeMap} style={styles.map} initialRegion={mapRegion} showsUserLocation={true} showsMyLocationButton={false} customMapStyle={detailedNativeStyle} showsPointsOfInterest showsBuildings mapType={tileUrl && Platform.OS === 'android' ? 'none' : 'standard'} onMapReady={() => {
+        <MapView ref={nativeMap} style={styles.map} initialRegion={mapRegion} showsUserLocation={true} showsMyLocationButton={false} showsPointsOfInterest showsBuildings mapType="standard" onMapReady={() => {
           const points = [[storeLat,storeLng],[destLat,destLng]].filter(p => p.every(v => v != null && Number.isFinite(v))).map(([latitude,longitude]) => ({latitude,longitude}));
           if (points.length) nativeMap.current?.fitToCoordinates(points,{ edgePadding:{ top:140,left:50,right:50,bottom:windowHeight*.35 },animated:true });
         }}>
-          {tileUrl && UrlTile && <UrlTile urlTemplate={tileUrl} tileSize={512} maximumZ={19} maximumNativeZ={19} minimumZ={1} zIndex={-1} />}
+
           {storeLat != null && storeLng != null && <Marker anchor={{ x:.5,y:1 }} coordinate={{ latitude: storeLat, longitude: storeLng }} title="Cửa hàng Avengers" description="Lấy hàng tại đây">
             <JourneyPin kind="store" />
           </Marker>}

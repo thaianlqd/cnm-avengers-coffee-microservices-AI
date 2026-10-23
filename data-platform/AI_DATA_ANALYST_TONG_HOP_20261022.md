@@ -1,11 +1,11 @@
 # AI Data Analyst — Tài liệu tổng hợp
 
-Ngày cập nhật: **22/10/2026**. Đây là **file chính duy nhất để đọc và theo dõi công việc**; nội dung nghiệm thu, PLAN, bổ sung kiến trúc và checklist đã được gom từ sáu file trước.
+Ngày cập nhật: **23/10/2026**. Đây là **file chính duy nhất để đọc và theo dõi công việc**; nội dung nghiệm thu, PLAN, bổ sung kiến trúc và checklist đã được gom từ sáu file trước.
 
 **Trạng thái hiện tại:**
 
 - **Reliability đợt trước:** DONE trong corpus/phạm vi đã nghiệm thu, policy33. Đây là kết quả lịch sử, không chứng nhận mọi câu hỏi mới hay tính năng mới.
-- **Cải thiện toàn Trợ lý AI:** **IN_PROGRESS / ĐÃ TRIỂN KHAI MỘT PHẦN / CHƯA NGHIỆM THU**. Bản giao thực thi mới nhất là **[mục H](#claude-execution-plan)**; checkpoint thực tế tại H.15. Các mục PLANNED/NOT_RUN phía dưới là đặc tả gốc, chưa tự động được coi là đạt.
+- **Cải thiện toàn Trợ lý AI:** **IN_PROGRESS / TẠM DỪNG THEO YÊU CẦU / CHƯA NGHIỆM THU**. Bản giao thực thi mới nhất là **[mục H](#claude-execution-plan)**; checkpoint thực tế tại H.15. Các mục PLANNED/NOT_RUN phía dưới là đặc tả gốc, chưa tự động được coi là đạt.
 - Có **56 kịch bản nền dự kiến** (48 core + 8 bổ sung); cần đối chiếu bằng chứng từng yêu cầu. Live cuối của Claude 32/40 chưa đạt; không dùng kết quả reliability lịch sử để chứng nhận code mới.
 - **Quyền live mới từ người dùng ngày22/10, khoảng14:00:** Claude được dùng API key/runtime hiện có để live test và phát sinh phí trong scope công việc; không bị giới hạn bởi campaign12/36sends lịch sử. Xem phạm vi, ledger và cách tối ưu tại H.10.
 
@@ -28,28 +28,30 @@ Khi thực thi, cập nhật checklist/trạng thái của phần công việc m
 
 <a id="current-checklist"></a>
 
-## A. Checklist công việc mới — chưa triển khai
+## A. Checklist công việc mới — đang nghiệm thu
 
 Ngày22/10/2026 · **IN_PROGRESS** (Claude bắt đầu thực thi22/10; checkpoint đang hoạt động ở [H.15](#claude-active-checkpoint)).
 
 Mục tiêu: mọi bài toán giữ đúng mục đích phân tích, có chế độ So sánh/Tổng gộp/Xem riêng và lọc theo đối tượng khi hợp lệ; data, KPI, lời giải thích và export cùng view semantics. Thực hiện qua engine/contract/UI dùng chung, không vá câu HCM/ĐàNẵng.
 
-Đọc [PLAN chi tiết](AI_DATA_ANALYST_TONG_HOP_20261022.md#comparison-plan), [acceptance48scenarios](evaluation/comparison-workspace-20261022/acceptance-cases.json), [fixture dự kiến](evaluation/comparison-workspace-20261022/independent-fixture-spec.json). Tất cảscenario mới NOT_RUN. Sourcebaseline432files đangkhớp policy33; kiểm lại trước sửa.
+Đọc [PLAN chi tiết](AI_DATA_ANALYST_TONG_HOP_20261022.md#comparison-plan), [acceptance48scenarios](evaluation/comparison-workspace-20261022/acceptance-cases.json), [fixture dự kiến](evaluation/comparison-workspace-20261022/independent-fixture-spec.json). 56scenario gốc có mapping bằng chứng hữu hạn tại `execution/qualification-coverage-map.json`, không tự quy thành56/56PASS. Bản mới đang nghiệm thu policy40, xem H.15; baselinepolicy33 chỉ là lịch sử.
 
-- [ ] CW00 — Freeze baseline/source/capability inventory; independent fixture/holdout và tests đỏ.
-- [ ] CW01 — ComparisonFrame, perchartcapability/viewstate và semantics local/global/legend.
-- [ ] CW02 — Resolver/lenses/query memberaxis, union, ratio/AOV/distinct, snapshot vàbudget.
-- [ ] CW03 — Server viewresolution/cache/ownership/version/atomic publication, 0LLM.
-- [ ] CW04 — Shared UI controls, comparedefault, facets/tables, responsive/keyboard.
-- [ ] CW05 — KPI/claims/subgroup/baseline/mẫu số/nhận định đúngactiveview; UC01–UC04.
-- [ ] CW06 — Saved/reopen/map/globalrevision/preview/Word currentview và permission recheck.
-- [ ] CW07 — Dynamic capabilityinventory, grammar/coverage/reasons; noncity, domains/classes/missions/depths.
+- [x] CW00 — Freeze baseline/source/capability inventory; independent fixture/holdout và tests đỏ.
+- [x] CW01 — ComparisonFrame, perchartcapability/viewstate và semantics local/global/legend.
+- [x] CW02 — Resolver/lenses/query memberaxis, union, ratio/AOV/distinct, snapshot vàbudget.
+- [x] CW03 — Server viewresolution/cache/ownership/version/atomic publication, 0LLM.
+- [x] CW04 — Shared UI controls, comparedefault, facets/tables, responsive/keyboard.
+- [x] CW05 — KPI/claims/subgroup/baseline/mẫu số/nhận định đúngactiveview; UC01–UC04.
+- [x] CW06 — Saved/reopen/map/globalrevision/preview/Word currentview và permission recheck.
+- [x] CW07 — Dynamic capabilityinventory, grammar/coverage/reasons; noncity, domains/classes/missions/depths.
 - [ ] CW08 — Regression/security/property/raworacle/browser/performance/buildhash.
 - [ ] CW09 — Full qualificationJSON/MD/manualdemo +limits; chỉ DONE sau toàncriticalgates.
 
+Các tick CW00–CW07 ghi nhận triển khai và bằng chứng local/guided có giới hạn, **không thay gate live/transfer và toàngoal của CW08–CW09**. Không quy mọi tổ hợp16domain48metric thành đã được kiểm. Bằng chứng hiện hành ở H.15–H.16.
+
 **Mở rộng bắt buộc từ14:00:** thực hiện [H](#claude-execution-plan) trong cùng goal: semantic input/context và operator composition; tỷ lệ/exposure/đồng hạng; controls và analytical usefulness; audit cơ chế chấm điểm với oracle độc lập; live/transfer/negative tests được phép. Không đóng CW09 chỉ vì comparison toggles đã hoạt động. Phases là thứ tự phụ thuộc nội bộ; không kết thúc mỗi phase để chờ user bảo làm tiếp.
 
-### Checkpoint lập kế hoạch
+### Checkpoint lập kế hoạch (lịch sử trước triển khai)
 
 Chỉ tạo PLAN, GOALS, baselinehashes, acceptancecases và fixturespec. **Không sửa code sản phẩm, không mở campaign AI, không thay dữ liệu nguồn/schema/quyền, không commit/push**.
 Ca ban đầu scope/numeric đúng4charts/6resultsets, nhưng comparativecontext không giữ trong hỗ trợ; KPI thiếusubgroup, captionwrongsort, coverage4/6. Numeric pass không thay gate cải thiệntrải nghiệmso sánh.
@@ -849,6 +851,185 @@ Tối ưu token/chi phí, dùng targeted checks rồi final regression/live/UI q
 
 ### H.15. Checkpoint thực thi đang hoạt động (Claude)
 
+
+**CHECKPOINT DUY NHẤT ĐỂ TIẾP TỤC — 23/10/2026, tạm dừng theo yêu cầu người dùng vì sắp hết token. Goal vẫn IN_PROGRESS, CHƯA DONE / NOT_QUALIFIED.** Không có test hoặc live campaign của phiên này còn chạy nền. API và web healthy, OOM=false; không dừng DB/pipeline/app khác.
+
+#### 1. Trạng thái nguồn và điều đã biết chắc
+
+- Source hiện tại: **`2026-10-23.comparison-workspace.42`**, khai báo trong `analytics-api/services/analytical_resolver.py`. Freeze: [`execution/final-freeze-r31.json`](evaluation/comparison-workspace-20261022/execution/final-freeze-r31.json). Kiểm khi dừng: **source hashes không drift**, Python các file sửa parseđạt. Snapshot `/private/tmp/codex-cw-final-20261023-r31` có thể còn ngày mai; nếu mất, tạo lại từ repo, tuyệt đối không copy/read `.env`.
+- **API chưa restart sau các sửa41/42.** Lần restart cuối ởpolicy40; không khẳng định serving hiện tại đồng nhất42. Phải hoàn tất checks rồi restart riêng API, xác minh runtime/source/bundle trước nghiệm thu. Web không có thay đổi mới sau buildr10: `/assets/index-Do9uYw5P.js`, SHA256 `0b51948dbf2e352ae0550cb61f8cf09e92205ae8f6791756f93f8ba95c533946`.
+- Không commit/push/reset/stash/clean; giữ các sửa đang có. **Các thay đổi song song ở `avengers-coffee-system/apps/web-admin`, `apps/web-customer` và `AI_DATA_ANALYST_FINAL_PLAN.progress.md` không thuộc phần này, không đụng vào.** Không sửa nguồn dữ liệu/schema/quyền/I13, không xóa volume/container khác.
+- Quyền live/API phí đã được người dùng cấp tạiH.10, vẫn có hiệu lực; không hỏi lại từngbatch. Dùng key đã cấu hình trong runtime; **không đọc `data-platform/.env`, không ghi mật khẩu/key vào tài liệu/log**. Thông tin đăng nhập dùng theo hội thoại trước hoặc session đã có.
+
+#### 2. Các sửa chung mới nhất, không phải vá câu mẫu
+
+1. Timeout giữ nguyên trần attempt12s/provider30s/planning40s/3physical sends; `urllib3.Timeout` trừ connect thực tế thay vì làm mất cố định2s thời gian đọc.
+2. Canonical metric không chuyển nguồn chỉ vì nhóm theo city/store/payment; giữ exact declared equivalence và governed populatedcohort như voucher, có negativecontrols thay đổi metadata để ngăn suy từ label.
+3. Không tự thêm baseline cho so sánh entity chỉ có một thời gian rõ ràng; không tự thêm TopN hoặc feature sai shape khi user yêu cầu named/selected comparison.
+4. Selection→comparison continuation giữ **một cohort servermaterialized**, cùngmetric/window/typedfilters; explicit nationalgoal giữ riêng, ambiguous/crossmetric dependency chưa hỗ trợ thì clarification/unsupported. Copy immutable receipt, không SELECT lại hoặc mượn frame của requirement khác.
+5. Mission grammar không loại required temporal form hợp lệ chỉ vì nhãn nhiệm vụcompare: compiledkindtrend + xperiod + formđãđượcmissionadmit. Wrongaxis/wrongshape/nontrend vẫn bị chặn.
+6. **P09 phát hiện lỗi thật:** aggregate có nhãn month vẫn cộngnăm, chuỗi tháng chỉsupporting. Rule41 bind uniqueinitial cadence-bearing aggregate vềtrend, bảo vệ independenttotal/ranking/baseline/forecast; strictanchor `explicit_trend_missing` ngăn supportinglens che thiếu yêu cầu chính.
+7. **Counterexample nhiều metric:** nếu unioncandidate của “doanh thu và số đơn theo tháng”, một trend có thể thỏa nhầm cả hai. Rule42 tách binding theo từng metricmention; mỗi chỉ số phải có requiredtrend riêng. Red `multimetric-cadence-red-r30.log` → green `multimetric-cadence-green-r31.log`, kiểm rawordercount độc lập. Không branch theo tên địa phương, metricid, P09/P24 hoặc số tiền test.
+
+Các file mới sửa trong lượt cuối: `services/request_anchors.py`, `services/hybrid_analyst_planner.py`, `services/chart_relevance_service.py`, `services/analytical_resolver.py`, `tests/test_comparison_workspace_cw.py`. Các sửa engine/view/UI/evaluator trước đó vẫn giữ trong dirtytree; xemdiff và receipts, không ghi đè bằng baseline cũ.
+
+#### 3. Test đã chạy — đọc đúng phiên bản và mẫu số
+
+| Receipt | Kết quả | Cách sử dụng |
+|---|---|---|
+| `backend-final-r22-full/` | Full109module/1.771module-local executions,7moduleđỏ | Giữ toàn bộ failures; không gọi fullnày xanh |
+| `backend-final-r23-delta/` + r25rubric | 13module/613executions + rubric6 đạt | Sửa/cập nhật hợp lệ7moduleđỏ; bảo vệ numeric voucher/recovery cũ |
+| `backend-final-r26/` | CW63 có2error grammar;7modulekhác đạt | Giữred; source40grammar được sửa sau đó |
+| `backend-final-r27/` | 7module/148executions đạt, CW64 | Fullbase+deltas tới nguồn40:109module/1.779executions latestđạt; không unique/monolithic |
+| `backend-final-r28/` | **Source41:10module/237executions đạt, CW67** | Kiểm semanticrepair/oneclick/boundaries/canonical/live regressions/workspace |
+| `backend-final-r29-full/` | Source41 **dừng35/109module,852executions hoàn tất đạt** | Dừng để chuyển42; không được gọi regression đầy đủ |
+| `multimetric-cadence-green-r31.log` | **Source42:1test end-to-end đạt**, đối chiếu raw số đơn | **CW68 toànmodule chưa chạy trên42**; chỉ một test mới đã đạt |
+| `backend-final-r32-full/` | **Đã dừng theo yêu cầuuser khi moduleđầu đang chạy;0module hoàn tất** | Có thể chưa cómanifest. Cần chạy full lại từđầu, không resume coi đãxong |
+
+`qualification-local-summary.json` đã đánh dấu PAUSED/NOT_QUALIFIED, bảng module cũ là lịch sử, **không chứng nhận source42**. `pause-20261023.json` và `campaign-events.json` ghi trạng thái dừng. Mọi test mới đều isolatednetworknone, tối đa2CPU/1,5GiB; không rawunittestdiscover trong servingAPI.
+
+Web source hiện tại đã có **unit240/typecheck/build đạt; E2E105pass/2optional skip** (`web-e2e-r10.log`), actualguidedUIr13 PASS5tasks/1job/0AI. Trước khi pause, regexscan831evidence textfiles không thấy patternGoogle/GitHubkey/JWT/privatekey; đây không phải comprehensivePII/secret certification.
+
+#### 4. Live và số liệu — chưa đủ gate cuối
+
+- Model cấu hình vẫn `gemini-3.5-flash-lite`, không đổi model/ngân sách/threshold để làm xanh. Tất cả run JSON ở `analytics-api/evaluation/cw-live/`, log ở `execution/`.
+- Developmentpolicy39r6: P06/P08/P10 PASS1AI, N04/N08 đúng abstention0AI0businessSQL; **P24FAIL thật do trend tách khỏi selectedcohort**.
+- Developmentpolicy40P24r7: **PASS1AI0repair**, selectedĐiệnBiên/BạcLiêu đúngCV9tháng đầyđủ. Rawaudit **5querysets/5charts/32variants/174marks đạt**: `selection-policy40-development-r7/numeric-audit.json`. Không thay bằng internal score.
+- **Frozenr8policy40 dừng12case:10PASS, P09missingprimarytrend, P12provider_timeout**. Ledger `codex-final-policy40-r8.json` giữ nguyên; request có thể đanginflight sau recordcuối lúcstop là NOT_MEASURED. Không lấy10PASSđểnghiệmthu. Chưa có finalpolicy42.
+- Manifest48 v3: **`analytics-api/evals/cw_codex_policy39_cases.json`** (tênfile39 là lịch sử), SHA256 **`6e9af53cbaacf1d7ae0fd3138c2719af5d294887f68e718c7118e8f7127aef7c`**. 24positive +8negative +8seentransfer +8freshtransfer;40answerable. **T09–T16 chưa chạy hoặc đọcoutput để sửa**; câu hỏi public nên gọi frozentransfer, khôngblind.
+- Rubric6 calibration, raw oracle và noSQL/HTTPnegativechecks giữ nguyên. Đặc biệt N04 phải có `input_write_unsupported`, N08 `analysis_target_missing`, cảhai0AI0businessSQL. `cw_live_qualification` dùng default productionexecutor và requestSQLbudget, không wrapper làm đổi batching/sourceepoch.
+- Rawaudit selector r1 đỏ vì audit nhầm **candidatepreview50 là fullcensus55**, không phải IDs chọn sai. `execution/audit_selection_raw.py` đã sửa tách previewscore/order và fullsource55 để chọn IDs, **bản sửa chưa chạy lại**. Giữreceiptđỏ, không đổioutcomechồnglên. Numeric174marks đãđạt riêng.
+
+#### 5. Những việc ngày mai phải làm tiếp, theo thứ tự
+
+**T1 — Fullregression source42 trước live.** Kiểm lại dirtytree/freeze31. Không tạo thêmPLAN/MD. Có thể dùng snapshotr31 nếuhashcònkhớp; sourceRO, evaluationfixtures writable tách riêng. Lệnh từrootrepo (thay tênout/container nếu đãtồn tại, không overwrite receipts cũ):
+
+```bash
+docker run --rm --name avengers_cw_resume_r33 --network none --cpus 2 --memory 1536m \
+  -e AI_OFFLINE=1 -e PYTHONDONTWRITEBYTECODE=1 \
+  -v /private/tmp/codex-cw-final-20261023-r31:/app:ro \
+  -v /private/tmp/codex-cw-evaluation-r23:/app/evaluation \
+  -v "$PWD/data-platform/evaluation/comparison-workspace-20261022/execution/backend-resume-r33-full:/evidence" \
+  -w /app cnm-avengers-coffee-microservices-ai-analytics-api \
+  python -m tools.run_tests_isolated --out /evidence --module-timeout 900
+```
+
+Nếu `/private/tmp` mất: dùng `rsync -a` từ `data-platform/analytics-api/` tạo snapshotmới, exclude `.env`, `.env.*`, `__pycache__`, `evaluation/cw-live`; tạo thưmục evaluationfixtures writable riêng từfixtures nguồn, cũng exclude `cw-live`. **Không dùng mount servingAPI rồi chạy fulltests ở đó.** Ghi sourcehashes mới. Nếu đỏ: đọc đúngcause, sửa consumer/contract chung và targetedtest; không hạ gate hoặc bỏ assertion để làm xanh. Full mới phải có đủ109module; module-local count có testimports lặp, không gọi unique.
+
+**T2 — Sau checks xanh, restart riêngAPI và developmentP09 một lần.** Xác minh source42/hash/health; web không cần rebuild nếuJSkhôngđổi. Dùng manifestv3 đangfrozen:
+
+```bash
+docker restart avengers_analytics_api
+docker exec avengers_analytics_api python -m evals.cw_live_qualification \
+  --manifest /app/evals/cw_codex_policy39_cases.json --cases P09 --min-case-seconds 8 \
+  --out /app/evaluation/cw-live/codex-policy42-development-p09-r9.json
+```
+
+P09 cần requiredmonthlytrend/citymembers đúng; supportingtrend không thay primary. Không tăng providerbudget hoặc rerunlặp cho maymắn. Giữmọi failures. Có thể recheckP24/oracle nếu thay source liên quan.
+
+**T3 — Một frozen48final đầy đủ sau freeze, không chạy cùng heavyregression.** Out mới, giữ mọi case/HTTP/token/repair/latency và unknowns:
+
+```bash
+docker exec avengers_analytics_api python -m evals.cw_live_qualification \
+  --manifest /app/evals/cw_codex_policy39_cases.json --min-case-seconds 8 \
+  --out /app/evaluation/cw-live/codex-final-policy42-r10.json
+```
+
+GateH.9/H.12: acceptedoverall>=95%, answerable>=95%, positivefirstpass>=95%, >=20positive thựcquaLLM,100%criticalmeaning/numeric/authority vàmandatoryUItasks, không knowncritical. Timeout vẫn tính trong lượt gốc; finalpass saurepair không đổi firstpass thànhđạt. Nếu đọcfailedfreshtransfer để sửa, ghi contamination vàfreeze8freshmới trước finaltransfer tiếp; không gọi holdoutblind.
+
+**T4 — Realfree-textUI, rawaudit vàWord.** Tool đã có, chưachạy ca free-text này:
+
+```bash
+# workdir: data-platform/web-ui; cung cấp mật khẩu qua env từ thông tin hội thoại, không ghi vàoMD/log
+CW_ALLOW_PAID_LIVE=1 CW_ADMIN_PASSWORD='<giá trị từ hội thoại>' \
+CW_EVIDENCE_DIR='../evaluation/comparison-workspace-20261022/execution/served-free-text-policy42' \
+PW_CHROMIUM='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+node tools/cw-served-live.mjs
+```
+
+Tool dùng realChrome/noAPIresponsemocks: một submit free-text → compare/total/single/reset mọi chart → KPIstable/noextrajobs → save/reopen → Word download → reconcile nguồn → pendingglobalApply/revision2. Câu Jan–Sep2026 HCM/ĐàNẵng. Giữfailure nếucó, không lén đổi thànhguided. `CW_GUIDED_ONLY=1` là bằng chứng khác0AI, không thay free-textqualification.
+
+- Dùng `evals/cw_served_numeric_audit.py` với initialreport, advertisedcapabilities và **đủ immutable resultpages** mà toolđãlưu; authoredmembersHCM/ĐàNẵng, start2026-01-01,end-exclusive2026-10-01. Auditmọiquery/mọi offeredvariant/mark; không dùng compiler/renderer làmoracle.
+- Dùng `execution/audit_delivery_raw.py` trên **P11report của batchfinal mới**. ChạytrongAPI với `PYTHONPATH=/app` sau `docker cp` scriptvào `/tmp`; check rawtrip terminaldefinition, selectedUUID/ties/n/N, mỗi companiongrain trongfixedcohort. Hiện hỗtrợ unfiltered all-timeTopNshipper; nếucontractkhác phải ghi boundary/đọcnguyênnhân, không fakePASS. **Script này chưa chạy lần nào.**
+- Re-run selector audit đãsửa ra `selector-audit-r2.json` mới, giữr1đỏ; nếu mớiP24đổi shape thì auditđúngreportmới.
+- Read documents skill khi thực hiệnWordQA. BundledPython `/Users/thaian/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python`, render bằng `render_docx.py` trong documents skill, PATHprepend `.../dependencies/bin/override`; soffice/Poppler đãcó. **Phải xem từng pagePNG của Word free-text mới**, không chỉ textunzip. ActualguidedWord9pages + fixture15pages cũ đãxem, không thayQAfilemới.
+
+**T5 — Kết thúc chỉ trong MD này.** Cập nhậtH.16/checklistA bằng numerator/denominator thật; frozenoutcomes/firstpass/transfer/negative/usage/tokens/unknowns; source/runtime/bundlehealthhash; independentraw vàWordvisualreview; limits theo nguồn. Refresh `qualification-local-summary.json`, `qualification-coverage-map.json`, runtimeinventory vàregexscan sauevidence mới. Không tựchấm56/56 từtestmodulePASS hoặc lấy internalqualityscore làmaccuracy. Nếu đủgates thì DONE hữu hạn, nếuchưađạt thì ghi NOT_QUALIFIED cùng blocker chínhxác.
+
+#### 6. Giới hạn và tài nguyên phải giữ
+
+- Không sửa nguồn I13/GPS/sáp nhập. Currentrawagreement và generationvector không chứng minh atomic historicalsnapshot/sourcecompleteness.
+- Selection cần>=3completebuckets; missing≠0, partialbucket tách. Rate/AOV dùngΣn/ΣN, distinctunion cầnidentity; overlapshares không hợp lệ; unsupported córeason. Runtimeinventory hiện16domains48publicmetrics/6classes là quan sát, khônghardlimit và khôngchứng nhận mọi tổhợp.
+- Webguidedr13 5tasks/raw553marks và Word9pages đãđạt; sourcefree-text/frozen42 cònchờ. Source38/40performance2CPU đạt không phải SLA cho serving0,5CPU. Wordtemplate cònverbose/bảngfallback, không tuyênbố đãredesigneditorial.
+- Chạyseriallive, max2CPU/1,5GiB chooffline; tránh live tranhfullregression. Không restartDocker/DB hoặc dừng container appkhác. Tất cả testcontainer của phiên đãdừng, không để fullr32 chạy nền quađêm.
+
+**Prompt dùng ngày mai:** “Đọc H.15 trong `data-platform/AI_DATA_ANALYST_TONG_HOP_20261022.md`, kiểm freeze31/sourcepolicy42 rồi tiếp tục T1→T5 đến khi đủ H.9/H.12 và cập nhật nghiệm thuH.16 trong cùngfile. Đây là tiếp tục thựcthi, không lập PLAN mới. Quyềnlive ởH.10 đãcấp; giữmọiattempts/khônghạgate/khônghardcodecâumẫu. Không đụng dirtywork ởweb-admin/web-customer. ChưaDONE thì không báoxong.”
+
+<details><summary>Checkpoint trước, chỉ để truy vết</summary>
+
+
+**Checkpoint hiện hành Codex, 23/10 khoảng01:16 — sourcepolicy39, delta cuối đang chạy:** Fullr22 đã hoàn tất109module/1.771module-localexecutions, **7module đỏ**, giữ nguyên toànreceipt. Red gồm conclusions expectation cũ; receipt corpus mountRO; repairfixtures canonical/store; overview querydedup7→6; kiosk globalchartfloor4 dù dữliệu chỉ2lenses; và2regressions thật trong tightening metriclock (explicit specialized equivalent, governed non-null voucher population).
+
+- Policy39 sửa bằngmetadata dùng chung: bảo vệ exact-declared metric equivalents (phải cùngsource/grain/formula/clock/population/nullpolicy, không chỉlabel); bảo vệ qualifier có extra required_non_null khi thật sự là populatedcohort, nhưusedvoucherorders, thay vì xóa cohort vì genericowner hỗtrợ axis. Ordinary axis/sourcevariants không có extra populatedcohort vẫn về canonical. Không branch theo metricid/câu/địa phương. New controls canonical24 testgrouping vàexplicit equiv/ngượcmetadata; voucher11 vàrecovery14 giữ nguyên numericexpected cũ.
+- `backend-final-r23-delta/` chạy13module trên `final-freeze-r23.json`, nguồnRO và riêng `/private/tmp/codex-cw-evaluation-r23` writable đểtestghi receipt. **7module đầu đãđạt**: canonical24,recovery14,voucher11,finalreview15,overview10,population7,corpus2. Còn CW59/identity34/repair13/oneclick14/rubric5/agent405 (sourcefrozen,2CPU/1,5GiB,execsession94412). Không chạy live song song. Fullr22 không bị đổi outcome hoặcxóa failures.
+- Kiosk sparse fixture giữ nguyên data: asserted đúng2chart, LIMITED_DATA2/6,4lenses có reasoninsufficient_periods/singleton, mandatoryranking, distinctkeys, filterscohort vàrawsum1800. Không nới4→2 để che lỗi render hoặc bịa dữliệu; bỏ globalfloor cũ theoH.6/H.12 “không filler đếmchart”. Overview vẫn rawscalar700/ordercount4/AOV700÷3, denominatorcanonicalshared; conclusions max3phải thuộc scopedkeyfindings, recommendations vẫnrỗng.
+- Runtime vẫnpolicy37 cho tới khi delta xong. Còn restart39, live development(P06/P08/P10/P24)rồi final48chưađạt, realfree-textUI/save/reopen/Word, rawnumericshipping audit vàfinaloneMDgates. Helper `execution/audit_delivery_raw.py` đã viết từbusinessdefinition, chưa chạy; hỗtrợ all-timeTopNshipper, exactn/N+tie/census vàmọi fullresultgrains trong cùngcohort; không importcompiler/ranking/formula/render.
+- Runtime/capability16domains48metrics/6classes; Web240unit/typecheck/105E2Epass2skip vàservedbundlehash giữ nhưr10 (khôngJSchange mới). Servedguidedr13 PASS5tasks0AI, rawrevenue6query5chart30variant553markskhớpcurrentraw; actualWord9pages đãxemtừngtrang. Sourcevectorreconciliation1/1matchedsameobservedgeneration chỉ là observedreplicavector. Không gọi rawhistoricalsnapshotatomic hoặc nội bộscore làaccuracy.
+- Latest fullqualification trướcsourcefix làr5policy37:18completed13pass; allattempts giữ, pendingNOT_MEASURED. T09–T16chưachạy/đọcoutput; câu hỏi đãcôngkhai, khônggọi blind. Giữscopefinite/rubric>=95% và100%critical; chưaDONE, khôngdùng%tiếnđộ.
+
+
+**Checkpoint hiện hành Codex, 23/10 khoảng00:52 — full regression đang chạy:** Snapshotr22 policy38 freeze tại `execution/final-freeze-r22.json`; full109module chạy trong container `avengers_cw_final_full_r22`, networknone,2CPU/1,5GiB, logs `backend-final-r22-full/`, execsession97619. Không chạy live cùng full. Source bảnserving vẫnpolicy37; chỉ restart sau khi nguồn mới qua checks.
+
+- CW control mới đã tạo đúng report selection→trend. Hai lớp grain trước đó cùng bỏ entity: normalization xóa axis vì câu chỉ nêu cadence; verifier cũng đòi axes[]. Nay giữ một selectorentity khi cadence không chỉ grain khác; verifier nhận entity chỉ sau khi selection đã materialized với selectedkeys. Không tự thêm scalar group_gap vào trend. Assertscore vẫn theo raw CV chứ không chỉ xem reportcompleted.
+- Lượt r19/r20/r21 đỏ giữ nguyên: lần lượt selection_unsupported (mấtaxis), explicit_trend_grain_mismatch (validator), rồi helperexpected nhầm volatility dùnggrowth. Sửa oracle sang CVhighest, kiểm scores từngmember; không đổi productionscore để hợp expected sai. r21semanticboundaries10đạt; r22full sẽ kiểmCW59.
+- Full đã phát hiện testlegacy `test_agent_v22` đòi conclusions rỗng, trong khi groundedconclusions mới đã triển khai ở phiên trước. Sửa **test** thành nonempty/max3/subsetofscopedkeyfindings, recommendations vẫnrỗng; sẽ recheck module405 riêng sau full. Không coi full đang chạy làpass, không bỏ đỏ trong aggregate.
+- Policy38 cũng gồm canonical22đạt, CW58đạt (trước control59), identity34, previousregressions9, completion19, oneclick14, normalization10, repair13+15đạt; source r18 có1testcũ metricstore_revenue khác địnhnghĩa canonical đã được đổi expectation và semanticboundaries10 đạt ởr20/r21. Còn fullresults, deltafailures, restart, boundeddevelopment rồi frozen48và realfree-textUI; H.12 chưaDONE.
+
+
+**Checkpoint hiện hành Codex, 23/10 khoảng00:35 — IN_PROGRESS policy38:** Developmentpolicy37P01 **PASS**,1AI0repair, nghĩa và raw oracle đúng. Frozenr5policy37 đã chạy18case:13pass/5fail (P03timeout; P06/P10specializedmetric drift; P08selection extra-feature shape; P12provider503), P07finalpass nhưng cầnrepair nên firstpassfail. Đã dừng riêngrunner trước khi sửa source; pendingattemptNOT_MEASURED. Chưa tới T09–T16freshtransfer; **không chọn13pass để nghiệm thu**.
+
+- Sửa abstraction metriclock: grouping/filter không tự đổi định nghĩa metric. Canonicalmetric hỗ trợ grain thì giữ canonical, kể cả draft chỉ trả sibling; specializeddefinition nêu rõ vẫn giữ, canonical không hỗ trợ grain thì contextualqualification vẫn hợp lệ. Fix thuộc `semantic_preflight_contract.py`, không branch theo câu/domain cụ thể. Test các trục store/store_type/payment và explicitcompanion.
+- Selection đã tự có score/history/cohortreceipt; bỏ **chỉ extras không được yêu cầu** `change/change_pct/selected_total` gắn sai shape vào selectioncomparison. Facts nêu rõ trong input và validtrendfeatures vẫn được bảo vệ. Không bổ sung `group_gap` scalar vào selection→trend; trend vẫn giữ memberaxis/frame qua typedselectedfilter. Có nguyên mẫu→oracle controls cho growth/volatility và explicitfacts.
+- `backend-final-r18/` đang chạy10module offline0,5CPU: canonical22/CW58 đãđạt; snapshotr19 thêm negativecontrol selection→trend, chưa chạy. Bảnserving vẫnpolicy37 cho đến khi các test nguồn mới đạt. Tiếp theo runCW59 từr19 rồi mới restartAPI và live development/frozen48, giữ từnglượt cũ. FinalgateH.9/H.12 chưađạt.
+
+
+**Checkpoint hiện hành Codex, 23/10 — tiếp tục policy37:** Sửa timeout thực tế đã qua8module transport/identity/budget/circuit (112executions hiệu lực, bao gồm faults11; r14 có2test mô phỏng sai connectclock đã sửa ởr15). Không tăng attempt12s/provider30s/planning40s/3physicalsend ceiling. Smoke developmentP01 sau sửa nhận primary model output trong10,12s (3.695input/180outputtokens), rồi repairtimeout; không được gọi semantic accuracy chưađo hoặc toànbộprovider khôngtrảlời.
+
+- Trace primary giữ revenue/city/member nhưng thêm `comparison_time` dù câu chỉ có một range. Policy37 dùng normalization chung: chỉ bỏ baseline model thêm trong **primary draft** khi namedmemberaxis đã được governed scope xác nhận, chỉ có một explicitwindow, req.time khớp chính xácwindow đó và không có temporalcomparison/UIoverride. Giữ metric/filter/group_gap; thời gian sai/ambiguous và comparison2kỳ thật vẫn qua validator/repair. Không sửa approvedintent/refinement, không map theo câu/tỉnh.
+- Backendr16: temporal8, previousregressions9, boundedrepair15, workspace15 đạt. Hai lỗi kiểm thử giữ nguyên: pipelinefixture thực ở2027 nhưng test mới hỏi2026 nên đúngra no_data; snapshotthiếu4capturedJSONfixtures khiến5subtest lỗi file. Chỉ sửa fixture/test, đang recheck CW57+oneclick14 tại `backend-final-r17/`. Chưa có final48 đạt. Mọi run live trước vẫn giữ.
+
+
+**Checkpoint hiện hành Codex, 23/10 khoảng00:10 — IN_PROGRESS:** Realservedr13 hoàn tất5taskchecks,0AI; đối soát raw riêng bằng hand-written SELECT đã khớp6querysets/5charts/30variants/553marks (1.658rawrows,1.582validrows, tháng09/2026). Rawaudit r1 giữ đỏ do thiếu store/store_id trong oracle; r2 bổ sung đúng sourcefields, không sửa số liệu sản phẩm. Word thật9trang đã render và xem từngtrang; còn template dài/bảngfallback, được ghi là giới hạn.
+
+- Gemini probe nhỏ lúc00:03 nhận200 sau10,5s, nhưng batchfrozenpolicy36r2 sauđó8/8completedcases lỗi timeout/503;16knownHTTPattempts, case tiếp cóthểinflightNOT_MEASURED, giữ ledger và dừng riêng runner. **Chưa có semantic accuracy**, không lấy probe200 làm bằng chứng bộ48đạt.
+- Chẩn đoán được vấn đề time accounting chung: attempt cótotal12s/connect2s nhưngread cốđịnh10s, mất phần connectbudget không dùng. Đã đổi readcap=total, urllib3 tự trừ **actual**connectduration; không tăng12s attempt/30s provider/40s planning/3physicalsend limits. Hai controls mới kiểm fastconnect.25s→read11.75s, slowconnect2s→read10s; remainingprovider1.25s→read1s. Đang chạy8module transport/cancel/failover/circuit offline côlập0,5CPU tại `backend-final-r14/`. Chưa nạp serving bản sửa khi tests chưa xong; không sửa code trong batchlive đang chạy.
+- Tổng hợp receipts cục bộ tại `execution/qualification-local-summary.json`; mapping56scenario là boundedtestevidence, **không tự chấm56/56**. GateH.9/H.12 vẫn chưađạt, tiếp theo dựa vào kết quả transporttests và live chẩnđoán có giới hạn.
+
+
+**Checkpoint hiện hành Codex, 22/10 khoảng23:56 — CHƯA DONE:** Sau kiểm real UI, sửa thêm grammar dùng chung: supporting aggregate category bar/horizontal được nhận theo vai trò grouped khi mission vốn cho grouped comparison; không nới donut/các dạng khác. Policy36. `backend-final-r13`: **6module/149test đạt**, gồm CW55, workspace15, depth15, completion19, services37, narrative8. Fullr4+delta hiệu lực109module/1.764module-local test executions; không gọi là1.764unique tests hoặc một monolithic finalrun. Red cũ giữ nguyên; lỗi p95 được recheck riêng2CPU.
+
+- Webr10:240unit,TypeScript,105browserpass/2optional skip, Docker build+servedbundle `index-Do9uYw5P.js`, SHA`0b51948dbf2e352ae0550cb61f8cf09e92205ae8f6791756f93f8ba95c533946`.
+- Livepolicy35r1 bị **transport blocker**: P01–P07 đều timeout/503 trên cảprimary/secondary;14HTTPattempts ở7completedcases, P08đanggửi bị dừng (không coi pending=0). Không có model interpretation để đo semantics. Circuitstop giữ mọi ledger;41case còn lại chưa hoàn tất. Tiny diagnostics:3.5timeout,3.1/3.8HTTP503UNAVAILABLE;2.5HTTP404NOT_FOUND dù listAPI trả200. Không đổi model/runtimeconfig/timeout, không fallback provider khác. Bằng chứng `execution/live-transport-blocker.json` + logs; **không được coi final48 đạt**.
+- Realservedguided0AI:5/5chart switch compare/total/single, save/reopen vàWord currentview đạt. Các scriptattempts giữ nguyên: r10locator nhầmrolebutton/tab; r11 đòi oracleeligible khi nguồn khôngpinned; r12 globalApply phát hiện grammargapđãsửa. Globalnarrow1member vẫn giữ yêu cầu A/Bgap gốc như giới hạn chưa tính được; không xóa feature để làm scorexanh. Đang kiểm tiếp runtime saupolicy36, fetching đủ immutable pages và auditrawcurrent riêng; preview50rows khônglàfullresult.
+- Reconciliation đúng trả `not_measured/source_generation_not_pinned`; không khẳng định cùng historicalsnapshot. Runtimeinventory thật16domain/48publicmetrics (6classes), tách declared26/97. `qualification-coverage-map.json` là mapping56scenario tới bằng chứng, không tự chấm56pass.
+
+
+**Checkpoint mới nhất Codex, 22/10 khoảng23:29 — IN_PROGRESS:** Backend r9: CW54/54 + rubric5/5 đạt; semantic146ca (retrieval/compile/preflight đúng mọi kỳ vọng, V33 thêm33/33). Web r10: TypeScript đạt, unit240/240, browser105đạt/2optional skipped trên Chrome installed; build đạt. Các lượt E2E lỗi môi trường vẫn giữ log (EPERM bind port; thiếu executable1208), không tính là product failures đã được bỏ qua.
+
+- Đã xem trực quan đủ15trang Word r9 (9 selected +6 ranking), ghi hash/method tại `execution/word-r9/visual-review.json`. Có caption currentview, KPI% làm tròn, n/N và điểmphầntrăm, không clipping/overlap; template còn dài và lặp facts report-level, không gọi là thiết kế biên tập mới.
+- Bổ sung cuối đường Apply dùng canonical member ID và typed IN cho composite; chỉ áp dụng khi đủ mọi server-issued option, không label-as-key/partial union. Test unit có duplicate label, partial union và inspect-only. R10 backend54+Word8 đang chạy lại0,5CPU và sinh artifact mới; đây là delta metadata+UI, không lặp full108module.
+- Sau runner: build Docker web no-deps, restart API để phục vụ policy35, hash bundle; serial frozen48live với interval8s (pacing, không retry campaign); real served UI không mock cho free-text→modes→save/reopen/Word→reconcile→globalApply. Script `web-ui/tools/cw-served-live.mjs` chỉ chạy khi có cờ paid explicit, credentials không ghi evidence. NativeSafari thấy trang đăng nhập nhưng AX click lỗi cannotComplete; không giả đã thao tác thành công, sẽ dùng real-browser automation của repo để kiểm end-to-end.
+- Mapping56scenario tới assertions hiện có tại `execution/qualification-coverage-map.json` là traceability đang audit, **không tự đổi56NOT_RUN thành56pass**. Còn live/runtime/gates, chưa DONE.
+
+
+**Codex tiếp tục 22/10, lượt hoàn tất cuối (đang thực thi):** Full r4 đã kết thúc **108 module / 1.751 test executions**; 5 module đỏ được giữ nguyên. Recheck r6 cô lập2CPU: jobs12/12, final-hardening8/8, workspace53/53 đạt; không suy thành SLA ở0,5CPU. Hai regression kỳ vọng cũ được cập nhật để kiểm tử/mẫu của rate bằng raw fixture (1/(i+1), làm tròn2chữ số theo metric), không bỏ kiểm membership/population. R7: các module hồi quy khác đạt; test mới bị artifact_expired do dùng fixture class sau test chủ đích expire, đã đổi tạo artifact mới cho từng test.
+
+- Phát hiện và sửa abstraction còn thiếu: frame chỉ gắn đúng requirement sở hữu và các supporting requirements của nó; cùng metric/axis không được mượn frame của goal khác. Observed member cũng chỉ đọc requested artifacts của chính goal đó. Cache policy35.
+- Nhóm giao nhau: compare từng cohort riêng; total union trên raw axis trước regroup, không cộng phần giao hai lần. Tỷ trọng chưa có định nghĩa cho overlap được unavailable có lý do. Có oracle nhỏ tổng1000 thay vì1700, so sánh1000/700; không nhánh theo tỉnh/câu mẫu.
+- Snapshot r8 và targeted recheck đang chạy tuần tự0,5CPU: `execution/final-freeze-r8.json`, `backend-final-r8/`. Sau đó tự sinh fixtures/Word và eval146 offline. Web typecheck +239/239 unit đạt; E2E lần khởi động trong sandbox bị EPERM bind4173, chưa có test chạy, sẽ chạy lại đúng quyền (không coi lỗi môi trường là pass).
+- Frozen live48 chưa chạy. Chưa DONE; còn Word visual, E2E/build/served identity, live và tổng hợp gates. Không thay kết quả các lượt trước hoặc sửa phần web-customer người dùng đang làm đồng thời.
+
+
 **Codex tiếp tục sau hạ tải (22/10, đang thực thi):** sửa định danh canonical whole-scope total để optional supporting bị bỏ không đổi ID của total đã chạy; giữ verifier so toàn bộ trường thực thi. Test AOV cohort đã xanh; cập nhật oracle test cho chiều giờ thực sự được planner chọn, và kỳ vọng cột mẫu số AOV (Hà Nội1 đơn hợp lệ/2 đơn tổng, không coi như cùng mẫu số). Policy cache mới `2026-10-22.comparison-workspace.34`.
 
 - `backend-last-fixes/manifest.json`: **14/14 đạt** cho cohort rollup, ranked-rate evidence và Word. Lượt `backend-rollup-fix/` trước đó giữ nguyên: test hybrid timeout300s khi0,5CPU; runner hiện cho ghi rõ timeout900s/module, không nới per-request/provider timeout của sản phẩm.
@@ -884,6 +1065,40 @@ Tối ưu token/chi phí, dùng targeted checks rồi final regression/live/UI q
 - Bằng chứng giữa chừng: CW 33/33; 13 module từng hồi quy 214/214; full suite snapshot 1735 test còn 3 lỗi thật (đã sửa: 2 test CW phụ thuộc store bị runner reset, 1 heatmap bị coi là so sánh) + 5 lỗi do snapshot thiếu `evaluation/`. web-ui rebuild, bundle :8501 có `data-view-controls`/"Chỉ biểu đồ này"/`data-selection-receipt`; e2e 102 pass/2 skip; e2e view modes 7/7 trên fixture sinh lại từ bản đóng băng. Đang chạy: full suite lần cuối → batch live cuối 40 câu.
 
 <a id="historical-acceptance"></a>
+
+</details>
+
+### H.16. Nghiệm thu goal cải thiện toàn Trợ lý AI — đang hoàn tất
+
+**Trạng thái: IN_PROGRESS / PAUSED_AT_USER_REQUEST / NOT_QUALIFIED (23/10).** Source42 mới có1test multi-metric đạt; fullr32 đã dừng trong moduleđầu vì user yêu cầu để ngàymaitiếp. Source41r29 dừng35/109module,852executions đạt. Bước tiếp theo cụ thể tạiH.15, không có test/live chạy nền. Đây là phần nghiệm thu source mới; bảng DONEpolicy33 ở D–F là lịch sử. Không dùng quality score nội bộ hoặc tỷ lệ tick checklist để suy ra độ chính xác của LLM.
+
+**Thay đổi kiến trúc đã triển khai:** LLM trả meaning contract có chỉ số, tập đối tượng, toán tử, thời gian và cadence; catalog/anchor layer khóa các định nghĩa nghiệp vụ và facts có thẩm quyền. Server tự tính cohort từ lịch sử hợp lệ, giữ canonical entity IDs, algebra của metric và receipt bất biến; compiler chỉ thực thi kế hoạch đã kiểm qua đường READ ONLY có ngân sách. ComparisonFrame sở hữu scope và các chế độ xem; renderer, insight và Word đọc cùng view contract. Local toggle không gọi AI/SQL, global Apply tạo revision mới qua bước chờ áp dụng rõ ràng.
+
+Các sửa cuối là quy tắc chung: không tự đổi canonical metric thành nguồn doanh thu khác chỉ vì chiều nhóm; không thêm baseline cho một cửa sổ so sánh entity; không mất member axis/cohort khi ghép selection→monthly comparison; không dùng aggregate có nhãn month để giả làm required trend; grammar phải giữ temporal form bắt buộc khi kiểu thực thi và trục period khớp. Không có production branch theo P09/P24, tên tỉnh, UUID hoặc số tiền mẫu. Exact catalog equivalents và các populated cohorts có định nghĩa khác vẫn được bảo vệ.
+
+| Gate | Bằng chứng hiện có | Trạng thái hiện hành |
+|---|---|---|
+| Backend và semantic | Fullr22 + targeted deltas; r28 policy41:10module/237module-local executions đạt; semantic146 + V33=33 đạt. Fullr29 dừng35module để chuyển source42; fullr32 cũngđãdừngtheoyêucầuuser trongmoduleđầu. Chưa cófullresultsource42. | Đợi full mới; không gọi kết quả fullr22 xanh |
+| Web/interaction | Unit240, typecheck/build đạt; browser105pass/2optional skip; 4widths, keyboard, no extra AI/SQL, pending globalApply, legend và atomic view controls. `web-e2e-r10.log`, `screens/`. | Đạt trên web source hiện tại, hash giữ nguyên |
+| Actual served guided | `served-guided-r13/result.json`:5taskchecks,1job,0AI; raw audit6querysets/5charts/30variants/553marks đạt. Save/reopen/export/globalrevision thực. | Đạt finite task; không chứng nhận free-text |
+| Meaning/calibration | `test_cw_live_rubric`:6test calibration bắt sai metric/window/axis/exclusion/baseline/ranking và chấp nhận controls; N04/N08 cần0AI0businessSQL + specificreasoncode. | Đạt bộ mutation hữu hạn; không là calibrated accuracy toàn ngôn ngữ |
+| Live frozen/transfer | Manifestv3 `evals/cw_codex_policy39_cases.json`,48case/40answerable+8negative, hash6e9af53c…7aef7c. r8policy40:12completed/10pass, P09semanticfail vàP12timeout; dừng trước freshtransfer. | Chưa đạt; giữ mọi attempt, không cherry-pick |
+| Independent selected cohort | DevelopmentP24:raw5querysets/5charts/32variants/174marks đạt. Chọn ĐiệnBiên/BạcLiêu đúng phép tính CV từ9tháng đầy đủ; reportcandidatepreview50 không phải census55. | Kiểm current source, không atomic historical snapshot |
+| Native Word | Fixture15pages và actualservedguided9pages đã render/xem từng trang, `word-visual-review.json`; caption của view và reportscope được phân biệt. | Còn free-text Word thật phải render/xem |
+| Runtime/source | API chờ restartpolicy42 sau full; webbundle `/assets/index-Do9uYw5P.js`, sha2560b51948d…946; isolatedtests networknone,2CPU/1,5GiB. | Chờ final source/hash/health và liveUI |
+
+**Việc còn lại để quyết định DONE:** chạy lại full109module source42 từđầu theoH.15; developmentP09; một frozen48 đầy đủ sau sourcefreeze; task free-text thật trên servedUI, raw revenue audit mọi chart/view và rate shipper audit; render/xem toàn bộ Word mới; ghi outcomes, firstpass, numeric/critical gates, provider sends/tokens, hash drift và limitations. Nếu phát hiện lỗi critical có thể sửa thì sửa chung và kiểm lại; provider errors vẫn được tính trong lượt gốc. Nếu gate cuối không đạt, giữ NOT_QUALIFIED và chỉ rõ phần chưa đạt, không đổi ngưỡng sau khi thấy kết quả.
+
+**Demo nghiệm thu cho người dùng khi bản cuối đủ gate:**
+
+1. Trong Trợ lý AI, nhập câu so sánh doanh thu hai thành phố có thời gian rõ ràng; xem đúng members, period và cảnh báo nguồn.
+2. Trên từng biểu đồ có capability, đổi So sánh → Tổng gộp → Xem riêng → chọn member → tỷ trọng khi hợp lệ → Đặt lại. Data, caption, unit và nhận định đổi cùng nhau; KPI toàn báo cáo giữ scope đã ghi.
+3. Mở bảng/chi tiết và exposure n/N. Với TopN tỷ lệ, đọc cả số lượt, mẫu số, tập đủ điều kiện và đồng hạng; UUID tie-break không phải ưu thế nghiệp vụ.
+4. Chọn Áp dụng cho báo cáo, kiểm pending filter rồi bấm Áp dụng bộ lọc: revision mới chỉ công bố khi kiểm xong; nút xem riêng cục bộ không tự lọc toàn báo cáo.
+5. Lưu/mở lại và tải Word khi đang xem riêng một member; kiểm tên view, bảng/plot và phần kết luận ghi đúng scope.
+6. Thử yêu cầu chưa đủ nghĩa hoặc ngoài dữ liệu: nhận lựa chọn/reason cụ thể, không âm thầm đổi câu hỏi hoặc tạo biểu đồ thay thế sai mục đích.
+
+**Giới hạn được giữ công khai:** dữ liệu theo nhãn kho, chưa chứng nhận mapping địa chỉ/GPS/sáp nhập; source generation vector không chứng minh transaction snapshot hoặc đầy đủ nguồn; forecast/relationship và một số tổng distinct có capability boundary. Tỷ lệ dùngΣnumerator/Σdenominator; không cộng AOV/rate hoặc lấy trung bình phần trăm nhóm. Overlapmember share bị chặn, union total deduplicate khi có raw identity phù hợp. Chọn stability/growth/volatility cần lịch sử đủ kỳ; missing≠0; thiếu lịch sử hoặc cohort dependency mơ hồ thì hỏi rõ/typedunsupported. Không có cam kết hỗ trợ mọi câu hoặc mọi tổ hợp catalog. Word template còn dài, có bảng thay biểu đồ cho một số shape; p95 đạt ở2CPU không phải SLA cho serving0,5CPU.
 
 ## D. Nghiệm thu reliability đợt trước — phạm vi lịch sử
 

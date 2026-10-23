@@ -31,6 +31,7 @@ import {
   MapPin,
   ArrowLeft,
   Eye,
+  EyeOff,
   KeyRound,
   Shield,
   Calendar,
@@ -137,6 +138,7 @@ export function AdminUserManagementPanel({
   const [newPasswordInput, setNewPasswordInput] = useState('')
   const [isResettingPassword, setIsResettingPassword] = useState(false)
   const [resetPasswordError, setResetPasswordError] = useState('')
+  const [showUserPassword, setShowUserPassword] = useState(false)
 
   // Defensive fallbacks
   const safeUserForm = userForm || {}
@@ -411,13 +413,43 @@ export function AdminUserManagementPanel({
                 <label htmlFor="usermanagementpanel-10895" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                   {editingUserId ? 'Đặt lại mật khẩu (để trống nếu giữ nguyên)' : 'Mật khẩu khởi tạo *'}
                 </label>
-                <input id="usermanagementpanel-10895"
-                  type="password"
-                  className="shadcn-input ui-input"
-                  value={safeUserForm.mat_khau || ''}
-                  onChange={(e) => setUserForm((p) => ({ ...p, mat_khau: e.target.value }))}
-                  placeholder={editingUserId ? 'Nhập mật khẩu mới nếu muốn đặt lại...' : '••••••••'}
-                />
+                <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
+                  <input id="usermanagementpanel-10895"
+                    type={showUserPassword ? "text" : "password"}
+                    className="shadcn-input ui-input"
+                    value={safeUserForm.mat_khau || ''}
+                    onChange={(e) => setUserForm((p) => ({ ...p, mat_khau: e.target.value }))}
+                    placeholder={editingUserId ? 'Nhập mật khẩu mới nếu muốn đặt lại...' : '••••••••'}
+                    style={{ width: '100%', height: '40px', paddingRight: '42px', boxSizing: 'border-box' }}
+                  />
+                  <button
+                    type="button"
+                    className="admin-password-toggle"
+                    onClick={() => setShowUserPassword(!showUserPassword)}
+                    title={showUserPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-label={showUserPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '26px',
+                      height: '26px',
+                      border: 'none',
+                      background: 'transparent',
+                      padding: 0,
+                      margin: 0,
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      zIndex: 3
+                    }}
+                  >
+                    {showUserPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               {/* Field: Role */}

@@ -14,6 +14,101 @@ from tests import cw_harness as h
 A, B, G = cf.CITIES['Alpha'], cf.CITIES['Beta'], cf.CITIES['Gamma']
 
 
+class ComparisonGrammarTests(unittest.TestCase):
+    def test_cadence_bearing_aggregate_must_execute_a_required_city_trend(self):
+        data=cf.selection_data()
+        report,provider,_=h.run([h.envelope(h.requirement(granularity='month'))],data=data,
+            question=f'so sánh doanh thu theo tháng của thành phố {A} và thành phố {B}')
+        self.assertEqual(provider.call_count,1)
+        requested=[q for q in report['analytical_queries'] if q['role']=='requested']
+        self.assertEqual(len(requested),1)
+        q=requested[0]
+        self.assertEqual((q['operation'],q['granularity'],q['group_by']),('trend','month',['city']))
+        actual=report['result_sets'][q['id']]['rows']
+        raw=cf.monthly_series(data,member_field='thanh_pho')
+        self.assertEqual(sum(x['revenue'] for x in actual),sum(sum(raw[m].values()) for m in [A,B]))
+        self.assertEqual(report['verification']['status'],'verified')
+        self.assertTrue(any(c['relevance_role']=='primary' and c['chart_type']=='multi_line' for c in report['charts']))
+
+    def test_temporal_role_completion_keeps_independent_totals_and_ambiguous_goals(self):
+        from services.analysis_intent import AnalysisIntentEnvelope
+        from services.request_anchors import complete_explicit_temporal_roles
+        anchors=dict(features=[],trend_bindings=[dict(metric_candidates=['revenue'],granularity='month',dimension_ids=[])])
+        total=h.requirement(id='total',granularity='month')
+        trend=h.requirement(id='months',analysis_kind='trend',granularity='month',derived_features=[])
+        before=AnalysisIntentEnvelope.model_validate(h.envelope(total,trend))
+        after,changes=complete_explicit_temporal_roles(before,anchors)
+        self.assertEqual(after,before);self.assertEqual(changes,[])
+        for special in (dict(ranking=dict(limit=2,metric_id='revenue')),dict(comparison_time=dict(kind='relative',mode='all_time'))):
+            before=AnalysisIntentEnvelope.model_validate(h.envelope(h.requirement(granularity='month',**special)))
+            after,changes=complete_explicit_temporal_roles(before,anchors)
+            self.assertEqual(after,before);self.assertEqual(changes,[])
+        before=AnalysisIntentEnvelope.model_validate(h.envelope(total,dict(total,id='other')))
+        after,changes=complete_explicit_temporal_roles(before,anchors)
+        self.assertEqual(after,before);self.assertEqual(changes,[])
+
+    def test_each_explicit_metric_keeps_the_requested_monthly_role(self):
+        data=cf.selection_data()
+        raw=h.envelope(h.requirement(granularity='month'),
+            h.requirement(id='orders',metric_ids=['order_count'],granularity='month'))
+        report,provider,_=h.run([raw],data=data,
+            question=f'so sánh doanh thu và số lượng đơn theo tháng của thành phố {A} và thành phố {B}')
+        self.assertEqual(provider.call_count,1)
+        requested=[q for q in report['analytical_queries'] if q['role']=='requested']
+        self.assertEqual(len(requested),2)
+        self.assertTrue(all(q['operation']=='trend' and q['granularity']=='month' and q['group_by']==['city'] for q in requested))
+        q=next(q for q in requested if 'order_count' in q['metrics'])
+        cities={s['ma_chi_nhanh']:s['thanh_pho'] for s in data['chi_nhanh']}
+        from collections import Counter
+        expected=Counter((str(o['ngay_tao'])[:7]+'-01',cities[o['co_so_ma']])
+                         for o in data['don_hang'] if cities[o['co_so_ma']] in {A,B})
+        self.assertEqual({(str(r['period'])[:10],r['city']):r['order_count'] for r in report['result_sets'][q['id']]['rows']},dict(expected))
+
+    def test_required_temporal_role_cannot_be_satisfied_by_unused_aggregate_cadence(self):
+        from services.analysis_intent import AnalysisIntentEnvelope
+        from services.request_anchors import request_anchors,verify_anchors
+        # A monthly label attached to a yearly aggregate does not execute the
+        # requested operation, even when a supporting lens could add a trend.
+        from services.analysis_catalog import AnalysisCatalog
+        catalog=AnalysisCatalog(h.physical_metadata())
+        anchors=request_anchors('doanh thu theo tháng',catalog,{})
+        draft=AnalysisIntentEnvelope.model_validate(h.envelope(h.requirement(granularity='month')))
+        from datetime import date
+        issues=verify_anchors(anchors,draft.requirements,date.fromisoformat(cf.REFERENCE),catalog)
+        self.assertIn('explicit_trend_missing',{i['code'] for i in issues})
+
+    def test_mixed_requested_trend_uses_admitted_temporal_form_with_verified_time_axis(self):
+        from types import SimpleNamespace as NS
+        from services.chart_relevance_service import grammar_decisions
+        mission=dict(chart_forms=['bar'],supporting_forms=['line','bar'])
+        artifacts={
+            'groups':NS(query=NS(role='requested'),plan=NS(kind='aggregate',dimensions=['city'])),
+            'months':NS(query=NS(role='requested'),plan=NS(kind='trend',dimensions=['city']))}
+        bars=dict(chart_type='bar',scope_ref='groups')
+        line=dict(chart_type='multi_line',scope_ref='months',x_field='period')
+        mapping={'groups':'selection','months':'trend'}
+        self.assertEqual(grammar_decisions([bars,line],artifacts,mission,mapping),{})
+        for invalid in (dict(line,x_field='city'),dict(line,chart_type='donut')):
+            self.assertEqual(grammar_decisions([bars,invalid],artifacts,mission,mapping),{1:'outside_mission_grammar'})
+        artifacts['months'].plan.kind='aggregate'
+        self.assertEqual(grammar_decisions([bars,line],artifacts,mission,mapping),{1:'outside_mission_grammar'})
+
+    def test_narrowed_member_keeps_category_comparisons_without_relaxing_other_shapes(self):
+        from types import SimpleNamespace as NS
+        from services.chart_relevance_service import grammar_decisions
+        mission=dict(chart_forms=['grouped_bar','line'],supporting_forms=['grouped_bar','line'])
+        artifact=NS(query=NS(role='supporting'),plan=NS(kind='aggregate',dimensions=['category']))
+        for orientation in ('bar','horizontal_bar'):
+            chart=dict(chart_type=orientation,scope_ref='q',analysis_lens_id='segment:category')
+            self.assertEqual(grammar_decisions([chart],{'q':artifact},mission,{'q':'r'}),{})
+            # This allowance requires an aggregate category and a mission that
+            # already admits grouped comparison. It is not a blanket bar bypass.
+            self.assertEqual(grammar_decisions([chart],{'q':artifact},dict(chart_forms=['line']),{'q':'r'}),
+                             {0:'outside_mission_grammar'})
+        bad=dict(chart_type='donut',scope_ref='q',analysis_lens_id='segment:category')
+        self.assertEqual(grammar_decisions([bad],{'q':artifact},mission,{'q':'r'}),{0:'outside_mission_grammar'})
+
+
 def series_values(payload, label):
     """{x_label: value} of one named series (or of the single series)."""
     keys = {s['label']: s['key'] for s in payload.get('series') or []}
@@ -70,6 +165,60 @@ class ComparisonWorkspaceTests(unittest.TestCase):
         self.assertEqual({c['label'] for c in cards[:2]},{A,B})
         self.assertEqual(cards[2]['value'],300-700)
         self.assertIn(B,cards[3]['sub_text'])
+
+    def test_independent_question_cannot_borrow_frame_by_shared_metric_or_supporting_role(self):
+        from services.view_mode_service import attach_view_modes
+        from services.analysis_quality_service import restore_artifacts
+        from services.analysis_catalog import AnalysisCatalog
+        from tests.analysis_fixtures import physical_metadata
+        from datetime import date
+        catalog=AnalysisCatalog(physical_metadata())
+        report,_,_=h.run([h.envelope()],data=self.data)
+        artifacts=restore_artifacts(report,catalog)
+        source=next(c for c in report['charts'] if c.get('relevance_role')=='primary')
+        frame=deepcopy(report['comparison_frames'][0])
+        # Both questions may use revenue/city. Neither primary nor supporting
+        # charts of a different question may inherit the first question's A/B.
+        for role in ('primary','supporting'):
+            chart=deepcopy(source)
+            for key in ('view_modes','view_ref','comparison_frame_ref'):
+                chart.pop(key,None)
+            chart.update(requirement_id='independent_question',relevance_role=role)
+            attach_view_modes([chart],artifacts,catalog,date.fromisoformat(cf.REFERENCE),frames=[frame])
+            self.assertNotIn('view_modes',chart)
+            owned=deepcopy(frame)
+            owned.update(id='owned_frame',requirement_id='independent_question',
+                         related_requirement_ids=['independent_question'])
+            attach_view_modes([chart],artifacts,catalog,date.fromisoformat(cf.REFERENCE),frames=[frame,owned])
+            self.assertEqual(chart['comparison_frame_ref'],'owned_frame')
+
+    def test_overlapping_members_compare_separately_but_total_is_raw_union(self):
+        from services.view_mode_service import project,composite_members
+        from services.analysis_quality_service import restore_artifacts
+        from services.analysis_catalog import AnalysisCatalog
+        from tests.analysis_fixtures import physical_metadata
+        catalog=AnalysisCatalog(physical_metadata())
+        report,_,_=h.run([h.envelope()],data=self.data)
+        artifacts=restore_artifacts(report,catalog)
+        chart=next(c for c in report['charts'] if c.get('relevance_role')=='primary')
+        artifact=artifacts[chart['query_id']]
+        binding={'bindings':[dict(dimension='city',comparison=True,
+            cohorts=[dict(members=[A,B]),dict(members=[B])])]}
+        members=composite_members('city',binding,catalog.registry)
+        self.assertEqual([m['values'] for m in members],[[A,B],[B]])
+        compare,reason=project(artifact,'city',dict(mode='compare'),catalog.registry,members)
+        self.assertIsNone(reason)
+        self.assertEqual({r['city']:r['revenue'] for r in compare.result['rows']},
+                         {members[0]['key']:1000,members[1]['key']:700})
+        total,reason=project(artifact,'city',dict(mode='total'),catalog.registry,members)
+        self.assertIsNone(reason)
+        self.assertEqual(total.result['rows'][0]['revenue'],1000)
+        single,reason=project(artifact,'city',dict(mode='single',member=members[1]['key']),catalog.registry,members)
+        self.assertIsNone(reason)
+        self.assertEqual(single.result['rows'][0]['revenue'],700)
+        share,reason=project(artifact,'city',dict(mode='compare',value_mode='scope_share'),catalog.registry,members)
+        self.assertIsNone(share)
+        self.assertEqual(reason,'overlapping_members_share_unavailable')
 
     def test_reading_guidance_matches_the_actual_view_shape_not_a_generic_bar_template(self):
         primary=next(c for c in self.report['charts'] if c.get('relevance_role')=='primary')
@@ -351,6 +500,97 @@ if __name__ == '__main__':
 class SelectionTests(unittest.TestCase):
     """Selection → fixed cohort → comparison; scores from evals.comparison_fixture (independent)."""
 
+    def split_trend(self, criterion='volatility', metric='revenue'):
+        return h.envelope(h.requirement(filters=[],selection=dict(criterion=criterion,limit=2)),
+            h.requirement(id='monthly',metric_ids=[metric],filters=[],dimension_ids=[],
+                analysis_kind='trend',granularity='month',derived_features=[]))
+
+    def test_split_selection_and_comparison_trend_share_one_verified_cohort(self):
+        data=cf.selection_data()
+        report, provider, _=h.run([self.split_trend()],data=data,
+            question='2 tỉnh có doanh thu biến động nhiều nhất, so sánh doanh thu theo tháng')
+        chosen,scores=self.expected(data,'thanh_pho','volatility',2)
+        self.assertEqual(provider.call_count,1)
+        self.assertEqual(report['verification']['status'],'verified')
+        requested=[r for r in report['semantic_intent']['requirements'] if not r.get('supporting_for')]
+        self.assertEqual(len(requested),2)
+        self.assertTrue(all(r['dimension_ids']==['city'] and r['selection']['selected_keys']==chosen for r in requested))
+        for q in report['analytical_queries']:
+            self.assertTrue(any(f['dimension']=='city' and set(f['value'])==set(chosen) for f in q['filters']))
+        receipts=h.LAST['pipeline'].semantic_info['selections']
+        self.assertEqual({r['requirement_id'] for r in receipts},{'r1','monthly'})
+        self.assertEqual(len({r['result_ref']['artifact_id'] for r in receipts}),1)
+        trend=next(q for q in report['analytical_queries'] if q['role']=='requested' and q['operation']=='trend')
+        rows=report['result_sets'][trend['id']]['rows']
+        self.assertEqual({r['city'] for r in rows},set(chosen))
+        raw_series=cf.monthly_series(data,member_field='thanh_pho')
+        self.assertEqual(sum(r['revenue'] for r in rows),sum(sum(raw_series[m].values()) for m in chosen))
+
+    def test_explicit_whole_population_trend_is_not_narrowed_to_selected_entities(self):
+        data=cf.selection_data()
+        report, provider, _=h.run([self.split_trend()],data=data,
+            question='2 tỉnh có doanh thu biến động nhiều nhất; so sánh doanh thu theo tháng toàn quốc')
+        self.assertEqual(provider.call_count,1)
+        target=next(r for r in report['semantic_intent']['requirements'] if r['id']=='monthly')
+        self.assertFalse(target.get('selection'))
+        self.assertEqual(target['filters'],[])
+        self.assertEqual(target['dimension_ids'],[])
+        trend=next(q for q in report['analytical_queries'] if q['role']=='requested' and q['operation']=='trend')
+        raw_series=cf.monthly_series(data,member_field='thanh_pho')
+        self.assertEqual(sum(r['revenue'] for r in report['result_sets'][trend['id']]['rows']),
+                         sum(sum(v.values()) for v in raw_series.values()))
+
+    def test_incompatible_selected_continuation_cannot_fall_back_to_national_data(self):
+        with self.assertRaises(Exception) as caught:
+            h.run([self.split_trend(metric='order_count')],data=cf.selection_data(),
+                question='2 tỉnh có doanh thu biến động nhiều nhất, so sánh số đơn theo tháng')
+        self.assertEqual(getattr(caught.exception,'category',None),'selection_unsupported')
+
+    def test_multiple_selected_cohorts_require_a_scope_choice(self):
+        raw=self.split_trend()
+        raw['requirements'].insert(1,h.requirement(id='other',filters=[],selection=dict(criterion='stability',limit=2)))
+        with self.assertRaises(Exception) as caught:
+            h.run([raw],data=cf.selection_data(),
+                question='2 tỉnh doanh thu ổn định nhất và 2 tỉnh biến động nhiều nhất, so sánh doanh thu theo tháng')
+        self.assertEqual(getattr(caught.exception,'category',None),'clarification')
+
+    def test_selection_comparison_ignores_only_unrequested_incompatible_extra_facts(self):
+        req = h.requirement(filters=[], selection=dict(criterion='growth', limit=2),
+            derived_features=['group_gap','change','change_pct','selected_total'],
+            feature_metrics={k:['revenue'] for k in ['group_gap','change','change_pct','selected_total']})
+        report, provider, _ = h.run([h.envelope(req)], data=cf.selection_data(),
+            question='so sánh doanh thu của 2 tỉnh tăng trưởng nhanh nhất')
+        self.assertEqual(provider.call_count, 1)
+        self.assertEqual(report['verification']['status'], 'verified')
+        chosen, _ = self.expected(cf.selection_data(), 'thanh_pho', 'growth', 2)
+        self.assertEqual(report['comparison_frames'][0]['selection']['selected'], chosen)
+        requested = next(r for r in report['semantic_intent']['requirements'] if not r.get('supporting_for'))
+        self.assertEqual(requested['derived_features'], ['group_gap'])
+        from services.analysis_intent import AnalysisIntentEnvelope
+        from services.analytical_resolver import drop_unrequested_feature_conflicts
+        intent = AnalysisIntentEnvelope.model_validate(h.envelope(req))
+        anchors = {'features':[{'candidate_ids':['change_pct']}], 'times':[], 'ui':{}}
+        retained, _ = drop_unrequested_feature_conflicts(intent, anchors)
+        self.assertIn('change_pct', retained.requirements[0].derived_features)
+        self.assertEqual(retained.requirements[0].feature_metrics['change_pct'], ['revenue'])
+
+    def test_selection_then_trend_keeps_its_shape_without_a_server_added_scalar_gap(self):
+        req = h.requirement(filters=[], selection=dict(criterion='volatility', limit=2),
+            analysis_kind='trend', granularity='month', derived_features=['change'])
+        report, provider, _ = h.run([h.envelope(req)], data=cf.selection_data(),
+            question='so sánh doanh thu theo tháng của 2 tỉnh biến động nhiều nhất')
+        self.assertEqual(provider.call_count, 1)
+        self.assertEqual(report['verification']['status'], 'verified')
+        requested = next(r for r in report['semantic_intent']['requirements'] if not r.get('supporting_for'))
+        self.assertEqual(requested['analysis_kind'], 'trend')
+        self.assertEqual(requested['granularity'], 'month')
+        self.assertNotIn('group_gap', requested['derived_features'])
+        self.assertIn('change', requested['derived_features'])
+        chosen, scores = self.expected(cf.selection_data(), 'thanh_pho', 'volatility', 2)
+        self.assertEqual(report['comparison_frames'][0]['selection']['selected'], chosen)
+        for member in report['comparison_frames'][0]['selection']['eligible']:
+            self.assertAlmostEqual(member['score'], scores[member['key']], places=12)
+
     def test_calendar_missing_for_every_member_is_not_skipped(self):
         from services.selection_service import calendar_buckets,select
         from services.insight_service import trend_bucket_coverage
@@ -365,7 +605,7 @@ class SelectionTests(unittest.TestCase):
 
     def expected(self, data, field, criterion, limit):
         series = cf.monthly_series(data, member_field=field)
-        scores = {m: (cf.cv([v[k] for k in sorted(v)]) if criterion == 'stability' else cf.growth([v[k] for k in sorted(v)]))
+        scores = {m: (cf.cv([v[k] for k in sorted(v)]) if criterion in {'stability','volatility'} else cf.growth([v[k] for k in sorted(v)]))
                   for m, v in series.items() if len(v) == 4}
         scores = {m: s for m, s in scores.items() if s is not None}
         ordered = sorted(scores, key=lambda m: (scores[m] if criterion == 'stability' else -scores[m], m))
@@ -472,6 +712,17 @@ class CompositeMemberTests(unittest.TestCase):
     """“Các kiosk” is the governed union of kiosk subtypes; the primary answer compares the union with the
     main stores instead of picking the two extremes among subtypes (incident 3 class)."""
 
+    def test_distinct_composite_without_raw_identity_union_is_honest_unsupported(self):
+        from services.analysis_catalog import AnalysisError
+        req=h.requirement(metric_ids=['purchasing_customer_count'],dimension_ids=['store_type'],
+            filters=[dict(dimension='store_type',operator='in',
+                     value=['KIOSK_NHUONG_QUYEN','KIOSK_VE_TINH','CHI_NHANH_CHINH'])])
+        with self.assertRaises(AnalysisError) as caught:
+            h.run([h.envelope(req)],data=cf.warehouse_data(),
+                  question='so sánh số khách mua hàng của kiosk với chi nhánh chính')
+        self.assertEqual(caught.exception.category,'unsupported')
+        self.assertIn('quần thể gốc',str(caught.exception))
+
     def test_kiosk_union_versus_main_store(self):
         data = cf.warehouse_data()
         env = h.envelope(h.requirement(dimension_ids=['store_type'], filters=[dict(dimension='store_type', operator='in',
@@ -516,6 +767,43 @@ class CriterionClarificationTests(unittest.TestCase):
 
 
 class TimeRangeUnderstandingTests(unittest.TestCase):
+    def test_named_member_comparison_drops_only_an_unasked_baseline_on_its_exact_window(self):
+        from services.analysis_intent import AnalysisIntentEnvelope
+        from services.analytical_resolver import drop_unrequested_feature_conflicts
+        window = dict(kind='range', start='2026-01-01', end='2026-09-30')
+        baseline = dict(kind='range', start='2025-01-01', end='2025-09-30')
+        raw = h.envelope(h.requirement(analysis_kind='comparison', time=window, comparison_time=baseline))
+        original = AnalysisIntentEnvelope.model_validate(raw)
+        anchors = dict(times=[window], ui={}, period_comparisons=[], scope_resolution=dict(bindings=[
+            dict(comparison=True, comparison_dimension='city', members=[A, B])]))
+        result, changes = drop_unrequested_feature_conflicts(original, anchors)
+        self.assertIsNone(result.requirements[0].comparison_time)
+        self.assertEqual(result.requirements[0].time, original.requirements[0].time)
+        self.assertEqual(result.requirements[0].filters, original.requirements[0].filters)
+        self.assertEqual(result.requirements[0].derived_features, ['group_gap'])
+        self.assertIsNotNone(original.requirements[0].comparison_time)
+        self.assertEqual(changes[0]['rule'], 'member_comparison_single_explicit_window')
+        # Real temporal comparisons, unbound axes, conflicting windows and UI
+        # authority cannot be rewritten by this primary-draft normalization.
+        for update in [dict(times=[baseline, window]), dict(period_comparisons=[{'baseline':baseline,'target':window}]),
+                       dict(scope_resolution={'bindings':[]}), dict(times=[baseline]),
+                       dict(ui={'required_period':'last_month'})]:
+            kept, _ = drop_unrequested_feature_conflicts(original, {**anchors, **update})
+            self.assertEqual(kept.requirements[0].comparison_time, original.requirements[0].comparison_time)
+
+    def test_entity_comparison_over_a_range_does_not_spend_repair_on_invented_period_comparison(self):
+        window = dict(kind='range', start='2027-01-01', end='2027-02-28')
+        draft = h.envelope(h.requirement(analysis_kind='comparison', time=window,
+            comparison_time=dict(kind='range', start='2026-01-01', end='2026-02-28')))
+        report, provider, _ = h.run([draft], question=f'so sánh doanh thu {A} và {B} từ tháng 1 đến tháng 2 năm 2027')
+        self.assertEqual(report['verification']['status'], 'verified')
+        self.assertEqual(provider.call_count, 1)
+        req = next(r for r in report['semantic_intent']['requirements'] if not r.get('supporting_for'))
+        self.assertFalse(req.get('comparison_time'))
+        self.assertEqual(req['time']['start'], '2027-01-01')
+        self.assertEqual(req['time']['end'], '2027-02-28')
+        self.assertEqual(set(m['key'] for m in report['comparison_frames'][0]['members']), {A, B})
+
     def test_month_and_quarter_ranges_are_one_window_and_period_comparisons_stay_two(self):
         from services.time_resolution_service import parse_time
         from services.preflight_service import preflight_catalog

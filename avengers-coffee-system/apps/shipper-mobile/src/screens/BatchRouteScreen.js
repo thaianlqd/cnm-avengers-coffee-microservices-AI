@@ -1,5 +1,4 @@
 import BatchRouteMap from '../components/BatchRouteMap'
-import { nativeTileUrl, detailedNativeStyle } from '../../../shared-ui/nativeBasemap'
 import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
@@ -32,21 +31,19 @@ import { colors, radius, spacing, shadows, typography } from '../theme'
 import { formatCurrency } from '../lib/shipperData'
 
 // Load react-native-maps chỉ trên native
-let MapView = null, Marker = null, Polyline = null, AnimatedRegion = null, UrlTile = null
+let MapView = null, Marker = null, Polyline = null, AnimatedRegion = null
 if (Platform.OS !== 'web') {
   try {
     const maps = require('react-native-maps')
     MapView = maps.default
     Marker = maps.Marker
     Polyline = maps.Polyline
-    UrlTile = maps.UrlTile
     AnimatedRegion = maps.AnimatedRegion
   } catch (e) {}
 }
 
 const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION !== 'false'
 const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
-const tileUrl = nativeTileUrl(process.env.EXPO_PUBLIC_VIETMAP_TILE_KEY);
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
 
 // ─── Haversine distance (km) ───────────────────────────────────────
@@ -148,7 +145,7 @@ export function BatchRouteScreen({ route, navigation }) {
   const [routeSegments, setRouteSegments] = useState([])
   const [isLoadingRoutes, setIsLoadingRoutes] = useState(true)
   const [selectedStop, setSelectedStop] = useState(null)
-  
+
   const { shipper } = useShipper()
   const queryClient = useQueryClient()
   const [cameraPermission, requestCameraPermission] = useCameraPermissions()
@@ -265,7 +262,7 @@ export function BatchRouteScreen({ route, navigation }) {
     })
     return coords
   }, [routeSegments, currentStepIndex])
-  
+
   const [isAnimating, setIsAnimating] = useState(false)
   const shipperCoord = useRef(AnimatedRegion ? new AnimatedRegion({
     latitude: shopLat,
@@ -273,7 +270,7 @@ export function BatchRouteScreen({ route, navigation }) {
     latitudeDelta: 0.01,
     longitudeDelta: 0.01
   }) : null).current
-  
+
     const updateStatusMutation = useMutation({
       mutationFn: async ({ deliveryId, action, payload = {} }) => {
         return apiClient.post(`/shippers/${shipper.id}/deliveries/${deliveryId}/${action}`, payload)
@@ -288,21 +285,21 @@ export function BatchRouteScreen({ route, navigation }) {
         Alert.alert('Lỗi', err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái')
       },
     })
-  
+
     // Intro animation
     const slideAnim = useRef(new Animated.Value(80)).current
     const opacityAnim = useRef(new Animated.Value(0)).current
-  
+
     useEffect(() => {
       Animated.parallel([
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }),
         Animated.timing(opacityAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
       ]).start()
     }, [])
-  
+
     useEffect(() => {
       let cancelled = false
-  
+
       const init = async () => {
         try {
           // 1. Vị trí shipper (có timeout bao cả khâu xin quyền)
@@ -318,7 +315,7 @@ export function BatchRouteScreen({ route, navigation }) {
               })(),
               new Promise((_, reject) => setTimeout(() => reject(new Error('Location Timeout')), 3000))
             ])
-            
+
             if (loc && loc.coords) {
               myLat = loc.coords.latitude
               myLng = loc.coords.longitude
@@ -327,7 +324,7 @@ export function BatchRouteScreen({ route, navigation }) {
           } catch (e) {
             console.log('Location timeout or error, using default')
           }
-  
+
           // 2. Build điểm: Shop + các điểm giao
           const shopPoint = {
             id: 'shop',
@@ -337,7 +334,7 @@ export function BatchRouteScreen({ route, navigation }) {
             address: actualStoreName,
             fee: 0, delivery: null,
           }
-  
+
           const deliveryPoints = deliveries.map((d, idx) => ({
           id: d.id || `d${idx}`,
           lat: d.tracking?.destination_latitude ? Number(d.tracking.destination_latitude) : (d.delivery_latitude ? Number(d.delivery_latitude) : shopLat + (idx + 1) * 0.006),
@@ -358,17 +355,17 @@ export function BatchRouteScreen({ route, navigation }) {
 
         // 4. Tối ưu bằng Nearest Neighbor (cho shop và các điểm giao)
         const optimized = nearestNeighborTSP(allPoints)
-        
+
         const shipperPoint = {
           id: 'shipper', lat: myLat, lng: myLng,
           label: 'Vị trí của bạn', type: 'shipper',
           orderCode: null, address: 'Vị trí hiện tại',
           fee: 0, delivery: null,
         }
-        
+
         // Lộ trình cuối cùng: Shipper -> [Quán -> Các điểm giao]
         const finalRoute = [shipperPoint, ...optimized]
-        
+
         const optDist = totalRouteDistance(finalRoute)
         if (!cancelled) {
           setOptimizedRoute(finalRoute)
@@ -388,9 +385,9 @@ export function BatchRouteScreen({ route, navigation }) {
         for (let i = 0; i < finalRoute.length - 1; i++) {
           const from = finalRoute[i]
           const to = finalRoute[i + 1]
-          
+
           const distStraight = haversine(from.lat, from.lng, to.lat, to.lng)
-          
+
           const fallbackSegment = {
             fromIdx: i, toIdx: i + 1,
             coordinates: [{ latitude: from.lat, longitude: from.lng }, { latitude: to.lat, longitude: to.lng }],
@@ -484,14 +481,14 @@ export function BatchRouteScreen({ route, navigation }) {
 
     // Bắt đầu Animation
     setIsAnimating(true)
-    
+
     // Di chuyển camera bản đồ bám theo đoạn đường
     mapRef.current?.fitToCoordinates(segment.coordinates, { edgePadding: { top: 80, right: 50, bottom: 300, left: 50 }, animated: true })
-    
+
     // Animation dọc theo đường mòn (Polyline)
     const coords = segment.coordinates
     let step = 0
-    
+
     // Đặt vị trí ban đầu của AnimatedRegion
     if (shipperCoord && coords.length > 0) {
       shipperCoord.setValue({ latitude: coords[0].latitude, longitude: coords[0].longitude })
@@ -686,7 +683,7 @@ export function BatchRouteScreen({ route, navigation }) {
 
             try {
               setIsAnimating(true); // Tạm khoá giao diện
-              
+
               // Chạy vòng lặp Promise.all để gọi API cho tất cả đơn còn lại
               await Promise.all(remainingDeliveries.map(p => {
                 const realDeliveryId = p.delivery?.id || p.id;
@@ -750,20 +747,20 @@ export function BatchRouteScreen({ route, navigation }) {
           onMapReady={() => mapRef.current?.fitToCoordinates(optimizedRoute.map(p=>({latitude:p.lat,longitude:p.lng})),{edgePadding:{top:65,left:55,right:55,bottom:screenHeight*.55},animated:false})}
           showsUserLocation={false}
           showsCompass={true}
-          customMapStyle={detailedNativeStyle} showsPointsOfInterest showsBuildings mapType={tileUrl && Platform.OS === 'android' ? 'none' : 'standard'}
+          showsPointsOfInterest showsBuildings mapType="standard"
         >
 
-          {tileUrl && UrlTile && <UrlTile urlTemplate={tileUrl} tileSize={512} maximumZ={19} maximumNativeZ={19} minimumZ={1} zIndex={-1} />}
+
           {/* Các điểm dừng theo thứ tự tối ưu */}
           {optimizedRoute.map((point, idx) => {
             const isCompleted = idx < currentStepIndex
             const isCurrentTarget = idx === currentStepIndex + 1
             const isShipper = point.type === 'shipper'
             const isShop = point.type === 'shop'
-            
+
             // Nếu là vị trí shipper gốc (index 0) và đã đi qua thì ẩn đi
             if (isShipper && idx !== currentStepIndex) return null
-            
+
             // Nếu shipper đang ở chặng hiện tại, đổi icon thành xe máy
             if (idx === currentStepIndex) {
               if (isAnimating && AnimatedRegion && shipperCoord) {
@@ -842,7 +839,7 @@ export function BatchRouteScreen({ route, navigation }) {
         </View>
       )}
 
-      {Platform.OS !== 'web' && tileUrl && <Text style={{position:'absolute',top:5,right:5,fontSize:10,backgroundColor:'#fffffff0',paddingHorizontal:4}}>© Vietmap</Text>}
+
 
       {/* ─── Floating Simulation Banner ─── */}
       {isAnimating && (
@@ -920,14 +917,14 @@ export function BatchRouteScreen({ route, navigation }) {
             <View style={styles.stopsList}>
               {optimizedRoute.map((point, idx) => {
                 if (point.type === 'shipper') return null // Không hiển thị Shipper trong list điểm giao
-                
+
                 const segToPrev = routeSegments[idx - 1]
                 const isShop = point.type === 'shop'
                 const isSelected = selectedStop === idx
                 const isCompleted = idx < currentStepIndex
                 const isCurrentTarget = idx === currentStepIndex + 1
                 const deliveryNumber = idx - 1
-                
+
                 const dotColor = isShop ? colors.success : (isCompleted ? '#9CA3AF' : '#2563EB')
 
                 return (
@@ -939,7 +936,7 @@ export function BatchRouteScreen({ route, navigation }) {
 
                     <TouchableOpacity
                       style={[
-                        styles.stopCard, 
+                        styles.stopCard,
                         isSelected && { borderColor: dotColor, borderWidth: 2 },
                         isCurrentTarget && { borderColor: colors.primary, borderWidth: 1.5, backgroundColor: '#FFF7ED' }
                       ]}
@@ -1055,7 +1052,7 @@ export function BatchRouteScreen({ route, navigation }) {
           </TouchableOpacity>
 
           {currentStepIndex > 0 && currentStepIndex < optimizedRoute.length - 1 && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={{ marginTop: 12, alignItems: 'center', paddingVertical: 8 }}
               onPress={handleCompleteAll}
               disabled={isAnimating || updateStatusMutation.isPending}
@@ -1109,7 +1106,7 @@ export function BatchRouteScreen({ route, navigation }) {
                       {!cameraPermission?.granted ? 'Camera chưa được cấp quyền' : 'Camera không khả dụng'}
                     </Text>
                     {!cameraPermission?.granted && (
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={{ marginTop: 8, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.primaryBg, borderRadius: 8 }}
                         onPress={() => requestCameraPermission()}
                       >

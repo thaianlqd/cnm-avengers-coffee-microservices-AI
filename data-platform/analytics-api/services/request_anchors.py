@@ -281,8 +281,14 @@ def request_anchors(question, catalog, ui):
         gs = {g for a in cadences for g in a['candidate_ids']}
         if (len(gs)==1 and metrics and len(re.findall(r'\btheo\b',normalized))==1 and
                 any(m['end']<=min(a['start'] for a in cadences) for m in metrics)):
-            trend_bindings.append(dict(metric_candidates=sorted({m for a in metrics for m in a['candidate_ids']}),
-                granularity=next(iter(gs)), dimension_ids=sorted({d for a in independent_dimensions for d in a['candidate_ids']})))
+            # Each independently mentioned metric owns this cadence. Combining
+            # their candidate sets would let one revenue trend accidentally
+            # satisfy a separately requested order-count time series.
+            for metric in metrics:
+                binding=dict(metric_candidates=sorted(metric['candidate_ids']),granularity=next(iter(gs)),
+                    dimension_ids=sorted({d for a in independent_dimensions for d in a['candidate_ids']}))
+                if binding not in trend_bindings:
+                    trend_bindings.append(binding)
         dimensions = [a for a in dimensions if re.search(r'\btheo\s*$', normalized[:a['start']])
             and not any(m['start'] <= a['start'] and a['end'] <= m['end'] for m in metrics)]
         # Only bind unique, independently named axes; prose containing several
@@ -506,6 +512,37 @@ def complete_explicit_granularity(intent, anchors):
             changes.append(dict(requirement_id=req.id, field='granularity',
                                 rule='explicit_request_cadence', value=req.granularity))
     return result, changes
+
+
+def complete_explicit_temporal_roles(intent, anchors):
+    """Bind an unambiguous cadence-bearing initial draft to its temporal role.
+
+    An aggregate's unused cadence is not evidence of a requested time series.
+    Keep independent totals and explicit ranking/baseline/forecast goals intact.
+    Ambiguous or incompatible drafts remain targets for strict anchor repair.
+    """
+    from services.analytical_resolver import FEATURE_SHAPES
+    result=intent.model_copy(deep=True);changes=[]
+    named={f for a in anchors.get('features',[]) for f in a['candidate_ids']}
+    roots=[r for r in result.requirements if r.availability=='requested' and not r.supporting_for]
+    for binding in anchors.get('trend_bindings',[]):
+        metrics=set(binding['metric_candidates']);cadence=binding['granularity']
+        if any(r.analysis_kind=='trend' and r.granularity==cadence and metrics.intersection(r.metric_ids) for r in roots):
+            continue
+        candidates=[r for r in roots if r.analysis_kind in {'aggregate','comparison'}
+            and r.granularity==cadence and len(r.metric_ids)==1 and r.metric_ids[0] in metrics
+            and not r.ranking and not r.comparison_time and not r.forecast
+            and not any(f in named and 'trend' not in FEATURE_SHAPES.get(f,{'trend'}) for f in r.derived_features)]
+        if len(candidates)!=1:
+            continue
+        req=candidates[0];previous=req.analysis_kind
+        req.analysis_kind='trend'
+        removed=[f for f in req.derived_features if f not in named and 'trend' not in FEATURE_SHAPES.get(f,{'trend'})]
+        req.derived_features=[f for f in req.derived_features if f not in removed]
+        req.feature_metrics={f:ms for f,ms in req.feature_metrics.items() if f in req.derived_features}
+        changes.append(dict(requirement_id=req.id,field='analysis_kind',rule='explicit_cadence_temporal_role',
+                            previous=previous,value='trend',removed_unrequested_features=removed))
+    return result,changes
 
 
 def complete_default_time(intent, anchors, question, catalog, reference):
@@ -737,6 +774,11 @@ def normalize_explicit_grains(intent, anchors, catalog):
         unique={tuple(sorted(ds)) for ds in expected}
         if len(unique)==1:
             axes=list(next(iter(unique)))
+            # A cadence-only clause says WHEN to compare, not which selected
+            # entity to erase. The selector needs its one entity axis to score
+            # history; a plain ungrouped trend keeps the existing normalization.
+            if not axes and req.selection and len(req.dimension_ids)==1:
+                axes=list(req.dimension_ids)
             identities={catalog.registry['dimensions'].get(d,{}).get('identity') for d in axes}
             if set(req.dimension_ids)-identities!=set(axes):
                 changes.append(dict(requirement_id=req.id,field='dimension_ids',
@@ -916,10 +958,23 @@ def verify_anchors(anchors, requirements, reference, catalog):
     for binding in anchors.get('trend_bindings', []):
         eligible=[req for req in requested if req.analysis_kind=='trend' and
             req.granularity==binding['granularity'] and any(covers(req,m) for m in binding['metric_candidates'])]
+        if not eligible:
+            candidates=[req for req in requested if any(covers(req,m) for m in binding['metric_candidates'])]
+            issues.append(dict(requirement_id=candidates[0].id if len(candidates)==1 else None,
+                field='analysis_kind' if len(candidates)==1 else 'requirements',
+                code='explicit_trend_missing',expected=binding))
+        def expected_trend_grain(req):
+            expected=list(binding['dimension_ids'])
+            # Selection was materialized by the server before this check. Its
+            # entity axis is part of the fixed cohort's trend, just as a named
+            # comparison scope adds its member axis; cadence does not erase it.
+            if req.selection and req.selection.selected_keys and req.selection.entity_dimension_id:
+                expected=list(dict.fromkeys([*expected,req.selection.entity_dimension_id]))
+            return expected
         # A governed cohort comparison ("của A và B") adds its member axis to the stated trend grain, never replaces it.
-        if eligible and not any(matches_grain(req.dimension_ids,binding['dimension_ids']) for req in eligible):
+        if eligible and not any(matches_grain(req.dimension_ids,expected_trend_grain(req)) for req in eligible):
             issues.extend(dict(requirement_id=req.id,field='dimension_ids',code='explicit_trend_grain_mismatch',
-                expected=binding['dimension_ids']) for req in eligible)
+                expected=expected_trend_grain(req)) for req in eligible)
     if not anchors['ui'].get('required_period'):
         for binding in anchors.get('time_bindings', []):
             period = resolve_time(binding['time'], reference, catalog.registry['timezone'])[2]

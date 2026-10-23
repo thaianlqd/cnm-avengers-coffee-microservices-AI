@@ -5,6 +5,16 @@ from evals.cw_live_qualification import check_meaning
 
 
 class LiveMeaningRubricTests(TestCase):
+    def test_negative_requires_zero_execution_and_its_specific_diagnostic(self):
+        from evals.cw_live_qualification import check_execution_constraints
+        expected = dict(zero_business_queries=True, zero_provider_http=True,
+            capability_codes_include=['input_write_unsupported'])
+        meta = dict(warehouse_queries=0, http_attempts=0, capability_codes=['input_write_unsupported'])
+        self.assertTrue(all(check_execution_constraints(expected, meta).values()))
+        for change in [dict(warehouse_queries=1),dict(http_attempts=1),dict(capability_codes=['analysis_target_missing'])]:
+            self.assertFalse(all(check_execution_constraints(expected, {**meta,**change}).values()))
+        self.assertEqual(check_execution_constraints({}, meta), {})
+
     def setUp(self):
         self.expected=dict(metric='revenue',period=['2026-09-01','2026-09-30'],dimensions=['city'])
         self.report=dict(semantic_intent=dict(requirements=[dict(id='r',metric_ids=['revenue'],dimension_ids=['city'],filters=[])]),

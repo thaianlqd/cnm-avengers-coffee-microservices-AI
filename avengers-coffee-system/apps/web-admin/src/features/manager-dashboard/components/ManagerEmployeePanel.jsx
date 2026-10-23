@@ -22,7 +22,9 @@ import {
   AlertCircle,
   Filter,
   User,
-  UserPlus
+  UserPlus,
+  Eye,
+  EyeOff
 } from '../../../components/console/WorkspaceIcons'
 import { formatMinutesLabel, getAttendanceInsight } from '../../workforce/attendance'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
@@ -122,6 +124,7 @@ export function ManagerEmployeePanel({
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [addError, setAddError] = useState('')
+  const [showAddPassword, setShowAddPassword] = useState(false)
   const [addForm, setAddForm] = useState({ ho_ten: '', ten_dang_nhap: '', mat_khau: '', co_so_ma: '' })
   const [kiosks, setKiosks] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -799,7 +802,26 @@ export function ManagerEmployeePanel({
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#414743' }}>Mật khẩu (Tối thiểu 6 ký tự)</label>
-                <input required type="password" value={addForm.mat_khau} onChange={e => setAddForm({ ...addForm, mat_khau: e.target.value })} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.9rem' }} placeholder="••••••••" minLength={6} />
+                <div className="admin-password-field">
+                  <input
+                    required
+                    type={showAddPassword ? "text" : "password"}
+                    value={addForm.mat_khau}
+                    onChange={e => setAddForm({ ...addForm, mat_khau: e.target.value })}
+                    style={{ width: '100%', padding: '0.5rem 2.5rem 0.5rem 0.5rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.9rem', boxSizing: 'border-box' }}
+                    placeholder="••••••••"
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    className="admin-password-toggle"
+                    onClick={() => setShowAddPassword(!showAddPassword)}
+                    title={showAddPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-label={showAddPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showAddPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#414743' }}>Kiosk trực thuộc</label>

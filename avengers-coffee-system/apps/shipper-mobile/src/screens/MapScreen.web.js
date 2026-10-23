@@ -1,4 +1,5 @@
-import { installDetailedBasemap } from '../../../web-customer/src/components/map/mapBasemap'
+import LeafletFrame from '../../../shared-ui/LeafletFrame.web'
+import { fetchRoadRoute } from '../../../web-customer/src/lib/maps/deliveryRouting.mjs'
 import '../../../web-customer/src/components/delivery/DeliveryJourney.css'
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, Linking, StyleSheet, ScrollView, Pressable, useWindowDimensions } from 'react-native'
@@ -18,68 +19,25 @@ function point(latitude,longitude) {
   const lat = Number(latitude),lng = Number(longitude)
   return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && (lat !== 0 || lng !== 0) ? [lat,lng] : null
 }
-let leafletPromise
-export function loadLeaflet() {
-  if (window.L) return Promise.resolve(window.L)
-  if (!leafletPromise) leafletPromise = new Promise((resolve,reject) => {
-    if (!document.getElementById('shipper-leaflet-css')) { const link = document.createElement('link'); link.id = 'shipper-leaflet-css'; link.rel = 'stylesheet'; link.href = '/map-libs/leaflet.css'; document.head.appendChild(link) }
-    const script = document.createElement('script'); script.src = '/map-libs/leaflet.js'; script.onload = () => resolve(window.L); script.onerror = () => { script.remove(); leafletPromise = null; reject(new Error('Không tải được bản đồ')) }; document.head.appendChild(script)
-  })
-  return leafletPromise
-}
 export function JourneyMap({ store,destination,driver,delivery,preview = false,onMetrics }) {
-  const element = useRef(null),map = useRef(null),markers = useRef({}),line = useRef(null),fitted = useRef(false)
-  const [routeData, setRouteData] = useState(null)
-  const [ready,setReady] = useState(false),[failed,setFailed] = useState(false),[loaded,setLoaded] = useState(false),[attempt,setAttempt] = useState(0)
-  const routeKey = [store?.join(","),destination?.join(","),driver?.join(","),delivery?.status].join("|")
-  const first = store || destination || driver
-  const fit = () => { const points = [store,destination,driver].filter(Boolean); if (map.current && points.length) map.current.fitBounds(points,{ paddingTopLeft: [preview?32:40,preview?55:85],paddingBottomRight: [preview?32:40,preview?18:65],maxZoom: 16 }) }
-  useEffect(() => {
-    if (!first || !element.current) return
-    let cancelled = false,observer,disposeBasemap
-    loadLeaflet().then(L => {
-      if (cancelled) return
-      const instance = L.map(element.current,{ scrollWheelZoom: false }).setView(first,15); map.current = instance
-      instance.attributionControl.setPosition('topright'); instance.attributionControl.getContainer().style.marginTop = preview?'0':'64px'
-      const key = process.env.EXPO_PUBLIC_VIETMAP_TILE_KEY
-      disposeBasemap = installDetailedBasemap(L,instance,{tileKey:key,onLoaded:()=>{if(!cancelled){setLoaded(true);setFailed(false)}},onError:()=>{if(!cancelled)setFailed(true)}})
-      observer = new ResizeObserver(() => instance.invalidateSize()); observer.observe(element.current); setReady(true)
-    }).catch(() => { if (!cancelled) setFailed(true) })
-    return () => { cancelled = true; disposeBasemap?.(); observer?.disconnect(); map.current?.remove(); map.current = null; markers.current = {}; line.current = null; fitted.current = false; setReady(false) }
-  },[Boolean(first),attempt])
-  useEffect(() => {
-    if (!ready || !map.current) return
-    const L = window.L
-    Object.entries({ store,destination,driver }).forEach(([kind,p]) => {
-      if (!p) { markers.current[kind]?.remove(); delete markers.current[kind]; return }
-      if (markers.current[kind]) markers.current[kind].setLatLng(p)
-      else { const icon = L.divIcon({ className:'', html:mapPinHtml(kind), iconSize:[44,54], iconAnchor:[22,52] }); markers.current[kind] = L.marker(p,{ icon }).addTo(map.current).bindTooltip(kind === 'store' ? delivery?.store_name || 'Lấy món tại quán' : kind === 'driver' ? 'Bạn · Tài xế' : delivery?.customer_name || 'Giao cho khách', { permanent:!preview, direction:'top', offset:[0,-47], className:'journey-marker-label' }) }
-    })
-    if (!fitted.current) { fit(); fitted.current = true }
-  },[ready,store?.[0],store?.[1],destination?.[0],destination?.[1],driver?.[0],driver?.[1]])
-  useEffect(() => {
-    line.current?.remove(); line.current = null;
-    const key = process.env.EXPO_PUBLIC_VIETMAP_API_KEY;
-    const pickedUp = ['IN_TRANSIT','DELIVERED'].includes(delivery?.status);
-    const points = (pickedUp ? [driver || store, destination] : [driver,store,destination]).filter(Boolean).filter((p,i,all) => !i || p.join(',') !== all[i-1].join(','));
-    if (!ready || points.length < 2 || !key) return;
-    const controller = new AbortController(), params = new URLSearchParams({ 'api-version':'1.1', apikey:key, vehicle:'motorcycle', points_encoded:'false' });
-    points.forEach(p => params.append('point', p.join(',')));
-    fetch(`https://maps.vietmap.vn/api/route?${params}`, { signal:controller.signal }).then(r => { if (!r.ok) throw new Error('route'); return r.json() }).then(data => {
-      const path = data.paths?.[0], coordinates = path?.points?.coordinates;
-      if (!controller.signal.aborted && Array.isArray(coordinates) && coordinates.length >= 2 && Number.isFinite(path.distance) && Number.isFinite(path.time) && map.current) {
-        line.current = window.L.polyline(coordinates.map(c => [c[1],c[0]]), { color:'#507fe5', weight:5 }).addTo(map.current);
-        setRouteData({ routeKey,distanceKm:path.distance/1000,durationMinutes:path.time/60000 });
-      }
-    }).catch(() => {});
-    return () => controller.abort();
-  },[ready,store?.[0],store?.[1],destination?.[0],destination?.[1],driver?.[0],driver?.[1],delivery?.status]);
-  useEffect(()=>{onMetrics?.(measuredRouteSummary(routeData?.routeKey===routeKey?routeData:null))},[routeData,routeKey,onMetrics])
-  if (!first) return <EmptyState icon="map-outline" title="Chưa có tọa độ hành trình" description="Bạn vẫn có thể mở Google Maps bằng địa chỉ ở bên dưới." />
-  return <View style={[s.map,preview && {minHeight:190}]}><div ref={element} aria-label="Bản đồ hành trình lấy và giao hàng" style={{ width:'100%',height:'100%' }} />{!preview && <View style={s.mapControl}><Button secondary icon="locate-outline" label="Định tâm" onPress={fit} /></View>}
-    {!preview && !onMetrics && <JourneyOverlay progress={journeyProgress(delivery?.status,Boolean(driver))} metrics={measuredRouteSummary(routeData?.routeKey === routeKey ? routeData : null)} showProgress={false} notice={failed ? 'Chưa tải được nền bản đồ. Kiểm tra kết nối.' : !loaded ? 'Đang tải bản đồ…' : undefined} />}
-    {preview && failed && <View style={{position:'absolute',bottom:6,left:6,right:6,padding:6,backgroundColor:'#fff'}}><Text style={{fontSize:10,color:colors.muted}}>Chưa tải được nền bản đồ. Thử lại khi có kết nối.</Text></View>}
-  </View>
+  const [routeData,setRouteData]=useState(null)
+  const pickedUp=['IN_TRANSIT','DELIVERED'].includes(delivery?.status)
+  const stops=(pickedUp?[driver||store,destination]:[driver,store,destination]).filter(Boolean).filter((p,i,all)=>!i||p.join(',')!==all[i-1].join(','))
+  const signature=stops.map(p=>p.map(n=>Number(n).toFixed(3)).join(',')).join('|')
+  const callback=useRef(onMetrics);callback.current=onMetrics
+  useEffect(()=>{
+    if(stops.length<2){setRouteData(null);return}
+    const controller=new AbortController()
+    fetchRoadRoute(stops.map(([latitude,longitude])=>({latitude,longitude})),{key:process.env.EXPO_PUBLIC_VIETMAP_API_KEY,signal:controller.signal})
+      .then(data=>{if(!controller.signal.aborted)setRouteData({signature,...data})}).catch(()=>{if(!controller.signal.aborted)setRouteData(null)})
+    return()=>controller.abort()
+  },[signature])
+  const route=routeData?.signature===signature?routeData:null
+  useEffect(()=>{const summary=measuredRouteSummary(route);callback.current?.(summary?{...summary,approximate:route.approximate}:null)},[route])
+  const points=Object.entries({store,destination,driver}).filter(([,p])=>p).map(([kind,p])=>({id:kind,kind,latitude:p[0],longitude:p[1],label:kind==='store'?'Cửa hàng':kind==='driver'?'Bạn · Tài xế':'Điểm giao'}))
+  if(!points.length)return <EmptyState icon="map-outline" title="Chưa có tọa độ hành trình" />
+  return <View style={[s.map,preview&&{minHeight:190}]}><LeafletFrame points={points} route={route?.coordinates} followDriver title="Bản đồ hành trình lấy và giao hàng" />
+    {!preview&&!onMetrics&&<JourneyOverlay progress={journeyProgress(delivery?.status,Boolean(driver))} metrics={measuredRouteSummary(route)} showProgress={false} notice={route?.approximate?'Tuyến dự phòng OSRM theo đường ô tô; thời gian tham khảo.':undefined}/>}</View>
 }
 export function MapScreen({ route,navigation }) {
   const [expanded, setExpanded] = useState(false)
@@ -103,7 +61,7 @@ export function MapScreen({ route,navigation }) {
   return <SafeAreaView edges={['top','left','right']} style={ui.screen}><Header title="Hành trình giao hàng" onBack={() => navigation.goBack()} />
     {!delivery ? <EmptyState title="Chưa có thông tin đơn" description="Mở hành trình từ chi tiết đơn hàng." /> : <View style={{ flex:1, minHeight:0 }}>
       {tracking.isLoading ? <Skeleton count={1} /> : <JourneyMap store={store} destination={destination} driver={driver} delivery={delivery} onMetrics={setMetrics} />}
-      <View style={[s.details, { height: expanded ? Math.min(windowHeight * .55, 460) : 265 }]}><Pressable accessibilityRole="button" accessibilityLabel={expanded ? 'Thu gọn chi tiết chuyến' : 'Mở rộng chi tiết chuyến'} onPress={() => setExpanded(value => !value)} style={s.sheetHeading}><View style={s.handle} /><View style={{ flexDirection:'row',alignItems:'center',gap:8 }}><Text style={{ flex:1,fontSize:13,fontWeight:'700',color:'#334155' }}>{progress.label}</Text><Ionicons name={expanded ? 'chevron-down' : 'chevron-up'} size={19} color="#8798ac" /></View></Pressable>{metrics ? <View style={s.routeMetrics}><View style={{flex:1}}><Text style={s.metricLabel}>Thời gian dự kiến</Text><Text style={[s.metricValue,{color:colors.primary}]}>{metrics.duration}</Text></View><View style={{flex:1,borderLeftWidth:1,borderColor:'#eee9e3',paddingLeft:20}}><Text style={s.metricLabel}>Quãng đường</Text><Text style={s.metricValue}>{metrics.distance}</Text></View></View> : <Text style={s.metricLabel}>Chờ dữ liệu tuyến đường để tính thời gian và khoảng cách.</Text>}<JourneyProgress step={progress.step} />
+      <View style={[s.details, { height: expanded ? Math.min(windowHeight * .55, 460) : 265 }]}><Pressable accessibilityRole="button" accessibilityLabel={expanded ? 'Thu gọn chi tiết chuyến' : 'Mở rộng chi tiết chuyến'} onPress={() => setExpanded(value => !value)} style={s.sheetHeading}><View style={s.handle} /><View style={{ flexDirection:'row',alignItems:'center',gap:8 }}><Text style={{ flex:1,fontSize:13,fontWeight:'700',color:'#334155' }}>{progress.label}</Text><Ionicons name={expanded ? 'chevron-down' : 'chevron-up'} size={19} color="#8798ac" /></View></Pressable>{metrics ? <View style={s.routeMetrics}><View style={{flex:1}}><Text style={s.metricLabel}>Thời gian dự kiến</Text><Text style={[s.metricValue,{color:colors.primary}]}>{metrics.duration}</Text></View><View style={{flex:1,borderLeftWidth:1,borderColor:'#eee9e3',paddingLeft:20}}><Text style={s.metricLabel}>Quãng đường</Text><Text style={s.metricValue}>{metrics.distance}</Text></View></View> : <Text style={s.metricLabel}>Chờ dữ liệu tuyến đường để tính thời gian và khoảng cách.</Text>}{metrics?.approximate&&<Text style={s.metricLabel}>Tuyến dự phòng OSRM theo đường ô tô; thời gian tham khảo.</Text>}<JourneyProgress step={progress.step} />
         {expanded ? <ScrollView style={{ flex:1 }} contentContainerStyle={{ paddingVertical:14,gap:12 }}><View style={s.point}><Ionicons name="cafe" size={22} color="#00a77d" /><View style={{ flex:1 }}><Text style={s.pointTitle}>{delivery.store_name || t?.branch_name || 'Cửa hàng lấy món'}</Text><Text style={s.address}>{pickupAddress || 'Chưa cập nhật địa chỉ'}</Text></View></View><View style={s.point}><Ionicons name="home" size={22} color="#ed3f74" /><View style={{ flex:1 }}><Text style={s.pointTitle}>{delivery.customer_name || 'Giao cho khách'}</Text><Text style={s.address}>{delivery.delivery_address || 'Chưa cập nhật địa chỉ'}</Text></View></View>
           {expanded && <><Text style={ui.caption}>Tiền thu hộ (Cod): {delivery.cod_amount != null ? formatCurrency(delivery.cod_amount) : 'Chưa cập nhật'}</Text>{delivery.customer_phone && <Button secondary label={`Gọi ${delivery.customer_phone}`} icon="call-outline" onPress={() => Linking.openURL(`tel:${delivery.customer_phone}`)} />}</>}
           {query.isError && <Text style={ui.caption}>Chưa đồng bộ được trạng thái mới.</Text>}<Pressable accessibilityRole="button" accessibilityLabel="Làm mới hành trình" onPress={refresh}><Text style={{ color:colors.primary,fontSize:12,textAlign:'center' }}>Làm mới hành trình</Text></Pressable>

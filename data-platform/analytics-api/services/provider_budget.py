@@ -107,7 +107,11 @@ class ProviderBudget:
             self.diagnostics['terminal_error']='planning_timeout'
             raise AnalysisError('planning_timeout','Provider allowance exhausted')
         connect=min(CONNECT_SECONDS,total/4)
-        return Timeout(total=total,connect=connect,read=total-connect)
+        # urllib3 subtracts the ACTUAL connect duration from total when the
+        # response read starts. Subtracting the reserved connect allowance here
+        # too cuts a fast connection's 12s attempt down to a fixed 10s read.
+        # Keep the same attempt/turn ceilings; unused connect time may be read.
+        return Timeout(total=total,connect=connect,read=total)
 
     def recovery_available(self, delay=0, same_call=False):
         # A transport recovery inside the logical call already holds its allowance (same_call).

@@ -9,6 +9,7 @@ import { DonHang } from '../../thanh-toan/entities/don-hang.entity';
 import { ChiTietDonHang } from '../../thanh-toan/entities/chi-tiet-don-hang.entity';
 import { LalamoveService } from './lalamove.service';
 import { RedisCacheService } from '../../../infrastructure/cache/redis-cache.service';
+import { TrackingStompService } from '../../notification/tracking-stomp.service';
 
 /**
  * DeliveryTrackingService — Service thống nhất cho cả Lalamove lẫn Shipper nội bộ.
@@ -33,6 +34,7 @@ export class DeliveryTrackingService {
     @InjectRepository(ChiTietDonHang) private chiTietRepo: Repository<ChiTietDonHang>,
     private readonly lalamoveService: LalamoveService,
     private readonly redisCacheService: RedisCacheService,
+    private readonly trackingStomp: TrackingStompService,
   ) { }
 
   private async layDanhSachChiNhanhHeThong(): Promise<any[]> {
@@ -537,6 +539,8 @@ export class DeliveryTrackingService {
         }
         : null,
       shipper: shipperInfo,
+      realtime: shipperInfo?.id && isOrderConfirmedOrInProgress && isDeliveryValid
+        ? this.trackingStomp.issue(donHang.ma_don_hang,shipperInfo.id) : null,
       shipper_location: shipperLocation,
       shipper_delivery: shipperDelivery
         ? {

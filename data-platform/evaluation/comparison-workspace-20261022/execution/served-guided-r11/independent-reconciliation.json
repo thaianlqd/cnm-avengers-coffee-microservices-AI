@@ -1,0 +1,18 @@
+{
+  "numeric": [],
+  "ranking": [],
+  "trend": [],
+  "independent_oracle": null,
+  "oracle_queries": 0,
+  "oracle_failures": 0,
+  "oracle_successes": 0,
+  "consistency": {
+    "status": "not_measured",
+    "reason": "source_generation_not_pinned",
+    "label": "Chưa đo đối chiếu độc lập trên cùng generation dữ liệu"
+  },
+  "provider_calls": 0,
+  "measured_at": "2026-10-22T16:39:34.295914+00:00",
+  "registry_fingerprint": "a7fed9b2a0dde9b01593f8aad690c30577b7cfde5ed293de28883ecebf7ab44d",
+  "session_revision": 2
+}

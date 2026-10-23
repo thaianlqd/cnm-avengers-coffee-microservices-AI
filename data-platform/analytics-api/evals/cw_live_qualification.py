@@ -214,7 +214,23 @@ def check(case, report, error):
     return got, checks
 
 
+def check_execution_constraints(expected, meta):
+    checks = {}
+    if expected.get('zero_business_queries'):
+        checks['zero_business_queries'] = meta.get('warehouse_queries') == 0
+    if expected.get('zero_provider_http'):
+        checks['zero_provider_http'] = meta.get('http_attempts') == 0
+    if expected.get('capability_codes_include'):
+        checks['specific_precheck_reason'] = set(expected['capability_codes_include']) <= set(meta.get('capability_codes') or [])
+    return checks
+
+
 def attempt(case, reference):
+    # Match the real job's SQL-budget context without substituting its executor:
+    # production batch execution, dry-run and source-epoch paths use its identity.
+    from services.analytical_capacity_planner import QueryBudget, request_sql_budget
+    sql_budget = QueryBudget()
+    sql_token = request_sql_budget.set(sql_budget)
     pipeline = AnalysisPipeline(owner_id='cw-live-qualification')
     started = time.perf_counter()
     report = error = None
@@ -237,9 +253,14 @@ def attempt(case, reference):
         error = exc
         error.category = 'internal_error'
         error.trace = traceback.format_exc(limit=3)[-600:]
+    finally:
+        request_sql_budget.reset(sql_token)
     info = pipeline.semantic_info
+    sql_usage = sql_budget.snapshot()
     return report, error, dict(
         phase=phase, latency_ms=round((time.perf_counter() - started) * 1000), error_category=getattr(error, 'category', None),
+        warehouse_queries=sql_usage['execute_attempts'] + sql_usage['dry_run_attempts'],
+        sql_budget=sql_usage, capability_codes=info.get('capability_codes', []),
         error_message=str(error)[:300] if error else None, logical_calls=info.get('logical_provider_calls', 0),
         http_attempts=info.get('provider_http_attempts', 0), repairs=info.get('semantic_repair_count', 0),
         input_tokens=info.get('input_tokens'), output_tokens=info.get('output_tokens'),
@@ -254,6 +275,8 @@ def main():
     parser.add_argument('--out', required=True)
     parser.add_argument('--cases')
     parser.add_argument('--manifest',default=str(CASES))
+    parser.add_argument('--min-case-seconds',type=float,default=0,
+                        help='Minimum serial case interval; pacing only, never retries or changes a result.')
     args = parser.parse_args()
     manifest_path=Path(args.manifest)
     manifest = json.loads(manifest_path.read_text())
@@ -264,12 +287,14 @@ def main():
     source_files=[p for d in ('services','routers','metadata','evals') for p in Path(d).rglob('*')
                   if p.is_file() and p.suffix in {'.py','.json'} and '__pycache__' not in p.parts]
     run = dict(started_at=datetime.now(timezone.utc).isoformat(), cases=[],
+               min_case_seconds=max(0,min(args.min_case_seconds,30)),
                manifest_sha256=hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
                source_hashes={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(source_files)})
     ledger['runs'].append(run)
     for case in manifest['cases']:
         if wanted and case['id'] not in wanted:
             continue
+        case_started=time.monotonic()
         report, error, meta = attempt(case, reference)
         if report and report.get('status')=='success':
             artifact_dir=out.parent/(out.stem+'-reports')
@@ -280,6 +305,7 @@ def main():
             meta['report_sha256']=hashlib.sha256(report_path.read_bytes()).hexdigest()
         try:
             got, checks = check(case, report, error)
+            checks.update(check_execution_constraints(case['expect'], meta))
         except Exception as exc:  # noqa: BLE001
             got, checks = 'check_error', {'check_error': False}
             meta['check_trace'] = traceback.format_exc(limit=2)[-400:]
@@ -291,6 +317,9 @@ def main():
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(ledger, ensure_ascii=False, indent=1, default=str))
         print(case['id'], got, 'PASS' if passed else 'FAIL', {k: v for k, v in checks.items() if not v}, meta['logical_calls'], meta['latency_ms'], flush=True)
+        remaining=run['min_case_seconds']-(time.monotonic()-case_started)
+        if remaining>0:
+            time.sleep(remaining)
     run['finished_at'] = datetime.now(timezone.utc).isoformat()
     out.write_text(json.dumps(ledger, ensure_ascii=False, indent=1, default=str))
 

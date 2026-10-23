@@ -1,11 +1,10 @@
-/* Shared management design system. Keep role screens on the same spacing,
-   controls and surfaces; colors in charts and warnings retain their meaning. */
+/* Shared management design system. Actor-specific palettes are strictly scoped. */
 .console-shell[data-actor] {
-  --primary: #18181b;
-  --primary-hover: #27272a;
-  --primary-light: #f4f4f5;
-  --primary-subtle: #e4e4e7;
-  --accent-rgb: 24,24,27;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --primary-subtle: #dbeafe;
+  --accent-rgb: 37, 99, 235;
   --surface: #ffffff;
   --surface-low: #ffffff;
   --text-main: #09090b;
@@ -13,13 +12,63 @@
   --text-muted: #71717a;
   --border-light: #e4e4e7;
   --border-subtle: #f4f4f5;
-  --success-bg: #f4f4f5;
-  --warning-bg: #f4f4f5;
-  --danger-bg: #f4f4f5;
+  --success-bg: #f0fdf4;
+  --warning-bg: #fffbeb;
+  --danger-bg: #fef2f2;
   background: #ffffff !important;
   color: var(--text-body);
   font-size: 13px;
   line-height: 1.6;
+}
+
+/* 1. Admin Workspace & Console: Royal Blue (#2563eb) */
+.console-shell[data-actor="admin"],
+.console-login[data-actor="admin"] {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --primary-subtle: #dbeafe;
+  --accent-rgb: 37, 99, 235;
+}
+
+/* 2. Manager Workspace & Console: Deep Steel / Ocean Blue (#0284c7) */
+.console-shell[data-actor="manager"],
+.console-login[data-actor="manager"] {
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --primary-light: #f0f9ff;
+  --primary-subtle: #e0f2fe;
+  --accent-rgb: 2, 132, 199;
+}
+
+/* 3. Staff Workspace & Console: Warm Highlands Orange (#c64b12) */
+.console-shell[data-actor="staff"],
+.console-login[data-actor="staff"] {
+  --primary: #c64b12;
+  --primary-hover: #a63d0b;
+  --primary-light: #fff4ed;
+  --primary-subtle: #ffe0cc;
+  --accent-rgb: 198, 75, 18;
+}
+
+/* 4. Franchise Partner / Kiosk Owner: Teal (#007cad) */
+.console-shell[data-actor="partner"],
+.console-login[data-actor="partner"] {
+  --primary: #007cad;
+  --primary-hover: #00658d;
+  --primary-light: #edf9ff;
+  --primary-subtle: #c8eafb;
+  --accent-rgb: 0, 124, 173;
+}
+
+/* 5. Franchise Manager / Accountant: Indigo / Violet (#4f46e5) */
+.console-shell[data-actor="accountant"],
+.console-login[data-actor="accountant"] {
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #eef2ff;
+  --primary-subtle: #e0e7ff;
+  --accent-rgb: 79, 70, 229;
 }
 .console-shell svg.workspace-icon,
 .console-shell svg.workspace-icon * { fill: currentColor; stroke: none !important; }
@@ -38,26 +87,26 @@
 .console-shell .workspace-sidebar-backdrop {
   display: none !important;
 }
-.console-shell .console-sidebar { width: 256px !important; min-width: 256px !important; padding: 24px 14px 16px !important; background: #09090b !important; border-right: 1px solid #18181b !important; }
-.console-shell[data-actor="admin"] .console-sidebar { background: #09090b !important; }
+.console-shell .console-sidebar { width: 256px !important; min-width: 256px !important; padding: 24px 14px 16px !important; background: #0b0f19 !important; border-right: 1px solid rgba(255, 255, 255, 0.08) !important; }
+.console-shell[data-actor="admin"] .console-sidebar { background: #0b0f19 !important; }
 .console-shell .console-brand { padding: 0 10px 24px; gap: 10px; }
-.console-shell .console-brand b { font-size: 14px; letter-spacing: -.02em; color: #ffffff !important; font-weight: 600; }
-.console-shell .console-brand-icon { width: 34px; height: 34px; background: #18181b !important; border: 1px solid #27272a !important; border-radius: 8px; }
-.console-shell .workspace-nav-heading { padding: 8px 12px !important; color: #71717a !important; font-size: 11px !important; letter-spacing: .04em; text-transform: uppercase; font-weight: 600 !important; }
+.console-shell .console-brand b { font-size: 15px; letter-spacing: -.02em; color: #ffffff !important; font-weight: 700; }
+.console-shell .console-brand-icon { width: 38px; height: 38px; background: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); display: grid; place-items: center; }
+.console-shell .workspace-nav-heading { padding: 8px 12px !important; color: #64748b !important; font-size: 11px !important; letter-spacing: .06em; text-transform: uppercase; font-weight: 700 !important; }
 .console-shell .workspace-nav-links { gap: 3px; }
 .console-shell .workspace-nav-group { margin-bottom: 16px; }
-.console-shell .console-sidebar .console-nav-item { min-height: 40px; margin: 0; padding: 9px 12px !important; gap: 11px; color: #a1a1aa !important; border: 1px solid transparent !important; border-radius: 6px !important; font-size: 13px !important; font-weight: 400 !important; transition: all 0.15s ease-in-out; }
+.console-shell .console-sidebar .console-nav-item { min-height: 42px; margin: 0; padding: 9px 14px !important; gap: 11px; color: #94a3b8 !important; border: 1px solid transparent !important; border-radius: 12px !important; font-size: 13.5px !important; font-weight: 500 !important; transition: all 0.15s ease-in-out; }
 .console-shell .console-sidebar .console-nav-item > svg { width: 18px; height: 18px; color: inherit !important; }
-.console-shell .console-sidebar .console-nav-item:hover { background: #18181b !important; color: #ffffff !important; }
+.console-shell .console-sidebar .console-nav-item:hover { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; }
 .console-shell .console-sidebar .console-nav-item[aria-current="page"],
-.console-shell .console-sidebar .console-nav-item[aria-current="page"]:hover { background: #27272a !important; border-color: #3f3f46 !important; box-shadow: none !important; color: #ffffff !important; font-weight: 500 !important; }
+.console-shell .console-sidebar .console-nav-item[aria-current="page"]:hover { background: var(--primary) !important; border-color: transparent !important; box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.35) !important; color: #ffffff !important; font-weight: 600 !important; }
 .console-shell .console-sidebar .console-nav-item[aria-current="page"] > svg { color: #ffffff !important; }
-.console-shell .workspace-sidebar-footer { border-top: 1px solid #18181b !important; padding-top: 14px !important; }
-.console-shell .console-sidebar .console-logout { border: 1px solid #27272a !important; background: transparent !important; color: #a1a1aa !important; border-radius: 6px !important; }
-.console-shell .console-sidebar .console-logout:hover { background: #18181b !important; color: #ffffff !important; border-color: #3f3f46 !important; }
-.console-shell .console-sidebar .console-avatar { background: #27272a !important; color: #ffffff !important; border: 1px solid #3f3f46 !important; }
-.console-shell .console-user b { color: #f4f4f5 !important; font-weight: 500; font-size: 13px; }
-.console-shell .console-user small { color: #71717a !important; font-size: 11px; }
+.console-shell .workspace-sidebar-footer { border-top: 1px solid rgba(255, 255, 255, 0.08) !important; padding-top: 14px !important; }
+.console-shell .console-sidebar .console-logout { border: 1px solid rgba(255, 255, 255, 0.12) !important; background: transparent !important; color: #94a3b8 !important; border-radius: 8px !important; }
+.console-shell .console-sidebar .console-logout:hover { background: rgba(239, 68, 68, 0.15) !important; color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.3) !important; }
+.console-shell .console-sidebar .console-avatar { background: var(--primary) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; border-radius: 10px; font-weight: 700; }
+.console-shell .console-user b { color: #ffffff !important; font-weight: 600; font-size: 13.5px; }
+.console-shell .console-user small { color: #94a3b8 !important; font-size: 11px; }
 .console-shell :is(.workspace-search-trigger,.workspace-icon-button) { border-radius: 6px !important; color: #71717a !important; background: #fff !important; border: 1px solid var(--border-light) !important; }
 .console-shell .workspace-search-trigger { min-height: 38px; }
 .console-shell :is(.workspace-search-trigger,.workspace-icon-button):hover { border-color: #a1a1aa !important; background: #f4f4f5 !important; color: #09090b !important; }
@@ -546,17 +595,19 @@
   gap: 12px !important;
   position: sticky !important;
   bottom: 0 !important;
-  z-index: 20 !important;
-  margin: 0 !important;
+  z-index: 25 !important;
+  margin: 24px 0 0 0 !important;
   padding: 16px 26px 20px 26px !important;
   background: #ffffff !important;
   border-top: 1.5px solid #e2e8f0 !important;
-  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.03) !important;
+  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.04) !important;
 }
-.console-shell .branch-form-actions { margin: 0 !important; }
-.console-shell :is(.btn-cancel,.cat-btn--neutral,.menu-btn--neutral,.promo-btn--neutral,.branch-btn--cancel,.admin-button-secondary,.workspace-dialog-btn-secondary) { background: #ffffff !important; color: #dc2626 !important; border: 1px solid #fca5a5 !important; box-shadow: 0 1px 2px 0 rgba(220, 38, 38, 0.05) !important; border-radius: 6px !important; font-size: 13px !important; font-weight: 500 !important; transition: all 0.15s ease !important; }
-.console-shell :is(.btn-cancel,.cat-btn--neutral,.menu-btn--neutral,.promo-btn--neutral,.branch-btn--cancel,.admin-button-secondary,.workspace-dialog-btn-secondary):hover:not(:disabled) { background: #fef2f2 !important; border-color: #ef4444 !important; color: #b91c1c !important; }
-.console-shell :is(.btn-cancel,.cat-btn--neutral,.menu-btn--neutral,.promo-btn--neutral,.branch-btn--cancel,.admin-button-secondary,.workspace-dialog-btn-secondary) :is(svg,span) { color: inherit !important; }
+.console-shell .branch-form-actions { margin: 24px 0 0 0 !important; }
+.console-shell :is(.btn-cancel,.cat-btn--neutral,.menu-btn--neutral,.promo-btn--neutral,.branch-btn--cancel) { background: #ffffff !important; color: #dc2626 !important; border: 1px solid #fca5a5 !important; box-shadow: 0 1px 2px 0 rgba(220, 38, 38, 0.05) !important; border-radius: 8px !important; font-size: 13px !important; font-weight: 500 !important; transition: all 0.15s ease !important; }
+.console-shell :is(.btn-cancel,.cat-btn--neutral,.menu-btn--neutral,.promo-btn--neutral,.branch-btn--cancel):hover:not(:disabled) { background: #fef2f2 !important; border-color: #ef4444 !important; color: #b91c1c !important; }
+.console-shell :is(.btn-cancel,.cat-btn--neutral,.menu-btn--neutral,.promo-btn--neutral,.branch-btn--cancel) :is(svg,span) { color: inherit !important; }
+.console-shell :is(.admin-button-secondary,.workspace-dialog-btn-secondary) { background: #ffffff !important; color: #334155 !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important; border-radius: 8px !important; font-size: 13px !important; font-weight: 600 !important; transition: all 0.15s ease !important; }
+.console-shell :is(.admin-button-secondary,.workspace-dialog-btn-secondary):hover:not(:disabled) { background: #f8fafc !important; border-color: #94a3b8 !important; color: #0f172a !important; }
 .console-shell button:is(.cat-modal-close,.menu-modal-close,.promo-modal-close,.branch-form-close-btn,.workspace-dialog-close,.workspace-icon-button) {
   padding: 0 !important;
   width: 36px !important;
@@ -583,8 +634,8 @@
 .console-shell button:is(.cat-modal-close,.menu-modal-close,.promo-modal-close,.branch-form-close-btn,.workspace-dialog-close,.workspace-icon-button) svg { color: inherit !important; flex-shrink: 0; width: 18px; height: 18px; }
 .console-shell :is(.cat-action-btn--delete,.menu-action-btn--delete,.branch-action-btn--delete,.admin-table-action-btn.btn-delete,.workspace-table-action.delete,.btn-delete) { color: #dc2626 !important; background: #fff5f5 !important; border: 1px solid #fecaca !important; transition: all 0.15s ease !important; }
 .console-shell :is(.cat-action-btn--delete,.menu-action-btn--delete,.branch-action-btn--delete,.admin-table-action-btn.btn-delete,.workspace-table-action.delete,.btn-delete):hover:not(:disabled) { color: #b91c1c !important; background: #fee2e2 !important; border-color: #ef4444 !important; }
-.console-shell :is(.btn-save,.btn-save-green,.btn-primary,.cat-btn--success,.menu-btn--success,.promo-btn--success,.branch-btn--save) { border-radius: 6px !important; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05) !important; background: #18181b !important; border: 1px solid #18181b !important; color: #fff !important; font-size: 13px !important; font-weight: 500 !important; }
-.console-shell :is(.btn-save,.btn-save-green,.btn-primary,.cat-btn--success,.menu-btn--success,.promo-btn--success,.branch-btn--save):hover { background: #27272a !important; border-color: #27272a !important; }
+.console-shell :is(.btn-save,.btn-save-green,.btn-primary,.cat-btn--success,.menu-btn--success,.promo-btn--success,.branch-btn--save) { border-radius: 6px !important; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05) !important; background: var(--primary) !important; border: 1px solid var(--primary) !important; color: #fff !important; font-size: 13px !important; font-weight: 500 !important; transition: all 0.15s ease-in-out !important; }
+.console-shell :is(.btn-save,.btn-save-green,.btn-primary,.cat-btn--success,.menu-btn--success,.promo-btn--success,.branch-btn--save):hover { background: var(--primary-hover) !important; border-color: var(--primary-hover) !important; box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.25) !important; }
 
 /* Neutral back-navigation buttons (never red) */
 .console-shell .workspace-back-button,
@@ -676,6 +727,33 @@
 .console-shell .workspace-news-layout { display: block !important; }
 .console-shell .workspace-news-editor { padding: 24px !important; width: auto !important; box-shadow: none !important; border: 0 !important; }
 
+.console-shell .management-dialog {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: min(90vh, 880px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scroll-padding-bottom: 90px;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25) !important;
+  background: #ffffff !important;
+}
+.console-shell :is(.cat-modal-body,.menu-modal-body,.promo-modal-body,.branch-form-grid,.workspace-form,.admin-shipper-editor,.system-admin-card,.workspace-edit-form) {
+  padding-bottom: 56px !important;
+}
+.console-shell :is(.cat-modal-body,.menu-modal-body,.promo-modal-body,.branch-form-grid,.workspace-form,.admin-shipper-editor,.system-admin-card,.workspace-edit-form) > :nth-last-child(2) {
+  margin-bottom: 28px !important;
+}
+.console-shell .admin-nav-dot {
+  width: 6.5px !important;
+  height: 6.5px !important;
+  border-radius: 9999px !important;
+  background: #ffffff !important;
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.95) !important;
+}
 .console-shell .management-dialog.workspace-dialog--wide { width: min(1040px,100%); }
 .console-shell .workspace-news-editor .workspace-form { padding: 0; }
 .console-shell .workspace-news-editor input[type="checkbox"] { accent-color: var(--primary); }
@@ -1159,12 +1237,12 @@ input.standard-select-input {
 }
 
 .shadcn-checkbox-card.is-checked {
-  border-color: #18181b;
-  background: #fafafa;
+  border-color: var(--primary);
+  background: var(--primary-light, #eff6ff);
 }
 
 .shadcn-checkbox-card:focus-visible {
-  outline: 2px solid #09090b;
+  outline: 2px solid var(--primary);
   outline-offset: 1px;
 }
 
@@ -1188,8 +1266,8 @@ input.standard-select-input {
 }
 
 .shadcn-checkbox-box.is-checked {
-  background: #09090b;
-  border-color: #09090b;
+  background: var(--primary);
+  border-color: var(--primary);
   color: #ffffff;
 }
 
@@ -1296,8 +1374,8 @@ input.standard-select-input {
   min-height: 38px !important;
   padding: 0 16px !important;
   border-radius: 6px !important;
-  background: #18181b !important;
-  border: 1px solid #18181b !important;
+  background: var(--primary) !important;
+  border: 1px solid var(--primary) !important;
   color: #ffffff !important;
   font-size: 13px !important;
   font-weight: 500 !important;
@@ -1305,11 +1383,13 @@ input.standard-select-input {
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  transition: all 0.15s ease-in-out !important;
 }
 
 .creatable-add-btn:hover {
-  background: #27272a !important;
-  border-color: #27272a !important;
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.25) !important;
 }
 
 .creatable-suggestions-popover {
@@ -1456,7 +1536,7 @@ input.standard-select-input {
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  background: #18181b;
+  background: var(--primary);
   color: #ffffff;
   flex-shrink: 0;
 }

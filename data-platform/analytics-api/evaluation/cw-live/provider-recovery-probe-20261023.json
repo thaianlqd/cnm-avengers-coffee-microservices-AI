@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-22T17:03:16.404300+00:00",
+  "model": "gemini-3.5-flash-lite",
+  "purpose": "one bounded transport recovery probe; not qualification",
+  "attempts": 1,
+  "http_status": 200,
+  "provider_status": null,
+  "has_candidates": true,
+  "ms": 10510
+}

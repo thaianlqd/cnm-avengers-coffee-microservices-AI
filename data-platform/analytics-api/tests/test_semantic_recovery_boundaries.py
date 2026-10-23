@@ -135,6 +135,13 @@ class SemanticRecoveryBoundaries(f.unittest.TestCase):
         report = p.generate(request)
         self.assertEqual(report['outcome'],'SUCCESS')
         self.assertTrue(report['charts'])
-        self.assertTrue(any(c['metric']=='store_revenue' for c in report['charts']))
+        # This generic question asks for revenue grouped by branches, not the
+        # separately defined store_revenue measure. The scripted sibling draft
+        # must be restored to canonical revenue without changing the axis.
+        self.assertTrue(any(c['metric']=='revenue' for c in report['charts']))
+        requested=[q for q in report['analytical_queries'] if q['role']=='requested']
+        self.assertTrue(requested)
+        self.assertTrue(all(q['metrics']==['revenue'] and q['group_by']==['store'] for q in requested))
+        self.assertTrue(all(not q.get('ranking') or q['ranking']['metric']=='revenue' for q in requested))
         self.assertEqual(report['quality_assessment'],verify_saved_report(report,self.catalog))
         self.assertEqual(p.provider.call_count,2)

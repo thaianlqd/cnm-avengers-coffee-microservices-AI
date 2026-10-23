@@ -68,7 +68,11 @@ export default function MembershipCard({ user, tier, points = 0, tierName: custo
       <section aria-label={t('membership.card')} style={{ backgroundColor: palette.background, borderColor: palette.accent }}
         className="rounded-2xl border p-7 text-white sm:p-9">
         <div className="flex items-start justify-between gap-6">
-          <img src="/images/brand/logo-white.png" alt="Avengers Coffee" className="h-12 w-auto object-contain" />
+          <img
+            src="/hc-assets/logo-red.png"
+            alt="Avengers Coffee"
+            className="h-12 w-auto object-contain bg-white rounded-xl p-1.5 shadow-sm"
+          />
           <span className="text-xl font-light tracking-wide" style={{ color: palette.accent }}>{tierName}</span>
         </div>
         <div className="my-9">

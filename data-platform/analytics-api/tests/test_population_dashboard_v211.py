@@ -79,7 +79,7 @@ class PopulationDashboardTests(f.unittest.TestCase):
         catalog=AnalysisCatalog(physical)
         with self.assertRaises(AnalysisError): population_filters(request_anchors(QUESTION,catalog,{}),catalog)
 
-    def test_kiosk_report_has_four_distinct_verified_views_and_correct_sql_cohort(self):
+    def test_kiosk_report_has_verified_views_truthful_sparse_coverage_and_correct_sql_cohort(self):
         warehouse=self.warehouse()
         p=self.pipeline(f.scripted(f.envelope(kiosk_requirement())),executor=warehouse)
         request=self.request(QUESTION)
@@ -92,7 +92,13 @@ class PopulationDashboardTests(f.unittest.TestCase):
             self.assertTrue(any(f['dimension']=='store_type' and set(f['value'])==set(KIOSKS) for f in q['filters']))
             self.assertEqual(q['time']['mode'],'all_time')
         f.approve(request,proposal);report=p.generate(request)
-        self.assertGreaterEqual(len(report['charts']),4)
+        # One month and one payment method support two meaningful views, not
+        # a global four-chart floor. Missing lenses must have typed reasons.
+        self.assertEqual(len(report['charts']),2)
+        self.assertEqual(report['analysis_coverage']['gap_kind'],'LIMITED_DATA')
+        rejected=[lens for lens in report['analysis_coverage']['lenses'] if lens['status']=='rejected']
+        self.assertEqual(len(rejected),4)
+        self.assertEqual({lens['reason'] for lens in rejected},{'insufficient_periods','singleton'})
         self.assertEqual(len({c['semantic_view_key'] for c in report['charts']}),len(report['charts']))
         # FINAL 2026-10-19: a time view needs >=2 observed periods; a one-period fixture is disclosed, never drawn as a line.
         trend_ok = any(c['x_field']=='period' for c in report['charts']) or any(
@@ -105,7 +111,7 @@ class PopulationDashboardTests(f.unittest.TestCase):
         ranking=next(q for q in report['analytical_queries'] if q['role']=='requested')
         rows=report['result_sets'][ranking['id']]['rows']
         self.assertEqual({r['store'] for r in rows},{'Điểm B','Điểm C'})
-        self.assertEqual(sum(r['store_revenue'] for r in rows),1800)
+        self.assertEqual(sum(r['revenue'] for r in rows),1800)
         self.assertNotIn('Kiosk tên giả',{r['store'] for r in rows})
         self.assertIn('loai_diem_ban',report['sql_by_query'][ranking['id']])
         self.assertEqual(p.provider.call_count,1)

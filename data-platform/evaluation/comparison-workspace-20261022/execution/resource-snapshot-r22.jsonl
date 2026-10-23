@@ -1,0 +1,3 @@
+{"BlockIO":"90MB / 0B","CPUPerc":"0.17%","Container":"avengers_analytics_api","ID":"bb8b9f3baa45","MemPerc":"24.16%","MemUsage":"247.4MiB / 1GiB","Name":"avengers_analytics_api","NetIO":"46.1MB / 28.2MB","PIDs":"21"}
+{"BlockIO":"17.7MB / 2.57MB","CPUPerc":"0.00%","Container":"avengers_analytics_web","ID":"8b42529f919c","MemPerc":"0.08%","MemUsage":"6.066MiB / 7.748GiB","Name":"avengers_analytics_web","NetIO":"61.1MB / 76.6MB","PIDs":"9"}
+{"BlockIO":"21.2MB / 32.8kB","CPUPerc":"97.97%","Container":"avengers_cw_final_full_r22","ID":"ccafe2135858","MemPerc":"6.71%","MemUsage":"103MiB / 1.5GiB","Name":"avengers_cw_final_full_r22","NetIO":"0B / 0B","PIDs":"2"}

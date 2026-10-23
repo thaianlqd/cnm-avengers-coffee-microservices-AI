@@ -7,9 +7,9 @@ import '../styles/AdminWorkspace.css'
 
 const descriptions = {
   overview: 'Theo dõi hoạt động và những số liệu mới nhất của hệ thống.',
-  categories: 'Sắp xếp danh mục chính và danh mục phụ cho sản phẩm.',
+  categories: 'Sắp xếp danh mục chính và danh mục phụ cho thực đơn món.',
   menu: 'Quản lý sản phẩm, giá bán, hình ảnh và các tùy chọn đặt món.',
-  promotions: 'Quản lý mã ưu đãi và quy tắc phát voucher tự động.',
+  promotions: 'Quản lý voucher công khai và voucher dành cho thành viên hệ thống.',
   customers: 'Quản lý hồ sơ, trạng thái tài khoản và điểm thành viên.',
   'membership-config': 'Thiết lập hạng thành viên, quyền lợi và vòng quay may mắn.',
   'survey-manage': 'Quản lý biểu mẫu khảo sát, xem phản hồi và kết quả phân tích.',
@@ -83,7 +83,14 @@ export function AdminWorkspace({ groups, activeTab, onSelect, session, onLogout,
     {mobileOpen && <div className="admin-nav-backdrop" onClick={closeMenu} aria-hidden="true" />}
     <aside ref={nav} id="admin-navigation" className={`admin-sidebar workspace-sidebar${mobileOpen ? ' is-open' : ''}`} aria-label="Điều hướng quản trị">
       <div className="admin-brand">
-        <span className="admin-brand-mark"><img src="/images/logo-white.png" alt="" /></span>
+        <span className="admin-brand-mark">
+          <img
+            src="/images/highlands-logo-red.svg"
+            onError={(e) => { e.currentTarget.src = '/images/logo-red.png' }}
+            alt="Avengers Coffee"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
+        </span>
         <div><b>Avengers Coffee</b><span>Không gian quản trị</span></div>
         <button className="admin-mobile-close" type="button" onClick={closeMenu} aria-label="Đóng điều hướng"><X size={20} /></button>
       </div>

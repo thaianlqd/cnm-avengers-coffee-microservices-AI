@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
+import { subscribeShipper } from '../../../web-customer/src/lib/maps/shipperRealtime.mjs'
 import { io } from 'socket.io-client'
 import { useUser } from '../context/UserContext'
 import { getUserId } from '../lib/customerData'
@@ -23,6 +24,7 @@ export default function useDeliveryTracking(orderId, visible) {
         const response = await apiClient.get(`/shippers/delivery/tracking/${encodeURIComponent(id)}`, { signal })
         return response?.order ? response : response?.data
       },
+      connectRealtime: (data,onLocation,onState) => subscribeShipper({ realtime:data.realtime,baseUrl:socketBase,orderId:data.order.ma_don_hang,onLocation,onState }),
       connectSocket: () => io(`${socketBase}/notifications`, { transports: ['websocket'], auth: { token: getAuthToken(), userId }, reconnectionDelay: 2000, reconnectionDelayMax: 15000 }),
       onChange: next => setState({ ...next, orderId }),
     })

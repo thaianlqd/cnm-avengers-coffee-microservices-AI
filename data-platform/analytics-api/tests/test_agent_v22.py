@@ -817,7 +817,12 @@ class AgentTests(unittest.TestCase):
             {"quantity_sold", "product_revenue", "revenue"},
         )
         self.assertEqual(narrative["executive_summary"], first_five[0]["finding"])
-        self.assertEqual(narrative["conclusions"], [])
+        # The report now synthesizes a bounded conclusion from grounded facts.
+        # It must introduce no statement outside this scoped evidence set.
+        self.assertTrue(narrative["conclusions"])
+        self.assertLessEqual(len(narrative["conclusions"]), 3)
+        self.assertLessEqual(set(narrative["conclusions"]),
+                             {finding["finding"] for finding in narrative["key_findings"]})
         self.assertEqual(narrative["recommendations"], [])
 
     def test_distribution_and_correlation_observational(self):

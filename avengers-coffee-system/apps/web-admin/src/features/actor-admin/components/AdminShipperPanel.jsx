@@ -62,9 +62,9 @@ function fmtDate(str) {
 }
 
 const SHIPPER_STATUS_CONFIG = {
-  ACTIVE: { label: 'Đang hoạt động', color: '#2563eb', bg: "#f7f9fd", border: '#bfdbfe' },
-  INACTIVE: { label: 'Tắt hoạt động', color: '#60718a', bg: '#f7f9fd', border: 'var(--border-light)' },
-  SUSPENDED: { label: 'Tạm ngưng', color: '#dc2626', bg: "#f7f9fd", border: '#fecaca' },
+  ACTIVE: { label: 'Đang hoạt động', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+  INACTIVE: { label: 'Tắt hoạt động', color: '#64748b', bg: '#f8fafc', border: '#cbd5e1' },
+  SUSPENDED: { label: 'Tạm ngưng', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 }
 
 const ALGORITHM_OPTIONS = [
@@ -327,14 +327,14 @@ export function AdminShipperPanel({ branchOptions = [] }) {
       {/* TAB 1: CRUD & LIST */}
       {activeTab === 'crud' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="admin-section-intro">
+          <div className="admin-section-intro" style={{ marginBottom: '1.25rem' }}>
             <div>
-              <h2>Danh sách nhân viên giao hàng</h2>
-              <p>Quản lý và tra cứu thông tin nhân viên giao vận theo chi nhánh, trạng thái hoạt động.</p>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>Danh sách nhân viên giao hàng</h2>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>Quản lý và tra cứu thông tin nhân viên giao vận theo chi nhánh, trạng thái hoạt động.</p>
             </div>
           </div>
           {/* Filter & Search */}
-          <div className="admin-surface admin-delivery-filters" style={{ background: '#ffffff', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div className="admin-surface admin-delivery-filters" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', alignItems: 'center' }}>
               {/* Search Input Box */}
               <div className="delivery-input-wrapper" style={{ flex: '1 1 240px', minWidth: '220px' }}>
@@ -343,17 +343,17 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   onChange={e => setSearchQ(e.target.value)}
                   placeholder="Tìm theo username, họ tên, số điện thoại..."
                   onKeyDown={e => e.key === 'Enter' && loadShippers()}
-                  style={{ width: '100%', height: '42px' }}
+                  style={{ width: '100%', height: '42px', borderRadius: '10px' }}
                 />
               </div>
 
               {/* Filter Branch Select Box - Generous width for long branch names */}
-              <div className="delivery-input-wrapper" style={{ flex: '1.8 1 360px', minWidth: '320px' }}>
+              <div className="delivery-input-wrapper" style={{ flex: '1.6 1 300px', minWidth: '240px' }}>
                 <SearchableSelect
                   value={filterBranch}
                   onChange={e => setFilterBranch(e?.target?.value ?? e)}
                   placeholder="Tất cả chi nhánh"
-                  style={{ width: '100%', height: '42px' }}
+                  style={{ width: '100%', height: '42px', borderRadius: '10px' }}
                 >
                   <option value="">Tất cả chi nhánh</option>
                   {effectiveBranches.map(b => (
@@ -362,13 +362,13 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                 </SearchableSelect>
               </div>
 
-              {/* Filter Status Select Box */}
-              <div className="delivery-input-wrapper" style={{ flex: '0 1 180px', minWidth: '160px' }}>
+              {/* Filter Status Select Box - Plenty of room to prevent text truncation */}
+              <div className="delivery-input-wrapper" style={{ flex: '0 1 210px', minWidth: '200px' }}>
                 <SearchableSelect
                   value={filterStatus}
                   onChange={e => setFilterStatus(e?.target?.value ?? e)}
                   placeholder="Tất cả trạng thái"
-                  style={{ width: '100%', height: '42px' }}
+                  style={{ width: '100%', height: '42px', borderRadius: '10px' }}
                 >
                   <option value="">Tất cả trạng thái</option>
                   <option value="ACTIVE">Đang hoạt động</option>
@@ -382,20 +382,20 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                 onClick={loadShippers}
                 style={{
                   height: '42px',
-                  background: 'var(--primary)',
+                  background: '#2563eb',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   fontWeight: '600',
                   fontSize: '0.875rem',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.5rem',
-                  padding: '0 1.35rem',
+                  padding: '0 1.5rem',
                   cursor: 'pointer',
                   flexShrink: 0,
-                  boxShadow: '0 2px 6px rgba(37,99,235,0.25)',
+                  boxShadow: '0 2px 6px rgba(37,99,235,0.3)',
                 }}
               >
                 <Search size={16} /> Lọc dữ liệu
@@ -460,14 +460,51 @@ export function AdminShipperPanel({ branchOptions = [] }) {
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60718a' }}>Mật khẩu {editingId ? '(Bỏ trống nếu không đổi)' : '*'}</span>
-                <div style={{position:'relative'}}><input className="ui-input"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={form.password || ''}
-                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                  placeholder="••••••••"
-                  style={{ width:'100%', padding: '0.5rem 2.75rem 0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-light)', fontSize: '0.875rem' }}
-                /><button className="admin-button-secondary" type="button" aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)} style={{ position:'absolute',right:6,top:4,width:32,height:32,padding:0,display:'grid',placeItems:'center',border:0,boxShadow:'none',background:'transparent',color:'var(--text-muted)',cursor:'pointer' }}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
+                <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
+                  <input
+                    className="ui-input"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={form.password || ''}
+                    onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                    placeholder="••••••••"
+                    style={{
+                      width: '100%',
+                      height: '40px',
+                      padding: '0 2.8rem 0 0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-light)',
+                      fontSize: '0.875rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    className="admin-password-toggle"
+                    type="button"
+                    aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword(value => !value)}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '28px',
+                      height: '28px',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: 0,
+                      boxShadow: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -552,46 +589,46 @@ export function AdminShipperPanel({ branchOptions = [] }) {
               <p style={{ margin: 0, fontWeight: '600' }}>Lỗi tải dữ liệu: {shippersError}</p>
             </div>
           ) : (
-            <div className="admin-surface" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+            <div className="admin-surface" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', overflowX: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
                 <thead>
-                  <tr style={{ background: '#fafafa', borderBottom: '1px solid var(--border-light)', color: 'var(--text-muted)', fontWeight: '700' }}>
-                    <th style={{ padding: '0.85rem 1rem' }}>Nhân viên</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Thông tin liên hệ</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Phương tiện</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Chi nhánh</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Trạng thái</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Đánh giá</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Ngày gia nhập</th>
-                    <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Thao tác</th>
+                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <th style={{ padding: '0.9rem 1.15rem' }}>Nhân viên</th>
+                    <th style={{ padding: '0.9rem 1.15rem' }}>Thông tin liên hệ</th>
+                    <th style={{ padding: '0.9rem 1.15rem' }}>Phương tiện</th>
+                    <th style={{ padding: '0.9rem 1.15rem' }}>Chi nhánh</th>
+                    <th style={{ padding: '0.9rem 1.15rem' }}>Trạng thái</th>
+                    <th style={{ padding: '0.9rem 1.15rem' }}>Đánh giá</th>
+                    <th style={{ padding: '0.9rem 1.15rem' }}>Ngày gia nhập</th>
+                    <th style={{ padding: '0.9rem 1.15rem', textAlign: 'right', minWidth: '190px' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   <PaginatedList items={shippers} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab,createdId])} layout="table" columns={8}>{s => {
                     const st = SHIPPER_STATUS_CONFIG[s.status] || SHIPPER_STATUS_CONFIG.INACTIVE
                     return (
-                      <tr key={s.id} style={{ borderBottom: '1px solid #f7f9fd' }}>
-                        <td style={{ padding: '0.85rem 1rem' }}>
+                      <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}>
+                        <td style={{ padding: '0.85rem 1.15rem' }}>
                           <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>{s.full_name}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{s.username}</div>
                         </td>
-                        <td style={{ padding: '0.85rem 1rem' }}>
+                        <td style={{ padding: '0.85rem 1.15rem' }}>
                           <div style={{ color: '#414743' }}>{s.email || '—'}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.phone || s.phone_number || '—'}</div>
                         </td>
-                        <td style={{ padding: '0.85rem 1rem' }}>
+                        <td style={{ padding: '0.85rem 1.15rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                             {getVehicleIcon(s.vehicle_type)}
                             <span style={{ fontWeight: '600', color: '#414743' }}>{s.vehicle_plate || 'Chưa cập nhật'}</span>
                           </div>
                         </td>
-                        <td style={{ padding: '0.85rem 1rem', color: '#414743' }}>
+                        <td style={{ padding: '0.85rem 1.15rem', color: '#414743' }}>
                           {effectiveBranches.find(b => (b.code || b.id) === s.branch_code)?.name || s.branch_name || s.branch_code || 'Toàn hệ thống'}
                         </td>
-                        <td style={{ padding: '0.85rem 1rem' }}>
+                        <td style={{ padding: '0.85rem 1.15rem' }}>
                           <span className="workspace-inline-label" style={{
                             display: 'inline-block',
-                            padding: '0.2rem 0.6rem',
+                            padding: '0.25rem 0.75rem',
                             borderRadius: '9999px',
                             fontSize: '0.75rem',
                             fontWeight: '700',
@@ -602,7 +639,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                             {st.label}
                           </span>
                         </td>
-                        <td style={{ padding: '0.85rem 1rem' }}>
+                        <td style={{ padding: '0.85rem 1.15rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#d97706', fontWeight: '700' }}>
                             {s.rating ? (
                               <>
@@ -613,11 +650,11 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                             )}
                           </div>
                         </td>
-                        <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                        <td style={{ padding: '0.85rem 1.15rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                           {fmtDate(s.created_at)}
                         </td>
-                        <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                        <td style={{ padding: '0.85rem 1.15rem', textAlign: 'right', minWidth: '190px', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', gap: '0.4rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                             {/* Edit Button */}
                             <button className="admin-button-secondary"
                               type="button"
@@ -636,17 +673,18 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                 setEditingId(s.id)
                               }}
                               style={{
-                                padding: '0.35rem 0.65rem',
-                                background: 'var(--primary-light)',
-                                color: 'var(--primary-hover)',
+                                padding: '0.4rem 0.75rem',
+                                background: '#eff6ff',
+                                color: '#2563eb',
                                 border: '1px solid #bfdbfe',
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
+                                borderRadius: '8px',
+                                fontSize: '0.8rem',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '0.2rem',
+                                gap: '0.3rem',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               <Edit2 size={13} /> Sửa
@@ -658,17 +696,18 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                               title={s.status === 'ACTIVE' ? 'Tắt hoạt động' : 'Kích hoạt'}
                               onClick={() => handleToggleStatus(s)}
                               style={{
-                                padding: '0.35rem 0.65rem',
-                                background: s.status === 'ACTIVE' ? "#f7f9fd" : "#f7f9fd",
-                                color: s.status === 'ACTIVE' ? '#c2410c' : "var(--primary)",
-                                border: s.status === 'ACTIVE' ? '1px solid #ffedd5' : '1px solid #bfdbfe',
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
+                                padding: '0.4rem 0.75rem',
+                                background: s.status === 'ACTIVE' ? '#fff1f2' : '#f0fdf4',
+                                color: s.status === 'ACTIVE' ? '#e11d48' : '#16a34a',
+                                border: s.status === 'ACTIVE' ? '1px solid #fecdd3' : '1px solid #bbf7d0',
+                                borderRadius: '8px',
+                                fontSize: '0.8rem',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '0.2rem',
+                                gap: '0.3rem',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               <Power size={13} /> {s.status === 'ACTIVE' ? 'Tắt' : 'Bật'}
@@ -680,17 +719,18 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                               title="Xóa hồ sơ"
                               onClick={() => handleDelete(s.id, s.full_name)}
                               style={{
-                                padding: '0.35rem 0.65rem',
-                                background: "#f7f9fd",
+                                padding: '0.4rem 0.75rem',
+                                background: '#fef2f2',
                                 color: '#dc2626',
                                 border: '1px solid #fecaca',
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
+                                borderRadius: '8px',
+                                fontSize: '0.8rem',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '0.2rem',
+                                gap: '0.3rem',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               <Trash2 size={13} /> Xóa

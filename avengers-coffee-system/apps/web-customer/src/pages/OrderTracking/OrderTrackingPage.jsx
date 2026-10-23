@@ -1,6 +1,7 @@
 import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import { subscribeShipper } from '../../lib/maps/shipperRealtime.mjs';
 import ShipperMapView from '../../components/delivery/ShipperMapView';
 import { OrderTrackingSkeleton } from '../../components/common/Skeleton';
 import { apiClient } from '../../lib/apiClient';
@@ -13,6 +14,7 @@ export default function OrderTrackingPage({ id, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const isMounted = useRef(true);
+  const currentOrder = useRef(id); currentOrder.current=id;
 
   // Rating states
   const [rating, setRating] = useState(5);
@@ -76,7 +78,7 @@ export default function OrderTrackingPage({ id, onBack }) {
   const fetchTracking = async () => {
     try {
       const res = await apiClient.get(`/shippers/delivery/tracking/${id}?t=${Date.now()}`);
-      if (!isMounted.current) return;
+      if (!isMounted.current || currentOrder.current!==id) return;
 
       // Ensure coordinates are numbers because Postgres decimal comes as string
       if (res.data?.shipper_location?.latitude) {
@@ -106,7 +108,7 @@ export default function OrderTrackingPage({ id, onBack }) {
     fetchTracking();
 
     const isDangGiao = trackingData?.order?.trang_thai_don_hang === 'DANG_GIAO' || trackingData?.tracking?.status === 'IN_TRANSIT';
-    const pollTime = isDangGiao ? 3000 : 8000;
+    const pollTime = trackingData?.realtime?.capability ? 15000 : isDangGiao ? 3000 : 8000;
 
     // 1. Polling tự động
     const interval = setInterval(() => {
@@ -115,7 +117,7 @@ export default function OrderTrackingPage({ id, onBack }) {
 
     // 2. WebSocket nhận vị trí Shipper tức thời
     const socketBase = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`;
-    const socket = io(`${socketBase}/notifications`, {
+    const socket = trackingData?.realtime?.capability ? null : io(`${socketBase}/notifications`, {
       transports: ['websocket'],
       reconnectionAttempts: 5,
     });
@@ -123,11 +125,11 @@ export default function OrderTrackingPage({ id, onBack }) {
     const orderId = trackingData?.order?.ma_don_hang || id;
     const trackingCode = trackingData?.tracking?.tracking_code || trackingData?.order?.tracking_code;
 
-    socket.on('connect', () => {
+    socket?.on('connect', () => {
       socket.emit('tracking:subscribe', { maDonHang: orderId, trackingCode });
     });
 
-    socket.on('shipper:location:update', (data) => {
+    socket?.on('shipper:location:update', (data) => {
       if (data?.latitude && data?.longitude && isMounted.current) {
         const lat = Number(data.latitude);
         const lng = Number(data.longitude);
@@ -150,9 +152,20 @@ export default function OrderTrackingPage({ id, onBack }) {
     return () => {
       isMounted.current = false;
       clearInterval(interval);
-      socket.disconnect();
+      socket?.disconnect();
     };
-  }, [id, trackingData?.order?.trang_thai_don_hang, trackingData?.tracking?.status]);
+  }, [id, trackingData?.order?.trang_thai_don_hang, trackingData?.tracking?.status, Boolean(trackingData?.realtime?.capability)]);
+
+  useEffect(() => {
+    const orderId=trackingData?.order?.ma_don_hang;
+    if (!trackingData?.realtime || !orderId || ['HOAN_THANH','DA_HUY'].includes(trackingData.order.trang_thai_don_hang)) return;
+    return subscribeShipper({ realtime:trackingData.realtime,
+      baseUrl:import.meta.env.VITE_SOCKET_URL || `${window.location.protocol}//${window.location.hostname}:3005`, orderId,
+      onLocation:point => setTrackingData(previous => previous?.order?.ma_don_hang===orderId ? {
+        ...previous,shipper_location:{ latitude:point.latitude,longitude:point.longitude,updated_at:point.updated_at },
+      } : previous),
+    });
+  }, [trackingData?.realtime?.capability,trackingData?.order?.ma_don_hang,trackingData?.order?.trang_thai_don_hang]);
 
   if (loading && !trackingData) {
     return (
@@ -446,7 +459,7 @@ export default function OrderTrackingPage({ id, onBack }) {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
           <h3 className="font-semibold text-gray-900 mb-4">{ui("Tiến trình đơn hàng")}</h3>
           <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[1.125rem] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
-            {timeline.map((step, idx) => (
+            {timeline.map((step) => (
               <div key={step.key} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                 <div className={`flex items-center justify-center w-9 h-9 rounded-full border-4 border-white z-10 font-bold text-sm flex-shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 ${
                   step.completed ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-400'

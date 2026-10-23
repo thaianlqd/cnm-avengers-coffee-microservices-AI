@@ -1517,21 +1517,21 @@
 .console-shell[data-actor="admin"] .console-sidebar { background: #09090b !important; }
 .console-shell .console-brand { padding-bottom: 20px; }
 .console-shell .console-brand b { color: #f4f6fb; font-size: 14px; font-weight: 600; }
-.console-shell .console-brand small, .console-shell .console-user small { color: #71717a; }
-.console-shell .console-brand-icon { background: #18181b; color: #fff; border: 1px solid #27272a; width: 36px; height: 36px; border-radius: 9px; }
-.console-shell .console-user b { color: #f4f4f5; }
-.console-shell .console-avatar { color: #fafafa; background: #27272a; border: 1px solid #3f3f46; }
-.console-shell .workspace-sidebar-footer { border-color: #18181b; }
-.console-shell .workspace-nav-heading { color: #71717a !important; font-size: 10px !important; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; }
-.console-shell .console-sidebar .console-nav-item { color: #a1a1aa !important; font-size: 13px !important; min-height: 39px; padding: 9px 11px !important; gap: 10px; border-radius: 6px !important; }
-.console-shell .console-sidebar .console-nav-item > svg { width: 16px; height: 16px; color: inherit !important; background: none; padding: 0; flex-shrink: 0; }
-.console-shell .console-sidebar .console-nav-item:hover { color: #fff !important; background: #18181b !important; }
+.console-shell .console-brand small, .console-shell .console-user small { color: #94a3b8; }
+.console-shell .console-brand-icon { background: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; width: 38px; height: 38px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); display: grid; place-items: center; }
+.console-shell .console-user b { color: #ffffff; font-weight: 600; }
+.console-shell .console-avatar { color: #ffffff; background: #2563eb; border: 1px solid rgba(255, 255, 255, 0.2); font-weight: 700; border-radius: 10px; }
+.console-shell .workspace-sidebar-footer { border-color: rgba(255, 255, 255, 0.08); }
+.console-shell .workspace-nav-heading { color: #64748b !important; font-size: 11px !important; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+.console-shell .console-sidebar .console-nav-item { color: #94a3b8 !important; font-size: 13.5px !important; min-height: 42px; padding: 9px 14px !important; gap: 11px; border-radius: 12px !important; font-weight: 500; transition: all 0.15s ease; }
+.console-shell .console-sidebar .console-nav-item > svg { width: 18px; height: 18px; color: inherit !important; background: none; padding: 0; flex-shrink: 0; }
+.console-shell .console-sidebar .console-nav-item:hover { color: #fff !important; background: rgba(255, 255, 255, 0.08) !important; }
 .console-shell .console-sidebar .console-nav-item[aria-current="page"],
-.console-shell .console-sidebar .console-nav-item[aria-current="page"]:hover { color: #fff !important; background: #27272a !important; border-color: #3f3f46 !important; box-shadow: none !important; font-weight: 500 !important; }
+.console-shell .console-sidebar .console-nav-item[aria-current="page"]:hover { color: #fff !important; background: #2563eb !important; border-color: transparent !important; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important; font-weight: 600 !important; }
 .console-shell .console-sidebar .console-nav-item[aria-current="page"] > svg { color: #fff !important; }
-.console-shell .console-sidebar .console-logout { background: transparent !important; border: 1px solid #27272a !important; color: #a1a1aa !important; border-radius: 6px !important; }
-.console-shell .console-sidebar .console-logout:hover { background: #18181b !important; color: #fff !important; border-color: #3f3f46 !important; }
-.console-shell .console-sidebar nav { scrollbar-color: #27272a transparent; }
+.console-shell .console-sidebar .console-logout { background: transparent !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; color: #94a3b8 !important; border-radius: 8px !important; }
+.console-shell .console-sidebar .console-logout:hover { background: rgba(239, 68, 68, 0.15) !important; color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.3) !important; }
+.console-shell .console-sidebar nav { scrollbar-color: #273549 transparent; }
 .console-shell .workspace-icon-button { background: #fff !important; color: #65738a !important; border-color: #e4e8ef !important; }
 .console-shell .workspace-icon-button:hover, .console-shell .workspace-icon-button[aria-expanded="true"] { background: var(--primary-light) !important; color: var(--primary) !important; }
 .console-shell .workspace-search-trigger { background: #f8f9fc !important; color: #7c8799 !important; }
@@ -1741,23 +1741,46 @@
 .smart-select-list button:hover, .smart-select-list button.is-highlighted { background: #f5f3f0; }
 .smart-select-list p { margin: 0; padding: 12px; color: #78716c; font-size: 12px; }
 
-/* Management surfaces use white and stone neutrals; status is conveyed by text and icons. */
-.console-shell :is(.tone-blue,.tone-teal,.tone-amber,.tone-red,.console-chart-badge,.workspace-search-trigger,.workspace-debt-badge,.workspace-financial-summary,.workspace-search-input,.workspace-notification-panel > header,.workspace-notification-actions),
-.console-shell :is(.cat-modal-head,.menu-modal-head,.promo-modal-head,.branch-form-header,.workspace-form-heading,.cat-modal-section,.menu-modal-section,.promo-modal-section,.cat-form-group--highlight),
-.console-shell :is(th,.workspace-tier-card > div:first-child,.workspace-tier-card > div:nth-child(2) > div,.workspace-tier-card > div:nth-child(3)) {
-  background: #f5f5f4 !important;
-  border-color: #e7e5e4 !important;
-  color: #57534e !important;
+/* Management surfaces use crisp white, subtle slate, and royal blue accents */
+.console-shell :is(.tone-blue, .console-chart-badge, .workspace-debt-badge) {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #2563eb !important;
 }
-.console-shell tbody tr:hover { background: #fafaf9 !important; }
-.console-shell .workspace-franchise-hero { background: #292524 !important; border-color: #292524 !important; }
+.console-shell :is(.tone-teal) { background: #ecfdf5 !important; border-color: #a7f3d0 !important; color: #059669 !important; }
+.console-shell :is(.tone-amber) { background: #fffbeb !important; border-color: #fde68a !important; color: #d97706 !important; }
+.console-shell :is(.tone-red) { background: #fef2f2 !important; border-color: #fecaca !important; color: #dc2626 !important; }
+.console-shell :is(.workspace-search-trigger, .workspace-search-input, .workspace-notification-panel > header, .workspace-notification-actions) {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #64748b !important;
+}
+.console-shell :is(.cat-modal-head, .menu-modal-head, .promo-modal-head, .branch-form-header, .workspace-form-heading) {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+.console-shell :is(.cat-modal-section, .menu-modal-section, .promo-modal-section, .cat-form-group--highlight) {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+.console-shell :is(th, thead th) {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+  font-weight: 700 !important;
+  font-size: 11.5px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+.console-shell tbody tr:hover { background: #f8faff !important; }
+.console-shell .workspace-franchise-hero { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important; border-color: #1e293b !important; }
 .console-shell .workspace-franchise-hero h2,
 .console-shell .workspace-franchise-hero > p { color: #fff !important; }
-.console-shell .workspace-franchise-hero > div > div { background: #fff !important; color: #292524 !important; border-color: #e7e5e4 !important; }
+.console-shell .workspace-franchise-hero > div > div { background: #fff !important; color: #0f172a !important; border-color: #e2e8f0 !important; }
 .console-shell .workspace-financial-summary > div,
-.console-shell .workspace-debt-badge { color: #44403c !important; }
-.console-role-tabs { background: #f5f5f4 !important; border-color: #e7e5e4 !important; }
-.console-shell .workspace-search-trigger { background: #f5f5f4 !important; color: #57534e !important; }
+.console-shell .workspace-debt-badge { color: #2563eb !important; }
+.console-role-tabs { background: #f1f5f9 !important; border-color: #e2e8f0 !important; }
 
 /* Preserve each chart gradient despite legacy global polygon styling. */
 .console-chart .console-plot polygon { fill: var(--chart-area-fill) !important; }

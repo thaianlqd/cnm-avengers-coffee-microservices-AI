@@ -1,0 +1,368 @@
+{
+  "passed": true,
+  "at": "2026-10-22T19:09:49.013000+00:00",
+  "session_id": "cdfa9bcf-9576-4698-ba4d-124d4f0bf938",
+  "revision": 1,
+  "raw_rows": 68,
+  "valid_rows": 64,
+  "queries": 5,
+  "charts": 5,
+  "variants": 32,
+  "marks": 174,
+  "checks": [
+    {
+      "check": "authored_member_scope",
+      "passed": true
+    },
+    {
+      "check": "authored_window q_bec08024f254396a66b2e8f3",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_bec08024f254396a66b2e8f3",
+      "passed": true,
+      "rows": 19
+    },
+    {
+      "check": "authored_window q_07aa2389f2a31f917842743b",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_07aa2389f2a31f917842743b",
+      "passed": true,
+      "rows": 2
+    },
+    {
+      "check": "authored_window q_510a91550436e0874de9cc21",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_510a91550436e0874de9cc21",
+      "passed": true,
+      "rows": 6
+    },
+    {
+      "check": "authored_window q_5ba898e36662d861c3c3566c",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_5ba898e36662d861c3c3566c",
+      "passed": true,
+      "rows": 19
+    },
+    {
+      "check": "authored_window q_79381407a27b615b79a3b3e5",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_79381407a27b615b79a3b3e5",
+      "passed": true,
+      "rows": 7
+    },
+    {
+      "check": "every_offered_variant visual_1/q_bec08024f254396a66b2e8f3~compare",
+      "passed": true,
+      "marks": 19,
+      "spec": {
+        "mode": "compare"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_1/q_bec08024f254396a66b2e8f3~total",
+      "passed": true,
+      "marks": 10,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_1/q_bec08024f254396a66b2e8f3~single~4503418922",
+      "passed": true,
+      "marks": 10,
+      "spec": {
+        "mode": "single",
+        "member": "Điện Biên"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_1/q_bec08024f254396a66b2e8f3~single~04e3b867a1",
+      "passed": true,
+      "marks": 9,
+      "spec": {
+        "mode": "single",
+        "member": "Bạc Liêu"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_510a91550436e0874de9cc21~compare",
+      "passed": true,
+      "marks": 6,
+      "spec": {
+        "mode": "compare"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_510a91550436e0874de9cc21~compare~f4dc189901",
+      "passed": true,
+      "marks": 6,
+      "spec": {
+        "mode": "compare",
+        "value_mode": "member_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_510a91550436e0874de9cc21~total",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_510a91550436e0874de9cc21~total~39385e7ce1",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "total",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_510a91550436e0874de9cc21~single~4503418922",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Điện Biên"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_510a91550436e0874de9cc21~single~c49c757822",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Điện Biên",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_510a91550436e0874de9cc21~single~04e3b867a1",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Bạc Liêu"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_510a91550436e0874de9cc21~single~b10dcc1cb4",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Bạc Liêu",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_07aa2389f2a31f917842743b~compare",
+      "passed": true,
+      "marks": 2,
+      "spec": {
+        "mode": "compare"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_07aa2389f2a31f917842743b~compare~f4dc189901",
+      "passed": true,
+      "marks": 2,
+      "spec": {
+        "mode": "compare",
+        "value_mode": "member_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_07aa2389f2a31f917842743b~total",
+      "passed": true,
+      "marks": 2,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_07aa2389f2a31f917842743b~total~39385e7ce1",
+      "passed": true,
+      "marks": 2,
+      "spec": {
+        "mode": "total",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_07aa2389f2a31f917842743b~single~4503418922",
+      "passed": true,
+      "marks": 1,
+      "spec": {
+        "mode": "single",
+        "member": "Điện Biên"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_07aa2389f2a31f917842743b~single~c49c757822",
+      "passed": true,
+      "marks": 1,
+      "spec": {
+        "mode": "single",
+        "member": "Điện Biên",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_07aa2389f2a31f917842743b~single~04e3b867a1",
+      "passed": true,
+      "marks": 1,
+      "spec": {
+        "mode": "single",
+        "member": "Bạc Liêu"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_07aa2389f2a31f917842743b~single~b10dcc1cb4",
+      "passed": true,
+      "marks": 1,
+      "spec": {
+        "mode": "single",
+        "member": "Bạc Liêu",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_5ba898e36662d861c3c3566c~compare~b38bb7ea86",
+      "passed": true,
+      "marks": 19,
+      "spec": {
+        "mode": "compare",
+        "breakdown": [
+          "store_type",
+          "CHI_NHANH_CHINH"
+        ]
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_5ba898e36662d861c3c3566c~total",
+      "passed": true,
+      "marks": 10,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_5ba898e36662d861c3c3566c~single~4503418922",
+      "passed": true,
+      "marks": 10,
+      "spec": {
+        "mode": "single",
+        "member": "Điện Biên"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_5ba898e36662d861c3c3566c~single~04e3b867a1",
+      "passed": true,
+      "marks": 9,
+      "spec": {
+        "mode": "single",
+        "member": "Bạc Liêu"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_79381407a27b615b79a3b3e5~compare",
+      "passed": true,
+      "marks": 7,
+      "spec": {
+        "mode": "compare"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_79381407a27b615b79a3b3e5~compare~f4dc189901",
+      "passed": true,
+      "marks": 7,
+      "spec": {
+        "mode": "compare",
+        "value_mode": "member_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_79381407a27b615b79a3b3e5~total",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_79381407a27b615b79a3b3e5~total~39385e7ce1",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "total",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_79381407a27b615b79a3b3e5~single~4503418922",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "single",
+        "member": "Điện Biên"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_79381407a27b615b79a3b3e5~single~c49c757822",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "single",
+        "member": "Điện Biên",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_79381407a27b615b79a3b3e5~single~04e3b867a1",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Bạc Liêu"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_79381407a27b615b79a3b3e5~single~b10dcc1cb4",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Bạc Liêu",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    }
+  ],
+  "totals": {
+    "Điện Biên": 3850000.0,
+    "Bạc Liêu": 3357000.0
+  },
+  "limitation": "Independent current raw source equals captured report numbers; source generation was not pinned, so this does not prove the same historical snapshot. No claim about LLM accuracy."
+}

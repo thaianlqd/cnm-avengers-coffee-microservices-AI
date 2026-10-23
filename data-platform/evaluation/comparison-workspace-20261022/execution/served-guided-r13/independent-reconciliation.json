@@ -1,0 +1,43 @@
+{
+  "numeric": [
+    {
+      "label": "Tổng doanh thu = tổng các nhóm/kỳ",
+      "expected_value": 178867000,
+      "reported_value": 178867000,
+      "absolute_error": 0,
+      "relative_error": 0,
+      "within_tolerance": true,
+      "tolerance": {
+        "absolute": 0.01,
+        "relative": 1e-9
+      },
+      "unit": "VND",
+      "source": "independent_scalar_query",
+      "status": "matched",
+      "query_id": "q_cb0617bd5f41761dc741f41d",
+      "metric": "revenue"
+    }
+  ],
+  "ranking": [],
+  "trend": [],
+  "independent_oracle": {
+    "matched": 1,
+    "eligible": 1,
+    "accuracy_pct": 100,
+    "source": "Truy vấn tổng hợp độc lập (read-only) từ cùng định nghĩa chỉ số"
+  },
+  "oracle_queries": 1,
+  "oracle_failures": 0,
+  "oracle_successes": 1,
+  "consistency": {
+    "status": "same_generation",
+    "report_epoch": "4bf7203b8f304a41c6c46ab8e40432ffbab124e5124b453183d01530fb5b1bb1",
+    "oracle_epoch": "4bf7203b8f304a41c6c46ab8e40432ffbab124e5124b453183d01530fb5b1bb1",
+    "reason": "same_observed_source_generations",
+    "basis": "Per-source replica generation vector; no source/formula independence claim"
+  },
+  "provider_calls": 0,
+  "measured_at": "2026-10-22T16:57:07.040116+00:00",
+  "registry_fingerprint": "a7fed9b2a0dde9b01593f8aad690c30577b7cfde5ed293de28883ecebf7ab44d",
+  "session_revision": 1
+}

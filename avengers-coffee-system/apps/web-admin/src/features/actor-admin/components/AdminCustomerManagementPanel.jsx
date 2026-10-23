@@ -28,7 +28,9 @@ import {
   RefreshCw,
   User,
   Mail,
-  Lock
+  Lock,
+  Eye,
+  EyeOff
 } from '../../../components/console/WorkspaceIcons'
 
 function CustomerAvatar({ src, name }) {
@@ -70,6 +72,7 @@ export function AdminCustomerManagementPanel({
   const [openCustomerActionId, setOpenCustomerActionId] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [formError, setFormError] = useState('')
+  const [showCustomerPassword, setShowCustomerPassword] = useState(false)
   const closeCustomerForm = () => {
     if (savingCustomer) return
     cancelEditCustomer()
@@ -300,13 +303,43 @@ export function AdminCustomerManagementPanel({
                 <label htmlFor="customermanagementpanel-10723" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
                   Mật khẩu {editingCustomerId ? '(bỏ trống nếu giữ nguyên)' : <span style={{ color: '#ef4444' }}>*</span>}
                 </label>
-                <input id="customermanagementpanel-10723"
-                  type="password"
-                  className="shadcn-input ui-input"
-                  value={customerForm.mat_khau || ''}
-                  onChange={(e) => setCustomerForm((p) => ({ ...p, mat_khau: e.target.value }))}
-                  placeholder="••••••••"
-                />
+                <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
+                  <input id="customermanagementpanel-10723"
+                    type={showCustomerPassword ? "text" : "password"}
+                    className="shadcn-input ui-input"
+                    value={customerForm.mat_khau || ''}
+                    onChange={(e) => setCustomerForm((p) => ({ ...p, mat_khau: e.target.value }))}
+                    placeholder="••••••••"
+                    style={{ width: '100%', height: '40px', paddingRight: '42px', boxSizing: 'border-box' }}
+                  />
+                  <button
+                    type="button"
+                    className="admin-password-toggle"
+                    onClick={() => setShowCustomerPassword(!showCustomerPassword)}
+                    title={showCustomerPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-label={showCustomerPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '26px',
+                      height: '26px',
+                      border: 'none',
+                      background: 'transparent',
+                      padding: 0,
+                      margin: 0,
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      zIndex: 3
+                    }}
+                  >
+                    {showCustomerPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               {/* Field 5: Status */}
@@ -397,9 +430,9 @@ export function AdminCustomerManagementPanel({
               }}
               disabled={savingCustomer}
               style={{
-                backgroundColor: '#18181b',
+                backgroundColor: 'var(--primary)',
                 color: '#ffffff',
-                border: '1px solid #18181b',
+                border: '1px solid var(--primary)',
                 height: '38px',
                 padding: '0 1.35rem',
                 borderRadius: '6px',
@@ -424,16 +457,16 @@ export function AdminCustomerManagementPanel({
       {/* Filter & Search Bar */}
       <div className="admin-surface" style={{ backgroundColor: '#ffffff', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', flexGrow: 1 }}>
-          <div className="customer-search-box" style={{ position: 'relative', minWidth: '260px', flexGrow: 1, height: '38px', display: 'flex', alignItems: 'center' }}>
+          <div className="customer-search-box" style={{ position: 'relative', minWidth: '260px', flexGrow: 1, height: '40px', display: 'flex', alignItems: 'center' }}>
 
             <input className="ui-input"
               style={{
                 width: '100%',
                 paddingLeft: '38px',
                 paddingRight: customerFilters.q ? '34px' : '12px',
-                height: '38px',
-                minHeight: '38px',
-                borderRadius: '6px',
+                height: '40px',
+                minHeight: '40px',
+                borderRadius: '8px',
                 border: '1px solid var(--border-light)',
                 fontSize: '13px',
                 backgroundColor: '#ffffff',
@@ -478,7 +511,7 @@ export function AdminCustomerManagementPanel({
             )}
           </div>
 
-          <div style={{ minWidth: 200, width: 225, flexShrink: 0 }}>
+          <div style={{ minWidth: 220, width: 220, flexShrink: 0 }}>
             <SearchableSelect
               id="customer-status-filter-select"
               value={customerFilters.status || ''}
@@ -496,11 +529,28 @@ export function AdminCustomerManagementPanel({
 
           <button
             type="button"
-            className="btn-save"
+            className="admin-button-secondary"
             onClick={() => loadCustomers && loadCustomers()}
-            style={{ height: '36px' }}
+            title="Tải lại danh sách"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              height: '40px',
+              minHeight: '40px',
+              padding: '0 15px',
+              borderRadius: '8px',
+              border: '1px solid #cbd5e1',
+              backgroundColor: '#ffffff',
+              color: '#334155',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              flexShrink: 0,
+              margin: 0
+            }}
           >
-            <RefreshCw size={14} /> Làm mới
+            <RefreshCw size={14} /> <span>Tải lại</span>
           </button>
         </div>
 
@@ -515,7 +565,20 @@ export function AdminCustomerManagementPanel({
               setShowCreateForm((prev) => !prev)
             }
           }}
-          style={{ height: '36px', padding: '0 1rem' }}
+          style={{
+            height: '40px',
+            minHeight: '40px',
+            padding: '0 18px',
+            borderRadius: '8px',
+            fontWeight: 600,
+            fontSize: '13.5px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            flexShrink: 0,
+            margin: 0
+          }}
         >
           {isFormActive ? (
             <>

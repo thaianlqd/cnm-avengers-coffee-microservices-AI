@@ -609,15 +609,16 @@ export function AdminSmtpConfigPanel() {
                     </span>
                   )}
                 </div>
-                <div style={{ position: 'relative', width: '100%' }}>
+                <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
                   <input
+                    className="ui-input"
                     id="smtp-input-auth-pass"
                     type={showPassword ? 'text' : 'password'}
                     style={{
                       width: '100%',
-                      height: '38px',
-                      padding: '0 2.5rem 0 0.85rem',
-                      borderRadius: '6px',
+                      height: '40px',
+                      padding: '0 2.8rem 0 0.85rem',
+                      borderRadius: '8px',
                       border: '1px solid #cbd5e1',
                       backgroundColor: '#ffffff',
                       fontSize: '0.8125rem',
@@ -631,11 +632,27 @@ export function AdminSmtpConfigPanel() {
                   />
                   <button
                     type="button"
+                    className="admin-password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '0.25rem', display: 'flex', alignItems: 'center' }}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '28px',
+                      height: '28px'
+                    }}
                     title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>

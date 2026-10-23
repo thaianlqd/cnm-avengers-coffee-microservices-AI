@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-22T16:50:23.098029+00:00",
+  "qualification": "NOT_QUALIFIED_PROVIDER_TRANSPORT_BLOCKED",
+  "manifest_version": "cw-codex-final-2",
+  "manifest_sha256": "416fea96bf08fec7454f9130b542758cfe8148ddc07d3450c3b366fcdaa1a08c",
+  "completed_requests": 7,
+  "accepted": 0,
+  "completed_http_attempts": 14,
+  "interrupted_pending_request": "P08",
+  "pending_http_attempts": "not_measured: process interrupted; do not treat as zero",
+  "observed_errors": {
+    "P01": "provider_timeout",
+    "P02": "provider_timeout",
+    "P03": "provider_timeout",
+    "P04": "provider_unavailable",
+    "P05": "provider_timeout",
+    "P06": "provider_timeout",
+    "P07": "provider_timeout"
+  },
+  "semantic_accuracy": "NOT_MEASURED: no completed model interpretation to assess",
+  "remaining_requests": "NOT_RUN: transport circuit stop",
+  "diagnostics": [
+    "provider-transport-diagnostic.log",
+    "provider-transport-diagnostic-2.log"
+  ],
+  "runtime_model_change": false,
+  "retry_policy": "No outcome replacement; original failed batch retained. Four tiny model diagnostic requests were separate from qualification; no warehouse data sent in diagnostics."
+}

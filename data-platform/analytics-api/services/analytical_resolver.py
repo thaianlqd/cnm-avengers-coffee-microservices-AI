@@ -140,7 +140,7 @@ from services.error_taxonomy import ResolutionIssues
 
 # Bump whenever resolution/binding rules change: cached plans from an older rule set
 # must be re-planned, not replayed into a verifier that rebuilds them differently (G07).
-PLAN_POLICY_VERSION = "2026-10-22.comparison-workspace.34"
+PLAN_POLICY_VERSION = "2026-10-23.comparison-workspace.42"
 
 FEATURE_SHAPES = {"scalar":{"aggregate"}, "leader":{"ranking"}, "top_gap":{"ranking"}, "selected_total":{"ranking"},
     "change":{"trend"}, "change_pct":{"trend"}, "concentration":{"distribution"},
@@ -156,9 +156,32 @@ def drop_unrequested_feature_conflicts(intent, anchors):
     named = {f for a in (anchors or {}).get('features', []) for f in a['candidate_ids']}
     result, changes = intent.model_copy(deep=True), []
     for req in result.requirements:
+        # Entity comparison over ONE explicit, already-correct window is not
+        # a period comparison. Ignore an unasked baseline only on the primary
+        # draft (this function's call site), with a matching governed member
+        # axis. Wrong/missing windows, ambiguous time and real two-period work
+        # still go through validation/targeted repair. No approved plan edits.
+        times = (anchors or {}).get('times', [])
+        member_axes = {b.get('comparison_dimension') for b in
+            ((anchors or {}).get('scope_resolution') or {}).get('bindings', []) if b.get('comparison')}
+        if (req.availability == 'requested' and not req.supporting_for and not req.forecast
+                and req.comparison_time and req.time and len(times) == 1
+                and not (anchors or {}).get('period_comparisons')
+                and not ((anchors or {}).get('ui') or {}).get('required_period')
+                and member_axes.intersection(req.dimension_ids)
+                and req.time.model_dump(mode='json', exclude_none=True) == times[0]):
+            changes.append(dict(requirement_id=req.id, field='comparison_time',
+                rule='member_comparison_single_explicit_window',
+                previous=req.comparison_time.model_dump(mode='json', exclude_none=True), value=None))
+            req.comparison_time = None
         # Only features no later deterministic rule can reshape (scalar/change/selected_total are rewritten
         # downstream; binding noise must still surface as a repair issue).
-        bad = [f for f in req.derived_features if f not in named and f in DROPPABLE_FEATURES
+        droppable = DROPPABLE_FEATURES | ({'change', 'change_pct', 'selected_total'} if req.selection else set())
+        # A selector already owns its scoring history and selected membership.
+        # Model-added trend/ranking-only facts must not change that comparison's
+        # shape. Explicitly requested facts remain protected and need a valid
+        # separate shape; actual trend requirements keep their valid features.
+        bad = [f for f in req.derived_features if f not in named and f in droppable
                and req.analysis_kind not in FEATURE_SHAPES[f]]
         if bad:
             req.derived_features = [f for f in req.derived_features if f not in bad]

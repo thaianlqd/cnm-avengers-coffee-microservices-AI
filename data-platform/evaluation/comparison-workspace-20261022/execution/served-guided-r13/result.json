@@ -1,0 +1,61 @@
+{
+  "mode": "served_real_ui_real_api_guided_zero_provider",
+  "started_at": "2026-10-22T16:56:37.863Z",
+  "checks": [
+    {
+      "id": "guided_member_meaning_and_verified_report",
+      "passed": true
+    },
+    {
+      "id": "every_offered_chart_compare_total_single",
+      "passed": true,
+      "charts": 5,
+      "extra_submissions": 0
+    },
+    {
+      "id": "real_save_reopen_and_word_preserve_selected_view",
+      "passed": true,
+      "extra_submissions": 0
+    },
+    {
+      "id": "source_reconciliation_measured_or_truthful_unpinned",
+      "passed": true,
+      "numeric_proof": true,
+      "oracle": {
+        "matched": 1,
+        "eligible": 1,
+        "accuracy_pct": 100,
+        "source": "Truy vấn tổng hợp độc lập (read-only) từ cùng định nghĩa chỉ số"
+      },
+      "consistency": {
+        "status": "same_generation",
+        "report_epoch": "4bf7203b8f304a41c6c46ab8e40432ffbab124e5124b453183d01530fb5b1bb1",
+        "oracle_epoch": "4bf7203b8f304a41c6c46ab8e40432ffbab124e5124b453183d01530fb5b1bb1",
+        "reason": "same_observed_source_generations",
+        "basis": "Per-source replica generation vector; no source/formula independence claim"
+      }
+    },
+    {
+      "id": "explicit_global_apply_new_verified_revision",
+      "passed": true,
+      "extra_submissions": 0
+    }
+  ],
+  "submissions": [
+    {
+      "path": "/api/ai/analysis-jobs",
+      "at": "2026-10-22T16:56:43.287Z"
+    }
+  ],
+  "builds": [
+    {
+      "url": "http://localhost:8501/assets/index-Do9uYw5P.js",
+      "sha256": "0b51948dbf2e352ae0550cb61f8cf09e92205ae8f6791756f93f8ba95c533946"
+    }
+  ],
+  "job_id": "aj_c7f7f1628f9742bbb0a192fdd67186c0",
+  "physical_http": 0,
+  "saved_report_id": "rpt_b54c9498f9aa",
+  "status": "PASS",
+  "finished_at": "2026-10-22T16:57:11.581Z"
+}

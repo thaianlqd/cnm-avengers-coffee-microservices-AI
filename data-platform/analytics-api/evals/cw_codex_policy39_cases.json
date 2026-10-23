@@ -1,0 +1,1041 @@
+{
+  "version": "cw-codex-final-3",
+  "frozen_at": "2026-10-22",
+  "reference_date": "2026-10-22",
+  "note": "Original 40 cases are seen development/regression. T09-T16 are fresh transfer frozen before final execution, not blind to the author. Every attempt is retained; no outcome substitution.",
+  "cases": [
+    {
+      "id": "P01",
+      "set": "positive",
+      "q": "so sánh doanh thu Hà Nội và Đà Nẵng từ tháng 1 đến tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Hà Nội",
+          "Đà Nẵng"
+        ],
+        "oracle": {
+          "metric": "revenue",
+          "start": "2026-01-01",
+          "end": "2026-10-01"
+        },
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P02",
+      "set": "positive",
+      "q": "so sánh số đơn hợp lệ của Hải Phòng và Cần Thơ trong quý 3 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Hải Phòng",
+          "Cần Thơ"
+        ],
+        "oracle": {
+          "metric": "valid_order_count",
+          "start": "2026-07-01",
+          "end": "2026-10-01"
+        },
+        "meaning": {
+          "metric": "valid_order_count",
+          "period": [
+            "2026-07-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P03",
+      "set": "positive",
+      "q": "so sánh giá trị đơn trung bình giữa Hà Nội và Hồ Chí Minh tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Hà Nội",
+          "Hồ Chí Minh"
+        ],
+        "oracle": {
+          "metric": "aov",
+          "start": "2026-09-01",
+          "end": "2026-10-01"
+        },
+        "meaning": {
+          "metric": "aov",
+          "period": [
+            "2026-09-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P04",
+      "set": "positive",
+      "q": "so sánh tỷ lệ hủy đơn của Đà Nẵng và Khánh Hòa năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Đà Nẵng",
+          "Khánh Hòa"
+        ],
+        "meaning": {
+          "metric": "order_cancellation_rate",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P05",
+      "set": "positive",
+      "q": "so sánh số khách hàng mua hàng của Hà Nội và Hải Phòng tháng 8 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Hà Nội",
+          "Hải Phòng"
+        ],
+        "total_unavailable": true,
+        "meaning": {
+          "metric": "purchasing_customer_count",
+          "period": [
+            "2026-08-01",
+            "2026-08-31"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P06",
+      "set": "positive",
+      "q": "so sánh doanh thu kiosk với chi nhánh chính tại Hà Nội năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "store_type",
+        "composite": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "store_type"
+          ],
+          "city_scope": "Hà Nội"
+        }
+      }
+    },
+    {
+      "id": "P07",
+      "set": "positive",
+      "q": "so sánh doanh thu bán hàng của 2 tỉnh có doanh thu ổn định nhất từ tháng 1 đến tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "selection": "stability",
+        "limit": 2,
+        "oracle_selection": {
+          "metric": "revenue",
+          "start": "2026-01-01",
+          "end": "2026-10-01"
+        },
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P08",
+      "set": "positive",
+      "q": "3 tỉnh có doanh thu tăng trưởng nhanh nhất từ tháng 1 đến tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "selection": "growth",
+        "limit": 3,
+        "oracle_selection": {
+          "metric": "revenue",
+          "start": "2026-01-01",
+          "end": "2026-10-01"
+        },
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P09",
+      "set": "positive",
+      "q": "so sánh doanh thu theo tháng của Bình Dương và Đồng Nai năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Bình Dương",
+          "Đồng Nai"
+        ],
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "granularity": "month"
+        }
+      }
+    },
+    {
+      "id": "P10",
+      "set": "positive",
+      "q": "top 5 cửa hàng có doanh thu cao nhất tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "ranking_census": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-09-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "ranking": {
+            "metric": "revenue",
+            "direction": "top",
+            "limit": 5
+          }
+        }
+      }
+    },
+    {
+      "id": "P11",
+      "set": "positive",
+      "q": "top 5 shipper có tỷ lệ giao hàng thành công cao nhất",
+      "expect": {
+        "outcome": "success",
+        "ranking_census": true,
+        "exposure": true,
+        "meaning": {
+          "metric": "delivery_success_rate",
+          "period": [
+            null,
+            null
+          ],
+          "dimensions": [
+            "driver_id"
+          ],
+          "ranking": {
+            "metric": "delivery_success_rate",
+            "direction": "top",
+            "limit": 5
+          }
+        }
+      }
+    },
+    {
+      "id": "P12",
+      "set": "positive",
+      "q": "doanh thu theo hình thức nhận hàng tại Hồ Chí Minh năm 2026",
+      "expect": {
+        "outcome": "success",
+        "no_frame": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "order_type"
+          ],
+          "city_scope": "Hồ Chí Minh"
+        }
+      }
+    },
+    {
+      "id": "P13",
+      "set": "positive",
+      "q": "xu hướng doanh thu theo tháng năm 2026",
+      "expect": {
+        "outcome": "success",
+        "no_frame": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [],
+          "granularity": "month"
+        }
+      }
+    },
+    {
+      "id": "P14",
+      "set": "positive",
+      "q": "tổng doanh thu tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "no_frame": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-09-01",
+            "2026-09-30"
+          ],
+          "dimensions": []
+        }
+      }
+    },
+    {
+      "id": "P15",
+      "set": "positive",
+      "q": "so sánh doanh thu tháng 9 với tháng 8 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "no_frame": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-09-01",
+            "2026-09-30"
+          ],
+          "dimensions": [],
+          "baseline_period": [
+            "2026-08-01",
+            "2026-08-31"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P16",
+      "set": "positive",
+      "q": "so sánh doanh thu của Quảng Ninh, Bắc Ninh và Thừa Thiên - Huế năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Quảng Ninh",
+          "Bắc Ninh",
+          "Thừa Thiên - Huế"
+        ],
+        "oracle": {
+          "metric": "revenue",
+          "start": "2026-01-01",
+          "end": "2026-10-23"
+        },
+        "oracle_note": "check fix 22/10: 'năm 2026' runs to the reference date 2026-10-22 inclusive (dev-run-2 showed the old 10-01 end was the oracle's error)",
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P17",
+      "set": "positive",
+      "q": "so sánh doanh thu theo phương thức thanh toán giữa Đà Nẵng và Cần Thơ năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Đà Nẵng",
+          "Cần Thơ"
+        ],
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "city",
+            "payment_method"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P18",
+      "set": "positive",
+      "q": "5 tỉnh có doanh thu thấp nhất năm 2026",
+      "expect": {
+        "outcome": "success",
+        "ranking_census": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "ranking": {
+            "metric": "revenue",
+            "direction": "bottom",
+            "limit": 5
+          }
+        }
+      }
+    },
+    {
+      "id": "P19",
+      "set": "positive",
+      "q": "tỷ lệ hủy đơn theo loại điểm bán năm 2026",
+      "expect": {
+        "outcome": "success",
+        "meaning": {
+          "metric": "order_cancellation_rate",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "store_type"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P20",
+      "set": "positive",
+      "q": "so sánh số đơn hợp lệ của kiosk nhượng quyền và kiosk vệ tinh năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "store_type",
+        "members": [
+          "KIOSK_NHUONG_QUYEN",
+          "KIOSK_VE_TINH"
+        ],
+        "meaning": {
+          "metric": "valid_order_count",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "store_type"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P21",
+      "set": "positive",
+      "q": "so sánh doanh thu Hà Nội và Hồ Chí Minh năm 2026, không tính đơn giao tận nơi",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Hà Nội",
+          "Hồ Chí Minh"
+        ],
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "exclude": {
+            "dimension": "order_type",
+            "value": "GIAO_TAN_NOI"
+          }
+        }
+      }
+    },
+    {
+      "id": "P22",
+      "set": "positive",
+      "q": "top 5 sản phẩm bán chạy nhất theo số lượng tại Hà Nội tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "ranking_census": true,
+        "meaning": {
+          "metric": "quantity_sold",
+          "period": [
+            "2026-09-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "product"
+          ],
+          "ranking": {
+            "metric": "quantity_sold",
+            "direction": "top",
+            "limit": 5
+          },
+          "city_scope": "Hà Nội"
+        }
+      }
+    },
+    {
+      "id": "P23",
+      "set": "positive",
+      "q": "so sánh doanh thu giữa các loại điểm bán năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "store_type",
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "store_type"
+          ]
+        }
+      }
+    },
+    {
+      "id": "P24",
+      "set": "positive",
+      "q": "2 tỉnh có doanh thu biến động nhiều nhất năm 2026, so sánh doanh thu theo tháng",
+      "expect": {
+        "outcome": "success",
+        "selection": "volatility",
+        "limit": 2,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "granularity": "month"
+        }
+      }
+    },
+    {
+      "id": "N01",
+      "set": "negative",
+      "q": "so sánh doanh thu của 2 tỉnh hiệu quả nhất",
+      "expect": {
+        "outcome": "clarification",
+        "choices_include": [
+          "stability"
+        ]
+      }
+    },
+    {
+      "id": "N02",
+      "set": "negative",
+      "q": "lợi nhuận ròng sau chi phí theo tỉnh năm 2026",
+      "expect": {
+        "outcome": "unsupported"
+      }
+    },
+    {
+      "id": "N03",
+      "set": "negative",
+      "q": "cửa hàng nào tốt nhất",
+      "expect": {
+        "outcome": "clarification"
+      }
+    },
+    {
+      "id": "N04",
+      "set": "negative",
+      "q": "xóa các đơn hàng bị hủy tháng 9",
+      "expect": {
+        "outcome": "clarification",
+        "zero_business_queries": true,
+        "zero_provider_http": true,
+        "capability_codes_include": [
+          "input_write_unsupported"
+        ]
+      }
+    },
+    {
+      "id": "N05",
+      "set": "negative",
+      "q": "dự báo doanh thu 5 năm tới",
+      "expect": {
+        "outcome": [
+          "unsupported",
+          "insufficient",
+          "clarification"
+        ]
+      }
+    },
+    {
+      "id": "N06",
+      "set": "negative",
+      "q": "so sánh doanh thu tỉnh Atlantis và Hà Nội",
+      "expect": {
+        "outcome": "clarification"
+      }
+    },
+    {
+      "id": "N07",
+      "set": "negative",
+      "q": "2 tỉnh có số khách hàng mua hàng ổn định nhất năm 2026",
+      "expect": {
+        "outcome": [
+          "unsupported",
+          "clarification"
+        ]
+      }
+    },
+    {
+      "id": "N08",
+      "set": "negative",
+      "q": "thời tiết hôm nay thế nào",
+      "expect": {
+        "outcome": "clarification",
+        "zero_business_queries": true,
+        "zero_provider_http": true,
+        "capability_codes_include": [
+          "analysis_target_missing"
+        ]
+      }
+    },
+    {
+      "id": "T01",
+      "set": "transfer",
+      "q": "đối chiếu doanh thu Bà Rịa - Vũng Tàu với Khánh Hòa năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Bà Rịa - Vũng Tàu",
+          "Khánh Hòa"
+        ],
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "T02",
+      "set": "transfer",
+      "q": "doanh thu Hà Nội so với Đà Nẵng tháng 9/2026 ra sao",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Hà Nội",
+          "Đà Nẵng"
+        ],
+        "oracle": {
+          "metric": "revenue",
+          "start": "2026-09-01",
+          "end": "2026-10-01"
+        },
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-09-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "T03",
+      "set": "transfer",
+      "q": "so sánh doanh thu kisok và chi nhánh chính ở Hồ Chí Minh năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "store_type",
+        "composite": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "store_type"
+          ],
+          "city_scope": "Hồ Chí Minh"
+        }
+      }
+    },
+    {
+      "id": "T04",
+      "set": "transfer",
+      "q": "3 cửa hàng có doanh thu ổn định nhất ở Hà Nội từ tháng 1 đến tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "selection": "stability",
+        "limit": 3,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "city_scope": "Hà Nội"
+        }
+      }
+    },
+    {
+      "id": "T05",
+      "set": "transfer",
+      "q": "so sánh số đơn hợp lệ theo tháng giữa Hải Phòng và Quảng Ninh quý 3 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Hải Phòng",
+          "Quảng Ninh"
+        ],
+        "meaning": {
+          "metric": "valid_order_count",
+          "period": [
+            "2026-07-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "granularity": "month"
+        }
+      }
+    },
+    {
+      "id": "T06",
+      "set": "transfer",
+      "q": "Cần Thơ hay Đồng Nai có giá trị đơn trung bình cao hơn trong năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Cần Thơ",
+          "Đồng Nai"
+        ],
+        "meaning": {
+          "metric": "aov",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "T07",
+      "set": "transfer",
+      "q": "so sánh tỷ lệ hoàn thành đơn giữa các loại điểm bán năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "store_type",
+        "meaning": {
+          "metric": "order_completion_rate",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "store_type"
+          ]
+        }
+      }
+    },
+    {
+      "id": "T08",
+      "set": "transfer",
+      "q": "2 cửa hàng ở Hồ Chí Minh có doanh thu tăng trưởng nhanh nhất từ tháng 1 đến tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "selection": "growth",
+        "limit": 2,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "city_scope": "Hồ Chí Minh"
+        }
+      }
+    },
+    {
+      "id": "T09",
+      "set": "fresh_transfer",
+      "q": "đặt cạnh nhau doanh thu Hải Dương và Nam Định quý 2 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Hải Dương",
+          "Nam Định"
+        ],
+        "oracle": {
+          "metric": "revenue",
+          "start": "2026-04-01",
+          "end": "2026-07-01"
+        },
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-04-01",
+            "2026-06-30"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "T10",
+      "set": "fresh_transfer",
+      "q": "so sánh giá trị trung bình mỗi đơn ở Bình Định và Nghệ An trong tháng 7 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Bình Định",
+          "Nghệ An"
+        ],
+        "oracle": {
+          "metric": "aov",
+          "start": "2026-07-01",
+          "end": "2026-08-01"
+        },
+        "meaning": {
+          "metric": "aov",
+          "period": [
+            "2026-07-01",
+            "2026-07-31"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "T11",
+      "set": "fresh_transfer",
+      "q": "theo từng tháng quý 2 năm 2026, so sánh doanh thu Thái Nguyên với Vĩnh Phúc",
+      "expect": {
+        "outcome": "success",
+        "axis": "city",
+        "members": [
+          "Thái Nguyên",
+          "Vĩnh Phúc"
+        ],
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-04-01",
+            "2026-06-30"
+          ],
+          "dimensions": [
+            "city"
+          ],
+          "granularity": "month"
+        }
+      }
+    },
+    {
+      "id": "T12",
+      "set": "fresh_transfer",
+      "q": "so sánh số đơn hợp lệ giữa kiosk vệ tinh và chi nhánh chính ở Cần Thơ trong quý 3 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "store_type",
+        "members": [
+          "KIOSK_VE_TINH",
+          "CHI_NHANH_CHINH"
+        ],
+        "meaning": {
+          "metric": "valid_order_count",
+          "period": [
+            "2026-07-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "store_type"
+          ],
+          "city_scope": "Cần Thơ"
+        }
+      }
+    },
+    {
+      "id": "T13",
+      "set": "fresh_transfer",
+      "q": "4 tỉnh tăng trưởng doanh thu nhanh nhất trong 9 tháng đầu năm 2026",
+      "expect": {
+        "outcome": "success",
+        "selection": "growth",
+        "limit": 4,
+        "oracle_selection": {
+          "metric": "revenue",
+          "start": "2026-01-01",
+          "end": "2026-10-01"
+        },
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-01-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "city"
+          ]
+        }
+      }
+    },
+    {
+      "id": "T14",
+      "set": "fresh_transfer",
+      "q": "so sánh tỷ lệ hủy đơn giữa kiosk nhượng quyền và kiosk vệ tinh năm 2026",
+      "expect": {
+        "outcome": "success",
+        "axis": "store_type",
+        "members": [
+          "KIOSK_NHUONG_QUYEN",
+          "KIOSK_VE_TINH"
+        ],
+        "meaning": {
+          "metric": "order_cancellation_rate",
+          "period": [
+            "2026-01-01",
+            "2026-12-31"
+          ],
+          "dimensions": [
+            "store_type"
+          ]
+        }
+      }
+    },
+    {
+      "id": "T15",
+      "set": "fresh_transfer",
+      "q": "doanh thu theo hình thức nhận hàng ở Nghệ An tháng 9 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "no_frame": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-09-01",
+            "2026-09-30"
+          ],
+          "dimensions": [
+            "order_type"
+          ],
+          "city_scope": "Nghệ An"
+        }
+      }
+    },
+    {
+      "id": "T16",
+      "set": "fresh_transfer",
+      "q": "3 chi nhánh có doanh thu thấp nhất ở Hải Phòng tháng 8 năm 2026",
+      "expect": {
+        "outcome": "success",
+        "ranking_census": true,
+        "meaning": {
+          "metric": "revenue",
+          "period": [
+            "2026-08-01",
+            "2026-08-31"
+          ],
+          "dimensions": [
+            "store"
+          ],
+          "ranking": {
+            "metric": "revenue",
+            "direction": "bottom",
+            "limit": 3
+          },
+          "city_scope": "Hải Phòng"
+        }
+      }
+    }
+  ],
+  "independent_meaning_rubric": {
+    "frozen_at": "2026-10-22T12:14:11.111463+00:00",
+    "previous_manifest_sha256": "441b783fa55fe847ecf2cbf2fa9334897e2d614c2242d707d7f3abf691e9abb8",
+    "method": "Hand-authored expected metric, dates, axes, ranking and exclusions from the frozen questions before execution. Production compilation is not the oracle.",
+    "fresh_transfer": "T09-T16 remain not executed and were not supplied to production context. Authored frozen transfer, not blind.",
+    "calendar_policy": "Explicit năm 2026 is the full declared calendar window Jan 1-Dec 31; observations are separately as-of/freshness bounded. Numeric reference queries may stop after the current as-of date because no future observations are claimed.",
+    "execution_policy": "Sequential fresh provider submissions and refresh=True warehouse execution. All attempts retained. Epoch comparison records replica-generation limitations."
+  },
+  "parent_manifest_sha256": "416fea96bf08fec7454f9130b542758cfe8148ddc07d3450c3b366fcdaa1a08c",
+  "rubric_audit": "Before any policy39 final: preserve every old outcome/positive expectation; strengthen N04/N08 with zero business SQL, zero provider HTTP and distinct precheck reason. Negative probes offline confirmed these contracts; no live outcomes used to loosen acceptance."
+}

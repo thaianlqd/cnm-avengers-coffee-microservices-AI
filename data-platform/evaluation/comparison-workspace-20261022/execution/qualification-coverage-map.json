@@ -1,0 +1,1737 @@
+{
+  "method": "Audited receipt traceability, not56new tests or a semantic accuracy score. Each row cites passing module receipts and actual test names; original assertions are retained, and mapped assertions do not certify the complete original scenario. Free-text/live qualification is separate.",
+  "cases": [
+    {
+      "id": "C01",
+      "scenario": "Hai đối tượng entity cùng metric",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "comparison frame có canonical member IDs và input refs",
+        "supporting giữ member axis, không chỉ IN filter"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C02",
+      "scenario": "Tổng quan có scope hai tỉnh nhưng không yêu cầu so sánh",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": "A scope filter alone never fabricates comparison intent. Modes are offered only for a governed member frame; overview remains overview.",
+      "original_assertions": [
+        "mặc định tổng hợp, cho phép chuyển mode nếu capability hợp lệ",
+        "không giả user đã yêu cầu comparison"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C03",
+      "scenario": "So sánh hai kỳ",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_v34_period_comparison"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "căn chỉnh bucket theo policy rõ",
+        "cả ngày gốc/kỳ nguồn giữ nguyên",
+        "không trộn hai kỳ thành một tổng"
+      ],
+      "receipts": [
+        {
+          "module": "test_v34_period_comparison",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 8,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C04",
+      "scenario": "So sánh nhiều metric khác đơn vị",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_completion_20261022",
+        "test_comparison_score_v282"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "tách panel hoặc normalization có baseline",
+        "không cộng VND với % và không ép chung trục"
+      ],
+      "receipts": [
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        },
+        {
+          "module": "test_comparison_score_v282",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 14,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C05",
+      "scenario": "Hai mục tiêu độc lập trong một câu",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw",
+        "test_completion_20261022"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "mỗi requirement frame riêng",
+        "chart local không lọc goal khác"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        },
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C06",
+      "scenario": "Mode không áp dụng cho chart/metric",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "server khai báo unavailable kèm lý do",
+        "không nút giả hoạt động hoặc âm thầm đổi nghĩa"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C07",
+      "scenario": "Additive mode so sánh/tổng/xem riêng",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "từng member/key/giá trị khớp raw fixture",
+        "tổngunion=1000, Alpha300 Beta700"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C08",
+      "scenario": "AOV khác số đơn mỗi nhóm",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "Alpha150 Beta700/3, union200",
+        "không average hai AOV"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C09",
+      "scenario": "Tỷ lệ khác exposure và status",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "Alpha1/3, Beta2/5, union3/8=37.5%",
+        "không sum/avg ratio",
+        "DANG_GIAO control riêng"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C10",
+      "scenario": "Distinct cùng khách xuất hiện hai nhóm",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": "Distinct total is safely unavailable from grouped member counts. Independent raw oracle union=2, member counts1/2; no sum3.",
+      "original_assertions": [
+        "Alpha1 Beta2 nhưng union2",
+        "không cộng distinct=3"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C11",
+      "scenario": "Nhóm so sánh chồng lấn",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": "Overlapping cohorts compare independently; total unions raw axis rows once. Percentage composition disabled for overlap. Composite distinct without raw identities is typed unsupported.",
+      "original_assertions": [
+        "gộp union raw keys hoặc disable tổng có lý do",
+        "không double count"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C12",
+      "scenario": "Cơ cấu tuyệt đối và tỷ trọng từng member",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "share per member dùng mẫu số member",
+        "share toànscope dùng denominator khác có nhãn rõ"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C13",
+      "scenario": "Missing/zero/negative/zero baseline",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_completion_20261022",
+        "test_v33_verification"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "missing không thành0",
+        "negative theo metric policy",
+        "delta baseline0 không có phần trăm giả"
+      ],
+      "receipts": [
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        },
+        {
+          "module": "test_v33_verification",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 12,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C14",
+      "scenario": "Trend có cùng member ở nhiều bucket",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "hai series tên canonical, thứ tự ngày/khoảng cách thực/gaps chuẩn",
+        "tổng mỗi bucket khớp union"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C15",
+      "scenario": "Category × member",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "grouped bar hoặc bảng",
+        "không đưa 2series vào một donut không phân biệt"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C16",
+      "scenario": "Time × store_type × member",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "chọn một chiều series, chiều kia facet/filter",
+        "không cố vẽ mọi tích Descartes"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C17",
+      "scenario": "Nhiều member và actual<N",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_completion_20261022"
+      ],
+      "browser_specs": [],
+      "boundary": "Bounded controls (6 members/8 breakdown values) plus existing full-result table and paged ranking; no total from a display page.",
+      "original_assertions": [
+        "không rơi member im lặng",
+        "limit có disclosure, search/pagination hoặc facets",
+        "không tính total từ trang đầu"
+      ],
+      "receipts": [
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C18",
+      "scenario": "Store/payment view bị grammar loại",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_completion_20261022",
+        "test_ai_final_depth_contract"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "quyết định theo semantic role/shape, có chart hoặc bảng hữu ích và lý do đúng",
+        "không nới grammar tất cả"
+      ],
+      "receipts": [
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        },
+        {
+          "module": "test_ai_final_depth_contract",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C19",
+      "scenario": "Đổi mode trên một chart",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [
+        "comparison-view-modes.spec.ts"
+      ],
+      "boundary": null,
+      "original_assertions": [
+        "chỉ chart đó đổi",
+        "report/other chart/map/primary answer không tự thay",
+        "rõ chip phạm vi cục bộ"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C20",
+      "scenario": "Áp dụng lựa chọn cho toàn báo cáo",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_workspace_revision"
+      ],
+      "browser_specs": [
+        "comparison-view-modes.spec.ts",
+        "workspace-interaction.spec.ts"
+      ],
+      "boundary": null,
+      "original_assertions": [
+        "explicit Apply tạo report revision mới, cả KPI/map/claims đồng bộ atomic",
+        "không widen base scope"
+      ],
+      "receipts": [
+        {
+          "module": "test_workspace_revision",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C21",
+      "scenario": "Tắt legend khác lọc dữ liệu",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [
+        "comparison-view-modes.spec.ts"
+      ],
+      "boundary": null,
+      "original_assertions": [
+        "hide series không tự đổi denominator/summary",
+        "UI ghi đangẩn",
+        "chuyển Xem riêng mới đổi view semantics"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C22",
+      "scenario": "A→B→Total nhanh, request trả ngược",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_workspace_revision"
+      ],
+      "browser_specs": [
+        "comparison-view-modes.spec.ts",
+        "workspace-interaction.spec.ts"
+      ],
+      "boundary": null,
+      "original_assertions": [
+        "chỉ view fingerprint mới publish",
+        "không giữ claim A khi đang hiển thị B",
+        "retry không nhân đôi query"
+      ],
+      "receipts": [
+        {
+          "module": "test_workspace_revision",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C23",
+      "scenario": "Report revision thay khi đang chờ view",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_workspace_revision"
+      ],
+      "browser_specs": [
+        "workspace-interaction.spec.ts"
+      ],
+      "boundary": null,
+      "original_assertions": [
+        "reject/drop stale response",
+        "local view state reset/rebind theo policy",
+        "chart thuộc revision cũ không sống lại"
+      ],
+      "receipts": [
+        {
+          "module": "test_workspace_revision",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C24",
+      "scenario": "Đổi mode cache đầy đủ/thiếu grain",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw",
+        "test_workspace_revision"
+      ],
+      "browser_specs": [],
+      "boundary": "Sufficient immutable grain: local projection0provider0SQL. Missing grain/nonadditive union: unavailable; no speculative re-query.",
+      "original_assertions": [
+        "artifact đủ:0LLM0warehousequery",
+        "thiếugrain:bounded server SQL0LLM, loading giữ old view có nhãn"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        },
+        {
+          "module": "test_workspace_revision",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C25",
+      "scenario": "Tamper member/filter/query/viewID/artifact",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw",
+        "test_v34_query_security"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "reject forged/out-of-scope IDs và external SQL",
+        "owner/access recheck cả cache hit"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        },
+        {
+          "module": "test_v34_query_security",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 3,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C26",
+      "scenario": "Narrow permission sau khi cache/save",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_completion_20261022",
+        "test_workspace_revision"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "không đọc/hồi sinh member cũ",
+        "reject get/export/view artifact ngoài quyền hiện tại"
+      ],
+      "receipts": [
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        },
+        {
+          "module": "test_workspace_revision",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C27",
+      "scenario": "Saved/reopen cùng mode và member",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw",
+        "test_workspace_revision"
+      ],
+      "browser_specs": [
+        "comparison-view-modes.spec.ts"
+      ],
+      "boundary": null,
+      "original_assertions": [
+        "server-owned state đầy đủ fingerprint/activeview",
+        "legacy report không bịa data và cần refresh rõ nếu thiếu grain"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        },
+        {
+          "module": "test_workspace_revision",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C28",
+      "scenario": "Export activeview có local override",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw",
+        "test_narrative_scope_20261021"
+      ],
+      "browser_specs": [
+        "comparison-view-modes.spec.ts"
+      ],
+      "boundary": null,
+      "original_assertions": [
+        "Word preview/export đúng mode/member/snapshot/facts",
+        "báo cáo gốc riêng tùy chọn rõ",
+        "không nhận client rows"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        },
+        {
+          "module": "test_narrative_scope_20261021",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 8,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C29",
+      "scenario": "KPI priority của compare",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": "Report KPI stays at approved report scope; local chart view changes its own caption/facts. Word explicitly discloses this distinction.",
+      "original_assertions": [
+        "memberA/memberB/delta/%base đúng cặp",
+        "không chọn maxstore thay totalcity, không giấu partition dưới details"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C30",
+      "scenario": "Đổi view cập nhật insight",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "mọi claim refs tới activeview",
+        "named subgroup",
+        "how_to_read vàsort khớp render"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C31",
+      "scenario": "Partial month và exposure",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_v33_verification",
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "không dùng kỳ chưa đủ để so sánh full",
+        "warning/estimatedinterval/samples theo member vàmode"
+      ],
+      "receipts": [
+        {
+          "module": "test_v33_verification",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 12,
+          "returncode": 0
+        },
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C32",
+      "scenario": "Coverage nhiệm vụ so sánh",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_ai_final_depth_contract"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "đếm logical lenses không đếm 3modes thành3bằngchứng",
+        "partial truthful, reason taxonomy nhấtquán"
+      ],
+      "receipts": [
+        {
+          "module": "test_ai_final_depth_contract",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C33",
+      "scenario": "1280/1440/1920/390 và keyboard/IME",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [
+        "comparison-view-modes.spec.ts",
+        "input-integrity.spec.ts"
+      ],
+      "boundary": null,
+      "original_assertions": [
+        "controls ngoài plot, readable/wrap, aria pressed/label/focus",
+        "thao tác không sinh LLM/job ngoài dự kiến"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C34",
+      "scenario": "Nhiều chart/member với click lặp",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_workspace_revision",
+        "test_analysis_jobs"
+      ],
+      "browser_specs": [
+        "workspace-interaction.spec.ts"
+      ],
+      "boundary": null,
+      "original_assertions": [
+        "không N+1 unbounded",
+        "budget/row/byte/deadline giữ",
+        "cache keys đầyđủ,duplicate in-flight coalesce"
+      ],
+      "receipts": [
+        {
+          "module": "test_workspace_revision",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        },
+        {
+          "module": "test_analysis_jobs",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 12,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C35",
+      "scenario": "Ca người dùng ĐàNẵng/HCM và Bottom5",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_cohort_rollups_20261021",
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "đúng số liệu nguồn đã ghi, có compare default/single/total",
+        "fixed cohort không tự rerank hoặc mởnational"
+      ],
+      "receipts": [
+        {
+          "module": "test_cohort_rollups_20261021",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 3,
+          "returncode": 0
+        },
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "C36",
+      "scenario": "Free text/guided/preset/refine/saved và3độsâu",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_completion_20261022",
+        "test_ai_final_depth_contract"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "canonical meaning tươngđương→frame/view semantics tươngđương, inherited members giữ",
+        "noncompare regressions không đổi ý"
+      ],
+      "receipts": [
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        },
+        {
+          "module": "test_ai_final_depth_contract",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H01",
+      "scenario": "Sản phẩm hoặc danh mục, cùng chỉ số bán",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "cùng engine, không có nhánh tên tỉnh hay doanhthu mẫu"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H02",
+      "scenario": "Hai cửa hàng trùng tên có ID khác",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "membership và legend identity phân biệt",
+        "label không là key"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H03",
+      "scenario": "Risk theo hai nhóm với số mẫu khác",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_completion_20261022"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "ngưỡng giữ policy, current snapshot rõ clock",
+        "exposure từng nhóm",
+        "không tự aggregate đèn đỏ"
+      ],
+      "receipts": [
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H04",
+      "scenario": "Forecast nhiều nhóm",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_forecast_v30",
+        "test_v34_forecast_diagnostics"
+      ],
+      "browser_specs": [],
+      "boundary": "Forecast uses existing governed engine/history/backtest. New member projections are not applied to forecast paths; no summing forecast intervals. This is a safe capability boundary, not multi-member forecast feature certification.",
+      "original_assertions": [
+        "fit/backtest/interval/history từngmember",
+        "total series fit riêng theo governed policy hoặc disable",
+        "không cộng intervals giả"
+      ],
+      "receipts": [
+        {
+          "module": "test_forecast_v30",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 18,
+          "returncode": 0
+        },
+        {
+          "module": "test_v34_forecast_diagnostics",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 3,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H05",
+      "scenario": "Relationship/driver không cùng grain",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_completion_20261022"
+      ],
+      "browser_specs": [],
+      "boundary": "Only catalog-governed operational pairs; causal conclusions forbidden.",
+      "original_assertions": [
+        "so sánh chỉ nếu typed compatible",
+        "unsupported rõ, không tạo scatter giả"
+      ],
+      "receipts": [
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H06",
+      "scenario": "Một member rỗng và member có dữ liệu",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "giữ member rỗng có no_data",
+        "không lặnglọai, zero khôngđồngnhất missing"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H07",
+      "scenario": "Customer/voucher distinct với giao nhau",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "union raw population, khôngsum distinct hoặc joinfanout"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H08",
+      "scenario": "Thêm/thay đổi dữ liệu ngoài approved cohort",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "mọi view/narrative của scopecốđịnh không đổi",
+        "ranking parent đổi có chủđích phải revision rõ"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H09",
+      "scenario": "Đổi người dùng/access fingerprint/epoch/schema",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_workspace_revision",
+        "test_completion_20261022"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "cachemiss/reject đúng taxonomy",
+        "không lẫn data/claimcũ với mới"
+      ],
+      "receipts": [
+        {
+          "module": "test_workspace_revision",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        },
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H10",
+      "scenario": "Multi-scope include/exclude/composite groups",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw",
+        "test_cw_live_rubric"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "nhóm con dùng AND trong group/OR giữaunion",
+        "không widen scope hoặc drop exclusion"
+      ],
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        },
+        {
+          "module": "test_cw_live_rubric",
+          "receipt": "backend-final-r26/manifest.json",
+          "tests": 6,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H11",
+      "scenario": "Temporal hai tháng khác số ngày/partial",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_v34_period_comparison",
+        "test_v33_verification"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": [
+        "alignment/normalization chỉ khi policy",
+        "hiển thị exact dates",
+        "baseline direction giữ"
+      ],
+      "receipts": [
+        {
+          "module": "test_v34_period_comparison",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 8,
+          "returncode": 0
+        },
+        {
+          "module": "test_v33_verification",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 12,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "H12",
+      "scenario": "Metric class/domain inventory mới hoặc unavailable",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_ai_final_depth_contract",
+        "test_completion_20261022"
+      ],
+      "browser_specs": [
+        "capability-catalog.spec.ts",
+        "catalog-layout-audit.spec.ts"
+      ],
+      "boundary": "Authenticated served runtime inventory captured in served-guided-r13/advertised-capabilities.json:16domains48metrics/6classes; registry26/97 is not runtime execution coverage.",
+      "original_assertions": [
+        "case inventory sinh từ capability hiện hành",
+        "mọiclass/domain có supported mode hoặc typedunsupported, không hardcode26/55"
+      ],
+      "receipts": [
+        {
+          "module": "test_ai_final_depth_contract",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 15,
+          "returncode": 0
+        },
+        {
+          "module": "test_completion_20261022",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 19,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": "web-e2e-r10.log",
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "S01",
+      "scenario": "Canonical alias xuất hiện hai lần",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_v34_live44_third_regressions"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": "revenue đủ; candidate siblings không thành nhiều obligations; explicit nhiều metric vẫn giữ",
+      "receipts": [
+        {
+          "module": "test_v34_live44_third_regressions",
+          "receipt": "backend-final-r22-full/manifest.json",
+          "tests": 9,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "S02",
+      "scenario": "Clarification hợp lệ khi criterion/time thiếu",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": "giữ canonical metric, entity và count; chỉ hỏi missing semantics; không ép executable intent hoặc repair vòng lặp",
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "S03",
+      "scenario": "Criterion chưa support",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": "preflight/runtime typed unsupported nhất quán; không giả READY_TO_EXECUTE, không bỏ chữ ổn định để chạy Top revenue",
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "S04",
+      "scenario": "Score numeric/eligibility",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": "Selector eligibility min3complete buckets and supported metric class; mean<=0/unknown history excluded with reason.",
+      "original_assertions": "CV/stddev theo definition đã chọn; minhistory/exposure/missing/zero/mean0/negative đúng policy, no invented eligibility",
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "S05",
+      "scenario": "Chuyển bài toán sang sản phẩm/store/tăng trưởng",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": "Growth transfer tested on store identity. This does not claim every class supports every selection criterion.",
+      "original_assertions": "generic selector→frame, không city-specific branch; tăng trưởng không bị coi là stability",
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "S06",
+      "scenario": "Tie/null/actual<N/partial periods",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": "stable keys/scores đúng raw oracle và tie policy; thiếu2member báo insufficient; không lấy partialmonth làm full",
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "S07",
+      "scenario": "Selection lineage qua mode/refine/export",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": "same selected keys khi local compare/total/single; thay criterion/window mới revision; outside scope invariant",
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    },
+    {
+      "id": "S08",
+      "scenario": "Security và diagnostics",
+      "qualification": "BOUNDED_TEST_RECEIPTS_AVAILABLE_NOT_FULL_SCENARIO_CERTIFICATION",
+      "backend_modules": [
+        "test_comparison_workspace_cw",
+        "test_cw_live_rubric"
+      ],
+      "browser_specs": [],
+      "boundary": null,
+      "original_assertions": "reject rawSQL/expression/member injection; clarifyerror alternatives đúng nghĩa; ledger bounded/no secret/no retries mù",
+      "receipts": [
+        {
+          "module": "test_comparison_workspace_cw",
+          "receipt": "backend-final-r27/manifest.json",
+          "tests": 64,
+          "returncode": 0
+        },
+        {
+          "module": "test_cw_live_rubric",
+          "receipt": "backend-final-r26/manifest.json",
+          "tests": 6,
+          "returncode": 0
+        }
+      ],
+      "browser_receipt": null,
+      "unmeasured": "Original compound scenario is not automatically PASS from module success; free-text LLM transport/meaning and task-specific original assertions require independent live/manual evidence."
+    }
+  ],
+  "test_inventory": {
+    "test_comparison_workspace_cw": [
+      "test_narrowed_member_keeps_category_comparisons_without_relaxing_other_shapes",
+      "test_report_is_verified_and_every_view_keeps_member_axis",
+      "test_pair_kpis_are_member_totals_before_supporting_extrema",
+      "test_independent_question_cannot_borrow_frame_by_shared_metric_or_supporting_role",
+      "test_overlapping_members_compare_separately_but_total_is_raw_union",
+      "test_reading_guidance_matches_the_actual_view_shape_not_a_generic_bar_template",
+      "test_compare_trend_matches_raw_oracle_per_member",
+      "test_total_and_single_modes_follow_additive_law",
+      "test_breakdown_view_compares_members_within_each_group_and_shares_use_member_denominator",
+      "test_outside_scope_member_never_changes_any_view",
+      "test_requested_member_without_rows_is_disclosed_not_ranked",
+      "test_two_value_scope_without_comparison_intent_stays_an_overview",
+      "test_saved_report_round_trip_reverifies_every_variant",
+      "test_aov_total_is_union_revenue_over_union_valid_orders_not_mean_of_members",
+      "test_cancellation_total_uses_terminal_population_and_excludes_in_transit",
+      "test_shared_customer_identity_never_becomes_a_sum_of_distinct_member_counts",
+      "test_valid_control_is_accepted",
+      "test_selected_view_replay_is_verified_and_rejects_unknown_or_cross_chart_ids",
+      "test_saved_view_survives_rehydrate_and_word_export",
+      "test_export_replays_ids_from_owned_session_not_client_data_and_rejects_stale_revision",
+      "test_saved_snapshot_view_export_does_not_require_the_expired_transient_session",
+      "test_enumerated_mutations_are_rejected",
+      "test_calendar_missing_for_every_member_is_not_skipped",
+      "test_two_most_stable_provinces_are_selected_then_compared",
+      "test_model_cannot_supply_the_selected_cohort_or_selector_execution_fields",
+      "test_selection_receipt_is_reverified_and_forgeries_are_caught",
+      "test_too_few_eligible_members_is_insufficient_data_not_a_fallback",
+      "test_criterion_incompatible_with_metric_class_is_typed_unsupported",
+      "test_growth_selection_transfers_to_another_entity_axis",
+      "test_duplicate_entity_labels_keep_identity_selection_and_view_members_separate",
+      "test_distinct_composite_without_raw_identity_union_is_honest_unsupported",
+      "test_kiosk_union_versus_main_store",
+      "test_undefined_criterion_asks_only_for_the_criterion_without_repair",
+      "test_model_reported_ambiguous_criterion_returns_governed_choices",
+      "test_named_member_comparison_drops_only_an_unasked_baseline_on_its_exact_window",
+      "test_entity_comparison_over_a_range_does_not_spend_repair_on_invented_period_comparison",
+      "test_month_and_quarter_ranges_are_one_window_and_period_comparisons_stay_two",
+      "test_numeric_cardinality_enumeration_is_an_axis",
+      "test_named_filter_axis_wins_over_earlier_enumeration",
+      "test_grouped_member_filter_is_comparison_but_plain_filter_is_not",
+      "test_model_invented_criterion_is_dropped_not_executed",
+      "test_cues_fold_accents",
+      "test_parenthesised_definition_name_anchors_the_qualified_metric",
+      "test_ranked_rate_carries_its_own_components_and_gap_is_percentage_points",
+      "test_boundary_tie_census_counts_are_oracle_exact_and_chart_is_not_projected",
+      "test_mutation_hidden_tie_is_detected",
+      "test_component_only_count_is_requestable_twin_plus_governed_filter",
+      "test_value_ranking_with_one_named_criterion_becomes_that_selection",
+      "test_rate_companions_are_not_separate_charts",
+      "test_breakdown_comparison_without_member_axis_gets_targeted_axis_repair",
+      "test_calendar_prefix_is_an_exact_window_not_the_full_year",
+      "test_eq_pinned_axis_is_scope_and_scope_comparison_is_evidence",
+      "test_top1_among_named_members_keeps_both_members",
+      "test_governed_scope_patch_is_applied_without_a_repair_call",
+      "test_comparison_grain_keeps_member_and_requested_breakdown",
+      "test_named_comparison_does_not_accept_model_invented_top_n",
+      "test_selection_checks_time_before_any_selection_query"
+    ],
+    "test_v34_period_comparison": [
+      "test_shared_trailing_year_and_explicit_cross_year_are_not_reference_year_guesses",
+      "test_comparison_report_uses_two_full_aggregates_and_replays_every_number",
+      "test_zero_baseline_has_no_invented_percentage",
+      "test_recorded_empty_l41_can_use_one_repair_with_two_explicit_periods",
+      "test_refinement_cannot_change_baseline_without_explicit_new_period",
+      "test_union_range_is_not_accepted_as_two_periods",
+      "test_wrong_baseline_year_or_invented_baseline_cannot_pass_request_anchors",
+      "test_overlap_and_grouped_or_ranked_shapes_are_rejected"
+    ],
+    "test_completion_20261022": [
+      "test_unasked_rank_gap_on_comparison_does_not_consume_repair",
+      "test_explicit_rank_gap_cannot_be_removed_as_noise",
+      "test_valid_ranking_features_are_preserved",
+      "test_saved_comparison_cannot_reopen_after_same_owner_permission_narrows",
+      "test_each_goal_traces_input_clause_and_verified_cohort_dependency",
+      "test_guided_selection_is_server_origin_and_model_cannot_supply_provenance",
+      "test_same_delivery_percentage_requires_independent_minimum_exposure",
+      "test_negative_values_are_preserved_and_missing_values_never_fabricated",
+      "test_structured_conclusions_render_as_text_without_python_objects",
+      "test_all_bottom_facts_and_word_keep_direction",
+      "test_metric_names_cannot_supply_mission_operators_or_entity_filters",
+      "test_axis_label_containing_another_metric_is_not_a_second_goal",
+      "test_composition_rejects_axes_without_governed_additivity_before_ready",
+      "test_real_unknown_scope_and_conflicting_mission_still_block",
+      "test_metric_namespace_is_not_an_implicit_entity_group_filter",
+      "test_ties_actual_n_and_full_fact_universe_at_every_depth",
+      "test_zero_negative_and_missing_revenue_baselines_at_all_depths",
+      "test_governed_operational_pair_keeps_grain_and_causal_guard_at_all_depths",
+      "test_text_builder_preset_and_owned_followup_share_scoped_primary_and_provenance"
+    ],
+    "test_comparison_score_v282": [
+      "test_reported_one_axis_cross_tab_canonicalizes_without_retry_or_scope_loss",
+      "test_real_two_axis_cross_tab_is_preserved_and_missing_axes_not_invented",
+      "test_comparison_executes_correct_populations_and_three_metric_views",
+      "test_comparison_refines_to_one_city_by_store_without_losing_window",
+      "test_requested_shares_have_third_view_using_full_denominator_not_topn_sum",
+      "test_share_view_tampering_and_duplicate_views_reduce_score",
+      "test_selected_share_is_not_renormalized_to_one_hundred_percent",
+      "test_missing_or_tampered_stored_score_never_changes_recomputed_index",
+      "test_perfect_internal_checks_leave_independent_budget_unearned",
+      "test_failed_scope_has_more_effect_than_more_claims_or_charts",
+      "test_one_wrong_claim_lowers_score_without_integer_rounding_it_away",
+      "test_not_applicable_work_is_not_penalized",
+      "test_independent_reference_counts_not_self_reported_percentage",
+      "test_invalid_counts_duplicate_groups_and_missing_sources_rejected"
+    ],
+    "test_v33_verification": [
+      "test_untouched_facts_are_all_confirmed_including_hyphenated_row_keys",
+      "test_changed_gap_value_sign_group_or_percentage_is_detected",
+      "test_underlying_row_mutation_after_the_insight_was_written_is_detected",
+      "test_trend_change_direction_and_amount_are_recomputed",
+      "test_threshold_breach_count_is_recounted",
+      "test_derived_marker_without_typed_calc_is_never_auto_confirmed",
+      "test_hyphenated_row_key_resolves_exactly",
+      "test_dangling_or_missing_pieces_fail_the_conclusion_check",
+      "test_real_backtest_keys_are_mapped_and_missing_coverage_is_not_invented",
+      "test_open_current_period_is_never_compared_as_a_complete_period_and_cannot_fake_a_decline",
+      "test_one_complete_period_is_not_a_trend_or_growth",
+      "test_zero_baseline_never_produces_an_infinite_percentage"
+    ],
+    "test_ai_final_depth_contract": [
+      "test_each_depth_reaches_its_view_floor_with_only_relevant_views",
+      "test_depths_are_monotonic_and_keep_the_same_meaning_and_numbers",
+      "test_grouped_rates_are_recomputed_per_group_and_components_reconcile",
+      "test_deleting_a_counted_view_or_its_lens_record_is_detected",
+      "test_one_day_scope_discloses_missing_time_view_instead_of_drawing_one_point",
+      "test_pinned_store_axis_is_not_segmented_and_other_axes_fill_core",
+      "test_conclusion_synthesizes_the_rendered_lenses_with_verified_facts",
+      "test_many_group_contribution_is_a_full_population_pareto",
+      "test_legacy_auto_depth_is_labelled_and_never_silent",
+      "test_additive_revenue_kpi_reaches_eight_relevant_views",
+      "test_average_metric_pairs_with_its_own_exposure",
+      "test_distinct_count_is_never_a_composition",
+      "test_snapshot_inventory_never_invents_history",
+      "test_ranking_question_keeps_its_top_n_and_labels_full_population_lenses",
+      "test_other_ratio_family_uses_the_same_rules"
+    ],
+    "test_workspace_revision": [
+      "test_filter_recompiles_ratio_on_full_population_without_provider",
+      "test_numerator_partition_is_inspect_only_not_a_population_filter",
+      "test_forged_value_type_scope_and_stale_revision_fail_closed",
+      "test_failed_execution_does_not_publish_or_mutate_source_session",
+      "test_metadata_drill_back_reset_preserve_parent_scope",
+      "test_tampered_saved_filter_is_not_scored",
+      "test_permission_denied_cannot_fallback_to_global_report",
+      "test_revoke_during_revision_prevents_atomic_publication",
+      "test_save_reopen_refresh_preserve_snapshot_and_reject_revision_substitution",
+      "test_non_ai_filter_drill_depth_refresh_visual_save_reopen_send_zero_provider_requests",
+      "test_http_contract_forbids_sql_and_atomically_returns_server_revision",
+      "test_http_disconnect_sets_revision_cancellation_before_worker_can_publish",
+      "test_repeated_non_ai_apply_does_not_exhaust_semantic_history_or_provider_budget",
+      "test_identity_filter_pins_label_axis_without_hiding_the_exact_answer",
+      "test_saved_render_policy_cannot_be_removed_or_downgraded"
+    ],
+    "test_v34_query_security": [
+      "test_direct_sql_denied_without_explicit_administration_before_execution",
+      "test_administrator_sql_still_enforces_silver_and_sensitive_policy",
+      "test_authorized_allowed_sql_uses_existing_bounded_executor"
+    ],
+    "test_narrative_scope_20261021": [
+      "test_word_table_discloses_full_result_count_and_displayed_preview",
+      "test_guided_compare_cards_have_verified_fact_ids_and_mutations_fail",
+      "test_wrong_finding_scope_is_rejected",
+      "test_geography_warning_discloses_source_labels_without_scoring_name_heuristics",
+      "test_export_rejects_unverified_claim_even_with_stored_perfect_score",
+      "test_chart_scope_and_unit_mutations_cannot_be_exported",
+      "test_fact_refs_and_conclusion_replay_detect_scope_unit_period_and_prose_mutations",
+      "test_unproved_average_rollups_remain_explicit_whole_scope_benchmarks"
+    ],
+    "test_analysis_jobs": [
+      "test_one_submit_produces_verified_report_and_duplicate_is_free",
+      "test_known_terminal_decisions_end_the_job_with_typed_state_zero_provider_and_zero_sql",
+      "test_job_ledger_fields_are_public_and_start_at_zero",
+      "test_exact_plan_cache_avoids_new_provider_but_changed_input_misses",
+      "test_cancel_before_submit_response_cannot_start_paid_work",
+      "test_old_job_contract_requires_new_submission_without_replaying_provider",
+      "test_concurrent_plan_cache_jobs_have_independent_session_revisions",
+      "test_cancel_cannot_publish_late_result_or_execute_sql",
+      "test_three_rejections_never_become_four_calls_after_reconnect",
+      "test_partial_scope_stops_before_sql",
+      "test_expired_worker_is_not_replayed_by_another_replica",
+      "test_load_one_five_ten_jobs_without_provider_network"
+    ],
+    "test_cohort_rollups_20261021": [
+      "test_cancellation_ratio_uses_cohort_numerator_and_denominator",
+      "test_average_order_value_uses_cohort_sum_and_exposure",
+      "test_rollup_requires_matching_population_clock_and_complete_formula"
+    ],
+    "test_forecast_v30": [
+      "test_trend_series_prefers_trend_model_and_beats_naive",
+      "test_weekly_seasonality_selects_seasonal_naive",
+      "test_deterministic_and_finite",
+      "test_insufficient_history_fails_fast_with_requirement",
+      "test_incomplete_current_period_is_excluded_and_trailing_zeros_filled",
+      "test_horizon_counts_from_the_current_period",
+      "test_seasonal_and_window_methods_skip_too_short_backtest_prefixes",
+      "test_history_respects_the_approved_window",
+      "test_missing_forecast_history_does_not_discard_other_requirements",
+      "test_structural_break_is_disclosed",
+      "test_smape_skips_zero_actual_and_forecast",
+      "test_governed_metadata_and_bounds",
+      "test_registry_rejects_ungoverned_forecasts",
+      "test_capability_view_advertises_forecastable_metrics",
+      "test_revenue_forecast_is_server_computed_from_verified_history",
+      "test_unsupported_forecast_fails_before_execution_with_one_call",
+      "test_insufficient_history_is_typed_after_execution",
+      "test_forecast_changes_meaning_fingerprint_but_legacy_intent_is_unchanged"
+    ],
+    "test_v34_forecast_diagnostics": [
+      "test_model_selection_compares_common_origins_instead_of_different_samples",
+      "test_short_history_does_not_fabricate_holdout_interval_calibration",
+      "test_holdout_is_not_used_to_select_the_method"
+    ],
+    "test_cw_live_rubric": [
+      "test_valid_control_and_wrong_metric_window_axis_are_distinguished",
+      "test_all_order_count_cannot_impersonate_the_valid_order_population",
+      "test_dropped_exclusion_cannot_pass_even_with_the_right_metric_and_members",
+      "test_baseline_reversal_fails_even_when_both_dates_exist",
+      "test_reversed_or_truncated_ranking_is_not_a_pass"
+    ],
+    "test_v34_live44_third_regressions": [
+      "test_canonical_menu_does_not_offer_alias_claimants_as_six_requested_metrics",
+      "test_precise_metrics_incompatible_product_axis_and_frozen_refinement_stay_available",
+      "test_reasonless_limitation_targets_only_its_coupled_classification",
+      "test_observed_reasonless_trend_repairs_explicit_metric_and_time_in_one_bounded_turn",
+      "test_bottom_ranking_repair_targets_orphan_feature_binding_and_keeps_frozen_scope",
+      "test_captured_rate_ranking_discards_only_unrequested_invalid_total_and_keeps_companion",
+      "test_scalar_comparison_shape_repair_targets_cadence_and_keeps_both_periods_frozen",
+      "test_early_comparison_shape_guard_repairs_kind_without_unlocking_either_period",
+      "test_repair_can_explicitly_remove_an_invented_baseline_but_omission_inherits_it"
+    ]
+  },
+  "at": "2026-10-22T17:25:09.061966+00:00",
+  "aggregate": {
+    "original_scenarios": 56,
+    "with_module_receipts": 56,
+    "complete_original_scenario_passes": "NOT_CLAIMED",
+    "live_qualification": "PENDING_POLICY37"
+  },
+  "latest_local_summary": "qualification-local-summary.json",
+  "source_freeze": "final-freeze-r27.json",
+  "live_pending": true
+}

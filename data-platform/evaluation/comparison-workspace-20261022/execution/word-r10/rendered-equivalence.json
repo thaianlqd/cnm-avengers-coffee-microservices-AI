@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-22T16:30:21.195568+00:00",
+  "method": "Compare every Word document/image part to the exact rendered-and-visually-reviewed r9 artifact. Ignore only ZIP timestamps and document core metadata; no unrendered content accepted.",
+  "documents": [
+    {
+      "path": "word-r10/selected-view.docx",
+      "sha256": "36afee0c818421de4772de7ec426e9221513eed6b51453ce503b4288ce45309c",
+      "compared_parts": 15,
+      "differences": [],
+      "rendered_reference": "word-r9/selected-view.docx"
+    },
+    {
+      "path": "word-r10/ranking-exposure.docx",
+      "sha256": "0c9a5a0e4517d6b42dfcae1a011f517b7a0d4c7294a171d42e53a81e1b19131c",
+      "compared_parts": 13,
+      "differences": [],
+      "rendered_reference": "word-r9/ranking-exposure.docx"
+    }
+  ],
+  "equivalent": true
+}

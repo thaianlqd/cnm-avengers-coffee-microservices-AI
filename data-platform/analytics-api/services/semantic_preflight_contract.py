@@ -3,8 +3,8 @@
 Preflight and planner must not disagree about the meaning of an explicit
 business phrase. A governed canonical alias ("doanh thu") anchors exactly one
 metric. Specialized siblings (product/store/payment revenue…) stay available
-only when the user qualified them explicitly (their own phrase) or the
-requirement itself carries one of their governed qualifier dimensions. The LLM
+only when the user qualified them explicitly (their own phrase), or when the
+canonical metric cannot express the governed qualifier dimension. The LLM
 may fill unresolved fields; it cannot silently replace a locked metric.
 """
 from services.value_grounding_service import value_text
@@ -122,6 +122,8 @@ def enforce_metric_locks(intent, locks, catalog):
     registry = catalog.registry
     if not locks:
         return intent, [], []
+    from services.request_anchors import metric_equivalents
+    equivalents = metric_equivalents(catalog)
     result = intent.model_copy(deep=True)
     changes, conflicts = [], []
     for lock in locks:
@@ -130,12 +132,27 @@ def enforce_metric_locks(intent, locks, catalog):
         for req in result.requirements:
             if req.availability != "requested" or req.supporting_for:
                 continue
-            named = set(lock.get('explicitly_named', lock['explicitly_qualified']))
-            drifted = [m for m in req.metric_ids if m in siblings and
-                       (not _qualified(m, req, registry, explicit) or owner in req.metric_ids and m not in named)]
+            named = {equivalent for metric in lock.get('explicitly_named', lock['explicitly_qualified'])
+                     for equivalent in equivalents.get(metric, {metric})}
+            canonical_fits = _canonical_fits(catalog, owner, req)
+            # A grouping/filter is not a request to change metric definition.
+            # Context qualifies a sibling only when the canonical metric cannot
+            # express that grain (e.g. a product-only dimension). Explicitly
+            # named specialized definitions remain independent requested work.
+            qualified = {m for m in siblings if _qualified(m, req, registry, explicit)}
+            # A governed non-null population is substantive scope: e.g. used
+            # vouchers exclude orders without a voucher. A grouping alone must
+            # not erase that population; ordinary source/axis variants have no
+            # extra non-null population and keep the canonical definition.
+            population_qualified = {m for m in qualified if
+                set(registry['metrics'][m].get('required_non_null') or []) -
+                set(registry['metrics'][owner].get('required_non_null') or [])}
+            drifted = [m for m in req.metric_ids if m in siblings and m not in named and
+                       (m not in qualified or owner in req.metric_ids or
+                        canonical_fits and m not in population_qualified)]
             if not drifted:
                 continue
-            if not _canonical_fits(catalog, owner, req):
+            if not canonical_fits:
                 conflicts.append({"requirement_id": req.id, "phrase": lock["phrase"], "locked_metric": owner,
                                   "proposed_metrics": drifted, "resolution": "contextual_qualification"})
                 continue

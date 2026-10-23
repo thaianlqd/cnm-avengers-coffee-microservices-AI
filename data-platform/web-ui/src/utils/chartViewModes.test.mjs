@@ -1,6 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultViewState, selectViewVariant, modeOptions, nextState, activeViewChart, valueModeOptions, reasonLabel, reportWithViewChoice } from './chartViewModes.mjs';
+import { defaultViewState, selectViewVariant, modeOptions, nextState, activeViewChart, valueModeOptions, reasonLabel, reportWithViewChoice, memberReportSelection } from './chartViewModes.mjs';
+
+test('whole-report member selection uses all governed union keys and refuses a partial or unknown union', () => {
+  const options=['id1','id2'].map(value=>({selection:{chart_id:'c',query_id:'q',dimension_id:'entity_id',operator:'eq',values:[{type:'string',value}]}}));
+  const interaction={selection_behavior:'population_filter',options};
+  const view={members:[{key:'combined display label',values:['id1','id2']},{key:'id1',label:'duplicate label'}]};
+  assert.deepEqual(memberReportSelection(view,'combined display label',interaction),
+    {...options[0].selection,operator:'in',values:[{type:'string',value:'id1'},{type:'string',value:'id2'}]});
+  assert.equal(memberReportSelection(view,'combined display label',{...interaction,options:options.slice(0,1)}),null);
+  assert.equal(memberReportSelection(view,'unknown',interaction),null);
+  assert.equal(memberReportSelection(view,'id1',{...interaction,selection_behavior:'inspect_only'}),null);
+  assert.deepEqual(memberReportSelection(view,'id1',interaction),options[0].selection);
+});
 
 const v = (id, spec, extra = {}) => ({ id, spec, availability: 'available', payload: { data: [{ label: id, value: 1 }], caption: id }, insight: { key_facts: [{ text: id }] }, ...extra });
 const modes = {
