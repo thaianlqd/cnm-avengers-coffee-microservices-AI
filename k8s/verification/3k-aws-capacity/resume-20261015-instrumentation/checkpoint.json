@@ -1,0 +1,50 @@
+{
+  "phase": "paused by user before provisioning",
+  "starting_features_k8s": "063efc4990d664d7a2e3843fb3ce87fa6126be48",
+  "main_baseline": "9eaf3b0b72f88acd7356ad71b2f7373ed3c2f36b",
+  "aws_preflight": {
+    "observed_date": "2026-10-15",
+    "ownership_tags": {
+      "Project": "avengers-coffee",
+      "Purpose": "3k-capacity",
+      "ManagedBy": "codex-features-k8s",
+      "Phase": "3k-aws"
+    },
+    "ec2_all_states": 0,
+    "security_groups": 0,
+    "volumes": 0,
+    "keypairs": 0,
+    "new_endpoints_started": 0
+  },
+  "new_aws_resources_created": 0,
+  "new_load_runs": 0,
+  "estimated_incremental_resource_cost_usd": 0,
+  "tests": {
+    "identity": 60,
+    "menu": 45,
+    "news": 34,
+    "gateway": 22,
+    "k8s_python": 24,
+    "aws_python_pass": 40,
+    "aws_python_historical_skip": 1,
+    "aws_node": 3,
+    "total_pass": 228,
+    "total_skip": 1
+  },
+  "backend_builds": "PASS all four",
+  "local_render": "PASS 22 resources with semantic validator",
+  "aws_render": "PASS kubectl kustomize (14 resources); deployment template only",
+  "diagnostics_load_validation": "NOT RUN",
+  "instrumentation_overhead_validation": "NOT RUN",
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "notes": [
+    "Initial Node helper tests blocked by sandbox loopback EPERM; rerun outside sandbox passed all 3.",
+    "Initial Gateway build argument arity error corrected; final build PASS.",
+    "No performance tuning retained, no bottleneck newly established."
+  ],
+  "instrumentation_commit": "89539f671748dba9befaceb61b21f28bb0727ee3",
+  "push": "PASS",
+  "remote_features_k8s": "4ebb424730f02a64f0772c59b6c373f8118734ee",
+  "authenticated_github_login": "thaianlqd",
+  "delivery_note": "Verified checkpoint push; follow-up documentation commit records resolved authentication. See git HEAD for final documentation SHA."
+}

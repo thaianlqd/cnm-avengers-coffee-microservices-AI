@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "k3s_version": "v1.36.5+k3s1",
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "image_tag": "3k-aws-ac88422957e9",
+  "build_tests_on_aws": true
+}

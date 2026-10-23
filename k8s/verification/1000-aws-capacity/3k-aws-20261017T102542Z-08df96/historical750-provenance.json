@@ -1,0 +1,17 @@
+{
+  "verified": true,
+  "points": [
+    {
+      "point": "k8s/verification/750-aws-capacity/3k-aws-20261017T074726Z-2acf4e/normal-750",
+      "analysis_sha256": "3a4eed1a7f4ae3ea0a11cee4d2c5095a6accb0bccdd6fc4ccef467b8cbba88f6",
+      "hold_seconds": 120
+    },
+    {
+      "point": "k8s/verification/750-aws-capacity/3k-aws-20261017T074726Z-2acf4e/long-750",
+      "analysis_sha256": "9ef6f30a7e8fb36a4062a5c5952a787f06acd90ced506bc50af42abac4e3e756",
+      "hold_seconds": 300
+    }
+  ],
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "not_relabelled_as_fresh_runs": true
+}

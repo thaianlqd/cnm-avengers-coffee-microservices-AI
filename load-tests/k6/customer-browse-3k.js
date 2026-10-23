@@ -15,7 +15,14 @@ const hold = integer('CAPACITY_HOLD_SECONDS', 120, 120, 600);
 const down = hold === 120 ? 30 : 60;
 if (__ENV.THINK_SECONDS && Number(__ENV.THINK_SECONDS) !== 3) throw Error('Think time is fixed at 3s');
 const base = (__ENV.BASE_URL || '').replace(/\/$/, '');
-if (!/^http:\/\/127\.0\.0\.1:13300$/.test(base)) {
+if (__ENV.AWS_PRIVATE_CAPACITY === 'true') {
+  const match = /^http:\/\/(\d{1,3}(?:\.\d{1,3}){3}):30300$/.exec(base);
+  const octets = match ? match[1].split('.').map(Number) : [];
+  const privateV4 = octets.length === 4 && octets.every(n => n <= 255) &&
+    (octets[0] === 10 || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+      (octets[0] === 192 && octets[1] === 168));
+  if (!privateV4) throw Error('AWS capacity requires an RFC1918 IPv4 target on private NodePort 30300');
+} else if (!/^http:\/\/127\.0\.0\.1:13300$/.test(base)) {
   throw Error('3k profile requires the loopback reverse SSH data plane to the real Mac Gateway; Quick Tunnel is forbidden');
 }
 const routes = [
@@ -23,6 +30,7 @@ const routes = [
   ['/users/branches/public', 'public_branches'], ['/news?limit=100', 'public_news'],
 ];
 const latency = Object.fromEntries(routes.map(([, n]) => [n, new Trend(`${n}_ms`, true)]));
+const waiting = Object.fromEntries(routes.map(([, n]) => [n, new Trend(`${n}_waiting_ms`, true)]));
 const statuses = new Counter('response_statuses');
 export const options = {
   scenarios: { browse: { executor: 'ramping-vus', startVUs: 0,
@@ -34,7 +42,7 @@ export const options = {
     'http_req_duration{phase:hold}': ['p(95)<1500'], 'http_reqs{phase:hold}': ['count>0'],
     // Observation-only submetrics avoid a high-volume per-point JSON writer.
     ...Object.fromEntries([0,200,401,403,404,429,500,502,503,504,522,524].map(code => [`response_statuses{status:${code}}`, ['count>=0']])),
-    ...Object.fromEntries(routes.map(([,name]) => [`${name}_ms{phase:hold}`, ['p(95)>=0']])),
+    ...Object.fromEntries(routes.flatMap(([,name]) => [[`${name}_ms{phase:hold}`, ['p(95)>=0']], [`${name}_waiting_ms{phase:hold}`, ['p(95)>=0']]])),
   },
   summaryTrendStats: ['avg', 'p(50)', 'p(95)', 'p(99)', 'max'],
 };
@@ -59,6 +67,7 @@ export default function () {
       headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'User-Agent': 'Avengers-Capacity-3k/1' } });
     statuses.add(1, { ...tags, status: String(r.status) });
     latency[name].add(r.timings.duration, { phase });
+    waiting[name].add(r.timings.waiting, { phase });
     check(r, { [`${name}: HTTP 200`]: v => v.status === 200,
       [`${name}: full JSON contract`]: v => validFullJson(v, name),
       [`${name}: gzip negotiated`]: v => v.headers['Content-Encoding'] === 'gzip' }, tags);

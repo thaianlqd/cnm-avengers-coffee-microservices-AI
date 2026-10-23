@@ -1,0 +1,12 @@
+{
+  "actual_bill": false,
+  "actual_termination_timestamps": "NOT AVAILABLE: describe-instances returned no histories during recovery",
+  "configured_guest_termination_minutes": 150,
+  "instance_shutdown_behavior": "terminate",
+  "maximum_instances": 6,
+  "configured_compute_ceiling_usd": 1.7955,
+  "planned_combined_ceiling_usd": 4.9431,
+  "pricing_source": "public-price.json",
+  "fresh_recovery_fleet_launched": false,
+  "verification": "all nonterminated instances/EBS/SG/keypairs/ENIs zero; actual billing not verified"
+}

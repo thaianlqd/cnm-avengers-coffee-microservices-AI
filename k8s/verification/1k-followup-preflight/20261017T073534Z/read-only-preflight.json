@@ -1,0 +1,33 @@
+{
+  "observed_at": "2026-10-17T07:35:34.238652+00:00",
+  "account": "956035085549",
+  "region": "ap-southeast-2",
+  "benchmark_inventory": {
+    "3k-aws": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "3k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "5k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    }
+  },
+  "instance_type": "m7i-flex.large",
+  "free_tier_eligible": true,
+  "plan_last_console_verified_at": "2026-10-17T05:25:40.437531+00:00",
+  "plan_reverification_required_before_launch": true,
+  "standard_ondemand_vcpu_quota": "UNKNOWN: read AccessDenied",
+  "quota_iam_changes": false,
+  "new_aws_resources_created": false,
+  "note": "Refresh inventory, AMI eligibility and Free plan before any later launch. Stop and cleanup on an actual eligibility/quota rejection."
+}

@@ -1,0 +1,44 @@
+{
+  "observed_at": "2026-10-16T06:32:24.757396+00:00",
+  "aws_python": {
+    "pass": 57,
+    "skip": 1
+  },
+  "k8s_python": {
+    "pass": 24
+  },
+  "node_control_security": {
+    "pass": 3
+  },
+  "backend_aws": {
+    "pass": 161,
+    "source": "build-checks.json"
+  },
+  "local_static_resources": 22,
+  "aws_static_resources": 14,
+  "total_pass": 245,
+  "local_backend_build": "NOT RUN: avoid shared DataPlatform CPU/RAM",
+  "local_runtime": "NOT RUN: Kubernetes disabled; Docker untouched",
+  "unknown_metric_regression": "PASS: unknown metrics are missing, complete hold coverage required",
+  "final_helper_check_at": "2026-10-16T10:07:50.289179+00:00",
+  "diff_check": "PASS",
+  "artifact_secret_review": {
+    "files_scanned_before_final_metadata": 359,
+    "findings": 0,
+    "method": "decompress gzip and inspect access-key/private-key/credential-URL/Secret-document/live-control-endpoint patterns; review helper diff; no AWS credential files read"
+  },
+  "final_absent_node_guard": "PASS full58 tests (57pass,1skip); report resource rows verified against final evidence",
+  "artifact_format_normalization": "CRLF CSV / console trailing whitespace normalized; original and normalized hashes retained",
+  "staged_review": {
+    "staged_files": 380,
+    "actual_secret_findings": 0,
+    "reviewed_fixture_literals": [
+      {
+        "file": "scripts/aws-k6/test_aws_private.py",
+        "finding": "deterministic mocked control URL / rejected-target test fixture; no live session endpoint"
+      }
+    ],
+    "diff_check": "PASS after LF/whitespace normalization",
+    "scope": "helpers/docs/verification only; no application source changes"
+  }
+}

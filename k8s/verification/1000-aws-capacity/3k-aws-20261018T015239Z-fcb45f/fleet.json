@@ -1,0 +1,63 @@
+{
+  "run_id": "3k-aws-20261018T015239Z-fcb45f",
+  "started_at": "2026-10-18T02:01:50.354322+00:00",
+  "roles": {
+    "target1": {
+      "id": "i-004f23e142503d5bc",
+      "private_ip": "172.31.3.77",
+      "launch_time": "2026-10-18T02:02:01+00:00",
+      "type": "m7i-flex.large"
+    },
+    "target2": {
+      "id": "i-09fee7837e2b2cdf2",
+      "private_ip": "172.31.14.93",
+      "launch_time": "2026-10-18T02:02:04+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator1": {
+      "id": "i-0365b76a49fb56ddb",
+      "private_ip": "172.31.8.199",
+      "launch_time": "2026-10-18T02:02:07+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator2": {
+      "id": "i-0595f1406173c547f",
+      "private_ip": "172.31.1.55",
+      "launch_time": "2026-10-18T02:02:58+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator3": {
+      "id": "i-0927bee8a712676aa",
+      "private_ip": "172.31.10.153",
+      "launch_time": "2026-10-18T02:03:50+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator4": {
+      "id": "i-0d45def1946b9e948",
+      "private_ip": "172.31.9.101",
+      "launch_time": "2026-10-18T02:20:21+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator5": {
+      "id": "i-0c2e00c1d03728ba8",
+      "private_ip": "172.31.12.44",
+      "launch_time": "2026-10-18T02:21:11+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator6": {
+      "id": "i-0c6606d882a9aefe1",
+      "private_ip": "172.31.10.130",
+      "launch_time": "2026-10-18T02:49:45+00:00",
+      "type": "m7i-flex.large"
+    }
+  },
+  "max_generators": 6,
+  "target_count": 2,
+  "runtime_minutes": 95,
+  "control_pid": null,
+  "tunnel_pid": null,
+  "groups": {
+    "target": "sg-0e43081309e0fd253",
+    "generator": "sg-072055873005e17dd"
+  }
+}

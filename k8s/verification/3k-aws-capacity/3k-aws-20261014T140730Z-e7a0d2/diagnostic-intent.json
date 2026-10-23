@@ -1,0 +1,15 @@
+{
+  "vus": 500,
+  "generator_count": 3,
+  "classification": "diagnostic only, never qualification",
+  "additional_observers": [
+    "host CPU/steal/cgroup throttling, ENA, TCP counters on all three target nodes",
+    "isolated pg pool per backend: SELECT 1 and grouped pg_stat_activity, no mutation",
+    "low rate pod-loopback public GET timings, full body consumed but not saved"
+  ],
+  "source_hashes": {
+    "aws-target-diagnostics.py": "f86cebc5ff6fe09902f5797706dbcd6c0598d143c9fb8fdd67708cc29ac404da",
+    "aws-pod-diagnostics.cjs": "66335d7a49f30f0767a7069c9cc738de1a9036b9781966227ac771153266089d"
+  },
+  "app_images": "unchanged da8ca6f74b04685f6b337630440184c70f5336bc"
+}

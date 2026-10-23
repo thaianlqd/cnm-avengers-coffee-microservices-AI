@@ -1,0 +1,30 @@
+{
+  "original_raw_sha256": "d6dfadfd5c80840278600854cd71072e5237b291e686fb2e71d4e4b673229871",
+  "original_raw_bytes": 9899475,
+  "compact_sha256": "924fe223655aa0b86ec06384bc3200d91d051ee76fb28397f5987e862dd48b04",
+  "compact_bytes": 2431350,
+  "format": "[metric,value,phase,status,route_name]; exact numeric observations, no response bodies",
+  "metric_observation_counts": {
+    "http_reqs": 51948,
+    "http_req_duration": 51948,
+    "http_req_blocked": 51948,
+    "http_req_connecting": 51948,
+    "http_req_tls_handshaking": 51948,
+    "http_req_waiting": 51948,
+    "http_req_receiving": 51948,
+    "http_req_failed": 51948,
+    "response_statuses": 51948,
+    "menu_categories_ms": 12987,
+    "menu_categories_waiting_ms": 12987,
+    "checks": 155844,
+    "menu_products_ms": 12987,
+    "menu_products_waiting_ms": 12987,
+    "public_branches_ms": 12987,
+    "public_branches_waiting_ms": 12987,
+    "public_news_ms": 12987,
+    "public_news_waiting_ms": 12987
+  },
+  "stage_vu_samples": 844,
+  "actual_vu_peak": 167,
+  "five_second_route_windows": 344
+}

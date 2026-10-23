@@ -1,0 +1,16 @@
+{
+  "observed_at": "2026-10-16T05:18:07.307714+00:00",
+  "classification": "SETUP/AUTHORIZATION BLOCK; not application or generator capacity failure",
+  "automatic_approval_review": "Existing DB configuration/credentials transfer to temporary AWS target cluster rejected: explicit sensitive-egress authorization required",
+  "explicit_user_confirmation": "APPROVED after FINISH was requested; old fleet cleanup completed; resume under fresh RunId",
+  "credential_transfer_performed": false,
+  "application_deployed": false,
+  "new_capacity_runs": 0,
+  "mac_backend_build_rejected": "Shared CPU/memory competition with DataPlatform; backend tests/builds performed on AWS instead",
+  "aws_backend_tests_pass": 161,
+  "local_kubernetes": "disabled; preserved running Compose/DataPlatform",
+  "historical_maximum_repeatably_qualified_vus": 250,
+  "historical_first_valid_unstable_vus": 500,
+  "3000_vu": "NOT VALID / NOT RUN",
+  "approval_observed_at": "2026-10-16T05:19:47.617795+00:00"
+}

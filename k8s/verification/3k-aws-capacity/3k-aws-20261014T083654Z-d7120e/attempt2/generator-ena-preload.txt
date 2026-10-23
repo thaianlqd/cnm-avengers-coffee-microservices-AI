@@ -1,0 +1,13 @@
+100
+     bw_in_allowance_exceeded: 0
+     bw_out_allowance_exceeded: 0
+     pps_allowance_exceeded: 0
+     conntrack_allowance_exceeded: 0
+     linklocal_allowance_exceeded: 0
+     conntrack_allowance_available: 76945
+     queue_0_tx_dma_mapping_err: 0
+     queue_0_tx_prepare_ctx_err: 0
+     queue_0_tx_unmask_interrupt: 21882
+     queue_0_rx_dma_mapping_err: 0
+     queue_0_rx_xdp_drop: 0
+dfb9af16b94cc0b22ae53710ece3bde446831fb110a928e7573120bf3ffc4c83  customer-browse-3k.js

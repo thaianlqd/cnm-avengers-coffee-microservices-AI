@@ -1,0 +1,20 @@
+{
+  "updated_at": "2026-10-17T06:28:25.342964+00:00",
+  "status": "COMPLETE_BOUNDED_CAPACITY_PHASE",
+  "run_id": "3k-aws-20261017T052200Z-952f9c",
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "runtime_minutes": 100,
+  "approved_additional_credit_usd": 2.0,
+  "free_plan_only": true,
+  "cleanup_required": false,
+  "historical_maximum_repeatably_qualified_vus": 500,
+  "retained": "AWS Gateway keepalive true only",
+  "next": "quiet250 regression, retained healing+rolling,750normal+long then1000 onlyifgatesPASS",
+  "push": false,
+  "github_auth_changes": false,
+  "maximum_repeatably_qualified_vus": 500,
+  "level750": "INVALID GENERATOR in completion fleet",
+  "level1000": "NOT RUN",
+  "workload_tuning": "none; fullJSON/gzip/think3 preserved",
+  "generator_gc_tuning": "not applied"
+}

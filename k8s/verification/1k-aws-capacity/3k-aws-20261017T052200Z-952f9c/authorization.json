@@ -1,0 +1,19 @@
+{
+  "approved_additional_credit_usd": 2.0,
+  "free_plan_only": true,
+  "targets": 3,
+  "maximum_generators": 3,
+  "instance_type": "m7i-flex.large",
+  "runtime_minutes": 100,
+  "no_plan_or_iam_changes": true,
+  "database_egress": "existing DB-only approval to three ephemeral AWS targets in account956035085549 ap-southeast-2",
+  "data_platform": "untouched",
+  "historical500": "k8s/verification/1k-aws-capacity/3k-aws-20261016T184703Z-fc6326",
+  "historical500_source_verified": true,
+  "historical500_two_pass_sha256": "bebaad1aa89e85ff76beb89fe4160b448b75658eaa5888b7906e4d0a4677d40b",
+  "delivery": {
+    "push": false,
+    "reason": "user changed GitHub account; explicitly instructed to leave work locally",
+    "github_auth_changes": false
+  }
+}

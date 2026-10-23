@@ -1,0 +1,19 @@
+{
+  "vus": 500,
+  "hold_seconds": 300,
+  "ramp_seconds": 60,
+  "down_seconds": 60,
+  "load_started_at": "2026-10-14T16:20:18.809999+00:00",
+  "fd_soft": "1024",
+  "load_finished_at": "2026-10-14T16:27:21.889048+00:00",
+  "generator_count": 3,
+  "generator_folders": [
+    "generator1",
+    "generator2",
+    "generator3"
+  ],
+  "start_skew_seconds": 0.000226,
+  "quantiles": "linear interpolation over all actual observations",
+  "rps_duration_seconds": 423.079049,
+  "diagnostic": false
+}

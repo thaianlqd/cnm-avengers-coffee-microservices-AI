@@ -1,3 +1,13 @@
+> **Mới nhất 18/10/2026: 1.000 VU QUALIFIED: normal 120s và long 300s đều STABLE PASS. AWS đã cleanup, session CLOSED.**
+> [Báo cáo mới: hai target, 18/10/2026](K8S_1000_TWO_TARGET_CAPACITY_REPORT.md). Phần bên dưới là lịch sử các phase trước, giữ nguyên kết luận tại thời điểm đó.
+
+> Cập nhật phase1K17/10: fresh750PASS;1000NOTRUN vìAWSquota16vCPU. Fleetđãcleanup.
+> [Reportmới](K8S_1000_CAPACITY_REPORT.md) · [Contingencylocal2target,chờphép](K8S_1K_QUOTA_CONTINGENCY_PLAN.md).
+
+> **Mới nhất 17/10/2026:** [750 VU qualified, hai PASS gồm300s hold; AWS cleanup PASS](K8S_750_CAPACITY_REPORT.md). Khôngpush/merge;1000NOTRUN.
+
+> Latest result17/10/2026: [1K phase final report](K8S_1K_CAPACITY_REPORT.md).500 VU repeatably QUALIFIED (normal+300s long);750 INVALID GENERATOR,1000 NOT RUN. Owned AWS cleanup verified includingENIs. Local runtime was not rerun to protect DataPlatform; prior results below remain historical.
+
 # Kubernetes customer demo — verification report
 
 Kiểm chứng 13/10/2026 (Asia/Ho_Chi_Minh). Repository baseline:

@@ -1,0 +1,10 @@
+{
+  "observed_at": "2026-10-17T08:52:52.081306+00:00",
+  "role_count": 8,
+  "verified_count": 8,
+  "elapsed_minutes_through_native_cleanup": 56.26562315,
+  "closed": true,
+  "active": false,
+  "application_hashes_still_match": true,
+  "all_phase_cleanup": "PASS"
+}

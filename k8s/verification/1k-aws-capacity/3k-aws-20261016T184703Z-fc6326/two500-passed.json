@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "observed_at": "2026-10-16T19:30:02.518355+00:00",
+  "points": [
+    {
+      "point": "reuse-regression-250",
+      "vus": 250,
+      "hold_seconds": 120,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "reuse-normal-500",
+      "vus": 500,
+      "hold_seconds": 120,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "reuse-long-500",
+      "vus": 500,
+      "hold_seconds": 300,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    }
+  ],
+  "next": "review candidate retention and availability before750"
+}

@@ -1,3 +1,5 @@
+import { performance } from 'node:perf_hooks';
+import { diagnosticEnabled, record, routeName, diagnosticMiddleware, startDiagnostics } from './capacity-diagnostics';
 import { NestFactory } from '@nestjs/core';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import { AppModule } from './app.module';
@@ -8,6 +10,8 @@ import { configureGatewayHttpServer } from './gateway-http-policy';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableShutdownHooks();
+  app.use(diagnosticMiddleware);
+  startDiagnostics(app.getHttpServer());
 
   app.enableCors();
 
@@ -19,7 +23,24 @@ async function bootstrap() {
   const PROXY_TIMEOUT = 120000; // 120 seconds
   const proxyAgents = new ProxyAgents(process.env);
   const proxyResponseHook = configureGatewayHttpServer(app.getHttpServer(), process.env);
-  const proxyResponseEvents = proxyResponseHook ? { proxyRes: proxyResponseHook } : {};
+  const proxyResponseEvents = { proxyRes: (upstreamRes: any, req: any, res: any) => {
+    proxyResponseHook?.(upstreamRes, req, res);
+    const span = upstreamSpans.get(req);
+    if (span) {
+      record('upstream_headers', performance.now() - span.start, span.route);
+      upstreamRes.once('end', () => record('upstream_body', performance.now() - span.start, span.route));
+    }
+  } };
+  const upstreamSpans = new WeakMap<object, { start: number; route: string }>();
+  const measureProxyRequest = (outgoing: any, req: any) => {
+    const route = diagnosticEnabled && routeName(req.originalUrl || req.url);
+    if (!route) return;
+    const start = performance.now(); upstreamSpans.set(req, { start, route });
+  };
+  const proxyRequest = (outgoing: any, req: any) => {
+    fixRequestBody(outgoing, req);
+    measureProxyRequest(outgoing, req);
+  };
   const upstream = (target: string) => ({ target, agent: proxyAgents.forTarget(target) });
   app.getHttpServer().once('close', () => proxyAgents.destroy());
 
@@ -27,7 +48,7 @@ async function bootstrap() {
     createProxyMiddleware({
       ...upstream(process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
+      on: { proxyReq: proxyRequest, ...proxyResponseEvents },
           pathFilter: ['/auth', '/users', '/promotions', '/franchise', '/admin', '/wallet'],
           timeout: PROXY_TIMEOUT,
           proxyTimeout: PROXY_TIMEOUT,
@@ -39,7 +60,7 @@ async function bootstrap() {
     createProxyMiddleware({
       ...upstream(process.env.MENU_SERVICE_URL || 'http://localhost:3003'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
+      on: { proxyReq: proxyRequest, ...proxyResponseEvents },
       pathFilter: ['/menu'],
       timeout: PROXY_TIMEOUT,
       proxyTimeout: PROXY_TIMEOUT,
@@ -50,7 +71,7 @@ async function bootstrap() {
     createProxyMiddleware({
       ...upstream(process.env.ORDER_SERVICE_URL || 'http://localhost:3005'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
+      on: { proxyReq: proxyRequest, ...proxyResponseEvents },
       pathFilter: [
         '/cart',
         '/orders',
@@ -79,7 +100,7 @@ async function bootstrap() {
     createProxyMiddleware({
       ...upstream(process.env.INVENTORY_SERVICE_URL || 'http://localhost:3004'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
+      on: { proxyReq: proxyRequest, ...proxyResponseEvents },
       pathFilter: ['/inventory'],
       timeout: PROXY_TIMEOUT,
       proxyTimeout: PROXY_TIMEOUT,
@@ -90,7 +111,7 @@ async function bootstrap() {
     createProxyMiddleware({
       ...upstream(process.env.AI_SERVICE_URL || 'http://localhost:8000'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
+      on: { proxyReq: proxyRequest, ...proxyResponseEvents },
       pathFilter: ['/ai'],
       timeout: PROXY_TIMEOUT,
       proxyTimeout: PROXY_TIMEOUT,
@@ -102,7 +123,7 @@ async function bootstrap() {
       ...upstream(process.env.NEWS_SERVICE_URL || 'http://localhost:3006'),
       changeOrigin: true,
       pathFilter: ['/news', '/uploads/news'],
-      on: proxyResponseEvents,
+      on: { proxyReq: measureProxyRequest, ...proxyResponseEvents },
       timeout: PROXY_TIMEOUT,
       proxyTimeout: PROXY_TIMEOUT,
     }),

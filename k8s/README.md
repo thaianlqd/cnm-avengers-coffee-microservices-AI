@@ -1,3 +1,5 @@
+> Latest capacity qualification: [16 October AWS report](../K8S_3K_AWS_CAPACITY_REPORT.md). 3K not qualified; single normal375 PASS, repeatable qualification retained250; cleanup verified. Local runtime was not restarted during this phase to protect DataPlatform.
+
 # Avengers Coffee: Docker Desktop Kubernetes
 
 Kubernetes is an additional deployment mode. The existing `docker-compose.yml`

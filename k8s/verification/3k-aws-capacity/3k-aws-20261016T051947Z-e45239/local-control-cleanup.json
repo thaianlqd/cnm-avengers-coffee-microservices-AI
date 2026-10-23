@@ -1,0 +1,9 @@
+{
+  "observed_at": "2026-10-16T09:58:49.299468+00:00",
+  "control_port_18084_listening": false,
+  "matching_benchmark_control_process_names": [],
+  "private_control_directory_exists": false,
+  "processes_stopped": true,
+  "aws_cleanup_verified": true,
+  "method": "interruption recovery, direct read-only local process-name/listener inspection; original controller exit was not observed"
+}

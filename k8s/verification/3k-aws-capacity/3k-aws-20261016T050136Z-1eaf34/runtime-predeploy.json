@@ -1,0 +1,69 @@
+{
+  "observed_at": "2026-10-16T05:15:26.733542+00:00",
+  "region": "ap-southeast-2",
+  "instances": [
+    {
+      "instance_id": "i-052f9ec9c7cd6af78",
+      "role": "generator2",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-16T05:05:18+00:00",
+      "state": "running",
+      "architecture": "x86_64",
+      "root_delete_on_termination": true
+    },
+    {
+      "instance_id": "i-07ac53eb27ef85bf8",
+      "role": "target1",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-16T05:03:32+00:00",
+      "state": "running",
+      "architecture": "x86_64",
+      "root_delete_on_termination": true
+    },
+    {
+      "instance_id": "i-0708d77b757080bf4",
+      "role": "target3",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-16T05:03:37+00:00",
+      "state": "running",
+      "architecture": "x86_64",
+      "root_delete_on_termination": true
+    },
+    {
+      "instance_id": "i-0d93d1fa39fa2af6a",
+      "role": "generator3",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-16T05:06:49+00:00",
+      "state": "running",
+      "architecture": "x86_64",
+      "root_delete_on_termination": true
+    },
+    {
+      "instance_id": "i-012006bb3888fdc29",
+      "role": "target2",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-16T05:03:34+00:00",
+      "state": "running",
+      "architecture": "x86_64",
+      "root_delete_on_termination": true
+    },
+    {
+      "instance_id": "i-0c1cc3712d5520928",
+      "role": "generator1",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-16T05:03:39+00:00",
+      "state": "running",
+      "architecture": "x86_64",
+      "root_delete_on_termination": true
+    }
+  ],
+  "counts": {
+    "instances": 6,
+    "security_groups": 2,
+    "volumes": 6,
+    "key_pairs": 0
+  },
+  "target_ingress_no_public_cidr": true,
+  "application_deployed": false,
+  "capacity_runs": 0
+}

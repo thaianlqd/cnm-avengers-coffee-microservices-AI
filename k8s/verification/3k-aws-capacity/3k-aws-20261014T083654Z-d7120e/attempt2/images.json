@@ -1,0 +1,52 @@
+[
+  {
+    "name": "api-gateway",
+    "tag": "docker.io/avengers/api-gateway:3k-aws-b9ba9fd95c3f",
+    "oci_manifest_digest": "sha256:1cf5a92d213dd096a9dcfbe15204d03060334b509bb53b0b3abda09574123ce4",
+    "image_id": "sha256:98889b321d32efb9641a86cd275b23fe1f4e06bbb076c488c2f2c9b73919ff33",
+    "architecture": "amd64",
+    "source_sha": "b9ba9fd95c3f63f3a9356b27454710a752bfc49b",
+    "dockerfile_sha256": "6a600919e610b6b5920bb4ed615d38460c9838c2b2e6446dbdddf81f767ddf59",
+    "tar_sha256": "9f2ac3cd5ec4556190fdaa4a7ff51d9f93442cb059738c063ba2c286c6ce5428"
+  },
+  {
+    "name": "customer-media",
+    "tag": "docker.io/avengers/customer-media:3k-aws-b9ba9fd95c3f",
+    "oci_manifest_digest": "sha256:fb3ab068954389a4e43a606b06dedba9dcdb85147d9a1d67c75d1224ad044ab5",
+    "image_id": "sha256:089da94e94498463d1c2bd6680b7d889669fa6a023a621936eb0ee585564a8f4",
+    "architecture": "amd64",
+    "source_sha": "b9ba9fd95c3f63f3a9356b27454710a752bfc49b",
+    "dockerfile_sha256": "1cb522cecf45139c7abe8fb926eaa8169a4af5f06bb13346c99287f42e225365",
+    "tar_sha256": "291a14a91f89804a04f72a6555e54958645c3b25dc649d764ada181d62be3f92"
+  },
+  {
+    "name": "identity-service",
+    "tag": "docker.io/avengers/identity-service:3k-aws-b9ba9fd95c3f",
+    "oci_manifest_digest": "sha256:05c8b1b2d79855ffb96a4f510a9e34648a600837805c7d1b261b5fa92c88a8cc",
+    "image_id": "sha256:ccef8f641f23b1c8464ebf261714d253c00b8cd37ec46f5431e7efeb24a849a0",
+    "architecture": "amd64",
+    "source_sha": "b9ba9fd95c3f63f3a9356b27454710a752bfc49b",
+    "dockerfile_sha256": "3c279a8085e1a7c4f099c15dc5d30d42b0163ca912edfad135521ffbd5614739",
+    "tar_sha256": "06b15d835fba0f491131dde2579e0d2646ea28bbd39c57c4f7bee7f9af558eba"
+  },
+  {
+    "name": "menu-service",
+    "tag": "docker.io/avengers/menu-service:3k-aws-b9ba9fd95c3f",
+    "oci_manifest_digest": "sha256:9e1ec9cd495a97f7a9514967e8ca2fe4cb175ae27b3daf754e60b02e1fed0aab",
+    "image_id": "sha256:b5f43d33f806a6fce541e44d2784fad3271fa3ecb7080eefc126ab8c836efef2",
+    "architecture": "amd64",
+    "source_sha": "b9ba9fd95c3f63f3a9356b27454710a752bfc49b",
+    "dockerfile_sha256": "b62a2c3ee8dd16a81c256103ed598e3d937cb3901405ae006527aaf49a436a08",
+    "tar_sha256": "27feee7d92fb142b9486621cebdbefcbf6b4cc1701cab8be851f7ff676c2c167"
+  },
+  {
+    "name": "news-service",
+    "tag": "docker.io/avengers/news-service:3k-aws-b9ba9fd95c3f",
+    "oci_manifest_digest": "sha256:d98bb6145aab2ca428856e368c5a026d83e4277d1bd8b4329022240060d636e8",
+    "image_id": "sha256:5b5ebb1879073a00f86a4b9baaa7701b865fca835d6be99ff906bbf1f796e567",
+    "architecture": "amd64",
+    "source_sha": "b9ba9fd95c3f63f3a9356b27454710a752bfc49b",
+    "dockerfile_sha256": "7cbebbd93bbb82a83798b9fc5d331685ea13503b2def03b6e08438b7f28f099b",
+    "tar_sha256": "49d17fd52092895b10fca4cc3adc41dfc10b73a6145ab48bb0e9877e429c0f81"
+  }
+]

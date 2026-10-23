@@ -1,0 +1,6 @@
+{"pool_idle_ms":5000,"sample":0,"before":{"total":0,"idle":0},"select1_ms":1211,"after":{"total":1,"idle":1}}
+{"pool_idle_ms":5000,"sample":1,"before":{"total":0,"idle":0},"select1_ms":1269,"after":{"total":1,"idle":1}}
+{"pool_idle_ms":5000,"sample":2,"before":{"total":0,"idle":0},"select1_ms":1278,"after":{"total":1,"idle":1}}
+{"pool_idle_ms":30000,"sample":0,"before":{"total":0,"idle":0},"select1_ms":1356,"after":{"total":1,"idle":1}}
+{"pool_idle_ms":30000,"sample":1,"before":{"total":1,"idle":1},"select1_ms":194,"after":{"total":1,"idle":1}}
+{"pool_idle_ms":30000,"sample":2,"before":{"total":1,"idle":1},"select1_ms":194,"after":{"total":1,"idle":1}}

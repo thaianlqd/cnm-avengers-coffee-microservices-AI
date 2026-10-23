@@ -1,0 +1,85 @@
+{
+  "source_sha": "d715ba7423d012e068eb5b447b806c9a4967320b",
+  "tests": {
+    "identity-service-test": {
+      "passed": true,
+      "test_counts": [
+        [
+          "60",
+          "60"
+        ]
+      ]
+    },
+    "news-service-test": {
+      "passed": true,
+      "test_counts": [
+        [
+          "34",
+          "34"
+        ]
+      ]
+    },
+    "menu-service-test": {
+      "passed": true,
+      "test_counts": [
+        [
+          "45",
+          "45"
+        ]
+      ]
+    },
+    "api-gateway-test": {
+      "passed": true,
+      "test_counts": [
+        [
+          "22",
+          "22"
+        ]
+      ]
+    }
+  },
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "images": [
+    {
+      "Id": "sha256:e9d241376376f938906b6dbef7dc70c4d65b2b877c7830946f578b9471f258e7",
+      "RepoTags": [
+        "avengers/api-gateway:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:e62651f11164cfa145ef1b4c56952e62864d44d09650a7872a6d9d8c442f46ab",
+      "RepoTags": [
+        "avengers/identity-service:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:9efe4c91591a550f3533cb66b54d115e34a499593d508aaa2ffa2456d4886cf5",
+      "RepoTags": [
+        "avengers/menu-service:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:4be96d5e5680d05382cc4c32a93a6d566a341614e556aede03b4ac41cce8da03",
+      "RepoTags": [
+        "avengers/news-service:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:a18f56506a414c969ad9f0d11f93d069da92e3bcf12247828d27c39effa4c889",
+      "RepoTags": [
+        "avengers/customer-media:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    }
+  ],
+  "image_tar_sha256": "39e68f8422669def9f83d91c0966ea8d47c9fe663480cfd3b494c1085238fe61"
+}

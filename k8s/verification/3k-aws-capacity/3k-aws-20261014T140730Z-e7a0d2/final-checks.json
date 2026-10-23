@@ -1,0 +1,30 @@
+{
+  "application_tests": {
+    "identity": 58,
+    "menu": 43,
+    "news": 32,
+    "gateway": 20
+  },
+  "k8s_tests": {
+    "passed": 24
+  },
+  "aws_harness_tests": {
+    "total": 41,
+    "passed": 40,
+    "historical_skip": 1
+  },
+  "total_passed": 217,
+  "total_skipped": 1,
+  "backend_builds": "PASS",
+  "aws_render": {
+    "resources": 14,
+    "status": "PASS"
+  },
+  "docker_desktop_render": {
+    "resources": 22,
+    "status": "PASS"
+  },
+  "diff_check": "PASS",
+  "local_runtime_deployed": false,
+  "note": "Final regression after pool configuration and gateway quota rollback; no test assertion/quality threshold relaxed."
+}

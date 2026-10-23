@@ -1,0 +1,71 @@
+{
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "git_base": "bca46485ab9389c662406c77dc261e4e3973f806",
+  "tests": {
+    "api-gateway": {
+      "passed": true,
+      "pass": 29,
+      "log_sha256": "57dce1581a24a7845ceaac0c9abc4494d594166d2184707e1bc1f1373b8ff63f"
+    },
+    "identity-service": {
+      "passed": true,
+      "pass": 60,
+      "log_sha256": "8a70a1d020977e2c8a63304c0b37f394cebca43912e5b193239abdfd0132d031"
+    },
+    "menu-service": {
+      "passed": true,
+      "pass": 45,
+      "log_sha256": "9618a6bde3a4d4df53faf00004fb70b3a8130c8640b11d1a177896d40afd9977"
+    },
+    "news-service": {
+      "passed": true,
+      "pass": 34,
+      "log_sha256": "ca6ddfb6c8b48803a52e787265ee573a1c2c187e124cfac0e4c282b7839dd03f"
+    }
+  },
+  "tests_passed": 168,
+  "images": [
+    {
+      "Id": "sha256:e4ff8ec3f6369d0d38bcdbf4636daf1441d67300b396b43718e1fa9b0b415753",
+      "RepoTags": [
+        "avengers/api-gateway:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:39c78389ebbfc22264df6db0d343a45debc19814e9783093282ab2b75e58fc13",
+      "RepoTags": [
+        "avengers/identity-service:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:64b0db919c0c52f97324728e22b588ad47225d7d88b92ce496b780270c6c3c70",
+      "RepoTags": [
+        "avengers/menu-service:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:867cb830c135b8d6dfbaf63631d967f6dd66c09bcd77daa6472332643ee867d1",
+      "RepoTags": [
+        "avengers/news-service:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:8a183069f6b5435bc6b698bca1011ed6723a14e14a3e00612a1f43f929170a5a",
+      "RepoTags": [
+        "avengers/customer-media:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    }
+  ],
+  "image_tar_sha256": "37cf56075ab36edd857bdf5180b7bea595ae4c340ab7a4bcf44b55f1bd97e132",
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2"
+}

@@ -1,0 +1,40 @@
+{
+  "observed_at": "2026-10-18T02:19:56.678278+00:00",
+  "since": "2026-10-18T02:10:51.344845+00:00",
+  "operation_errors": [],
+  "node_versions": {
+    "capacity-target1": "v1.36.5+k3s1",
+    "capacity-target2": "v1.36.5+k3s1"
+  },
+  "deployment": {
+    "replicas": 1,
+    "available": 1,
+    "containers": [
+      {
+        "name": "metrics-server",
+        "image": "rancher/mirrored-metrics-server:v0.9.0",
+        "resources": {
+          "requests": {
+            "cpu": "100m",
+            "memory": "70Mi"
+          }
+        },
+        "safe_args": [
+          "--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname",
+          "--metric-resolution=15s"
+        ]
+      }
+    ]
+  },
+  "pods": [
+    {
+      "name": "metrics-server-6dc596dfb8-r4x7v",
+      "node": "capacity-target1",
+      "phase": "Running",
+      "restarts": 0,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_log_bytes": 0
+    }
+  ],
+  "log_windows": []
+}

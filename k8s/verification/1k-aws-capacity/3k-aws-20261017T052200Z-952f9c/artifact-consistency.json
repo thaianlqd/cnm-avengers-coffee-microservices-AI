@@ -1,0 +1,21 @@
+{
+  "observed_at": "2026-10-17T06:34:56.055327+00:00",
+  "passed": true,
+  "frozen_source_matches": true,
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "points": [
+    {
+      "point": "retained-normal-750",
+      "requests": 138368,
+      "status": "INVALID GENERATOR",
+      "passed": true
+    },
+    {
+      "point": "retained-regression-250",
+      "requests": 48656,
+      "status": "STABLE PASS",
+      "passed": true
+    }
+  ],
+  "quantile_method": "exact linear interpolation over all observations, never average shard percentiles; merged on AWS"
+}

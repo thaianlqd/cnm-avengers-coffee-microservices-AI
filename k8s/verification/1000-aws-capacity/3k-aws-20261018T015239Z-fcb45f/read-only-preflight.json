@@ -1,0 +1,45 @@
+{
+  "observed_at": "2026-10-18T02:00:51.777498+00:00",
+  "account": "956035085549",
+  "region": "ap-southeast-2",
+  "inventory": {
+    "3k-aws": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "3k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "5k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    }
+  },
+  "owned_eni_counts": {
+    "3k-aws": 0,
+    "3k-qualification": 0,
+    "5k-qualification": 0
+  },
+  "instance_free_tier_eligible": true,
+  "ami_free_tier_eligible": true,
+  "ami_id": "ami-0f5e1e0151e5b95ed",
+  "ami_owner": "099720109477",
+  "account_plan_direct_verification_required_before_launch": false,
+  "account_plan_directly_verified": true,
+  "actual_vcpu_limit_from_prior_rejection": 16,
+  "planned_max_vcpu": 16,
+  "no_iam_plan_quota_changes": true,
+  "new_aws_resources_created": false,
+  "account_plan": "FREE",
+  "account_plan_console_observed_at": "2026-10-18T02:01:13.891956+00:00",
+  "credits_sufficient_for_approved_cap": true,
+  "credit_balance_retained": false,
+  "account_plan_verification_method": "authenticated AWSConsoleHome credits cover freeplan costs; account matched; sufficient credit seen; amount not retained"
+}

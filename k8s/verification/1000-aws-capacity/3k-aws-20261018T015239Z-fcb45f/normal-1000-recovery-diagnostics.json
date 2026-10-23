@@ -1,0 +1,122 @@
+[
+  {
+    "folder_exists": true,
+    "files": {
+      "metric-points.jsonl.gz": 1209642,
+      "k6.json": 16519,
+      "stage-vus.jsonl.gz": 2616,
+      "http-windows.jsonl.gz": 11343,
+      "metadata.json": 220,
+      "exit.txt": 1,
+      "k6.log": 26703,
+      "generator.jsonl": 35578,
+      "metric-points-manifest.json": 1055,
+      "post-smoke.json": 3454
+    },
+    "epoch": 1792292582.2046459,
+    "request_count": 33028,
+    "k6_exit": "0",
+    "active_k6_count": 1,
+    "role": "generator1"
+  },
+  {
+    "folder_exists": true,
+    "files": {
+      "metric-points.jsonl.gz": 1194899,
+      "k6.json": 16586,
+      "stage-vus.jsonl.gz": 2590,
+      "http-windows.jsonl.gz": 11444,
+      "metadata.json": 220,
+      "exit.txt": 1,
+      "k6.log": 26702,
+      "generator.jsonl": 35634,
+      "metric-points-manifest.json": 1055,
+      "post-smoke.json": 3466
+    },
+    "epoch": 1792292580.7723413,
+    "request_count": 32292,
+    "k6_exit": "0",
+    "active_k6_count": 1,
+    "role": "generator2"
+  },
+  {
+    "folder_exists": true,
+    "files": {
+      "metric-points.jsonl.gz": 1185460,
+      "k6.json": 16625,
+      "stage-vus.jsonl.gz": 2628,
+      "http-windows.jsonl.gz": 11308,
+      "metadata.json": 220,
+      "exit.txt": 1,
+      "k6.log": 26588,
+      "generator.jsonl": 35595,
+      "metric-points-manifest.json": 1055,
+      "post-smoke.json": 3423
+    },
+    "epoch": 1792292581.0204604,
+    "request_count": 31888,
+    "k6_exit": "0",
+    "active_k6_count": 1,
+    "role": "generator3"
+  },
+  {
+    "folder_exists": true,
+    "files": {
+      "metric-points.jsonl.gz": 1199308,
+      "k6.json": 16658,
+      "stage-vus.jsonl.gz": 2623,
+      "http-windows.jsonl.gz": 11333,
+      "metadata.json": 220,
+      "exit.txt": 1,
+      "k6.log": 26702,
+      "generator.jsonl": 35567,
+      "metric-points-manifest.json": 1055,
+      "post-smoke.json": 3442
+    },
+    "epoch": 1792292582.2512882,
+    "request_count": 32328,
+    "k6_exit": "0",
+    "active_k6_count": 1,
+    "role": "generator4"
+  },
+  {
+    "folder_exists": true,
+    "files": {
+      "metric-points.jsonl.gz": 1202214,
+      "k6.json": 16565,
+      "stage-vus.jsonl.gz": 2610,
+      "http-windows.jsonl.gz": 11173,
+      "metadata.json": 220,
+      "exit.txt": 1,
+      "k6.log": 26588,
+      "generator.jsonl": 35521,
+      "metric-points-manifest.json": 1055,
+      "post-smoke.json": 3445
+    },
+    "epoch": 1792292582.1421964,
+    "request_count": 32676,
+    "k6_exit": "0",
+    "active_k6_count": 1,
+    "role": "generator5"
+  },
+  {
+    "folder_exists": true,
+    "files": {
+      "metric-points.jsonl.gz": 1206383,
+      "k6.json": 16488,
+      "stage-vus.jsonl.gz": 2579,
+      "http-windows.jsonl.gz": 11152,
+      "metadata.json": 220,
+      "exit.txt": 1,
+      "k6.log": 26587,
+      "generator.jsonl": 35148,
+      "metric-points-manifest.json": 1055,
+      "post-smoke.json": 3484
+    },
+    "epoch": 1792292580.1362264,
+    "request_count": 32836,
+    "k6_exit": "0",
+    "active_k6_count": 1,
+    "role": "generator6"
+  }
+]

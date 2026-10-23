@@ -1,0 +1,6 @@
+{
+  "source_manifest": "source-manifest.json",
+  "images_manifest": "images.json",
+  "images_manifest_sha256": "e1bbafd2e78affe6afa652f9e8985fcba6cdee3e2928734578f34d668366fc97",
+  "runtime_overlay_sha256": "ecd8f26f8abab54c9c688d1c11e7e84027516f5c6962d3e6dfbc7756c8d1f15c"
+}

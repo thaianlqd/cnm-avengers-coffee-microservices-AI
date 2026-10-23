@@ -1,0 +1,56 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 235B done
+#1 DONE 0.0s
+
+#2 [context menu_media] load .dockerignore
+#2 transferring menu_media: 2B done
+#2 DONE 0.0s
+
+#3 [context news_media] load .dockerignore
+#3 transferring news_media: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/library/busybox:1.37
+#4 DONE 2.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [context news_media] load from client
+#6 transferring news_media: 1.29MB 0.0s done
+#6 DONE 0.0s
+
+#7 [context menu_media] load from client
+#7 transferring menu_media: 1.88MB 0.0s done
+#7 DONE 0.0s
+
+#8 [media 1/3] FROM docker.io/library/busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+#8 resolve docker.io/library/busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+#8 resolve docker.io/library/busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e 1.2s done
+#8 DONE 1.2s
+
+#8 [media 1/3] FROM docker.io/library/busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+#8 sha256:68fe9bff2ad4ad46da3e58db03faa64eb73c0ff16d546b0c42539eaa9854cb7f 0B / 2.21MB 0.2s
+#8 sha256:68fe9bff2ad4ad46da3e58db03faa64eb73c0ff16d546b0c42539eaa9854cb7f 2.21MB / 2.21MB 0.3s done
+#8 extracting sha256:68fe9bff2ad4ad46da3e58db03faa64eb73c0ff16d546b0c42539eaa9854cb7f 0.1s done
+#8 DONE 1.5s
+
+#9 [media 2/3] COPY --from=menu_media / /media/products/
+#9 DONE 0.3s
+
+#10 [media 3/3] COPY --from=news_media / /media/uploads/
+#10 DONE 0.0s
+
+#11 exporting to image
+#11 exporting layers 0.1s done
+#11 exporting manifest sha256:0653004c758c744aeb3759f33c2189aed04febe5072f3bfecc242cd78a267855
+#11 exporting manifest sha256:0653004c758c744aeb3759f33c2189aed04febe5072f3bfecc242cd78a267855 done
+#11 exporting config sha256:55537cbf57942681b5f77ce0d12c1d1688794ba192ad4e14421a5028ab1438a7 done
+#11 exporting attestation manifest sha256:f1a7243fed7f1325bb55d5a7d9ce937b5650f9845641c46c7a33f85f970ed2ad 0.0s done
+#11 exporting manifest list sha256:895987c9f6c799d50a8ac64d9c41ea49ff5b9078035d49cefc0641280f7aa7b2 done
+#11 naming to docker.io/avengers/customer-media:3k-aws-ac88422957e9 done
+#11 unpacking to docker.io/avengers/customer-media:3k-aws-ac88422957e9 0.0s done
+#11 DONE 0.2s

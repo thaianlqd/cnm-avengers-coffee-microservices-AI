@@ -1,0 +1,64 @@
+namespace/avengers-coffee created
+configmap/api-gateway-config serverside-applied
+secret/api-gateway-secrets serverside-applied
+configmap/identity-service-config serverside-applied
+secret/identity-service-secrets serverside-applied
+configmap/menu-service-config serverside-applied
+secret/menu-service-secrets serverside-applied
+configmap/news-service-config serverside-applied
+secret/news-service-secrets serverside-applied
+namespace/avengers-coffee serverside-applied
+configmap/avengers-common serverside-applied
+service/api-gateway serverside-applied
+service/identity-service serverside-applied
+service/menu-service serverside-applied
+service/news-service serverside-applied
+deployment.apps/api-gateway serverside-applied
+deployment.apps/identity-service serverside-applied
+deployment.apps/menu-service serverside-applied
+deployment.apps/news-service serverside-applied
+poddisruptionbudget.policy/api-gateway serverside-applied
+horizontalpodautoscaler.autoscaling/api-gateway serverside-applied
+horizontalpodautoscaler.autoscaling/identity-service serverside-applied
+horizontalpodautoscaler.autoscaling/menu-service serverside-applied
+Waiting for deployment "api-gateway" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "api-gateway" rollout to finish: 1 of 2 updated replicas are available...
+deployment "api-gateway" successfully rolled out
+Waiting for deployment "identity-service" rollout to finish: 0 of 1 updated replicas are available...
+deployment "identity-service" successfully rolled out
+Waiting for deployment "menu-service" rollout to finish: 0 of 1 updated replicas are available...
+deployment "menu-service" successfully rolled out
+deployment "news-service" successfully rolled out
+NAME                                READY   STATUS    RESTARTS   AGE   IP          NODE               NOMINATED NODE   READINESS GATES
+api-gateway-6bf6b5694b-klbhp        1/1     Running   0          12s   10.42.2.2   capacity-target2   <none>           <none>
+api-gateway-6bf6b5694b-q8rd5        1/1     Running   0          12s   10.42.1.3   capacity-target3   <none>           <none>
+identity-service-5977c8446c-8flx7   1/1     Running   0          12s   10.42.1.2   capacity-target3   <none>           <none>
+menu-service-55d485f4b-zxbwb        1/1     Running   0          12s   10.42.2.3   capacity-target2   <none>           <none>
+news-service-7bb8497b5c-rtw2h       1/1     Running   0          12s   10.42.1.4   capacity-target3   <none>           <none>
+NAME               REFERENCE                     TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+api-gateway        Deployment/api-gateway        cpu: <unknown>/60%   2         4         0          12s
+identity-service   Deployment/identity-service   cpu: <unknown>/60%   1         3         0          12s
+menu-service       Deployment/menu-service       cpu: <unknown>/60%   1         4         0          12s
+NAME               CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)
+capacity-target1   203m         10%      1019Mi          13%
+capacity-target2   58m          2%       419Mi           5%
+capacity-target3   62m          3%       416Mi           5%
+NAME               CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)
+capacity-target1   203m         10%      1019Mi          13%
+capacity-target2   58m          2%       419Mi           5%
+capacity-target3   62m          3%       416Mi           5%
+NAME               CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)
+capacity-target1   203m         10%      1019Mi          13%
+capacity-target2   58m          2%       419Mi           5%
+capacity-target3   62m          3%       416Mi           5%
+NAME               CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)
+capacity-target1   123m         6%       974Mi           12%
+capacity-target2   123m         6%       467Mi           6%
+capacity-target3   183m         9%       508Mi           6%
+NAME                                CPU(cores)   MEMORY(bytes)
+api-gateway-6bf6b5694b-klbhp        5m           19Mi
+api-gateway-6bf6b5694b-q8rd5        46m          22Mi
+identity-service-5977c8446c-8flx7   15m          35Mi
+menu-service-55d485f4b-zxbwb        9m           30Mi
+news-service-7bb8497b5c-rtw2h       8m           31Mi
+PASS existing TLS database and five application schemas; read-only transaction

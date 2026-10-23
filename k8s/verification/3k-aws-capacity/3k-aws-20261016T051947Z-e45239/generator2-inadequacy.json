@@ -1,0 +1,7 @@
+{
+  "evidence_name": "analysis.json",
+  "evidence_sha256": "ce01d6f9fce36be90d00d5ca167557fc521bc8d5ece6a9207f97d1a3de2560f5",
+  "generator_reasons": [
+    "generator CPU >=90% for three consecutive intervals"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "observed_at": "2026-10-16T18:47:06.945880+00:00",
+  "instance_type": "m7i-flex.large",
+  "free_tier_eligible": true,
+  "vcpus": {
+    "DefaultVCpus": 2,
+    "DefaultCores": 1,
+    "DefaultThreadsPerCore": 2,
+    "ValidCores": [
+      1
+    ],
+    "ValidThreadsPerCore": [
+      1,
+      2
+    ]
+  },
+  "memory_mib": 8192,
+  "ami_id": "ami-0f5e1e0151e5b95ed",
+  "ami_owner": "099720109477",
+  "ami_free_tier_eligible": true,
+  "account_plan": "FREE, directly verified in AWS Console; CLI account-plan permission denied",
+  "plan_unchanged": true
+}

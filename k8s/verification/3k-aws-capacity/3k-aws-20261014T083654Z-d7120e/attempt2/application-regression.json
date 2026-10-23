@@ -1,0 +1,10 @@
+{
+  "source_sha": "b9ba9fd95c3f63f3a9356b27454710a752bfc49b",
+  "platform": "linux/amd64",
+  "gateway": 20,
+  "identity": 41,
+  "menu": 26,
+  "news": 15,
+  "total_passed": 102,
+  "before_build": true
+}

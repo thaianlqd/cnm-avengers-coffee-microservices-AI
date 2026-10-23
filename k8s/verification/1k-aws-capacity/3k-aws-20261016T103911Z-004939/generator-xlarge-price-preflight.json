@@ -1,0 +1,17 @@
+{
+  "SKU": "VQ4C2CD69N5AQKY5",
+  "EffectiveDate": "2026-10-01",
+  "Unit": "Hrs",
+  "PricePerUnit": "0.2394000000",
+  "Currency": "USD",
+  "Instance Type": "m7i-flex.xlarge",
+  "vCPU": "4",
+  "Memory": "16 GiB",
+  "Operating System": "Linux",
+  "Tenancy": "Shared",
+  "PriceDescription": "$0.2394 per On Demand Linux m7i-flex.xlarge Instance Hour",
+  "source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-southeast-2/index.csv",
+  "observed_at": "2026-10-16T12:17:03.456504+00:00",
+  "provisioned": false,
+  "purpose": "read-only future generator eligibility/cost preflight; no authorization inferred"
+}

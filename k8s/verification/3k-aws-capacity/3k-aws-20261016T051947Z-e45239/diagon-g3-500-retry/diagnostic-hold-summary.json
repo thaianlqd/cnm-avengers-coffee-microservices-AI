@@ -1,0 +1,213 @@
+{
+  "api-gateway": {
+    "products:upstream_headers": {
+      "count": 8458,
+      "max_ms": 10519.043325999999,
+      "mean_ms": 418.83254661799486
+    },
+    "products:request": {
+      "count": 8452,
+      "max_ms": 9841.847626000002,
+      "mean_ms": 411.91234346888245
+    },
+    "branches:upstream_headers": {
+      "count": 8481,
+      "max_ms": 10873.443616000004,
+      "mean_ms": 463.816847112957
+    },
+    "branches:request": {
+      "count": 8470,
+      "max_ms": 9988.494784999988,
+      "mean_ms": 451.35033802302155
+    },
+    "news:upstream_headers": {
+      "count": 8430,
+      "max_ms": 9893.002806000004,
+      "mean_ms": 232.1060294651256
+    },
+    "news:request": {
+      "count": 8429,
+      "max_ms": 9893.653222000008,
+      "mean_ms": 231.82060638889524
+    },
+    "categories:upstream_headers": {
+      "count": 8600,
+      "max_ms": 9805.840056999994,
+      "mean_ms": 419.1386670150008
+    },
+    "categories:request": {
+      "count": 8601,
+      "max_ms": 9806.365013000002,
+      "mean_ms": 420.2109439573308
+    }
+  },
+  "identity-service": {
+    "branches:request": {
+      "count": 7713,
+      "max_ms": 1715.982388999997,
+      "mean_ms": 175.13131976623922
+    },
+    "branches:db_acquire": {
+      "count": 37,
+      "max_ms": 1.3383689999973285,
+      "mean_ms": 0.18955800000942355
+    },
+    "branches:db_query": {
+      "count": 37,
+      "max_ms": 1494.1314869999987,
+      "mean_ms": 1078.3593049459278
+    },
+    "branches:load": {
+      "count": 37,
+      "max_ms": 1545.0355439999985,
+      "mean_ms": 1106.3130279459526
+    },
+    "branches:serialize": {
+      "count": 37,
+      "max_ms": 71.81550700000662,
+      "mean_ms": 19.503559999990003
+    },
+    "branches:gzip": {
+      "count": 37,
+      "max_ms": 56.16110800000024,
+      "mean_ms": 10.187519270278514
+    },
+    "branches:cache_wait": {
+      "count": 1751,
+      "max_ms": 1624.0635970000003,
+      "mean_ms": 719.9688963095372
+    }
+  },
+  "menu-service": {
+    "categories:db_acquire": {
+      "count": 59,
+      "max_ms": 1162.558889,
+      "mean_ms": 89.47582722034127
+    },
+    "categories:db_query": {
+      "count": 58,
+      "max_ms": 193.10673700000189,
+      "mean_ms": 171.0654146551664
+    },
+    "categories:load": {
+      "count": 58,
+      "max_ms": 1356.2535539999953,
+      "mean_ms": 264.2487235862051
+    },
+    "categories:serialize": {
+      "count": 58,
+      "max_ms": 0.09891899999638554,
+      "mean_ms": 0.04565486207181085
+    },
+    "categories:gzip": {
+      "count": 58,
+      "max_ms": 0.816263999999137,
+      "mean_ms": 0.36772551723749436
+    },
+    "categories:cache_wait": {
+      "count": 829,
+      "max_ms": 1356.902565999997,
+      "mean_ms": 325.28607641133954
+    },
+    "categories:request": {
+      "count": 8380,
+      "max_ms": 1370.474936000006,
+      "mean_ms": 33.861795480309645
+    },
+    "products:db_connect": {
+      "count": 2,
+      "max_ms": 1103.4471520000006,
+      "mean_ms": 1054.3037580000005
+    },
+    "products:db_acquire": {
+      "count": 108,
+      "max_ms": 1103.7861360000006,
+      "mean_ms": 19.640152638890843
+    },
+    "products:db_query": {
+      "count": 108,
+      "max_ms": 575.1358459999974,
+      "mean_ms": 346.63290996297076
+    },
+    "products:load": {
+      "count": 54,
+      "max_ms": 1871.3759740000005,
+      "mean_ms": 738.0655640370477
+    },
+    "products:serialize": {
+      "count": 54,
+      "max_ms": 17.65454500001215,
+      "mean_ms": 2.009307574083289
+    },
+    "products:gzip": {
+      "count": 54,
+      "max_ms": 9.20011100001284,
+      "mean_ms": 1.9701339444445356
+    },
+    "products:cache_wait": {
+      "count": 1532,
+      "max_ms": 1874.7856850000007,
+      "mean_ms": 441.78337576370734
+    },
+    "products:request": {
+      "count": 8269,
+      "max_ms": 1884.8330989999995,
+      "mean_ms": 84.05212060007254
+    },
+    "categories:db_connect": {
+      "count": 5,
+      "max_ms": 1162.1786989999964,
+      "mean_ms": 1053.0097539999958
+    }
+  },
+  "news-service": {
+    "news:db_acquire": {
+      "count": 18,
+      "max_ms": 0.2534260000102222,
+      "mean_ms": 0.13359294444995207
+    },
+    "news:db_query": {
+      "count": 18,
+      "max_ms": 172.59539899998344,
+      "mean_ms": 168.9232814444436
+    },
+    "news:load": {
+      "count": 18,
+      "max_ms": 175.93677799985744,
+      "mean_ms": 170.72808683329882
+    },
+    "news:serialize": {
+      "count": 18,
+      "max_ms": 0.5577259999699891,
+      "mean_ms": 0.14758861107596508
+    },
+    "news:gzip": {
+      "count": 18,
+      "max_ms": 1.5952139999717474,
+      "mean_ms": 0.6163631666762134
+    },
+    "news:cache_wait": {
+      "count": 409,
+      "max_ms": 177.64270399999805,
+      "mean_ms": 79.46953762347599
+    },
+    "news:request": {
+      "count": 8199,
+      "max_ms": 207.13356300001033,
+      "mean_ms": 5.09662423222202
+    }
+  },
+  "event_loop_max_ms": {
+    "api-gateway": 180.879359,
+    "identity-service": 383.778815,
+    "menu-service": 105.644031,
+    "news-service": 84.934655
+  },
+  "_selection": {
+    "hold_start": "2026-10-16T06:06:03.070210+00:00",
+    "hold_end": "2026-10-16T06:08:03.070210+00:00",
+    "intervals": 34,
+    "method": "record end minus interval_ms >= hold start, record end <= hold end; count-weighted means and maxima, not quantiles",
+    "limits": "Collected surviving-Pod logs only; no request-ID pairing or DB server execution timing. Intervals crossing hold boundary excluded. Instrumentation-enabled variant is not default qualification."
+  }
+}

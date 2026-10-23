@@ -1,0 +1,44 @@
+{
+  "instances": [
+    {
+      "instance_id": "i-052f9ec9c7cd6af78",
+      "role": "generator2",
+      "runtime_upper_seconds": 836.23982,
+      "compute_upper_usd": 0.027804974015
+    },
+    {
+      "instance_id": "i-07ac53eb27ef85bf8",
+      "role": "target1",
+      "runtime_upper_seconds": 942.23982,
+      "compute_upper_usd": 0.031329474015000004
+    },
+    {
+      "instance_id": "i-0708d77b757080bf4",
+      "role": "target3",
+      "runtime_upper_seconds": 937.23982,
+      "compute_upper_usd": 0.031163224015
+    },
+    {
+      "instance_id": "i-0d93d1fa39fa2af6a",
+      "role": "generator3",
+      "runtime_upper_seconds": 745.23982,
+      "compute_upper_usd": 0.024779224015
+    },
+    {
+      "instance_id": "i-012006bb3888fdc29",
+      "role": "target2",
+      "runtime_upper_seconds": 940.23982,
+      "compute_upper_usd": 0.031262974015
+    },
+    {
+      "instance_id": "i-0c1cc3712d5520928",
+      "role": "generator1",
+      "runtime_upper_seconds": 935.23982,
+      "compute_upper_usd": 0.031096724014999997
+    }
+  ],
+  "compute_upper_usd": 0.17743659409,
+  "first_attempt_reserve_usd": 0.3,
+  "actual_bill": false,
+  "scope": "includes unused setup; no credentials or load; reserve includes EBS/public IPv4 and unitemized transfer"
+}

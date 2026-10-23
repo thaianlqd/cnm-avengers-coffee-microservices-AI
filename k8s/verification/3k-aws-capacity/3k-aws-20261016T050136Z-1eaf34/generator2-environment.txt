@@ -1,0 +1,7 @@
+k6 v2.3.0 (commit/e088784614, go1.26.8, linux/amd64)
+e001bbf39ba67424a85c9c8516440ba5c73ecf7a6021be96c76194380c15f260  /opt/avengers-k6/k6
+8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2  /opt/avengers-workload/customer-browse-3k.js
+100
+               total        used        free      shared  buff/cache   available
+Mem:            7776         593        6655           2         785        7182
+Swap:              0           0           0

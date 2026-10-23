@@ -1,0 +1,14 @@
+{
+  "actual_bill": false,
+  "approved_additional_credit_max_usd": 2.0,
+  "controller_started_at": "2026-10-17T05:22:20.596884+00:00",
+  "cleanup_verified_at": "2026-10-17T06:29:29.141293+00:00",
+  "elapsed_minutes_until_cleanup": 67.14240681666666,
+  "compute_upper_bound_usd": 0.8036946095955,
+  "method": "conservative: all six machines charged from controller start until verified cleanup, although generators launched later",
+  "planned_full100min_compute_max_usd": 1.197,
+  "reserved_total_usd": 1.927,
+  "cumulative_authorized_estimate_usd": 12.4431,
+  "account_plan": "FREE directly verified; no plan/IAM changes",
+  "personal_balance_retained": false
+}

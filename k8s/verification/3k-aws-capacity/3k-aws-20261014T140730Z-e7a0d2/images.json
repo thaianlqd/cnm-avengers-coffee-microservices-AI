@@ -1,0 +1,67 @@
+[
+  {
+    "name": "api-gateway",
+    "tag": "avengers/api-gateway:3k-aws-da8ca6f74b04",
+    "image_id": "sha256:cc58270b20e0a90988c80c14dfb140da83b83e3fa3e3c2f8d2ff5c3689e86d93",
+    "architecture": "amd64",
+    "source_sha": "da8ca6f74b04685f6b337630440184c70f5336bc",
+    "repo_digests": [
+      "avengers/api-gateway@sha256:cc58270b20e0a90988c80c14dfb140da83b83e3fa3e3c2f8d2ff5c3689e86d93"
+    ],
+    "tar_sha256": "73f1dcd14a3c689a512b3d9a4e217794c9c9020af45aacc622e55247d7fff171",
+    "oci_manifest_digest": "sha256:cc58270b20e0a90988c80c14dfb140da83b83e3fa3e3c2f8d2ff5c3689e86d93",
+    "dockerfile_sha256": "6a600919e610b6b5920bb4ed615d38460c9838c2b2e6446dbdddf81f767ddf59"
+  },
+  {
+    "name": "identity-service",
+    "tag": "avengers/identity-service:3k-aws-da8ca6f74b04",
+    "image_id": "sha256:0acc3bcafbdae4b01c5c2671f12f06a7a5832681815ccf779115ffe96897c2d3",
+    "architecture": "amd64",
+    "source_sha": "da8ca6f74b04685f6b337630440184c70f5336bc",
+    "repo_digests": [
+      "avengers/identity-service@sha256:0acc3bcafbdae4b01c5c2671f12f06a7a5832681815ccf779115ffe96897c2d3"
+    ],
+    "tar_sha256": "967fd5f160a68514241fa4080252048bd3e2a37d83208e884d373aed5efd0f76",
+    "oci_manifest_digest": "sha256:0acc3bcafbdae4b01c5c2671f12f06a7a5832681815ccf779115ffe96897c2d3",
+    "dockerfile_sha256": "3c279a8085e1a7c4f099c15dc5d30d42b0163ca912edfad135521ffbd5614739"
+  },
+  {
+    "name": "menu-service",
+    "tag": "avengers/menu-service:3k-aws-da8ca6f74b04",
+    "image_id": "sha256:13cdd6183eb1ece1080e798ba2e9e76b808b1f57d3c405009db2b70e3393767e",
+    "architecture": "amd64",
+    "source_sha": "da8ca6f74b04685f6b337630440184c70f5336bc",
+    "repo_digests": [
+      "avengers/menu-service@sha256:13cdd6183eb1ece1080e798ba2e9e76b808b1f57d3c405009db2b70e3393767e"
+    ],
+    "tar_sha256": "d9c19fd6813f93f0c69e4e2f33762d38948a855ca8ed81d0486d50282f1183d5",
+    "oci_manifest_digest": "sha256:13cdd6183eb1ece1080e798ba2e9e76b808b1f57d3c405009db2b70e3393767e",
+    "dockerfile_sha256": "b62a2c3ee8dd16a81c256103ed598e3d937cb3901405ae006527aaf49a436a08"
+  },
+  {
+    "name": "news-service",
+    "tag": "avengers/news-service:3k-aws-da8ca6f74b04",
+    "image_id": "sha256:7cc6fbdb604d2127bb5b200116453c12a9dbebea3b65d41b7ea5032c365a5e2c",
+    "architecture": "amd64",
+    "source_sha": "da8ca6f74b04685f6b337630440184c70f5336bc",
+    "repo_digests": [
+      "avengers/news-service@sha256:7cc6fbdb604d2127bb5b200116453c12a9dbebea3b65d41b7ea5032c365a5e2c"
+    ],
+    "tar_sha256": "a2995d7ec87e1e106b93fd0cde0343f3ee91f0ce3bec62793841ff2d564b4aef",
+    "oci_manifest_digest": "sha256:7cc6fbdb604d2127bb5b200116453c12a9dbebea3b65d41b7ea5032c365a5e2c",
+    "dockerfile_sha256": "7cbebbd93bbb82a83798b9fc5d331685ea13503b2def03b6e08438b7f28f099b"
+  },
+  {
+    "name": "customer-media",
+    "tag": "avengers/customer-media:3k-aws-da8ca6f74b04",
+    "image_id": "sha256:1aca704972c95f3ac8b93c30999731847a9a65b9cc5bae44e8df18fcaf7db50f",
+    "architecture": "amd64",
+    "source_sha": "da8ca6f74b04685f6b337630440184c70f5336bc",
+    "repo_digests": [
+      "avengers/customer-media@sha256:1aca704972c95f3ac8b93c30999731847a9a65b9cc5bae44e8df18fcaf7db50f"
+    ],
+    "tar_sha256": "7a74e1ec8f6cfe16d0805d1d38a279d65b16cb532fd78940517ff9d76015a0a7",
+    "oci_manifest_digest": "sha256:1aca704972c95f3ac8b93c30999731847a9a65b9cc5bae44e8df18fcaf7db50f",
+    "dockerfile_sha256": "1323ad4e25dc90d659c79922fd9d4ca5a75be8c0ef91eadba8991ea85252e47d"
+  }
+]

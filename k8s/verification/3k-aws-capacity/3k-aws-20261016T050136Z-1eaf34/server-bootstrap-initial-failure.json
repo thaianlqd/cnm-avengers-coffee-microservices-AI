@@ -1,0 +1,6 @@
+{
+  "stage": "first k3s node registration",
+  "error": "kubectl wait before Node object existed: no matching resources found",
+  "classification": "setup readiness race; no capacity load",
+  "action": "bounded registration wait on the same fleet; no new resources"
+}

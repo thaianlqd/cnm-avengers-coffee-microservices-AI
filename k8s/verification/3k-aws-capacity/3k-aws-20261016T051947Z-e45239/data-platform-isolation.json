@@ -1,0 +1,8 @@
+{
+  "observed_at": "2026-10-16T10:04:39.293303+00:00",
+  "original_worktree_branch": "branch_thaian",
+  "worktree_used_for_changes": "features_k8s isolated sibling",
+  "actions": "No original-worktree edits/checkout/stash/reset/clean, no Mac Docker restart/settings/container stop, no local cluster creation",
+  "local_runtime_regression": "NOT RUN: protect concurrent DataPlatform",
+  "socket_io_current": "NOT RUN; historical evidence retained separately"
+}

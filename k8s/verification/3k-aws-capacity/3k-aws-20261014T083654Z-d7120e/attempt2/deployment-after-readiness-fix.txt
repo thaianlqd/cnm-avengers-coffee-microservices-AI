@@ -1,0 +1,57 @@
+namespace/avengers-coffee unchanged (server dry run)
+configmap/avengers-common configured (server dry run)
+service/api-gateway unchanged (server dry run)
+service/identity-service unchanged (server dry run)
+service/menu-service unchanged (server dry run)
+service/news-service unchanged (server dry run)
+deployment.apps/api-gateway configured (server dry run)
+deployment.apps/identity-service configured (server dry run)
+deployment.apps/menu-service configured (server dry run)
+deployment.apps/news-service configured (server dry run)
+poddisruptionbudget.policy/api-gateway configured (server dry run)
+horizontalpodautoscaler.autoscaling/api-gateway unchanged (server dry run)
+horizontalpodautoscaler.autoscaling/identity-service unchanged (server dry run)
+horizontalpodautoscaler.autoscaling/menu-service unchanged (server dry run)
+namespace/avengers-coffee unchanged
+configmap/avengers-common configured
+service/api-gateway unchanged
+service/identity-service unchanged
+service/menu-service unchanged
+service/news-service unchanged
+deployment.apps/api-gateway configured
+deployment.apps/identity-service configured
+deployment.apps/menu-service configured
+deployment.apps/news-service configured
+poddisruptionbudget.policy/api-gateway configured
+horizontalpodautoscaler.autoscaling/api-gateway unchanged
+horizontalpodautoscaler.autoscaling/identity-service unchanged
+horizontalpodautoscaler.autoscaling/menu-service unchanged
+Waiting for deployment "api-gateway" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "api-gateway" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "api-gateway" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "api-gateway" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "api-gateway" rollout to finish: 1 old replicas are pending termination...
+deployment "api-gateway" successfully rolled out
+deployment "identity-service" successfully rolled out
+deployment "menu-service" successfully rolled out
+deployment "news-service" successfully rolled out
+NAME                               READY   STATUS    RESTARTS   AGE   IP          NODE              NOMINATED NODE   READINESS GATES
+api-gateway-769f78bf-8rshf         1/1     Running   0          41s   10.42.2.6   ip-172-31-1-239   <none>           <none>
+api-gateway-769f78bf-hnpwh         1/1     Running   0          47s   10.42.1.4   ip-172-31-1-187   <none>           <none>
+identity-service-c7ff96fbd-q8sdz   1/1     Running   0          47s   10.42.2.5   ip-172-31-1-239   <none>           <none>
+menu-service-6f7bb7488d-dbd82      1/1     Running   0          47s   10.42.1.5   ip-172-31-1-187   <none>           <none>
+news-service-54bdb497d9-hjc5v      1/1     Running   0          47s   10.42.0.5   ip-172-31-13-1    <none>           <none>
+NAME              CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+ip-172-31-1-187   12m          0%       490Mi           6%          
+ip-172-31-1-239   14m          0%       492Mi           6%          
+ip-172-31-13-1    44m          2%       867Mi           11%         
+NAME                               CPU(cores)   MEMORY(bytes)   
+api-gateway-769f78bf-8rshf         1m           18Mi            
+api-gateway-769f78bf-hnpwh         3m           18Mi            
+identity-service-c7ff96fbd-q8sdz   2m           36Mi            
+menu-service-6f7bb7488d-dbd82      1m           30Mi            
+news-service-54bdb497d9-hjc5v      2m           31Mi            
+NAME               REFERENCE                     TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+api-gateway        Deployment/api-gateway        cpu: 2%/60%   2         4         2          18m
+identity-service   Deployment/identity-service   cpu: 2%/60%   1         3         1          18m
+menu-service       Deployment/menu-service       cpu: 1%/60%   1         4         1          18m

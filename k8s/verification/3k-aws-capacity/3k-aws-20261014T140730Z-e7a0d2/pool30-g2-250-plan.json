@@ -1,0 +1,14 @@
+{
+  "vus": 250,
+  "generator_partitions": {
+    "generator1": 125,
+    "generator2": 125
+  },
+  "start_at": "2026-10-14T14:31:22.384318+00:00",
+  "workload_sha256": "dfb9af16b94cc0b22ae53710ece3bde446831fb110a928e7573120bf3ffc4c83",
+  "collector": "raw gzipped k6 points; merged exact quantiles; per-generator adequacy required",
+  "controller_hashes": {
+    "aws-run-generator.py": "a78eaafb77a9247f9c57ab82cc44ac08f197a21e5821d8c1a97be1acf78f5c39",
+    "merge-aws-generators.py": "19704fe34131bd73ae6560e08d722ad369455b07261edb390a456ef36bb792be"
+  }
+}

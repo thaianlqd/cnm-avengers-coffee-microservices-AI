@@ -1,0 +1,17 @@
+{
+  "status": "INCOMPLETE CONTROL START \u2014 NOT QUALIFICATION",
+  "requested_vus": 500,
+  "started_partitions": [
+    "generator2",
+    "generator3"
+  ],
+  "started_partition_vus": 333,
+  "missing_partition_vus": 167,
+  "cause": "generator1 rejected invalid synchronized start; no k6 process started on this shard",
+  "failed_control_job": "298c9fe293bb9888",
+  "worker_command_started_at": 1792152993.234709,
+  "worker_command_finished_at": 1792152993.2683606,
+  "stderr_sha256": "88e845a86df1d2b363d88b41b367804d232c53e1e4583306a5e28e26c1b5c978",
+  "retention": "no merged500 summary/analysis fabricated; all completed shard evidence preserved",
+  "fix": "increase schedule lead from35 to90 seconds; keep <=120s native validation, unchanged workload and <=2s actual skew gate"
+}

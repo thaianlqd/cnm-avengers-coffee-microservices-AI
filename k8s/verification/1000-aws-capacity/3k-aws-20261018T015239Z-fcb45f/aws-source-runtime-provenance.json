@@ -1,0 +1,89 @@
+{
+  "source_file_hashes_match": true,
+  "source_archive_sha256": "baffd60f03e83541849b9f4f73f2a1091e279b63c199a8ec436832a9659bda33",
+  "application_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "gateway_node_version": "v20.20.2",
+  "nodes": [
+    {
+      "name": "capacity-target1",
+      "nodeInfo": {
+        "architecture": "amd64",
+        "bootID": "74020485-3e08-414b-94d3-02739fdc95fc",
+        "containerRuntimeVersion": "containerd://2.3.4-k3s1.36",
+        "kernelVersion": "7.0.0-1014-aws",
+        "kubeProxyVersion": "",
+        "kubeletVersion": "v1.36.5+k3s1",
+        "machineID": "ec2c8850152d62b5303d30c7c7f0ff34",
+        "operatingSystem": "linux",
+        "osImage": "Ubuntu 24.04.5 LTS",
+        "systemUUID": "ec2c8850-152d-62b5-303d-30c7c7f0ff34"
+      },
+      "capacity": {
+        "cpu": "2",
+        "ephemeral-storage": "29378688Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "memory": "7962844Ki",
+        "pods": "110"
+      },
+      "allocatable": {
+        "cpu": "2",
+        "ephemeral-storage": "28579587664",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "memory": "7962844Ki",
+        "pods": "110"
+      }
+    },
+    {
+      "name": "capacity-target2",
+      "nodeInfo": {
+        "architecture": "amd64",
+        "bootID": "5e151a3b-a0fe-4285-a2ed-92782813cadd",
+        "containerRuntimeVersion": "containerd://2.3.4-k3s1.36",
+        "kernelVersion": "7.0.0-1014-aws",
+        "kubeProxyVersion": "",
+        "kubeletVersion": "v1.36.5+k3s1",
+        "machineID": "ec224914f1cbd73f310d311ba2ec371b",
+        "operatingSystem": "linux",
+        "osImage": "Ubuntu 24.04.5 LTS",
+        "systemUUID": "ec224914-f1cb-d73f-310d-311ba2ec371b"
+      },
+      "capacity": {
+        "cpu": "2",
+        "ephemeral-storage": "29378688Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "memory": "7962852Ki",
+        "pods": "110"
+      },
+      "allocatable": {
+        "cpu": "2",
+        "ephemeral-storage": "28579587664",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "memory": "7962852Ki",
+        "pods": "110"
+      }
+    }
+  ],
+  "coredns": {
+    "replicas": 1,
+    "available": 1,
+    "containers": [
+      {
+        "name": "coredns",
+        "image": "rancher/mirrored-coredns-coredns:1.14.7",
+        "resources": {
+          "limits": {
+            "memory": "170Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "70Mi"
+          }
+        }
+      }
+    ]
+  }
+}

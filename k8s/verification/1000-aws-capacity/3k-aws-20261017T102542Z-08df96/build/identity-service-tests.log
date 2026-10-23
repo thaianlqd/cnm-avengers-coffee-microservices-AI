@@ -1,0 +1,20 @@
+
+> identity-service@0.0.1 test
+> jest --runInBand
+
+PASS src/public-browse-cache.spec.ts
+PASS src/modules/user/customer-auth.spec.ts
+PASS src/modules/user/membership-contract.spec.ts
+PASS src/auth/workspace-policy.spec.ts
+PASS src/health.controller.spec.ts
+PASS src/modules/user/promotion-claim.spec.ts
+PASS src/auth/google-identity.spec.ts
+PASS src/capacity-diagnostics.spec.ts
+PASS src/db-pool.config.spec.ts
+PASS src/app.controller.spec.ts
+
+Test Suites: 10 passed, 10 total
+Tests:       60 passed, 60 total
+Snapshots:   0 total
+Time:        4.444 s
+Ran all test suites.

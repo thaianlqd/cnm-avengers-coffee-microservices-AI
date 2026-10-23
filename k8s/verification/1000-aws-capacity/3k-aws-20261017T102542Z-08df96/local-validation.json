@@ -1,0 +1,19 @@
+{
+  "observed_at": "2026-10-17T11:01:58.576196+00:00",
+  "passed": true,
+  "controller_ast_files": 24,
+  "controller_admission_progression_pass": 7,
+  "aws_helper_pass": 76,
+  "aws_helper_skip": 1,
+  "total_pass": 111,
+  "frozen_application_files_verified": 176,
+  "workload_unchanged": true,
+  "six_partition_exact_merge_and_invalid_sixth_coverage": "test_aws_extended_topology.py",
+  "git_diff_check": true,
+  "aws_benchmark_executed": false,
+  "six_generator_csv_pass": 1,
+  "k8s_helper_pass": 24,
+  "control_pass": 3,
+  "aws_static_resources": 14,
+  "initial_control_test_port_conflict": "validation/control-test-execution-note.json"
+}

@@ -2,6 +2,12 @@ import { BeforeApplicationShutdown, Controller, Get, ServiceUnavailableException
 import { DataSource } from 'typeorm';
 import { Client } from 'pg';
 
+export function dbProbeConnectionTimeoutMs(raw = process.env.DB_PROBE_CONNECTION_TIMEOUT_MS): number {
+  const configured = Number(raw);
+  // Keep the local default; bound the AWS network allowance to two seconds.
+  return Number.isInteger(configured) && configured >= 1000 && configured <= 2000 ? configured : 1000;
+}
+
 /** Process liveness is independent of DB/provider availability. */
 @Controller('health')
 export class HealthController implements BeforeApplicationShutdown {
@@ -26,7 +32,7 @@ export class HealthController implements BeforeApplicationShutdown {
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME || 'avengers_coffee',
       ssl: process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : false,
-      connectionTimeoutMillis: 1000,
+      connectionTimeoutMillis: dbProbeConnectionTimeoutMs(),
       query_timeout: 1000,
     });
     client.on('error', () => undefined);

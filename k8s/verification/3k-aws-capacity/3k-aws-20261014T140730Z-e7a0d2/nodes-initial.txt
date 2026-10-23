@@ -1,0 +1,7 @@
+node/ip-172-31-13-225 condition met
+node/ip-172-31-14-153 condition met
+node/ip-172-31-9-192 condition met
+NAME               STATUS   ROLES           AGE   VERSION        INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+ip-172-31-13-225   Ready    <none>          9s    v1.34.1+k3s1   172.31.13.225   <none>        Ubuntu 24.04.5 LTS   7.0.0-1014-aws   containerd://2.1.4-k3s2
+ip-172-31-14-153   Ready    control-plane   32s   v1.34.1+k3s1   172.31.14.153   <none>        Ubuntu 24.04.5 LTS   7.0.0-1014-aws   containerd://2.1.4-k3s2
+ip-172-31-9-192    Ready    <none>          8s    v1.34.1+k3s1   172.31.9.192    <none>        Ubuntu 24.04.5 LTS   7.0.0-1014-aws   containerd://2.1.4-k3s2

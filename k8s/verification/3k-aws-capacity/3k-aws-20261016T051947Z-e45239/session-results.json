@@ -1,0 +1,923 @@
+{
+  "scope": "16 October completed points; no new load during recovery",
+  "maximum_repeatably_qualified_vu_retained": 250,
+  "highest_fresh_single_normal_pass_vu": 375,
+  "first_unstable_default_vu": 500,
+  "long375": "NOT RUN: runtime interrupted; no replacement fleet provisioned",
+  "3000_vu": "NOT VALID / NOT QUALIFIED; not run after lower-level failure",
+  "points": [
+    {
+      "name": "diagoff-a-250",
+      "vus": 250,
+      "hold_seconds": 120,
+      "requests": 48896.0,
+      "rps": 229.09950228161242,
+      "failure_rate": 0.0,
+      "check_rate": 1.0,
+      "p50_ms": 12.167873499999999,
+      "p90_ms": 158.5867965,
+      "p95_ms": 594.99634325,
+      "hold_p95_ms": 565.463251199998,
+      "p99_ms": 1066.406018300003,
+      "max_latency_ms": 2340.848632,
+      "status": "STABLE PASS",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 59.81963927855711,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "restart_delta": 0,
+      "node_cpu_peak_percent": 31.0,
+      "post_smoke": true,
+      "natural_recovery": true,
+      "target_reasons": [],
+      "complete_metric_hold_coverage": {
+        "intervals": 24,
+        "expected_intervals": 24.0,
+        "max_gap_seconds": 5.000879,
+        "sufficient": true
+      },
+      "cluster_sampled_peak": {
+        "cpu_millicores": 1378.0,
+        "memory_MiB": 2136.0
+      },
+      "nodes": {
+        "capacity-target1": {
+          "cpu_millicores": 624.0,
+          "memory_MiB": 908.0
+        },
+        "capacity-target2": {
+          "cpu_millicores": 462.0,
+          "memory_MiB": 632.0
+        },
+        "capacity-target3": {
+          "cpu_millicores": 338.0,
+          "memory_MiB": 597.0
+        }
+      },
+      "pods": {
+        "api-gateway-7558f57b5-4xsmt": {
+          "cpu_millicores": 140.0,
+          "memory_MiB": 34.0
+        },
+        "api-gateway-7558f57b5-g45mh": {
+          "cpu_millicores": 144.0,
+          "memory_MiB": 34.0
+        },
+        "identity-service-5977c8446c-8flx7": {
+          "cpu_millicores": 65.0,
+          "memory_MiB": 54.0
+        },
+        "menu-service-55d485f4b-zxbwb": {
+          "cpu_millicores": 84.0,
+          "memory_MiB": 43.0
+        },
+        "news-service-7bb8497b5c-rtw2h": {
+          "cpu_millicores": 72.0,
+          "memory_MiB": 44.0
+        },
+        "api-gateway-7558f57b5-gtg7b": {
+          "cpu_millicores": 157.0,
+          "memory_MiB": 34.0
+        },
+        "api-gateway-7558f57b5-z8zqx": {
+          "cpu_millicores": 167.0,
+          "memory_MiB": 34.0
+        },
+        "identity-service-5977c8446c-nq286": {
+          "cpu_millicores": 82.0,
+          "memory_MiB": 50.0
+        },
+        "menu-service-55d485f4b-cnrdt": {
+          "cpu_millicores": 81.0,
+          "memory_MiB": 44.0
+        },
+        "identity-service-5977c8446c-t2hnc": {
+          "cpu_millicores": 128.0,
+          "memory_MiB": 50.0
+        },
+        "menu-service-55d485f4b-l9qjd": {
+          "cpu_millicores": 100.0,
+          "memory_MiB": 43.0
+        },
+        "menu-service-55d485f4b-9j84d": {
+          "cpu_millicores": 103.0,
+          "memory_MiB": 42.0
+        }
+      },
+      "correlation_rows": 351,
+      "all_requests_in_correlation": true,
+      "generators": {
+        "generator1": {
+          "vus": 125,
+          "actual_vu_peak": 125,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 56.42570281124498,
+          "rss_peak_bytes": 193101824,
+          "available_min_KiB": 7231548,
+          "fds_peak": 43,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator2": {
+          "vus": 125,
+          "actual_vu_peak": 125,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 59.81963927855711,
+          "rss_peak_bytes": 228691968,
+          "available_min_KiB": 7143972,
+          "fds_peak": 37,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        }
+      },
+      "response_status_counts": {
+        "response_statuses{status:200}": 48896.0
+      }
+    },
+    {
+      "name": "diagon-a-250",
+      "vus": 250,
+      "hold_seconds": 120,
+      "requests": 47760.0,
+      "rps": 222.83590330021048,
+      "failure_rate": 0.0,
+      "check_rate": 1.0,
+      "p50_ms": 19.270384,
+      "p90_ms": 199.17660859999995,
+      "p95_ms": 614.1331968499989,
+      "hold_p95_ms": 587.9048081499996,
+      "p99_ms": 1169.6367967899994,
+      "max_latency_ms": 2351.874684,
+      "status": "DIAGNOSTIC (NOT QUALIFICATION)",
+      "observed_gate_status": "STABLE PASS",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 60.76076076076076,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "restart_delta": 0,
+      "node_cpu_peak_percent": 33.0,
+      "post_smoke": true,
+      "natural_recovery": true,
+      "target_reasons": [],
+      "complete_metric_hold_coverage": {
+        "intervals": 24,
+        "expected_intervals": 24.0,
+        "max_gap_seconds": 5.000164,
+        "sufficient": true
+      },
+      "cluster_sampled_peak": {
+        "cpu_millicores": 1420.0,
+        "memory_MiB": 2163.0
+      },
+      "nodes": {
+        "capacity-target1": {
+          "cpu_millicores": 679.0,
+          "memory_MiB": 977.0
+        },
+        "capacity-target2": {
+          "cpu_millicores": 475.0,
+          "memory_MiB": 596.0
+        },
+        "capacity-target3": {
+          "cpu_millicores": 350.0,
+          "memory_MiB": 602.0
+        }
+      },
+      "pods": {
+        "api-gateway-6f9ccf979f-d8rg6": {
+          "cpu_millicores": 149.0,
+          "memory_MiB": 34.0
+        },
+        "api-gateway-6f9ccf979f-xhmjs": {
+          "cpu_millicores": 155.0,
+          "memory_MiB": 34.0
+        },
+        "identity-service-57fb6f74df-wwbfc": {
+          "cpu_millicores": 78.0,
+          "memory_MiB": 50.0
+        },
+        "menu-service-84544b4797-rffm2": {
+          "cpu_millicores": 92.0,
+          "memory_MiB": 44.0
+        },
+        "news-service-85bbd4ccdd-s5lf5": {
+          "cpu_millicores": 87.0,
+          "memory_MiB": 44.0
+        },
+        "api-gateway-6f9ccf979f-g54jd": {
+          "cpu_millicores": 166.0,
+          "memory_MiB": 35.0
+        },
+        "api-gateway-6f9ccf979f-z28bm": {
+          "cpu_millicores": 175.0,
+          "memory_MiB": 35.0
+        },
+        "identity-service-57fb6f74df-k4gtx": {
+          "cpu_millicores": 105.0,
+          "memory_MiB": 52.0
+        },
+        "menu-service-84544b4797-wjztc": {
+          "cpu_millicores": 136.0,
+          "memory_MiB": 45.0
+        },
+        "identity-service-57fb6f74df-kjnmh": {
+          "cpu_millicores": 116.0,
+          "memory_MiB": 50.0
+        },
+        "menu-service-84544b4797-hqrs9": {
+          "cpu_millicores": 65.0,
+          "memory_MiB": 42.0
+        },
+        "menu-service-84544b4797-zzzvt": {
+          "cpu_millicores": 112.0,
+          "memory_MiB": 42.0
+        }
+      },
+      "correlation_rows": 356,
+      "all_requests_in_correlation": true,
+      "generators": {
+        "generator1": {
+          "vus": 125,
+          "actual_vu_peak": 125,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 56.75675675675676,
+          "rss_peak_bytes": 190570496,
+          "available_min_KiB": 7244860,
+          "fds_peak": 57,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator2": {
+          "vus": 125,
+          "actual_vu_peak": 125,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 60.76076076076076,
+          "rss_peak_bytes": 216354816,
+          "available_min_KiB": 7222260,
+          "fds_peak": 43,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        }
+      },
+      "response_status_counts": {
+        "response_statuses{status:200}": 47760.0
+      }
+    },
+    {
+      "name": "diagon-g3-500-retry",
+      "vus": 500,
+      "hold_seconds": 120,
+      "requests": 70420.0,
+      "rps": 330.81678316127727,
+      "failure_rate": 0.004345356432831582,
+      "check_rate": 0.9956546435671684,
+      "p50_ms": 49.466768,
+      "p90_ms": 897.7042291999998,
+      "p95_ms": 1908.0151957500002,
+      "hold_p95_ms": 2711.1661042000023,
+      "p99_ms": 7613.131093459997,
+      "max_latency_ms": 10076.591669,
+      "status": "DIAGNOSTIC (NOT QUALIFICATION)",
+      "observed_gate_status": "FAIL",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 74.04809619238478,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "restart_delta": 0,
+      "node_cpu_peak_percent": 50.0,
+      "post_smoke": true,
+      "natural_recovery": true,
+      "target_reasons": [
+        "HTTP thresholds failed"
+      ],
+      "complete_metric_hold_coverage": {
+        "intervals": 24,
+        "expected_intervals": 24.0,
+        "max_gap_seconds": 5.000121,
+        "sufficient": true
+      },
+      "cluster_sampled_peak": {
+        "cpu_millicores": 2087.0,
+        "memory_MiB": 2193.0
+      },
+      "nodes": {
+        "capacity-target1": {
+          "cpu_millicores": 1012.0,
+          "memory_MiB": 1051.0
+        },
+        "capacity-target2": {
+          "cpu_millicores": 761.0,
+          "memory_MiB": 603.0
+        },
+        "capacity-target3": {
+          "cpu_millicores": 449.0,
+          "memory_MiB": 613.0
+        }
+      },
+      "pods": {
+        "api-gateway-6f9ccf979f-xhmjs": {
+          "cpu_millicores": 203.0,
+          "memory_MiB": 36.0
+        },
+        "api-gateway-6f9ccf979f-z28bm": {
+          "cpu_millicores": 236.0,
+          "memory_MiB": 35.0
+        },
+        "identity-service-57fb6f74df-k4gtx": {
+          "cpu_millicores": 93.0,
+          "memory_MiB": 52.0
+        },
+        "menu-service-84544b4797-rffm2": {
+          "cpu_millicores": 100.0,
+          "memory_MiB": 44.0
+        },
+        "news-service-85bbd4ccdd-s5lf5": {
+          "cpu_millicores": 106.0,
+          "memory_MiB": 45.0
+        },
+        "api-gateway-6f9ccf979f-25879": {
+          "cpu_millicores": 287.0,
+          "memory_MiB": 40.0
+        },
+        "api-gateway-6f9ccf979f-c6pm9": {
+          "cpu_millicores": 264.0,
+          "memory_MiB": 41.0
+        },
+        "identity-service-57fb6f74df-sqfnt": {
+          "cpu_millicores": 112.0,
+          "memory_MiB": 50.0
+        },
+        "menu-service-84544b4797-vzr25": {
+          "cpu_millicores": 150.0,
+          "memory_MiB": 46.0
+        },
+        "identity-service-57fb6f74df-nhlb2": {
+          "cpu_millicores": 92.0,
+          "memory_MiB": 50.0
+        },
+        "menu-service-84544b4797-8xlrk": {
+          "cpu_millicores": 97.0,
+          "memory_MiB": 43.0
+        },
+        "menu-service-84544b4797-fmwrz": {
+          "cpu_millicores": 114.0,
+          "memory_MiB": 44.0
+        }
+      },
+      "correlation_rows": 531,
+      "all_requests_in_correlation": true,
+      "generators": {
+        "generator1": {
+          "vus": 167,
+          "actual_vu_peak": 167,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 70.44088176352706,
+          "rss_peak_bytes": 272248832,
+          "available_min_KiB": 7134720,
+          "fds_peak": 169,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator2": {
+          "vus": 167,
+          "actual_vu_peak": 167,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 74.04809619238478,
+          "rss_peak_bytes": 337776640,
+          "available_min_KiB": 7105808,
+          "fds_peak": 163,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator3": {
+          "vus": 166,
+          "actual_vu_peak": 166,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 71.44288577154309,
+          "rss_peak_bytes": 359034880,
+          "available_min_KiB": 7107436,
+          "fds_peak": 164,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        }
+      },
+      "response_status_counts": {
+        "response_statuses{status:200}": 70114.0,
+        "response_statuses{status:500}": 5.0,
+        "response_statuses{status:0}": 301.0
+      }
+    },
+    {
+      "name": "default-g3-500",
+      "vus": 500,
+      "hold_seconds": 120,
+      "requests": 76500.0,
+      "rps": 358.1871398764841,
+      "failure_rate": 0.006,
+      "check_rate": 0.994,
+      "p50_ms": 36.5488555,
+      "p90_ms": 511.2423915000004,
+      "p95_ms": 1117.1330218,
+      "hold_p95_ms": 1334.3634618499989,
+      "p99_ms": 8504.310547899964,
+      "max_latency_ms": 10130.807875,
+      "status": "STABLE PASS",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 78.75751503006012,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "restart_delta": 0,
+      "node_cpu_peak_percent": 43.0,
+      "post_smoke": true,
+      "natural_recovery": true,
+      "target_reasons": [],
+      "complete_metric_hold_coverage": {
+        "intervals": 24,
+        "expected_intervals": 24.0,
+        "max_gap_seconds": 5.001342,
+        "sufficient": true
+      },
+      "cluster_sampled_peak": {
+        "cpu_millicores": 2164.0,
+        "memory_MiB": 2217.0
+      },
+      "nodes": {
+        "capacity-target1": {
+          "cpu_millicores": 879.0,
+          "memory_MiB": 973.0
+        },
+        "capacity-target2": {
+          "cpu_millicores": 814.0,
+          "memory_MiB": 654.0
+        },
+        "capacity-target3": {
+          "cpu_millicores": 471.0,
+          "memory_MiB": 615.0
+        }
+      },
+      "pods": {
+        "api-gateway-6857d97df4-nc5n9": {
+          "cpu_millicores": 205.0,
+          "memory_MiB": 38.0
+        },
+        "api-gateway-6857d97df4-ttjvc": {
+          "cpu_millicores": 205.0,
+          "memory_MiB": 41.0
+        },
+        "identity-service-5ff9b98dfb-mq2ll": {
+          "cpu_millicores": 96.0,
+          "memory_MiB": 53.0
+        },
+        "menu-service-9df6f7bd7-8fnvh": {
+          "cpu_millicores": 118.0,
+          "memory_MiB": 44.0
+        },
+        "news-service-56cdc4c9bb-d559d": {
+          "cpu_millicores": 95.0,
+          "memory_MiB": 44.0
+        },
+        "api-gateway-6857d97df4-pzpgh": {
+          "cpu_millicores": 250.0,
+          "memory_MiB": 34.0
+        },
+        "api-gateway-6857d97df4-wwfmt": {
+          "cpu_millicores": 267.0,
+          "memory_MiB": 37.0
+        },
+        "menu-service-9df6f7bd7-dkdnz": {
+          "cpu_millicores": 122.0,
+          "memory_MiB": 45.0
+        },
+        "identity-service-5ff9b98dfb-ghpsc": {
+          "cpu_millicores": 107.0,
+          "memory_MiB": 53.0
+        },
+        "menu-service-9df6f7bd7-np2jf": {
+          "cpu_millicores": 159.0,
+          "memory_MiB": 45.0
+        },
+        "menu-service-9df6f7bd7-gzf7f": {
+          "cpu_millicores": 100.0,
+          "memory_MiB": 44.0
+        },
+        "identity-service-5ff9b98dfb-wjrx2": {
+          "cpu_millicores": 117.0,
+          "memory_MiB": 49.0
+        }
+      },
+      "correlation_rows": 543,
+      "all_requests_in_correlation": true,
+      "generators": {
+        "generator1": {
+          "vus": 167,
+          "actual_vu_peak": 167,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 75.12537612838516,
+          "rss_peak_bytes": 353071104,
+          "available_min_KiB": 7082228,
+          "fds_peak": 170,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator2": {
+          "vus": 167,
+          "actual_vu_peak": 167,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 78.75751503006012,
+          "rss_peak_bytes": 260415488,
+          "available_min_KiB": 7059952,
+          "fds_peak": 166,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator3": {
+          "vus": 166,
+          "actual_vu_peak": 166,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 77.47747747747748,
+          "rss_peak_bytes": 279891968,
+          "available_min_KiB": 7109244,
+          "fds_peak": 166,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        }
+      },
+      "response_status_counts": {
+        "response_statuses{status:200}": 76041.0,
+        "response_statuses{status:0}": 458.0,
+        "response_statuses{status:500}": 1.0
+      }
+    },
+    {
+      "name": "default-long-g3-500",
+      "vus": 500,
+      "hold_seconds": 300,
+      "requests": 137269.0,
+      "rps": 315.5706565272458,
+      "failure_rate": 0.022080731993385252,
+      "check_rate": 0.9779192680066148,
+      "p50_ms": 36.387701,
+      "p90_ms": 1032.168311,
+      "p95_ms": 3363.8745231999947,
+      "hold_p95_ms": 3376.0554015999987,
+      "p99_ms": 10000.18857452,
+      "max_latency_ms": 10143.667832,
+      "status": "FAIL",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 77.52247752247752,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "restart_delta": 0,
+      "node_cpu_peak_percent": 74.0,
+      "post_smoke": false,
+      "natural_recovery": true,
+      "target_reasons": [
+        "HTTP thresholds failed",
+        "complete HPA/Pod/node metric evidence missing during hold",
+        "post-load smoke missing/failed",
+        "generator1: complete HPA/Pod/node metric evidence missing during hold",
+        "generator1: post-load smoke missing/failed",
+        "generator2: complete HPA/Pod/node metric evidence missing during hold",
+        "generator2: post-load smoke missing/failed",
+        "generator3: complete HPA/Pod/node metric evidence missing during hold"
+      ],
+      "complete_metric_hold_coverage": {
+        "intervals": 52,
+        "expected_intervals": 60.0,
+        "max_gap_seconds": 42.63434,
+        "sufficient": false
+      },
+      "cluster_sampled_peak": {
+        "cpu_millicores": 2011.0,
+        "memory_MiB": 2356.0
+      },
+      "nodes": {
+        "capacity-target1": {
+          "cpu_millicores": 1489.0,
+          "memory_MiB": 1114.0
+        },
+        "capacity-target2": {
+          "cpu_millicores": 720.0,
+          "memory_MiB": 659.0
+        },
+        "capacity-target3": {
+          "cpu_millicores": 492.0,
+          "memory_MiB": 621.0
+        }
+      },
+      "pods": {
+        "api-gateway-6857d97df4-nc5n9": {
+          "cpu_millicores": 203.0,
+          "memory_MiB": 42.0
+        },
+        "api-gateway-6857d97df4-ttjvc": {
+          "cpu_millicores": 227.0,
+          "memory_MiB": 43.0
+        },
+        "identity-service-5ff9b98dfb-mq2ll": {
+          "cpu_millicores": 80.0,
+          "memory_MiB": 53.0
+        },
+        "menu-service-9df6f7bd7-8fnvh": {
+          "cpu_millicores": 118.0,
+          "memory_MiB": 45.0
+        },
+        "news-service-56cdc4c9bb-d559d": {
+          "cpu_millicores": 88.0,
+          "memory_MiB": 44.0
+        },
+        "api-gateway-6857d97df4-htjtg": {
+          "cpu_millicores": 265.0,
+          "memory_MiB": 44.0
+        },
+        "api-gateway-6857d97df4-zws7n": {
+          "cpu_millicores": 246.0,
+          "memory_MiB": 43.0
+        },
+        "identity-service-5ff9b98dfb-4z6jr": {
+          "cpu_millicores": 114.0,
+          "memory_MiB": 53.0
+        },
+        "menu-service-9df6f7bd7-wmsz9": {
+          "cpu_millicores": 139.0,
+          "memory_MiB": 45.0
+        },
+        "menu-service-9df6f7bd7-xppw5": {
+          "cpu_millicores": 119.0,
+          "memory_MiB": 65.0
+        },
+        "identity-service-5ff9b98dfb-z54bv": {
+          "cpu_millicores": 84.0,
+          "memory_MiB": 61.0
+        },
+        "menu-service-9df6f7bd7-qqx96": {
+          "cpu_millicores": 92.0,
+          "memory_MiB": 44.0
+        }
+      },
+      "correlation_rows": 1068,
+      "all_requests_in_correlation": true,
+      "generators": {
+        "generator1": {
+          "vus": 167,
+          "actual_vu_peak": 167,
+          "hold_target_fraction": 0.9966666666666667,
+          "cpu_peak_percent": 74.82447342026079,
+          "rss_peak_bytes": 351346688,
+          "available_min_KiB": 7073532,
+          "fds_peak": 166,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator2": {
+          "vus": 167,
+          "actual_vu_peak": 167,
+          "hold_target_fraction": 0.9966666666666667,
+          "cpu_peak_percent": 77.52247752247752,
+          "rss_peak_bytes": 355061760,
+          "available_min_KiB": 7083772,
+          "fds_peak": 170,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator3": {
+          "vus": 166,
+          "actual_vu_peak": 166,
+          "hold_target_fraction": 0.9966666666666667,
+          "cpu_peak_percent": 74.77477477477477,
+          "rss_peak_bytes": 328151040,
+          "available_min_KiB": 7121224,
+          "fds_peak": 169,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        }
+      },
+      "response_status_counts": {
+        "response_statuses{status:200}": 134238.0,
+        "response_statuses{status:500}": 7.0,
+        "response_statuses{status:0}": 3024.0
+      }
+    },
+    {
+      "name": "default-g3-375",
+      "vus": 375,
+      "hold_seconds": 120,
+      "requests": 70636.0,
+      "rps": 331.6825323340577,
+      "failure_rate": 0.0,
+      "check_rate": 1.0,
+      "p50_ms": 20.363308,
+      "p90_ms": 210.4092945,
+      "p95_ms": 693.4036285,
+      "hold_p95_ms": 563.5845664999987,
+      "p99_ms": 1353.2786831999988,
+      "max_latency_ms": 5735.682688,
+      "status": "STABLE PASS",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 61.22244488977956,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "restart_delta": 0,
+      "node_cpu_peak_percent": 38.0,
+      "post_smoke": true,
+      "natural_recovery": true,
+      "target_reasons": [],
+      "complete_metric_hold_coverage": {
+        "intervals": 24,
+        "expected_intervals": 24.0,
+        "max_gap_seconds": 5.000518,
+        "sufficient": true
+      },
+      "cluster_sampled_peak": {
+        "cpu_millicores": 1709.0,
+        "memory_MiB": 2349.0
+      },
+      "nodes": {
+        "capacity-target1": {
+          "cpu_millicores": 775.0,
+          "memory_MiB": 957.0
+        },
+        "capacity-target2": {
+          "cpu_millicores": 544.0,
+          "memory_MiB": 749.0
+        },
+        "capacity-target3": {
+          "cpu_millicores": 476.0,
+          "memory_MiB": 737.0
+        }
+      },
+      "pods": {
+        "api-gateway-6857d97df4-nc5n9": {
+          "cpu_millicores": 180.0,
+          "memory_MiB": 41.0
+        },
+        "api-gateway-6857d97df4-ttjvc": {
+          "cpu_millicores": 185.0,
+          "memory_MiB": 39.0
+        },
+        "identity-service-5ff9b98dfb-mq2ll": {
+          "cpu_millicores": 80.0,
+          "memory_MiB": 50.0
+        },
+        "menu-service-9df6f7bd7-8fnvh": {
+          "cpu_millicores": 96.0,
+          "memory_MiB": 44.0
+        },
+        "news-service-56cdc4c9bb-d559d": {
+          "cpu_millicores": 73.0,
+          "memory_MiB": 45.0
+        },
+        "api-gateway-6857d97df4-4b6vg": {
+          "cpu_millicores": 205.0,
+          "memory_MiB": 34.0
+        },
+        "api-gateway-6857d97df4-lsqhj": {
+          "cpu_millicores": 195.0,
+          "memory_MiB": 34.0
+        },
+        "menu-service-9df6f7bd7-qsn2w": {
+          "cpu_millicores": 105.0,
+          "memory_MiB": 45.0
+        },
+        "identity-service-5ff9b98dfb-vqqmx": {
+          "cpu_millicores": 143.0,
+          "memory_MiB": 51.0
+        },
+        "menu-service-9df6f7bd7-kxt8w": {
+          "cpu_millicores": 78.0,
+          "memory_MiB": 42.0
+        },
+        "menu-service-9df6f7bd7-q7qdp": {
+          "cpu_millicores": 103.0,
+          "memory_MiB": 43.0
+        },
+        "identity-service-5ff9b98dfb-ltqrs": {
+          "cpu_millicores": 74.0,
+          "memory_MiB": 49.0
+        }
+      },
+      "correlation_rows": 525,
+      "all_requests_in_correlation": true,
+      "generators": {
+        "generator1": {
+          "vus": 125,
+          "actual_vu_peak": 125,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 59.95995995995996,
+          "rss_peak_bytes": 351059968,
+          "available_min_KiB": 7124576,
+          "fds_peak": 78,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator2": {
+          "vus": 125,
+          "actual_vu_peak": 125,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 61.22244488977956,
+          "rss_peak_bytes": 236310528,
+          "available_min_KiB": 7183672,
+          "fds_peak": 71,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        },
+        "generator3": {
+          "vus": 125,
+          "actual_vu_peak": 125,
+          "hold_target_fraction": 0.9916666666666667,
+          "cpu_peak_percent": 60.16016016016016,
+          "rss_peak_bytes": 320716800,
+          "available_min_KiB": 7131256,
+          "fds_peak": 67,
+          "ena_allowance_deltas": {
+            "enp39s0/bw_in_allowance_exceeded": 0,
+            "enp39s0/bw_out_allowance_exceeded": 0,
+            "enp39s0/pps_allowance_exceeded": 0,
+            "enp39s0/conntrack_allowance_exceeded": 0
+          }
+        }
+      },
+      "response_status_counts": {
+        "response_statuses{status:200}": 70636.0
+      }
+    }
+  ]
+}

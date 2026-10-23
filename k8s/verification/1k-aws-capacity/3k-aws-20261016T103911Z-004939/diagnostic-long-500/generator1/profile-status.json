@@ -1,0 +1,9 @@
+{
+  "started_at": "2026-10-16T11:52:44.732032+00:00",
+  "seconds": 30,
+  "loopback_only": true,
+  "qualification_eligible": false,
+  "passed": false,
+  "reason": "bounded local profiling request failed; no exception text retained",
+  "finished_at": "2026-10-16T11:52:44.750985+00:00"
+}

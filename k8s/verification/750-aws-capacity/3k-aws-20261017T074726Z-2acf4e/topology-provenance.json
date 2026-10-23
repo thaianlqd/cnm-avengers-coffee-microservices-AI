@@ -1,0 +1,64 @@
+{
+  "goal_vus": 750,
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "target": "http://172.31.0.75:30300",
+  "path": "generator -> target1 NodePort30300 -> Kubernetes api-gateway Service -> Gateway -> backend Services",
+  "generators": {
+    "generator1": {
+      "id": "i-0f2b784822be149bd",
+      "private_ip": "172.31.0.107",
+      "launch_time": "2026-10-17T07:55:57+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator2": {
+      "id": "i-0f7b6b0bd38bec462",
+      "private_ip": "172.31.15.105",
+      "launch_time": "2026-10-17T07:56:54+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator3": {
+      "id": "i-0e78fff8a9529c96a",
+      "private_ip": "172.31.13.82",
+      "launch_time": "2026-10-17T07:57:47+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator4": {
+      "id": "i-0962b8f9f59e751d5",
+      "private_ip": "172.31.6.99",
+      "launch_time": "2026-10-17T08:25:43+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator5": {
+      "id": "i-04f9781128fc0cc41",
+      "private_ip": "172.31.0.157",
+      "launch_time": "2026-10-17T08:26:33+00:00",
+      "type": "m7i-flex.large"
+    }
+  },
+  "full_json": true,
+  "gzip": true,
+  "think_seconds": 3,
+  "diagnostics_baseline": false,
+  "initial_generators": {
+    "generator1": {
+      "id": "i-0f2b784822be149bd",
+      "private_ip": "172.31.0.107",
+      "launch_time": "2026-10-17T07:55:57+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator2": {
+      "id": "i-0f7b6b0bd38bec462",
+      "private_ip": "172.31.15.105",
+      "launch_time": "2026-10-17T07:56:54+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator3": {
+      "id": "i-0e78fff8a9529c96a",
+      "private_ip": "172.31.13.82",
+      "launch_time": "2026-10-17T07:57:47+00:00",
+      "type": "m7i-flex.large"
+    }
+  },
+  "generator_snapshot_updated_at": "2026-10-17T08:40:31.925031+00:00",
+  "generator_snapshot_stage": "all five authenticated and baseline-verified;750normal completed"
+}

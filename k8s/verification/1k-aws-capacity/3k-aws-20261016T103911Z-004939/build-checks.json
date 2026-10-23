@@ -1,0 +1,75 @@
+{
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "git_base": "0a9b928c7c596c8772cf83019342f392e96a4d2e",
+  "tests": {
+    "menu-service-tests": {
+      "passed": true,
+      "pass": 45,
+      "total": 45,
+      "log_sha256": "e9ee1f932c706810450d2e2de3f5050067f97b1a3d2d36d5b2199b9117194b1e"
+    },
+    "news-service-tests": {
+      "passed": true,
+      "pass": 34,
+      "total": 34,
+      "log_sha256": "6374fbf33eee72cf6c68fca897f21a5e47867de19341d8c636bc700c3c8220d8"
+    },
+    "identity-service-tests": {
+      "passed": true,
+      "pass": 60,
+      "total": 60,
+      "log_sha256": "a80637484dd04794cabb2f7b056863ccbf931feef42ad8cc43948a8e3947c631"
+    },
+    "api-gateway-tests": {
+      "passed": true,
+      "pass": 29,
+      "total": 29,
+      "log_sha256": "931693271ca1ee5af4689381225e008e2c88df8c2071fe2445a8cbf7c2c1c634"
+    }
+  },
+  "tests_passed": 168,
+  "images": [
+    {
+      "Id": "sha256:15abd31ea56f76e3ada938f328711118234afa5070c427f2a4401e75c4eec419",
+      "RepoTags": [
+        "avengers/api-gateway:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:50ad0cfc641b7365f8280a40015b55992ddd2a09abce56f0c8cff8b62e52fef9",
+      "RepoTags": [
+        "avengers/identity-service:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:4cbc54e884610c3d9ed8b4f1d5c835cde96db07498e6ad4d8a89ba2c6cd51d71",
+      "RepoTags": [
+        "avengers/menu-service:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:bea0138e11ecdbebec77c7d57f4baa34786785421a4292ae6aaf45ccedfb9e27",
+      "RepoTags": [
+        "avengers/news-service:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:895987c9f6c799d50a8ac64d9c41ea49ff5b9078035d49cefc0641280f7aa7b2",
+      "RepoTags": [
+        "avengers/customer-media:3k-aws-ac88422957e9"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    }
+  ],
+  "image_tar_sha256": "37c62b97096f5fa6888f8a9ebfbe1e106cabf4aca0783200efb7ef3b8186228f",
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2"
+}

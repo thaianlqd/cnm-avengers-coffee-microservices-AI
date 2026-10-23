@@ -1,0 +1,24 @@
+SERVICE identity-service
+{"cache_ttl":"5000","read_only":"true"}
+{"status":200,"total_ms":2472,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":98,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":93,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":13,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":93,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":13,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":93,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":12,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":80,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":9,"decoded_bytes":695137,"gzip":"gzip"}
+SERVICE api-gateway
+{"cache_ttl":"5000","read_only":"true"}
+{"status":200,"total_ms":178,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":16,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":93,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":84,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":14,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":83,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":18,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":13,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":69,"decoded_bytes":695137,"gzip":"gzip"}
+{"status":200,"total_ms":13,"decoded_bytes":695137,"gzip":"gzip"}

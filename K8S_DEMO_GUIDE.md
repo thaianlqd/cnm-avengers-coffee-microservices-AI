@@ -1,3 +1,5 @@
+> Latest result 16/10/2026: [AWS capacity report](K8S_3K_AWS_CAPACITY_REPORT.md). 3K NOT QUALIFIED; retained repeatable250VU, single normal375VU PASS (long/repeat not run), long500FAIL. AWS cleanup verified. Local runtime/Socket.IO were not rerun to protect DataPlatform; historical results below remain historical.
+
 # Demo Kubernetes Avengers Coffee trên Mac M1 Pro
 
 Phase tiếp theo: [report 3K](K8S_3K_CAPACITY_REPORT.md). Clean legacy 200 VU PASS

@@ -1,0 +1,13 @@
+{
+  "total_vus": 750,
+  "partitions": {
+    "generator1": 150,
+    "generator2": 150,
+    "generator3": 150,
+    "generator4": 150,
+    "generator5": 150
+  },
+  "measured_inadequacy_sha256": "b626c0d2ec5d624d18c3a50b9bfab724878dc6194c2343f575daaad163ee64ad",
+  "reason": "five150VU partitions stay below the independently measured valid166/167VU per-generator load",
+  "prediction_not_qualification": true
+}

@@ -1,0 +1,54 @@
+{
+  "status": "1000 QUALIFIED",
+  "maximum_repeatably_qualified_vus": 1000,
+  "normal_and_long_valid": true,
+  "target_nodes": 2,
+  "historical_three_target_results_not_relabelled": true,
+  "points": [
+    {
+      "point": "regression-normal-500",
+      "vus": 500,
+      "hold_seconds": 120,
+      "generators": 3,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "regression-normal-750",
+      "vus": 750,
+      "hold_seconds": 120,
+      "generators": 5,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "fresh-long-750",
+      "vus": 750,
+      "hold_seconds": 300,
+      "generators": 5,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "normal-1000",
+      "vus": 1000,
+      "hold_seconds": 120,
+      "generators": 6,
+      "status": "STABLE PASS",
+      "valid_pass": true,
+      "original_load_artifacts_recovered": true
+    },
+    {
+      "point": "long-1000",
+      "vus": 1000,
+      "hold_seconds": 300,
+      "generators": 6,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    }
+  ],
+  "run_above_1000": false,
+  "cleanup_required_before_delivery": true,
+  "original_normal_load_preserved_via_delivery_recovery": true,
+  "push": false
+}

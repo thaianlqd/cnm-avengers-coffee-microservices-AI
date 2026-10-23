@@ -1,0 +1,9 @@
+namespace/avengers-coffee created
+configmap/api-gateway-config created
+secret/api-gateway-secrets created
+configmap/identity-service-config created
+secret/identity-service-secrets created
+configmap/menu-service-config created
+secret/menu-service-secrets created
+configmap/news-service-config created
+secret/news-service-secrets created

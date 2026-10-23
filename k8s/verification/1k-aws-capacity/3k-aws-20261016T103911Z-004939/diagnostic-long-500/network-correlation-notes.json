@@ -1,0 +1,13 @@
+{
+  "rows": 96,
+  "first_positive_counter_delta_at": {
+    "target1_drop": "2026-10-16T11:52:38.929348+00:00",
+    "target1_early_drop": "2026-10-16T11:52:38.929348+00:00",
+    "target3_drop": "2026-10-16T11:53:18.445506+00:00",
+    "target3_early_drop": "2026-10-16T11:53:18.445506+00:00"
+  },
+  "percentiles": "range of per-generator per-route p95s within each5s bucket; never averaged or claimed as merged p95",
+  "whole_quantiles": "analysis.json is the exact merge of all numeric observations",
+  "missing_values": "blank, not zero; first counter sample has no delta",
+  "limits": "five-second bucket alignment; multiple counter layers may observe different packets, never sum them as unique packet drops"
+}

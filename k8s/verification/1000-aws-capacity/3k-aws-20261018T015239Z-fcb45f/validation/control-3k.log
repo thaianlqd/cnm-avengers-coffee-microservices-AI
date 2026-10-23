@@ -1,0 +1,15 @@
+TAP version 13
+# Subtest: 3k control token required; uploads bounded to existing job and whitelisted artifacts
+ok 1 - 3k control token required; uploads bounded to existing job and whitelisted artifacts
+  ---
+  duration_ms: 59.562208
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 107.423708

@@ -1,0 +1,1 @@
+PASS AWS capacity overlay: 14 resources, four browse services, private NodePort, baseline resources/HPA/read-only intent

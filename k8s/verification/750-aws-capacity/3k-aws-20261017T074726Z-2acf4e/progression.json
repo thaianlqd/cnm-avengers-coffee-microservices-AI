@@ -1,0 +1,39 @@
+{
+  "observed_at": "2026-10-17T08:50:49.054045+00:00",
+  "results": [
+    {
+      "point": "regression-250",
+      "vus": 250,
+      "hold_seconds": 120,
+      "generators": 3,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "regression-normal-500",
+      "vus": 500,
+      "hold_seconds": 120,
+      "generators": 3,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "normal-750",
+      "vus": 750,
+      "hold_seconds": 120,
+      "generators": 5,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "long-750",
+      "vus": 750,
+      "hold_seconds": 300,
+      "generators": 5,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    }
+  ],
+  "maximum_planned_vus": 750,
+  "run_1000": false
+}

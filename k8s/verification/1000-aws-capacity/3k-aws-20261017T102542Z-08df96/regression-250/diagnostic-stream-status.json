@@ -1,0 +1,69 @@
+{
+  "pods": {
+    "baebdf7f-34c0-45ac-9884-a157a7c2dffb": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-bgz5g",
+      "records": 0
+    },
+    "c9d5a9c0-9a75-4e77-9c6e-4f25ffcc5a74": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-hq6mw",
+      "records": 0
+    },
+    "0b436b30-0e3e-4be5-ba34-16242f5ae99c": {
+      "service": "identity-service",
+      "pod": "identity-service-9c49d558f-qz8q6",
+      "records": 0
+    },
+    "ce24c288-4fca-4d73-8749-eeccd2048008": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-2k66n",
+      "records": 0
+    },
+    "dfc73ccb-e325-4505-a7b1-534516c5b757": {
+      "service": "news-service",
+      "pod": "news-service-59b758f876-45xzp",
+      "records": 0
+    },
+    "928d897e-a26b-42c0-85ac-15d570c98ccd": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-m88bz",
+      "records": 0
+    },
+    "f0e9cc12-cd03-402e-aa2b-9afb23bbfe38": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-5g9zt",
+      "records": 0
+    },
+    "8bc9d7bc-48ec-43f0-a275-607a878321f3": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-n9znr",
+      "records": 0
+    },
+    "ada0543b-f330-41ac-9259-dba3ad89dbed": {
+      "service": "identity-service",
+      "pod": "identity-service-9c49d558f-l24r2",
+      "records": 0
+    },
+    "a1f6eaa4-87e8-40b2-b674-c9945c738652": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-n4q8g",
+      "records": 0
+    }
+  },
+  "attempts": {
+    "baebdf7f-34c0-45ac-9884-a157a7c2dffb": 1,
+    "c9d5a9c0-9a75-4e77-9c6e-4f25ffcc5a74": 1,
+    "0b436b30-0e3e-4be5-ba34-16242f5ae99c": 1,
+    "ce24c288-4fca-4d73-8749-eeccd2048008": 1,
+    "dfc73ccb-e325-4505-a7b1-534516c5b757": 1,
+    "928d897e-a26b-42c0-85ac-15d570c98ccd": 1,
+    "f0e9cc12-cd03-402e-aa2b-9afb23bbfe38": 1,
+    "8bc9d7bc-48ec-43f0-a275-607a878321f3": 1,
+    "ada0543b-f330-41ac-9259-dba3ad89dbed": 1,
+    "a1f6eaa4-87e8-40b2-b674-c9945c738652": 1
+  },
+  "records": 0,
+  "raw_other_logs_retained": false,
+  "owned_log_processes_stopped": true
+}

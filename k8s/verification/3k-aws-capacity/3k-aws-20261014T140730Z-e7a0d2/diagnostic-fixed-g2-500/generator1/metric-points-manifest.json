@@ -1,0 +1,23 @@
+{
+  "original_raw_sha256": "8e460fa445611dc5e6fdffd059e64628e8dd076f974044d1e15f41df31909e0a",
+  "original_raw_bytes": 6590111,
+  "compact_sha256": "02446aaa0c5db21a241df8cc0df1b9775c2544295a4c39ae3a02beb539746938",
+  "compact_bytes": 1625209,
+  "format": "[metric,value,phase,status,route_name]; exact numeric observations, no response bodies",
+  "metric_observation_counts": {
+    "http_reqs": 37784,
+    "http_req_duration": 37784,
+    "http_req_blocked": 37784,
+    "http_req_connecting": 37784,
+    "http_req_tls_handshaking": 37784,
+    "http_req_waiting": 37784,
+    "http_req_receiving": 37784,
+    "http_req_failed": 37784,
+    "response_statuses": 37784,
+    "menu_categories_ms": 9446,
+    "checks": 113352,
+    "menu_products_ms": 9446,
+    "public_branches_ms": 9446,
+    "public_news_ms": 9446
+  }
+}

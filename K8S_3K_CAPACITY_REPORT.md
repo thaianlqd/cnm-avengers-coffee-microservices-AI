@@ -1,3 +1,5 @@
+> Latest result 16/10/2026: [AWS capacity report](K8S_3K_AWS_CAPACITY_REPORT.md). 3K NOT QUALIFIED; retained repeatable250VU, single normal375VU PASS (long/repeat not run), long500FAIL. AWS cleanup verified. Local runtime/Socket.IO were not rerun to protect DataPlatform; historical results below remain historical.
+
 # Phase 3K capacity qualification — 14/10/2026
 
 **3.000 VU chưa được qualified. Phase dừng trước external load vì chưa thiết lập

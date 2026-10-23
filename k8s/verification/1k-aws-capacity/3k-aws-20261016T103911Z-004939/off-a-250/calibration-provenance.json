@@ -1,0 +1,11 @@
+{
+  "capture": "Retrospective linkage to runtime snapshot captured before this calibration; fresh per-point runtime guards added for subsequent500+ observations",
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "runtime_snapshot": "baseline-runtime.json",
+  "runtime_snapshot_sha256": "10381620bf3403f30079ced427e4e2720d5037d011808101bd190afe6592e667",
+  "entrypoint": "http://172.31.2.233:30300",
+  "diagnostic": false,
+  "collector_revision": "calibration before netlink fallback; procfs conntrack drop counters unavailable and kept null",
+  "helpers_sha256": null
+}

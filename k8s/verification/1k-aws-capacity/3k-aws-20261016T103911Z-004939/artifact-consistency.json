@@ -1,0 +1,39 @@
+{
+  "observed_at": "2026-10-17T06:34:55.881818+00:00",
+  "passed": true,
+  "frozen_source_matches": true,
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "points": [
+    {
+      "point": "baseline-long-500",
+      "requests": 158044,
+      "status": "FAIL",
+      "passed": true
+    },
+    {
+      "point": "diagnostic-long-500",
+      "requests": 155236,
+      "status": "DIAGNOSTIC (NOT QUALIFICATION)",
+      "passed": true
+    },
+    {
+      "point": "off-a-250",
+      "requests": 48828,
+      "status": "STABLE PASS",
+      "passed": true
+    },
+    {
+      "point": "on-a-250",
+      "requests": 48348,
+      "status": "DIAGNOSTIC (NOT QUALIFICATION)",
+      "passed": true
+    },
+    {
+      "point": "reuse-diag-250",
+      "requests": 50068,
+      "status": "DIAGNOSTIC (NOT QUALIFICATION)",
+      "passed": true
+    }
+  ],
+  "quantile_method": "exact linear interpolation over all observations, never average shard percentiles; merged on AWS"
+}

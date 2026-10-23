@@ -1,0 +1,8 @@
+{"phase":"dns","ms":0,"families":[4]}
+{"stage":"done","connect_ms":1149,"query_ms":181}
+{"stage":"done","connect_ms":1007,"query_ms":168}
+{"stage":"done","connect_ms":1007,"query_ms":168}
+{"path":"/health/live","status":200,"ms":134}
+{"path":"/health/ready","status":503,"ms":1060}
+{"path":"/danh-muc","status":404,"ms":4}
+{"path":"/menu/danh-muc","status":200,"ms":1278}

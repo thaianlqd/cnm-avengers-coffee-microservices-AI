@@ -1,0 +1,445 @@
+{
+  "deployments": [
+    {
+      "name": "api-gateway",
+      "replicas": 2,
+      "containers": [
+        {
+          "name": "api-gateway",
+          "image": "avengers/api-gateway:3k-aws-ac88422957e9",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "flags": [
+            {
+              "name": "GATEWAY_PROXY_KEEP_ALIVE",
+              "value": "true"
+            },
+            {
+              "name": "GATEWAY_REQUEST_LOGGING",
+              "value": "false"
+            },
+            {
+              "name": "GATEWAY_MAX_REQUESTS_PER_SOCKET",
+              "value": "0"
+            },
+            {
+              "name": "PORT",
+              "value": "3000"
+            },
+            {
+              "name": "CAPACITY_DIAGNOSTICS",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "identity-service",
+      "replicas": 1,
+      "containers": [
+        {
+          "name": "identity-service",
+          "image": "avengers/identity-service:3k-aws-ac88422957e9",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "flags": [
+            {
+              "name": "PORT",
+              "value": "3001"
+            },
+            {
+              "name": "CAPACITY_DIAGNOSTICS",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "menu-service",
+      "replicas": 1,
+      "containers": [
+        {
+          "name": "menu-service",
+          "image": "avengers/menu-service:3k-aws-ac88422957e9",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "flags": [
+            {
+              "name": "PORT",
+              "value": "3003"
+            },
+            {
+              "name": "CAPACITY_DIAGNOSTICS",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "news-service",
+      "replicas": 1,
+      "containers": [
+        {
+          "name": "news-service",
+          "image": "avengers/news-service:3k-aws-ac88422957e9",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "flags": [
+            {
+              "name": "PORT",
+              "value": "3006"
+            },
+            {
+              "name": "CAPACITY_DIAGNOSTICS",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hpa": {
+    "apiVersion": "v1",
+    "items": [
+      {
+        "apiVersion": "autoscaling/v2",
+        "kind": "HorizontalPodAutoscaler",
+        "metadata": {
+          "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"autoscaling/v2\",\"kind\":\"HorizontalPodAutoscaler\",\"metadata\":{\"annotations\":{},\"labels\":{\"app.kubernetes.io/component\":\"autoscaler\",\"app.kubernetes.io/name\":\"api-gateway\",\"app.kubernetes.io/part-of\":\"avengers-coffee\"},\"name\":\"api-gateway\",\"namespace\":\"avengers-coffee\"},\"spec\":{\"behavior\":{\"scaleDown\":{\"policies\":[{\"periodSeconds\":60,\"type\":\"Pods\",\"value\":1}],\"stabilizationWindowSeconds\":120},\"scaleUp\":{\"policies\":[{\"periodSeconds\":30,\"type\":\"Pods\",\"value\":1},{\"periodSeconds\":30,\"type\":\"Percent\",\"value\":100}],\"selectPolicy\":\"Max\",\"stabilizationWindowSeconds\":0}},\"maxReplicas\":4,\"metrics\":[{\"resource\":{\"name\":\"cpu\",\"target\":{\"averageUtilization\":60,\"type\":\"Utilization\"}},\"type\":\"Resource\"}],\"minReplicas\":2,\"scaleTargetRef\":{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"api-gateway\"}}}\n"
+          },
+          "creationTimestamp": "2026-10-18T02:09:32Z",
+          "labels": {
+            "app.kubernetes.io/component": "autoscaler",
+            "app.kubernetes.io/name": "api-gateway",
+            "app.kubernetes.io/part-of": "avengers-coffee"
+          },
+          "name": "api-gateway",
+          "namespace": "avengers-coffee",
+          "resourceVersion": "835",
+          "uid": "bb0c2bde-601f-497b-aafd-627bffd260b9"
+        },
+        "spec": {
+          "behavior": {
+            "scaleDown": {
+              "policies": [
+                {
+                  "periodSeconds": 60,
+                  "type": "Pods",
+                  "value": 1
+                }
+              ],
+              "selectPolicy": "Max",
+              "stabilizationWindowSeconds": 120
+            },
+            "scaleUp": {
+              "policies": [
+                {
+                  "periodSeconds": 30,
+                  "type": "Pods",
+                  "value": 1
+                },
+                {
+                  "periodSeconds": 30,
+                  "type": "Percent",
+                  "value": 100
+                }
+              ],
+              "selectPolicy": "Max",
+              "stabilizationWindowSeconds": 0
+            }
+          },
+          "maxReplicas": 4,
+          "metrics": [
+            {
+              "resource": {
+                "name": "cpu",
+                "target": {
+                  "averageUtilization": 60,
+                  "type": "Utilization"
+                }
+              },
+              "type": "Resource"
+            }
+          ],
+          "minReplicas": 2,
+          "scaleTargetRef": {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "name": "api-gateway"
+          }
+        },
+        "status": {
+          "conditions": [
+            {
+              "lastTransitionTime": "2026-10-18T02:09:47Z",
+              "message": "the HPA controller was able to get the target's current scale",
+              "reason": "SucceededGetScale",
+              "status": "True",
+              "type": "AbleToScale"
+            },
+            {
+              "lastTransitionTime": "2026-10-18T02:09:47Z",
+              "message": "the HPA was unable to compute the replica count: failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API",
+              "reason": "FailedGetResourceMetric",
+              "status": "False",
+              "type": "ScalingActive"
+            }
+          ],
+          "currentMetrics": [
+            {
+              "type": ""
+            }
+          ],
+          "currentReplicas": 2,
+          "desiredReplicas": 0
+        }
+      },
+      {
+        "apiVersion": "autoscaling/v2",
+        "kind": "HorizontalPodAutoscaler",
+        "metadata": {
+          "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"autoscaling/v2\",\"kind\":\"HorizontalPodAutoscaler\",\"metadata\":{\"annotations\":{},\"labels\":{\"app.kubernetes.io/component\":\"autoscaler\",\"app.kubernetes.io/name\":\"identity-service\",\"app.kubernetes.io/part-of\":\"avengers-coffee\"},\"name\":\"identity-service\",\"namespace\":\"avengers-coffee\"},\"spec\":{\"behavior\":{\"scaleDown\":{\"policies\":[{\"periodSeconds\":60,\"type\":\"Pods\",\"value\":1}],\"stabilizationWindowSeconds\":120},\"scaleUp\":{\"policies\":[{\"periodSeconds\":30,\"type\":\"Pods\",\"value\":1},{\"periodSeconds\":30,\"type\":\"Percent\",\"value\":100}],\"selectPolicy\":\"Max\",\"stabilizationWindowSeconds\":0}},\"maxReplicas\":3,\"metrics\":[{\"resource\":{\"name\":\"cpu\",\"target\":{\"averageUtilization\":60,\"type\":\"Utilization\"}},\"type\":\"Resource\"}],\"minReplicas\":1,\"scaleTargetRef\":{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"identity-service\"}}}\n"
+          },
+          "creationTimestamp": "2026-10-18T02:09:32Z",
+          "labels": {
+            "app.kubernetes.io/component": "autoscaler",
+            "app.kubernetes.io/name": "identity-service",
+            "app.kubernetes.io/part-of": "avengers-coffee"
+          },
+          "name": "identity-service",
+          "namespace": "avengers-coffee",
+          "resourceVersion": "838",
+          "uid": "1ccf7377-7b77-4ca1-aa1c-b06b0e97a13e"
+        },
+        "spec": {
+          "behavior": {
+            "scaleDown": {
+              "policies": [
+                {
+                  "periodSeconds": 60,
+                  "type": "Pods",
+                  "value": 1
+                }
+              ],
+              "selectPolicy": "Max",
+              "stabilizationWindowSeconds": 120
+            },
+            "scaleUp": {
+              "policies": [
+                {
+                  "periodSeconds": 30,
+                  "type": "Pods",
+                  "value": 1
+                },
+                {
+                  "periodSeconds": 30,
+                  "type": "Percent",
+                  "value": 100
+                }
+              ],
+              "selectPolicy": "Max",
+              "stabilizationWindowSeconds": 0
+            }
+          },
+          "maxReplicas": 3,
+          "metrics": [
+            {
+              "resource": {
+                "name": "cpu",
+                "target": {
+                  "averageUtilization": 60,
+                  "type": "Utilization"
+                }
+              },
+              "type": "Resource"
+            }
+          ],
+          "minReplicas": 1,
+          "scaleTargetRef": {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "name": "identity-service"
+          }
+        },
+        "status": {
+          "conditions": [
+            {
+              "lastTransitionTime": "2026-10-18T02:09:47Z",
+              "message": "the HPA controller was able to get the target's current scale",
+              "reason": "SucceededGetScale",
+              "status": "True",
+              "type": "AbleToScale"
+            },
+            {
+              "lastTransitionTime": "2026-10-18T02:09:47Z",
+              "message": "the HPA was unable to compute the replica count: failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API",
+              "reason": "FailedGetResourceMetric",
+              "status": "False",
+              "type": "ScalingActive"
+            }
+          ],
+          "currentMetrics": [
+            {
+              "type": ""
+            }
+          ],
+          "currentReplicas": 1,
+          "desiredReplicas": 0
+        }
+      },
+      {
+        "apiVersion": "autoscaling/v2",
+        "kind": "HorizontalPodAutoscaler",
+        "metadata": {
+          "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"autoscaling/v2\",\"kind\":\"HorizontalPodAutoscaler\",\"metadata\":{\"annotations\":{},\"labels\":{\"app.kubernetes.io/component\":\"autoscaler\",\"app.kubernetes.io/name\":\"menu-service\",\"app.kubernetes.io/part-of\":\"avengers-coffee\"},\"name\":\"menu-service\",\"namespace\":\"avengers-coffee\"},\"spec\":{\"behavior\":{\"scaleDown\":{\"policies\":[{\"periodSeconds\":60,\"type\":\"Pods\",\"value\":1}],\"stabilizationWindowSeconds\":120},\"scaleUp\":{\"policies\":[{\"periodSeconds\":30,\"type\":\"Pods\",\"value\":1},{\"periodSeconds\":30,\"type\":\"Percent\",\"value\":100}],\"selectPolicy\":\"Max\",\"stabilizationWindowSeconds\":0}},\"maxReplicas\":4,\"metrics\":[{\"resource\":{\"name\":\"cpu\",\"target\":{\"averageUtilization\":60,\"type\":\"Utilization\"}},\"type\":\"Resource\"}],\"minReplicas\":1,\"scaleTargetRef\":{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"menu-service\"}}}\n"
+          },
+          "creationTimestamp": "2026-10-18T02:09:32Z",
+          "labels": {
+            "app.kubernetes.io/component": "autoscaler",
+            "app.kubernetes.io/name": "menu-service",
+            "app.kubernetes.io/part-of": "avengers-coffee"
+          },
+          "name": "menu-service",
+          "namespace": "avengers-coffee",
+          "resourceVersion": "841",
+          "uid": "f994b6c7-70d8-4f91-ab22-e180f7473387"
+        },
+        "spec": {
+          "behavior": {
+            "scaleDown": {
+              "policies": [
+                {
+                  "periodSeconds": 60,
+                  "type": "Pods",
+                  "value": 1
+                }
+              ],
+              "selectPolicy": "Max",
+              "stabilizationWindowSeconds": 120
+            },
+            "scaleUp": {
+              "policies": [
+                {
+                  "periodSeconds": 30,
+                  "type": "Pods",
+                  "value": 1
+                },
+                {
+                  "periodSeconds": 30,
+                  "type": "Percent",
+                  "value": 100
+                }
+              ],
+              "selectPolicy": "Max",
+              "stabilizationWindowSeconds": 0
+            }
+          },
+          "maxReplicas": 4,
+          "metrics": [
+            {
+              "resource": {
+                "name": "cpu",
+                "target": {
+                  "averageUtilization": 60,
+                  "type": "Utilization"
+                }
+              },
+              "type": "Resource"
+            }
+          ],
+          "minReplicas": 1,
+          "scaleTargetRef": {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "name": "menu-service"
+          }
+        },
+        "status": {
+          "conditions": [
+            {
+              "lastTransitionTime": "2026-10-18T02:09:47Z",
+              "message": "the HPA controller was able to get the target's current scale",
+              "reason": "SucceededGetScale",
+              "status": "True",
+              "type": "AbleToScale"
+            },
+            {
+              "lastTransitionTime": "2026-10-18T02:09:47Z",
+              "message": "the HPA was unable to compute the replica count: failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API",
+              "reason": "FailedGetResourceMetric",
+              "status": "False",
+              "type": "ScalingActive"
+            }
+          ],
+          "currentMetrics": [
+            {
+              "type": ""
+            }
+          ],
+          "currentReplicas": 1,
+          "desiredReplicas": 0
+        }
+      }
+    ],
+    "kind": "List",
+    "metadata": {
+      "resourceVersion": ""
+    }
+  },
+  "common": {
+    "AI_SERVICE_URL": "http://ai-service:8000",
+    "DB_POOL_IDLE_TIMEOUT_MS": "30000",
+    "DB_PROBE_CONNECTION_TIMEOUT_MS": "2000",
+    "ENVIRONMENT": "production",
+    "IDENTITY_SERVICE_URL": "http://identity-service:3001",
+    "INVENTORY_SERVICE_URL": "http://inventory-service:3004",
+    "K8S_DB_MODE": "existing",
+    "K8S_DEMO_READ_ONLY": "true",
+    "MENU_SERVICE_URL": "http://menu-service:3003",
+    "NEWS_SERVICE_URL": "http://news-service:3006",
+    "NODE_ENV": "production",
+    "ORDER_SERVICE_URL": "http://order-service:3005",
+    "PAYMENT_RETURN_BASE_URL": "http://localhost:3000",
+    "PUBLIC_BROWSE_CACHE_TTL_MS": "5000",
+    "SOCKET_REDIS_ENABLED": "true",
+    "WEB_CUSTOMER_BASE_URL": "http://localhost:5175"
+  }
+}

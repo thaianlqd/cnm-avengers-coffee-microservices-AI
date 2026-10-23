@@ -1,0 +1,32 @@
+[
+  {
+    "name": "api-gateway",
+    "filesystem_layers_equal": true,
+    "old_image_id": "sha256:cc58270b20e0a90988c80c14dfb140da83b83e3fa3e3c2f8d2ff5c3689e86d93",
+    "new_image_id": "sha256:750df8041dc190e4ba98292f441aa6b7a17dad358909693c09f5f9c0873ce75b"
+  },
+  {
+    "name": "identity-service",
+    "filesystem_layers_equal": true,
+    "old_image_id": "sha256:0acc3bcafbdae4b01c5c2671f12f06a7a5832681815ccf779115ffe96897c2d3",
+    "new_image_id": "sha256:85a81b391f0afb01d10fd46c49eeeeccf43d92401b98eff02db4de8ca1ce5b69"
+  },
+  {
+    "name": "menu-service",
+    "filesystem_layers_equal": true,
+    "old_image_id": "sha256:13cdd6183eb1ece1080e798ba2e9e76b808b1f57d3c405009db2b70e3393767e",
+    "new_image_id": "sha256:c240f300143c637f3f29f274c5eaee87d1f6ac402171154cf450b0ca73f2b00b"
+  },
+  {
+    "name": "news-service",
+    "filesystem_layers_equal": true,
+    "old_image_id": "sha256:7cc6fbdb604d2127bb5b200116453c12a9dbebea3b65d41b7ea5032c365a5e2c",
+    "new_image_id": "sha256:c0a0a6f422cc94e5407d15b7cea210844f0a9c2a43a2d646e260b6789127984e"
+  },
+  {
+    "name": "customer-media",
+    "filesystem_layers_equal": true,
+    "old_image_id": "sha256:1aca704972c95f3ac8b93c30999731847a9a65b9cc5bae44e8df18fcaf7db50f",
+    "new_image_id": "sha256:c575d0a0e9e6a1565ac9bdf2eedc8cf4c54443a930735b9e9a1322e0c196f432"
+  }
+]

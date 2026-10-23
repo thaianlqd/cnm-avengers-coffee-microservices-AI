@@ -1,0 +1,12 @@
+{
+  "status": "LOCAL_ONLY_NOT_AUTHORIZED",
+  "new_run": "3k-aws-20261017T114759Z-224ba7",
+  "prior_run": "3k-aws-20261017T102542Z-08df96",
+  "copied_controllers_from": "k8s/verification/1000-aws-capacity/3k-aws-20261017T102542Z-08df96/controller",
+  "private_session_base_sha256": "b33053dc6c2fa9d752cdac902ed3daeea3ab3c12b3084a8a6e60abf2d0348bed",
+  "shared_helpers_unchanged": true,
+  "frozen_application_unchanged": true,
+  "new_aws_resources_created": false,
+  "required_scope": "explicit2targets+max6generators/95min within same3USD aggregate cap; no newcredit/noquota/IAM/planchanges",
+  "combined_planned_cost": 2.995379626938
+}

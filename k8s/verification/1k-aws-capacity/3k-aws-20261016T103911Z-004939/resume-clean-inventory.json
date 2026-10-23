@@ -1,0 +1,28 @@
+{
+  "observed_at": "2026-10-16T18:43:06.012640+00:00",
+  "all_phases": {
+    "3k-aws": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0,
+      "network_interfaces": 0
+    },
+    "3k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0,
+      "network_interfaces": 0
+    },
+    "5k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0,
+      "network_interfaces": 0
+    }
+  },
+  "pass": true,
+  "note": "terminated instance records expired from EC2 API; actual bill not inferred"
+}

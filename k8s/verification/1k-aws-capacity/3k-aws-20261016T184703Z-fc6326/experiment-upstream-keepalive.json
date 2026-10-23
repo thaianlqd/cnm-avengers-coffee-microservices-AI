@@ -1,0 +1,27 @@
+{
+  "decision": "KEEP",
+  "observed_at": "2026-10-16T19:31:09.854284+00:00",
+  "hypothesis": "bounded upstream connection reuse removes measured conntrack/DNS connection churn",
+  "only_application_runtime_variable": {
+    "name": "GATEWAY_PROXY_KEEP_ALIVE",
+    "before": "false",
+    "after": "true"
+  },
+  "lower_regression": "reuse-regression-250 STABLE PASS",
+  "qualification": [
+    "reuse-normal-500 STABLE PASS hold120s",
+    "reuse-long-500 STABLE PASS hold300s"
+  ],
+  "unchanged": [
+    "workload SHA/fullJSON/gzip/think3",
+    "Gateway500m/request75m",
+    "backend400m",
+    "HPA ceilings",
+    "cache5000ms",
+    "DBpoolmax2/idle30000ms",
+    "timeouts/retries",
+    "target1 NodePort30300 topology"
+  ],
+  "scope": "AWS overlay only; local/Compose defaults preserved",
+  "evidence_limit": "different fleets and fresh native builds from identical frozen source; no statistical causal-effect estimate"
+}

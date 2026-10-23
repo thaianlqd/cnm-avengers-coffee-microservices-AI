@@ -1,0 +1,34 @@
+{
+  "observed_at": "2026-10-17T11:42:32.165797+00:00",
+  "pass": true,
+  "known_phase_inventory": {
+    "3k-aws": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "3k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "5k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    }
+  },
+  "known_phase_owned_eni_counts": {
+    "3k-aws": 0,
+    "3k-qualification": 0,
+    "5k-qualification": 0
+  },
+  "local_control_processes_stopped": true,
+  "controller_key_and_token_removed": true,
+  "decrypted_encrypted_private_job_files_remaining": 0,
+  "session_closed": true,
+  "scope": "all known benchmark ownership phases and RunIds in ap-southeast-2; unrelated account resources excluded"
+}

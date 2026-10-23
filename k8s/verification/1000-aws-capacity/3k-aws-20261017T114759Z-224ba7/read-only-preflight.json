@@ -1,0 +1,8 @@
+{
+  "status": "MUST_REFRESH_BEFORE_APPROVED_LAUNCH",
+  "account_plan": "UNKNOWN",
+  "account_plan_directly_verified": false,
+  "observed_at": "2000-01-01T00:00:00+00:00",
+  "actual_vcpu_quota_from_prior_launch_rejection": 16,
+  "new_aws_resources_created": false
+}

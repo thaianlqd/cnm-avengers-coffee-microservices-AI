@@ -1,0 +1,50 @@
+{
+  "run_id": "3k-aws-20261016T184703Z-fc6326",
+  "started_at": "2026-10-16T18:48:06.442129+00:00",
+  "roles": {
+    "target1": {
+      "id": "i-08e84163531a95269",
+      "private_ip": "172.31.6.214",
+      "launch_time": "2026-10-16T18:48:18+00:00",
+      "type": "m7i-flex.large"
+    },
+    "target2": {
+      "id": "i-03bd6d9943af79963",
+      "private_ip": "172.31.3.86",
+      "launch_time": "2026-10-16T18:48:21+00:00",
+      "type": "m7i-flex.large"
+    },
+    "target3": {
+      "id": "i-020c2f5aa8754dbd8",
+      "private_ip": "172.31.8.70",
+      "launch_time": "2026-10-16T18:48:23+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator1": {
+      "id": "i-092aa751cc5d44c0d",
+      "private_ip": "172.31.2.123",
+      "launch_time": "2026-10-16T18:48:26+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator2": {
+      "id": "i-0e2e559de8415ab50",
+      "private_ip": "172.31.13.246",
+      "launch_time": "2026-10-16T18:49:25+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator3": {
+      "id": "i-0d1d76205602a9082",
+      "private_ip": "172.31.0.36",
+      "launch_time": "2026-10-16T18:50:17+00:00",
+      "type": "m7i-flex.large"
+    }
+  },
+  "max_generators": 3,
+  "runtime_minutes": 120,
+  "control_pid": null,
+  "tunnel_pid": null,
+  "groups": {
+    "target": "sg-0e488a7664ebfbd83",
+    "generator": "sg-07cee4e6d80b49530"
+  }
+}

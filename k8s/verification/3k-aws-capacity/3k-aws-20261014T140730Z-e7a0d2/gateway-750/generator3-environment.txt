@@ -1,0 +1,11 @@
+k6-v2.3.0-linux-amd64.tar.gz: OK
+k6 v2.3.0 (commit/e088784614, go1.26.8, linux/amd64)
+e001bbf39ba67424a85c9c8516440ba5c73ecf7a6021be96c76194380c15f260  k6
+Linux ip-172-31-2-163 7.0.0-1014-aws #14~24.04.1-Ubuntu SMP PREEMPT Fri Sep 18 21:24:59 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+2
+100
+               total        used        free      shared  buff/cache   available
+Mem:           7.6Gi       657Mi       6.5Gi       2.9Mi       745Mi       7.0Gi
+Swap:             0B          0B          0B
+1024
+524288

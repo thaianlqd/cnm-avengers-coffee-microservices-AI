@@ -1,0 +1,44 @@
+{
+  "observed_at": "2026-10-17T10:49:19.402422+00:00",
+  "account": "956035085549",
+  "region": "ap-southeast-2",
+  "inventory": {
+    "3k-aws": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "3k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "5k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    }
+  },
+  "owned_eni_counts": {
+    "3k-aws": 0,
+    "3k-qualification": 0,
+    "5k-qualification": 0
+  },
+  "instance_type": "m7i-flex.large",
+  "instance_free_tier_eligible": true,
+  "ami_id": "ami-0f5e1e0151e5b95ed",
+  "ami_owner": "099720109477",
+  "ami_free_tier_eligible": true,
+  "account_plan_console_verification_required_before_launch": false,
+  "quota_read_status": "prior read AccessDenied; no IAM/quota changes; stop and cleanup on actual rejection",
+  "new_aws_resources_created": false,
+  "account_plan": "FREE",
+  "account_plan_directly_verified": true,
+  "account_plan_verification_method": "AWS Console authenticated account home; credits cover free plan costs; sufficient credit observed; balance not retained",
+  "credits_sufficient_for_approved_cap": true,
+  "account_plan_api_access_denied": true,
+  "plan_or_iam_changes": false
+}

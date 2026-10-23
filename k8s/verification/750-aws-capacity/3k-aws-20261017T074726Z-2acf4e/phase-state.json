@@ -1,0 +1,60 @@
+{
+  "phase": "750",
+  "state": "COMPLETE_750_QUALIFICATION",
+  "observed_at": "2026-10-17T08:54:02.303583+00:00",
+  "credit_cap_usd": 2.2,
+  "runtime_minutes": 90,
+  "targets": 3,
+  "maximum_generators": 5,
+  "maximum_planned_vus": 750,
+  "cleanup_required": false,
+  "qualification_claim": "750 normal and independent300s long STABLEPASS; all-phase cleanup verified;1000notrun",
+  "push": false,
+  "completed_points": [
+    {
+      "point": "regression-250",
+      "vus": 250,
+      "status": "STABLE PASS",
+      "requests": 50420.0,
+      "rps": 238.01562980002515,
+      "failure_rate": 3.966679888932963e-05,
+      "p95_ms": 359.5633281999995,
+      "hold_p95_ms": 398.32280840000027,
+      "generator_adequate": true,
+      "natural_recovery": true
+    },
+    {
+      "point": "regression-normal-500",
+      "vus": 500,
+      "status": "STABLE PASS",
+      "requests": 98452.0,
+      "rps": 460.19528814190863,
+      "failure_rate": 0.0,
+      "p95_ms": 307.3584064999998,
+      "hold_p95_ms": 239.03388229999996,
+      "generator_adequate": true,
+      "natural_recovery": true
+    }
+  ],
+  "gateway_self_healing": "PASS60/60",
+  "gateway_rolling_restart": "PASS60/60",
+  "generator_partition": {
+    "generator1": 150,
+    "generator2": 150,
+    "generator3": 150,
+    "generator4": 150,
+    "generator5": 150
+  },
+  "normal750": {
+    "status": "STABLE PASS",
+    "requests": 156996.0,
+    "rps": 728.9430700643943,
+    "p95_ms": 92.5347915,
+    "hold_p95_ms": 73.50308229999979,
+    "failure_rate": 3.821753420469311e-05,
+    "generator_adequate": true,
+    "natural_recovery": true
+  },
+  "cleanup": "PASS",
+  "maximum_repeatably_qualified_vus": 750
+}

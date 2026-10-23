@@ -1,0 +1,16 @@
+{
+  "total_vus": 1000,
+  "partitions": {
+    "generator1": 167,
+    "generator2": 167,
+    "generator3": 167,
+    "generator4": 167,
+    "generator5": 166,
+    "generator6": 166
+  },
+  "measured_inadequacy_sha256": "b626c0d2ec5d624d18c3a50b9bfab724878dc6194c2343f575daaad163ee64ad",
+  "reason": "old measured250VU-per-generator saturation; independently valid166/167VU per-generator at500; latest750/5 peak76.1%; six167/166 partitions avoid the projected200VU CPU saturation",
+  "projected_cpu_at_200_vu_percent": 101.46666666666665,
+  "projection_is_not_measured_failure": true,
+  "prediction_not_qualification": true
+}

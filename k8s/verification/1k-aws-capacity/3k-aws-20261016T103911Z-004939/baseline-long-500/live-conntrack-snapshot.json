@@ -1,0 +1,62 @@
+{
+  "target1": {
+    "at": "2026-10-16T11:38:14.975684+00:00",
+    "usage": {
+      "count": 130036,
+      "max": 131072
+    },
+    "stats": {
+      "source": "netlink",
+      "counters": {
+        "invalid": 0,
+        "insert_failed": 0,
+        "drop": 0,
+        "early_drop": 0,
+        "error": 0,
+        "search_restart": 0,
+        "clash_resolve": 156587,
+        "chaintoolong": 0
+      }
+    }
+  },
+  "target2": {
+    "at": "2026-10-16T11:38:14.251357+00:00",
+    "usage": {
+      "count": 114776,
+      "max": 131072
+    },
+    "stats": {
+      "source": "netlink",
+      "counters": {
+        "invalid": 0,
+        "insert_failed": 0,
+        "drop": 0,
+        "early_drop": 0,
+        "error": 0,
+        "search_restart": 0,
+        "clash_resolve": 20516,
+        "chaintoolong": 0
+      }
+    }
+  },
+  "target3": {
+    "at": "2026-10-16T11:38:14.236771+00:00",
+    "usage": {
+      "count": 99685,
+      "max": 131072
+    },
+    "stats": {
+      "source": "netlink",
+      "counters": {
+        "invalid": 0,
+        "insert_failed": 0,
+        "drop": 0,
+        "early_drop": 0,
+        "error": 0,
+        "search_restart": 0,
+        "clash_resolve": 19848,
+        "chaintoolong": 0
+      }
+    }
+  }
+}

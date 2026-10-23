@@ -1,0 +1,13 @@
+normal-1000 INVALID GENERATOR
+test_approved_scope_checks_all176_frozen_files (__main__.Admission.test_approved_scope_checks_all176_frozen_files) ... ok
+test_closed750_scope_cannot_authorize1000 (__main__.Admission.test_closed750_scope_cannot_authorize1000) ... ok
+test_free_plan_console_verification_required (__main__.Admission.test_free_plan_console_verification_required) ... ok
+test_pending_credit_blocks_before_inventory (__main__.Admission.test_pending_credit_blocks_before_inventory) ... ok
+test_stale_inventory_blocks_before_control (__main__.Admission.test_stale_inventory_blocks_before_control) ... ok
+test_above1000_rejected_before_load (__main__.Progression.test_above1000_rejected_before_load) ... ok
+test_invalid_generator_blocks_higher_claim (__main__.Progression.test_invalid_generator_blocks_higher_claim) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.053s
+
+OK

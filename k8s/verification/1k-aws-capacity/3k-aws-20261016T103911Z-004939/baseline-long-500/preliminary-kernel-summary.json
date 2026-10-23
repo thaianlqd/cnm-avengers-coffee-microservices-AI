@@ -1,0 +1,53 @@
+{
+  "kernel-target3.jsonl.gz": {
+    "samples": 96,
+    "conntrack_count_peak": 107519,
+    "limit_values": [
+      131072
+    ],
+    "counter_deltas": {
+      "invalid": 0,
+      "insert_failed": 0,
+      "drop": 0,
+      "early_drop": 0,
+      "error": 0,
+      "search_restart": 0,
+      "clash_resolve": 14066,
+      "chaintoolong": 0
+    }
+  },
+  "kernel-target2.jsonl.gz": {
+    "samples": 96,
+    "conntrack_count_peak": 128687,
+    "limit_values": [
+      131072
+    ],
+    "counter_deltas": {
+      "invalid": 0,
+      "insert_failed": 0,
+      "drop": 0,
+      "early_drop": 0,
+      "error": 0,
+      "search_restart": 0,
+      "clash_resolve": 19469,
+      "chaintoolong": 0
+    }
+  },
+  "kernel-target1.jsonl.gz": {
+    "samples": 96,
+    "conntrack_count_peak": 131072,
+    "limit_values": [
+      131072
+    ],
+    "counter_deltas": {
+      "invalid": 5,
+      "insert_failed": 0,
+      "drop": 617,
+      "early_drop": 15125,
+      "error": 0,
+      "search_restart": 0,
+      "clash_resolve": 146636,
+      "chaintoolong": 0
+    }
+  }
+}

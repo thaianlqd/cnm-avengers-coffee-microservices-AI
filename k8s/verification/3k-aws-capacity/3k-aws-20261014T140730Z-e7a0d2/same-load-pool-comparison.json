@@ -1,0 +1,59 @@
+{
+  "hypothesis": "retain DB connections across 5s cache refresh instead of repeatedly paying fresh connection establishment",
+  "primary_change": "DB_POOL_IDLE_TIMEOUT_MS 5000 -> 30000",
+  "unchanged": {
+    "pool_max": 2,
+    "cache_ttl_ms": 5000,
+    "target_nodes": 3,
+    "generator_nodes": 1,
+    "instance_type": "m7i-flex.large",
+    "workload_sha256": "dfb9af16b94cc0b22ae53710ece3bde446831fb110a928e7573120bf3ffc4c83",
+    "vus": 250,
+    "profile_seconds": [
+      60,
+      120,
+      30
+    ]
+  },
+  "before": {
+    "requests": 19856,
+    "rps": 94.11050999958154,
+    "failure_rate": 0,
+    "check_rate": 1,
+    "p95_ms": 3536.65616375,
+    "hold_p95_ms": 3758.6442472,
+    "p99_ms": 4132.334692400001,
+    "status": "FAIL",
+    "generator_adequate": true,
+    "generator_cpu_saturation_longest_samples": 0,
+    "restart_delta": 0,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 2,
+      "menu-service": 2
+    },
+    "post_smoke": true,
+    "natural_recovery": true
+  },
+  "after": {
+    "requests": 41600,
+    "rps": 195.91631975351177,
+    "failure_rate": 0,
+    "check_rate": 1,
+    "p95_ms": 779.186172199999,
+    "hold_p95_ms": 786.1115590499999,
+    "p99_ms": 1300.449499200001,
+    "status": "INVALID GENERATOR",
+    "generator_adequate": false,
+    "generator_cpu_saturation_longest_samples": 14,
+    "restart_delta": 0,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 3
+    },
+    "post_smoke": true,
+    "natural_recovery": true
+  },
+  "decision": "latency improved materially; raw correctness/stability passed, but after run invalid because generator saturated. Retain experiment provisionally; rerun total 250 with adequate generators before advancing. No application capacity ceiling inferred."
+}

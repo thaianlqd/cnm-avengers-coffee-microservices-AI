@@ -1,0 +1,17 @@
+
+> gateway-root@0.0.1 test
+> jest --runInBand
+
+PASS src/upstream-diagnostics.spec.ts
+PASS src/proxy-agents.spec.ts
+PASS src/capacity-diagnostics.spec.ts
+PASS src/request-logging.spec.ts
+PASS src/gateway-http-policy.spec.ts
+PASS src/app.controller.spec.ts
+PASS src/health.controller.spec.ts
+
+Test Suites: 7 passed, 7 total
+Tests:       29 passed, 29 total
+Snapshots:   0 total
+Time:        1.951 s
+Ran all test suites.

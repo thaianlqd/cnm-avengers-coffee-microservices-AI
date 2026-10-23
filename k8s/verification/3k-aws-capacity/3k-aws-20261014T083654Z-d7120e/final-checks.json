@@ -1,0 +1,13 @@
+{
+  "aws_helpers": {
+    "tests": 30,
+    "skipped": 1,
+    "passed": 29
+  },
+  "application_amd64_tests_passed": 102,
+  "local_backend_tests_passed": 82,
+  "docker_desktop_render_resources": 22,
+  "aws_render_resources": 14,
+  "secret_scan": "PASS",
+  "paused_by_user": true
+}

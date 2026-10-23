@@ -1,0 +1,31 @@
+{
+  "observed_at": "2026-10-17T06:39:27.518155+00:00",
+  "tests": {
+    "backend_pass": 168,
+    "aws_helper_pass": 68,
+    "aws_helper_skip": 1,
+    "k8s_helper_pass": 24,
+    "control_pass": 3,
+    "total_pass": 263,
+    "total_skip": 1,
+    "local_static_resources": 22,
+    "aws_static_resources": 14
+  },
+  "backend_build_checks": "build-checks.json",
+  "backend_source_frozen_matches": true,
+  "static_local": "validation/local-static.log",
+  "static_aws": "validation/aws-static.log",
+  "artifact_completed_points_checked": 10,
+  "final_secret_scan": {
+    "pass": true,
+    "files": 955,
+    "gzip_streams": 170,
+    "includes_ignored_public_logs": true
+  },
+  "git_diff_check": "PASS; only raw.log trailing alignment spaces exempted by scoped attributes, bytes/hashes preserved",
+  "cleanup": "final-all-phase-cleanup.json",
+  "source_controller_ast": "PASS",
+  "sha256_manifests": "SHA256SUMS in each of the three run directories; excludes each manifest itself",
+  "public_artifacts_all_explicitly_staged": true,
+  "raw_logs_byte_exact": true
+}

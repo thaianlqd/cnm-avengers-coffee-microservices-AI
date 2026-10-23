@@ -1,0 +1,20 @@
+{
+  "updated_at": "2026-10-17T05:52:43.268896+00:00",
+  "results": [
+    {
+      "point": "retained-regression-250",
+      "vus": 250,
+      "hold_seconds": 120,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "retained-normal-750",
+      "vus": 750,
+      "hold_seconds": 120,
+      "status": "INVALID GENERATOR",
+      "valid_pass": false
+    }
+  ],
+  "historical500_verified": true
+}

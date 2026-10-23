@@ -1,0 +1,15 @@
+
+> news-service@0.0.1 test
+> jest --runInBand
+
+PASS src/public-browse-cache.spec.ts
+PASS src/health.controller.spec.ts
+PASS src/capacity-diagnostics.spec.ts
+PASS src/modules/news/news-demo.spec.ts
+PASS src/db-pool.config.spec.ts
+
+Test Suites: 5 passed, 5 total
+Tests:       34 passed, 34 total
+Snapshots:   0 total
+Time:        4.818 s
+Ran all test suites.

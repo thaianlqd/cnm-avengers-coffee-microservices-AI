@@ -1,0 +1,15 @@
+TAP version 13
+# Subtest: allowlist rejects write/auth/admin/unexpected query before upstream; preserves full gzip
+ok 1 - allowlist rejects write/auth/admin/unexpected query before upstream; preserves full gzip
+  ---
+  duration_ms: 20.578958
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 81.432291

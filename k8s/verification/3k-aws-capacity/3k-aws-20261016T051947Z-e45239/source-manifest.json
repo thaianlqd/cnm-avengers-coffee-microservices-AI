@@ -1,0 +1,152 @@
+{
+  "branch": "features_k8s",
+  "starting_head": "d715ba7423d012e068eb5b447b806c9a4967320b",
+  "origin_main": "9ab6d638d72f55e8b5c0208a692b5b6252a7a861",
+  "application_source": "d715ba7423d012e068eb5b447b806c9a4967320b",
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "helper_changes": "uncommitted lifecycle hardening; application/workload/manifests unchanged",
+  "local_kubernetes": "disabled; preserve DataPlatform",
+  "local_runtime_regression": "NOT RUN",
+  "controller_tests": {
+    "observed_at": "2026-10-16T06:32:24.757396+00:00",
+    "aws_python": {
+      "pass": 57,
+      "skip": 1
+    },
+    "k8s_python": {
+      "pass": 24
+    },
+    "node_control_security": {
+      "pass": 3
+    },
+    "backend_aws": {
+      "pass": 161,
+      "source": "build-checks.json"
+    },
+    "local_static_resources": 22,
+    "aws_static_resources": 14,
+    "total_pass": 245,
+    "local_backend_build": "NOT RUN: avoid shared DataPlatform CPU/RAM",
+    "local_runtime": "NOT RUN: Kubernetes disabled; Docker untouched",
+    "unknown_metric_regression": "PASS: unknown metrics are missing, complete hold coverage required",
+    "final_helper_check_at": "2026-10-16T10:07:50.289179+00:00",
+    "diff_check": "PASS",
+    "artifact_secret_review": {
+      "files_scanned_before_final_metadata": 359,
+      "findings": 0,
+      "method": "decompress gzip and inspect access-key/private-key/credential-URL/Secret-document/live-control-endpoint patterns; review helper diff; no AWS credential files read"
+    },
+    "final_absent_node_guard": "PASS full58 tests (57pass,1skip); report resource rows verified against final evidence",
+    "artifact_format_normalization": "CRLF CSV / console trailing whitespace normalized; original and normalized hashes retained",
+    "staged_review": {
+      "staged_files": 380,
+      "actual_secret_findings": 0,
+      "reviewed_fixture_literals": [
+        {
+          "file": "scripts/aws-k6/test_aws_private.py",
+          "finding": "deterministic mocked control URL / rejected-target test fixture; no live session endpoint"
+        }
+      ],
+      "diff_check": "PASS after LF/whitespace normalization",
+      "scope": "helpers/docs/verification only; no application source changes"
+    }
+  },
+  "helper_hashes_at_long500": {
+    "scripts/aws-k6/analyze-3k.py": "90dfc32d74cb13c3ec31ef69223cad4969f762a9e1c2b64e2f0749e56138d128",
+    "scripts/aws-k6/analyze-aws-capacity.py": "f7b544d2dd430fea5dbb962a6e2ddd48f1b9496a5d0d4cd3fe8de3d220ba9da4",
+    "scripts/aws-k6/analyze.py": "a1b9c3550e15257004b0ba0097e2cfd9d56f2e447e96f5740160f94d86615ee4",
+    "scripts/aws-k6/archive-3k.py": "42288b50a76df5af0fb567a69f7314fc102f71556e4b13391459cd66f85668fc",
+    "scripts/aws-k6/archive-aws-points.py": "78d463741b36c6bb95df679f530800cef396837289c01bbf92147a157aa3e268",
+    "scripts/aws-k6/archive.py": "7c9296f1eeb83b267116058bb8cbc5fe5c113ed9bbf1c99eedc8f011dd242c10",
+    "scripts/aws-k6/aws-capacity.py": "20d2da49fcde6a3d86d273f6facd36554ff2b6c29a0bb368ac4e68d8fd9deb10",
+    "scripts/aws-k6/aws-control.py": "9bdad2eb70fb0de87f482600aa365b987577079c2ac0e2981c99cd7c7951cb74",
+    "scripts/aws-k6/aws-generator-metrics.py": "865705a7b1a7e145400f8c912c5df89174e2ab283a316d107c8ef0ec0d990eee",
+    "scripts/aws-k6/aws-network-baseline.py": "03120f21d27f2e02168e6accc0c5634dc0bc6a2b519c408df442e604d9ff5243",
+    "scripts/aws-k6/aws-observe.py": "a23e51b1cf817f408540bb6286987c4cc08fab7a9ab60254af602d0809947130",
+    "scripts/aws-k6/aws-private-session.py": "40191501ff04680ffe97122d1bfd8779f8daaffc02174db7f7acc4436b3c8f34",
+    "scripts/aws-k6/aws-run-generator.py": "a78eaafb77a9247f9c57ab82cc44ac08f197a21e5821d8c1a97be1acf78f5c39",
+    "scripts/aws-k6/aws-target-diagnostics.py": "f86cebc5ff6fe09902f5797706dbcd6c0598d143c9fb8fdd67708cc29ac404da",
+    "scripts/aws-k6/aws-worker.py": "2e8fea4c8537e1bad596fea87ec7c193d6af0e53b4f3a8edbc8c4ffc1f8f4c5b",
+    "scripts/aws-k6/control-worker.py": "8ba1fadb0d3dd3b83a63bdbcf678ea46d86b97c9f86b1ef3515e4306415e1087",
+    "scripts/aws-k6/egress-3k.py": "49cb1157437f138a34180f9386c7d04d4c9e3d0ed752e26ff9d4d24cb6d18f6f",
+    "scripts/aws-k6/https-session.py": "cc2b35b6dfc7179a9ce4afbe24eb567df148c0170dcc08af710dfb70a775e419",
+    "scripts/aws-k6/legacy-3k.py": "876554ff47ac0299c0433a2c76961815c1122607f00d81a4d66ba4d30ad32fcf",
+    "scripts/aws-k6/merge-aws-generators.py": "68efc608e38c055084efc669a4cb1de0e04668ab0d9e866292959e8c45eae9c7",
+    "scripts/aws-k6/metrics-3k.py": "03f06fcb9c94b3299648b1281c906767c24944bd9de396bbff5ebf5daa55e14f",
+    "scripts/aws-k6/network-3k.py": "93fe149e04b51786d90ef893bdf1f93b3385e544bffcad21ad766003355d9b08",
+    "scripts/aws-k6/phase-3k.py": "a3b54ad042af7a689b6119c349ae46b8e0255f252560b614d062b1d812457b01",
+    "scripts/aws-k6/remote-metrics.py": "932de8cbb72da1e9b130977f13db63caca51c3c5dde24a47fd53108a46c52233",
+    "scripts/aws-k6/sample-path.py": "594611da0e145ad7de8fadf8d1a5a472a0e4ff6dac0301ee894687a564836cb9",
+    "scripts/aws-k6/session.py": "108b6bf00fb0d92ad28e428b917df0b1e272f081bdb55fb260665a95cc311cf5",
+    "scripts/aws-k6/test_adequacy3k.py": "909d75049c5312425d45b910a427c0b3bbcd9c438d163559f80873bd9884406e",
+    "scripts/aws-k6/test_analyze.py": "7f8e78d923c2353e2bef4d74db9e5bfe4e9b8efe08063f6e88b0dbdea32bc250",
+    "scripts/aws-k6/test_aws_analysis.py": "d6e7686ab1e996168623355347b117f29ae5a27b9a8268a373f6986498a643f6",
+    "scripts/aws-k6/test_aws_capacity.py": "ab490cbe92d860c283bafcfc0ebafd8d45b7958774ea130632fd10aac3459ce5",
+    "scripts/aws-k6/test_aws_merge.py": "c71cdb42b60c013e8c8ded6620f87cb8b32460220e2d51ddb4eb048a234653b9",
+    "scripts/aws-k6/test_aws_network.py": "f83946b519ca6486e3520afd9ff9ef49c04da1ad2de6f4f2477f263b30dc2a97",
+    "scripts/aws-k6/test_aws_private.py": "50720456924fc63cd31a7b2a41944b5b025e75133808738099d5a85be4e50eaa",
+    "scripts/aws-k6/test_aws_target_diagnostics.py": "7122cc9506920bfbcf1bf99303c1aa2837fb901129bda7ecba8e1a5c817fe0e0",
+    "scripts/aws-k6/test_egress3k.py": "addf9de6884a251375ea750a3acb5231bd366cc65d5c83a5e8e63bbd976dff28",
+    "scripts/aws-k6/test_phase3k.py": "56d0439ef92c70102eabe63acb9ef5b93e0adad281258b52f164b8957e3f16e3",
+    "scripts/aws-k6/test_session.py": "30b272efcee1cbf78b89209e37bcd5f76bd9ad1eea4ac78c76cd5a999aca4a4d",
+    "scripts/aws-k6/worker-3k.py": "655a6652446f69295480c08862857de0958a40eec46c64f3d2f351651d30e42c"
+  },
+  "controller_evidence_hashes": {
+    "correlate-point.py": "85df6c54562d18ec56e60124a3606fdcabbe12bb3f791014f68a1c132906c8c3",
+    "point-observe.py": "e615df9aa87051c17a5f20282dfc2cc35bb11447d8db62ff35466f955c533988",
+    "session-driver.py": "a005c9c07d559e7c5f022c60a8df3b69357e1cddf357d8f112bab74d0cb4557c"
+  },
+  "final_analysis_helper_sha256": "40c44395fbb8de35887a9ed5844b652de59c14a1255d0e79d5e12eb365bc067f",
+  "final_helper_hashes": {
+    "scripts/aws-k6/analyze-3k.py": "90dfc32d74cb13c3ec31ef69223cad4969f762a9e1c2b64e2f0749e56138d128",
+    "scripts/aws-k6/analyze-aws-capacity.py": "40c44395fbb8de35887a9ed5844b652de59c14a1255d0e79d5e12eb365bc067f",
+    "scripts/aws-k6/analyze.py": "a1b9c3550e15257004b0ba0097e2cfd9d56f2e447e96f5740160f94d86615ee4",
+    "scripts/aws-k6/archive-3k.py": "42288b50a76df5af0fb567a69f7314fc102f71556e4b13391459cd66f85668fc",
+    "scripts/aws-k6/archive-aws-points.py": "78d463741b36c6bb95df679f530800cef396837289c01bbf92147a157aa3e268",
+    "scripts/aws-k6/archive.py": "7c9296f1eeb83b267116058bb8cbc5fe5c113ed9bbf1c99eedc8f011dd242c10",
+    "scripts/aws-k6/aws-capacity.py": "20d2da49fcde6a3d86d273f6facd36554ff2b6c29a0bb368ac4e68d8fd9deb10",
+    "scripts/aws-k6/aws-control.py": "9bdad2eb70fb0de87f482600aa365b987577079c2ac0e2981c99cd7c7951cb74",
+    "scripts/aws-k6/aws-generator-metrics.py": "865705a7b1a7e145400f8c912c5df89174e2ab283a316d107c8ef0ec0d990eee",
+    "scripts/aws-k6/aws-network-baseline.py": "03120f21d27f2e02168e6accc0c5634dc0bc6a2b519c408df442e604d9ff5243",
+    "scripts/aws-k6/aws-observe.py": "a23e51b1cf817f408540bb6286987c4cc08fab7a9ab60254af602d0809947130",
+    "scripts/aws-k6/aws-private-session.py": "40191501ff04680ffe97122d1bfd8779f8daaffc02174db7f7acc4436b3c8f34",
+    "scripts/aws-k6/aws-run-generator.py": "a78eaafb77a9247f9c57ab82cc44ac08f197a21e5821d8c1a97be1acf78f5c39",
+    "scripts/aws-k6/aws-target-diagnostics.py": "f86cebc5ff6fe09902f5797706dbcd6c0598d143c9fb8fdd67708cc29ac404da",
+    "scripts/aws-k6/aws-worker.py": "2e8fea4c8537e1bad596fea87ec7c193d6af0e53b4f3a8edbc8c4ffc1f8f4c5b",
+    "scripts/aws-k6/control-worker.py": "8ba1fadb0d3dd3b83a63bdbcf678ea46d86b97c9f86b1ef3515e4306415e1087",
+    "scripts/aws-k6/egress-3k.py": "49cb1157437f138a34180f9386c7d04d4c9e3d0ed752e26ff9d4d24cb6d18f6f",
+    "scripts/aws-k6/https-session.py": "cc2b35b6dfc7179a9ce4afbe24eb567df148c0170dcc08af710dfb70a775e419",
+    "scripts/aws-k6/legacy-3k.py": "876554ff47ac0299c0433a2c76961815c1122607f00d81a4d66ba4d30ad32fcf",
+    "scripts/aws-k6/merge-aws-generators.py": "68efc608e38c055084efc669a4cb1de0e04668ab0d9e866292959e8c45eae9c7",
+    "scripts/aws-k6/metrics-3k.py": "03f06fcb9c94b3299648b1281c906767c24944bd9de396bbff5ebf5daa55e14f",
+    "scripts/aws-k6/network-3k.py": "93fe149e04b51786d90ef893bdf1f93b3385e544bffcad21ad766003355d9b08",
+    "scripts/aws-k6/phase-3k.py": "a3b54ad042af7a689b6119c349ae46b8e0255f252560b614d062b1d812457b01",
+    "scripts/aws-k6/remote-metrics.py": "932de8cbb72da1e9b130977f13db63caca51c3c5dde24a47fd53108a46c52233",
+    "scripts/aws-k6/sample-path.py": "594611da0e145ad7de8fadf8d1a5a472a0e4ff6dac0301ee894687a564836cb9",
+    "scripts/aws-k6/session.py": "108b6bf00fb0d92ad28e428b917df0b1e272f081bdb55fb260665a95cc311cf5",
+    "scripts/aws-k6/test_adequacy3k.py": "909d75049c5312425d45b910a427c0b3bbcd9c438d163559f80873bd9884406e",
+    "scripts/aws-k6/test_analyze.py": "7f8e78d923c2353e2bef4d74db9e5bfe4e9b8efe08063f6e88b0dbdea32bc250",
+    "scripts/aws-k6/test_aws_analysis.py": "fdd50731758a1d42983e25d0894e28a798397c0373f1b4a8c43eb3264855bffb",
+    "scripts/aws-k6/test_aws_capacity.py": "ab490cbe92d860c283bafcfc0ebafd8d45b7958774ea130632fd10aac3459ce5",
+    "scripts/aws-k6/test_aws_merge.py": "c71cdb42b60c013e8c8ded6620f87cb8b32460220e2d51ddb4eb048a234653b9",
+    "scripts/aws-k6/test_aws_network.py": "f83946b519ca6486e3520afd9ff9ef49c04da1ad2de6f4f2477f263b30dc2a97",
+    "scripts/aws-k6/test_aws_private.py": "50720456924fc63cd31a7b2a41944b5b025e75133808738099d5a85be4e50eaa",
+    "scripts/aws-k6/test_aws_target_diagnostics.py": "7122cc9506920bfbcf1bf99303c1aa2837fb901129bda7ecba8e1a5c817fe0e0",
+    "scripts/aws-k6/test_egress3k.py": "addf9de6884a251375ea750a3acb5231bd366cc65d5c83a5e8e63bbd976dff28",
+    "scripts/aws-k6/test_phase3k.py": "56d0439ef92c70102eabe63acb9ef5b93e0adad281258b52f164b8957e3f16e3",
+    "scripts/aws-k6/test_session.py": "30b272efcee1cbf78b89209e37bcd5f76bd9ad1eea4ac78c76cd5a999aca4a4d",
+    "scripts/aws-k6/worker-3k.py": "655a6652446f69295480c08862857de0958a40eec46c64f3d2f351651d30e42c"
+  },
+  "final_postprocessing_hashes": {
+    "correlate-point.py": "85df6c54562d18ec56e60124a3606fdcabbe12bb3f791014f68a1c132906c8c3",
+    "refresh-baseline.py": "72da9af702853ff8bd76defdf2a43830d6eb7f0f162d996eaf519767bc19e0d9",
+    "session-driver-after-smoke-failure.py": "3aa53ca157130cf15d8be04275f2b28c2731507b820610d44ce83db63a67975e",
+    "correlate-final.py": "e56a4f66e3270ee76adfa3e55e76557a6e5aa3f1d92c60a1162736e8b2fc80d8",
+    "point-observe.py": "e615df9aa87051c17a5f20282dfc2cc35bb11447d8db62ff35466f955c533988",
+    "summarize-diagnostics.py": "9ed3ca21df1efbd8ca8f000840fa82f4f9bcf5e5ceaac282cbaeee96c9327fdc",
+    "session-driver.py": "a005c9c07d559e7c5f022c60a8df3b69357e1cddf357d8f112bab74d0cb4557c",
+    "reanalyze-point.py": "eeb83df18aeff75af7e76d7b08c4289a8d81e36cf288924a846089afa32dfd46",
+    "recover-original-long500.py": "6b5f4278c90fa26f522ed4e65a066caeba089863fcd14049f8d50a9e18fd15ac"
+  },
+  "reanalysis": "Final lightweight status/resource analysis and CSV join on retained evidence after interruption; exact merged HTTP observations unchanged; no load rerun"
+}

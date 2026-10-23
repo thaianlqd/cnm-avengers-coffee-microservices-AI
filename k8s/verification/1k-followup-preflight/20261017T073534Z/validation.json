@@ -1,0 +1,24 @@
+{
+  "observed_at": "2026-10-17T07:40:26.875490+00:00",
+  "aws_helper_tests": {
+    "run": 77,
+    "pass": 76,
+    "skip": 1,
+    "skip_reason": "historical native k6 path not present"
+  },
+  "ast": "PASS",
+  "pending_authorization_blocks_provision": "PASS",
+  "sixth_generator_saturation_and_missing_partition_rejected": "PASS",
+  "partition_total_and_exact_quantiles": "PASS",
+  "sixth_generator_private_job_cleanup": "PASS",
+  "application_source_dockerfiles_workload_runtime_manifests_unchanged": true,
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "diff_check": "PASS",
+  "secret_pattern_scan": {
+    "files": 14,
+    "findings": 0
+  },
+  "new_benchmark_runs": 0,
+  "new_aws_resources_created": false,
+  "push": false
+}

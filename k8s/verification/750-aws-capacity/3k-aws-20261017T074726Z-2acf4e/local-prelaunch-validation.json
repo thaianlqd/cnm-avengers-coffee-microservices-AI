@@ -1,0 +1,11 @@
+{
+  "observed_at": "2026-10-17T07:55:36.843942+00:00",
+  "syntax": "PASS",
+  "point_accepts750_rejects1000_and_sixth_generator": "PASS",
+  "unapproved_supervisor_rejects_before_control_and_aws": "PASS",
+  "application_file_hashes_verified": 176,
+  "workload_unchanged": true,
+  "helpers_last_validated": "76PASS/1historicalSKIP; no helper source changes since that suite",
+  "initial_test_harness_error": "Mocked Popen intercepted the read-only git branch check; corrected by independently stubbing check_output. Not an application or AWS failure.",
+  "execution_note": "actual approved supervisor independently validates all launch guards before provisioning"
+}

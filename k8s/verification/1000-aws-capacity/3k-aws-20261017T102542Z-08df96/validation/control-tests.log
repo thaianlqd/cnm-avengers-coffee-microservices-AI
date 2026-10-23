@@ -1,0 +1,47 @@
+TAP version 13
+# Subtest: 3k control token required; uploads bounded to existing job and whitelisted artifacts
+ok 1 - 3k control token required; uploads bounded to existing job and whitelisted artifacts
+  ---
+  duration_ms: 82.417292
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 148.649167
+
+TAP version 13
+# Subtest: control token required; uploads bounded to existing job and whitelisted artifacts
+ok 1 - control token required; uploads bounded to existing job and whitelisted artifacts
+  ---
+  duration_ms: 58.968125
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 108.388083
+
+TAP version 13
+# Subtest: allowlist rejects write/auth/admin/unexpected query before upstream; preserves full gzip
+ok 1 - allowlist rejects write/auth/admin/unexpected query before upstream; preserves full gzip
+  ---
+  duration_ms: 23.254584
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 73.325416

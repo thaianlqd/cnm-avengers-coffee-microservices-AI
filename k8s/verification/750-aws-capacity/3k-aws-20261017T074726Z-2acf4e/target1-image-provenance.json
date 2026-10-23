@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "archive_sha256": "37cf56075ab36edd857bdf5180b7bea595ae4c340ab7a4bcf44b55f1bd97e132",
+  "images": {
+    "avengers/api-gateway:3k-aws-ac88422957e9": {
+      "image_index_digest": "sha256:e4ff8ec3f6369d0d38bcdbf4636daf1441d67300b396b43718e1fa9b0b415753",
+      "image_config_digest": "sha256:2c9745bff5d7e6429dea642524c7b3fc7d700059c2403a1773aa926b270adaa4"
+    },
+    "avengers/customer-media:3k-aws-ac88422957e9": {
+      "image_index_digest": "sha256:8a183069f6b5435bc6b698bca1011ed6723a14e14a3e00612a1f43f929170a5a",
+      "image_config_digest": "sha256:6433894117c2a7827b44380984afc1a21c166a303c74b0804acd782f00b8e60d"
+    },
+    "avengers/identity-service:3k-aws-ac88422957e9": {
+      "image_index_digest": "sha256:39c78389ebbfc22264df6db0d343a45debc19814e9783093282ab2b75e58fc13",
+      "image_config_digest": "sha256:d45dc4ada2593c1cc20fb09f6365e4dc591f769bcb27b2ecbd0ea18eb21f70e6"
+    },
+    "avengers/menu-service:3k-aws-ac88422957e9": {
+      "image_index_digest": "sha256:64b0db919c0c52f97324728e22b588ad47225d7d88b92ce496b780270c6c3c70",
+      "image_config_digest": "sha256:f7807653a3d2acfc2c0fd3378875d7093bc66739bb11c5ace520b98a872177a5"
+    },
+    "avengers/news-service:3k-aws-ac88422957e9": {
+      "image_index_digest": "sha256:867cb830c135b8d6dfbaf63631d967f6dd66c09bcd77daa6472332643ee867d1",
+      "image_config_digest": "sha256:044d7279422e08d889b7efab41f5cd71d2747536c400f556378faf4abade6dba"
+    }
+  }
+}

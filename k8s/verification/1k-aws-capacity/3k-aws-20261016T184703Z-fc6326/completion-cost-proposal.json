@@ -1,0 +1,26 @@
+{
+  "observed_at": "2026-10-17T05:20:19.270021+00:00",
+  "source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-southeast-2/index.csv",
+  "price": {
+    "SKU": "YZS4YR3ZPHD427K5",
+    "EffectiveDate": "2026-10-01",
+    "Unit": "Hrs",
+    "PricePerUnit": "0.1197000000",
+    "Currency": "USD",
+    "Instance Type": "m7i-flex.large",
+    "vCPU": "2",
+    "Memory": "8 GiB"
+  },
+  "proposal_only": true,
+  "topology": "3target + up to3generator m7i-flex.large, Free plan only",
+  "runtime_minutes": 100,
+  "max_compute_usd": 1.197,
+  "ebs_reserve_usd": 0.08,
+  "ipv4_reserve_usd": 0.05,
+  "transfer_contingency_usd": 0.6,
+  "proposed_additional_credit_max_usd": 2.0,
+  "combined_authorized_estimate_if_approved_usd": 12.4431,
+  "actual_bill": false,
+  "no_plan_or_iam_changes": true,
+  "reason": "previous120min fleet expired after interruption; existing500 twoPASS preserved; retained rolling then750/1000 still required"
+}

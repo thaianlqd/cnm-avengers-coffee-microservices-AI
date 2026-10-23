@@ -1,0 +1,85 @@
+{
+  "source_sha": "d715ba7423d012e068eb5b447b806c9a4967320b",
+  "tests": {
+    "identity-service-test": {
+      "passed": true,
+      "test_counts": [
+        [
+          "60",
+          "60"
+        ]
+      ]
+    },
+    "news-service-test": {
+      "passed": true,
+      "test_counts": [
+        [
+          "34",
+          "34"
+        ]
+      ]
+    },
+    "menu-service-test": {
+      "passed": true,
+      "test_counts": [
+        [
+          "45",
+          "45"
+        ]
+      ]
+    },
+    "api-gateway-test": {
+      "passed": true,
+      "test_counts": [
+        [
+          "22",
+          "22"
+        ]
+      ]
+    }
+  },
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "images": [
+    {
+      "Id": "sha256:e8fd6739c562969b589ef64984efd1032bf91363b7141dde1e1f12e328a9eb7d",
+      "RepoTags": [
+        "avengers/api-gateway:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:237a7b725e5b4a56a214ddaebac7b9103b72c0934cf22203566694e7f5193c2a",
+      "RepoTags": [
+        "avengers/identity-service:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:97c1e4a07c3a385ccf27f0e86b5bb52bef727a841b615a9fea44979c538b82df",
+      "RepoTags": [
+        "avengers/menu-service:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:5431574ab7a59822f945e586fba0f2c3d8f847c93b32d18c3ef30d005271159f",
+      "RepoTags": [
+        "avengers/news-service:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    {
+      "Id": "sha256:d0c47f40681501e87c948caf50803532f3dbee2046634d9b733f89d2d6d976cb",
+      "RepoTags": [
+        "avengers/customer-media:3k-aws-d715ba7423d0"
+      ],
+      "Architecture": "amd64",
+      "Os": "linux"
+    }
+  ],
+  "image_tar_sha256": "6b5c64bc5eac4f263ab0ae2e1fb5693529d417ef32b2ec42571ec487f140b3ae"
+}
