@@ -871,6 +871,440 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0
+    },
+    {
+      "module": "tests.test_understanding_v21",
+      "returncode": 0,
+      "seconds": 19.8,
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v32_mission_reliability",
+      "returncode": 0,
+      "seconds": 51.67,
+      "tests": 43,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v33_followup",
+      "returncode": 0,
+      "seconds": 17.84,
+      "tests": 25,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v33_identity",
+      "returncode": 0,
+      "seconds": 4.47,
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v33_live_regressions",
+      "returncode": 0,
+      "seconds": 20.61,
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v33_pair",
+      "returncode": 0,
+      "seconds": 45.51,
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v33_provider_faults",
+      "returncode": 0,
+      "seconds": 1.98,
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v33_verification",
+      "returncode": 0,
+      "seconds": 5.6,
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v33_views",
+      "returncode": 0,
+      "seconds": 1.86,
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_access_policy",
+      "returncode": 0,
+      "seconds": 2.01,
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_anomalies",
+      "returncode": 0,
+      "seconds": 1.51,
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_architecture",
+      "returncode": 0,
+      "seconds": 1.72,
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_audit",
+      "returncode": 0,
+      "seconds": 3.0,
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_auth_boundary",
+      "returncode": 0,
+      "seconds": 4.47,
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_batch_plan",
+      "returncode": 0,
+      "seconds": 1.33,
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_catalog_lifecycle",
+      "returncode": 0,
+      "seconds": 5.99,
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_data_health",
+      "returncode": 0,
+      "seconds": 3.19,
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_entity_inspect",
+      "returncode": 0,
+      "seconds": 2.49,
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_forecast_diagnostics",
+      "returncode": 0,
+      "seconds": 1.2,
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_identity_login_session",
+      "returncode": 0,
+      "seconds": 3.79,
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_job_operations",
+      "returncode": 0,
+      "seconds": 6.3,
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_live44_fourth_regressions",
+      "returncode": 0,
+      "seconds": 12.68,
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_live44_third_regressions",
+      "returncode": 1,
+      "seconds": 12.52,
+      "tests": 9,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_live_harness",
+      "returncode": 0,
+      "seconds": 3.7,
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_observability",
+      "returncode": 0,
+      "seconds": 1.78,
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_oracle_consistency",
+      "returncode": 0,
+      "seconds": 1.31,
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_otel",
+      "returncode": 0,
+      "seconds": 1.88,
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_period_comparison",
+      "returncode": 0,
+      "seconds": 10.79,
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_platform_routes",
+      "returncode": 0,
+      "seconds": 2.01,
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_provider_observability",
+      "returncode": 0,
+      "seconds": 1.86,
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_query_security",
+      "returncode": 0,
+      "seconds": 2.91,
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_ranked_companion",
+      "returncode": 1,
+      "seconds": 12.51,
+      "tests": 4,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_relationship",
+      "returncode": 0,
+      "seconds": 1.47,
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_semantic_corpus",
+      "returncode": 0,
+      "seconds": 13.2,
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_semantic_repair",
+      "returncode": 0,
+      "seconds": 23.34,
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v34_source_lineage",
+      "returncode": 0,
+      "seconds": 8.93,
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v35_admin_views",
+      "returncode": 0,
+      "seconds": 3.3,
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v35_certified_health",
+      "returncode": 0,
+      "seconds": 1.49,
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v35_dashboards",
+      "returncode": 0,
+      "seconds": 92.77,
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v35_metrics_export",
+      "returncode": 0,
+      "seconds": 1.94,
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v35_preservation",
+      "returncode": 0,
+      "seconds": 2.67,
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v35_route_policy",
+      "returncode": 0,
+      "seconds": 4.39,
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_v35_shared_circuit",
+      "returncode": 0,
+      "seconds": 1.93,
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_verifiable_v27",
+      "returncode": 0,
+      "seconds": 32.96,
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_voucher_scope_v285",
+      "returncode": 0,
+      "seconds": 23.43,
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_word_render_20261022",
+      "returncode": 0,
+      "seconds": 9.2,
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_workspace_revision",
+      "returncode": 0,
+      "seconds": 72.0,
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "tests.test_workspace_v31",
+      "returncode": 1,
+      "seconds": 36.64,
+      "tests": 53,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
     }
-  ]
+  ],
+  "finished_at": 1792673771.262448,
+  "passed": false
 }

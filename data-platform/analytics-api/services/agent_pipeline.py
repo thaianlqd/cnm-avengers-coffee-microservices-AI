@@ -1134,7 +1134,8 @@ class AnalysisPipeline:
         anchors = self.semantic_info.get("request_anchors") or (session.diagnostics or {}).get("request_anchors") or {}
         comparison_frames = report_frames(self.semantic_info.get("semantic_intent") or session.semantic_intent, artifacts,
                                           catalog.registry, mission_hint, anchors.get("scope_resolution"),
-                                          getattr(session, "original_prompt", None))
+                                          getattr(session, "original_prompt", None),
+                                          coverage=self.semantic_info.get('resolved_requirement_coverage'))
         view_decisions = attach_view_modes(dashboard["charts"], artifacts, catalog, reference, mission_hint, comparison_frames)
         insights = [c["insight"] for c in dashboard["charts"] if c.get("insight")]
         selections = self.semantic_info.get("selections") or (session.diagnostics or {}).get("selections") or []

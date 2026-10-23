@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-22T17:05:55.272206+00:00",
+  "artifact": "active-view.docx",
+  "sha256": "7fb0267bbefd26c13c5a2dfe174cb9715706e398b5086953b33d30ca723dae86",
+  "renderer": "documents skill render_docx.py; bundled LibreOffice/Poppler",
+  "page_count": 9,
+  "pages_visually_inspected": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "scope": "Actual localhost served report Word after local primary single-member choice. Report KPI/conclusion stay report scope as disclosed.",
+  "layout": {
+    "overlap_or_unintended_clipping_observed": false,
+    "repeated_findings_header": true,
+    "single_member_caption_correct": true,
+    "charts_and_tables_stay_inside_page": true
+  },
+  "limitations": [
+    "Word template remains verbose, repeated report-level findings and raw aliases. Not an editorial redesign.",
+    "Some category variants use lossless table fallback rather than graphical renderer; disclosed in document.",
+    "Scientific scale1e6 requires reader to read axis multiplier.",
+    "Export predates explicit reconciliation so independent score remains not_measured in this captured document.",
+    "KPI context subtitle is shortened by existing template policy; full scope is stated in report narrative and chart captions."
+  ],
+  "numerical_receipt": "independent-current-source-audit-r2.json"
+}

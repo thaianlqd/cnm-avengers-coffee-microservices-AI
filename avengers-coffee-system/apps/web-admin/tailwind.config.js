@@ -3,14 +3,14 @@ import plugin from 'tailwindcss/plugin.js'
 // Shared web-admin design vocabulary. Components consume these values through
 // theme() in CSS or Tailwind utilities. Actor-specific styles remain scoped.
 const admin = {
-  canvas: '#ffffff', surface: '#ffffff', subtle: '#f4f4f5',
-  ink: '#09090b', body: '#27272a', muted: '#71717a', border: '#e4e4e7',
-  primary: '#18181b', hover: '#27272a', focus: '#71717a',
-  danger: '#b42318', dangerSoft: '#fff1f0', success: '#15803d', warning: '#a16207',
-  mint: '#0f8a70', mintSoft: '#e5f7ef', violet: '#7c4dcc', violetSoft: '#f2ecff', amber: '#b96b0b', amberSoft: '#fff4df',
-  chart: '#4f86c6', chartSoft: '#dce9f7',
-  sidebar: '#09090b', sidebarHover: '#18181b', sidebarActive: '#27272a',
-  sidebarText: '#a1a1aa', sidebarMuted: '#71717a',
+  canvas: '#ffffff', surface: '#ffffff', subtle: '#f8fafc',
+  ink: '#09090b', body: '#1e293b', muted: '#64748b', border: '#e2e8f0',
+  primary: '#2563eb', hover: '#1d4ed8', focus: '#3b82f6',
+  danger: '#ef4444', dangerSoft: '#fef2f2', success: '#10b981', warning: '#f59e0b',
+  mint: '#059669', mintSoft: '#ecfdf5', violet: '#6366f1', violetSoft: '#eef2ff', amber: '#d97706', amberSoft: '#fffbeb',
+  chart: '#2563eb', chartSoft: '#eff6ff',
+  sidebar: '#0b0f19', sidebarHover: '#172033', sidebarActive: '#2563eb',
+  sidebarText: '#94a3b8', sidebarMuted: '#64748b',
 }
 export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],

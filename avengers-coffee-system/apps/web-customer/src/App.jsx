@@ -744,7 +744,7 @@ function AppContent() {
   useEffect(() => {
     let tabName = 'Trang chủ';
     switch (activeTab) {
-      case 'other-group': tabName = ui('Tuyển dụng & hỗ trợ'); break;
+      case 'other-group': tabName = ui('Hỗ trợ chính'); break;
       case 'home': tabName = t('order.home', 'Trang chủ'); break;
       case 'order': {
         if (selectedCatId === 'all') {
@@ -769,7 +769,8 @@ function AppContent() {
       case 'order-history': tabName = t('header.orders', 'Lịch sử đơn hàng'); break;
       case 'news': tabName = t('header.news', 'Tin tức'); break;
       case 'stores': tabName = t('header.findStore', 'Hệ thống cửa hàng'); break;
-      case 'contact': tabName = t('header.support'); break;
+      case 'contact': tabName = ui('Hỗ trợ khách hàng'); break;
+      case 'lien-he': tabName = ui('Liên hệ'); break;
       case 'nhuong-quyen': tabName = t('header.franchise'); break;
       case 'careers': tabName = t('header.careers'); break;
       case 'tra-cuu-don':
@@ -873,13 +874,13 @@ function AppContent() {
     [addressOptions],
   );
 
-  const { data: newsPayload, isLoading: isNewsLoading } = useQuery({
+  const { data: newsPayload, isLoading: isNewsLoading, isError: isNewsError, refetch: refetchNews } = useQuery({
     queryKey: ['news', 'all'],
     queryFn: async () => {
       const response = await apiClient.get('/news?limit=100');
       return response.data;
     },
-    enabled: ['news', 'news-detail'].includes(activeTab),
+    enabled: ['home', 'news', 'news-detail'].includes(activeTab),
     staleTime: 60 * 1000,
     refetchInterval: 90 * 1000,
   });
@@ -1715,16 +1716,26 @@ function AppContent() {
             HomeBannerSlider={HomeBannerSlider}
             categories={categories}
             setSelectedCatId={setSelectedCatId}
+            articles={newsArticles}
+            isNewsLoading={isNewsLoading}
+            isNewsError={isNewsError}
+            onRetryNews={refetchNews}
+            onSelectArticle={(id) => {
+              setSelectedNewsArticleId(id);
+              setActiveTab('news');
+              window.scrollTo({ top: 0, behavior: 'instant' });
+            }}
           />
         ) : activeTab === 'menu-intro' ? (
           <MenuIntroPage
             categories={categories}
             products={products}
+            isLoading={loading}
+            isError={hasMenuError}
+            onRetry={() => { refetchProducts(); refetchCategories(); }}
             activeCategoryId={selectedCatId}
             onCategoryChange={setSelectedCatId}
-            onOrderProduct={(product) => {
-              setActiveTab('order');
-            }}
+            onOrderProduct={handleOpenProductPage}
           />
         ) : activeTab === 'about' ? (
           <About setActiveTab={setActiveTab} />

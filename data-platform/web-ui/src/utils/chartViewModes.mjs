@@ -68,8 +68,23 @@ export function reportWithViewChoice(report, chartId, state) {
     charts: report.charts.map(c => c.id === chartId ? activeViewChart(c, state) : c) };
 }
 
+/** Turn a governed member (possibly a union) into existing typed filter options.
+ * Never send the display label as an entity key or silently apply only part of a union. */
+export function memberReportSelection(modes, memberKey, interaction) {
+  const member = modes?.members?.find(m => m.key === memberKey);
+  if (!member || !interaction || interaction.selection_behavior !== 'population_filter') return null;
+  const keys = [...new Set((member.values || [member.key]).map(String))];
+  const selections = keys.map(key => interaction.options?.find(o => o.selection?.values?.length === 1 &&
+    String(o.selection.values[0].value) === key)?.selection);
+  if (selections.some(s => !s)) return null;
+  const first = selections[0];
+  if (!first || selections.some(s => s.dimension_id !== first.dimension_id || s.query_id !== first.query_id)) return null;
+  return { ...first, operator: keys.length === 1 ? 'eq' : 'in', values: selections.map(s => s.values[0]) };
+}
+
 export const REASON_LABELS = {
   distinct_requires_identity_union: 'Không cộng được số đếm không trùng giữa các đối tượng',
+  overlapping_members_share_unavailable: 'Các nhóm giao nhau nên không chia tỷ trọng theo tổng cộng các nhóm',
   ratio_components_missing: 'Thiếu tử/mẫu để tính tổng tỷ lệ',
   average_components_missing: 'Thiếu tử/mẫu để tính trung bình chung',
   renderer_unsupported: 'Chế độ này không có cách trình bày phù hợp',

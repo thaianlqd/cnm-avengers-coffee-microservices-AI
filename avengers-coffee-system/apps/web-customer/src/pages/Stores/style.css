@@ -1,0 +1,5 @@
+.store-locator { height:calc(100svh - 94px); min-height:660px; }
+.store-locator > .flex-1 { min-height:0; }
+.store-list-error { padding:30px 24px; font-size:12px; color:#85726a; line-height:1.8; }
+.store-list-error button { margin-top:12px; color:#b22830; text-decoration:underline; cursor:pointer; }
+@media(max-width:767px) { .store-locator { height:auto; min-height:0; } .store-locator > .flex-1 { min-height:450px; } }

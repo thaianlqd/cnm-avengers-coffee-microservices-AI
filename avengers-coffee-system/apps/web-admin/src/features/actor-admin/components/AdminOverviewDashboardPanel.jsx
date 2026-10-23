@@ -55,9 +55,61 @@ export function AdminOverviewDashboardPanel({
     groups[status] = (groups[status] || 0) + 1;
     return groups;
   }, {});
+  const paymentLabels = {
+    TIEN_MAT: "Tiền mặt",
+    THANH_TOAN_KHI_NHAN_HANG: "Tiền mặt khi nhận",
+    VNPAY: "Ví VNPay",
+    ZALOPAY: "Ví ZaloPay",
+    MOMO: "Ví MoMo",
+    QR: "Quét mã QR",
+    CONG_NO: "Công nợ kiosk",
+    CHUYEN_KHOAN: "Chuyển khoản",
+  };
+  const paymentCounts = orders.reduce((groups, order) => {
+    const raw = order.phuong_thuc_thanh_toan || order.payment_method || order.paymentMethod || "TIEN_MAT";
+    const label = paymentLabels[raw] || raw;
+    groups[label] = (groups[label] || 0) + 1;
+    return groups;
+  }, {});
+  const paymentRows = Object.entries(paymentCounts)
+    .sort(([, a], [, b]) => b - a)
+    .map(([label, value]) => ({ label, value }));
+
+  const channelCounts = orders.reduce((groups, order) => {
+    let channel = "Mang đi / Tại quán";
+    if (order.dia_chi_giao_hang || order.dia_chi || order.loai_don_hang === "GIAO_HANG" || order.order_type === "DELIVERY") {
+      channel = "Giao tận nơi";
+    } else if (order.hinh_thuc_nhan === "TAI_BAN" || order.loai_don_hang === "TAI_CHO") {
+      channel = "Dùng tại bàn";
+    }
+    groups[channel] = (groups[channel] || 0) + 1;
+    return groups;
+  }, {});
+  const channelRows = Object.entries(channelCounts)
+    .sort(([, a], [, b]) => b - a)
+    .map(([label, value]) => ({ label, value }));
   const roleRows = Object.entries(statsState.data?.by_role || {}).map(
     ([role, value]) => ({ label: roles[role] || role, value }),
   );
+  const categoryCounts = (menuState.items || []).reduce((acc, item) => {
+    const catName = item.danh_muc?.ten_danh_muc || item.ten_danh_muc || item.category_name || item.danh_muc_ten || 'Khác';
+    acc[catName] = (acc[catName] || 0) + 1;
+    return acc;
+  }, {});
+  const categoryRows = Object.entries(categoryCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 6)
+    .map(([label, value]) => ({ label, value }));
+
+  const branchAreaCounts = (branchesState.items || []).reduce((acc, b) => {
+    const area = b.tinh_thanh || b.thanh_pho || (b.dia_chi?.split(',').pop()?.trim()) || (b.trang_thai === 'HOAT_DONG' ? 'Đang hoạt động' : 'Tạm dừng') || 'Khác';
+    acc[area] = (acc[area] || 0) + 1;
+    return acc;
+  }, {});
+  const branchAreaRows = Object.entries(branchAreaCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 8)
+    .map(([label, value]) => ({ label, value }));
   const activities = [
     ...recentOrders.map((order, index) => ({
       id: "order-" + index,
@@ -139,6 +191,17 @@ export function AdminOverviewDashboardPanel({
                 .slice(0, 10)
                 .map((row) => ({ label: row.label, value: row.count }))}
             />
+            <Chart
+              title="Cơ cấu danh mục thực đơn"
+              subtitle="Phân bố số lượng món theo từng nhóm danh mục"
+              type="donut"
+              rows={categoryRows}
+            />
+            <Chart
+              title="Mạng lưới chi nhánh theo khu vực"
+              subtitle="Số lượng cơ sở phân bố theo tỉnh / thành phố"
+              rows={branchAreaRows}
+            />
           </div>
         </>
       )}
@@ -189,6 +252,21 @@ export function AdminOverviewDashboardPanel({
             label: statuses[status] || status,
             value,
           }))}
+        />
+        <Chart
+          loading={recentOrdersState.loading}
+          error={recentOrdersState.error}
+          subtitle="Cơ cấu phương thức thanh toán của các đơn đã ghi nhận"
+          title="Phương thức thanh toán"
+          type="donut"
+          rows={paymentRows}
+        />
+        <Chart
+          loading={recentOrdersState.loading}
+          error={recentOrdersState.error}
+          subtitle="Tỉ trọng theo hình thức nhận món và giao hàng"
+          title="Hình thức phục vụ"
+          rows={channelRows}
         />
       </div>
       <article className="console-card admin-activity-card">

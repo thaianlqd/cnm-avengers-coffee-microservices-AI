@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-22T16:31:09.209071+00:00",
+  "bundles": [
+    {
+      "path": "/assets/index-Do9uYw5P.js",
+      "sha256": "0b51948dbf2e352ae0550cb61f8cf09e92205ae8f6791756f93f8ba95c533946",
+      "bytes": 774854,
+      "markers": {
+        "Chỉ biểu đồ này": true,
+        "mẫu số và nhận định giữ nguyên": true,
+        "Các nhóm giao nhau": true
+      }
+    }
+  ],
+  "api_health": {
+    "status": "ok",
+    "check": "liveness",
+    "service": "avengers-analytics-api",
+    "version": "3.0.0",
+    "provider_budget": 3,
+    "session_backend": "redis",
+    "artifact_backend": "redis",
+    "execution_rows": 50000
+  }
+}

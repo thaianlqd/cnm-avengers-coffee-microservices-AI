@@ -12,7 +12,9 @@ import {
   Mail,
   Phone,
   Image,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from '../../../components/console/WorkspaceIcons'
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3005`
@@ -51,6 +53,9 @@ export function AccountCenterPanel({ session }) {
   const [profileState, setProfileState] = useState({ loading: false, saving: false, error: '', success: '' })
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [passwordState, setPasswordState] = useState({ saving: false, error: '', success: '' })
+  const [showCurrentPwd, setShowCurrentPwd] = useState(false)
+  const [showNewPwd, setShowNewPwd] = useState(false)
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false)
   const [notificationsState, setNotificationsState] = useState({ loading: false, error: '', items: [] })
   const [markingNotificationId, setMarkingNotificationId] = useState('')
   const [markingAll, setMarkingAll] = useState(false)
@@ -647,25 +652,36 @@ export function AccountCenterPanel({ session }) {
                     <Lock size={14} color="#64748b" />
                     <span>Mật khẩu hiện tại</span>
                   </label>
-                  <input
-                    id="account-pwd-current"
-                    type="password"
-                    value={passwordForm.currentPassword}
-                    onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
-                    placeholder="••••••••"
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      padding: '0 0.85rem',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      backgroundColor: '#ffffff',
-                      fontSize: '0.8125rem',
-                      color: '#0f172a',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                  />
+                  <div className="admin-password-field">
+                    <input
+                      id="account-pwd-current"
+                      type={showCurrentPwd ? "text" : "password"}
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                      placeholder="••••••••"
+                      style={{
+                        width: '100%',
+                        height: '38px',
+                        padding: '0 2.5rem 0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        backgroundColor: '#ffffff',
+                        fontSize: '0.8125rem',
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="admin-password-toggle"
+                      onClick={() => setShowCurrentPwd(!showCurrentPwd)}
+                      title={showCurrentPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                      aria-label={showCurrentPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    >
+                      {showCurrentPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
@@ -675,25 +691,36 @@ export function AccountCenterPanel({ session }) {
                       <KeyRound size={14} color="#64748b" />
                       <span>Mật khẩu mới</span>
                     </label>
-                    <input
-                      id="account-pwd-new"
-                      type="password"
-                      value={passwordForm.newPassword}
-                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-                      placeholder="Tối thiểu 6 ký tự"
-                      style={{
-                        width: '100%',
-                        height: '38px',
-                        padding: '0 0.85rem',
-                        borderRadius: '6px',
-                        border: '1px solid #cbd5e1',
-                        backgroundColor: '#ffffff',
-                        fontSize: '0.8125rem',
-                        color: '#0f172a',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
+                    <div className="admin-password-field">
+                      <input
+                        id="account-pwd-new"
+                        type={showNewPwd ? "text" : "password"}
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                        placeholder="Tối thiểu 6 ký tự"
+                        style={{
+                          width: '100%',
+                          height: '38px',
+                          padding: '0 2.5rem 0 0.85rem',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#ffffff',
+                          fontSize: '0.8125rem',
+                          color: '#0f172a',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="admin-password-toggle"
+                        onClick={() => setShowNewPwd(!showNewPwd)}
+                        title={showNewPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        aria-label={showNewPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                      >
+                        {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Confirm Password */}
@@ -702,25 +729,36 @@ export function AccountCenterPanel({ session }) {
                       <KeyRound size={14} color="#64748b" />
                       <span>Xác nhận mật khẩu mới</span>
                     </label>
-                    <input
-                      id="account-pwd-confirm"
-                      type="password"
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                      placeholder="Nhập lại mật khẩu mới"
-                      style={{
-                        width: '100%',
-                        height: '38px',
-                        padding: '0 0.85rem',
-                        borderRadius: '6px',
-                        border: '1px solid #cbd5e1',
-                        backgroundColor: '#ffffff',
-                        fontSize: '0.8125rem',
-                        color: '#0f172a',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
+                    <div className="admin-password-field">
+                      <input
+                        id="account-pwd-confirm"
+                        type={showConfirmPwd ? "text" : "password"}
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                        placeholder="Nhập lại mật khẩu mới"
+                        style={{
+                          width: '100%',
+                          height: '38px',
+                          padding: '0 2.5rem 0 0.85rem',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#ffffff',
+                          fontSize: '0.8125rem',
+                          color: '#0f172a',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="admin-password-toggle"
+                        onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                        title={showConfirmPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        aria-label={showConfirmPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                      >
+                        {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 

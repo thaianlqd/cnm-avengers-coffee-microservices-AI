@@ -27,23 +27,24 @@ export default function OrderFooter({ onNavigate }) {
 
   return (
     <footer className="w-full bg-[#18181b] text-gray-300 font-sans border-t border-gray-800 relative z-10">
-
-
       {/* Main Footer Content */}
       <div className="max-w-[1240px] mx-auto px-4 md:px-6 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
 
           {/* ── COL 1: BRAND & COMPANY INFO (4 Cols) ── */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="flex items-center gap-3">
-              <img
-                src="/images/brand/logo-white.png"
-                alt="Avengers Coffee"
-                className="h-14 sm:h-16 w-auto object-contain"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              />
+            <div className="flex items-center gap-3.5">
+              <div className="bg-white rounded-2xl p-2 sm:p-2.5 inline-flex items-center justify-center shadow-md">
+                <img
+                  src="/hc-assets/logo-red.png"
+                  alt="Avengers Coffee"
+                  className="h-12 sm:h-14 w-auto object-contain"
+                  onError={(e) => { e.currentTarget.src = '/hc-assets/red_BG_logo800.png'; }}
+                />
+              </div>
               <div>
-                <h3 className="text-base font-bold text-white tracking-wide">Avengers Coffee</h3>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-wide">Avengers Coffee</h3>
+                <span className="text-[11px] text-gray-400 font-medium">Since 2026 • Chuỗi cà phê Việt</span>
               </div>
             </div>
 
@@ -54,7 +55,7 @@ export default function OrderFooter({ onNavigate }) {
             <ul className="space-y-2.5 text-xs text-gray-300 font-medium">
               <li className="flex items-start gap-2.5">
                 <MapPinIcon className="w-4 h-4 text-[#b22830] shrink-0 mt-0.5" />
-                <button type="button" onClick={() => onNavigate?.('stores')} className="text-left text-gray-300 underline underline-offset-4">{t('orderFooter.findStore')}</button>
+                <button type="button" onClick={() => onNavigate?.('stores')} className="text-left text-gray-300 underline underline-offset-4 hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0">{t('orderFooter.findStore')}</button>
               </li>
               <li className="flex items-center gap-2.5">
                 <PhoneIcon className="w-4 h-4 text-[#b22830] shrink-0" />
@@ -100,7 +101,7 @@ export default function OrderFooter({ onNavigate }) {
 
           {/* ── COL 2: CHÍNH SÁCH (3 Cols) ── */}
           <div className="lg:col-span-3 space-y-3">
-            <h4 className="text-xs font-semibold text-white  tracking-wider border-b border-gray-800 pb-2">
+            <h4 className="text-xs font-semibold text-white tracking-wider border-b border-gray-800 pb-2">
               {t('orderFooter.policies')}
             </h4>
             <ul className="space-y-2.5 text-xs font-medium text-gray-400">
@@ -116,6 +117,7 @@ export default function OrderFooter({ onNavigate }) {
               <li>
                 <button
                   type="button"
+                  onClick={() => onNavigate?.('chinh-sach-dat-hang')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.privacyPolicy')}
@@ -124,6 +126,7 @@ export default function OrderFooter({ onNavigate }) {
               <li>
                 <button
                   type="button"
+                  onClick={() => onNavigate?.('chinh-sach-dat-hang')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.paymentPolicy')}
@@ -132,7 +135,7 @@ export default function OrderFooter({ onNavigate }) {
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate?.('hoi-vien')}
+                  onClick={() => onNavigate?.('membership')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.memberBenefits')}
@@ -143,7 +146,7 @@ export default function OrderFooter({ onNavigate }) {
 
           {/* ── COL 3: HỖ TRỢ KHÁCH HÀNG (2 Cols) ── */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="text-xs font-semibold text-white  tracking-wider border-b border-gray-800 pb-2">
+            <h4 className="text-xs font-semibold text-white tracking-wider border-b border-gray-800 pb-2">
               {t('orderFooter.support')}
             </h4>
             <ul className="space-y-2.5 text-xs font-medium text-gray-400">
@@ -159,7 +162,7 @@ export default function OrderFooter({ onNavigate }) {
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate?.('cua-hang')}
+                  onClick={() => onNavigate?.('stores')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.findStore')}
@@ -168,7 +171,7 @@ export default function OrderFooter({ onNavigate }) {
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate?.('ho-tro')}
+                  onClick={() => onNavigate?.('contact')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.helpCenter')}
@@ -177,7 +180,7 @@ export default function OrderFooter({ onNavigate }) {
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate?.('vong-quay')}
+                  onClick={() => onNavigate?.('lucky-wheel')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.luckyWheel')}
@@ -188,7 +191,7 @@ export default function OrderFooter({ onNavigate }) {
 
           {/* ── COL 4: ĐĂNG KÝ NHẬN TIN (3 Cols) ── */}
           <div className="lg:col-span-3 space-y-3">
-            <h4 className="text-xs font-semibold text-white  tracking-wider border-b border-gray-800 pb-2">
+            <h4 className="text-xs font-semibold text-white tracking-wider border-b border-gray-800 pb-2">
               {t('orderFooter.subscribe')}
             </h4>
             <p className="text-xs text-gray-400 font-medium leading-relaxed">
@@ -202,7 +205,7 @@ export default function OrderFooter({ onNavigate }) {
                   placeholder={t('orderFooter.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-white placeholder-gray-500 outline-none focus:border-[#b22830] focus:ring-1 focus:ring-[#b22830] transition-all"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-white placeholder-gray-500 outline-none focus:border-[#b22830] focus:ring-1 focus:ring-[#b22830] transition-all font-medium"
                   required
                 />
                 <button

@@ -1,371 +1,134 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
-import Map, {
-  Marker,
-  Popup,
-  NavigationControl,
-  FullscreenControl,
-  GeolocateControl,
-} from 'react-map-gl/mapbox';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import './locationMap.css';
-import {
-  RiCupFill,
-  RiMapPin2Fill,
-  RiTimeLine,
-  RiPhoneLine,
-  RiStarFill,
-  RiArrowRightUpLine,
-  RiFocus3Line,
-  RiStackLine,
-  RiInformationLine,
-  RiWifiLine,
-  RiBankCardLine,
-  RiCloseLine,
-} from 'react-icons/ri';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import L from 'leaflet';
+import { MapContainer } from 'react-leaflet';
+import { installDetailedBasemap } from './mapBasemap';
+import 'leaflet/dist/leaflet.css';
+import './storeMap.css';
+import { RiFocus3Line, RiMapPin2Fill, RiArrowRightUpLine, RiCloseLine, RiRestartLine, RiNavigationLine } from 'react-icons/ri';
 import { coordinates, DEFAULT_MAP_CENTER, decodeHtmlEntities } from '../../lib/locationModel';
-import { useLocationText } from '../../lib/locationText';
+import { useUiLanguage } from '../../lib/uiText';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
-
-const MAP_STYLES = [
-  { id: 'streets', label: 'Đường phố', url: 'mapbox://styles/mapbox/streets-v12' },
-  { id: 'light', label: 'Sáng thanh lịch', url: 'mapbox://styles/mapbox/light-v11' },
-  { id: 'satellite', label: 'Vệ tinh', url: 'mapbox://styles/mapbox/satellite-streets-v12' },
-];
-
-export default function LocationMap({
-  branches = [],
-  selected = null,
-  onSelect,
-  onViewDetail,
-  height = '100%',
-}) {
-  const t = useLocationText();
+export default function LocationMap({ branches = [], selected = null, onSelect, onViewDetail, height = '100%', searchCenter = null, searchRadiusKm = 5 }) {
+  const isEn = useUiLanguage().startsWith('en');
+  const copy = (vi, en) => isEn ? en : vi;
+  const [instance, setInstance] = useState(null);
   const mapRef = useRef(null);
-  const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/streets-v12');
-  const [showStyleMenu, setShowStyleMenu] = useState(false);
-  const [hoveredStore, setHoveredStore] = useState(null);
-  const [showPopupCard, setShowPopupCard] = useState(true);
-
-  // Determine initial center
+  const pointsRef = useRef(null);
+  const selectedMarker = useRef(null);
+  const userMarker = useRef(null);
+  const onSelectRef = useRef(onSelect);
   const selectedPoint = coordinates(selected);
   const firstPoint = selectedPoint || branches.map(coordinates).find(Boolean);
-  const defaultCenter = firstPoint ? [firstPoint.lng, firstPoint.lat] : [DEFAULT_MAP_CENTER[1], DEFAULT_MAP_CENTER[0]];
+  const [initialCenter] = useState(() => firstPoint ? [firstPoint.lat, firstPoint.lng] : DEFAULT_MAP_CENTER);
+  const [theme, setTheme] = useState('streets');
+  const [retry, setRetry] = useState(0);
+  const [tileStatus, setTileStatus] = useState('loading');
+  const [dismissedId, setDismissedId] = useState(null);
+  const [locationStatus, setLocationStatus] = useState('idle');
+  const selectedId = selected?.id || selected?.ma_chi_nhanh;
+  const points = useMemo(() => branches.map(branch => ({ branch, point: coordinates(branch) })).filter(item => item.point), [branches]);
+  useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
 
-  const [viewState, setViewState] = useState({
-    longitude: defaultCenter[0],
-    latitude: defaultCenter[1],
-    zoom: firstPoint ? 15 : 12,
-    pitch: 0,
-    bearing: 0,
-  });
-
-  // Re-fly and show popup when selected store changes (from sidebar or map)
   useEffect(() => {
-    if (selected) {
-      const point = coordinates(selected);
-      if (point && mapRef.current) {
-        mapRef.current.flyTo({
-          center: [point.lng, point.lat],
-          zoom: 15.5,
-          duration: 800,
-          essential: true,
-        });
-      }
-      setShowPopupCard(true);
-    }
-  }, [selected?.id, selected?.ma_chi_nhanh]);
+    if (!instance) return;
+    const map = instance;
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    map.attributionControl.setPrefix(false);
+    mapRef.current = map;
+    pointsRef.current = L.layerGroup().addTo(map);
+    const resize = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+    resize.observe(map.getContainer());
+    return () => {
+      resize.disconnect();
+      map.stop();
+      // Remove paths before their canvas renderer; otherwise their teardown may
+      // schedule a redraw after the renderer's drawing context has been removed.
+      pointsRef.current?.clearLayers();
+      selectedMarker.current?.remove();
 
-  const handleCenterSelected = () => {
-    const point = coordinates(selected) || firstPoint;
-    if (point && mapRef.current) {
-      mapRef.current.flyTo({
-        center: [point.lng, point.lat],
-        zoom: 16,
-        pitch: 0,
-        bearing: 0,
-        duration: 700,
+      mapRef.current = null;
+      pointsRef.current = null;
+      selectedMarker.current = null;
+      userMarker.current = null;
+    };
+  }, [instance]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    return installDetailedBasemap(L, map, { onLoaded: () => setTileStatus('ready'), onError: () => setTileStatus('error') });
+  }, [retry, instance]);
+
+  useEffect(() => {
+    const layer = pointsRef.current;
+    if (!layer) return;
+    // Commit paths after camera/size effects. A cancelled StrictMode mount must
+    // never leave a canvas redraw queued for a map that has already been removed.
+    const frame = window.requestAnimationFrame(() => {
+      layer.clearLayers();
+      points.forEach(({ branch, point }) => {
+        L.circleMarker([point.lat, point.lng], { radius: 6, color: '#fff', weight: 2, fillColor: '#b22830', fillOpacity: .92, bubblingMouseEvents: false })
+          .on('click', () => { onSelectRef.current?.(branch); setDismissedId(null); }).addTo(layer);
       });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [points, instance]);
+
+  const lat = selectedPoint?.lat;
+  const lng = selectedPoint?.lng;
+  useEffect(() => {
+    const map = mapRef.current;
+    selectedMarker.current?.remove();
+    if (!map || lat == null || lng == null) return;
+    const icon = L.divIcon({ className: 'store-map-pin', html: '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h12v7a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V8Zm12 1h2a3 3 0 0 1 0 6h-2M8 3v2m4-2v2m4-2v2"/></svg></span>', iconSize: [40, 48], iconAnchor: [20, 48] });
+    selectedMarker.current = L.marker([lat, lng], { icon, zIndexOffset: 1000, keyboard: false, interactive: false }).addTo(map);
+    map.stop();
+    if (!map.getCenter().equals([lat, lng]) || map.getZoom() !== 14) {
+      map.setView([lat, lng], 14, { animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, duration: .5 });
     }
+  }, [lat, lng, instance]);
+
+  useEffect(() => {
+    if (!instance || !searchCenter) return;
+    const center=[searchCenter.lat,searchCenter.lng];
+    const radius=L.circle(center,{radius:searchRadiusKm*1000,color:'#497ac4',weight:1,fillOpacity:.05});
+    const marker=L.circleMarker(center,{radius:8,color:'#fff',weight:3,fillColor:'#497ac4',fillOpacity:1});
+    const label=document.createElement('span');label.textContent=searchCenter.label || copy('Vị trí tìm kiếm','Search location');
+    marker.bindTooltip(label);
+    const layer=L.layerGroup([radius,marker]).addTo(instance);
+    instance.fitBounds(radius.getBounds(),{padding:[30,30],maxZoom:15,animate:false});
+    return () => layer.remove();
+  }, [instance, searchCenter, searchRadiusKm, isEn]);
+
+  const centerSelected = () => {
+    if (!selectedPoint) return;
+    setDismissedId(null);
+    mapRef.current?.setView([selectedPoint.lat, selectedPoint.lng], 14, { animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches });
+  };
+  const fitAll = () => { if (points.length) mapRef.current?.fitBounds(points.map(({ point }) => [point.lat, point.lng]), { padding: [40, 40], maxZoom: 14, animate: false }); };
+  const locate = () => {
+    if (!navigator.geolocation) { setLocationStatus('error'); return; }
+    setLocationStatus('loading');
+    navigator.geolocation.getCurrentPosition(position => {
+      const map = mapRef.current;
+      if (!map) return;
+      const point = [position.coords.latitude, position.coords.longitude];
+      userMarker.current?.remove();
+      userMarker.current = L.marker(point, { icon: L.divIcon({ className: 'store-map-user', html: '<span></span>', iconSize: [20, 20] }), interactive: false }).addTo(map);
+      map.setView(point, 14, { animate: false });
+      setDismissedId(selectedId);
+      setLocationStatus('idle');
+    }, () => { if (mapRef.current) setLocationStatus('error'); }, { timeout: 8000, maximumAge: 60000, enableHighAccuracy: false });
   };
 
-  const validBranches = useMemo(() => {
-    return branches.filter((branch) => coordinates(branch));
-  }, [branches]);
-
-  return (
-    <div className="relative w-full overflow-hidden bg-slate-100" style={{ height, minHeight: 380 }}>
-      <Map
-        ref={mapRef}
-        {...viewState}
-        onMove={(evt) => setViewState(evt.viewState)}
-        mapStyle={mapStyle}
-        mapboxAccessToken={MAPBOX_TOKEN}
-        style={{ width: '100%', height: '100%' }}
-        attributionControl={false}
-      >
-        {/* Navigation Controls */}
-        <NavigationControl position="bottom-right" showCompass visualizePitch />
-        <FullscreenControl position="bottom-right" />
-        <GeolocateControl
-          position="bottom-right"
-          trackUserLocation
-          showAccuracyCircle
-          showUserHeading
-        />
-
-        {/* Store Markers */}
-        {validBranches.map((branch) => {
-          const pt = coordinates(branch);
-          if (!pt) return null;
-          const isSelected =
-            (selected?.id && selected.id === branch.id) ||
-            (selected?.ma_chi_nhanh && selected.ma_chi_nhanh === branch.ma_chi_nhanh);
-          const isHovered = hoveredStore?.id === branch.id;
-          const storeName = decodeHtmlEntities(branch.name || branch.ten_chi_nhanh || t('branch'));
-          const storeAddress = decodeHtmlEntities(branch.address || branch.dia_chi || '');
-
-          return (
-            <Marker
-              key={branch.id || branch.ma_chi_nhanh || `${pt.lat}-${pt.lng}`}
-              longitude={pt.lng}
-              latitude={pt.lat}
-              anchor="bottom"
-              onClick={(e) => {
-                e.originalEvent.stopPropagation();
-                onSelect?.(branch);
-                setShowPopupCard(true);
-              }}
-            >
-              <div
-                className="relative cursor-pointer transition-transform duration-200"
-                style={{ zIndex: isSelected ? 50 : isHovered ? 40 : 10 }}
-                onMouseEnter={() => setHoveredStore(branch)}
-                onMouseLeave={() => setHoveredStore(null)}
-              >
-                {/* Ripple ring for selected store */}
-                {isSelected && (
-                  <span className="absolute -inset-2 rounded-full bg-[#b22830]/25 animate-ping pointer-events-none" />
-                )}
-
-                {/* Marker Pin */}
-                <div
-                  className={`flex items-center justify-center rounded-full transition-all duration-300 shadow-lg ${
-                    isSelected
-                      ? 'w-11 h-11 bg-gradient-to-tr from-[#8b1820] to-[#d32f2f] text-white ring-4 ring-white ring-offset-2 scale-110 shadow-red-900/40'
-                      : 'w-8 h-8 bg-gradient-to-tr from-[#9c2028] to-[#b22830] text-white hover:scale-115 hover:ring-2 hover:ring-white shadow-stone-800/25'
-                  }`}
-                  style={{
-                    clipPath: isSelected
-                      ? 'polygon(50% 100%, 0% 40%, 0% 0%, 100% 0%, 100% 40%)'
-                      : 'polygon(50% 100%, 0% 35%, 0% 0%, 100% 0%, 100% 35%)',
-                    borderRadius: isSelected ? '14px 14px 4px 4px' : '10px 10px 3px 3px',
-                    paddingBottom: isSelected ? '8px' : '6px',
-                  }}
-                  title={storeName}
-                >
-                  <RiCupFill className={isSelected ? 'w-5 h-5 drop-shadow-sm' : 'w-3.5 h-3.5'} />
-                </div>
-
-                {/* Compact Hover Tooltip (Small card with Name and Address only) */}
-                {isHovered && !isSelected && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[240px] p-2.5 bg-gray-900/95 backdrop-blur-md text-white rounded-xl shadow-2xl pointer-events-none z-50 text-left animate-fade-in border border-white/10">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <RiCupFill className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                      <p className="text-xs font-bold text-white truncate leading-tight">
-                        {storeName}
-                      </p>
-                    </div>
-                    {storeAddress && (
-                      <p className="text-[10.5px] text-gray-300 font-normal line-clamp-2 leading-relaxed">
-                        {storeAddress}
-                      </p>
-                    )}
-                    {/* Little pointy shape pointing down to the marker */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-0.5 w-0 h-0 border-x-4 border-x-transparent border-t-[5px] border-t-gray-900/95" />
-                  </div>
-                )}
-              </div>
-            </Marker>
-          );
-        })}
-
-        {/* Selected Store Detailed Popup with pointy shape pointing down to pin */}
-        {selected && showPopupCard && selectedPoint && (
-          <Popup
-            longitude={selectedPoint.lng}
-            latitude={selectedPoint.lat}
-            anchor="bottom"
-            offset={[0, -44]}
-            closeButton={false}
-            closeOnClick={false}
-            onClose={() => setShowPopupCard(false)}
-            className="store-selected-popup"
-            maxWidth="360px"
-          >
-            <div className="p-4 w-[330px] max-w-[calc(100vw-48px)] text-left font-sans bg-white rounded-2xl">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-800 text-[10px] font-bold border border-red-100">
-                    <RiCupFill className="w-3 h-3 text-[#b22830]" />
-                    Avengers Coffee
-                  </span>
-                  <h3 className="mt-1 text-sm font-bold text-gray-900 truncate">
-                    {decodeHtmlEntities(selected.name || selected.ten_chi_nhanh || t('branch'))}
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowPopupCard(false)}
-                  className="p-1 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                  title="Đóng"
-                >
-                  <RiCloseLine className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Rating & Type */}
-              <div className="mt-2 flex items-center gap-2">
-                {selected.reviewCount > 0 ? (
-                  <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 text-xs font-semibold px-2 py-0.5 rounded-md border border-amber-200">
-                    <RiStarFill className="w-3.5 h-3.5 text-amber-500" />
-                    {Number(selected.rating).toFixed(1)}
-                    <span className="text-gray-400 font-normal">({selected.reviewCount})</span>
-                  </span>
-                ) : (
-                  <span className="text-[11px] text-gray-400 italic">Chưa có đánh giá</span>
-                )}
-                {selected.type === 'KIOSK_VE_TINH' && (
-                  <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-semibold border border-blue-100">
-                    Take-away
-                  </span>
-                )}
-                {selected.type === 'XE_NUOC_FRUIT' && (
-                  <span className="text-[10px] bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md font-semibold border border-orange-100">
-                    Xe Đẩy
-                  </span>
-                )}
-              </div>
-
-              {/* Address, Hours, Phone */}
-              <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-                <div className="flex items-start gap-2">
-                  <RiMapPin2Fill className="w-3.5 h-3.5 text-[#b22830] shrink-0 mt-0.5" />
-                  <p className="line-clamp-2 leading-relaxed font-medium text-gray-700">
-                    {decodeHtmlEntities(selected.address || selected.dia_chi || 'Đang cập nhật địa chỉ')}
-                  </p>
-                </div>
-                {selected.hours && (
-                  <div className="flex items-center gap-2">
-                    <RiTimeLine className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    <span className="text-gray-600 font-medium">{selected.hours}</span>
-                  </div>
-                )}
-                {selected.phone && (
-                  <div className="flex items-center gap-2">
-                    <RiPhoneLine className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    <a
-                      href={`tel:${selected.phone}`}
-                      className="text-gray-700 hover:text-[#b22830] font-medium"
-                    >
-                      {selected.phone}
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {/* Amenities */}
-              <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center gap-3 text-[11px] text-gray-500 font-medium">
-                <span className="flex items-center gap-1 text-blue-700 bg-blue-50/60 px-2 py-0.5 rounded border border-blue-100">
-                  <RiWifiLine className="w-3 h-3 text-blue-500" /> Wifi
-                </span>
-                <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50/60 px-2 py-0.5 rounded border border-emerald-100">
-                  <RiBankCardLine className="w-3 h-3 text-emerald-500" /> Thẻ
-                </span>
-              </div>
-
-              {/* Action buttons */}
-              <div className="mt-3.5 pt-2 flex items-center gap-2">
-                {onViewDetail && (
-                  <button
-                    type="button"
-                    onClick={() => onViewDetail(selected)}
-                    className="flex-1 h-8 px-3 rounded-xl bg-[#b22830] hover:bg-red-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                  >
-                    <RiInformationLine className="w-3.5 h-3.5" />
-                    Chi tiết & Đánh giá
-                  </button>
-                )}
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                    coordinates(selected)
-                      ? `${coordinates(selected).lat},${coordinates(selected).lng}`
-                      : selected.address || selected.dia_chi || ''
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 h-8 px-3 rounded-xl bg-stone-800 hover:bg-stone-900 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all text-center"
-                >
-                  <RiArrowRightUpLine className="w-3.5 h-3.5" />
-                  Chỉ đường
-                </a>
-              </div>
-            </div>
-          </Popup>
-        )}
-      </Map>
-
-      {/* Top Controls: Re-center & Map Style Switcher */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-        {/* Style switch button */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowStyleMenu(!showStyleMenu)}
-            className="h-9 px-3 rounded-xl bg-white/95 backdrop-blur-md text-gray-700 hover:text-[#b22830] text-xs font-medium border border-gray-200/80 shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
-            title="Đổi kiểu bản đồ"
-          >
-            <RiStackLine className="w-4 h-4 text-[#b22830]" />
-            <span className="hidden sm:inline">Kiểu bản đồ</span>
-          </button>
-
-          {showStyleMenu && (
-            <div className="absolute right-0 top-full mt-1.5 w-40 bg-white rounded-xl shadow-xl border border-gray-100 p-1 z-30 animate-fade-in">
-              {MAP_STYLES.map((style) => (
-                <button
-                  key={style.id}
-                  type="button"
-                  onClick={() => {
-                    setMapStyle(style.url);
-                    setShowStyleMenu(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${
-                    mapStyle === style.url
-                      ? 'bg-red-50 text-[#b22830] font-semibold'
-                      : 'text-gray-700 hover:bg-gray-50 font-medium'
-                  }`}
-                >
-                  {style.label}
-                  {mapStyle === style.url && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#b22830]" />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Re-center Button */}
-        <button
-          type="button"
-          onClick={handleCenterSelected}
-          className="h-9 px-3 rounded-xl bg-white/95 backdrop-blur-md text-gray-700 hover:text-[#b22830] text-xs font-medium border border-gray-200/80 shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
-          title="Định tâm cửa hàng"
-        >
-          <RiFocus3Line className="w-4 h-4 text-[#b22830]" />
-          <span className="hidden sm:inline">Định tâm</span>
-        </button>
-      </div>
-    </div>
-  );
+  return <div className={`store-map ${theme === 'light' ? 'store-map--minimal' : ''}`} style={{ height }} aria-label={copy('Bản đồ cửa hàng', 'Store map')}>
+    <MapContainer className="store-map-canvas" ref={setInstance} center={initialCenter} zoom={14} preferCanvas zoomAnimation={false} fadeAnimation={false} markerZoomAnimation={false} zoomControl={false} scrollWheelZoom={false} />
+    <div className="store-map-tools"><div className="store-map-style" aria-label={copy('Kiểu bản đồ', 'Map style')}><button type="button" aria-pressed={theme === 'light'} onClick={() => setTheme('light')}>{copy('Tối giản', 'Minimal')}</button><button type="button" aria-pressed={theme === 'streets'} onClick={() => setTheme('streets')}>{copy('Đường phố', 'Streets')}</button></div><button type="button" className="store-map-center" onClick={centerSelected} disabled={!selectedPoint} title={copy('Định tâm cửa hàng', 'Center on store')} aria-label={copy('Định tâm cửa hàng', 'Center on store')}><RiFocus3Line /></button><button type="button" className="store-map-center" onClick={locate} disabled={locationStatus === 'loading'} title={copy('Vị trí của tôi', 'My location')} aria-label={copy('Vị trí của tôi', 'My location')}><RiNavigationLine /></button></div>
+    {locationStatus === 'error' && <div className="store-map-location-error" role="status">{copy('Chưa lấy được vị trí của bạn. Hãy kiểm tra quyền vị trí trong trình duyệt.', 'Your location is unavailable. Check your browser location permission.')}</div>}
+    <button type="button" className="store-map-all" onClick={fitAll}>{copy('Xem tất cả điểm trên bản đồ', 'Show all locations')}<RiArrowRightUpLine /></button>
+    {tileStatus === 'loading' && <div className="store-map-status" role="status"><span />{copy('Đang tải nền bản đồ…', 'Loading map tiles…')}</div>}
+    {(tileStatus === 'error' || tileStatus === 'partial') && <div className="store-map-error" role="status"><p>{tileStatus === 'partial' ? copy('Một phần nền bản đồ chưa tải xong. Bạn có thể tải lại hoặc mở chỉ đường.', 'Some map tiles could not load. You can retry or open directions.') : copy('Nền bản đồ chưa tải được. Bạn vẫn có thể chọn cửa hàng hoặc mở chỉ đường.', 'Map tiles could not load. You can still choose a store or open directions.')}</p><button type="button" onClick={() => { setTileStatus('loading'); setRetry(value => value + 1); }}><RiRestartLine />{copy('Tải lại bản đồ', 'Retry map')}</button></div>}
+    {selected && dismissedId !== selectedId && <div className="store-map-card"><button type="button" className="store-map-close" aria-label={copy('Thu gọn thông tin cửa hàng', 'Close store information')} onClick={() => setDismissedId(selectedId)}><RiCloseLine /></button><p className="store-map-eyebrow">AVENGERS COFFEE</p><h3>{decodeHtmlEntities(selected.name || selected.ten_chi_nhanh)}</h3><p className="store-map-address"><RiMapPin2Fill />{decodeHtmlEntities(selected.address || selected.dia_chi)}</p>{selected.hours && <p className="store-map-hours">{selected.hours}</p>}{!selectedPoint && <p className="store-map-coordinates-note">{copy('Cửa hàng chưa có tọa độ bản đồ.', 'Coordinates are not available for this store.')}</p>}<div className="store-map-card-actions"><button type="button" onClick={() => onViewDetail?.(selected)}>{copy('Chi tiết cửa hàng', 'Store details')}<RiArrowRightUpLine /></button><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.address || selected.dia_chi || selected.name)}`} target="_blank" rel="noopener noreferrer">{copy('Chỉ đường', 'Directions')}<RiArrowRightUpLine /></a></div></div>}
+    {!points.length && <div className="store-map-empty">{copy('Chưa có tọa độ trong danh sách cửa hàng này.', 'There are no map coordinates in this selection.')}</div>}
+  </div>;
 }

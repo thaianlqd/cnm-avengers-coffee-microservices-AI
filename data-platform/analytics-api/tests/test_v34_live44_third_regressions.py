@@ -119,7 +119,11 @@ class ThirdRunRegressions(f.unittest.TestCase):
         requested=[q for q in report['analytical_queries'] if q['role']=='requested']
         self.assertEqual(len(requested),2)
         self.assertTrue(any(q.get('cohort_query_id') for q in requested))
-        self.assertFalse(any(e['feature']=='selected_total' for e in report['evidence']))
+        # Additive exposure counts may have selected totals; the ratio itself
+        # must never be summed. Preserve the original invalid-rate-total guard.
+        totals=[e for e in report['evidence'] if e['feature']=='selected_total']
+        self.assertFalse(any(e['metric']=='order_cancellation_rate' for e in totals))
+        self.assertTrue(all(e['metric'] in {'cancelled_terminal_order_count','terminal_order_count'} for e in totals))
         intent=AnalysisIntentEnvelope.model_validate(raw)
         anchors=request_anchors(capture['question'],self.catalog,{})
         anchors['features'].append({'candidate_ids':['selected_total']})

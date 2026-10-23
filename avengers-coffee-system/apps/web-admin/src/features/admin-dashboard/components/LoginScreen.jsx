@@ -81,6 +81,8 @@ export function LoginScreen({
   });
   const [submittedWorkspace, setSubmittedWorkspace] = useState(workspace);
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const selected = workspaces.find((item) => item.id === workspace);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -130,26 +132,44 @@ export function LoginScreen({
           <p>Xin chào, {pendingPasswordChange.user?.hoTen}</p>
           <form onSubmit={handleConfirm} className="console-login-fields">
             <label htmlFor="newPassword">Mật khẩu mới</label>
-            <input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Nhập mật khẩu mới"
-              autoComplete="new-password"
-              required
-            />
+            <div className="console-password">
+              <input
+                id="newPassword"
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Nhập mật khẩu mới"
+                autoComplete="new-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword((v) => !v)}
+                aria-label={showNewPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                {showNewPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+              </button>
+            </div>
 
             <label htmlFor="confirmPassword">Nhập lại mật khẩu mới</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Xác nhận mật khẩu mới"
-              autoComplete="new-password"
-              required
-            />
+            <div className="console-password">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Xác nhận mật khẩu mới"
+                autoComplete="new-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                {showConfirmPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+              </button>
+            </div>
 
             {(localError || loginStatus.error) && (
               <p className="error-text">{localError || loginStatus.error}</p>
@@ -170,7 +190,9 @@ export function LoginScreen({
       <img key={selected.image} className="console-login-photo" src={selected.image} alt={selected.imageAlt} fetchPriority="high" />
       <section className="console-login-story" data-workspace={workspace}>
         <div className="console-login-logo">
-          <img src="/images/logo-white.png" alt="Avengers Coffee" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+          <span style={{ display: 'inline-grid', placeItems: 'center', width: 44, height: 44, borderRadius: 12, background: '#ffffff', padding: 5, boxShadow: '0 4px 12px rgba(0,0,0,0.18)' }}>
+            <img src="/images/highlands-logo-red.svg" onError={(e) => { e.currentTarget.src = '/images/logo-red.png' }} alt="Avengers Coffee" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+          </span>
           <span>Avengers Coffee</span>
         </div>
         <div className="console-login-copy">

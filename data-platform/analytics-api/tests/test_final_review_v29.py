@@ -141,7 +141,9 @@ class FinalReviewTests(unittest.TestCase):
     def test_store_alias_definition_repaired_in_one_user_request(self):
         raw=f.envelope(req('compare',['store_revenue','store_order_count','store_aov'],['store'],
             kind='cross_tab',features=['contribution_share'],feature_metrics={'contribution_share':['store_revenue']}))
-        patch_meaning={'decision':'analyze','requirements':[{'id':'compare','metric_ids':['store_revenue','store_order_count','aov']}]}
+        # Grouping by branch preserves canonical revenue/order_count; only the
+        # incompatible AVG-based store_aov needs the requested ratio definition.
+        patch_meaning={'decision':'analyze','requirements':[{'id':'compare','metric_ids':['revenue','order_count','aov']}]}
         p=self.pipeline(f.scripted(raw,patch_meaning));r=p.propose(self.request('So sánh doanh thu, số đơn và giá trị đơn trung bình theo chi nhánh trong 90 ngày gần nhất.'))
         self.assertEqual(r['outcome'],'SUCCESS');self.assertEqual(p.provider.call_count,2)
         self.assertNotIn('store_aov',metric_equivalents(self.catalog)['aov'])

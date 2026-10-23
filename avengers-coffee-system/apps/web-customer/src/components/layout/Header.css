@@ -1,0 +1,34 @@
+/* Shared geometry and typography: navigating never changes header proportions. */
+.hc-home-header { position:fixed; left:0; width:100%; color:white; background:transparent; transition:background .35s,box-shadow .35s; border-bottom:1px solid #ffffff38; }
+.hc-home-header--solid { background:#a42431f7; box-shadow:0 3px 20px #2b0d1510; }
+.customer-public-header .hc-header-bar { max-width:1600px; height:104px; padding-inline:40px; }
+.customer-public-header .hc-header-desktop-nav { gap:clamp(14px,1.65vw,30px); }
+.customer-public-header .hc-header-desktop-nav > div > button,
+.customer-public-header .hc-header-desktop-actions > button { font-size:clamp(10px,.82vw,13px); font-weight:500; letter-spacing:.055em; }
+.customer-public-header .hc-header-desktop-actions { gap:24px; }
+.customer-public-header .hc-header-bar > button { padding-inline:30px; }
+.customer-public-header .hc-header-bar > button img { height:86px; }
+.customer-public-header .hc-header-desktop-nav .fixed { top:104px; }
+.customer-public-header .hc-header-desktop-nav .fixed > div { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); max-height:calc(100svh - 104px); overflow-y:auto; }
+.customer-public-header .hc-header-desktop-nav .fixed > div > div { min-width:0; }
+.customer-public-header .hc-header-desktop-nav .group:focus-within > .invisible { visibility:visible; opacity:1; transform:none; }
+@media(max-width:1279px) {
+  .customer-public-header .hc-header-desktop-nav,
+  .customer-public-header .hc-header-desktop-actions,
+  .customer-public-header .hc-header-bar > div:first-child { display:none; }
+  .customer-public-header .hc-header-mobile-actions { display:flex; }
+  .customer-public-header .hc-header-bar { height:90px; padding-inline:32px; }
+  .customer-public-header .hc-header-bar > button img { height:76px; }
+  .customer-public-header .hc-header-bar > button { padding-inline:0; }
+  .customer-public-header #customer-mobile-navigation { display:block; max-height:calc(100svh - 90px); overflow-y:auto; overscroll-behavior:contain; }
+}
+@media(max-width:767px) {
+  .customer-public-header .hc-header-bar { height:80px; padding-inline:22px; }
+  .customer-public-header .hc-header-bar > button img { height:67px; }
+  .customer-public-header .hc-header-mobile-actions > button:first-child { font-size:10px; padding:8px 10px; font-weight:500; }
+  .customer-public-header #customer-mobile-navigation { max-height:calc(100svh - 80px); }
+}
+/* The ordering toolbar keeps its controls while sharing the lighter type scale. */
+.customer-order-header { font-family:var(--font-sans); font-size:13px; }
+.customer-order-header button { font-size:13px; font-weight:500; }
+.customer-order-header input { font-size:13px; }

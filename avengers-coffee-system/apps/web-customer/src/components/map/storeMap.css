@@ -1,0 +1,48 @@
+.store-map { position:relative; isolation:isolate; min-height:380px; width:100%; background:#f3f4f1; overflow:hidden; font-family:'Montserrat',Arial,sans-serif; }
+.store-map-canvas { position:absolute; inset:0; z-index:0; background:#f0f2ee; }
+.store-map button { cursor:pointer; }
+.store-map button:focus-visible,.store-map a:focus-visible { outline:2px solid #b22830; outline-offset:4px; }
+.store-map .leaflet-tile { width:256px!important; height:256px!important; max-width:none!important; }
+.store-map .leaflet-control-attribution { font-size:8px; background:#ffffffe8; }
+.store-map .leaflet-control-zoom { box-shadow:0 3px 12px #20161315; border:1px solid #dedbd5; margin:0 18px 36px 0; border-radius:8px; overflow:hidden; }
+.store-map .leaflet-control-zoom a { width:32px; height:32px; line-height:32px; color:#6e3937; font-size:20px; border-color:#eee; }
+.store-map-tools { position:absolute; z-index:500; top:20px; right:20px; display:flex; gap:10px; }
+.store-map-style { display:flex; padding:4px; background:white; box-shadow:0 3px 18px #20161312; border:1px solid #e7e3de; border-radius:9px; }
+.store-map-style button { padding:8px 13px; font-size:10px; color:#776b65; border-radius:5px; }
+.store-map-style button[aria-pressed=true] { color:#a42431; background:#fcf1ef; font-weight:600; }
+.store-map-center { width:41px; display:grid; place-items:center; background:white; border:1px solid #e7e3de; border-radius:8px; color:#a42431; box-shadow:0 3px 18px #20161312; }
+.store-map-center svg { width:18px; height:18px; }
+.store-map-center:disabled { opacity:.4; cursor:default; }
+.store-map-all { position:absolute; z-index:500; left:20px; top:20px; display:flex; align-items:center; gap:8px; padding:12px 14px; background:white; border:1px solid #e7e3de; border-radius:8px; font-size:9px; color:#6b5550; box-shadow:0 3px 18px #20161312; }
+.store-map-all svg { width:15px; height:15px; }
+.store-map-pin { border:0; background:none; }
+.store-map-pin > span { display:grid; place-items:center; width:38px; height:38px; background:#b22830; border:3px solid white; border-radius:50% 50% 50% 0; transform:rotate(-45deg); box-shadow:0 3px 10px #81212a50; }
+.store-map-pin svg { width:22px; height:22px; color:white; transform:rotate(45deg); }
+.store-map-card { position:absolute; z-index:500; left:24px; bottom:30px; width:310px; max-width:calc(100% - 88px); background:#fff; border:1px solid #ece3df; border-radius:12px; padding:22px; box-shadow:0 12px 35px #3a2a2420; }
+.store-map-close { position:absolute; top:12px; right:12px; width:24px; height:24px; display:grid; place-items:center; color:#8a7870; }
+.store-map-card .store-map-eyebrow { font-size:7px; color:#a42431; letter-spacing:.13em; margin:0 0 11px; }
+.store-map-card h3 { font-size:13px; font-weight:600; color:#45302a; line-height:1.7; padding-right:10px; margin:0 0 12px; }
+.store-map-address { display:flex; align-items:start; gap:8px; color:#8b7b73; font-size:10px; line-height:1.8; margin:0; }
+.store-map-address svg { flex-shrink:0; width:13px; height:13px; margin-top:3px; color:#b22830; }
+.store-map-hours { font-size:9px; color:#8b7b73; margin:12px 0 0; }
+.store-map-card-actions { display:flex; gap:20px; margin-top:19px; padding-top:14px; border-top:1px solid #eee5e1; }
+.store-map-card-actions button,.store-map-card-actions a { display:flex; align-items:center; gap:7px; color:#a42431; font-size:9px; text-decoration:none; }
+.store-map-card-actions svg { width:14px; height:14px; }
+.store-map-status { position:absolute; z-index:500; left:50%; top:80px; transform:translateX(-50%); display:flex; align-items:center; gap:8px; background:#fffefa; border:1px solid #e7e3de; border-radius:6px; padding:10px 14px; font-size:9px; color:#7e6a60; white-space:nowrap; }
+.store-map-status > span { width:7px; height:7px; border-radius:50%; background:#b22830; animation:store-map-loading 1s ease infinite alternate; }
+.store-map-error { position:absolute; z-index:500; top:80px; left:20px; right:20px; max-width:420px; background:#fff; border:1px solid #e5d8ce; border-radius:9px; padding:14px 18px; font-size:11px; color:#806a60; box-shadow:0 4px 20px #30221a10; }
+.store-map-error p { margin:0; line-height:1.8; }
+.store-map-error button { display:flex; gap:7px; align-items:center; color:#a42431; font-size:10px; margin-top:8px; }
+.store-map-empty { position:absolute; z-index:400; top:130px; left:20px; right:20px; font-size:11px; color:#8d7a70; text-align:center; }
+.store-map-coordinates-note { font-size:10px; color:#a42431; margin-top:12px; }
+@keyframes store-map-loading { to { opacity:.25; } }
+@media(max-width:1050px) { .store-map-all { top:75px; padding:9px 11px; font-size:8px; } .store-map-status { top:125px; } .store-map-error { top:125px; } }
+@media(max-width:767px) { .store-map { min-height:450px; } .store-map-tools { top:14px; right:14px; } .store-map-all { left:14px; top:68px; } .store-map-card { left:14px; bottom:26px; padding:18px; width:280px; max-width:calc(100% - 76px); } .store-map-card h3 { font-size:11px; margin-bottom:8px; } .store-map-address { font-size:9px; } .store-map-card-actions { gap:14px; } .store-map-card-actions button,.store-map-card-actions a { font-size:8px; } }
+@media(prefers-reduced-motion:reduce) { .store-map * { animation:none!important; transition:none!important; } }
+.store-map--minimal .leaflet-tile-pane { filter:grayscale(1) contrast(.92) brightness(1.06); }
+/* Reserve the lower corner for the existing floating support button. */
+.store-map .leaflet-control-zoom { margin-bottom:100px; }
+.store-map-user { border:0; background:transparent; }
+.store-map-user span { display:block; width:17px; height:17px; border:3px solid white; background:#3178c6; border-radius:50%; box-shadow:0 0 0 6px #3178c633; }
+.store-map-location-error { position:absolute; z-index:501; right:20px; top:75px; max-width:280px; padding:12px 15px; background:white; border:1px solid #e7e3de; border-radius:8px; color:#8c6d62; font-size:10px; line-height:1.8; box-shadow:0 3px 18px #20161312; }
+@media(max-width:767px) { .store-map-location-error { top:112px; right:14px; left:14px; max-width:none; } }

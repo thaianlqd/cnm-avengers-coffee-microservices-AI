@@ -50,7 +50,10 @@ class RankedCompanionTests(f.unittest.TestCase):
         queries=report['analytical_queries']
         ranked=next(q for q in queries if q['role']=='requested' and q.get('ranking'))
         companion=next(q for q in queries if q.get('cohort_query_id'))
-        self.assertEqual(ranked['metrics'],['order_cancellation_rate'])
+        # Rates now carry their governed exposure components. The selected
+        # cohort/population must still be independently checked below.
+        self.assertEqual(ranked['metrics'],['order_cancellation_rate',
+            'cancelled_terminal_order_count','terminal_order_count'])
         self.assertEqual(companion['metrics'],['order_count'])
         self.assertEqual(companion['cohort_query_id'],ranked['id'])
         primary=report['result_sets'][ranked['id']]['rows']
@@ -60,6 +63,10 @@ class RankedCompanionTests(f.unittest.TestCase):
         self.assertEqual({r['store_id']:r['order_count'] for r in counts},
             {f's{i}':1+2*i for i in range(1,6)})
         self.assertAlmostEqual(primary[0]['order_cancellation_rate'],50)
+        self.assertEqual({r['store_id']:(r['cancelled_terminal_order_count'],r['terminal_order_count']) for r in primary},
+                         {f's{i}':(1,i+1) for i in range(1,6)})
+        for row in primary:
+            self.assertEqual(row['order_cancellation_rate'],round(100/row['terminal_order_count'],2))
         evidence=next(e for e in report['evidence'] if e['feature']=='ranked_companion')
         self.assertEqual(len(evidence['values']['rows']),5)
         self.assertIn('s1',evidence['values']['rows'][0]['entity'])

@@ -1,0 +1,32 @@
+{
+  "reviewed_at": "2026-10-22T16:23:41.568740+00:00",
+  "method": "Rendered by bundled document renderer + LibreOffice. Every page visually inspected through view_image; no XML-only visual claim.",
+  "documents": [
+    {
+      "path": "word-r9/selected-view.docx",
+      "sha256": "8f166ee8b0bb81f45db5dbacbb86f59d1d0ecf978d056b07414645d4338e94f8",
+      "pages": 9,
+      "all_pages_inspected": true,
+      "layout": "Readable, no clipping/overlap; repeated table headers; selected-view caption and KPI/report scope explicitly separated.",
+      "content_checks": [
+        "Selected single-member chart facts match active member; report-level answer retains original approved scope.",
+        "Ranking exposure n/N visible; percent change uses percentage points; multi-series insufficient history disclosed."
+      ]
+    },
+    {
+      "path": "word-r9/ranking-exposure.docx",
+      "sha256": "0304cd5d56d9ee964cf64fee64ec8c826c9342baef7d488ca680ba6790ad8a2c",
+      "pages": 6,
+      "all_pages_inspected": true,
+      "layout": "Readable, no clipping/overlap; repeated table headers; selected-view caption and KPI/report scope explicitly separated.",
+      "content_checks": [
+        "Selected single-member chart facts match active member; report-level answer retains original approved scope.",
+        "Ranking exposure n/N visible; percent change uses percentage points; multi-series insufficient history disclosed."
+      ]
+    }
+  ],
+  "limits": [
+    "Existing Word template retains verbose repeated report-level evidence; this QA does not claim redesigned editorial template.",
+    "This receipt covers these exact artifact hashes; later regenerated documents need separate hash/layout comparison."
+  ]
+}

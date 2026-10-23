@@ -43,8 +43,10 @@ class OverviewTests(unittest.TestCase):
 
     def test_exact_failed_redis_intent_succeeds_in_one_interpretation(self):
         _,_,report,proposal=self.report(RECORDED['failed_intent'])
-        self.assertEqual(len([q for q in report['analytical_queries'] if q['role']=='requested']),7)
-        self.assert_shared_share_denominator(report, {'req_city_dist','req_store_rank'}, 'store_revenue')
+        # Generic revenue by city/store shares the canonical order-level
+        # denominator; no second specialized revenue query is required.
+        self.assertEqual(len([q for q in report['analytical_queries'] if q['role']=='requested']),6)
+        self.assert_shared_share_denominator(report, {'req_city_dist','req_store_rank'}, 'revenue')
         self.assertTrue(all(c['state']=='RESOLVED' for c in report['resolved_requirement_coverage']))
         trend=next(q for q in report['analytical_queries'] if q['operation']=='trend')
         self.assertEqual(trend['group_by'],[])

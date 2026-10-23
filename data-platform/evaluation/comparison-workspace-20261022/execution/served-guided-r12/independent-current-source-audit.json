@@ -1,0 +1,359 @@
+{
+  "passed": false,
+  "at": "2026-10-22T16:44:08.310855+00:00",
+  "session_id": "0f26d788-bff8-4225-9414-b7bfe3707433",
+  "revision": 1,
+  "raw_rows": 1658,
+  "valid_rows": 1582,
+  "queries": 6,
+  "charts": 5,
+  "variants": 30,
+  "marks": 553,
+  "checks": [
+    {
+      "check": "authored_member_scope",
+      "passed": true
+    },
+    {
+      "check": "authored_window q_cb0617bd5f41761dc741f41d",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_cb0617bd5f41761dc741f41d",
+      "passed": true,
+      "rows": 2
+    },
+    {
+      "check": "authored_window q_1f8f14f4cf76f76edb07c6b8",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_1f8f14f4cf76f76edb07c6b8",
+      "passed": false,
+      "rows": 50
+    },
+    {
+      "check": "authored_window q_2f21f358d2931a69a8455548",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_2f21f358d2931a69a8455548",
+      "passed": false,
+      "rows": 50
+    },
+    {
+      "check": "authored_window q_7cc339a3404c19a4be384115",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_7cc339a3404c19a4be384115",
+      "passed": false,
+      "rows": 50
+    },
+    {
+      "check": "authored_window q_9e12ba74a2845e46ed752a35",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_9e12ba74a2845e46ed752a35",
+      "passed": true,
+      "rows": 8
+    },
+    {
+      "check": "authored_window q_ab8b63dc187c50d500194bff",
+      "passed": true
+    },
+    {
+      "check": "full_result_keys_values q_ab8b63dc187c50d500194bff",
+      "passed": true,
+      "rows": 6
+    },
+    {
+      "check": "every_offered_variant visual_1/q_cb0617bd5f41761dc741f41d~compare",
+      "passed": true,
+      "marks": 2,
+      "spec": {
+        "mode": "compare"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_1/q_cb0617bd5f41761dc741f41d~total",
+      "passed": true,
+      "marks": 1,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_1/q_cb0617bd5f41761dc741f41d~single~482053b1d3",
+      "passed": true,
+      "marks": 1,
+      "spec": {
+        "mode": "single",
+        "member": "Hồ Chí Minh"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_1/q_cb0617bd5f41761dc741f41d~single~fecf24c624",
+      "passed": true,
+      "marks": 1,
+      "spec": {
+        "mode": "single",
+        "member": "Đà Nẵng"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_2f21f358d2931a69a8455548~compare",
+      "passed": true,
+      "marks": 60,
+      "spec": {
+        "mode": "compare"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_2f21f358d2931a69a8455548~total",
+      "passed": true,
+      "marks": 30,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_2f21f358d2931a69a8455548~single~482053b1d3",
+      "passed": true,
+      "marks": 30,
+      "spec": {
+        "mode": "single",
+        "member": "Hồ Chí Minh"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_2/q_2f21f358d2931a69a8455548~single~fecf24c624",
+      "passed": true,
+      "marks": 30,
+      "spec": {
+        "mode": "single",
+        "member": "Đà Nẵng"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_ab8b63dc187c50d500194bff~compare",
+      "passed": true,
+      "marks": 6,
+      "spec": {
+        "mode": "compare"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_ab8b63dc187c50d500194bff~compare~f4dc189901",
+      "passed": true,
+      "marks": 6,
+      "spec": {
+        "mode": "compare",
+        "value_mode": "member_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_ab8b63dc187c50d500194bff~total",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_ab8b63dc187c50d500194bff~total~39385e7ce1",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "total",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_ab8b63dc187c50d500194bff~single~482053b1d3",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Hồ Chí Minh"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_ab8b63dc187c50d500194bff~single~1add2fed46",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Hồ Chí Minh",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_ab8b63dc187c50d500194bff~single~fecf24c624",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Đà Nẵng"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_3/q_ab8b63dc187c50d500194bff~single~17afef4b9b",
+      "passed": true,
+      "marks": 3,
+      "spec": {
+        "mode": "single",
+        "member": "Đà Nẵng",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_7cc339a3404c19a4be384115~compare~b38bb7ea86",
+      "passed": true,
+      "marks": 60,
+      "spec": {
+        "mode": "compare",
+        "breakdown": [
+          "store_type",
+          "CHI_NHANH_CHINH"
+        ]
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_7cc339a3404c19a4be384115~compare~e83b184bff",
+      "passed": true,
+      "marks": 43,
+      "spec": {
+        "mode": "compare",
+        "breakdown": [
+          "store_type",
+          "KIOSK_NHUONG_QUYEN"
+        ]
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_7cc339a3404c19a4be384115~compare~65d550ee23",
+      "passed": true,
+      "marks": 21,
+      "spec": {
+        "mode": "compare",
+        "breakdown": [
+          "store_type",
+          "KIOSK_VE_TINH"
+        ]
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_7cc339a3404c19a4be384115~total",
+      "passed": true,
+      "marks": 80,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_7cc339a3404c19a4be384115~single~482053b1d3",
+      "passed": true,
+      "marks": 70,
+      "spec": {
+        "mode": "single",
+        "member": "Hồ Chí Minh"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_4/q_7cc339a3404c19a4be384115~single~fecf24c624",
+      "passed": true,
+      "marks": 54,
+      "spec": {
+        "mode": "single",
+        "member": "Đà Nẵng"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_9e12ba74a2845e46ed752a35~compare",
+      "passed": true,
+      "marks": 8,
+      "spec": {
+        "mode": "compare"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_9e12ba74a2845e46ed752a35~compare~f4dc189901",
+      "passed": true,
+      "marks": 8,
+      "spec": {
+        "mode": "compare",
+        "value_mode": "member_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_9e12ba74a2845e46ed752a35~total",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "total"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_9e12ba74a2845e46ed752a35~total~39385e7ce1",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "total",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_9e12ba74a2845e46ed752a35~single~482053b1d3",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "single",
+        "member": "Hồ Chí Minh"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_9e12ba74a2845e46ed752a35~single~1add2fed46",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "single",
+        "member": "Hồ Chí Minh",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_9e12ba74a2845e46ed752a35~single~fecf24c624",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "single",
+        "member": "Đà Nẵng"
+      }
+    },
+    {
+      "check": "every_offered_variant visual_5/q_9e12ba74a2845e46ed752a35~single~17afef4b9b",
+      "passed": true,
+      "marks": 4,
+      "spec": {
+        "mode": "single",
+        "member": "Đà Nẵng",
+        "value_mode": "scope_share",
+        "metric": "revenue"
+      }
+    }
+  ],
+  "totals": {
+    "Hồ Chí Minh": 154577000.0,
+    "Đà Nẵng": 24290000.0
+  },
+  "limitation": "Independent current raw source equals captured report numbers; source generation was not pinned, so this does not prove the same historical snapshot. No claim about LLM accuracy."
+}

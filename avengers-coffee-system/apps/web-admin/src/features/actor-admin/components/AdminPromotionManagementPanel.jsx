@@ -28,7 +28,8 @@ import {
   Zap,
   Globe,
   Sliders,
-  MoreVertical
+  MoreVertical,
+  Upload
 } from '../../../components/console/WorkspaceIcons'
 
 function fmtNumber(value) {
@@ -301,7 +302,7 @@ function AdminPromotionManagementPanelContent({
       <div className="promo-list-card">
         {/* Toolbar & Filters */}
         <div className="workspace-section-title">
-          <div><h2>Danh sách khuyến mãi</h2><p>Mã công khai và mẫu voucher phát tự động.</p></div>
+          <div><h2>Danh sách khuyến mãi & voucher</h2><p>Voucher công khai và voucher phát cho thành viên hệ thống.</p></div>
           <span className="workspace-record-count">{stats.total} chương trình</span>
         </div>
         <div className="promo-toolbar">
@@ -314,7 +315,7 @@ function AdminPromotionManagementPanelContent({
               onClick={() => setActiveDistributionTab('PUBLIC')}
             >
               <Tag size={18}  style={{ flexShrink: 0 }} className="promo-type-tab-icon" />
-              <span>Mã áp dụng công khai</span>
+              <span>Voucher công khai</span>
               <span className="workspace-tab-count">{stats.publicCount}</span>
             </button>
 
@@ -325,16 +326,15 @@ function AdminPromotionManagementPanelContent({
               onClick={() => setActiveDistributionTab('TEMPLATE')}
             >
               <Sparkles size={18}  style={{ flexShrink: 0 }} className="promo-type-tab-icon" />
-              <span>Voucher tự động</span>
+              <span>Voucher thành viên hệ thống</span>
               <span className="workspace-tab-count">{stats.templateCount}</span>
             </button>
           </div>
 
-          <div className="promo-filter-group">
+          <div className="promo-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', width: '100%' }}>
             {/* Search Input with right-side button */}
-            <div className="promo-search-box">
+            <div className="promo-search-box" style={{ flex: '0 1 320px', minWidth: '220px' }}>
               <div className="promo-search-input-wrap">
-
                 <input className="ui-input"
                   type="text"
                   value={promotionFilter.q || ''}
@@ -356,7 +356,7 @@ function AdminPromotionManagementPanelContent({
             </div>
 
             {/* Status Filter */}
-            <div style={{ minWidth: 190, width: 200, flexShrink: 0 }}>
+            <div style={{ minWidth: 220, width: 220, flexShrink: 0, margin: 0 }}>
               <SearchableSelect
                 id="promo-status-filter-select"
                 aria-label="Lọc trạng thái khuyến mãi"
@@ -375,8 +375,30 @@ function AdminPromotionManagementPanelContent({
             </div>
 
             {loadPromotions && (
-              <button type="button" className="promo-refresh-btn" onClick={loadPromotions} title="Tải lại dữ liệu">
-                <RefreshCw size={16} />
+              <button
+                type="button"
+                className="promo-refresh-btn"
+                onClick={loadPromotions}
+                title="Tải lại dữ liệu"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  height: '40px',
+                  minHeight: '40px',
+                  padding: '0 15px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#334155',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  margin: 0
+                }}
+              >
+                <RefreshCw size={15} />
                 <span>Tải lại</span>
               </button>
             )}
@@ -385,9 +407,22 @@ function AdminPromotionManagementPanelContent({
               type="button"
               className="promo-btn promo-btn--success promo-create-btn"
               onClick={() => handleOpenAddModal(activeDistributionTab)}
+              style={{
+                marginLeft: 'auto',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
+                height: '40px',
+                minHeight: '40px',
+                padding: '0 18px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '13.5px',
+                cursor: 'pointer'
+              }}
             >
               <Plus size={18}  style={{ flexShrink: 0 }} />
-              <span>{activeDistributionTab === 'PUBLIC' ? 'Tạo mã mới' : 'Tạo template'}</span>
+              <span>{activeDistributionTab === 'PUBLIC' ? 'Tạo voucher mới' : 'Tạo voucher thành viên'}</span>
             </button>
           </div>
         </div>
@@ -659,7 +694,7 @@ function AdminPromotionManagementPanelContent({
                   <>
                     <Edit3 size={20} className="promo-head-icon edit-mode" />
                     <div>
-                      <h3>{safeForm.loai_phan_phoi === 'TEMPLATE' ? 'Chỉnh sửa Template Voucher' : 'Chỉnh sửa mã Voucher'}</h3>
+                      <h3>{safeForm.loai_phan_phoi === 'TEMPLATE' ? 'Chỉnh sửa Voucher thành viên hệ thống' : 'Chỉnh sửa Voucher công khai'}</h3>
                       <span>Mã: {editingPromotionCode}</span>
                     </div>
                   </>
@@ -667,8 +702,8 @@ function AdminPromotionManagementPanelContent({
                   <>
                     <Plus size={20} className="promo-head-icon add-mode" />
                     <div>
-                      <h3>Tạo Template Voucher phát tự động</h3>
-                      <span>Thiết lập khuôn mẫu voucher tự động trao cho sự kiện Thăng hạng, Sinh nhật, Vòng quay...</span>
+                      <h3>Tạo Voucher thành viên hệ thống</h3>
+                      <span>Thiết lập voucher tự động trao cho sự kiện Thăng hạng, Sinh nhật, Vòng quay...</span>
                     </div>
                   </>
                 ) : (
@@ -866,16 +901,106 @@ function AdminPromotionManagementPanelContent({
                       />
                     </div>
 
-                    {/* Banner Image URL */}
+                    {/* Banner Image URL & File Upload */}
                     <div className="promo-form-group promo-form-group--full">
-                      <label htmlFor="promo-image-url">Đường dẫn ảnh Banner chương trình</label>
-                      <input className="ui-input"
-                        id="promo-image-url"
-                        type="text"
-                        value={safeForm.hinh_anh || ''}
-                        onChange={(e) => setPromotionForm && setPromotionForm((p) => ({ ...p, hinh_anh: e.target.value }))}
-                        placeholder="https://..."
-                      />
+                      <label htmlFor="promo-image-url">Ảnh Banner chương trình ưu đãi</label>
+                      <div className="admin-image-picker">
+                        <div className="admin-image-picker-controls" style={{ display: 'flex', alignItems: 'stretch', width: '100%', height: '40px' }}>
+                          <input className="ui-input"
+                            id="promo-image-url"
+                            type="text"
+                            value={safeForm.hinh_anh || ''}
+                            onChange={(e) => setPromotionForm && setPromotionForm((p) => ({ ...p, hinh_anh: e.target.value }))}
+                            placeholder="Dán đường dẫn ảnh Banner (https://...)"
+                            style={{
+                              flex: '1 1 auto',
+                              width: 'auto',
+                              height: '40px',
+                              minHeight: '40px',
+                              borderTopRightRadius: 0,
+                              borderBottomRightRadius: 0,
+                              borderRight: 'none',
+                              borderTopLeftRadius: '8px',
+                              borderBottomLeftRadius: '8px',
+                              boxSizing: 'border-box',
+                              margin: 0
+                            }}
+                          />
+                          <label
+                            className="admin-image-upload-btn"
+                            title="Chọn tệp banner từ máy tính"
+                            style={{
+                              flex: '0 0 auto',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              height: '40px',
+                              minHeight: '40px',
+                              padding: '0 16px',
+                              borderTopLeftRadius: 0,
+                              borderBottomLeftRadius: 0,
+                              borderTopRightRadius: '8px',
+                              borderBottomRightRadius: '8px',
+                              border: '1px solid #cbd5e1',
+                              borderLeft: '1px solid #e2e8f0',
+                              backgroundColor: '#f8fafc',
+                              color: '#334155',
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              boxSizing: 'border-box',
+                              margin: 0,
+                              lineHeight: 1
+                            }}
+                          >
+                            <Upload size={15} />
+                            <span>Chọn từ máy</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  if (event.target?.result) {
+                                    setPromotionForm && setPromotionForm((p) => ({ ...p, hinh_anh: event.target.result }));
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              }}
+                            />
+                          </label>
+                        </div>
+
+                        {safeForm.hinh_anh && (
+                          <div className="admin-image-preview-badge">
+                            <img
+                              src={safeForm.hinh_anh}
+                              alt="Xem trước banner"
+                              className="admin-image-preview-thumb"
+                              style={{ width: '80px', height: '45px', objectFit: 'cover' }}
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                            <div className="admin-image-preview-info">
+                              <span className="admin-image-preview-url" title={safeForm.hinh_anh}>
+                                {safeForm.hinh_anh.startsWith('data:') ? 'Ảnh tải lên từ máy tính' : safeForm.hinh_anh}
+                              </span>
+                              <button
+                                type="button"
+                                className="admin-image-clear-btn"
+                                onClick={() => setPromotionForm && setPromotionForm((p) => ({ ...p, hinh_anh: '' }))}
+                              >
+                                <Trash2 size={12} />
+                                <span>Gỡ banner này</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Description */}
@@ -1054,9 +1179,9 @@ function AdminPromotionManagementPanelContent({
                   className="promo-btn promo-btn--success"
                   disabled={savingPromotion || !String(safeForm.ten_khuyen_mai || '').trim() || !safeForm.ma_khuyen_mai}
                   style={{
-                    background: "#18181b",
+                    background: "var(--primary)",
                     color: '#ffffff',
-                    border: '1px solid #18181b',
+                    border: '1px solid var(--primary)',
                     height: '38px',
                     padding: '0 1.35rem',
                     borderRadius: '6px',

@@ -1,0 +1,44 @@
+{
+  "events": [
+    {
+      "at": "2026-10-22T19:16:35.928536+00:00",
+      "run": "codex-final-policy40-r8.json",
+      "action": "stopped_runner_before_transfer_for_source_fix",
+      "completed": 12,
+      "passed": 10,
+      "failures": {
+        "P09": "required primary cadence missing despite supporting trend",
+        "P12": "provider_timeout"
+      },
+      "in_flight_after_last_record": "NOT_MEASURED: interruption may have reached next request; ledger records only completed attempts.",
+      "next_source_policy": "41",
+      "transfer_outputs_used_for_fix": false
+    },
+    {
+      "at": "2026-10-22T19:29:36.328499+00:00",
+      "run": "backend-final-r29-full",
+      "action": "stopped_old_snapshot_to_test_policy42_source",
+      "completed_failures": 0,
+      "reason": "A separately authored multi-metric cadence test reproduces one trend satisfying two metric obligations; fix splits temporal bindings per mention. Red/green receipts retained. Re-run complete suite against frozen42 instead of calling old snapshot final.",
+      "completed_modules_at_stop_request": 32,
+      "final_completed_modules": 35,
+      "final_module_local_executions": 852
+    },
+    {
+      "at": "2026-10-22T19:35:19.896477+00:00",
+      "status": "PAUSED_AT_USER_REQUEST_NOT_QUALIFIED",
+      "source_policy": "2026-10-23.comparison-workspace.42",
+      "source_freeze": "final-freeze-r31.json",
+      "source_drift": [],
+      "stopped_run": "backend-final-r32-full",
+      "completed_modules": 0,
+      "unfinished_module": "tests.test_agent_v22",
+      "reason": "User requested a single-MD handoff to continue tomorrow before token exhaustion.",
+      "running_task_test_or_live_containers": [],
+      "api_health": "healthy",
+      "web_health": "healthy",
+      "oom_killed": false,
+      "last_api_restart_policy": "40; source changed since restart, serving/source parity not certified for42"
+    }
+  ]
+}

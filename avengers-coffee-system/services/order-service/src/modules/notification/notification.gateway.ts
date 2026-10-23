@@ -8,6 +8,7 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { ThongBao } from './entities/thong-bao.entity';
+import { TrackingStompService } from './tracking-stomp.service';
 
 @WebSocketGateway({
   namespace: '/notifications',
@@ -17,6 +18,7 @@ import { ThongBao } from './entities/thong-bao.entity';
   },
 })
 export class NotificationGateway implements OnGatewayConnection {
+  constructor(private readonly trackingStomp: TrackingStompService) {}
   @WebSocketServer()
   server: Server;
 
@@ -92,6 +94,7 @@ export class NotificationGateway implements OnGatewayConnection {
   }
 
   guiViTriShipper(maDonHang: string, trackingCode: string | null, payload: Record<string, any>) {
+    this.trackingStomp.publish(maDonHang,payload);
     if (this.server) {
       this.server.to(`tracking:${maDonHang}`).emit('shipper:location:update', payload);
       if (trackingCode) {

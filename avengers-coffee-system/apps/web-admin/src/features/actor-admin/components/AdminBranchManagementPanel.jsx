@@ -23,7 +23,8 @@ import {
   ExternalLink,
   Users,
   Star,
-  MoreVertical
+  MoreVertical,
+  Upload
 } from '../../../components/console/WorkspaceIcons'
 
 function fmtNumber(value) {
@@ -394,18 +395,107 @@ export function AdminBranchManagementPanel({
                   />
                 </div>
 
-                {/* Field: Image URL */}
+                {/* Field: Image URL & Local Upload */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                   <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
-                    URL Ảnh chi nhánh
+                    Ảnh chi nhánh
                   </label>
-                  <input
-                    type="text"
-                    className="shadcn-input ui-input"
-                    value={safeBranchForm.hinh_anh_url || ''}
-                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, hinh_anh_url: e.target.value }))}
-                    placeholder="https://images.unsplash.com/..."
-                  />
+                  <div className="admin-image-picker">
+                    <div className="admin-image-picker-controls" style={{ display: 'flex', alignItems: 'stretch', width: '100%', height: '40px' }}>
+                      <input
+                        type="text"
+                        className="shadcn-input ui-input"
+                        value={safeBranchForm.hinh_anh_url || ''}
+                        onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, hinh_anh_url: e.target.value }))}
+                        placeholder="Dán đường dẫn ảnh (https://...)"
+                        style={{
+                          flex: '1 1 auto',
+                          width: 'auto',
+                          height: '40px',
+                          minHeight: '40px',
+                          borderTopRightRadius: 0,
+                          borderBottomRightRadius: 0,
+                          borderRight: 'none',
+                          borderTopLeftRadius: '8px',
+                          borderBottomLeftRadius: '8px',
+                          boxSizing: 'border-box',
+                          margin: 0
+                        }}
+                      />
+                      <label
+                        className="admin-image-upload-btn"
+                        title="Chọn tệp ảnh từ máy tính"
+                        style={{
+                          flex: '0 0 auto',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          height: '40px',
+                          minHeight: '40px',
+                          padding: '0 16px',
+                          borderTopLeftRadius: 0,
+                          borderBottomLeftRadius: 0,
+                          borderTopRightRadius: '8px',
+                          borderBottomRightRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          borderLeft: '1px solid #e2e8f0',
+                          backgroundColor: '#f8fafc',
+                          color: '#334155',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          boxSizing: 'border-box',
+                          margin: 0,
+                          lineHeight: 1
+                        }}
+                      >
+                        <Upload size={15} />
+                        <span>Chọn từ máy</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              if (event.target?.result) {
+                                setBranchForm && setBranchForm((p) => ({ ...p, hinh_anh_url: event.target.result }));
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {safeBranchForm.hinh_anh_url && (
+                      <div className="admin-image-preview-badge">
+                        <img
+                          src={safeBranchForm.hinh_anh_url}
+                          alt="Xem trước ảnh chi nhánh"
+                          className="admin-image-preview-thumb"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                        <div className="admin-image-preview-info">
+                          <span className="admin-image-preview-url" title={safeBranchForm.hinh_anh_url}>
+                            {safeBranchForm.hinh_anh_url.startsWith('data:') ? 'Ảnh tải lên từ máy tính' : safeBranchForm.hinh_anh_url}
+                          </span>
+                          <button
+                            type="button"
+                            className="admin-image-clear-btn"
+                            onClick={() => setBranchForm && setBranchForm((p) => ({ ...p, hinh_anh_url: '' }))}
+                          >
+                            <Trash2 size={12} />
+                            <span>Gỡ ảnh này</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Field: Google Maps URL */}
@@ -514,7 +604,7 @@ export function AdminBranchManagementPanel({
               </div>
             </div>
 
-            <div style={{ minWidth: 190, width: 200, flexShrink: 0 }}>
+            <div style={{ minWidth: 220, width: 220, flexShrink: 0 }}>
               <SearchableSelect
                 id="branch-status-filter-select"
                 className="branch-filter-select"
@@ -533,13 +623,29 @@ export function AdminBranchManagementPanel({
             </div>
           </div>
 
-          <div className="admin-branch-toolbar-actions">
+          <div className="admin-branch-toolbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {loadBranches && (
               <button
                 type="button"
                 className="branch-refresh-btn"
                 onClick={loadBranches}
                 title="Tải lại dữ liệu"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  height: '40px',
+                  minHeight: '40px',
+                  padding: '0 15px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#334155',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
               >
                 <RefreshCw size={15} />
                 <span>Tải lại</span>

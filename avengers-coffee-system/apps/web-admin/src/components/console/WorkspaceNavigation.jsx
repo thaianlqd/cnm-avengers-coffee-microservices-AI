@@ -54,14 +54,14 @@ export function WorkspaceSidebar({ groups, activeTab, onSelect, session, label, 
     <button type="button" className="workspace-mobile-toggle" aria-label="Mở điều hướng" aria-expanded={mobileOpen} onClick={() => setMobileOpen(value => !value)}><FiMenu size={20} /></button>
     {mobileOpen && <div className="workspace-sidebar-backdrop" onClick={() => setMobileOpen(false)} />}
     <aside className={'console-sidebar workspace-sidebar' + (mobileOpen ? ' is-open' : '')}>
-      <div className="console-brand"><span className="console-brand-icon"><img src="/images/logo-white.png" alt="Avengers Coffee" style={{ width: 24, height: 24, objectFit: 'contain' }} /></span><div><b>Avengers Coffee</b></div></div>
+      <div className="console-brand"><span className="console-brand-icon"><img src="/images/highlands-logo-red.svg" onError={(e) => { e.currentTarget.src = '/images/logo-red.png' }} alt="Avengers Coffee" style={{ width: 26, height: 26, objectFit: 'contain' }} /></span><div><b>Avengers Coffee</b></div></div>
       {extra}
       <nav aria-label={'Điều hướng ' + label}>
         {groups.map(group => <section className="workspace-nav-group" key={group.label}>
           <button type="button" className="workspace-nav-heading" aria-expanded={!collapsed[group.label]} onClick={() => setCollapseState({ activeTab, groups: { ...collapsed, [group.label]: !collapsed[group.label] } })}><span>{group.label}</span><FiChevronDown size={14} className={collapsed[group.label] ? 'is-collapsed' : ''} /></button>
           {!collapsed[group.label] && <div className="workspace-nav-links">{group.items.map(item => {
             const Icon = item.icon || FiCoffee
-            return <button type="button" className="console-nav-item" key={item.id} aria-current={activeTab === item.id ? 'page' : undefined} onClick={() => { onSelect(item.id); setMobileOpen(false) }}><Icon size={17} /><span>{item.label}</span></button>
+            return <button type="button" className="console-nav-item" key={item.id} aria-current={activeTab === item.id ? 'page' : undefined} onClick={() => { onSelect(item.id); setMobileOpen(false) }}><Icon size={17} /><span>{item.label}</span>{activeTab === item.id && <span className="admin-nav-dot" />}</button>
           })}</div>}
         </section>)}
       </nav>
