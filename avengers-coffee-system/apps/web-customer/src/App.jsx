@@ -1723,7 +1723,11 @@ function AppContent() {
             activeCategoryId={selectedCatId}
             onCategoryChange={setSelectedCatId}
             onOrderProduct={(product) => {
-              setActiveTab('order');
+              if (product) {
+                handleOpenProductPage(product);
+              } else {
+                setActiveTab('order');
+              }
             }}
           />
         ) : activeTab === 'about' ? (
