@@ -87,6 +87,34 @@ class FaultInjectionTests(unittest.TestCase):
             budget.deadline += 2
             self.assertTrue(budget.transport_retry_allowed(attempt, 0.5, same_call=True))
 
+    def test_fast_connect_does_not_lose_reserved_time_from_attempt(self):
+        from services import provider_budget as pb
+        from urllib3.util import Timeout
+        budget = pb.ProviderBudget({}, max_calls=3)
+        with patch.object(pb.time, 'monotonic', return_value=500.):
+            budget.start_deadline()
+            timeout = budget.http_timeout()
+        self.assertEqual(timeout.total, 12)
+        self.assertEqual(timeout.connect_timeout, 2)
+        timeout.start_connect()  # urllib3 starts this clock before the socket call.
+        with patch.object(Timeout, 'get_connect_duration', return_value=.25):
+            self.assertEqual(timeout.read_timeout, 11.75)
+        with patch.object(Timeout, 'get_connect_duration', return_value=2):
+            self.assertEqual(timeout.read_timeout, 10)
+
+    def test_response_read_remains_bounded_by_turn_and_provider_time_left(self):
+        from services import provider_budget as pb
+        from urllib3.util import Timeout
+        budget = pb.ProviderBudget({}, max_calls=3)
+        with patch.object(pb.time, 'monotonic', return_value=500.):
+            budget.deadline = 500 + pb.DETERMINISTIC_RESERVE + 1.5
+            budget.provider_deadline = 501.25
+            timeout = budget.http_timeout()
+        self.assertEqual(timeout.total, 1.25)
+        timeout.start_connect()
+        with patch.object(Timeout, 'get_connect_duration', return_value=.25):
+            self.assertEqual(timeout.read_timeout, 1.)
+
     def test_secrets_never_reach_diagnostics(self):
         _, _, diag, _ = self.call([http(503), success()], secondary="secondary-SECRET")
         self.assertNotIn("SECRET", json.dumps(diag)); self.assertNotIn("primary-key", json.dumps(diag))

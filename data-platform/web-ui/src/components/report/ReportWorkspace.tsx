@@ -13,7 +13,7 @@ import { FollowUpChips } from '../workspace/FollowUpChips';
 import { ForecastPanel } from '../ForecastPanel';
 import { ChartInsight, ChartSource } from './ChartInsight';
 import { ChartViewControls } from './ChartViewControls';
-import { activeViewChart, defaultViewState, reportWithViewChoice } from '../../utils/chartViewModes.mjs';
+import { activeViewChart, defaultViewState, reportWithViewChoice, memberReportSelection } from '../../utils/chartViewModes.mjs';
 import { VerificationPanel } from './VerificationPanel';
 import { queueWorkspaceFilter, workspaceRevisionInput, workspaceRevisionController } from '../../utils/workspaceInteraction.mjs';
 
@@ -95,6 +95,7 @@ const ChartCard: React.FC<{ chart: any; placement: ChartGridPlacement; editing?:
   const [view, setView] = useState<any>(() => defaultViewState(reportChart.view_modes, reportChart.view_ref));
   useEffect(() => setView(defaultViewState(reportChart.view_modes, reportChart.view_ref)), [reportChart.id, reportChart.view_ref, reportChart.view_modes?.default_variant]);
   const chart = reportChart.view_modes ? activeViewChart(reportChart, view) : reportChart;
+  const memberSelection = memberReportSelection(reportChart.view_modes, view?.member, memberInteraction);
   const [type, setType] = useState(initialChartType(chart));
   useEffect(() => setType(initialChartType(chart)), [chart.id, chart.chart_type, chart.query_id, chart.view_ref]);
   const accent = chartAccent(chart);
@@ -120,7 +121,7 @@ const ChartCard: React.FC<{ chart: any; placement: ChartGridPlacement; editing?:
       </details>
     </div>
     {reportChart.view_modes && view && <ChartViewControls chart={reportChart} state={view} onChange={state => { setView(state); onViewChange?.(reportChart.id, state); }} disabled={editing}
-      onApplyReport={memberInteraction && onSelect ? (memberKey: string) => { const option = memberInteraction.options?.find((o: any) => o.selection?.values?.[0]?.value === memberKey); if (option) onSelect(option.selection); } : undefined} />}
+      onApplyReport={memberSelection && onSelect ? () => onSelect(memberSelection) : undefined} />}
     {chart.ranking_census?.note && <p data-ranking-ties role="note" className="my-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">{chart.ranking_census.note}</p>}
     {chart.data?.some((r: any) => r.denominator != null) && <details data-chart-exposure open={Boolean(chart.ranking_census)} className="my-2 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-600">
       <summary className="cursor-pointer font-medium">Tử số / mẫu số theo từng đối tượng</summary>
@@ -158,7 +159,7 @@ const ChartCard: React.FC<{ chart: any; placement: ChartGridPlacement; editing?:
 export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean; dashboardLayout?: boolean; definitions?: Record<string, string>; onInspect?: (chart: any, row: any) => void; interactions?:any[]; onViewChange?: (id: string, state: any) => void; onSelect?:(selection:any)=>void }> = ({ charts = [], onChartTypeChange, editing = false, compact = false, definitions = {}, onInspect, interactions, onViewChange, onSelect }) => {
   const [columns, setColumns] = useState(3);
   const renderGrid = (items: any[]) => <DashboardChartGrid charts={items} maxColumns={columns}>
-    {(chart, placement) => <ChartCard key={chart.id || placement.index} chart={chart} placement={placement} editing={editing} onChartTypeChange={onChartTypeChange} definition={definitions[chart.metric]} onViewChange={onViewChange} onInspect={onInspect} interaction={interactions?.find(c=>c.chart_id===chart.id)} memberInteraction={chart.view_modes ? interactions?.find(c=>c.dimension_id===chart.view_modes.axis_dimension_id && c.selection_behavior==='population_filter') : undefined} onSelect={onSelect} />}
+    {(chart, placement) => <ChartCard key={chart.id || placement.index} chart={chart} placement={placement} editing={editing} onChartTypeChange={onChartTypeChange} definition={definitions[chart.metric]} onViewChange={onViewChange} onInspect={onInspect} interaction={interactions?.find(c=>c.chart_id===chart.id)} memberInteraction={chart.view_modes ? interactions?.find(c=>c.dimension_id===(chart.view_modes.member_key_dimension || chart.view_modes.axis_dimension_id) && c.selection_behavior==='population_filter') : undefined} onSelect={onSelect} />}
   </DashboardChartGrid>;
   return <div className="space-y-3" data-analyst-views>
     {charts.length > 1 && <nav aria-label="Bố cục biểu đồ" className="flex flex-wrap items-center justify-end gap-1 text-[11px] text-slate-500"><span className="mr-2">Bố cục</span>{[[3,'Tự động · 2–3 ô'],[2,'Hai ô mỗi hàng'],[1,'Toàn chiều rộng']].map(([value,label])=><button key={value} type="button" aria-pressed={columns===value} onClick={()=>setColumns(Number(value))} className={`rounded-lg border px-2.5 py-1.5 ${columns===value?'border-blue-200 bg-blue-50 text-blue-700':'border-slate-200 bg-white'}`}>{label}</button>)}</nav>}

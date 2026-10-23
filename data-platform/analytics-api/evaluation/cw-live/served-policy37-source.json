@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-22T17:25:35.247413+00:00",
+  "policy": "2026-10-23.comparison-workspace.37",
+  "health_http": 200,
+  "source_hashes": {
+    "services/provider_budget.py": "d221aa63735b94efdbc25e3fc76713b5691dea4e8b617308238f12d89484d6ad",
+    "services/analytical_resolver.py": "d5469357c5f9cd21738b44853137adc6c4fde9375d8c8f99303e3e71be9a773c",
+    "services/chart_relevance_service.py": "2e561b93d7f520e8e73730cf3a2fb13fb85e2aa4bd9e90e0e639fd5b3c454c59",
+    "services/view_mode_service.py": "c6c1de57fb7d50811cc1e9322a9b5be32d6bb14b58a5834affffe6701f06ba6f",
+    "services/hybrid_analyst_planner.py": "bfac5ebb72231e3051f8ca88214c23a177c37c3ffe662e014be39229c24b8a7e"
+  },
+  "web_bundle": "index-Do9uYw5P.js",
+  "web_receipt": "served-source-r10.json"
+}

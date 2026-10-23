@@ -126,6 +126,14 @@ export function OverviewPanel({
                 { label: 'Hết hàng', value: overviewData.stockSummary?.outOfStock || 0, color: '#e65d78' },
               ]}
             />
+            <Chart
+              title="Phân bố đơn theo khung giờ"
+              subtitle={`Mật độ đặt hàng gần đây · ${overviewData.chartPeriod?.label || 'kỳ đã chọn'}`}
+              rows={(overviewData.hourly || []).map((h) => ({
+                label: h.label,
+                value: h.value,
+              }))}
+            />
           </div>
           <div className="console-two-columns">
             <article className="console-card">

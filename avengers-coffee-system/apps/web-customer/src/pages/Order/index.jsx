@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   MagnifyingGlassIcon,
+  ArrowLongRightIcon,
   UserCircleIcon,
   ShoppingCartIcon,
   PhoneIcon,
@@ -123,10 +124,14 @@ export default function OrderPage({
   };
 
   const [activeCategory, setActiveCategory] = useState(selectedCatId || 'all');
+  const [viewCategory, setViewCategory] = useState(
+    selectedCatId && selectedCatId !== 'all' ? selectedCatId : 'all'
+  );
   const [previousSelectedCatId, setPreviousSelectedCatId] = useState(selectedCatId);
   if (selectedCatId !== previousSelectedCatId) {
     setPreviousSelectedCatId(selectedCatId);
     setActiveCategory(selectedCatId || 'all');
+    setViewCategory(selectedCatId && selectedCatId !== 'all' ? selectedCatId : 'all');
   }
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -216,7 +221,6 @@ export default function OrderPage({
 
   const [sortByOrder, setSortByOrder] = useState('default'); // 'default' | 'price-asc' | 'price-desc' | 'name-asc'
   const [expandedParents, setExpandedParents] = useState({});
-  const [viewCategory, setViewCategory] = useState('all');
   const [showAllCategories, setShowAllCategories] = useState(true);
   const mobileMenuRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -523,18 +527,15 @@ export default function OrderPage({
       return;
     }
     setActiveCategory(id);
-    setViewCategory('all'); // Go back to overview mode when using header menu
+    setViewCategory(id);
     setShowAllCategories(true);
     if (onSelectedCatIdChange) onSelectedCatIdChange(id);
     if (onSearchKeywordChange) onSearchKeywordChange(''); // Clear search when switching categories
     if (onNavigate) onNavigate('order');
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-
-    if (id === 'all') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
 
     // Smooth scroll directly to the selected category section
     setTimeout(() => {
@@ -594,7 +595,7 @@ export default function OrderPage({
             >
               <div className="flex items-center gap-3.5">
                 <img loading="lazy" decoding="async" src={iconUrl} alt={parent.ten_danh_muc}
-                  className={`w-5 h-5 object-contain transition-transform duration-200 ${isActive ? 'brightness-0 invert scale-110' : ''}`} />
+                  className={`w-5 h-5 object-contain transition-transform duration-200 ${isActive ? 'scale-110 drop-shadow-xs' : ''}`} />
                 <span className="text-[14px] capitalize tracking-wide">
                   {tCategory(parent.ten_danh_muc)}
                 </span>
@@ -930,18 +931,6 @@ export default function OrderPage({
             <span className="text-[15px] font-normal text-[#b22830] capitalize">{t('order.productCategories')}</span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (onNavigate) onNavigate('tra-cuu-don');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer font-bold"
-          >
-            <TruckIcon className="w-4 h-4 text-white" />
-            <span className="text-[13px]">{t('header.tracking')}</span>
-          </button>
-
           <button type="button" onClick={() => onNavigate?.('chinh-sach-dat-hang')} className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer">
             <img loading="lazy" decoding="async" src="/hc-assets/icon_chinhsach.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span className="text-[13px] font-medium">{t('order.returnPolicy')}</span>
@@ -950,10 +939,6 @@ export default function OrderPage({
             <img loading="lazy" decoding="async" src="/hc-assets/icon_lienhe.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span className="text-[13px] font-medium">{t('order.contact')}</span>
           </button>
-          <a href="#" className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity hidden sm:flex">
-            <img loading="lazy" decoding="async" src="/hc-assets/icon_bank.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            <span className="text-[13px] font-medium">{ui("Đồng hành cùng Avengers")}</span>
-          </a>
         </div>
       </div>
 
@@ -971,7 +956,7 @@ export default function OrderPage({
               </div>
             ) : (
               <>
-                {/* Hero Banner & Category Menu Area (Desktop Only) */}
+                {/* Hero Banner & Category Menu Area (Desktop Only, scrolls naturally with page) */}
                 {viewCategory === 'all' && (
                   <div className="w-full mb-10 flex flex-col lg:flex-row items-stretch gap-8">
                     {/* LEFT SIDEBAR (Category Menu Desktop) */}
@@ -1213,22 +1198,64 @@ export default function OrderPage({
                 )}
 
                 {/* Main Layout for Products */}
-                <div ref={productsContainerRef} className="flex flex-col gap-8 px-4 sm:px-6 lg:px-8 mt-6">
+                <div ref={productsContainerRef} className="flex flex-col gap-8 mt-6">
                   <div className="flex-1 min-w-0">
 
-                    {/* Product Grids - Render single chosen category section, Smooth Scroll to target */}
-                    {targetParentCategory && (
-                      <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3 mb-4 pt-1">
-                        <div className="flex items-center gap-3">
-                          <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
-                          <h2 className="text-xl md:text-2xl font-bold text-gray-900 font-sans tracking-tight">
-                            {tCategory(targetParentCategory.ten_danh_muc)}
-                          </h2>
-                          <span className="text-xs font-semibold bg-red-50 text-[#b22830] px-3 py-1 rounded-full border border-red-100/80">
-                            {renderedSections.reduce((acc, s) => acc + s.subSections.flatMap(sub => sub.items).length, 0)} {copy('sản phẩm', 'products')}
+                    {/* Product Grids - Render single chosen category section */}
+                    {viewCategory !== 'all' ? (
+                      <div className="mb-4 pt-1">
+                        <div className="text-[13px] text-gray-500 mb-6 tracking-wider font-semibold">
+                          <button
+                            type="button"
+                            className="cursor-pointer hover:text-[#b22830] transition-colors"
+                            onClick={() => {
+                              setViewCategory('all');
+                              setActiveCategory('all');
+                              if (onSelectedCatIdChange) onSelectedCatIdChange('all');
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                          >
+                            {copy('Trang chủ', 'Home')}
+                          </button>
+                          <span className="mx-2">/</span>
+                          <span className="text-[#333333] font-bold">
+                            {tCategory(targetParentCategory?.ten_danh_muc || '')}
                           </span>
                         </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2.5 h-8 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
+                            <h1 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-[#222222] tracking-tight uppercase">
+                              {tCategory(targetParentCategory?.ten_danh_muc || '')}
+                            </h1>
+                            <span className="text-xs font-semibold bg-red-50 text-[#b22830] px-3 py-1 rounded-full border border-red-100/80">
+                              {renderedSections.reduce((acc, s) => acc + s.subSections.flatMap(sub => sub.items).length, 0)} {copy('sản phẩm', 'products')}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 md:gap-6 text-[13px] font-semibold text-gray-500 mb-8 pb-4 border-b border-gray-100">
+                          <span className="text-gray-900 font-bold mr-2">{copy('Sắp xếp:', 'Sort by:')}</span>
+                          <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-asc' ? 'text-[#b22830] font-bold' : ''}`} onClick={() => setSortByOrder('name-asc')}>{copy('Tên A → Z', 'Name A → Z')}</button>
+                          <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-desc' ? 'text-[#b22830] font-bold' : ''}`} onClick={() => setSortByOrder('name-desc')}>{copy('Tên Z → A', 'Name Z → A')}</button>
+                          <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-asc' ? 'text-[#b22830] font-bold' : ''}`} onClick={() => setSortByOrder('price-asc')}>{copy('Giá tăng dần', 'Price: low to high')}</button>
+                          <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-desc' ? 'text-[#b22830] font-bold' : ''}`} onClick={() => setSortByOrder('price-desc')}>{copy('Giá giảm dần', 'Price: high to low')}</button>
+                          <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'default' ? 'text-[#b22830] font-bold' : ''}`} onClick={() => setSortByOrder('default')}>{ui("Hàng mới")}</button>
+                        </div>
                       </div>
+                    ) : (
+                      targetParentCategory && (
+                        <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3 mb-4 pt-1">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
+                            <h2 className="text-xl md:text-2xl font-bold text-gray-900 font-sans tracking-tight">
+                              {tCategory(targetParentCategory.ten_danh_muc)}
+                            </h2>
+                            <span className="text-xs font-semibold bg-red-50 text-[#b22830] px-3 py-1 rounded-full border border-red-100/80">
+                              {renderedSections.reduce((acc, s) => acc + s.subSections.flatMap(sub => sub.items).length, 0)} {copy('sản phẩm', 'products')}
+                            </span>
+                          </div>
+                        </div>
+                      )
                     )}
 
                     <div className="space-y-10">
@@ -1270,41 +1297,20 @@ export default function OrderPage({
                             if (sortByOrder === 'name-desc') return String(b.ten_san_pham || '').localeCompare(String(a.ten_san_pham || ''), 'vi');
                             return 0;
                           });
-                          const displayItems = sortedItems;
-                          const hasMore = false;
+                          const displayItems = viewCategory === 'all' ? sortedItems.slice(0, 5) : sortedItems;
+                          const hasMore = viewCategory === 'all' && sortedItems.length > 5;
 
                           return (
                             <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[100px]">
-                              {viewCategory !== 'all' ? (
-                                <div className="mb-6 pt-2">
-                                  <div className="text-[13px] text-gray-500 mb-8  tracking-wider font-semibold">
-                                    <span className="cursor-pointer hover:text-[#b22830] transition-colors" onClick={() => setViewCategory('all')}>{copy('Trang chủ', 'Home')}</span>
-                                    <span className="mx-2">/</span>
-                                    <span className="text-[#333333] font-bold">{tCategory(section.label)}</span>
-                                  </div>
-                                  <h1 className="text-3xl md:text-[32px] font-normal text-[#333333]  mb-8">
-                                    {tCategory(section.label)}
-                                  </h1>
-                                  <div className="flex flex-wrap items-center gap-4 md:gap-6 text-[13px] font-semibold text-gray-500 mb-8 pb-4">
-                                    <span className="text-gray-900 font-bold mr-2">{copy('Sắp xếp:', 'Sort by:')}</span>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-asc')}>{copy('Tên A → Z', 'Name A → Z')}</button>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-desc')}>{copy('Tên Z → A', 'Name Z → A')}</button>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-asc')}>{copy('Giá tăng dần', 'Price: low to high')}</button>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-desc')}>{copy('Giá giảm dần', 'Price: high to low')}</button>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'default' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('default')}>{ui("Hàng mới")}</button>
+                              {(renderedSections.length > 1 || (viewCategory === 'all' && section.label !== targetParentCategory?.ten_danh_muc)) && (
+                                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-5 pt-2">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-2 h-5 rounded-full bg-[#b22830] shrink-0"></div>
+                                    <h3 className="text-base md:text-lg font-semibold text-gray-800 font-sans tracking-wide">
+                                      {tCategory(section.label)}
+                                    </h3>
                                   </div>
                                 </div>
-                              ) : (
-                                (renderedSections.length > 1 || section.label !== targetParentCategory?.ten_danh_muc) && (
-                                  <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-5 pt-2">
-                                    <div className="flex items-center gap-2.5">
-                                      <div className="w-2 h-5 rounded-full bg-stone-400 shrink-0"></div>
-                                      <h3 className="text-base md:text-lg font-semibold text-gray-800 font-sans tracking-wide">
-                                        {tCategory(section.label)}
-                                      </h3>
-                                    </div>
-                                  </div>
-                                )
                               )}
 
                               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
@@ -1378,6 +1384,22 @@ export default function OrderPage({
                                   );
                                 })}
                               </div>
+                              {hasMore && (
+                                <div className="mt-8 flex justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setViewCategory(targetParentCategory?.ma_danh_muc || section.id);
+                                      setActiveCategory(targetParentCategory?.ma_danh_muc || section.id);
+                                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    className="px-8 py-3 rounded-full border-2 border-[#b22830] text-[#b22830] font-bold text-[14px] hover:bg-[#b22830] hover:text-white transition-all duration-300 cursor-pointer flex items-center gap-2 shadow-sm active:scale-95"
+                                  >
+                                    <span>{copy('Xem tất cả', 'View all')} {sortedItems.length} {copy('món', 'items')}</span>
+                                    <ArrowLongRightIcon className="w-5 h-5" />
+                                  </button>
+                                </div>
+                              )}
                             </section>
                           );
                         });

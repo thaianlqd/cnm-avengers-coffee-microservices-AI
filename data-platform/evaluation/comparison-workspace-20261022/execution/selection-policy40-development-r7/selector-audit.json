@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-22T19:09:47.013044+00:00",
+  "passed": false,
+  "checks": {
+    "authored_definition": true,
+    "exact_selected_identity_order": true,
+    "exact_eligible_population_and_scores": false,
+    "all_queries_fixed_city_scope": true,
+    "monthly_city_primary": true
+  },
+  "selected": [
+    "Điện Biên",
+    "Bạc Liêu"
+  ],
+  "eligible_cities": 55,
+  "complete_months": [
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07",
+    "2026-08",
+    "2026-09"
+  ],
+  "query_count": 5,
+  "limitation": "Finite independently authored contract, current-source equality; not generic selector accuracy or atomic historical snapshot."
+}

@@ -35,7 +35,8 @@ SYSTEM += " Concept without candidate metric: decision unsupported. Vague superl
 SYSTEM += " Future forecast of one metric: forecast{horizon,unit}; time=history window; never output values; not in forecast_capabilities=unsupported."
 # Appended only when the question names a selection criterion (token budget of ordinary questions unchanged).
 SELECTION_SYSTEM = (" Members picked by a criterion (ổn định/biến động/tăng trưởng nhất): selection{criterion,limit}, entity in dimension_ids,"
-                    " no filter on it; other criteria: needs_input ambiguous_criterion. Named members: filter in + group_gap.")
+                    " no filter on it; other criteria: needs_input ambiguous_criterion. Named members: filter in + group_gap."
+                    " For a trend comparing selected entities, keep selection and its entity axis on that trend, never an unscoped trend. Explicit whole-population goals stay independent.")
 SYSTEM += " Only an explicit two-period scalar comparison uses comparison_time=baseline ISO range, time=target, aggregate; no cadence/change features. A single date window has no comparison_time."
 SYSTEM += " driver_delta is supported observational decomposition of additive changes by group, never causal; aggregate, time=current period, server computes the baseline."
 SYSTEM += " Broad questions: maximum 6 core requirements. Bundle complementary metrics only at compatible population/grouping; server adds supporting views."
@@ -694,6 +695,70 @@ class HybridAnalystPlanner(OneShotPlanner):
         self.diagnostics.setdefault('semantic_normalizations',[]).append({'rule':'server_scope_patch','requirement_ids':[p['id'] for p in patches]})
         return patched
 
+    def bind_selected_comparison_trends(self, intent, original_filters, prompt):
+        """Compose a comparison continuation with one verified computed cohort.
+
+        Membership is copied from a server-owned receipt, never from AI labels.
+        An explicit whole-population trend remains independent. Ambiguous or
+        incompatible dependencies stop instead of becoming a national series.
+        """
+        from services.time_resolution_service import resolve_time
+        from services.selection_service import any_criterion_cue
+        from services.value_grounding_service import value_text
+        selected=[r for r in intent.requirements if not r.supporting_for and r.selection and r.selection.selected_keys]
+        if not selected or not prompt:
+            return
+        policy=self.catalog.registry.get('scope_expression_policy',{})
+        clauses=[value_text(c) for c in re.split(r'[,;.\n]+',prompt) if c.strip()]
+        def mentions(text, aliases):
+            return any(re.search(r'(?<!\w)'+re.escape(value_text(a))+r'(?!\w)',text) for a in aliases)
+        def filters_key(filters):
+            rows=[]
+            for f in filters:
+                row=f.model_dump(mode='json',exclude_none=True)
+                if row['operator']=='in' and isinstance(row['value'],list):
+                    row['value']=sorted(row['value'],key=lambda v:compact([type(v).__name__,v]))
+                rows.append(compact(row))
+            return sorted(rows)
+        def period(req):
+            return resolve_time(req.time.model_dump(mode='json') if req.time else
+                {'kind':'relative','mode':'all_time'},self.reference,self.catalog.registry['timezone'])[2]
+        for target in intent.requirements:
+            if (target.supporting_for or target.availability!='requested' or target.selection or target.ranking
+                    or target.comparison_time or target.forecast or target.analysis_kind!='trend'):
+                continue
+            bindings=[b for b in self.anchors.get('trend_bindings',[]) if b['granularity']==target.granularity
+                and set(target.metric_ids).intersection(b['metric_candidates'])]
+            if not bindings:
+                continue
+            cadence=self.catalog.registry.get('granularity_aliases',{}).get(target.granularity,[])
+            # Bare calendar units in a history range are not a requested
+            # cadence. Use governed analytical qualifiers/compound aliases.
+            cadence_phrases=[a for a in cadence if len(value_text(a).split())>1]
+            cadence_phrases += [q+' '+a for q in self.catalog.registry.get('grouping_qualifiers',[]) for a in cadence]
+            trend_clauses=[c for c in clauses if mentions(c,cadence_phrases)]
+            whole=[c for c in trend_clauses if mentions(c,policy.get('all',[]))]
+            if whole:
+                if len(whole)!=len(trend_clauses) or any(any_criterion_cue(c) for c in whole):
+                    raise AnalysisError('clarification','Cần phân biệt chuỗi của nhóm đã chọn với chuỗi toàn phạm vi.')
+                continue
+            if not any(mentions(c,policy.get('comparison',[])) for c in trend_clauses):
+                raise AnalysisError('clarification','Chuỗi thời gian dùng nhóm đã chọn hay toàn phạm vi?')
+            parents=[r for r in selected if set(r.metric_ids)==set(target.metric_ids) and period(r)==period(target)
+                and filters_key(original_filters[r.id])==filters_key(target.filters)]
+            if len(parents)>1:
+                raise AnalysisError('clarification','Có nhiều cohort phù hợp; cần chọn cohort cho chuỗi so sánh.')
+            if len(parents)!=1:
+                raise AnalysisError('selection_unsupported','Chưa có một cohort duy nhất cùng chỉ số, thời gian và phạm vi cho chuỗi so sánh.')
+            parent=parents[0]
+            receipt=next(r for r in self.diagnostics['selections'] if r['requirement_id']==parent.id)
+            target.dimension_ids=list(dict.fromkeys([parent.selection.entity_dimension_id,*target.dimension_ids]))
+            target.filters=deepcopy(parent.filters)
+            target.selection=parent.selection.model_copy(deep=True)
+            self.diagnostics['selections'].append({**deepcopy(receipt),'requirement_id':target.id})
+            self.diagnostics.setdefault('semantic_normalizations',[]).append(dict(
+                rule='selected_cohort_comparison_trend',requirement_id=target.id,parent_requirement_id=parent.id))
+
     def apply_selections(self, intent, resolver, prompt=None):
         """Materialize computed member selections (criterion → fixed cohort) before resolution.
 
@@ -703,6 +768,7 @@ class HybridAnalystPlanner(OneShotPlanner):
         from services import selection_service as sel
         from services.analysis_intent import IntentSelection
         receipts=self.diagnostics.setdefault('selections',[])
+        original_filters={r.id:deepcopy(r.filters) for r in intent.requirements}
         cued=[c for c in sel.CRITERIA if prompt is not None and sel.criterion_anchored(c,prompt)]
         if any(r.selection or (cued and r.ranking) for r in intent.requirements):
             # Selection executes a query even during proposal. Validate every anchored time window
@@ -806,9 +872,11 @@ class HybridAnalystPlanner(OneShotPlanner):
             if req.analysis_kind in (None,'ranking'):
                 req.analysis_kind='aggregate'
             req.ranking=None
-            if 'group_gap' not in req.derived_features and len(receipt['selected'])>=2:
+            if (req.analysis_kind in {'aggregate','comparison','cross_tab'}
+                    and 'group_gap' not in req.derived_features and len(receipt['selected'])>=2):
                 req.derived_features=[*req.derived_features,'group_gap']
             req.selection=spec.model_copy(update={'entity_dimension_id':entity,'cadence':cadence,'selected_keys':list(receipt['selected'])})
+        self.bind_selected_comparison_trends(intent,original_filters,prompt)
         return intent
 
     def _compile_resolved(self, resolved, context):
@@ -965,7 +1033,9 @@ class HybridAnalystPlanner(OneShotPlanner):
                         intent,cadences=complete_explicit_granularity(intent,self.anchors)
                         completed += cadences
                         if kind=='primary':
-                            from services.request_anchors import normalize_explicit_grains
+                            from services.request_anchors import normalize_explicit_grains, complete_explicit_temporal_roles
+                            intent,temporal=complete_explicit_temporal_roles(intent,self.anchors)
+                            completed += temporal
                             intent,grains=normalize_explicit_grains(intent,self.anchors,self.catalog)
                             completed += grains
                         from services.request_anchors import normalize_explicit_metrics

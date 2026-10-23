@@ -63,14 +63,20 @@ def grammar_decisions(charts, artifacts, mission, mapping):
         if not artifact or not mapping.get(ref):
             continue
         form = _form(chart)
+        grouped_bar=bool(artifact and artifact.plan.kind=='aggregate' and artifact.plan.dimensions
+                         and chart.get('chart_type') in {'bar','horizontal_bar'} and not chart.get('value_transform'))
         if i in primaries:
             # A large categorical aggregate renders horizontally for legibility.
             # Orientation does not turn its compiled grouped role into ranking.
-            grouped_bar=bool(artifact and artifact.plan.kind=='aggregate' and artifact.plan.dimensions
-                             and chart.get('chart_type') in {'bar','horizontal_bar'} and not chart.get('value_transform'))
-            if form not in forms and in_grammar and not grouped_bar:
+            # A multi-goal comparison can explicitly request a temporal series.
+            # Promote the mission's already-admitted temporal form only when
+            # the compiled operation and actual time axis agree. Mission labels
+            # must not remove an independently required, mapped trend.
+            requested_trend=bool(artifact.plan.kind=='trend' and form=='line'
+                                 and form in supporting_forms and chart.get('x_field')=='period')
+            if form not in forms and in_grammar and not grouped_bar and not requested_trend:
                 drop[i] = "outside_mission_grammar"
-        elif form not in supporting_forms:
+        elif form not in supporting_forms and not (grouped_bar and 'grouped_bar' in supporting_forms):
             drop[i] = "outside_mission_grammar"
         elif form != "table" and not chart.get("analysis_lens_id"):
             per_form[form] = per_form.get(form, 0) + 1

@@ -40,8 +40,8 @@ function normalizeText(value) {
 const ADMIN_NAV_GROUPS = [
   { label: 'Tổng quan', items: [{ id: 'overview', label: 'Dashboard hệ thống', icon: FiGrid }] },
   { label: 'Sản phẩm & khuyến mãi', items: [
-    { id: 'categories', label: 'Danh mục sản phẩm', icon: FiFolder },
-    { id: 'menu', label: 'Thực đơn', icon: FiCoffee },
+    { id: 'categories', label: 'Danh mục thực đơn', icon: FiFolder },
+    { id: 'menu', label: 'Danh mục sản phẩm', icon: FiCoffee },
     { id: 'promotions', label: 'Khuyến mãi & voucher', icon: FiTag },
   ] },
   { label: 'Khách hàng', items: [

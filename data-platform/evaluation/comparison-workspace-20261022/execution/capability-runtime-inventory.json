@@ -1,0 +1,1009 @@
+{
+  "basis": "Authenticated actual /api/ai/capabilities receipt served-guided-r13/advertised-capabilities.json; observed runtime inventory only, separate from declared registry and per-combination execution coverage. Source/bundle reference served-source-r10.json; final policy41 runtime recheck pending.",
+  "domain_count": 16,
+  "public_metric_count": 48,
+  "metric_classes": {
+    "sum": 13,
+    "count": 14,
+    "average": 6,
+    "distinct_count": 2,
+    "ratio": 4,
+    "conditional_count": 9
+  },
+  "missions": [
+    {
+      "id": "overview",
+      "status": "available",
+      "reason": null
+    },
+    {
+      "id": "compare",
+      "status": "available",
+      "reason": null
+    },
+    {
+      "id": "ranking",
+      "status": "available",
+      "reason": null
+    },
+    {
+      "id": "trend",
+      "status": "available",
+      "reason": null
+    },
+    {
+      "id": "composition",
+      "status": "available",
+      "reason": null
+    },
+    {
+      "id": "forecast",
+      "status": "partial",
+      "reason": "Dữ liệu cập nhật theo đợt đang trễ; dự báo sẽ kèm cảnh báo độ mới dữ liệu."
+    },
+    {
+      "id": "risk_watch",
+      "status": "available",
+      "reason": null
+    },
+    {
+      "id": "relationship",
+      "status": "partial",
+      "reason": "Chỉ hỗ trợ quan hệ giữa các chỉ số trong cùng một nhóm phân tích (ví dụ shipper)."
+    }
+  ],
+  "metrics": [
+    {
+      "id": "revenue",
+      "domain": "orders",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": true,
+      "dimensions": [
+        "city",
+        "store",
+        "payment_method",
+        "order_type",
+        "weekday",
+        "customer_role",
+        "promotion",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "order_count",
+      "domain": "orders",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": true,
+      "dimensions": [
+        "city",
+        "store",
+        "order_status",
+        "order_type",
+        "weekday",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "aov",
+      "domain": "orders",
+      "metric_class": "average",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "city",
+        "store",
+        "payment_method",
+        "order_type",
+        "weekday",
+        "customer_role",
+        "promotion",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "growth"
+      ]
+    },
+    {
+      "id": "purchasing_customer_count",
+      "domain": "orders",
+      "metric_class": "distinct_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "city",
+        "store",
+        "payment_method",
+        "order_type",
+        "weekday",
+        "customer_role",
+        "promotion",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": []
+    },
+    {
+      "id": "order_cancellation_rate",
+      "domain": "orders",
+      "metric_class": "ratio",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "order_type",
+        "payment_method",
+        "weekday",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "growth"
+      ]
+    },
+    {
+      "id": "order_completion_rate",
+      "domain": "orders",
+      "metric_class": "ratio",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "order_type",
+        "payment_method",
+        "weekday",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "growth"
+      ]
+    },
+    {
+      "id": "anonymous_order_count",
+      "domain": "orders",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "quantity_sold",
+      "domain": "order_items",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "product",
+        "category",
+        "city",
+        "store",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "item_revenue",
+      "domain": "order_items",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "product",
+        "category",
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "product_revenue",
+      "domain": "products",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "product",
+        "category",
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "store_revenue",
+      "domain": "stores",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": true,
+      "dimensions": [
+        "city",
+        "store",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "store_order_count",
+      "domain": "stores",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": true,
+      "dimensions": [
+        "city",
+        "store",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "store_aov",
+      "domain": "stores",
+      "metric_class": "average",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "city",
+        "store",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "growth"
+      ]
+    },
+    {
+      "id": "customer_count",
+      "domain": "customers",
+      "metric_class": "distinct_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "customer_role",
+        "loyalty_points"
+      ],
+      "selection_criteria": []
+    },
+    {
+      "id": "total_spent",
+      "domain": "customers",
+      "metric_class": "sum",
+      "historical": false,
+      "forecastable": false,
+      "dimensions": [
+        "customer_role",
+        "loyalty_points"
+      ],
+      "selection_criteria": []
+    },
+    {
+      "id": "voucher_revenue",
+      "domain": "promotions",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "promotion",
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "discount_amount",
+      "domain": "promotions",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "promotion",
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "voucher_order_count",
+      "domain": "promotions",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "promotion",
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "promotion_redemption_count",
+      "domain": "promotions",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "redeemed_promotion",
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "payment_count",
+      "domain": "payments",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "payment_gateway",
+        "payment_status",
+        "payment_transaction_status",
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "payment_revenue",
+      "domain": "payments",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "payment_gateway",
+        "payment_status",
+        "payment_transaction_status",
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "settled_payment_amount",
+      "domain": "payments",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "payment_gateway",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "unsettled_payment_count",
+      "domain": "payments",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "payment_gateway",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "total_deliveries",
+      "domain": "delivery",
+      "metric_class": "sum",
+      "historical": false,
+      "forecastable": false,
+      "dimensions": [
+        "driver_id"
+      ],
+      "selection_criteria": []
+    },
+    {
+      "id": "driver_rating",
+      "domain": "delivery",
+      "metric_class": "average",
+      "historical": false,
+      "forecastable": false,
+      "dimensions": [
+        "driver_id"
+      ],
+      "selection_criteria": []
+    },
+    {
+      "id": "delivery_count",
+      "domain": "delivery",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": true,
+      "dimensions": [
+        "delivery_status",
+        "driver_id",
+        "store",
+        "city",
+        "payment_method",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "delivered_count",
+      "domain": "delivery",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "driver_id",
+        "store",
+        "city",
+        "payment_method",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "failed_or_cancelled_delivery_count",
+      "domain": "delivery",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "driver_id",
+        "store",
+        "city",
+        "payment_method",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "delivery_success_rate",
+      "domain": "delivery",
+      "metric_class": "ratio",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "driver_id",
+        "store",
+        "city",
+        "payment_method",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "growth"
+      ]
+    },
+    {
+      "id": "avg_delivery_minutes",
+      "domain": "delivery",
+      "metric_class": "average",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "payment_method",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "growth"
+      ]
+    },
+    {
+      "id": "delivery_driver_key_conflict_count",
+      "domain": "delivery",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "sale_positions",
+      "domain": "inventory",
+      "metric_class": "count",
+      "historical": false,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "product",
+        "category",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": []
+    },
+    {
+      "id": "paused_sale_positions",
+      "domain": "inventory",
+      "metric_class": "conditional_count",
+      "historical": false,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "product",
+        "category",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": []
+    },
+    {
+      "id": "avg_product_rating",
+      "domain": "product_reviews",
+      "metric_class": "average",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "product",
+        "category",
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "growth"
+      ]
+    },
+    {
+      "id": "review_count",
+      "domain": "product_reviews",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "product",
+        "category",
+        "store",
+        "city",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "avg_store_rating",
+      "domain": "store_reviews",
+      "metric_class": "average",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "growth"
+      ]
+    },
+    {
+      "id": "store_review_count",
+      "domain": "store_reviews",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "public_store_review_count",
+      "domain": "store_reviews",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "shift_count",
+      "domain": "staff_shifts",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "shift_name",
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "late_count",
+      "domain": "staff_shifts",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "shift_name",
+        "attendance_status",
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "late_shift_rate",
+      "domain": "staff_shifts",
+      "metric_class": "ratio",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "shift_name",
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "growth"
+      ]
+    },
+    {
+      "id": "total_cash_difference",
+      "domain": "cashier_reconciliation",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "system_cash_revenue",
+      "domain": "cashier_reconciliation",
+      "metric_class": "sum",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "reconciled_shifts",
+      "domain": "cashier_reconciliation",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "large_cash_discrepancy_shift_count",
+      "domain": "cashier_reconciliation",
+      "metric_class": "conditional_count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "survey_response_count",
+      "domain": "customer_surveys",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "store",
+        "city",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "favorite_count",
+      "domain": "wishlist_favorites",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "product",
+        "category",
+        "customer_role"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    },
+    {
+      "id": "hourly_orders",
+      "domain": "hourly",
+      "metric_class": "count",
+      "historical": true,
+      "forecastable": false,
+      "dimensions": [
+        "hour",
+        "store",
+        "city",
+        "weekday",
+        "customer_role",
+        "payment_method",
+        "promotion",
+        "order_type",
+        "store_type",
+        "reporting_region"
+      ],
+      "selection_criteria": [
+        "stability",
+        "growth",
+        "volatility"
+      ]
+    }
+  ],
+  "qualification_limit": "This is the observed advertisement and metadata contract, not97 executed metrics or proof every operator cross-product is supported. Generic-law fixtures and typed rejection tests are referenced separately.",
+  "receipt": "served-guided-r13/advertised-capabilities.json"
+}

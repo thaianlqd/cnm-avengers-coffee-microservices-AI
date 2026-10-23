@@ -10,7 +10,9 @@ import {
   LogOut,
   ChevronDown,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Eye,
+  EyeOff
 } from '../../../components/console/WorkspaceIcons'
 import { readWorkspaceSession, saveWorkspaceSession } from '../../../lib/workspaceAuth'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
@@ -507,11 +509,17 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
     confirmPassword: ''
   })
   const [passwordState, setPasswordState] = useState({ saving: false, error: '', success: '' })
+  const [showCurrentPwd, setShowCurrentPwd] = useState(false)
+  const [showNewPwd, setShowNewPwd] = useState(false)
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
       setPasswordState({ saving: false, error: '', success: '' })
+      setShowCurrentPwd(false)
+      setShowNewPwd(false)
+      setShowConfirmPwd(false)
     }
   }, [isOpen])
 
@@ -645,26 +653,55 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
                 <Lock size={15} color="#64748b" />
                 <span>Mật khẩu hiện tại *</span>
               </label>
-              <input
-                id="modal-pwd-current"
-                type="password"
-                required
-                value={passwordForm.currentPassword}
-                onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
-                placeholder="Nhập mật khẩu đang sử dụng"
-                style={{
-                  width: '100%',
-                  height: '40px',
-                  padding: '0 0.85rem',
-                  borderRadius: '7px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
-                  fontSize: '0.85rem',
-                  color: '#0f172a',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
+              <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
+                <input
+                  id="modal-pwd-current"
+                  type={showCurrentPwd ? "text" : "password"}
+                  required
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                  placeholder="Nhập mật khẩu đang sử dụng"
+                  style={{
+                    width: '100%',
+                    height: '40px',
+                    padding: '0 2.5rem 0 0.85rem',
+                    borderRadius: '7px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#ffffff',
+                    fontSize: '0.85rem',
+                    color: '#0f172a',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  className="admin-password-toggle"
+                  onClick={() => setShowCurrentPwd(!showCurrentPwd)}
+                  title={showCurrentPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  aria-label={showCurrentPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '26px',
+                    height: '26px',
+                    border: 'none',
+                    background: 'transparent',
+                    padding: 0,
+                    margin: 0,
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    zIndex: 3
+                  }}
+                >
+                  {showCurrentPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             {/* Field 2: New Password */}
@@ -683,26 +720,55 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
                 <KeyRound size={15} color="#64748b" />
                 <span>Mật khẩu mới *</span>
               </label>
-              <input
-                id="modal-pwd-new"
-                type="password"
-                required
-                value={passwordForm.newPassword}
-                onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-                placeholder="Tối thiểu 6 ký tự"
-                style={{
-                  width: '100%',
-                  height: '40px',
-                  padding: '0 0.85rem',
-                  borderRadius: '7px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
-                  fontSize: '0.85rem',
-                  color: '#0f172a',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
+              <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
+                <input
+                  id="modal-pwd-new"
+                  type={showNewPwd ? "text" : "password"}
+                  required
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                  placeholder="Tối thiểu 6 ký tự"
+                  style={{
+                    width: '100%',
+                    height: '40px',
+                    padding: '0 2.5rem 0 0.85rem',
+                    borderRadius: '7px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#ffffff',
+                    fontSize: '0.85rem',
+                    color: '#0f172a',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  className="admin-password-toggle"
+                  onClick={() => setShowNewPwd(!showNewPwd)}
+                  title={showNewPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  aria-label={showNewPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '26px',
+                    height: '26px',
+                    border: 'none',
+                    background: 'transparent',
+                    padding: 0,
+                    margin: 0,
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    zIndex: 3
+                  }}
+                >
+                  {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             {/* Field 3: Confirm Password */}
@@ -721,26 +787,55 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
                 <KeyRound size={15} color="#64748b" />
                 <span>Xác nhận mật khẩu mới *</span>
               </label>
-              <input
-                id="modal-pwd-confirm"
-                type="password"
-                required
-                value={passwordForm.confirmPassword}
-                onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                placeholder="Nhập lại mật khẩu mới"
-                style={{
-                  width: '100%',
-                  height: '40px',
-                  padding: '0 0.85rem',
-                  borderRadius: '7px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
-                  fontSize: '0.85rem',
-                  color: '#0f172a',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
+              <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
+                <input
+                  id="modal-pwd-confirm"
+                  type={showConfirmPwd ? "text" : "password"}
+                  required
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                  placeholder="Nhập lại mật khẩu mới"
+                  style={{
+                    width: '100%',
+                    height: '40px',
+                    padding: '0 2.5rem 0 0.85rem',
+                    borderRadius: '7px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#ffffff',
+                    fontSize: '0.85rem',
+                    color: '#0f172a',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  className="admin-password-toggle"
+                  onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                  title={showConfirmPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  aria-label={showConfirmPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '26px',
+                    height: '26px',
+                    border: 'none',
+                    background: 'transparent',
+                    padding: 0,
+                    margin: 0,
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    zIndex: 3
+                  }}
+                >
+                  {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             {passwordState.error && (

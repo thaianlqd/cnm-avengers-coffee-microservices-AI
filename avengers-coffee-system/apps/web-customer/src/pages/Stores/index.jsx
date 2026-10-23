@@ -1,5 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { autocompletePlaces, resolveSuggestedPlace, placesConfigured } from '../../lib/storePlaces';
+import { distanceKm } from '../../lib/maps/nearbyStores.mjs';
+import { coordinates } from '../../lib/locationModel';
 import LocationMap from '../../components/map/LocationMap';
+import './style.css';
 import {
   branchLocation,
   branchFilterOptions,
@@ -18,8 +22,6 @@ import {
   RiTimeLine,
   RiPhoneLine,
   RiStarFill,
-  RiWifiLine,
-  RiBankCardLine,
   RiArrowRightUpLine,
   RiInformationLine,
   RiBuilding4Line,
@@ -252,7 +254,7 @@ export default function StoresPage() {
   const locationText = useLocationText();
   const { t } = useTranslation();
 
-  const { data: publicBranchPayload, isLoading: isStoresLoading } = useQuery({
+  const { data: publicBranchPayload, isLoading: isStoresLoading, isError: isStoresError, refetch: refetchStores } = useQuery({
     queryKey: ['public-branches'],
     queryFn: async () => {
       const response = await apiClient.get('/users/branches/public');
@@ -288,7 +290,7 @@ export default function StoresPage() {
         const openTime = String(branch?.gio_mo_cua || '').trim();
         const closeTime = String(branch?.gio_dong_cua || '').trim();
         const fallbackHours =
-          openTime || closeTime ? `${openTime || '--:--'} - ${closeTime || '--:--'}` : '07:00 - 22:00';
+          openTime || closeTime ? `${openTime || '--:--'} - ${closeTime || '--:--'}` : locationText('unknownHours');
         const location = branchLocation(branch);
         const city = location.city;
         const code = String(branch?.ma_chi_nhanh || `branch-${index + 1}`);
@@ -304,7 +306,7 @@ export default function StoresPage() {
           name: branchDisplayName(branch?.ten_chi_nhanh),
           address: String(branch?.dia_chi || '').trim() || 'Đang cập nhật địa chỉ',
           hours: fallbackHours,
-          phone: branch?.so_dien_thoai || '1900 1755',
+          phone: branch?.so_dien_thoai || '',
           rating: stats?.diem_trung_binh ?? 0,
           reviewCount: stats?.tong_luot_danh_gia || 0,
           type: branch?.loai_diem_ban || 'CHI_NHANH_CHINH',
@@ -323,6 +325,36 @@ export default function StoresPage() {
   const [detailedStore, setDetailedStore] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchInputRef = useRef(null);
+  const [placeSuggestions, setPlaceSuggestions] = useState([]);
+  const [searchCenter, setSearchCenter] = useState(null);
+  const [radiusKm, setRadiusKm] = useState(5);
+  const [placeError, setPlaceError] = useState('');
+  const [placeBusy, setPlaceBusy] = useState(false);
+  const placeRequest = useRef(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    setPlaceSuggestions([]);
+    if (!placesConfigured || !showSuggestions || searchQuery.trim().length < 3) return;
+    const timer = setTimeout(() => {
+      autocompletePlaces(searchQuery, { signal:controller.signal }).then(items => {
+        if (!controller.signal.aborted) { setPlaceSuggestions(items); setPlaceError(''); }
+      }).catch(() => { if (!controller.signal.aborted) setPlaceError('Gợi ý địa chỉ tạm thời chưa khả dụng. Bạn vẫn tìm cửa hàng theo tên được.'); });
+    }, 350);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [searchQuery, showSuggestions]);
+  useEffect(() => () => placeRequest.current?.abort(), []);
+  const selectPlace = async item => {
+    placeRequest.current?.abort();
+    const controller = new AbortController(); placeRequest.current = controller;
+    setPlaceBusy(true); setPlaceError(''); setShowSuggestions(false);
+    try {
+      const center = await resolveSuggestedPlace(item.value, { signal:controller.signal });
+      if (controller.signal.aborted) return;
+      setSelectedCity(''); setSelectedWard(''); setSearchQuery(''); setSelectedStoreId(null);
+      setSearchCenter(center); setVisibleCount(20);
+    } catch { if (!controller.signal.aborted) setPlaceError('Chưa lấy được vị trí địa điểm. Bạn vui lòng thử lại.'); }
+    finally { if (!controller.signal.aborted) setPlaceBusy(false); }
+  };
 
   const { data: detailedBranchReviews } = useQuery({
     queryKey: ['branch-reviews-detail', detailedStore?.code],
@@ -377,12 +409,15 @@ export default function StoresPage() {
 
   // Filtered stores
   const filteredStores = useMemo(() => {
-    return filterBranches(stores, {
+    const matches = filterBranches(stores, {
       city: selectedCity,
       ward: selectedWard,
       query: searchQuery,
     }).filter((store) => selectedType === 'ALL' || store.type === selectedType);
-  }, [stores, selectedCity, selectedWard, selectedType, searchQuery]);
+    if (!searchCenter) return matches;
+    return matches.map(store => ({ ...store, distanceKm:distanceKm(searchCenter,coordinates(store)) }))
+      .filter(store => store.distanceKm != null && store.distanceKm <= radiusKm).sort((a,b) => a.distanceKm-b.distanceKm);
+  }, [stores, selectedCity, selectedWard, selectedType, searchQuery, searchCenter, radiusKm]);
 
   // Smart suggestions
   const suggestions = useMemo(() => {
@@ -402,16 +437,17 @@ export default function StoresPage() {
       .slice(0, 5)
       .map((s) => ({ type: 'store', text: s.name, subtext: s.address, value: s }));
 
-    return [...matchingCities.slice(0, 3), ...matchingStoreItems];
-  }, [searchQuery, cities, stores]);
+    return [...matchingCities.slice(0, 3), ...matchingStoreItems, ...placeSuggestions];
+  }, [searchQuery, cities, stores, placeSuggestions]);
 
   const selectedStore =
     filteredStores.find((store) => store.id === selectedStoreId) || filteredStores[0] || null;
   const setSelectedStore = (store) => setSelectedStoreId(store?.id || null);
 
-  const hasActiveFilter = Boolean(selectedCity || selectedWard || selectedType !== 'ALL' || searchQuery);
+  const hasActiveFilter = Boolean(selectedCity || selectedWard || selectedType !== 'ALL' || searchQuery || searchCenter);
 
   const handleResetFilters = () => {
+    placeRequest.current?.abort(); setPlaceBusy(false); setSearchCenter(null); setPlaceError('');
     setSelectedCity('');
     setSelectedWard('');
     setSelectedType('ALL');
@@ -420,7 +456,7 @@ export default function StoresPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-90px)] bg-white mt-0 font-sans">
+    <div className="store-locator flex flex-col h-[calc(100vh-90px)] bg-white mt-0 font-sans">
       {/* Detailed Store View */}
       {detailedStore ? (
         <div className="flex-1 overflow-y-auto bg-gray-50 pb-16">
@@ -487,13 +523,6 @@ export default function StoresPage() {
                       <p className="text-[#333333] text-[14px] flex-1 font-medium">{detailedStore.phone}</p>
                     </div>
                     <div className="pt-2 flex flex-wrap gap-4 text-[13px] text-gray-700 font-medium">
-                      <span className="flex items-center gap-1.5 text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
-                        <RiWifiLine className="w-4 h-4 text-blue-600" /> {t('stores.freeWifi', 'Wifi Miễn Phí')}
-                      </span>
-                      <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
-                        <RiBankCardLine className="w-4 h-4 text-emerald-600" />{' '}
-                        {t('stores.cardPayment', 'Thanh toán thẻ')}
-                      </span>
                       <span className="flex items-center gap-1.5 text-red-700 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">
                         <RiTimeLine className="w-4 h-4 text-amber-600" /> {detailedStore.hours}
                       </span>
@@ -679,6 +708,7 @@ export default function StoresPage() {
                       value={searchQuery}
                       onFocus={() => setShowSuggestions(true)}
                       onChange={(e) => {
+                        placeRequest.current?.abort(); setPlaceBusy(false);
                         setSearchQuery(e.target.value);
                         setVisibleCount(20);
                         setShowSuggestions(true);
@@ -700,6 +730,13 @@ export default function StoresPage() {
                     )}
                   </div>
 
+                  {placeBusy && <p role="status" className="text-xs py-2">Đang tìm vị trí địa điểm…</p>}
+                  {placeError && <p role="status" className="text-xs py-2 text-[#b22830]">{placeError}</p>}
+                  {searchCenter && <div className="text-xs py-3 flex flex-wrap items-center gap-3" role="status">
+                    <span>Quanh {searchCenter.label} · khoảng cách đường chim bay</span>
+                    <label>Bán kính <select aria-label="Bán kính tìm cửa hàng" value={radiusKm} onChange={e => setRadiusKm(Number(e.target.value))}>{[1,3,5,10,20].map(km => <option key={km} value={km}>{km} km</option>)}</select></label>
+                    <button type="button" onClick={() => setSearchCenter(null)}>Bỏ vị trí</button>
+                  </div>}
                   {/* Dropdown Autocomplete Menu */}
                   {showSuggestions && suggestions.length > 0 && (
                     <div className="absolute top-full left-0 w-full mt-1.5 bg-white border border-gray-200/90 shadow-2xl rounded-2xl overflow-hidden z-[100] max-h-[380px] overflow-y-auto animate-fade-in">
@@ -709,8 +746,12 @@ export default function StoresPage() {
                       {suggestions.map((item, idx) => (
                         <div
                           key={idx}
+                          role="button" tabIndex={0}
+                          onKeyDown={event => { if (event.key==='Enter'||event.key===' ') { event.preventDefault(); event.currentTarget.click(); } }}
                           className="px-4 py-2.5 cursor-pointer hover:bg-red-50/50 border-b border-gray-50 last:border-none flex items-start gap-3 transition-colors"
                           onClick={() => {
+                            if (item.type === 'place') { selectPlace(item); return; }
+                            setSearchCenter(null);
                             if (item.type === 'city') {
                               setSelectedCity(item.value);
                               setSelectedWard('');
@@ -729,7 +770,7 @@ export default function StoresPage() {
                             {item.type === 'city' && (
                               <RiBuilding4Line className="w-4 h-4 text-gray-400" />
                             )}
-                            {item.type === 'store' && (
+                            {['store','place'].includes(item.type) && (
                               <RiMapPin2Fill className="w-4 h-4 text-[#b22830]" />
                             )}
                           </div>
@@ -805,6 +846,7 @@ export default function StoresPage() {
 
               <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
                 {isStoresLoading && <StoreListSkeleton />}
+                {isStoresError && <div className="store-list-error" role="alert"><p>{ui('Chưa tải được danh sách cửa hàng. Bạn thử lại nhé.')}</p><button type="button" onClick={() => refetchStores()}>{ui('Thử lại')}</button></div>}
                 {filteredStores.slice(0, visibleCount).map((store) => {
                   const isSelected = selectedStore?.id === store.id;
                   const storeName = decodeHtmlEntities(store.name);
@@ -886,16 +928,6 @@ export default function StoresPage() {
                           className="mt-4 pt-3.5 border-t border-red-200/60 space-y-3 animate-fade-in"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {/* Amenities */}
-                          <div className="flex flex-wrap gap-2">
-                            <span className="flex items-center gap-1 text-[11px] font-medium text-blue-700 bg-blue-50/80 px-2.5 py-1 rounded-md border border-blue-100">
-                              <RiWifiLine className="w-3.5 h-3.5 text-blue-600" /> Wifi Miễn Phí
-                            </span>
-                            <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-md border border-emerald-100">
-                              <RiBankCardLine className="w-3.5 h-3.5 text-emerald-600" /> Thanh toán thẻ
-                            </span>
-                          </div>
-
                           {/* Action Buttons */}
                           <div className="flex gap-2 pt-1">
                             <button
@@ -934,7 +966,7 @@ export default function StoresPage() {
                   </button>
                 )}
 
-                {filteredStores.length === 0 && !isStoresLoading && (
+                {filteredStores.length === 0 && !isStoresLoading && !isStoresError && (
                   <div className="p-8 text-center text-gray-500 text-xs space-y-3">
                     <RiStore2Line className="w-12 h-12 text-gray-300 mx-auto" />
                     <p className="font-medium text-gray-600">
@@ -963,6 +995,8 @@ export default function StoresPage() {
                 />
               ) : selectedStore ? (
                 <LocationMap
+                  searchCenter={searchCenter}
+                  searchRadiusKm={radiusKm}
                   branches={filteredStores}
                   selected={selectedStore}
                   onSelect={setSelectedStore}

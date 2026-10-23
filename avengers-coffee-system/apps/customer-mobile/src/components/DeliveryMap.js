@@ -1,17 +1,15 @@
-import { nativeTileUrl, detailedNativeStyle } from '../../../shared-ui/nativeBasemap'
 import useDeliveryRoute from '../hooks/useDeliveryRoute'
 import JourneyOverlay, { JourneyPin } from '../../../shared-ui/JourneyOverlay'
 import { journeyProgress, measuredRouteSummary } from '../../../web-customer/src/components/map/deliveryMapPresentation'
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native'
-import MapView, { Marker, AnimatedRegion, Polyline, UrlTile } from 'react-native-maps'
+import MapView, { Marker, AnimatedRegion, Polyline } from 'react-native-maps'
 import { Ionicons } from '@expo/vector-icons'
 import { coordinate } from '../lib/trackingSession'
 import { colors } from '../theme'
 
 export default function DeliveryMap({ delivery }) {
-  const tileUrl = nativeTileUrl(process.env.EXPO_PUBLIC_VIETMAP_TILE_KEY)
-  const route = useDeliveryRoute(delivery)
+    const route = useDeliveryRoute(delivery)
   const map = useRef(null), marker = useRef(null), fitted = useRef(false)
   const [follow, setFollow] = useState(true)
   const driver = coordinate(delivery?.shipper_location)
@@ -36,9 +34,9 @@ export default function DeliveryMap({ delivery }) {
   if (!first) return <View style={styles.empty}><Ionicons name="map-outline" size={30} color={colors.muted} /><Text style={styles.emptyText}>Bản đồ sẽ hiển thị khi có vị trí cửa hàng hoặc tài xế.</Text></View>
   return <View style={{ gap: 8 }}><View style={styles.wrap}>
     <MapView ref={map} style={StyleSheet.absoluteFill} initialRegion={{ ...first, latitudeDelta: .025, longitudeDelta: .025 }}
-      customMapStyle={detailedNativeStyle} showsPointsOfInterest showsBuildings mapType={tileUrl && Platform.OS === 'android' ? 'none' : 'standard'}
+      showsPointsOfInterest showsBuildings mapType="standard"
       onMapReady={() => { fit(); fitted.current = true }} onPanDrag={() => setFollow(false)} toolbarEnabled={false}>
-      {tileUrl && <UrlTile urlTemplate={tileUrl} tileSize={512} maximumZ={19} maximumNativeZ={19} minimumZ={1} zIndex={-1} />}
+
       {route.data && <Polyline coordinates={route.data.coordinates} strokeColor="#507fe5" strokeWidth={5} />}
       {store && <Marker coordinate={store} title={delivery?.tracking?.branch_name || 'Cửa hàng'} anchor={{ x:.5,y:1 }}><JourneyPin kind="store" /></Marker>}
       {destination && <Marker coordinate={destination} title="Địa chỉ giao hàng" anchor={{ x:.5,y:1 }}><JourneyPin kind="destination" /></Marker>}
@@ -46,7 +44,7 @@ export default function DeliveryMap({ delivery }) {
         <JourneyPin kind="driver" />
       </Marker.Animated>}
     </MapView>
-    {tileUrl && <Text style={{position:'absolute',bottom:3,right:5,fontSize:10,backgroundColor:'#fffffff0',paddingHorizontal:4}}>© Vietmap</Text>}
+
     <Pressable style={styles.recenter} accessibilityLabel="Đưa bản đồ về hành trình đơn hàng" onPress={() => { setFollow(true); fit() }}><Ionicons name="locate-outline" size={22} color={colors.primary} /></Pressable>
 
   </View><JourneyOverlay floating={false} progress={journeyProgress(delivery?.shipper_delivery?.status || delivery?.order?.trang_thai_don_hang, Boolean(driver))} metrics={measuredRouteSummary(route.data)} notice={route.isError ? 'Chưa tải được tuyến đường. Kéo xuống để thử lại.' : !driver ? 'Chưa có vị trí tài xế. Thời gian tuyến không phải ETA trực tiếp.' : undefined} />

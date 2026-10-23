@@ -817,8 +817,8 @@ function AdminMenuManagementPanelContent({
                 Tạm ngưng
               </button>
             </div>
-          <div className="menu-filter-group">
-          <div className="menu-search-box">
+          <div className="menu-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', width: '100%' }}>
+          <div className="menu-search-box" style={{ flex: '0 1 320px', minWidth: '220px' }}>
             <div className="menu-search-input-wrap">
               <input className="ui-input"
                 type="text"
@@ -844,7 +844,7 @@ function AdminMenuManagementPanelContent({
 
 
             {/* Filter Category Dropdown */}
-            <div className="menu-filter-select-wrapper" style={{ minWidth: 240, width: 280, maxWidth: 320 }}>
+            <div className="menu-filter-select-wrapper" style={{ minWidth: 240, width: 280, maxWidth: 320, flexShrink: 0 }}>
               <SearchableSelect
                 id="menu-category-filter"
                 aria-label="Lọc theo danh mục"
@@ -864,13 +864,51 @@ function AdminMenuManagementPanelContent({
 
 
             {loadMenu && (
-              <button type="button" className="menu-refresh-btn" onClick={loadMenu} title="Tải lại danh sách">
+              <button
+                type="button"
+                className="menu-refresh-btn"
+                onClick={loadMenu}
+                title="Tải lại danh sách"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  height: '40px',
+                  minHeight: '40px',
+                  padding: '0 15px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#334155',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+              >
                 <RefreshCw size={15} />
                 <span>Tải lại</span>
               </button>
             )}
 
-            <button type="button" className="menu-btn menu-btn--success menu-btn--sm menu-create-btn" onClick={handleOpenAddModal}>
+            <button
+              type="button"
+              className="menu-btn menu-btn--success menu-btn--sm menu-create-btn"
+              onClick={handleOpenAddModal}
+              style={{
+                marginLeft: 'auto',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
+                height: '40px',
+                minHeight: '40px',
+                padding: '0 18px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '13.5px',
+                cursor: 'pointer'
+              }}
+            >
               <Plus size={16} />
               <span>Tạo món</span>
             </button>
@@ -1467,9 +1505,9 @@ function AdminMenuManagementPanelContent({
                   className="menu-btn menu-btn--success"
                   disabled={savingMenu || !String(safeMenuForm.name || '').trim() || !safeMenuForm.category_code}
                   style={{
-                    background: "#18181b",
+                    background: "var(--primary)",
                     color: '#ffffff',
-                    border: '1px solid #18181b',
+                    border: '1px solid var(--primary)',
                     height: '38px',
                     padding: '0 1.35rem',
                     borderRadius: '6px',

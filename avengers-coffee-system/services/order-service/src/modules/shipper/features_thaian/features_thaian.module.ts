@@ -5,6 +5,7 @@ import { LalamoveService } from './lalamove.service';
 import { LalamoveController } from './lalamove.controller';
 import { DeliveryTrackingService } from './delivery-tracking.service';
 import { DeliveryTrackingController } from './delivery-tracking.controller';
+import { NotificationModule } from '../../notification/notification.module';
 
 // Import entities từ modules gốc (cần cho inject repository)
 import { ShipperDelivery } from '../entities/shipper-delivery.entity';
@@ -23,6 +24,7 @@ import { ChiTietDonHang } from '../../thanh-toan/entities/chi-tiet-don-hang.enti
  */
 @Module({
   imports: [
+    NotificationModule,
     TypeOrmModule.forFeature([
       DeliveryTracking,
       ShipperDelivery,

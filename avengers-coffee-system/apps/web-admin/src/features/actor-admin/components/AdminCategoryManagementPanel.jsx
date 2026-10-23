@@ -26,7 +26,8 @@ import {
   Cake,
   Package,
   Heart,
-  MoreVertical
+  MoreVertical,
+  Upload
 } from '../../../components/console/WorkspaceIcons'
 
 // Preset icon options for quick selection
@@ -309,7 +310,7 @@ export function AdminCategoryManagementPanel({
       {/* Category List & Data Table (FULL WIDTH 100%) */}
       <div className="cat-list-card cat-list-card--full">
         {/* List Toolbar & Filters */}
-        <div className="workspace-section-title"><div><h2>Danh sách danh mục</h2><p>Phân nhóm và quản lý danh mục sản phẩm.</p></div></div>
+        <div className="workspace-section-title"><div><h2>Danh mục thực đơn</h2><p>Phân nhóm và sắp xếp danh mục cho thực đơn món.</p></div></div>
         <div className="cat-toolbar">
           <div className="cat-filter-pills">
               <button aria-pressed={levelFilter === 'ALL'}
@@ -334,39 +335,73 @@ export function AdminCategoryManagementPanel({
                 Danh mục phụ ({stats.level2Count})
               </button>
             </div>
-          <div className="cat-filter-group">
-          <div className="cat-search-box">
-
-            <input className="ui-input"
-              type="text"
-              value={categoryKeyword}
-              onChange={(e) => {
-                setCategoryKeyword(e.target.value)
-                setCategoriesPage(1)
-              }}
-              placeholder="Tìm kiếm danh mục theo tên hoặc mã..."
-            />
-            {categoryKeyword && (
-              <button
-                type="button"
-                aria-label="Xóa tìm kiếm" className="cat-search-clear"
-                onClick={() => setCategoryKeyword('')}
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
-          {/* Level Filter Tabs & Actions */}
-
+          <div className="cat-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', width: '100%' }}>
+            <div className="cat-search-box" style={{ flex: '0 1 320px', minWidth: '220px' }}>
+              <input className="ui-input"
+                type="text"
+                value={categoryKeyword}
+                onChange={(e) => {
+                  setCategoryKeyword(e.target.value)
+                  setCategoriesPage(1)
+                }}
+                placeholder="Tìm kiếm danh mục theo tên hoặc mã..."
+              />
+              {categoryKeyword && (
+                <button
+                  type="button"
+                  aria-label="Xóa tìm kiếm" className="cat-search-clear"
+                  onClick={() => setCategoryKeyword('')}
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
 
             {onRefresh && (
-              <button type="button" className="cat-refresh-btn" onClick={onRefresh} title="Tải lại dữ liệu">
+              <button
+                type="button"
+                className="cat-refresh-btn"
+                onClick={onRefresh}
+                title="Tải lại dữ liệu"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  height: '40px',
+                  minHeight: '40px',
+                  padding: '0 15px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#334155',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+              >
                 <RefreshCw size={15} />
                 <span>Tải lại</span>
               </button>
             )}
-            <button type="button" className="cat-btn cat-btn--success cat-btn--sm cat-create-btn" onClick={handleOpenAddModal}>
+            <button
+              type="button"
+              className="cat-btn cat-btn--success cat-btn--sm cat-create-btn"
+              onClick={handleOpenAddModal}
+              style={{
+                marginLeft: 'auto',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
+                height: '40px',
+                minHeight: '40px',
+                padding: '0 18px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '13.5px',
+                cursor: 'pointer'
+              }}
+            >
               <Plus size={16} />
               <span>Tạo danh mục</span>
             </button>
@@ -632,22 +667,112 @@ export function AdminCategoryManagementPanel({
                 </div>
               )}
 
-              {/* Input: Category Image URL */}
+              {/* Input: Category Image URL or Local File Upload */}
               <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label htmlFor="cat-modal-icon" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
-                  Hình ảnh danh mục (URL)
+                  Hình ảnh danh mục
                 </label>
-                <input
-                  id="cat-modal-icon"
-                  type="text"
-                  className="shadcn-input ui-input"
-                  value={categoryForm.icon || ''}
-                  onChange={(e) => setCategoryForm((p) => ({ ...p, icon: e.target.value }))}
-                  placeholder="https://... (Dán link ảnh hoặc chọn icon bên dưới)"
-                />
+                <div className="admin-image-picker">
+                  <div className="admin-image-picker-controls" style={{ display: 'flex', alignItems: 'stretch', width: '100%', height: '40px' }}>
+                    <input
+                      id="cat-modal-icon"
+                      type="text"
+                      className="shadcn-input ui-input"
+                      value={categoryForm.icon || ''}
+                      onChange={(e) => setCategoryForm((p) => ({ ...p, icon: e.target.value }))}
+                      placeholder="Dán đường dẫn ảnh (https://...)"
+                      style={{
+                        flex: '1 1 auto',
+                        width: 'auto',
+                        height: '40px',
+                        minHeight: '40px',
+                        borderTopRightRadius: 0,
+                        borderBottomRightRadius: 0,
+                        borderRight: 'none',
+                        borderTopLeftRadius: '8px',
+                        borderBottomLeftRadius: '8px',
+                        boxSizing: 'border-box',
+                        margin: 0
+                      }}
+                    />
+                    <label
+                      className="admin-image-upload-btn"
+                      title="Chọn tệp ảnh từ máy tính"
+                      style={{
+                        flex: '0 0 auto',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        height: '40px',
+                        minHeight: '40px',
+                        padding: '0 16px',
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
+                        borderTopRightRadius: '8px',
+                        borderBottomRightRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        borderLeft: '1px solid #e2e8f0',
+                        backgroundColor: '#f8fafc',
+                        color: '#334155',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        boxSizing: 'border-box',
+                        margin: 0,
+                        lineHeight: 1
+                      }}
+                    >
+                      <Upload size={15} />
+                      <span>Chọn từ máy</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            if (event.target?.result) {
+                              setCategoryForm((p) => ({ ...p, icon: event.target.result }));
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {categoryForm.icon && (
+                    <div className="admin-image-preview-badge">
+                      <img
+                        src={categoryForm.icon}
+                        alt="Xem trước ảnh"
+                        className="admin-image-preview-thumb"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                      <div className="admin-image-preview-info">
+                        <span className="admin-image-preview-url" title={categoryForm.icon}>
+                          {categoryForm.icon.startsWith('data:') ? 'Ảnh tải lên từ máy tính' : categoryForm.icon}
+                        </span>
+                        <button
+                          type="button"
+                          className="admin-image-clear-btn"
+                          onClick={() => setCategoryForm((p) => ({ ...p, icon: '' }))}
+                        >
+                          <Trash2 size={12} />
+                          <span>Gỡ ảnh này</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Customer Icon Presets */}
                 <div className="cat-icon-presets" style={{ marginTop: '0.4rem' }}>
-                  <span className="cat-presets-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Biểu tượng danh mục:</span>
+                  <span className="cat-presets-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Biểu tượng gợi ý nhanh:</span>
                   <div className="cat-presets-list" style={{ marginTop: '0.35rem', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {CUSTOMER_ICON_PRESETS.map((preset) => {
                       const isSelected = categoryForm.icon === preset.url
@@ -662,12 +787,12 @@ export function AdminCategoryManagementPanel({
                             gap: '6px',
                             padding: '4px 10px',
                             borderRadius: '6px',
-                            border: isSelected ? '1.5px solid #b22830' : '1px solid var(--border-light)',
-                            background: isSelected ? '#fef2f2' : '#ffffff',
-                            color: isSelected ? '#b22830' : '#27272a',
+                            border: isSelected ? '1.5px solid #0f172a' : '1px solid var(--border-light)',
+                            background: isSelected ? '#f1f5f9' : '#ffffff',
+                            color: '#0f172a',
                             fontSize: '12px',
                             cursor: 'pointer',
-                            fontWeight: isSelected ? '600' : '400'
+                            fontWeight: isSelected ? '700' : '400'
                           }}
                           onClick={() => setCategoryForm((p) => ({ ...p, icon: preset.url }))}
                           title={preset.label}
@@ -713,9 +838,9 @@ export function AdminCategoryManagementPanel({
                   className="cat-btn cat-btn--success btn-save"
                   disabled={savingCategory || !categoryForm.label.trim()}
                   style={{
-                    background: "#18181b",
+                    background: "var(--primary)",
                     color: '#ffffff',
-                    border: '1px solid #18181b',
+                    border: '1px solid var(--primary)',
                     height: '38px',
                     padding: '0 1.35rem',
                     borderRadius: '6px',

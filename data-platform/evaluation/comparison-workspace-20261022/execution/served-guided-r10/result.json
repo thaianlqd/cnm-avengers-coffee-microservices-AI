@@ -1,0 +1,39 @@
+{
+  "mode": "served_real_ui_real_api_guided_zero_provider",
+  "started_at": "2026-10-22T16:37:08.789Z",
+  "checks": [
+    {
+      "id": "guided_member_meaning_and_verified_report",
+      "passed": true
+    },
+    {
+      "id": "every_offered_chart_compare_total_single",
+      "passed": true,
+      "charts": 5,
+      "extra_submissions": 0
+    },
+    {
+      "id": "real_save_reopen_and_word_preserve_selected_view",
+      "passed": true,
+      "extra_submissions": 0
+    }
+  ],
+  "submissions": [
+    {
+      "path": "/api/ai/analysis-jobs",
+      "at": "2026-10-22T16:37:15.385Z"
+    }
+  ],
+  "builds": [
+    {
+      "url": "http://localhost:8501/assets/index-Do9uYw5P.js",
+      "sha256": "0b51948dbf2e352ae0550cb61f8cf09e92205ae8f6791756f93f8ba95c533946"
+    }
+  ],
+  "job_id": "aj_4dc98bff2ea14884bdc70f1c521148cd",
+  "physical_http": 0,
+  "saved_report_id": "rpt_b641dddcdc4c",
+  "status": "FAIL",
+  "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Kiểm chứng & nguồn', exact: true })\u001b[22m\n",
+  "finished_at": "2026-10-22T16:38:00.900Z"
+}

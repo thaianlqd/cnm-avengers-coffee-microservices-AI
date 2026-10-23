@@ -211,17 +211,18 @@ def view_id(query_id, spec):
 
 def regroup(artifact, axis, members):
     """Re-key the member axis to composite member keys and combine rows of one member (governed law)."""
-    groups = {v: m['key'] for m in members for v in m.get('values') or [m['key']]}
+    groups = {}
+    for m in members:
+        for v in m.get('values') or [m['key']]:
+            groups.setdefault(v, []).append(m['key'])
     owners = {artifact.grounded.dimensions.get(d, {}).get('identity'): d for d in artifact.plan.dimensions}
     dims = [d for d in artifact.plan.dimensions if not (owners.get(d) == axis)]
     keep = (['period'] if artifact.plan.kind == 'trend' else []) + dims
     buckets = {}
     for r in artifact.result.get('rows', []):
-        key = groups.get(str(r.get(axis)))
-        if key is None:
-            continue
-        r = {**r, axis: key}
-        buckets.setdefault(tuple(str(r.get(f)) for f in keep), []).append(r)
+        for key in groups.get(str(r.get(axis)), []):
+            member_row = {**r, axis: key}
+            buckets.setdefault(tuple(str(member_row.get(f)) for f in keep), []).append(member_row)
     rows = []
     for members_rows in buckets.values():
         values, reason = _combine(members_rows, list(artifact.plan.metrics), artifact.grounded.metrics)
@@ -236,6 +237,16 @@ def regroup(artifact, axis, members):
 
 def project(artifact, axis, spec, registry, members=None):
     if members and any(m.get('values') for m in members):
+        raw_keys = [str(v) for m in members for v in m.get('values') or [m['key']]]
+        if len(raw_keys) != len(set(raw_keys)):
+            if spec['mode'] == 'total':
+                # Union the immutable raw axis rows once, before regrouping.
+                # Summing the displayed overlapping cohorts would double count.
+                rows = [r for r in artifact.result.get('rows', []) if str(r.get(axis)) in set(raw_keys)]
+                union = ProjectedArtifact(artifact, artifact.query.id, artifact.plan.dimensions, rows)
+                return _project(union, axis, spec, registry)
+            if spec.get('value_mode', 'absolute') != 'absolute':
+                return None, 'overlapping_members_share_unavailable'
         artifact, reason = regroup(artifact, axis, members)
         if artifact is None:
             return None, reason
@@ -503,6 +514,8 @@ def _mode_caption(frame, spec, registry, breakdown_label=None):
         text = f'Tổng của {len(names)} đối tượng đã chọn (' + ', '.join(names) + ')'
     else:
         text = 'Riêng ' + _member_label(frame, spec['member'])
+    if frame.get('overlap_policy') == 'raw_axis_union_without_double_count':
+        text += ' · Các nhóm có phần giao nhau; tổng gộp chỉ tính mỗi phần một lần'
     if breakdown_label:
         text += ' · ' + breakdown_label
     value_mode = spec.get('value_mode', 'absolute')
@@ -570,9 +583,10 @@ def attach_view_modes(charts, artifacts, catalog, reference=None, mission_id=Non
             # A multi-metric visual (e.g. revenue with AOV) is not one member projection; it stays as rendered.
             decisions.append(dict(chart_id=chart.get('id'), status='skipped', reason='multi_metric_chart'))
             continue
+        # A shared metric/axis does not make two independent questions one
+        # comparison. Bind only to the owning requirement (including its lenses).
         frame = next((f for f in frames if f['axis_dimension_id'] in artifact.plan.dimensions
-                      and (metric in f['metric_ids'] or chart.get('requirement_id') == f['requirement_id']
-                           or chart.get('relevance_role') == 'supporting')), None)
+                      and chart.get('requirement_id') in f.get('related_requirement_ids', [f['requirement_id']])), None)
         if frame is None:
             continue
         axis = frame['axis_dimension_id']
@@ -613,6 +627,11 @@ def attach_view_modes(charts, artifacts, catalog, reference=None, mission_id=Non
             variants.append(dict(id=projected.query.id, spec=spec, availability='available', payload=payload, insight=block))
         available = [v for v in variants if v['availability'] == 'available']
         if not available:
+            if frame.get('composite') and chart.get('relevance_role') == 'primary':
+                from services.analysis_catalog import AnalysisError
+                raise AnalysisError('unsupported',
+                    'Chưa thể tính nhóm gộp được yêu cầu từ kết quả hiện có. '
+                    'Chỉ số không cộng được cần truy vấn quần thể gốc; không thay bằng so sánh các nhóm con.')
             decisions.append(dict(chart_id=chart.get('id'), status='no_available_variant'))
             continue
         default = next((v for v in available if v['spec']['mode'] == 'compare' and v['spec'].get('value_mode', 'absolute') == 'absolute'), available[0])
@@ -624,6 +643,7 @@ def attach_view_modes(charts, artifacts, catalog, reference=None, mission_id=Non
         chart['comparison_frame_ref'] = frame['id']
         chart['view_modes'] = dict(
             policy_version=POLICY_VERSION, frame_id=frame['id'], axis_dimension_id=axis, axis_label=frame['axis_label'],
+            member_key_dimension=frame.get('member_key_dimension', axis),
             base_query_id=artifact.query.id, default_variant=default['id'], local_only=True,
             members=[m for m in frame['members'] if m['key'] in (frame.get('observed_members') or [m['key'] for m in frame['members']])],
             breakdown=dict(dimension_id=breakdowns[0][0], label=registry['dimensions'][breakdowns[0][0]]['business_name'],
@@ -688,14 +708,15 @@ def composite_members(axis, scope_resolution, registry, request_text=None, obser
         values = [str(v) for v in cohort.get('members') or []]
         label = ' + '.join(str(labels.get(v, v)) for v in values)
         out.append(dict(key=label, label=label, values=values))
-    seen = [v for m in out for v in m['values']]
-    return out if len(out) >= 2 and len(seen) == len(set(seen)) else None  # overlapping cohorts: no silent double count
+    return out if len(out) >= 2 else None
 
 
-def report_frames(intent, artifacts, registry, mission_id=None, scope_resolution=None, request_text=None):
+def report_frames(intent, artifacts, registry, mission_id=None, scope_resolution=None, request_text=None, coverage=None):
     """Comparison frames of the approved meaning, with observed/missing members from the requested result."""
     frames = []
-    for req in (intent or {}).get('requirements') or []:
+    owners = {op: c['requirement_id'] for c in coverage or [] for op in c.get('operation_ids', [])}
+    requirements = (intent or {}).get('requirements') or []
+    for req in requirements:
         found = member_axis(req, registry, mission_id, scope_resolution=scope_resolution)
         if not found:
             continue
@@ -703,7 +724,8 @@ def report_frames(intent, artifacts, registry, mission_id=None, scope_resolution
         observed = set()
         labels={}
         for a in artifacts.values():
-            if a.query.role == 'requested' and axis in a.plan.dimensions and not getattr(a.plan, 'ranking', None):
+            if (a.query.role == 'requested' and axis in a.plan.dimensions and not getattr(a.plan, 'ranking', None)
+                    and (coverage is None or owners.get(a.query.id) == req['id'])):
                 identity=registry['dimensions'][axis].get('identity')
                 key=identity if identity and any(f.get('dimension')==identity and f.get('operator')=='in' for f in req.get('filters',[])) else axis
                 observed |= {str(r.get(key)) for r in a.result.get('rows', []) if r.get(key) is not None}
@@ -712,6 +734,8 @@ def report_frames(intent, artifacts, registry, mission_id=None, scope_resolution
                     label=dimension_labeler(a.plan.dimensions,a.result.get('rows',[]),a.grounded.dimensions)
                     labels.update({str(r[key]):label(r,axis) for r in a.result.get('rows',[]) if r.get(key) is not None})
         frame = frame_for(req, registry, mission_id, observed=observed, scope_resolution=scope_resolution)
+        if frame:
+            frame['related_requirement_ids'] = [req['id']] + [r['id'] for r in requirements if r.get('supporting_for') == req['id']]
         if frame and labels:
             frame['members']=[dict(m,label=labels.get(m['key'],m['label'])) for m in frame['members']]
         requested_values = [m['key'] for m in frame['members']] if frame else []
@@ -720,6 +744,9 @@ def report_frames(intent, artifacts, registry, mission_id=None, scope_resolution
             frame.update(members=composite, composite=True, baseline_member_key=composite[-1]['key'] if len(composite) == 2 else None,
                          observed_members=[m['key'] for m in composite if set(m['values']) & observed],
                          missing_members=[m['key'] for m in composite if not set(m['values']) & observed])
+            keys=[v for m in composite for v in m['values']]
+            if len(keys)!=len(set(keys)):
+                frame['overlap_policy']='raw_axis_union_without_double_count'
         if frame and frame['id'] not in {f['id'] for f in frames}:
             frames.append(frame)
     return frames

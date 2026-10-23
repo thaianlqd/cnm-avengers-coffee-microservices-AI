@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Roboto', Arial, system-ui, sans-serif;
+  --font-sans: 'Montserrat', 'Roboto', Arial, system-ui, sans-serif;
   /* Highlands Coffee real colors */
-  --color-hc-red: #c41230;
+  --color-hc-red: #b22830;
   /* primary red */
-  --color-hc-red-dark: #a30f28;
+  --color-hc-red-dark: #941e28;
   /* hover state */
   --color-hc-cream: #f4f0eb;
   /* section backgrounds */
@@ -19,8 +19,8 @@
   /* accent gold */
 
   /* Legacy aliases — now mapped to red */
-  --color-tch-orange: #c41230;
-  --color-hc-green: #c41230;
+  --color-tch-orange: #b22830;
+  --color-hc-green: #b22830;
   --color-tch-bg: #ffffff;
   --color-tch-gray: #f4f0eb;
   --color-tch-text: #1a1a1a;
@@ -29,7 +29,7 @@
 body {
   background: #ffffff;
   color: #1a1a1a;
-  font-family: 'Roboto', Arial, system-ui, sans-serif;
+  font-family: 'Montserrat', 'Roboto', Arial, system-ui, sans-serif;
   font-weight: 400;
   line-height: 1.6;
 }
@@ -41,9 +41,9 @@ h4,
 h5,
 h6,
 .brand-serif {
-  font-family: 'Roboto', Arial, system-ui, sans-serif;
+  font-family: 'Montserrat', 'Roboto', Arial, system-ui, sans-serif;
   letter-spacing: -0.015em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Custom scrollbar - HC red */
@@ -379,6 +379,7 @@ h6,
 .support-search input { width: 100%; outline: 0; font-size: 15px; min-width: 0; }
 .support-search:focus-within { border-color: #b22830; box-shadow: 0 0 0 1px #b22830; }
 .support-body { max-width: 1280px; margin: auto; padding: 64px 32px; display: grid; grid-template-columns: 280px 1fr; gap: 72px; }
+.support-body > * { min-width: 0; }
 .support-sidebar nav { display: flex; flex-direction: column; margin-top: 16px; }
 .support-sidebar nav button { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; padding: 16px 0; border-bottom: 1px solid #eee; cursor: pointer; font-size: 15px; }
 .support-sidebar nav button[aria-pressed=true] { color: #b22830; font-weight: 700; }

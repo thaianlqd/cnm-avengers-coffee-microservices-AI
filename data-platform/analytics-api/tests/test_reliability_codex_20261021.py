@@ -213,6 +213,58 @@ class CanonicalCompanionTests(f.unittest.TestCase):
             metric_locks(anchors,self.catalog.registry),self.catalog)
         self.assertEqual(out.requirements[0].metric_ids,['revenue','store_revenue'])
 
+    def test_grouping_or_filter_does_not_qualify_a_replacement_definition(self):
+        from services.request_anchors import request_anchors
+        from services.semantic_preflight_contract import metric_locks,enforce_metric_locks
+        from services.analysis_intent import AnalysisIntentEnvelope
+        cases=[('Top 5 cửa hàng có doanh thu cao nhất tháng 9 năm 2026','store_revenue','store'),
+               ('So sánh doanh thu kiosk với chi nhánh chính tại Hà Nội năm 2026','store_revenue','store_type'),
+               ('Doanh thu theo phương thức thanh toán năm 2026','payment_revenue','payment_method')]
+        for question,metric,axis in cases:
+            with self.subTest(axis=axis):
+                req=f.requirement(metric_ids=[metric],dimension_ids=[axis],analysis_kind='aggregate',
+                    ranking=None,derived_features=[])
+                anchors=request_anchors(question,self.catalog,{})
+                intent=AnalysisIntentEnvelope.model_validate(f.envelope(req))
+                out,changes,_=enforce_metric_locks(intent,metric_locks(anchors,self.catalog.registry),self.catalog)
+                self.assertEqual(out.requirements[0].metric_ids,['revenue'])
+                self.assertTrue(changes)
+                self.assertEqual(out.requirements[0].dimension_ids,[axis])
+
+    def test_explicit_specialized_definition_protects_only_exact_declared_equivalents(self):
+        from services.request_anchors import request_anchors
+        from services.semantic_preflight_contract import metric_locks,enforce_metric_locks
+        from services.analysis_intent import AnalysisIntentEnvelope
+        from unittest.mock import patch
+        anchors=request_anchors('Doanh thu và doanh thu sản phẩm trong 90 ngày gần nhất',self.catalog,{})
+        locks=metric_locks(anchors,self.catalog.registry)
+        intent=AnalysisIntentEnvelope.model_validate(f.envelope(f.requirement(
+            metric_ids=['revenue','item_revenue'],dimension_ids=[],analysis_kind='aggregate',
+            ranking=None,derived_features=[])))
+        out,_,_=enforce_metric_locks(intent,locks,self.catalog)
+        self.assertEqual(out.requirements[0].metric_ids,['revenue','item_revenue'])
+        # A shared noun or group tag cannot protect a measure with a different
+        # expression/grain; the existing exact-equivalence contract is required.
+        with patch.dict(self.catalog.registry['metrics']['item_revenue'],{'expression':'COUNT(*)'}):
+            changed,_,_=enforce_metric_locks(intent,locks,self.catalog)
+            self.assertEqual(changed.requirements[0].metric_ids,['revenue'])
+
+    def test_governed_population_qualifier_preserves_non_null_cohort(self):
+        from services.request_anchors import request_anchors
+        from services.semantic_preflight_contract import metric_locks,enforce_metric_locks
+        from services.analysis_intent import AnalysisIntentEnvelope
+        from unittest.mock import patch
+        anchors=request_anchors('Số đơn dùng từng voucher trong 60 ngày gần nhất',self.catalog,{})
+        locks=metric_locks(anchors,self.catalog.registry)
+        intent=AnalysisIntentEnvelope.model_validate(f.envelope(f.requirement(
+            metric_ids=['voucher_order_count'],dimension_ids=['promotion'],analysis_kind='aggregate',
+            ranking=None,derived_features=[])))
+        out,_,_=enforce_metric_locks(intent,locks,self.catalog)
+        self.assertEqual(out.requirements[0].metric_ids,['voucher_order_count'])
+        with patch.dict(self.catalog.registry['metrics']['voucher_order_count'],{'required_non_null':[]}):
+            changed,_,_=enforce_metric_locks(intent,locks,self.catalog)
+            self.assertEqual(changed.requirements[0].metric_ids,['order_count'])
+
 
 class CohortSelectionIdentityTests(f.unittest.TestCase):
     setUp = f.HybridTests.setUp
