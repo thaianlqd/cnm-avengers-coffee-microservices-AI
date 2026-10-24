@@ -1,3 +1,11 @@
+import ArticleEditor from './ArticleEditor'
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { Input } from '../../../components/ui/input'
+import { Label } from '../../../components/ui/label'
+import { Textarea } from '../../../components/ui/textarea'
+import SearchableSelect from '../../../components/console/SearchableSelect'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import { Check as WorkspaceSymbolCheck } from '../../../components/console/WorkspaceIcons'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -253,6 +261,8 @@ export function NewsPanel() {
     ? URL.createObjectURL(imageFile)
     : resolveImageUrl(activeArticle?.image_url)
 
+  if (editorOpen) return <ArticleEditor form={form} setForm={setForm} onSubmit={handleSave} onBack={() => setEditorOpen(false)} busy={submitting} error={error} imagePreview={imagePreview} onImageChange={setImageFile} editing={Boolean(activeArticleId)} />
+
   return (
     <div className="panel-container" style={{
       padding: '1.75rem',
@@ -271,7 +281,7 @@ export function NewsPanel() {
         marginBottom: '1.5rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
+          <div className="operational-title-decoration" style={{
             width: '42px',
             height: '42px',
             borderRadius: '12px',
@@ -284,17 +294,17 @@ export function NewsPanel() {
           }}>
             <Newspaper size={24} />
           </div>
-          <div>
+          <WorkspacePanelIntro><div>
             <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#252927' }}>
               Quản lý Tin Tức & Bài Viết
             </h2>
             <span style={{ fontSize: '0.825rem', color: '#69736a' }}>
               Đăng tin tức, bài viết blog, chương trình khuyến mãi và tải ảnh minh họa bài viết
             </span>
-          </div>
+          </div></WorkspacePanelIntro>
         </div>
 
-        <button
+        <Button
           type="button"
           onClick={resetForCreate}
           style={{
@@ -314,11 +324,11 @@ export function NewsPanel() {
           }}
         >
           <Plus size={18} /> Soạn bài viết mới
-        </button>
+        </Button>
       </div>
 
       {/* Summary Cards */}
-      <div style={{
+      <div className="news-summary-cards" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
         gap: '1rem',
@@ -474,16 +484,16 @@ export function NewsPanel() {
             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <FolderKanban size={18} color="#2563eb" /> Danh sách bài viết
             </h3>
-            <span className="workspace-inline-label" style={{ fontSize: '0.8rem', color: '#69736a', fontWeight: '600', background: 'var(--primary-light)', padding: '0.2rem 0.6rem', borderRadius: '9999px' }}>
+            <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{ fontSize: '0.8rem', color: '#69736a', fontWeight: '600', background: 'var(--primary-light)', padding: '0.2rem 0.6rem', borderRadius: '9999px' }}>
               {filteredArticles.length} kết quả
-            </span>
+            </Badge>
           </div>
 
           {/* Search & Category Filter */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <div style={{ position: 'relative', width: '100%' }}>
               <Search size={16} color="#85907d" style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)' }} />
-              <input
+              <Input data-input-prefix="true"
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -499,7 +509,7 @@ export function NewsPanel() {
                 }}
               />
               {search && (
-                <button
+                <Button
                   type="button"
                   onClick={() => setSearch('')}
                   style={{
@@ -514,13 +524,13 @@ export function NewsPanel() {
                   }}
                 >
                   <X size={14} />
-                </button>
+                </Button>
               )}
             </div>
 
             {/* Category chips */}
             <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-              <button
+              <Button data-selected={filterCat === ''}
                 type="button"
                 onClick={() => { setFilterCat(''); setPage(1); }}
                 style={{
@@ -535,9 +545,9 @@ export function NewsPanel() {
                 }}
               >
                 Tất cả
-              </button>
+              </Button>
               {['BLOG', 'COFFEEHOLIC', 'TEAHOLIC'].map((cat) => (
-                <button
+                <Button data-selected={filterCat === cat}
                   key={cat}
                   type="button"
                   onClick={() => { setFilterCat(cat); setPage(1); }}
@@ -553,7 +563,7 @@ export function NewsPanel() {
                   }}
                 >
                   {cat}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -594,7 +604,7 @@ export function NewsPanel() {
                       <h4 style={{ margin: 0, fontSize: '0.925rem', fontWeight: '700', color: '#252927', lineHeight: 1.35 }}>
                         {article.title}
                       </h4>
-                      <span className="workspace-inline-label" style={{
+                      <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{
                         fontSize: '0.7rem',
                         fontWeight: '700',
                         padding: '0.15rem 0.5rem',
@@ -604,19 +614,19 @@ export function NewsPanel() {
                         color: article.is_published ? '#1d4ed8' : '#b45309'
                       }}>
                         {article.is_published ? 'Đã xuất bản' : 'Bản nháp'}
-                      </span>
+                      </Badge>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.775rem', color: '#69736a', flexWrap: 'wrap', gap: '0.4rem' }}>
-                      <span style={{ background: 'var(--primary-subtle)', color: 'var(--primary)', padding: '0.1rem 0.45rem', borderRadius: '4px', fontWeight: '600' }}>
+                      <Badge variant="outline" data-quiet-label="true" style={{ background: 'var(--primary-subtle)', color: 'var(--primary)', padding: '0.1rem 0.45rem', borderRadius: '4px', fontWeight: '600' }}>
                         {article.category || 'BLOG'}
-                      </span>
+                      </Badge>
                       <span>Tác giả: <strong>{article.author_name || 'Nhân viên'}</strong></span>
                       <span>{fmtDate(article.created_at)}</span>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.2rem' }}>
-                      <button
+                    <div data-modal-actions="true" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.2rem' }}>
+                      <Button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setActiveArticleId(article.id); setError(''); setEditorOpen(true); }}
                         style={{
@@ -634,9 +644,9 @@ export function NewsPanel() {
                         }}
                       >
                         <Edit3 size={12} /> Chỉnh sửa
-                      </button>
+                      </Button>
 
-                      <button
+                      <Button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleDelete(article.id); }}
                         disabled={deletingId === article.id}
@@ -655,7 +665,7 @@ export function NewsPanel() {
                         }}
                       >
                         <Trash2 size={12} /> {deletingId === article.id ? 'Đang xóa...' : 'Xóa'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )
@@ -665,7 +675,7 @@ export function NewsPanel() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div style={{
+            <div data-modal-actions="true" style={{
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -674,7 +684,7 @@ export function NewsPanel() {
               paddingTop: '0.75rem',
               borderTop: '1px solid #f4f5f2'
             }}>
-              <button
+              <Button
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={safePage === 1}
@@ -693,13 +703,13 @@ export function NewsPanel() {
                 }}
               >
                 <ChevronLeft size={14} /> Trước
-              </button>
+              </Button>
 
               <span style={{ fontSize: '0.8rem', color: '#69736a', fontWeight: '600', padding: '0 0.5rem' }}>
                 Trang {safePage} / {totalPages}
               </span>
 
-              <button
+              <Button
                 type="button"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={safePage === totalPages}
@@ -718,304 +728,13 @@ export function NewsPanel() {
                 }}
               >
                 Tiếp <ChevronRight size={14} />
-              </button>
+              </Button>
             </div>
           )}
         </div>
 
         {/* RIGHT COLUMN: ARTICLE EDITOR FORM */}
-        {editorOpen && <WorkspaceDialog label={activeArticleId ? 'Cập nhật bài viết' : 'Soạn bài viết mới'} title="Biên tập bài viết" busy={submitting} onClose={() => setEditorOpen(false)} className="workspace-dialog--wide"><div className="workspace-news-editor" style={{
-          background: '#ffffff',
-          borderRadius: '18px',
-          border: '1px solid #e2e4df',
-          padding: '1.25rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid #f4f5f2',
-            paddingBottom: '0.75rem',
-            marginBottom: '1rem'
-          }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <FileEdit size={18} color="#3b82f6" />
-              {activeArticleId ? 'Cập nhật bài viết' : 'Soạn bài viết mới'}
-            </h3>
-            {activeArticleId && (
-              <button
-                type="button"
-                onClick={resetForCreate}
-                style={{
-                  background: '#f4f5f2',
-                  border: 'none',
-                  color: '#596255',
-                  padding: '0.3rem 0.65rem',
-                  borderRadius: '6px',
-                  fontSize: '0.775rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}
-              >
-                <Plus size={13} /> Tạo mới
-              </button>
-            )}
-          </div>
 
-          {error && <p className="workspace-form-error" role="alert">{error}</p>}
-          <form className="workspace-form" onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {/* Title */}
-            <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
-                Tiêu đề bài viết <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                placeholder="Nhập tiêu đề hấp dẫn cho bài viết..."
-                style={{
-                  width: '100%',
-                  padding: '0.55rem 0.75rem',
-                  borderRadius: '10px',
-                  border: '1px solid #ccd3c7',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: '#252927',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            {/* Category & Author */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '0.75rem' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
-                  Danh mục
-                </label>
-                <select
-                  value={form.category}
-                  onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '0.55rem 0.75rem',
-                    borderRadius: '10px',
-                    border: '1px solid #ccd3c7',
-                    fontSize: '0.85rem',
-                    color: '#30382e',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  <option value="COFFEEHOLIC">Góc Cà Phê (COFFEEHOLIC)</option>
-                  <option value="TEAHOLIC">Góc Trà (TEAHOLIC)</option>
-                  <option value="BLOG">Tin Tức & Blog (BLOG)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
-                  Tác giả
-                </label>
-                <input
-                  type="text"
-                  value={form.author_name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, author_name: e.target.value }))}
-                  placeholder="Tên tác giả / NV"
-                  style={{
-                    width: '100%',
-                    padding: '0.55rem 0.75rem',
-                    borderRadius: '10px',
-                    border: '1px solid #ccd3c7',
-                    fontSize: '0.85rem',
-                    color: '#30382e',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
-                Mô tả ngắn (tóm tắt)
-              </label>
-              <textarea
-                rows={2}
-                value={form.description}
-                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Mô tả ngắn hiển thị trên thẻ bài viết..."
-                style={{
-                  width: '100%',
-                  padding: '0.55rem 0.75rem',
-                  borderRadius: '10px',
-                  border: '1px solid #ccd3c7',
-                  fontSize: '0.85rem',
-                  resize: 'vertical',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            {/* Content */}
-            <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.3rem' }}>
-                Nội dung chi tiết bài viết <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <textarea
-                rows={6}
-                value={form.content}
-                onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
-                placeholder="Soạn thảo nội dung bài viết đầy đủ tại đây..."
-                style={{
-                  width: '100%',
-                  padding: '0.55rem 0.75rem',
-                  borderRadius: '10px',
-                  border: '1px solid #ccd3c7',
-                  fontSize: '0.875rem',
-                  resize: 'vertical',
-                  boxSizing: 'border-box',
-                  lineHeight: 1.5
-                }}
-              />
-            </div>
-
-            {/* Upload Image */}
-            <div style={{
-              background: '#f8f9f6',
-              padding: '0.85rem',
-              borderRadius: '12px',
-              border: '1px solid #e2e4df',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem'
-            }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <ImageIcon size={15} color="#3b82f6" /> Ảnh đại diện bài viết
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                style={{ fontSize: '0.825rem' }}
-              />
-              {activeArticleId && !imageFile && (
-                <small style={{ color: '#69736a' }}>Bỏ trống để giữ ảnh hiện tại, chọn ảnh mới để thay thế.</small>
-              )}
-              {imageFile && (
-                <small style={{ color: '#2563eb', fontWeight: '600' }}><WorkspaceSymbolCheck size="1.1em" aria-hidden="true" /> Đã chọn ảnh mới: {imageFile.name}</small>
-              )}
-
-              {imagePreview && (
-                <div style={{ marginTop: '0.35rem' }}>
-                  <img
-                    src={imagePreview}
-                    alt="Xem trước ảnh bài viết"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '160px',
-                      borderRadius: '8px',
-                      objectFit: 'cover',
-                      border: '1px solid #e2e4df'
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Is Published Toggle Checkbox */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '10px',
-              background: form.is_published ? "#f4f5f2" : "#f4f5f2",
-              border: form.is_published ? '1px solid #bfdbfe' : '1px solid #fde68a'
-            }}>
-              <input
-                id="is-published-cb"
-                type="checkbox"
-                checked={Boolean(form.is_published)}
-                onChange={(e) => setForm((prev) => ({ ...prev, is_published: e.target.checked }))}
-                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-              />
-              <label htmlFor="is-published-cb" style={{ fontSize: '0.85rem', fontWeight: '700', color: form.is_published ? '#1d4ed8' : '#b45309', cursor: 'pointer' }}>
-                Xuất bản công khai ngay (Published)
-              </label>
-            </div>
-
-            {/* Submit Action Buttons */}
-            <button type="button" className="workspace-secondary-button" disabled={submitting} onClick={() => setEditorOpen(false)}>Hủy</button>
-            <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.5rem' }}>
-              <button
-                type="submit"
-                disabled={submitting}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.4rem',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: "var(--primary)",
-                  color: '#ffffff',
-                  fontSize: '0.9rem',
-                  fontWeight: '700',
-                  cursor: submitting ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 10px rgba(59, 130, 246, 0.25)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {submitting ? (
-                  <>
-                    <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> Đang lưu...
-                  </>
-                ) : (
-                  <>
-                    <Save size={16} /> {activeArticleId ? 'Cập nhật bài viết' : 'Lưu & Đăng bài viết'}
-                  </>
-                )}
-              </button>
-
-              {activeArticleId && (
-                <button
-                  type="button"
-                  onClick={() => handleDelete(activeArticleId)}
-                  disabled={deletingId === activeArticleId}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.4rem',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: '#ef4444',
-                    color: '#ffffff',
-                    fontSize: '0.9rem',
-                    fontWeight: '700',
-                    cursor: deletingId === activeArticleId ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 4px 10px rgba(239, 68, 68, 0.25)',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <Trash2 size={16} /> {deletingId === activeArticleId ? 'Đang xóa...' : 'Xóa bài'}
-                </button>
-              )}
-            </div>
-          </form>
-        </div></WorkspaceDialog>}
       </div>
     </div>
   )

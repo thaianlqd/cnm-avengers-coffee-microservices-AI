@@ -1,3 +1,6 @@
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import { Button } from '../../../components/ui/button'
+import { Table } from '../../../components/ui/table'
 import { money, number } from "../../../components/console/chartModel";
 import { Store, ShoppingBag, Coffee, CheckCircle2, Wallet } from '../../../components/console/WorkspaceIcons';
 import {
@@ -23,10 +26,10 @@ export function OverviewPanel({
   const summary = overviewData.summary || {};
   const chartData = overviewData.chartData || overviewData;
   return (
-    <section className="console-dashboard">
+    <section className="console-dashboard manager-overview">
       <div className="console-page-heading">
-        <div>
-          <span className="console-eyebrow">VẬN HÀNH CHI NHÁNH</span>
+        <WorkspacePanelIntro><div>
+
           <h1>
             <Store size={24} /> {branchName || "Tổng quan cửa hàng"}
           </h1>
@@ -34,16 +37,16 @@ export function OverviewPanel({
             Đơn hàng, giá trị bán hàng và tình hình thực đơn trong cùng một góc
             nhìn.
           </p>
-        </div>
+        </div></WorkspacePanelIntro>
         <div className="console-segments" aria-label="Khoảng thời gian">
           {OVERVIEW_TIME_RANGES.map((range) => (
-            <button
+            <Button
               key={range.id}
               onClick={() => setOverviewRange(range.id)}
               aria-pressed={overviewRange === range.id}
             >
               {range.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -96,6 +99,7 @@ export function OverviewPanel({
             />
             <Chart
               title="Trạng thái đơn hàng"
+              type="donut"
               subtitle={`Số đơn · ${overviewData.chartPeriod?.label || 'kỳ đã chọn'}`}
               rows={(chartData.statusRows || []).map((row) => ({
                 label: ORDER_STATUS_LABEL[row.status] || row.status,
@@ -116,24 +120,6 @@ export function OverviewPanel({
               subtitle={`Mọi trạng thái đơn · ${overviewData.chartPeriod?.label || 'kỳ đã chọn'}`}
               rows={(chartData.topItems || []).map(item => ({ label: item.ten_san_pham, value: item.so_luong }))}
             />
-            <Chart
-              title="Tình trạng tồn kho"
-              subtitle="Số món theo tồn kho hiện tại; mỗi món thuộc một nhóm"
-              type="donut"
-              rows={[
-                { label: 'Còn hàng trên mức cảnh báo', value: Math.max(0, (overviewData.stockSummary?.available || 0) - (overviewData.stockSummary?.lowStock || 0)), color: '#3b82f6' },
-                { label: 'Sắp hết hàng', value: overviewData.stockSummary?.lowStock || 0, color: '#eba341' },
-                { label: 'Hết hàng', value: overviewData.stockSummary?.outOfStock || 0, color: '#e65d78' },
-              ]}
-            />
-            <Chart
-              title="Phân bố đơn theo khung giờ"
-              subtitle={`Mật độ đặt hàng gần đây · ${overviewData.chartPeriod?.label || 'kỳ đã chọn'}`}
-              rows={(overviewData.hourly || []).map((h) => ({
-                label: h.label,
-                value: h.value,
-              }))}
-            />
           </div>
           <div className="console-two-columns">
             <article className="console-card">
@@ -142,7 +128,7 @@ export function OverviewPanel({
                 Theo cùng kỳ với biểu đồ, bao gồm các trạng thái đơn.
               </p>
               <div className="console-table-scroll">
-                <table>
+                <Table>
                   <thead>
                     <tr>
                       <th>Món</th>
@@ -159,7 +145,7 @@ export function OverviewPanel({
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Table>
                 {!chartData.topItems?.length && (
                   <p className="console-muted">
                     Chưa có món được đặt trong khoảng này.

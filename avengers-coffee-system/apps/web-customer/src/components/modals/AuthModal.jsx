@@ -6,7 +6,6 @@ import { GoogleOAuthProvider, GoogleLogin, useGoogleLogin } from '@react-oauth/g
 import ReCAPTCHA from 'react-google-recaptcha';
 import { postAuthRequest } from '../../lib/authRequest';
 
-const BRAND_LOGO = 'A';
 
 function AuthModalInner({
   isOpen,
@@ -343,7 +342,7 @@ function AuthModalInner({
         <div className="p-10">
           <div className="mb-8 rounded-3xl border border-[#f3dfcf] bg-gradient-to-br from-[#fff9f2] to-[#fff2e6] px-4 py-5 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f1842a] to-[#d85f1f] text-2xl font-semibold text-white shadow-lg shadow-orange-200">
-              {BRAND_LOGO}
+              <img src="/images/brand/logo-white.svg" alt="Avengers Coffee" className="h-9 w-10 object-contain" />
             </div>
             <p className="text-[11px] font-semibold  tracking-[0.2em] text-[#d06a2e]">The Avengers Coffee</p>
             <h2 className="mt-2 text-2xl font-semibold  italic tracking-tighter text-[#1f1a17]">

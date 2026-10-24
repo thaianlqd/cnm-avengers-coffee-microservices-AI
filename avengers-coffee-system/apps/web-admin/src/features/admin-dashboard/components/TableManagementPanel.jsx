@@ -1,3 +1,8 @@
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import StatusBadge from '../../../components/console/StatusBadge'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { Input } from '../../../components/ui/input'
 import { PaginatedList } from '../../../components/console/CompactPagination'
 import React, { useMemo, useState } from 'react'
 import {
@@ -30,8 +35,8 @@ import { fmtMoney, normalizeOrderStatus } from '../utils'
 // Component hiển thị mã QR đặt món trực tiếp tại bàn
 const QRCodeDisplay = ({ tableId, storeId }) => {
   const [copied, setCopied] = useState(false)
-  const baseUrl = import.meta.env.VITE_CUSTOMER_WEB_URL || 'http://127.0.0.1:5175'
-  const qrUrl = `${baseUrl}/?storeId=${storeId}&tableId=${tableId}&tab=cart`
+  const baseUrl = import.meta.env.VITE_TABLE_ORDER_URL || `${window.location.protocol}//${window.location.hostname}:5176`
+  const qrUrl = `${baseUrl}/?storeId=${encodeURIComponent(storeId)}&tableId=${encodeURIComponent(tableId)}`
   const imgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl)}&margin=10`
 
   const handleCopyLink = () => {
@@ -92,7 +97,7 @@ const QRCodeDisplay = ({ tableId, storeId }) => {
       </div>
 
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center', width: '100%', maxWidth: '380px' }}>
-        <button
+        <Button
           onClick={handleCopyLink}
           style={{
             flex: 1,
@@ -113,7 +118,7 @@ const QRCodeDisplay = ({ tableId, storeId }) => {
         >
           {copied ? <Check size={16} color="#2563eb" /> : <Copy size={16} />}
           {copied ? 'Đã sao chép link!' : 'Sao chép liên kết'}
-        </button>
+        </Button>
 
         <a
           href={qrUrl}
@@ -137,7 +142,7 @@ const QRCodeDisplay = ({ tableId, storeId }) => {
           }}
         >
           <ExternalLink size={16} />
-          Mở link thử nghiệm
+          Mở liên kết
         </a>
       </div>
     </div>
@@ -370,7 +375,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 0' }}>
-                  <span className="workspace-inline-label" style={{
+                  <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{
                     fontSize: '0.8rem',
                     color: '#6b7280',
                     fontWeight: '500',
@@ -379,7 +384,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                     borderRadius: '9999px'
                   }}>
                     Bàn trống
-                  </span>
+                  </Badge>
                   <span style={{ fontSize: '0.75rem', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <QrCode size={12} /> Quét QR đặt món
                   </span>
@@ -481,7 +486,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               </div>
             </div>
 
-            <button
+            <Button
               onClick={() => setSelectedTable(null)}
               style={{
                 background: 'rgba(255, 255, 255, 0.15)',
@@ -500,7 +505,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)' }}
             >
               <X size={20} />
-            </button>
+            </Button>
           </div>
 
           {/* Modal Navigation Tabs */}
@@ -510,7 +515,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             borderBottom: '1px solid #e2e4df',
             padding: '0.35rem 1rem 0 1rem'
           }}>
-            <button
+            <Button
               onClick={() => setActiveModalTab('orders')}
               style={{
                 flex: 1,
@@ -530,9 +535,9 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               }}
             >
               <Receipt size={16} /> Đơn Hàng Tại Bàn {isOccupied && `(${activeOrders.length})`}
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => setActiveModalTab('qr')}
               style={{
                 flex: 1,
@@ -552,7 +557,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               }}
             >
               <QrCode size={16} /> Mã QR Đặt Món
-            </button>
+            </Button>
           </div>
 
           {/* Modal Body */}
@@ -586,16 +591,9 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                             #{order.ma_don_hang.substring(0, 8).toUpperCase()}
                           </strong>
                         </div>
-                        <span className="workspace-inline-label" style={{
-                          fontSize: '0.8rem',
-                          fontWeight: '700',
-                          padding: '0.25rem 0.65rem',
-                          borderRadius: '9999px',
-                          backgroundColor: "#f4f5f2",
-                          color: '#1d4ed8'
-                        }}>
+                        <StatusBadge status={order.trang_thai_don_hang} className="workspace-inline-label">
                           {ORDER_STATUS_LABEL[normalizeOrderStatus(order.trang_thai_don_hang)]}
-                        </span>
+                        </StatusBadge>
                       </div>
 
                       {/* Khách hàng */}
@@ -630,7 +628,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={{ color: '#30382e', fontWeight: '600' }}>
-                                <span style={{
+                                <Badge variant="outline" data-quiet-label="true" style={{
                                   display: 'inline-block',
                                   width: '20px',
                                   height: '20px',
@@ -644,7 +642,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                                   fontWeight: 'bold'
                                 }}>
                                   {item.so_luong}
-                                </span>
+                                </Badge>
                                 {item.ten_san_pham}
                               </span>
                               <span style={{ fontWeight: '700', color: '#252927' }}>
@@ -677,7 +675,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
 
                       {/* Nút hành động */}
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                        <button
+                        <Button
                           onClick={() => {
                             onUpdateStatus(order.ma_don_hang, 'HOAN_THANH')
                             setSelectedTable(null)
@@ -701,7 +699,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                           onMouseLeave={(e) => { e.currentTarget.style.background = '#3b82f6' }}
                         >
                           <CheckCircle2 size={18} /> Hoàn tất & Trả bàn
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )}</PaginatedList>
@@ -719,7 +717,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                   <p style={{ margin: '0 0 1.25rem 0', color: '#69736a', fontSize: '0.875rem' }}>
                     Chưa có đơn hàng nào phát sinh tại bàn này. Bạn có thể giơ mã QR cho khách hàng đặt món.
                   </p>
-                  <button
+                  <Button
                     onClick={() => setActiveModalTab('qr')}
                     style={{
                       background: 'var(--primary)',
@@ -736,7 +734,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                     }}
                   >
                     <QrCode size={16} /> Xem mã QR đặt món
-                  </button>
+                  </Button>
                 </div>
               )
             ) : (
@@ -767,7 +765,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{
+            <div className="operational-title-decoration" style={{
               width: '40px',
               height: '40px',
               borderRadius: '12px',
@@ -780,14 +778,14 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             }}>
               <Coffee size={22} />
             </div>
-            <div>
+            <WorkspacePanelIntro><div>
               <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#252927' }}>
                 Quản lý & Sơ đồ Bàn
               </h2>
               <span style={{ fontSize: '0.825rem', color: '#69736a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <Store size={14} color="#2563eb" /> Cơ sở: <strong>{storeId}</strong>
               </span>
-            </div>
+            </div></WorkspacePanelIntro>
           </div>
         </div>
 
@@ -827,128 +825,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
       </div>
 
       {/* Summary Cards Row */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1rem',
-        marginBottom: '1.5rem'
-      }}>
-        {/* Total Tables Card */}
-        <div style={{
-          background: '#ffffff',
-          padding: '1.15rem 1.25rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'var(--primary-light)',
-            color: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Grid size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: '#69736a', fontWeight: '500' }}>Tổng số bàn</div>
-            <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#30382e' }}>{stats.total} bàn</div>
-          </div>
-        </div>
 
-        {/* Occupied Tables Card */}
-        <div style={{
-          background: '#ffffff',
-          padding: '1.15rem 1.25rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: "#f4f5f2",
-            color: '#2563eb',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Utensils size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: '#69736a', fontWeight: '500' }}>Đang phục vụ</div>
-            <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#2563eb' }}>{stats.occupied} bàn</div>
-          </div>
-        </div>
-
-        {/* Available Tables Card */}
-        <div style={{
-          background: '#ffffff',
-          padding: '1.15rem 1.25rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: '#f8f9f6',
-            color: '#69736a',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <CheckCircle2 size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: '#69736a', fontWeight: '500' }}>Bàn trống</div>
-            <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#414743' }}>{stats.empty} bàn</div>
-          </div>
-        </div>
-
-        {/* Active Revenue Card */}
-        <div style={{
-          background: '#ffffff',
-          padding: '1.15rem 1.25rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: "#f4f5f2",
-            color: '#d97706',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <DollarSign size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: '#69736a', fontWeight: '500' }}>Doanh thu tạm tính</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#d97706' }}>{fmtMoney(stats.revenue)}</div>
-          </div>
-        </div>
-      </div>
 
       {/* Control Bar: Filter Tabs & Search Bar */}
       <div style={{
@@ -964,7 +841,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
       }}>
         {/* Status Filter Tabs */}
         <div style={{ display: 'flex', gap: '0.5rem', background: '#f4f5f2', padding: '0.25rem', borderRadius: '10px' }}>
-          <button
+          <Button data-selected={filterStatus === 'ALL'}
             onClick={() => setFilterStatus('ALL')}
             style={{
               padding: '0.5rem 1rem',
@@ -980,9 +857,9 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             }}
           >
             Tất cả ({stats.total})
-          </button>
+          </Button>
 
-          <button
+          <Button data-selected={filterStatus === 'OCCUPIED'}
             onClick={() => setFilterStatus('OCCUPIED')}
             style={{
               padding: '0.5rem 1rem',
@@ -998,9 +875,9 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             }}
           >
             Đang phục vụ ({stats.occupied})
-          </button>
+          </Button>
 
-          <button
+          <Button data-selected={filterStatus === 'EMPTY'}
             onClick={() => setFilterStatus('EMPTY')}
             style={{
               padding: '0.5rem 1rem',
@@ -1016,7 +893,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             }}
           >
             Bàn trống ({stats.empty})
-          </button>
+          </Button>
         </div>
 
         {/* Search Input */}
@@ -1026,7 +903,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             color="#85907d"
             style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }}
           />
-          <input
+          <Input data-input-prefix="true"
             type="text"
             placeholder="Tìm theo số bàn hoặc tên khách..."
             value={searchQuery}
@@ -1045,7 +922,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             onBlur={(e) => { e.target.style.borderColor = '#ccd3c7' }}
           />
           {searchQuery && (
-            <button
+            <Button
               onClick={() => setSearchQuery('')}
               style={{
                 position: 'absolute',
@@ -1062,7 +939,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               }}
             >
               <X size={16} />
-            </button>
+            </Button>
           )}
         </div>
       </div>

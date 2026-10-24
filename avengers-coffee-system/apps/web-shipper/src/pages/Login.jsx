@@ -52,7 +52,7 @@ export default function Login() {
         <div className="bg-neutral-900 p-8 text-center text-white">
           <div className="flex justify-center mb-4">
             <div className="bg-white rounded-full p-4">
-              <MapPin className="w-8 h-8 text-neutral-800" />
+              <img src="/images/brand/logo.svg" alt="Avengers Coffee" className="w-14 h-12 object-contain"/>
             </div>
           </div>
           <h1 className="text-2xl font-medium">Avengers Delivery</h1>

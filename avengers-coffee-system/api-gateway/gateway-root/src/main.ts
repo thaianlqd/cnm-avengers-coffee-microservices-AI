@@ -62,6 +62,7 @@ async function bootstrap() {
         '/reviews',
         '/branch-reviews',
         '/surveys',
+        '/table-order',
         '/shippers',
         '/vouchers',
         '/sepay_webhook.php',

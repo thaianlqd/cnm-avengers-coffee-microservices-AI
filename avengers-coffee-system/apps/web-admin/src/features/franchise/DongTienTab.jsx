@@ -1,8 +1,16 @@
+import { franchiseApi as apiFetch } from './franchiseApi'
+import { FranchiseFeedback } from './FranchiseWorkspaceUI'
+import { KioskTableLoading } from './KioskShiftPanel'
+import { Input } from '../../components/ui/input'
+import { Button } from '../../components/ui/button'
+import { Table } from '../../components/ui/table'
+import { Label } from '../../components/ui/label'
+import { Textarea } from '../../components/ui/textarea'
+import SearchableSelect from '../../components/console/SearchableSelect'
 import { PaginatedList } from '../../components/console/CompactPagination'
-import { getAdminAccessToken } from '../../lib/adminFetch'
 import CurrencyInput from '../../components/console/CurrencyInput'
 import WorkspaceDialog from '../../components/console/WorkspaceDialog'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { API_BASE_URL } from '../admin-dashboard/constants'
 import { 
   ArrowRight, 
@@ -20,18 +28,6 @@ import {
   User 
 } from '../../components/console/WorkspaceIcons'
 
-const apiFetch = async (path, opts = {}) => {
-  const t = getAdminAccessToken() || ''
-  const res = await fetch(API_BASE_URL + path, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}`, ...opts.headers }
-  })
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}))
-    throw new Error(e.message || 'Lỗi API')
-  }
-  return res.json()
-}
 
 const LOAI_PHIEU = {
   THU: { label: 'Phiếu Thu', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
@@ -42,7 +38,7 @@ const DANH_MUC = {
   DAT_COC: 'Tiền cọc giữ chỗ',
   NHUONG_QUYEN: 'Tất toán gói nhượng quyền',
   NGUYEN_LIEU: 'Thanh toán combo nguyên liệu',
-  ROYALTY: 'Phí bản quyền (Royalty)',
+  ROYALTY: "Chia sẻ doanh thu",
   HOAN_COC: 'Hoàn trả tiền cọc',
   CHI_PHI_VAN_HANH: 'Hỗ trợ / Chi phí vận hành',
   TIEN_PHAT: 'Tiền phạt vi phạm hợp đồng',
@@ -71,6 +67,8 @@ export function DongTienTab() {
   
   const [form, setForm] = useState(null)
   const [inPhieuModal, setInPhieuModal] = useState(null)
+  const [submitting,setSubmitting]=useState(false)
+  const submitLock=useRef(false)
 
   // Load danh sách Kiosk để gắn Kiosk vào phiếu
   useEffect(() => {
@@ -106,10 +104,13 @@ export function DongTienTab() {
 
   const submitForm = async (e) => {
     e.preventDefault()
-    if (!form.so_tien || Number(form.so_tien) <= 0) {
+    if (submitLock.current) return
+    if (!form.so_tien || !Number.isFinite(Number(form.so_tien)) || Number(form.so_tien) <= 0) {
       setMsg({ type: 'error', text: 'Vui lòng nhập số tiền hợp lệ (> 0).' })
       return
     }
+    submitLock.current=true
+    setSubmitting(true)
     try {
       await apiFetch('/franchise/thu-chi', {
         method: 'POST',
@@ -124,7 +125,7 @@ export function DongTienTab() {
       load()
     } catch (error) {
       setMsg({ type: 'error', text: error.message })
-    }
+    } finally { submitLock.current=false;setSubmitting(false) }
   }
 
   const inPhieu = () => {
@@ -181,108 +182,103 @@ export function DongTienTab() {
   return (
     <div className="workspace-cashflow" style={{ animation: 'fadeIn 0.2s ease-in-out' }}>
       {/* 3 Thẻ Chỉ số Dòng tiền */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
-        <div style={{ background: '#fff', padding: '18px 20px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tổng Thu Nhượng Quyền</div>
-          <div style={{ fontSize: 24, fontWeight: 600, color: '#16a34a', marginTop: 6 }}>+{fmtMoney(tong_thu)}</div>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Cọc, Hợp đồng, Royalty, Combo</div>
+      <div className="franchise-financial-summary" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
+        <div style={{ background: '#ffffff', padding: '18px 20px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.02)' }}>
+          <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Tổng Thu Nhượng Quyền</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: '#15803d', marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>+{fmtMoney(tong_thu)}</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Cọc, Hợp đồng, Chia sẻ doanh thu, Combo</div>
         </div>
 
-        <div style={{ background: '#fff', padding: '18px 20px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tổng Chi Trả / Hoàn Kiosk</div>
-          <div style={{ fontSize: 24, fontWeight: 600, color: '#dc2626', marginTop: 6 }}>-{fmtMoney(tong_chi)}</div>
+        <div style={{ background: '#ffffff', padding: '18px 20px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.02)' }}>
+          <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Tổng Chi Trả / Hoàn Kiosk</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: '#b91c1c', marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>-{fmtMoney(tong_chi)}</div>
           <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Hoàn cọc, Hỗ trợ vận hành</div>
         </div>
 
-        <div style={{ background: '#fff', padding: '18px 20px', borderRadius: 12, border: '1px solid #cbd5e1', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: 12, color: '#475569', fontWeight: 500, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tồn Quỹ Dòng Tiền Ròng</div>
-          <div style={{ fontSize: 24, fontWeight: 600, color: ton_quy >= 0 ? 'var(--primary, #0f172a)' : '#dc2626', marginTop: 6 }}>{fmtMoney(ton_quy)}</div>
+        <div style={{ background: '#ffffff', padding: '18px 20px', borderRadius: 12, border: '1.5px solid #16354d', boxShadow: '0 2px 8px rgba(178, 40, 48, 0.06)' }}>
+          <div style={{ fontSize: 11.5, color: '#16354d', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Tồn Quỹ Dòng Tiền Ròng</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: ton_quy >= 0 ? '#0f172a' : '#b91c1c', marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(ton_quy)}</div>
           <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Thu thực tế trừ các khoản hoàn chi</div>
         </div>
       </div>
 
       {/* Toolbar & Filters */}
-      <div style={{ background: '#fff', padding: '16px 20px', borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
+      <div className="franchise-toolbar" style={{ background: '#ffffff', padding: '14px 18px', borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.02)' }}>
+        <div className="franchise-cashflow-filters">
           {/* Ô tìm kiếm */}
-          <div style={{ position: 'relative', minWidth: 200, flex: '1 1 200px' }}>
+          <div className="franchise-search-box" style={{ position: 'relative', minWidth: 200, flex: '1 1 200px' }}>
             <Search size={15} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            <input
+            <Input
               type="text"
               placeholder="Tìm kiếm theo Kiosk, diễn giải..."
               value={filter.keyword}
               onChange={e => setFilter(f => ({ ...f, keyword: e.target.value }))}
-              style={{ width: '100%', padding: '7px 10px 7px 32px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', background: '#f8fafc', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '7px 10px 7px 32px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', background: '#f8fafc', color: '#0f172a', boxSizing: 'border-box' }}
             />
           </div>
 
           {/* Lọc Kiosk */}
-          <select 
+          <SearchableSelect
             value={filter.kiosk_id} 
             onChange={e => setFilter(f => ({ ...f, kiosk_id: e.target.value }))} 
-            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none', cursor: 'pointer' }}
+            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
           >
             <option value="">-- Mọi Kiosk / Toàn hệ thống --</option>
             {kiosks.map(k => (
               <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>
             ))}
-          </select>
+          </SearchableSelect>
 
           {/* Lọc Loại phiếu */}
-          <select 
+          <SearchableSelect
             value={filter.loai_phieu} 
             onChange={e => setFilter(f => ({ ...f, loai_phieu: e.target.value }))} 
-            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none', cursor: 'pointer' }}
+            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
           >
             <option value="">-- Mọi Loại phiếu --</option>
             <option value="THU">Phiếu Thu (+)</option>
             <option value="CHI">Phiếu Chi (-)</option>
-          </select>
+          </SearchableSelect>
 
           {/* Lọc Danh mục */}
-          <select 
+          <SearchableSelect
             value={filter.danh_muc} 
             onChange={e => setFilter(f => ({ ...f, danh_muc: e.target.value }))} 
-            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none', cursor: 'pointer' }}
+            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
           >
             <option value="">-- Mọi Danh mục --</option>
             {Object.entries(DANH_MUC).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
             ))}
-          </select>
+          </SearchableSelect>
 
-          <button 
+          <Button
             onClick={load} 
             title="Tải lại danh sách"
-            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', fontWeight: 500 }}
+            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#334155', fontWeight: 500 }}
           >
             <RefreshCw size={14} /> Làm mới
-          </button>
+          </Button>
         </div>
 
         {/* Nút Lập phiếu */}
-        <button 
+        <Button
           onClick={() => setForm({ loai_phieu: 'THU', danh_muc: 'DAT_COC', kiosk_id: kiosks[0]?.id || '', so_tien: '', ghi_chu: '' })}
-          style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--primary, #0f172a)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+          style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#16354d', color: '#ffffff', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
           + Lập Phiếu Giao Dịch
-        </button>
+        </Button>
       </div>
 
-      {msg && (
-        <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 14, background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2', border: `1px solid ${msg.type === 'success' ? '#bbf7d0' : '#fecaca'}`, color: msg.type === 'success' ? '#166534' : '#991b1b', fontSize: 13, fontWeight: 500, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>{msg.text}</span>
-          <button onClick={() => setMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'inherit' }}>×</button>
-        </div>
-      )}
+      <FranchiseFeedback message={msg} onClose={() => setMsg(null)} />
 
       {/* Bảng Dữ Liệu Giao Dịch Tài Chính */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 48, color: '#94a3b8', fontSize: 14 }}>Đang tải dữ liệu giao dịch tài chính...</div>
+        <KioskTableLoading label="Đang tải dữ liệu" />
       ) : (
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
           <div className="console-table-scroll">
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+            <Table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: 12, fontWeight: 600 }}>
                   <th style={{ padding: '12px 16px' }}>Thời gian</th>
@@ -329,13 +325,13 @@ export function DongTienTab() {
                           {d.ghi_chu || <span style={{ color: '#cbd5e1' }}>—</span>}
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          <button
+                          <Button
                             onClick={() => setInPhieuModal(d)}
                             title="In phiếu giao dịch"
                             style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 12, color: '#475569', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                           >
                             <Printer size={13} /> In phiếu
-                          </button>
+                          </Button>
                         </td>
                       </tr>
                     )
@@ -349,19 +345,19 @@ export function DongTienTab() {
                   </tr>
                 )}
               </tbody>
-            </table>
+            </Table>
           </div>
         </div>
       )}
 
       {/* Modal Lập Phiếu Thu / Chi */}
       {form && (
-        <WorkspaceDialog title={`Lập Phiếu Giao Dịch (${form.loai_phieu === 'THU' ? 'Thu Tiền' : 'Chi Tiền'})`} onClose={() => setForm(null)}>
-          <form onSubmit={submitForm} style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4 }}>
+        <WorkspaceDialog busy={submitting} title={`Lập Phiếu Giao Dịch (${form.loai_phieu === 'THU' ? 'Thu Tiền' : 'Chi Tiền'})`} onClose={() => setForm(null)}>
+          <form data-modal-body="true" onSubmit={submitForm} style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Loại giao dịch *</label>
+              <Label htmlFor="dongtientab-field-1" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Loại giao dịch *</Label>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button
+                <Button
                   type="button"
                   onClick={() => setForm(f => ({ ...f, loai_phieu: 'THU' }))}
                   style={{
@@ -372,8 +368,8 @@ export function DongTienTab() {
                   }}
                 >
                   + Phiếu Thu (Nhận tiền)
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setForm(f => ({ ...f, loai_phieu: 'CHI' }))}
                   style={{
@@ -384,13 +380,13 @@ export function DongTienTab() {
                   }}
                 >
                   - Phiếu Chi (Chi / Hoàn trả)
-                </button>
+                </Button>
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Kiosk liên quan</label>
-              <select 
+              <Label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Kiosk liên quan</Label>
+              <SearchableSelect id="dongtientab-field-1"
                 value={form.kiosk_id || ''} 
                 onChange={e => setForm(f => ({ ...f, kiosk_id: e.target.value }))}
                 style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', background: '#fff' }}
@@ -399,12 +395,12 @@ export function DongTienTab() {
                 {kiosks.map(k => (
                   <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk}) - {k.dia_chi}</option>
                 ))}
-              </select>
+              </SearchableSelect>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Danh mục giao dịch *</label>
-              <select 
+              <Label htmlFor="dongtientab-field-2" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Danh mục giao dịch *</Label>
+              <SearchableSelect id="dongtientab-field-2"
                 value={form.danh_muc} 
                 onChange={e => setForm(f => ({ ...f, danh_muc: e.target.value }))}
                 style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, outline: 'none', background: '#fff' }}
@@ -412,12 +408,12 @@ export function DongTienTab() {
                 {Object.entries(DANH_MUC).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
                 ))}
-              </select>
+              </SearchableSelect>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Số tiền (VNĐ) *</label>
-              <CurrencyInput
+              <Label htmlFor="dongtientab-field-3" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Số tiền (VNĐ) *</Label>
+              <CurrencyInput id="dongtientab-field-3"
                 required
                 value={form.so_tien}
                 onChange={e => setForm(f => ({ ...f, so_tien: e.target.value }))}
@@ -427,8 +423,8 @@ export function DongTienTab() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Diễn giải / Ghi chú chứng từ</label>
-              <textarea 
+              <Label htmlFor="dongtientab-field-4" style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475569', marginBottom: 4 }}>Diễn giải / Ghi chú chứng từ</Label>
+              <Textarea id="dongtientab-field-4"
                 value={form.ghi_chu} 
                 onChange={e => setForm(f => ({ ...f, ghi_chu: e.target.value }))} 
                 rows={3} 
@@ -437,20 +433,20 @@ export function DongTienTab() {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 10, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
-              <button 
-                type="button" 
+            <div data-modal-footer="inset" data-modal-actions="true" style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 10, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
+              <Button data-intent="danger"
+                type="button" disabled={submitting}
                 onClick={() => setForm(null)} 
                 style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: '#475569' }}
               >
                 Hủy bỏ
-              </button>
-              <button 
-                type="submit" 
+              </Button>
+              <Button data-intent="success"
+                type="submit" disabled={submitting} variant="default"
                 style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: form.loai_phieu === 'THU' ? '#16a34a' : '#dc2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}
               >
                 Xác nhận tạo {form.loai_phieu === 'THU' ? 'Phiếu Thu' : 'Phiếu Chi'}
-              </button>
+              </Button>
             </div>
           </form>
         </WorkspaceDialog>
@@ -459,7 +455,7 @@ export function DongTienTab() {
       {/* Modal Xem & In Phiếu Giao Dịch */}
       {inPhieuModal && (
         <WorkspaceDialog title={`Chứng Từ: PHIẾU ${inPhieuModal.loai_phieu === 'THU' ? 'THU' : 'CHI'}`} onClose={() => setInPhieuModal(null)}>
-          <div id="receipt-print-area" style={{ padding: '16px 20px', background: '#fff', color: '#0f172a' }}>
+          <div data-modal-body="true" id="receipt-print-area" style={{ padding: '16px 20px', background: '#fff', color: '#0f172a' }}>
             <div className="header" style={{ textAlign: 'center', borderBottom: '1px dashed #cbd5e1', paddingBottom: 14, marginBottom: 16 }}>
               <h2 style={{ margin: '0 0 4px', fontSize: 18, color: '#0f172a' }}>CÔNG TY CỔ PHẦN AVENGERS COFFEE</h2>
               <div style={{ fontSize: 12, color: '#64748b' }}>Hệ Thống Chuỗi Nhượng Quyền Cà Phê Avengers</div>
@@ -507,19 +503,19 @@ export function DongTienTab() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16, paddingTop: 12, borderTop: '1px solid #e2e8f0' }}>
-            <button
+          <div data-modal-footer="edge" data-modal-actions="true" style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16, paddingTop: 12, borderTop: '1px solid #e2e8f0' }}>
+            <Button data-intent="danger"
               onClick={() => setInPhieuModal(null)}
               style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#475569' }}
             >
               Đóng
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={inPhieu}
               style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: 'var(--primary, #0f172a)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}
             >
               <Printer size={14} /> In phiếu ra máy in / PDF
-            </button>
+            </Button>
           </div>
         </WorkspaceDialog>
       )}

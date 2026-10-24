@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, IsNull } from 'typeorm';
 import { SurveyForm } from '../entities/survey-form.entity';
 import { SurveyResponse } from '../entities/survey-response.entity';
 import { secretWithDevDefault } from '../config/runtime-secrets';
@@ -22,7 +22,7 @@ export class SurveyService {
   //  SURVEY FORM METHODS
   // ═══════════════════════════════════════════════════════
 
-  async taoBieuMau(payload: { tieu_de: string; mo_ta?: string; cau_hoi: any[] }, username: string) {
+  async taoBieuMau(payload: { tieu_de: string; mo_ta?: string; cau_hoi: any[] }, username: string, branchCode: string | null = null) {
     if (!payload.tieu_de?.trim()) {
       throw new BadRequestException('Tieu de khao sat la bat buoc');
     }
@@ -32,32 +32,33 @@ export class SurveyService {
     form.cau_hoi = Array.isArray(payload.cau_hoi) ? payload.cau_hoi : [];
     form.trang_thai = false;
     form.nguoi_tao = username;
+    form.co_so_ma = branchCode;
 
     const saved = await this.formRepo.save(form);
     return { message: 'Tao bieu mau khao sat thanh cong', item: saved };
   }
 
-  async layDanhSachBieuMau() {
-    const list = await this.formRepo.find({ order: { ngay_tao: 'DESC' } });
+  async layDanhSachBieuMau(branchCode: string | null = null) {
+    const list = await this.formRepo.find({ where: { co_so_ma: branchCode ?? IsNull() }, order: { ngay_tao: 'DESC' } });
     return { total: list.length, items: list };
   }
 
   async layBieuMauActive() {
-    const form = await this.formRepo.findOne({ where: { trang_thai: true } });
+    const form = await this.formRepo.findOne({ where: { trang_thai: true, co_so_ma: IsNull() } });
     if (!form) {
       throw new NotFoundException('Khong co khao sat nao dang hoat dong');
     }
     return form;
   }
 
-  async kickHoatBieuMau(id: number) {
-    const form = await this.formRepo.findOne({ where: { id } });
+  async kickHoatBieuMau(id: number, branchCode: string | null = null) {
+    const form = await this.formRepo.findOne({ where: { id, co_so_ma: branchCode ?? IsNull() } });
     if (!form) {
       throw new NotFoundException('Khong tim thay bieu mau khao sat');
     }
 
     // Deactivate all forms that are currently active
-    await this.formRepo.update({ trang_thai: true }, { trang_thai: false });
+    await this.formRepo.update({ trang_thai: true, co_so_ma: branchCode ?? IsNull() }, { trang_thai: false });
 
     // Activate selected form
     form.trang_thai = true;
@@ -66,8 +67,8 @@ export class SurveyService {
     return { message: 'Kich hoat bieu mau khao sat thanh cong', active_id: id };
   }
 
-  async suaBieuMau(id: number, payload: { tieu_de?: string; mo_ta?: string; cau_hoi?: any[]; trang_thai?: boolean }) {
-    const form = await this.formRepo.findOne({ where: { id } });
+  async suaBieuMau(id: number, payload: { tieu_de?: string; mo_ta?: string; cau_hoi?: any[]; trang_thai?: boolean }, branchCode: string | null = null) {
+    const form = await this.formRepo.findOne({ where: { id, co_so_ma: branchCode ?? IsNull() } });
     if (!form) {
       throw new NotFoundException('Khong tim thay bieu mau khao sat');
     }
@@ -77,7 +78,7 @@ export class SurveyService {
     if (payload.cau_hoi !== undefined) form.cau_hoi = Array.isArray(payload.cau_hoi) ? payload.cau_hoi : [];
     if (payload.trang_thai !== undefined) {
       if (payload.trang_thai === true) {
-        await this.formRepo.update({ trang_thai: true }, { trang_thai: false });
+        await this.formRepo.update({ trang_thai: true, co_so_ma: branchCode ?? IsNull() }, { trang_thai: false });
       }
       form.trang_thai = payload.trang_thai;
     }
@@ -86,8 +87,8 @@ export class SurveyService {
     return { message: 'Cap nhat bieu mau thanh cong', item: saved };
   }
 
-  async xoaBieuMau(id: number) {
-    const form = await this.formRepo.findOne({ where: { id } });
+  async xoaBieuMau(id: number, branchCode: string | null = null) {
+    const form = await this.formRepo.findOne({ where: { id, co_so_ma: branchCode ?? IsNull() } });
     if (!form) {
       throw new NotFoundException('Khong tim thay bieu mau khao sat');
     }
@@ -132,7 +133,14 @@ export class SurveyService {
       }
     }
 
-    let coSoMa = null;
+    if (!form.trang_thai) throw new BadRequestException('Khảo sát này chưa mở hoặc đã kết thúc.');
+    const answers = Array.isArray(payload.tra_loi) ? payload.tra_loi : [];
+    for (const q of form.cau_hoi || []) {
+      const answer = answers.find(a => a.cau_hoi_id === q.id || a.cau_hoi_tieu_de === q.tieu_de)?.cau_tra_loi;
+      if (q.bat_buoc && (answer === undefined || answer === null || answer === '' || (Array.isArray(answer) && !answer.length))) throw new BadRequestException(`Vui lòng trả lời: ${q.tieu_de}`);
+      if (q.loai === 'rating' && answer !== undefined && (!Number.isInteger(Number(answer)) || Number(answer) < 1 || Number(answer) > 5)) throw new BadRequestException('Điểm đánh giá phải từ 1 đến 5.');
+    }
+    let coSoMa: string | null = form.co_so_ma || null;
     if (payload.ma_don_hang?.trim()) {
       try {
         const rows = await this.dataSource.query(
@@ -140,9 +148,11 @@ export class SurveyService {
           [payload.ma_don_hang.trim()]
         );
         if (rows && rows.length > 0) {
-          coSoMa = rows[0].co_so_ma;
+          if (form.co_so_ma && form.co_so_ma !== rows[0].co_so_ma) throw new BadRequestException('Đơn hàng không thuộc chi nhánh của khảo sát.');
+          coSoMa = form.co_so_ma || rows[0].co_so_ma;
         }
       } catch (err) {
+        if (err instanceof BadRequestException) throw err;
         console.error('Error looking up co_so_ma for survey response:', err);
       }
     }
@@ -160,7 +170,7 @@ export class SurveyService {
     const savedResponse = await this.responseRepo.save(response);
 
     // If logged in customer, issue a 20% discount voucher immediately
-    if (userId) {
+    if (userId && !form.co_so_ma) {
       try {
         const identityResponse = await fetch(`${this.IDENTITY_SERVICE_URL}/promotions/internal/phat-hanh`, {
           method: 'POST',
@@ -200,7 +210,7 @@ export class SurveyService {
 
     return {
       success: true,
-      message: 'Gui khao sat thanh cong! Dang nhap tai khoan de duoc nhan voucher 20% cho lan sau.',
+      message: form.co_so_ma ? 'Cảm ơn bạn! Chi nhánh đã nhận được phản hồi.' : 'Gửi khảo sát thành công!',
       item: savedResponse,
     };
   }
@@ -215,7 +225,7 @@ export class SurveyService {
     return;
   }
 
-  async layDanhSachPhanHoi(branchCode?: string) {
+  async layDanhSachPhanHoi(branchCode: string | null = null) {
     // Build WHERE clause
     const conditions: string[] = [];
     const params: any[] = [];
@@ -224,10 +234,11 @@ export class SurveyService {
     const orderSchema = process.env.DB_SCHEMA || 'orders';
 
     if (branchCode) {
-      conditions.push(`r.co_so_ma = $${paramIdx++}`);
+      conditions.push(`f.co_so_ma = $${paramIdx++}`);
       params.push(branchCode);
     }
 
+    if (!branchCode) conditions.push('f.co_so_ma IS NULL');
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // JOIN with survey_form to get ten_form (survey title)
@@ -243,13 +254,20 @@ export class SurveyService {
     return { total: rows.length, items: rows };
   }
 
+
+  async layBieuMauCongKhai(id: number) {
+    const form = await this.formRepo.findOne({ where: { id, trang_thai: true } });
+    if (!form) throw new NotFoundException('Khảo sát chưa mở hoặc đã kết thúc.');
+    return { id: form.id, tieu_de: form.tieu_de, mo_ta: form.mo_ta, cau_hoi: form.cau_hoi, co_so_ma: form.co_so_ma };
+  }
+
   async checkStatus(userId: string) {
     const cleanUserId = String(userId || '').trim();
     if (!cleanUserId || cleanUserId === 'anonymous') {
       return { completed: false };
     }
 
-    const activeForm = await this.formRepo.findOne({ where: { trang_thai: true } });
+    const activeForm = await this.formRepo.findOne({ where: { trang_thai: true, co_so_ma: IsNull() } });
     if (!activeForm) {
       return { completed: true }; // No active survey form -> assume completed to avoid showing popup
     }

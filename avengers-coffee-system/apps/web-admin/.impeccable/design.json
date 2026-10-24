@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-23T07:59:11.624Z",
+  "title": "Design System: Avengers Coffee — Web Admin",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "primary"
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "primary hover"
+      },
+      "primary-light": {
+        "role": "primary",
+        "displayName": "primary light"
+      },
+      "primary-subtle": {
+        "role": "primary",
+        "displayName": "primary subtle"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "surface"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "canvas"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "ink"
+      },
+      "body": {
+        "role": "neutral",
+        "displayName": "body"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "muted"
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "border"
+      },
+      "divider": {
+        "role": "neutral",
+        "displayName": "divider"
+      },
+      "nav-text": {
+        "role": "neutral",
+        "displayName": "nav text"
+      },
+      "nav-muted": {
+        "role": "neutral",
+        "displayName": "nav muted"
+      },
+      "nav-hover": {
+        "role": "neutral",
+        "displayName": "nav hover"
+      },
+      "row-hover": {
+        "role": "neutral",
+        "displayName": "row hover"
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "success"
+      },
+      "success-bg": {
+        "role": "secondary",
+        "displayName": "success bg"
+      },
+      "success-border": {
+        "role": "secondary",
+        "displayName": "success border"
+      },
+      "sky": {
+        "role": "primary",
+        "displayName": "sky"
+      },
+      "nav": {
+        "role": "neutral",
+        "displayName": "nav"
+      },
+      "nav-active": {
+        "role": "neutral",
+        "displayName": "nav active"
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "danger"
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Page heading",
+        "purpose": "Single shell-owned page or record heading."
+      },
+      "field": {
+        "displayName": "Text field",
+        "purpose": "Observed legacy specificity preserves regular desktop text-input typography."
+      },
+      "metric": {
+        "displayName": "Metric value",
+        "purpose": "Prominent counts with tabular figures."
+      },
+      "code": {
+        "displayName": "Literal identifier",
+        "purpose": "Existing ui-monospace, SFMono-Regular, Consolas, monospace stack at 11px/600 for promotion, branch and category code badges only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "dialog",
+        "value": "0 12px 32px -16px #11182755",
+        "purpose": "Management and quick-search dialog layers; ordinary data cards remain flat."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-state",
+        "value": "background-color 160ms ease, color 160ms ease, border-color 160ms ease",
+        "purpose": "Enterprise button state transitions."
+      },
+      {
+        "name": "tab-state",
+        "value": "all .15s ease-in-out",
+        "purpose": "Existing task-tab transition."
+      },
+      {
+        "name": "drawer",
+        "value": "transform .2s ease",
+        "purpose": "Existing navigation drawer translation."
+      },
+      {
+        "name": "group-chevron",
+        "value": "transform .2s",
+        "purpose": "Existing collapsed group indicator."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none !important; transition: none !important; scroll-behavior: auto !important",
+        "purpose": "Applied for prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": {
+      "mobile": "760px",
+      "navigationDrawer": "1100px",
+      "detailStack": "1100px"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Common create/save action; presentation sample only.",
+      "html": "<button class=\"ds-primary\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z\"></path></svg>Tạo mới</button>",
+      "css": ".ds-primary{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;cursor:pointer;transition:background-color 160ms ease,color 160ms ease,border-color 160ms ease;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:9px 18px;border:1px solid var(--primary,#16354d);border-radius:6px;background:var(--primary,#16354d);color:#fff;font-size:13px;font-weight:500;}.ds-primary:hover:not(:disabled){background:var(--primary-hover,#0f4d70);border-color:var(--primary-hover,#0f4d70);}.ds-primary:focus-visible{outline:2px solid var(--primary,#16354d);outline-offset:3px;}.ds-primary:disabled{opacity:.5;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-primary{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Neutral outlined action.",
+      "html": "<button class=\"ds-secondary\">Hủy</button>",
+      "css": ".ds-secondary{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;cursor:pointer;transition:background-color 160ms ease,color 160ms ease,border-color 160ms ease;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 14px;border:1px solid var(--border-light,#e2e8f0);border-radius:6px;background:#fff;color:var(--text-body,#263c50);font-size:13px;font-weight:500;}.ds-secondary:hover:not(:disabled){background:var(--surface-low,#f6f8fa);border-color:var(--text-muted,#526174);color:var(--primary,#16354d);}.ds-secondary:focus-visible{outline:2px solid var(--primary,#16354d);outline-offset:3px;}.ds-secondary:disabled{opacity:.5;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-secondary{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Existing regular field cascade, including inherited input radius and type.",
+      "html": "<input class=\"ds-input\" aria-label=\"Tên hiển thị\" placeholder=\"Nhập tên hiển thị\" />",
+      "css": ".ds-input{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:40px;min-height:40px;width:100%;padding:10px 13px;border:1px solid var(--border-light,#e2e8f0);border-radius:8px;background:#fff;color:var(--text-main,#142b3e);font-size:14px;font-weight:400;line-height:1.5;caret-color:var(--primary,#16354d);box-shadow:none;outline:none;}.ds-input::placeholder{color:var(--text-muted,#526174);opacity:1;}.ds-input:hover:not(:disabled){border-color:var(--text-muted,#526174);}.ds-input:focus,.ds-input:focus-visible{border-color:var(--primary,#16354d);outline:none;box-shadow:none;}.ds-input:disabled{background:var(--surface-low,#f6f8fa);color:var(--text-muted,#526174);cursor:not-allowed;}@media(max-width:760px){.ds-input{font-size:16px;}}@media(prefers-reduced-motion:reduce){.ds-input{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}"
+    },
+    {
+      "name": "Directory search",
+      "kind": "input",
+      "refersTo": "input-directory-search",
+      "description": "Users/kiosk search reserves leading icon and trailing clear space.",
+      "html": "<div class=\"ds-search\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M228.24,219.76l-51.38-51.38a86.15,86.15,0,1,0-8.48,8.48l51.38,51.38a6,6,0,0,0,8.48-8.48ZM38,112a74,74,0,1,1,74,74A74.09,74.09,0,0,1,38,112Z\"></path></svg><input class=\"ds-search-field\" type=\"search\" aria-label=\"Tìm nhân viên\" placeholder=\"Tìm username, họ tên...\" /></div>",
+      "css": ".ds-search{position:relative;width:100%;}.ds-search>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted,#526174);pointer-events:none;}.ds-search-field{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:40px;width:100%;padding:10px 40px 10px 44px;border:1px solid var(--border-light,#e2e8f0);border-radius:8px;background:#fff;color:var(--text-main,#142b3e);font-size:14px;font-weight:400;line-height:1.5;caret-color:var(--primary,#16354d);outline:none;}.ds-search-field::placeholder{color:var(--text-muted,#526174);opacity:1;}.ds-search-field:hover{border-color:var(--text-muted,#526174);}.ds-search-field:focus,.ds-search-field:focus-visible{border-color:var(--primary,#16354d);outline:none;box-shadow:none;}@media(max-width:760px){.ds-search-field{font-size:16px;}}@media(prefers-reduced-motion:reduce){.ds-search,.ds-search-field{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}"
+    },
+    {
+      "name": "Selected navigation destination",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "The active destination within the dark rail.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Ví dụ điều hướng\"><button class=\"ds-nav-item\" aria-current=\"page\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M200,42H56A14,14,0,0,0,42,56V200a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V56A14,14,0,0,0,200,42Zm2,14v66H134V54h66A2,2,0,0,1,202,56ZM56,54h66v68H54V56A2,2,0,0,1,56,54ZM54,200V134h68v68H56A2,2,0,0,1,54,200Zm146,2H134V134h68v66A2,2,0,0,1,200,202Z\"></path></svg><span>Dashboard hệ thống</span><span class=\"ds-nav-dot\"></span></button></nav>",
+      "css": ".ds-nav{padding:12px;background:var(--text-main,#142b3e);}.ds-nav-item{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;cursor:pointer;transition:background-color 160ms ease,color 160ms ease,border-color 160ms ease;display:flex;align-items:center;gap:11px;width:100%;min-height:42px;padding:10px 12px;border:0;border-radius:6px;background:transparent;color:#d0d5de;font-size:13px;font-weight:500;line-height:1.5;text-align:left;}.ds-nav-item:hover{background:#202a39;color:#fff;}.ds-nav-item[aria-current=\"page\"]{background:var(--primary,#16354d);color:#fff;}.ds-nav-item:focus-visible{outline:2px solid var(--primary,#16354d);outline-offset:3px;}.ds-nav-dot{width:4px;height:4px;margin-left:auto;border-radius:50%;background:#fff;}@media(prefers-reduced-motion:reduce){.ds-nav,.ds-nav-dot,.ds-nav-item{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}"
+    },
+    {
+      "name": "Task tab",
+      "kind": "nav",
+      "refersTo": "tab-active",
+      "description": "Selected task tab within the existing neutral strip.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\" aria-label=\"Loại khuyến mãi\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Voucher công khai</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Voucher thành viên</button></div>",
+      "css": ".ds-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:5px;border:1px solid var(--border-light,#e2e8f0);border-radius:10px;background:var(--border-subtle,#f3f4f6);}.ds-tab{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;cursor:pointer;transition:background-color 160ms ease,color 160ms ease,border-color 160ms ease;min-height:38px;padding:8px 16px;border:0;border-radius:5px;background:transparent;color:var(--text-body,#263c50);font-size:13px;font-weight:500;transition:all .15s ease-in-out;}.ds-tab:hover{background:var(--border-light,#e2e8f0);color:var(--text-main,#142b3e);}.ds-tab[aria-selected=\"true\"]{background:var(--primary,#16354d);color:#fff;}.ds-tab[aria-selected=\"true\"]:hover{background:var(--primary-hover,#0f4d70);}.ds-tab:focus-visible{outline:2px solid var(--primary,#16354d);outline-offset:3px;}@media(prefers-reduced-motion:reduce){.ds-tab,.ds-tabs{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}"
+    },
+    {
+      "name": "Active status chip",
+      "kind": "chip",
+      "refersTo": "chip-active",
+      "description": "Static menu/promotion status label; semantic green remains separate from brand red.",
+      "html": "<span class=\"ds-chip\">Hiệu lực</span>",
+      "css": ".ds-chip{display:inline-flex;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:3px 9px;border:1px solid #22833d;border-radius:6px;background:#22833d;color:#22833d;font-size:12px;font-weight:600;}@media(prefers-reduced-motion:reduce){.ds-chip{animation:none!important;transition:none!important;scroll-behavior:auto!important;}} .ds-chip{color:#fff!important;}"
+    },
+    {
+      "name": "Data card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat bordered white container with compact heading.",
+      "html": "<article class=\"ds-card\"><h3 class=\"ds-card-title\">Tài khoản theo vai trò</h3><p class=\"ds-card-note\">Phân bổ</p></article>",
+      "css": ".ds-card{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;border:1px solid var(--border-light,#e2e8f0);border-radius:8px;background:#fff;color:var(--text-body,#263c50);box-shadow:none;}.ds-card-title{margin:0;color:var(--text-main,#142b3e);font-size:16px;font-weight:600;letter-spacing:-.025em;}.ds-card-note{margin:8px 0 0;color:var(--text-muted,#526174);font-size:12px;line-height:1.6;}@media(max-width:760px){.ds-card{padding:18px;}}@media(prefers-reduced-motion:reduce){.ds-card,.ds-card-note,.ds-card-title{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Clear enterprise operations with shadcn/ui",
+    "overview": "Shared navy/sky Web Admin primitives with focused record detail cards. Customer red branding remains separate.",
+    "keyCharacteristics": [
+      "Navy navigation and stronger readable ink.",
+      "Official shadcn source with Radix semantics.",
+      "Clear record cards, restrained badges and responsive data geometry."
+    ],
+    "rules": [
+      {
+        "name": "The Canonical Logo Rule",
+        "body": "Use `avengers-coffee-system/assets/branding/logo.svg`, the original black artwork, on light backgrounds and `logo-white.svg` from the same directory on dark backgrounds. Preserve the artwork and aspect ratio; app SVG copies and native PNGs are synchronized through `scripts/sync-brand.cjs`.",
+        "section": "colors"
+      },
+      {
+        "name": "One page heading",
+        "body": "The shell owns the title; cards name information groups.",
+        "section": "layout"
+      },
+      {
+        "name": "Semantic emphasis",
+        "body": "Use badges sparingly, green for confirmed active status and explicit save hover, red for destructive hover.",
+        "section": "colors"
+      },
+      "Use StatusBadge for all status columns; preserve business labels and distinguish active, paused, pending and rejected states.",
+      "Align detail action rows and modal footers with body content: 24px gutter, 18px in mobile dialogs, no extra gutter for nested footers.",
+      "Map suggestions use the shared Radix popover with flexible two-line rows. Kiosk approval stays on the top action with the existing confirmation."
+    ],
+    "dos": [
+      "Use shared primitives across roles.",
+      "Preserve event contracts and permissions.",
+      "Keep full chart labels in tooltips and data tables."
+    ],
+    "donts": [
+      "Do not invent product statistics.",
+      "Do not claim unperformed visual verification.",
+      "Do not use decorative rainbow badges."
+    ]
+  }
+}

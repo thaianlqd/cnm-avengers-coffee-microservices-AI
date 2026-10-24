@@ -1,3 +1,7 @@
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { Label } from '../../../components/ui/label'
+import { Textarea } from '../../../components/ui/textarea'
 import React, { useState } from 'react'
 import {
   AlertTriangle,
@@ -31,6 +35,7 @@ export function PosRefundVoidModal({
   onClose,
   onConfirmRefundVoid,
   processing = false,
+  refundOnly = false,
 }) {
   const [selectedPreset, setSelectedPreset] = useState(PRESET_REASONS[0])
   const [customNote, setCustomNote] = useState('')
@@ -143,15 +148,15 @@ export function PosRefundVoidModal({
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#991b1b' }}>
-                Hoàn Tiền Mặt &amp; Hủy Giao Dịch POS
+                {refundOnly ? 'Hoàn tiền đơn mang đi' : 'Hoàn tiền mặt & hủy giao dịch POS'}
               </h2>
               <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.76rem', color: '#7f1d1d' }}>
-                Thao tác dành cho quầy Kiosk bán tại chỗ và mang đi
+                {refundOnly ? 'Hoàn tiền trực tiếp tại quầy kiosk cho đơn đã thanh toán.' : 'Thao tác dành cho quầy POS tại chỗ và mang đi'}
               </p>
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
             onClick={onClose}
             disabled={processing}
@@ -169,7 +174,7 @@ export function PosRefundVoidModal({
             }}
           >
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
         {/* MODAL BODY */}
@@ -201,7 +206,7 @@ export function PosRefundVoidModal({
                 Ca Kiosk đang mở lúc: <strong>{shiftOpenTimeFormatted}</strong>
               </span>
             </div>
-            <span
+            <Badge variant="outline" data-quiet-label="true"
               style={{
                 backgroundColor: "#f4f5f2",
                 color: '#1d4ed8',
@@ -212,7 +217,7 @@ export function PosRefundVoidModal({
               }}
             >
               Đủ điều kiện hoàn hủy
-            </span>
+            </Badge>
           </div>
 
           {/* ORDER BRIEF INFO CARD */}
@@ -232,7 +237,7 @@ export function PosRefundVoidModal({
                 <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#252927' }}>
                   Đơn #{order.ma_don_hang?.slice(0, 8)?.toUpperCase()}
                 </span>
-                <span
+                <Badge variant="outline" data-quiet-label="true"
                   style={{
                     fontSize: '0.7rem',
                     fontWeight: '700',
@@ -243,7 +248,7 @@ export function PosRefundVoidModal({
                   }}
                 >
                   {order.loai_don_hang === 'TAI_CHO' ? 'Dùng tại quầy' : 'Mang đi'}
-                </span>
+                </Badge>
               </div>
               <span style={{ fontSize: '0.75rem', color: '#69736a' }}>Tạo lúc {orderTimeFormatted}</span>
             </div>
@@ -340,15 +345,15 @@ export function PosRefundVoidModal({
 
           {/* REASON SELECTION */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.81rem', fontWeight: '700', color: '#414743' }}>
-              Lý do hoàn tiền &amp; hủy giao dịch:
-            </label>
+            <Label style={{ fontSize: '0.81rem', fontWeight: '700', color: '#414743' }}>
+              {refundOnly ? 'Lý do hoàn tiền:' : 'Lý do hoàn tiền & hủy giao dịch:'}
+            </Label>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
               {PRESET_REASONS.map((reason) => {
                 const isSelected = selectedPreset === reason
                 return (
-                  <button
+                  <Button data-selected={isSelected}
                     key={reason}
                     type="button"
                     onClick={() => setSelectedPreset(reason)}
@@ -365,12 +370,12 @@ export function PosRefundVoidModal({
                     }}
                   >
                     {reason}
-                  </button>
+                  </Button>
                 )
               })}
             </div>
 
-            <textarea
+            <Textarea
               rows={2}
               placeholder="Ghi chú chi tiết thêm lý do hoàn tiền (không bắt buộc)..."
               value={customNote}
@@ -432,7 +437,7 @@ export function PosRefundVoidModal({
         </div>
 
         {/* MODAL FOOTER */}
-        <div
+        <div data-modal-actions="true"
           style={{
             padding: '1rem 1.4rem',
             borderTop: '1px solid #e2e4df',
@@ -442,7 +447,7 @@ export function PosRefundVoidModal({
             gap: '0.75rem',
           }}
         >
-          <button
+          <Button data-intent="danger"
             type="button"
             onClick={onClose}
             disabled={processing}
@@ -458,10 +463,10 @@ export function PosRefundVoidModal({
               transition: 'all 0.15s ease',
             }}
           >
-            Hủy Bỏ / Quay Lại
-          </button>
+            Quay lại
+          </Button>
 
-          <button
+          <Button data-intent="danger"
             type="button"
             onClick={handleConfirm}
             disabled={processing}
@@ -482,8 +487,8 @@ export function PosRefundVoidModal({
             }}
           >
             <RotateCcw size={16} color="#ffffff" />
-            <span>{processing ? 'Đang xử lý...' : 'Xác Nhận Hoàn Tiền & Hủy Đơn'}</span>
-          </button>
+            <span>{processing ? 'Đang xử lý...' : (refundOnly ? 'Xác nhận hoàn tiền' : 'Xác nhận hoàn tiền & hủy đơn')}</span>
+          </Button>
         </div>
       </div>
     </div>

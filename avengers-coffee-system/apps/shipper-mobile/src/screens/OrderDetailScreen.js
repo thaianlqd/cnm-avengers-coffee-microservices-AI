@@ -1,3 +1,4 @@
+import { deliveryActionPath } from '../lib/deliveryAcceptance.mjs'
 import OrderRouteCard from '../components/OrderRouteCard'
 import AvailableOrderDetail from './AvailableOrderDetail'
 import { LazyScrollView, LazySection } from '../components/LazyScrollView'
@@ -67,7 +68,7 @@ function AssignedDeliveryDetail({ route, navigation }) {
   const updateStatusMutation = useMutation({
     mutationFn: async ({ action, payload = {} }) => {
       setLoadingAction(action)
-      return apiClient.post(`/shippers/${shipper.id}/deliveries/${deliveryId}/${action}`, payload)
+      return apiClient.post(deliveryActionPath(shipper.id, delivery, action), payload)
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['deliveryDetail', deliveryId] })
@@ -80,6 +81,9 @@ function AssignedDeliveryDetail({ route, navigation }) {
       setFailModalVisible(false)
       setFailReason('')
 
+      if (variables?.action === 'accept' && data?.delivery?.id) {
+        navigation.replace('OrderDetail', { deliveryId: data.delivery.id, orderId: null })
+      }
       if (variables?.action === 'start') {
         navigation.navigate('Map', { delivery: { ...delivery, status: 'IN_TRANSIT' } })
       }
@@ -167,12 +171,13 @@ function AssignedDeliveryDetail({ route, navigation }) {
 
   const renderStepper = () => {
     const steps = [
-      { id: 'PENDING', label: 'Chờ lấy', icon: 'cube-outline' },
+      { id: 'PENDING', label: 'Chờ nhận', icon: 'time-outline' },
+      { id: 'CONFIRMED', label: 'Đã nhận', icon: 'checkmark-outline' },
       { id: 'PICKING_UP', label: 'Đang lấy', icon: 'storefront-outline' },
       { id: 'IN_TRANSIT', label: 'Đang giao', icon: 'navigate-outline' },
       { id: 'DELIVERED', label: 'Hoàn thành', icon: 'checkmark-circle-outline' },
     ]
-    const currentIndex = steps.findIndex(s => s.id === (delivery.status === 'CONFIRMED' ? 'PENDING' : delivery.status))
+    const currentIndex = steps.findIndex(s => s.id === delivery.status)
     const isCancelled = delivery.status === 'CANCELLED' || delivery.status === 'FAILED'
 
     return (
@@ -204,7 +209,10 @@ function AssignedDeliveryDetail({ route, navigation }) {
   }
 
   const renderActionButtons = () => {
-    if (['PENDING','CONFIRMED'].includes(delivery.status)) {
+    if (delivery.status === 'PENDING') {
+      return <TouchableOpacity style={styles.primaryBtn} onPress={() => handleAction('accept')} disabled={loadingAction !== null}>{loadingAction === 'accept' ? <ActivityIndicator color="#fff"/> : <Text style={styles.btnText}>Nhận đơn được phân công</Text>}</TouchableOpacity>
+    }
+    if (delivery.status === 'CONFIRMED') {
       return (
         <TouchableOpacity
           style={styles.primaryBtn}

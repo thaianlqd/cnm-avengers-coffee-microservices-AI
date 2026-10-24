@@ -1,14 +1,11 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { number, normalizeChartRows, donutSegments } from "./chartModel";
-
-const colors = [
-  "var(--chart-primary, #4f86c6)",
-  "#e6503c",
-  "#e9a23b",
-  "#65b4ec",
-  "#f28b50",
-  "#69736a",
-];
+import { useId } from 'react'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts'
+import { number, normalizeChartRows, donutSegments } from './chartModel'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart'
+import { Card } from '../ui/card'
+import { Badge } from '../ui/badge'
+import { Table } from '../ui/table'
+const colors = ['#0284c7', '#16354d', '#0f766e', '#65a7c4', '#5b7288', '#a2becd']
 
 export function DashboardSkeleton() {
   return (
@@ -37,7 +34,7 @@ export function DashboardSkeleton() {
 
 export function Metric({ label, value, note, icon: Icon, tone = "blue" }) {
   return (
-    <article className="console-card console-metric">
+    <Card className="console-card console-metric">
       <div className={"console-metric-icon tone-" + tone}>
         {Icon ? <Icon size={21} /> : null}
       </div>
@@ -46,227 +43,45 @@ export function Metric({ label, value, note, icon: Icon, tone = "blue" }) {
         <strong>{value}</strong>
         {note && <small>{note}</small>}
       </div>
-    </article>
+    </Card>
   );
 }
 
-// SVG uses a shared responsive coordinate system; the table exposes exact values on touch and keyboard.
-export function Chart({
-  title,
-  subtitle,
-  rows = [],
-  type = "bar",
-  format = number,
-  totalLabel = "Tổng",
-  loading = false,
-  error = "",
-}) {
-  const reactId = useId();
-  const id = `chart-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
-  const container = useRef(null);
-  const [canvasWidth, setCanvasWidth] = useState(500);
-  useEffect(() => {
-    if (!container.current || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(([entry]) => setCanvasWidth(Math.max(500, Math.round(entry.contentRect.width))));
-    observer.observe(container.current);
-    return () => observer.disconnect();
-  }, []);
-  const data = normalizeChartRows(rows);
-  const positive = donutSegments(data);
-  const total = positive.reduce((sum, row) => sum + row.value, 0);
-  const min = Math.min(0, ...data.map((row) => row.value));
-  const max = Math.max(1, ...data.map((row) => row.value));
-  const y = (value) => 195 - ((value - min) / (max - min)) * 155;
-  const baseline = y(0);
-  const x = (i) => 48 + ((i + 0.5) * (canvasWidth - 80)) / Math.max(data.length, 1);
-  const points = data.map((row, i) => `${x(i)},${y(row.value)}`).join(" ");
-  const empty = !data.length || (type === "donut" && !total);
-  return (
-    <article className="console-card console-chart" data-chart-type={type} ref={container}>
-      <header>
-        <div>
-          <h3>{title}</h3>
-          {subtitle && <p>{subtitle}</p>}
-        </div>
-        <span className="console-chart-badge">
-          {type === "line"
-            ? "Xu hướng"
-            : type === "donut"
-              ? "Phân bổ"
-              : "So sánh"}
-        </span>
-      </header>
-      {!empty && error && <p className="console-error" role="alert">Đang hiển thị lần tải gần nhất. Cập nhật chưa thành công: {error}</p>}
-      {!empty && type === 'line' && data.length < 2 && <p className="workspace-chart-note">Mới có một kỳ dữ liệu; chưa đủ để xác định xu hướng.</p>}
-      {empty ? (
-        <div className="console-chart-empty" style={{background:'transparent',display:'flex',flexDirection:'column',gap:12}}>
-          {type === 'donut' ? <svg viewBox="0 0 220 160" role="img" aria-label={title + ' · chưa có số liệu'} style={{height:150}}><circle cx="110" cy="80" r="58" fill="none" stroke="#e9edf4" strokeWidth="18"/><text x="110" y="85" textAnchor="middle" fill="#85907d">—</text></svg> : <svg viewBox="0 0 500 160" role="img" aria-label={title + ' · chưa có số liệu'} style={{width:'100%',height:150}}>{[25,60,95,130].map(y=><line key={y} x1="30" x2="480" y1={y} y2={y} stroke="#e8edf4" strokeDasharray="3 4"/>)}<line x1="30" x2="30" y1="20" y2="130" stroke="#e8edf4"/><text x="250" y="83" textAnchor="middle" fill="#85907d">—</text></svg>}
-          <span role={error ? 'alert' : 'status'}>{loading ? 'Đang tải số liệu…' : error ? `Không tải được số liệu: ${error}` : data.length ? 'Chưa có giá trị phát sinh trong kỳ này.' : 'Chưa ghi nhận dữ liệu trong tập đã tải.'}</span>
-        </div>
-      ) : type === "donut" ? (
-        <div className="console-donut-layout">
-          <svg viewBox="0 0 220 220" role="img" aria-labelledby={id}>
-            <title id={id}>{title}</title>
-            <circle
-              cx="110"
-              cy="110"
-              r="78"
-              fill="none"
-              stroke="#edf1f7"
-              strokeWidth="24"
-            />
-            {positive.map((row, i) => {
-              const share = row.share;
-              const start = row.offset;
-              return (
-                <circle
-                  key={i}
-                  cx="110"
-                  cy="110"
-                  r="78"
-                  fill="none"
-                  stroke={row.color || colors[i % colors.length]}
-                  strokeWidth="24"
-                  pathLength="100"
-                  strokeDasharray={`${share} ${100 - share}`}
-                  strokeDashoffset={-start}
-                  transform="rotate(-90 110 110)"
-                >
-                  <title>{`${row.label}: ${format(row.value)} (${share.toFixed(1)}%)`}</title>
-                </circle>
-              );
-            })}
-            <text
-              x="110"
-              y="104"
-              textAnchor="middle"
-              className="console-donut-total"
-            >
-              {format(total)}
-            </text>
-            <text x="110" y="127" textAnchor="middle" className="console-axis">
-              {totalLabel}
-            </text>
-          </svg>
-          <ul className="console-legend">
-            {positive.map((row, i) => (
-              <li key={i}>
-                <i
-                  style={{ background: row.color || colors[i % colors.length] }}
-                />
-                <span>{row.label}</span>
-                <b>{((row.value / total) * 100).toFixed(1)}%</b>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <svg
-          className="console-plot"
-          viewBox={`0 0 ${canvasWidth} 235`}
-          role="img"
-          aria-labelledby={id}
-        >
-          <title id={id}>{title}</title>
-          {type === 'line' && <>
-            <defs><linearGradient id={id + '-area'} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={colors[0]} stopOpacity="0.18" />
-              <stop offset="100%" stopColor={colors[0]} stopOpacity="0.01" />
-            </linearGradient></defs>
-            <polygon points={`${x(0)},${baseline} ${points} ${x(data.length - 1)},${baseline}`} fill={`url(#${id}-area)`} style={{ "--chart-area-fill": `url(#${id}-area)` }} />
-          </>}
-          {[0, 1, 2, 3, 4].map((i) => {
-            const value = min + ((max - min) * i) / 4;
-            return (
-              <g key={i}>
-                <line
-                  x1="48"
-                  x2={canvasWidth - 25}
-                  y1={y(value)}
-                  y2={y(value)}
-                  stroke="#e8edf4"
-                  strokeDasharray="3 4"
-                />
-                <text
-                  x="42"
-                  y={y(value) + 4}
-                  textAnchor="end"
-                  className="console-axis"
-                >
-                  {Intl.NumberFormat("vi-VN", {
-                    notation: "compact",
-                    maximumFractionDigits: 1,
-                  }).format(value)}
-                </text>
-              </g>
-            );
-          })}
-          {type === "line" && (
-            <polyline
-              points={points}
-              fill="none"
-              stroke={colors[0]}
-              strokeWidth="3"
-              strokeLinejoin="round"
-            />
-          )}
-          {data.map((row, i) => (
-            <g key={i}>
-              {type === "line" ? (
-                <circle cx={x(i)} cy={y(row.value)} r="4" fill={colors[0]}>
-                  <title>{`${row.label}: ${format(row.value)}`}</title>
-                </circle>
-              ) : (
-                <rect
-                  x={x(i) - Math.min(28, 140 / data.length)}
-                  y={Math.min(y(row.value), baseline)}
-                  width={Math.min(56, 280 / data.length)}
-                  height={Math.abs(y(row.value) - baseline)}
-                  rx="4"
-                  fill={row.color || colors[i % colors.length]}
-                >
-                  <title>{`${row.label}: ${format(row.value)}`}</title>
-                </rect>
-              )}
-              {(data.length <= 8 || i % Math.ceil(data.length / 8) === 0) && (
-                <text
-                  x={x(i)}
-                  y="218"
-                  textAnchor="middle"
-                  className="console-axis"
-                >
-                  {String(row.label).length > 12
-                    ? String(row.label).slice(0, 11) + "…"
-                    : row.label}
-                </text>
-              )}
-            </g>
-          ))}
-        </svg>
-      )}
-      {data.length > 0 && (
-        <details className="console-chart-data">
-          <summary>Xem số liệu</summary>
-          <div className="console-table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nhóm / thời gian</th>
-                  <th>Giá trị</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.label}</td>
-                    <td>{format(row.value)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </details>
-      )}
-    </article>
-  );
+
+// shadcn chart framing with Recharts geometry. Full labels stay in tooltip and data table.
+export function Chart({ title, subtitle, rows = [], type = 'bar', format = number, totalLabel = 'Tổng', loading = false, error = '' }) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '')
+  const data = normalizeChartRows(rows), positive = donutSegments(data)
+  const total = positive.reduce((sum, row) => sum + row.value, 0)
+  const empty = !data.length || (type === 'donut' && !total)
+  const config = { value: { label: title, color: '#0284c7' } }
+  const short = label => String(label).length > 19 ? String(label).slice(0, 18) + '…' : label
+  const compact = value => Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
+  const tooltip = <ChartTooltip content={<ChartTooltipContent formatter={value => format(Number(value))} />} cursor={type === 'bar' ? { fill: '#f1f5f9' } : false} />
+  return <Card className="console-card console-chart shadcn-chart" data-chart-type={type}>
+    <header><div><h3>{title}</h3>{subtitle && <p>{subtitle}</p>}</div><Badge variant="outline">{type === 'line' ? 'Xu hướng' : type === 'donut' ? 'Phân bổ' : 'So sánh'}</Badge></header>
+    {!empty && error && <p className="console-error" role="alert">Đang hiển thị lần tải gần nhất. Cập nhật chưa thành công: {error}</p>}
+    {!empty && type === 'line' && data.length < 2 && <p className="workspace-chart-note">Mới có một kỳ dữ liệu; chưa đủ để xác định xu hướng.</p>}
+    {empty ? <div className="console-chart-empty" role={error ? 'alert' : 'status'}>{loading ? 'Đang tải số liệu…' : error ? 'Không tải được số liệu: ' + error : 'Chưa ghi nhận dữ liệu trong tập đã tải.'}</div> : type === 'donut' ? <div className="shadcn-donut-layout">
+      <div className="shadcn-donut-plot">
+        <ChartContainer config={config} className="shadcn-chart-canvas" role="img" aria-label={title}>
+          <PieChart accessibilityLayer><Pie data={positive} dataKey="value" nameKey="label" innerRadius="63%" outerRadius="86%" paddingAngle={2} strokeWidth={0} isAnimationActive={false}>
+            {positive.map((row, index) => <Cell key={index} fill={row.color || colors[index % colors.length]} />)}
+          </Pie>{tooltip}</PieChart>
+        </ChartContainer>
+        <div className="shadcn-donut-center" aria-hidden="true"><strong>{compact(total)}</strong><span>{totalLabel}</span></div>
+      </div>
+      <ul className="shadcn-chart-legend">{positive.map((row, index) => <li key={index}><i style={{ background: row.color || colors[index % colors.length] }} /><span>{row.label}</span><strong>{row.share.toFixed(1)}%</strong></li>)}</ul>
+    </div> : <ChartContainer config={config} className="shadcn-chart-canvas" role="img" aria-label={title} style={{ height: type === 'bar' ? Math.max(260, Math.min(420, data.length * 38)) : 280 }}>
+      {type === 'line' ? <AreaChart data={data} margin={{ left: 8, right: 16, top: 18, bottom: 8 }} accessibilityLayer>
+        <defs><linearGradient id={id + 'area'} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0284c7" stopOpacity={.22} /><stop offset="100%" stopColor="#0284c7" stopOpacity={.02} /></linearGradient></defs>
+        <CartesianGrid vertical={false} strokeDasharray="3 5" /><XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={12} minTickGap={30} interval="preserveStartEnd" tickFormatter={short} height={42} /><YAxis tickLine={false} axisLine={false} tickFormatter={compact} width={52} tickMargin={8} />{tooltip}
+        <Area type="monotone" dataKey="value" stroke="#0284c7" strokeWidth={2.5} fill={'url(#' + id + 'area)'} isAnimationActive={false} dot={data.length < 2} />
+      </AreaChart> : <BarChart data={data} layout="vertical" margin={{ left: 0, right: 20, top: 8, bottom: 8 }} barCategoryGap="28%" accessibilityLayer>
+        <CartesianGrid horizontal={false} strokeDasharray="3 5" /><XAxis type="number" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={compact} /><YAxis type="category" dataKey="label" tickLine={false} axisLine={false} width={125} tickFormatter={short} tickMargin={10} interval={0} />{tooltip}
+        <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={28} isAnimationActive={false}>{data.map((row, index) => <Cell key={index} fill={row.color || colors[index % colors.length]} />)}</Bar>
+      </BarChart>}
+    </ChartContainer>}
+    {data.length > 0 && <details className="console-chart-data"><summary>Xem số liệu</summary><Table><thead><tr><th>Nhóm / thời gian</th><th>Giá trị</th></tr></thead><tbody>{data.map((row,index) => <tr key={index}><td>{row.label}</td><td>{format(row.value)}</td></tr>)}</tbody></Table></details>}
+  </Card>
 }

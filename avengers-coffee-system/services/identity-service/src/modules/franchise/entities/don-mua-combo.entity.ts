@@ -21,7 +21,7 @@ export class DonMuaCombo {
   tong_tien: number;
 
   @Column({ type: 'varchar', length: 20, default: 'DA_DAT' })
-  trang_thai: 'DA_DAT' | 'DA_GIAO' | 'TAM_HOAN';
+  trang_thai: 'DA_DAT' | 'DA_XAC_NHAN' | 'DA_GIAO' | 'TAM_HOAN';
 
   @Column({ type: 'varchar', length: 30, default: 'CONG_NO' })
   phuong_thuc_thanh_toan: 'VNPAY' | 'CHUYEN_KHOAN' | 'CONG_NO' | 'VI_DIEN_TU';

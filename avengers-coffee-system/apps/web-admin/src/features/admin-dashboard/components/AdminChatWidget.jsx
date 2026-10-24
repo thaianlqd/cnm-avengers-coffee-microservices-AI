@@ -1,3 +1,5 @@
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
 import { useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
 import { MessageSquare } from '../../../components/console/WorkspaceIcons'
@@ -23,5 +25,5 @@ export function AdminChatWidget({ session, onOpenInbox, hidden }) {
     return () => { clearInterval(timer); model.dispose(); socket.disconnect() }
   }, [userId, role, token, hidden])
   if (!session || hidden) return null
-  return <button type="button" aria-label="Mở trang tin nhắn khách hàng" title="Tin nhắn khách hàng" className="admin-chat-bubble-btn" onClick={onOpenInbox}><MessageSquare size={25} />{unread > 0 && <span className="admin-chat-bubble-badge" aria-label={`${unread} tin nhắn chưa đọc`}>{unread > 99 ? '99+' : unread}</span>}</button>
+  return <Button type="button" aria-label="Mở trang tin nhắn khách hàng" title="Tin nhắn khách hàng" className="admin-chat-bubble-btn" onClick={onOpenInbox}><MessageSquare size={25} />{unread > 0 && <Badge variant="outline" className="admin-chat-bubble-badge" aria-label={`${unread} tin nhắn chưa đọc`}>{unread > 99 ? '99+' : unread}</Badge>}</Button>
 }

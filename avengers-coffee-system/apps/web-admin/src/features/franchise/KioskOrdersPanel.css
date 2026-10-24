@@ -1,0 +1,29 @@
+.kiosk-order-history { display:grid; gap:18px; min-width:0; }
+.kiosk-orders-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:16px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; }
+.kiosk-orders-search { position:relative; flex:1; min-width:220px; }
+.kiosk-orders-search > svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#526174; pointer-events:none; }
+:is(#root,body) .console-shell .kiosk-orders-search input { padding-left:40px !important; height:40px; }
+.kiosk-orders-toolbar .standard-searchable-select { width:190px; }
+.kiosk-orders-empty { display:grid; justify-items:center; padding:48px 16px; gap:16px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; color:#526174; font-size:14px; }
+.kiosk-order-hint { font-size:12px; color:#526174; margin:0; }
+.kiosk-orders-table { border:1px solid #e2e8f0; border-radius:12px; background:#fff; overflow-x:auto; }
+.kiosk-orders-table table { width:100%; min-width:850px; border-collapse:collapse; }
+.kiosk-orders-table :is(th,td) { padding:16px; text-align:left; font-size:13px; color:#263c50; vertical-align:middle; }
+.kiosk-orders-table th { background:#f6f8fa; font-weight:500; color:#526174; }
+.kiosk-orders-table td { border-top:1px solid #edf1f5; }
+.kiosk-orders-table td strong { font-weight:500; }
+.kiosk-orders-table td small { display:block; margin-top:6px; color:#526174; font-size:12px; }
+.kiosk-orders-table .kiosk-orders-money { font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.kiosk-order-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.kiosk-orders-pagination { display:flex; justify-content:flex-end; align-items:center; gap:10px; }
+.kiosk-orders-pagination > span { margin-right:auto; font-size:12px; color:#526174; }
+.kiosk-order-detail { padding:24px; display:grid; gap:16px; font-size:14px; color:#263c50; }
+.kiosk-order-detail ul { list-style:none; margin:0; padding:0; }
+.kiosk-order-detail li { display:flex; justify-content:space-between; gap:20px; padding:14px 0; border-bottom:1px solid #edf1f5; }
+.kiosk-order-detail :is(strong,dd) { font-weight:500; font-variant-numeric:tabular-nums; }
+.kiosk-order-detail dl { margin:0; display:grid; gap:12px; }
+.kiosk-order-detail dl > div { display:flex; justify-content:space-between; gap:20px; }
+.kiosk-order-detail dd { margin:0; }
+.kiosk-order-detail p { margin:0; line-height:1.6; color:#526174; }
+.kiosk-order-detail label { font-size:13px; font-weight:500; }
+@media(max-width:600px) { .kiosk-orders-toolbar .standard-searchable-select { flex:1; min-width:160px; } .kiosk-orders-search { flex-basis:100%; } }

@@ -9,7 +9,7 @@ export const GiftCardFooter = ({ onNavigate }) => (
         {/* Col 1 */}
         <div className="flex flex-col gap-4 w-[320px] flex-shrink-0">
           <div className="mb-2">
-            <img src="/images/brand/logo-white.png" alt="Avengers Coffee" className="h-[68px] w-auto object-contain" />
+            <img src="/images/brand/logo-white.svg" alt="Avengers Coffee" className="h-[68px] w-auto object-contain" />
           </div>
 
           <p className="text-[14px] text-white/95 leading-[1.6]">

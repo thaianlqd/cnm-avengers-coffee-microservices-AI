@@ -1,0 +1,39 @@
+{
+  "buildPath": "code",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "theme('fontfamily.sans')",
+        "files": [
+          "avengers-coffee-system/apps/web-admin/src/features/actor-admin/styles/AdminWorkspace.css"
+        ],
+        "createdAt": "2026-10-23T05:19:06.975Z",
+        "reason": "Agent: detector reads Tailwind theme('fontFamily.sans') as a literal font. tailwind.config.js resolves it to the exact Inter/system stack documented in DESIGN.md; no new font was introduced."
+      },
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "files": [
+          "avengers-coffee-system/apps/web-admin/src/Console.css",
+          "avengers-coffee-system/apps/web-admin/src/Workspace.css",
+          "avengers-coffee-system/apps/web-admin/src/features/actor-admin/styles/AdminEnterprise.css",
+          "avengers-coffee-system/apps/web-admin/src/index.css"
+        ],
+        "createdAt": "2026-10-23T05:19:07.060Z",
+        "reason": "Agent design decision: retain the existing documented Inter typography for a dense enterprise Operate workspace, consistent with the reviewed System Admin design. This is intentional workhorse UI typography, not a new decorative display face."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "times new roman",
+        "files": [
+          "avengers-coffee-system/apps/web-admin/src/features/actor-admin/components/AdminKioskManagementPanel.jsx"
+        ],
+        "createdAt": "2026-10-23T05:19:07.146Z",
+        "reason": "Agent: existing separate A4 kiosk contract print window uses Times New Roman at 14pt. This literal document typography is outside the interactive dashboard system; the print handler is preserved under the strict business-logic constraint and the exception is documented in DESIGN.md."
+      }
+    ]
+  }
+}

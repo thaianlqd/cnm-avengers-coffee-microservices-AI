@@ -11,12 +11,12 @@ export const normalizeOrderStatus = (value) => normalizeCode(value)
 
 export const normalizeViText = (value) => {
   const text = String(value ?? '')
-  if (!text) return text
+  if (!text || !/(?:Ã|Â|Ä|Æ|á[º»])/.test(text)) return text
 
   // Fix common UTF-8 mojibake (e.g. "Cà Phê" rendered as "CÃ  PhÃª").
   try {
     const bytes = Uint8Array.from(Array.from(text).map((char) => char.charCodeAt(0) & 0xff))
-    const decoded = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
+    const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
 
     const score = (input) => (input.match(/[ăâđêôơưáàảãạấầẩẫậéèẻẽẹíìỉĩịóòỏõọúùủũụýỳỷỹỵ]/gi) || []).length
     return score(decoded) >= score(text) ? decoded : text
@@ -44,4 +44,17 @@ export const cutTimeByRange = (range, nowTimestamp) => {
     '30d': nowTimestamp - 30 * 24 * 60 * 60 * 1000,
   }
   return map[range] || map['7d']
+}
+
+// Cancellation notes live in the order status history; an ordinary order note is not a cancellation reason.
+export const orderCancellationReason = order => {
+  if (normalizeOrderStatus(order?.trang_thai_don_hang) !== 'DA_HUY') return ''
+  const explicit = order.ly_do_huy || order.cancel_reason || order.cancellation_reason
+  if (String(explicit || '').trim()) return normalizeViText(String(explicit).trim())
+  const history = Array.isArray(order.lich_su_trang_thai) ? order.lich_su_trang_thai : []
+  const cancelled = [...history].reverse().find(entry => entry.loai === 'ORDER' && normalizeOrderStatus(entry.trang_thai) === 'DA_HUY')
+  const note = normalizeViText(String(cancelled?.ly_do_huy || cancelled?.reason || cancelled?.ghi_chu || '').trim())
+  const normalizedNote = note.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().trim()
+  if (['du lieu cu duoc dong bo tu trang thai hien tai','nhan vien cua hang cap nhat trang thai','cap nhat trang thai don hang'].includes(normalizedNote)) return ''
+  return note.replace(/^.*?(?:Lý do|Ly do):\s*/i, '')
 }

@@ -1,3 +1,9 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Button } from '../../../components/ui/button'
+import { Textarea } from '../../../components/ui/textarea'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import CurrencyInput from '../../../components/console/CurrencyInput'
 import React, { useState, useEffect } from 'react'
@@ -14,6 +20,7 @@ import {
   Plus,
   Trash2,
   Check,
+  CheckCircle2,
   Printer,
   AlertCircle,
   Clock,
@@ -25,6 +32,7 @@ import { fmtMoney, normalizeViText, paymentTag } from '../utils'
 
 export function PosOrderPanel({
   isKioskStaff,
+  isManager,
   isStaff,
   activeKioskShift,
   moCaKiosk,
@@ -56,6 +64,7 @@ export function PosOrderPanel({
   const [openShiftCash, setOpenShiftCash] = useState(0)
   const [openShiftNote, setOpenShiftNote] = useState('')
   const [isOpeningShift, setIsOpeningShift] = useState(false)
+  const [openShiftError, setOpenShiftError] = useState('')
 
   useEffect(() => {
     if (isKioskStaff && posForm.loai_don_hang !== 'MANG_DI') {
@@ -65,18 +74,20 @@ export function PosOrderPanel({
 
   const handleOpenShift = async () => {
     setIsOpeningShift(true)
-    if (moCaKiosk) {
-      await moCaKiosk({ cash_open: openShiftCash, note: openShiftNote })
-    }
-    setIsOpeningShift(false)
+    setOpenShiftError('')
+    try {
+      const result = await moCaKiosk?.({ cash_open: openShiftCash, note: openShiftNote })
+      if (result?.ok === false || result === false) setOpenShiftError(result?.error || 'Không mở được ca. Vui lòng thử lại.')
+    } catch (error) { setOpenShiftError(error.message) }
+    finally { setIsOpeningShift(false) }
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem 1.5rem' }}>
+    <div className="manager-pos" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem 1.5rem' }}>
       
       {/* HEADER TITLE */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e4df', paddingBottom: '1rem' }}>
-        <div>
+        <WorkspacePanelIntro><div>
           <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Monitor size={22} color="var(--primary)" /> {isKioskStaff ? 'POS Tạo Đơn Nhanh Mang Đi' : 'POS Tạo Đơn Nhanh Tại Quầy'}
           </h1>
@@ -85,145 +96,30 @@ export function PosOrderPanel({
               ? 'Tạo đơn nhanh cho khách mang đi (Takeaway), tự động tính tiền thối và in hóa đơn tức thì.'
               : 'Tạo đơn trực tiếp cho khách dùng tại chỗ hoặc mang đi, tự động tính tiền thối và in hóa đơn tức thì.'}
           </p>
-        </div>
+        </div></WorkspacePanelIntro>
       </div>
 
-      {(isKioskStaff || isStaff) && !activeKioskShift && (
-        <div style={{ backgroundColor: "#f4f5f2", border: '1px solid #fecaca', borderRadius: '12px', padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-          <AlertCircle size={24} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div style={{ flex: 1 }}>
-            <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: '700', color: '#991b1b' }}>Chưa mở ca làm việc</h3>
-            <p style={{ margin: '0 0 1rem 0', fontSize: '0.8125rem', color: '#b91c1c' }}>
-              Vui lòng nhập tiền mặt đầu ca để mở ca làm việc. Bạn không thể tạo đơn POS khi chưa mở ca.
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', width: '200px' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#991b1b' }}>Tiền mặt đầu ca (VNĐ)</label>
-                <CurrencyInput 
-                  value={openShiftCash === 0 ? '' : openShiftCash} 
-                  onChange={(e) => setOpenShiftCash(Number(e.target.value) || 0)} 
-                  placeholder="VD: 500.000" 
-                  style={{ height: '36px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #fca5a5', backgroundColor: '#fff', outline: 'none', fontSize: '0.8125rem' }} 
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', width: '250px' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#991b1b' }}>Ghi chú ca làm việc</label>
-                <input 
-                  type="text" 
-                  value={openShiftNote} 
-                  onChange={(e) => setOpenShiftNote(e.target.value)} 
-                  placeholder="Ghi chú (không bắt buộc)..." 
-                  style={{ height: '36px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #fca5a5', backgroundColor: '#fff', outline: 'none', fontSize: '0.8125rem' }} 
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleOpenShift}
-                disabled={isOpeningShift}
-                style={{ height: '36px', padding: '0 1.25rem', borderRadius: '6px', backgroundColor: '#dc2626', color: '#ffffff', fontWeight: '700', border: 'none', cursor: 'pointer', fontSize: '0.8125rem' }}
-              >
-                {isOpeningShift ? 'Đang mở...' : 'Mở ca ngay'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {(isKioskStaff || isStaff) && activeKioskShift && (
-        <div style={{ backgroundColor: "#f4f5f2", border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <Clock size={24} color="#2563eb" style={{ flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: '700', color: '#1e40af' }}>Ca làm việc hiện tại</h3>
-            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#1d4ed8' }}>
-              Tiền mặt đầu ca: <strong>{fmtMoney(activeKioskShift.tien_dau_ca)}</strong> • 
-              Bắt đầu lúc: <strong>{new Date(activeKioskShift.thoi_gian_mo_ca).toLocaleTimeString('vi-VN')}</strong>
-              {activeKioskShift.ghi_chu_mo_ca ? ` • Ghi chú: ${activeKioskShift.ghi_chu_mo_ca}` : ''}
-            </p>
-          </div>
-        </div>
-      )}
+      {(isKioskStaff || isStaff || isManager) && <section className={`pos-session ${activeKioskShift ? 'pos-session--open' : ''}`} aria-label="Ca bán hàng">
+        <div className="pos-session-intro"><div className="pos-session-icon"><Clock size={22}/></div><div><h2>{activeKioskShift ? 'Ca bán hàng đang mở' : 'Bắt đầu ca bán hàng'}</h2><p>{activeKioskShift ? `Mở lúc ${new Date(activeKioskShift.thoi_gian_mo_ca).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})} · Tiền đầu ca ${fmtMoney(activeKioskShift.tien_dau_ca)}` : 'Kiểm đếm tiền mặt đầu ca trước khi nhận thanh toán tại quầy.'}</p></div>{activeKioskShift && <StatusBadge status="ACTIVE">Đang hoạt động</StatusBadge>}</div>
+        {!activeKioskShift && <><div className="pos-session-fields"><div><Label htmlFor="pos-opening-cash">Tiền mặt đầu ca</Label><CurrencyInput id="pos-opening-cash" value={openShiftCash === 0 ? '' : openShiftCash} onChange={e=>setOpenShiftCash(Number(e.target.value)||0)} placeholder="Ví dụ: 500.000"/></div><div><Label htmlFor="pos-opening-note">Ghi chú ca làm việc</Label><Input id="pos-opening-note" value={openShiftNote} onChange={e=>setOpenShiftNote(e.target.value)} placeholder="Không bắt buộc"/></div><Button variant="default" className="admin-button-primary" type="button" onClick={handleOpenShift} disabled={isOpeningShift}><CheckCircle2 size={16}/>{isOpeningShift ? 'Đang mở ca…' : 'Mở ca bán hàng'}</Button></div>{openShiftError&&<p role="alert" className="workspace-form-error">{openShiftError}</p>}</>}
+      </section>}
 
       {/* SPLIT CONTAINER */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+      <div data-pos-layout="true" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
         
         {/* LEFT COLUMN: FORM & ITEMS SELECTION */}
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           
           {/* Order Type & Payment Method Switches */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#69736a', letterSpacing: '0.04em' }}>
-              Loại đơn &amp; Hình thức thanh toán:
-            </span>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
-              {POS_ORDER_TYPE_OPTIONS.filter(opt => isKioskStaff ? opt.id === 'MANG_DI' : true).map((option) => {
-                const isActive = posForm.loai_don_hang === option.id
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => setPosForm((prev) => ({ ...prev, loai_don_hang: option.id }))}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      padding: '0.45rem 0.95rem',
-                      borderRadius: '8px',
-                      fontSize: '0.8125rem',
-                      fontWeight: isActive ? '700' : '600',
-                      border: isActive ? '1px solid var(--primary)' : '1px solid #ccd3c7',
-                      backgroundColor: isActive ? 'var(--primary)' : '#ffffff',
-                      color: isActive ? '#ffffff' : '#596255',
-                      cursor: 'pointer',
-                      boxShadow: isActive ? '0 2px 6px rgba(0, 0, 0, 0.15)' : 'none',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {option.id === 'TAI_CHO' ? <Store size={15} /> : <ShoppingBag size={15} />}
-                    <span>{option.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
-              {POS_PAYMENT_OPTIONS.map((option) => {
-                const isActive = posForm.phuong_thuc_thanh_toan === option.id
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => setPosForm((prev) => ({ ...prev, phuong_thuc_thanh_toan: option.id }))}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      padding: '0.45rem 0.95rem',
-                      borderRadius: '8px',
-                      fontSize: '0.8125rem',
-                      fontWeight: isActive ? '700' : '600',
-                      border: isActive ? '1px solid var(--primary)' : '1px solid #ccd3c7',
-                      backgroundColor: isActive ? 'var(--primary)' : '#ffffff',
-                      color: isActive ? '#ffffff' : '#596255',
-                      cursor: 'pointer',
-                      boxShadow: isActive ? '0 2px 6px rgba(0, 0, 0, 0.15)' : 'none',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {option.id === 'THANH_TOAN_KHI_NHAN_HANG' ? <Coins size={15} /> : <QrCode size={15} />}
-                    <span>{option.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          <div className="pos-order-options"><Label htmlFor="pos-order-type">Hình thức phục vụ<SearchableSelect id="pos-order-type" value={posForm.loai_don_hang} disabled={isKioskStaff} onChange={e => setPosForm(prev => ({ ...prev, loai_don_hang: e.target.value }))} options={POS_ORDER_TYPE_OPTIONS.filter(option => !isKioskStaff || option.id === 'MANG_DI').map(option => ({ value: option.id, label: option.label }))} /></Label><Label htmlFor="pos-payment-method">Phương thức thanh toán<SearchableSelect id="pos-payment-method" value={posForm.phuong_thuc_thanh_toan} onChange={e => setPosForm(prev => ({ ...prev, phuong_thuc_thanh_toan: e.target.value }))} options={POS_PAYMENT_OPTIONS.map(option => ({ value: option.id, label: option.label }))} /></Label></div>
 
           {/* Customer & Table Inputs */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: '0.85rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <User size={14} color="#69736a" /> Tên khách hàng
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 placeholder="Khách vãng lai (không bắt buộc)"
                 value={posForm.ten_khach_hang}
@@ -234,10 +130,10 @@ export function PosOrderPanel({
 
             {!isKioskStaff && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <MapPin size={14} color="#69736a" /> Mã / Số bàn
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   placeholder="Số bàn (nếu dùng tại chỗ)"
                   disabled={!['TAI_CHO', 'DUNG_TAI_CHO'].includes(posForm.loai_don_hang)}
@@ -251,10 +147,10 @@ export function PosOrderPanel({
 
           {/* Note Input */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-            <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <FileText size={14} color="#69736a" /> Ghi chú đơn
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               placeholder="VD: Ít đường, mang đi gấp..."
               rows={2}
               value={posForm.ghi_chu}
@@ -267,14 +163,14 @@ export function PosOrderPanel({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', borderTop: '1px solid #f4f5f2', paddingTop: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '0.84rem', fontWeight: '700', color: '#252927' }}>Danh sách món trong đơn:</span>
-              <button
+              <Button
                 type="button"
                 onClick={addPosItem}
                 disabled={!inventoryState?.items?.length}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', backgroundColor: 'var(--primary-light)', color: 'var(--primary-hover)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '0.35rem 0.75rem', fontSize: '0.78125rem', fontWeight: '700', cursor: 'pointer' }}
               >
                 <Plus size={14} /> Thêm món
-              </button>
+              </Button>
             </div>
 
             {!inventoryState?.loading && !inventoryState?.items?.length ? (
@@ -283,7 +179,7 @@ export function PosOrderPanel({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               {posItems.map((item, index) => (
-                <div key={`${item.ma_san_pham}-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#f8f9f6', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid #e2e4df', flexWrap: 'wrap' }}>
+                <div data-pos-line="true" key={`${item.ma_san_pham}-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#f8f9f6', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid #e2e4df', flexWrap: 'wrap' }}>
                   <SearchableSelect
                     value={item.ma_san_pham}
                     onChange={(e) => updatePosItem(index, 'ma_san_pham', e.target.value)}
@@ -296,7 +192,7 @@ export function PosOrderPanel({
                     ))}
                   </SearchableSelect>
 
-                  <input
+                  <Input
                     type="number"
                     min="1"
                     value={item.qty}
@@ -308,13 +204,13 @@ export function PosOrderPanel({
                     {fmtMoney(Number(item.price || 0) * Number(item.qty || 1))}
                   </div>
 
-                  <button
+                  <Button
                     type="button"
                     onClick={() => removePosItem(index)}
                     style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', width: '36px', height: '36px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                   >
                     <Trash2 size={15} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -360,9 +256,9 @@ export function PosOrderPanel({
             {/* Cash input & calculation */}
             {isCashMethod ? (
               <div style={{ backgroundColor: '#f8f9f6', border: '1px solid #e2e4df', borderRadius: '10px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.25rem' }}>
-                <label htmlFor="pos-cash-input" style={{ fontSize: '0.78125rem', fontWeight: '700', color: '#414743' }}>
+                <Label htmlFor="pos-cash-input" style={{ fontSize: '0.78125rem', fontWeight: '700', color: '#414743' }}>
                   Tiền khách đưa (VNĐ):
-                </label>
+                </Label>
                 <CurrencyInput
                   id="pos-cash-input"
                   style={{ height: '36px', width: '100%', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.9rem', fontWeight: '700', color: '#252927' }}
@@ -381,7 +277,7 @@ export function PosOrderPanel({
             ) : null}
 
             {/* Confirm Create Button */}
-            <button
+            <Button data-intent="success"
               type="button"
               className="btn-save-green"
               onClick={taoDonTaiQuay}
@@ -391,26 +287,26 @@ export function PosOrderPanel({
                 !inventoryState?.items?.length ||
                 posHasUnavailableItem ||
                 (isCashMethod && posCashInsufficient) ||
-                ((isKioskStaff || isStaff) && !activeKioskShift)
+                ((isKioskStaff || isStaff || isManager) && !activeKioskShift)
               }
-              style={{ 
-                width: '100%', 
-                height: '42px', 
-                borderRadius: '10px', 
-                fontSize: '0.9rem', 
-                fontWeight: '700', 
-                cursor: ((isKioskStaff || isStaff) && !activeKioskShift) ? 'not-allowed' : 'pointer', 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                gap: '0.45rem', 
+              style={{
+                width: '100%',
+                height: '42px',
+                borderRadius: '10px',
+                fontSize: '0.9rem',
+                fontWeight: '700',
+                cursor: ((isKioskStaff || isStaff || isManager) && !activeKioskShift) ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.45rem',
                 marginTop: '0.5rem',
-                opacity: ((isKioskStaff || isStaff) && !activeKioskShift) ? 0.6 : 1
+                opacity: ((isKioskStaff || isStaff || isManager) && !activeKioskShift) ? 0.6 : 1
               }}
             >
               <Check size={18} color="#ffffff" />
               <span>{creatingPosOrder ? 'Đang tạo đơn...' : isKioskStaff ? 'Xác Nhận Tạo Đơn Mang Đi' : 'Xác Nhận Tạo Đơn Tại Quầy'}</span>
-            </button>
+            </Button>
           </div>
 
           {/* CREATED POS ORDER BILL BOX */}
@@ -420,13 +316,13 @@ export function PosOrderPanel({
                 <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Sparkles size={16} color="var(--primary)" /> Đơn vừa tạo thành công
                 </h3>
-                <button
+                <Button
                   type="button"
                   onClick={() => inHoaDonPos(lastPosOrder.order.ma_don_hang)}
                   style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary-hover)', border: '1px solid var(--border-light)', borderRadius: '6px', padding: '0.25rem 0.65rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                 >
                   <Printer size={13} /> In hóa đơn
-                </button>
+                </Button>
               </div>
 
               <div style={{ fontSize: '0.8125rem', color: '#414743', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
@@ -453,8 +349,8 @@ export function PosOrderPanel({
                 </div>
               ) : null}
 
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.35rem' }}>
-                <button
+              <div data-modal-actions="true" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.35rem' }}>
+                <Button data-intent="success"
                   type="button"
                   onClick={() => {
                     capNhatTrangThaiDon(lastPosOrder.order.ma_don_hang, 'DA_XAC_NHAN')
@@ -463,8 +359,8 @@ export function PosOrderPanel({
                   style={{ flex: 1, backgroundColor: 'var(--primary)', color: '#ffffff', border: 'none', borderRadius: '6px', height: '34px', fontSize: '0.78125rem', fontWeight: '700', cursor: 'pointer' }}
                 >
                   Xác nhận đơn
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => {
                     capNhatTrangThaiDon(lastPosOrder.order.ma_don_hang, 'DANG_CHUAN_BI')
@@ -473,7 +369,7 @@ export function PosOrderPanel({
                   style={{ flex: 1, backgroundColor: '#f4f5f2', color: '#414743', border: '1px solid #ccd3c7', borderRadius: '6px', height: '34px', fontSize: '0.78125rem', fontWeight: '600', cursor: 'pointer' }}
                 >
                   Đang chuẩn bị
-                </button>
+                </Button>
               </div>
             </div>
           ) : null}

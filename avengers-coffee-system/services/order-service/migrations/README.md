@@ -39,3 +39,23 @@ Unpaid `WAITING_PAYMENT` claims expire after `VOUCHER_PAYMENT_HOLD_TTL_MINUTES`
 (default 30). This uses the existing `created_at` and `status` columns, so no
 new migration is needed. A later confirmed payment moves an expired claim back
 to `PENDING` for idempotent delivery; monitor late settlements after hold expiry.
+
+`20261023_pos_shift_scope.sql` separates branch-store POS sessions from franchise
+kiosk sessions. Apply it before deploying the scoped branch-shift endpoints; the
+added column defaults existing rows to `FRANCHISE_KIOSK` so legacy kiosk sessions
+keep their current behavior.
+
+`20261024_branch_surveys.sql` adds ownership of manager survey forms by branch.
+NULL ownership remains system-wide; management APIs derive the branch from JWT claims.
+`20261024_commerce_management.sql` adds scheduled flash sales and the restored product
+ranking weights. Apply both scripts before deploying the new services. The local
+Docker environment was migrated in the 24/10/2026 implementation session.
+
+`20261024_flash_sale_campaigns.sql` groups multiple product prices under a single
+flash-sale schedule. Existing individual sales are preserved as separate programs.
+Apply it before deploying the inline campaign editor and campaign endpoints.
+
+Kiosk close review metadata is stored in `kiosk_shift_session.du_lieu_chi_tiet.close_review`.
+The runtime no longer selects the optional `close_requested_*` / `close_approved_*`
+columns. The earlier `20261024_kiosk_shift_close_approval.sql` is optional legacy
+schema history; it is not required to open POS or submit/review new close reports.

@@ -25,7 +25,7 @@ export default function Footer({ onTabChange }) {
               aria-label="Avengers Coffee Home"
             >
               <img
-                src="/hc-assets/logo-white.png"
+                src="/images/brand/logo-white.svg"
                 alt="Avengers Coffee"
                 className="h-20 sm:h-24 w-auto object-contain drop-shadow-md"
               />

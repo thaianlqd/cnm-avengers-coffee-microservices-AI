@@ -1,3 +1,12 @@
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import { Button } from '../../../components/ui/button'
+import StatusBadge from '../../../components/console/StatusBadge'
+import { PageNumbers } from '../../../components/console/CompactPagination'
+import { Table } from '../../../components/ui/table'
+import { Badge } from '../../../components/ui/badge'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import SearchableSelect from '../../../components/console/SearchableSelect'
 import { Calendar as WorkspaceSymbolCalendar, Check as WorkspaceSymbolCheck, AlertTriangle as WorkspaceSymbolAlertTriangle } from '../../../components/console/WorkspaceIcons'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
@@ -89,9 +98,8 @@ export function StaffWorkShiftsPanel({
   }))
   const [attendanceMessage, setAttendanceMessage] = useState('')
   const [attendanceError, setAttendanceError] = useState('')
-  const [pendingPage, setPendingPage] = useState(1)
-  const [approvedPage, setApprovedPage] = useState(1)
-  const [rejectedPage, setRejectedPage] = useState(1)
+  const [historyFilter, setHistoryFilter] = useState('ALL')
+  const [historyPage, setHistoryPage] = useState(1)
 
   const summary = useMemo(() => {
     return getAttendanceMetrics(myWorkShiftState.items || [])
@@ -132,38 +140,14 @@ export function StaffWorkShiftsPanel({
     return (shiftRequestState?.items || []).filter(item => item.trang_thai_yeu_cau === 'REJECTED')
   }, [shiftRequestState?.items])
 
-  const pendingTotalPages = useMemo(() => Math.max(1, Math.ceil(pendingRequests.length / PAGE_SIZE)), [pendingRequests.length])
-  const pendingSafePage = useMemo(() => Math.min(Math.max(pendingPage, 1), pendingTotalPages), [pendingPage, pendingTotalPages])
-  const pendingPageRows = useMemo(
-    () => pendingRequests.slice((pendingSafePage - 1) * PAGE_SIZE, pendingSafePage * PAGE_SIZE),
-    [pendingRequests, pendingSafePage],
-  )
-
-  const approvedTotalPages = useMemo(() => Math.max(1, Math.ceil(approvedRequests.length / PAGE_SIZE)), [approvedRequests.length])
-  const approvedSafePage = useMemo(() => Math.min(Math.max(approvedPage, 1), approvedTotalPages), [approvedPage, approvedTotalPages])
-  const approvedPageRows = useMemo(
-    () => approvedRequests.slice((approvedSafePage - 1) * PAGE_SIZE, approvedSafePage * PAGE_SIZE),
-    [approvedRequests, approvedSafePage],
-  )
-
-  const rejectedTotalPages = useMemo(() => Math.max(1, Math.ceil(rejectedRequests.length / PAGE_SIZE)), [rejectedRequests.length])
-  const rejectedSafePage = useMemo(() => Math.min(Math.max(rejectedPage, 1), rejectedTotalPages), [rejectedPage, rejectedTotalPages])
-  const rejectedPageRows = useMemo(
-    () => rejectedRequests.slice((rejectedSafePage - 1) * PAGE_SIZE, rejectedSafePage * PAGE_SIZE),
-    [rejectedRequests, rejectedSafePage],
-  )
-
-  useEffect(() => {
-    if (pendingPage > pendingTotalPages) setPendingPage(pendingTotalPages)
-  }, [pendingPage, pendingTotalPages])
-
-  useEffect(() => {
-    if (approvedPage > approvedTotalPages) setApprovedPage(approvedTotalPages)
-  }, [approvedPage, approvedTotalPages])
-
-  useEffect(() => {
-    if (rejectedPage > rejectedTotalPages) setRejectedPage(rejectedTotalPages)
-  }, [rejectedPage, rejectedTotalPages])
+  const historyItems = useMemo(() => [...(shiftRequestState.items || [])]
+    .filter(item => historyFilter === 'ALL' || item.trang_thai_yeu_cau === historyFilter)
+    .sort((a,b) => String(b.ngay_lam_viec).localeCompare(String(a.ngay_lam_viec)) || String(a.gio_bat_dau).localeCompare(String(b.gio_bat_dau))), [shiftRequestState.items, historyFilter])
+  const historyPages = Math.max(1, Math.ceil(historyItems.length / PAGE_SIZE))
+  const safeHistoryPage = Math.min(historyPage, historyPages)
+  const historyRows = historyItems.slice((safeHistoryPage-1)*PAGE_SIZE, safeHistoryPage*PAGE_SIZE)
+  const requestStatusLabels = {PENDING:'Chờ duyệt',APPROVED:'Đã duyệt',REJECTED:'Từ chối',CANCELLED:'Đã hủy'}
+  const historyDate = value => /^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? String(value).split('-').reverse().join('/') : value || 'Chưa có ngày'
 
   const handleDeleteRequest = (requestId) => {
     if (confirm('Xác nhận hủy yêu cầu đăng ký ca này?')) {
@@ -172,7 +156,7 @@ export function StaffWorkShiftsPanel({
   }
 
   return (
-    <div className="panel-container" style={{
+    <div className="panel-container manager-personal-schedule" style={{
       padding: '1.75rem',
       background: '#f8f9f6',
       borderRadius: '20px',
@@ -188,7 +172,7 @@ export function StaffWorkShiftsPanel({
         gap: '1rem',
         marginBottom: '1.5rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <WorkspacePanelIntro><div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
             width: '42px',
             height: '42px',
@@ -210,72 +194,11 @@ export function StaffWorkShiftsPanel({
               <User size={14} color="var(--primary)" /> Nhân sự: <strong>{staffUsername || 'Nhân viên'}</strong>
             </span>
           </div>
-        </div>
+        </div></WorkspacePanelIntro>
       </div>
 
       {/* Summary Cards Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-        gap: '0.85rem',
-        marginBottom: '1.25rem'
-      }}>
-        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e4df' }}>
-          <span style={{ fontSize: '0.75rem', color: '#69736a' }}>Tổng ca đã xếp</span>
-          <strong style={{ fontSize: '1.25rem', display: 'block', color: '#30382e', marginTop: '0.1rem' }}>
-            {summary.totalShifts} ca
-          </strong>
-        </div>
 
-        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e4df' }}>
-          <span style={{ fontSize: '0.75rem', color: '#69736a' }}>Đi làm tuần này</span>
-          <strong style={{ fontSize: '1.25rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
-            {summary.attendedDaysWeek} ngày
-          </strong>
-        </div>
-
-        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e4df' }}>
-          <span style={{ fontSize: '0.75rem', color: '#69736a' }}>Đang Check-in</span>
-          <strong style={{ fontSize: '1.25rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
-            {summary.checkedInCount} ca
-          </strong>
-        </div>
-
-        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e4df' }}>
-          <span style={{ fontSize: '0.75rem', color: '#69736a' }}>Giờ làm thực tế</span>
-          <strong style={{ fontSize: '1.25rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
-            {summary.workedHours}h / {summary.scheduledHours}h
-          </strong>
-        </div>
-
-        <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e4df' }}>
-          <span style={{ fontSize: '0.75rem', color: '#69736a' }}>Đi muộn / Vắng</span>
-          <strong style={{ fontSize: '1.25rem', display: 'block', color: summary.lateCount > 0 || summary.absentCount > 0 ? '#ef4444' : 'var(--primary)', marginTop: '0.1rem' }}>
-            {summary.lateCount} muộn • {summary.absentCount} vắng
-          </strong>
-        </div>
-      </div>
-
-      {/* Attendance Insight Banner */}
-      <div style={{
-        background: 'var(--primary)',
-        color: '#ffffff',
-        padding: '0.85rem 1.25rem',
-        borderRadius: '14px',
-        marginBottom: '1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <Award size={22} color="#ffffff" />
-          <div>
-            <strong style={{ fontSize: '1rem', display: 'block' }}>Tỷ lệ chấm công đạt: {summary.attendanceRate}%</strong>
-            <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>Tỷ lệ được tính từ các ca làm có check-in / check-out hoặc được xác nhận có mặt.</span>
-          </div>
-        </div>
-      </div>
 
       {/* Navigation Tabs */}
       {enableRequestTabs && (
@@ -288,7 +211,7 @@ export function StaffWorkShiftsPanel({
           border: '1px solid #e2e4df',
           marginBottom: '1.5rem'
         }}>
-          <button
+          <Button data-selected={activeTab === TABS.REQUEST}
             type="button"
             onClick={() => setActiveTab(TABS.REQUEST)}
             style={{
@@ -309,9 +232,9 @@ export function StaffWorkShiftsPanel({
             }}
           >
             <Send size={16} /> Đăng ký ca mới
-          </button>
+          </Button>
 
-          <button
+          <Button data-selected={activeTab === TABS.HISTORY}
             type="button"
             onClick={() => setActiveTab(TABS.HISTORY)}
             style={{
@@ -332,9 +255,9 @@ export function StaffWorkShiftsPanel({
             }}
           >
             <History size={16} /> Lịch sử đăng ký ({shiftRequestState?.items?.length || 0})
-          </button>
+          </Button>
 
-          <button
+          <Button data-selected={activeTab === TABS.SCHEDULE}
             type="button"
             onClick={() => setActiveTab(TABS.SCHEDULE)}
             style={{
@@ -355,7 +278,7 @@ export function StaffWorkShiftsPanel({
             }}
           >
             <Calendar size={16} /> Lịch làm việc tuần
-          </button>
+          </Button>
         </div>
       )}
 
@@ -393,12 +316,12 @@ export function StaffWorkShiftsPanel({
             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <PlusCircle size={18} color="var(--primary)" /> Đăng ký nguyện vọng ca làm việc
             </h3>
-            <span style={{
+            <Badge variant="outline" data-quiet-label="true" style={{
               fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 99,
               background: 'var(--primary-light)', color: 'var(--primary-hover)', border: '1px solid var(--border-light)'
             }}>
               Tuần kế tiếp: {nextWeekRange.nextMondayFmt} – {nextWeekRange.nextSundayFmt}
-            </span>
+            </Badge>
           </div>
 
           {/* Banner cảnh báo nếu hôm nay là Chủ Nhật */}
@@ -427,10 +350,10 @@ export function StaffWorkShiftsPanel({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
             <div>
-              <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
+              <Label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                 Ngày muốn đăng ký *
-              </label>
-              <input
+              </Label>
+              <Input
                 type="date"
                 value={requestForm.shift_date}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, shift_date: e.target.value }))}
@@ -454,10 +377,10 @@ export function StaffWorkShiftsPanel({
             </div>
 
             <div>
-              <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
+              <Label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                 Khung ca làm *
-              </label>
-              <select
+              </Label>
+              <SearchableSelect
                 value={requestForm.shift_code}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, shift_code: e.target.value }))}
                 disabled={nextWeekRange.isSunday}
@@ -474,14 +397,14 @@ export function StaffWorkShiftsPanel({
                 <option value="SANG">Ca sáng (06:00 - 12:00)</option>
                 <option value="CHIEU">Ca chiều (12:00 - 18:00)</option>
                 <option value="TOI">Ca tối (18:00 - 23:00)</option>
-              </select>
+              </SearchableSelect>
             </div>
 
             <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
+              <Label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                 Lý do / Ghi chú cho Quản lý chi nhánh
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 value={requestForm.note}
                 onChange={(e) => setRequestForm((prev) => ({ ...prev, note: e.target.value }))}
@@ -501,7 +424,7 @@ export function StaffWorkShiftsPanel({
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
+            <Button
               type="submit"
               disabled={creatingShiftRequest || nextWeekRange.isSunday}
               style={{
@@ -521,7 +444,7 @@ export function StaffWorkShiftsPanel({
             >
               <Send size={16} />
               {creatingShiftRequest ? 'Đang gửi...' : 'Gửi yêu cầu đăng ký ca'}
-            </button>
+            </Button>
           </div>
 
           {shiftRequestState?.error && (
@@ -532,117 +455,12 @@ export function StaffWorkShiftsPanel({
         </form>
       )}
 
-      {/* Tab 2: Lịch sử yêu cầu */}
-      {enableRequestTabs && activeTab === TABS.HISTORY && (
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          border: '1px solid #e2e4df',
-          padding: '1.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)'
-        }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <History size={18} color="var(--primary)" /> Lịch sử các yêu cầu đăng ký ca
-          </h3>
-
-          {/* Pending Section */}
-          {pendingRequests.length > 0 && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h4 style={{ margin: '0 0 0.75rem 0', color: '#b45309', fontSize: '0.95rem', fontWeight: '700' }}>
-                Đang chờ phê duyệt ({pendingRequests.length})
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.85rem' }}>
-                {pendingPageRows.map((item) => (
-                  <div key={item.ma_ca_lam_viec} style={{ background: "#f4f5f2", padding: '1rem', borderRadius: '12px', border: '1px solid #fde68a' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.95rem', color: '#30382e' }}>{item.ten_ca}</strong>
-                      <span className="workspace-inline-label" style={{ fontSize: '0.75rem', fontWeight: '700', background: "#f4f5f2", color: '#b45309', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
-                        Chờ duyệt
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.825rem', color: '#596255', marginBottom: '0.5rem' }}>
-                      <WorkspaceSymbolCalendar size="1.1em" aria-hidden="true" /> {item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}
-                    </div>
-                    {item.note && <div style={{ fontSize: '0.8rem', color: '#69736a' }}>Ghi chú: {item.note}</div>}
-                    <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteRequest(item.ma_ca_lam_viec)}
-                        disabled={Boolean(handlingShiftRequestId && String(item.ma_ca_lam_viec) === handlingShiftRequestId)}
-                        style={{
-                          background: '#ef4444',
-                          color: '#ffffff',
-                          border: 'none',
-                          padding: '0.35rem 0.75rem',
-                          borderRadius: '6px',
-                          fontSize: '0.775rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.25rem'
-                        }}
-                      >
-                        <Trash2 size={12} /> Hủy yêu cầu
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Approved Section */}
-          {approvedRequests.length > 0 && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--primary)', fontSize: '0.95rem', fontWeight: '700' }}>
-                Đã phê duyệt ({approvedRequests.length})
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.85rem' }}>
-                {approvedPageRows.map((item) => (
-                  <div key={item.ma_ca_lam_viec} style={{ background: 'var(--primary-light)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.95rem', color: '#30382e' }}>{item.ten_ca}</strong>
-                      <span className="workspace-inline-label" style={{ fontSize: '0.75rem', fontWeight: '700', background: 'var(--primary-light)', color: 'var(--primary-hover)', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
-                        Đã duyệt
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.825rem', color: '#596255' }}>
-                      <WorkspaceSymbolCalendar size="1.1em" aria-hidden="true" /> {item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}
-                    </div>
-                    {item.ghi_chu_duyet && <div style={{ fontSize: '0.8rem', color: 'var(--primary-hover)', marginTop: '0.35rem' }}>Phản hồi: {item.ghi_chu_duyet}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Rejected Section */}
-          {rejectedRequests.length > 0 && (
-            <div>
-              <h4 style={{ margin: '0 0 0.75rem 0', color: '#b91c1c', fontSize: '0.95rem', fontWeight: '700' }}>
-                Từ chối ({rejectedRequests.length})
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.85rem' }}>
-                {rejectedPageRows.map((item) => (
-                  <div key={item.ma_ca_lam_viec} style={{ background: "#f4f5f2", padding: '1rem', borderRadius: '12px', border: '1px solid #fca5a5' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.95rem', color: '#30382e' }}>{item.ten_ca}</strong>
-                      <span className="workspace-inline-label" style={{ fontSize: '0.75rem', fontWeight: '700', background: "#f4f5f2", color: '#b91c1c', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
-                        Từ chối
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.825rem', color: '#596255' }}>
-                      <WorkspaceSymbolCalendar size="1.1em" aria-hidden="true" /> {item.ngay_lam_viec} • {item.gio_bat_dau} - {item.gio_ket_thuc}
-                    </div>
-                    {item.ghi_chu_duyet && <div style={{ fontSize: '0.8rem', color: '#b91c1c', marginTop: '0.35rem' }}>Lý do từ chối: {item.ghi_chu_duyet}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      {enableRequestTabs && activeTab === TABS.HISTORY && <section className="shift-request-history">
+        <header><div><h2>Lịch sử đăng ký ca</h2><p>Theo dõi kết quả duyệt và phản hồi cho từng yêu cầu.</p></div><span>{shiftRequestState.items?.length || 0} yêu cầu</span></header>
+        <div className="shift-request-filters" role="group" aria-label="Lọc lịch sử đăng ký">{[['ALL','Tất cả',shiftRequestState.items?.length || 0],['PENDING','Chờ duyệt',pendingRequests.length],['APPROVED','Đã duyệt',approvedRequests.length],['REJECTED','Từ chối',rejectedRequests.length]].map(([value,label,count])=><Button key={value} type="button" variant={historyFilter===value?'default':'outline'} aria-pressed={historyFilter===value} onClick={()=>{setHistoryFilter(value);setHistoryPage(1)}}>{label}<span>{count}</span></Button>)}</div>
+        {shiftRequestState.loading ? <p className="operation-empty" role="status">Đang tải lịch sử đăng ký…</p> : shiftRequestState.error ? <p className="workspace-form-error" role="alert">{shiftRequestState.error}</p> : !historyRows.length ? <p className="operation-empty">Chưa có yêu cầu đăng ký trong nhóm này.</p> : <div className="shift-request-table"><Table><thead><tr><th>Ngày làm việc</th><th>Ca đăng ký</th><th>Trạng thái</th><th>Ghi chú / phản hồi</th><th>Thao tác</th></tr></thead><tbody>{historyRows.map(item=><tr key={item.ma_ca_lam_viec}><td><span className="shift-history-date"><Calendar size={15}/>{historyDate(item.ngay_lam_viec)}</span></td><td><strong>{item.ten_ca || 'Ca làm việc'}</strong><small className="shift-history-time">{String(item.gio_bat_dau||'').slice(0,5)} – {String(item.gio_ket_thuc||'').slice(0,5)}</small></td><td><StatusBadge status={item.trang_thai_yeu_cau}>{requestStatusLabels[item.trang_thai_yeu_cau] || 'Chưa xác định'}</StatusBadge></td><td className="shift-history-notes">{item.note && <p><span>Ghi chú:</span> {item.note}</p>}{item.ghi_chu_duyet && <p><span>Phản hồi:</span> {item.ghi_chu_duyet}</p>}{!item.note && !item.ghi_chu_duyet && <small>Chưa có ghi chú</small>}</td><td>{item.trang_thai_yeu_cau==='PENDING' ? <Button type="button" variant="outline" data-intent="danger" onClick={()=>handleDeleteRequest(item.ma_ca_lam_viec)} disabled={Boolean(handlingShiftRequestId && String(item.ma_ca_lam_viec)===String(handlingShiftRequestId))}><X size={14}/>Hủy yêu cầu</Button> : <small>Đã xử lý</small>}</td></tr>)}</tbody></Table></div>}
+        {historyPages>1 && <footer className="shift-request-pagination"><span>Trang {safeHistoryPage} / {historyPages}</span><PageNumbers page={safeHistoryPage} totalPages={historyPages} onChange={setHistoryPage}/></footer>}
+      </section>}
 
       {/* Tab 3: Workforce Calendar View & Self Attendance Details */}
       {activeTab === TABS.SCHEDULE && (
@@ -681,7 +499,7 @@ export function StaffWorkShiftsPanel({
                       {selectedShiftDetails.ngay_lam_viec} • {selectedShiftDetails.gio_bat_dau} - {selectedShiftDetails.gio_ket_thuc}
                     </span>
                   </div>
-                  <span className="workspace-inline-label" style={{
+                  <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{
                     fontSize: '0.8rem',
                     fontWeight: '700',
                     padding: '0.3rem 0.75rem',
@@ -690,7 +508,7 @@ export function StaffWorkShiftsPanel({
                     color: 'var(--primary-hover)'
                   }}>
                     {selectedInsight?.shortLabel || 'Đã xếp lịch'}
-                  </span>
+                  </Badge>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
@@ -711,7 +529,7 @@ export function StaffWorkShiftsPanel({
 
                 {/* Self Attendance Buttons */}
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => handleSelfAttendance('CHECK_IN')}
                     disabled={
@@ -739,9 +557,9 @@ export function StaffWorkShiftsPanel({
                   >
                     <CheckCircle2 size={18} />
                     {checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec) ? 'Đang xử lý...' : 'Check-in (Vào ca)'}
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
                     onClick={() => handleSelfAttendance('CHECK_OUT')}
                     disabled={
@@ -770,7 +588,7 @@ export function StaffWorkShiftsPanel({
                   >
                     <XCircle size={18} />
                     {checkingAttendanceShiftId === String(selectedShiftDetails.ma_ca_lam_viec) ? 'Đang xử lý...' : 'Check-out (Kết thúc ca)'}
-                  </button>
+                  </Button>
                 </div>
 
                 {attendanceMessage && (

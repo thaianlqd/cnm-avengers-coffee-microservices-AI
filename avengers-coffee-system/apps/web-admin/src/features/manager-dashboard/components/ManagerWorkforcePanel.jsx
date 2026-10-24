@@ -1,3 +1,10 @@
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import { Button } from '../../../components/ui/button'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Textarea } from '../../../components/ui/textarea'
+import { Badge } from '../../../components/ui/badge'
+import SearchableSelect from '../../../components/console/SearchableSelect'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import { Calendar as WorkspaceSymbolCalendar } from '../../../components/console/WorkspaceIcons'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -22,7 +29,10 @@ import {
   Trash2,
   FileText,
   ListChecks,
-  Plus
+  Plus,
+  Sunset,
+  Sun,
+  Moon
 } from '../../../components/console/WorkspaceIcons'
 import { WorkforceCalendar, getInitialWeekStart } from '../../staff-dashboard/components/WorkforceCalendar'
 import SmartSelect from '../../../components/console/SmartSelect'
@@ -36,10 +46,29 @@ import {
 } from '../../workforce/attendance'
 
 const SHIFT_CODES = [
-  { id: 'SANG', label: 'Ca sáng (07:00 - 12:00)' },
-  { id: 'CHIEU', label: 'Ca chiều (12:00 - 17:00)' },
-  { id: 'TOI', label: 'Ca tối (17:00 - 22:00)' },
+  { id: 'SANG', label: 'Ca sáng', time: '07:00–12:00', icon: Sun },
+  { id: 'CHIEU', label: 'Ca chiều', time: '12:00–17:00', icon: Sunset },
+  { id: 'TOI', label: 'Ca tối', time: '17:00–22:00', icon: Moon },
 ]
+
+function friendlyRole(role) {
+  const normalized = String(role || '').toUpperCase()
+  return normalized === 'MANAGER' ? 'Quản lý cửa hàng' : normalized === 'STAFF' ? 'Nhân viên cửa hàng' : 'Nhân sự'
+}
+
+function workforceOption(item) {
+  const username = item.ten_dang_nhap || item.username || ''
+  const name = item.ho_ten || username
+  const role = friendlyRole(item.vai_tro)
+  const roleKey = String(item.vai_tro || '').toLowerCase()
+  return {
+    value: username,
+    label: <span className="workforce-select-option"><span>{name}</span><Badge variant="outline" className={`workforce-role-badge workforce-role-badge--${roleKey}`}>{role}</Badge></span>,
+    displayLabel: `${name} · ${role}`,
+    rawLabel: `${name} ${role}`,
+    keywords: item.email,
+  }
+}
 
 const TASK_TEMPLATES = [
   'Pha chế đồ uống theo giờ cao điểm',
@@ -108,7 +137,7 @@ export function ManagerWorkforcePanel({
   const [weekStart, setWeekStart] = useState(getInitialWeekStart)
   const [selectedStaffFilter, setSelectedStaffFilter] = useState('ALL')
   const [selectedShift, setSelectedShift] = useState(null)
-  const [activeTab, setActiveTab] = useState(TABS.MANAGE)
+  const [activeTab, setActiveTab] = useState(TABS.SCHEDULE)
   const [taskDraft, setTaskDraft] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [createError, setCreateError] = useState('')
@@ -299,7 +328,7 @@ export function ManagerWorkforcePanel({
   }
 
   return (
-    <div className="panel-container workspace-workforce" style={{
+    <div className="panel-container workspace-workforce manager-workforce" style={{
       padding: '1.75rem',
       background: '#f8f9f6',
       borderRadius: '20px',
@@ -315,7 +344,7 @@ export function ManagerWorkforcePanel({
         gap: '1rem',
         marginBottom: '1.5rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <WorkspacePanelIntro><div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
             width: '42px',
             height: '42px',
@@ -337,11 +366,11 @@ export function ManagerWorkforcePanel({
               Phân công ca làm việc, duyệt đăng ký ca từ nhân viên và kiểm soát chấm công toàn quán
             </span>
           </div>
-        </div>
+        </div></WorkspacePanelIntro>
       </div>
 
       {/* Tabs Bar */}
-      <div className="workspace-workforce-tabs" style={{
+      <div className="operation-section-heading"><span className="operation-note">Chọn ca trong lịch để xem hoặc cập nhật chấm công.</span><Button className="workspace-primary-button" onClick={() => { setActiveTab(TABS.MANAGE); setCreateError(''); setCreateOpen(true) }}><Calendar size={16} />Phân ca mới</Button></div><div className="workspace-workforce-tabs" style={{
         display: 'flex',
         gap: '0.5rem',
         background: '#ffffff',
@@ -350,7 +379,7 @@ export function ManagerWorkforcePanel({
         border: '1px solid #e2e4df',
         marginBottom: '1.5rem'
       }}>
-        <button
+        <Button data-selected={activeTab === TABS.MANAGE}
           type="button"
           onClick={() => setActiveTab(TABS.MANAGE)}
           style={{
@@ -371,9 +400,9 @@ export function ManagerWorkforcePanel({
           }}
         >
           <Briefcase size={16} /> Quản lý phân ca
-        </button>
+        </Button>
 
-        <button
+        <Button data-selected={activeTab === TABS.APPROVE} data-intent="success"
           type="button"
           onClick={() => setActiveTab(TABS.APPROVE)}
           style={{
@@ -394,9 +423,9 @@ export function ManagerWorkforcePanel({
           }}
         >
           <UserCheck size={16} /> Duyệt đăng ký ({pendingRequests.length})
-        </button>
+        </Button>
 
-        <button
+        <Button data-selected={activeTab === TABS.SCHEDULE}
           type="button"
           onClick={() => setActiveTab(TABS.SCHEDULE)}
           style={{
@@ -417,15 +446,15 @@ export function ManagerWorkforcePanel({
           }}
         >
           <Calendar size={16} /> Lịch làm tổng quan
-        </button>
+        </Button>
       </div>
 
       {/* TAB 1: QUẢN LÝ PHÂN CA */}
       {activeTab === TABS.MANAGE && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Form phân ca */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button type="button" className="workspace-primary-button" onClick={() => { setCreateError(''); setCreateOpen(true) }}><Calendar size={18} />Phân ca mới</button></div>
-          {createOpen && <WorkspaceDialog title="Phân ca làm việc" busy={creatingWorkShift} onClose={() => setCreateOpen(false)}><form className="workspace-form"
+
+          {createOpen && <WorkspaceDialog className="workforce-assignment-dialog" title="Phân ca làm việc" busy={creatingWorkShift} onClose={() => setCreateOpen(false)}><form data-modal-body="true" className="workspace-form"
             onSubmit={async event => { setCreateError(''); try { const result = await onCreateWorkShift(event); if (result?.ok) setCreateOpen(false); else if (result?.error) setCreateError(result.error) } catch (error) { setCreateError(error.message || 'Không thể tạo lịch làm việc.') } }}
             style={{
               background: '#ffffff',
@@ -443,11 +472,11 @@ export function ManagerWorkforcePanel({
             </h3>
 
 {createError && <p className="workspace-form-error" role="alert">{createError}</p>}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem' }}>
+            <div className="workforce-assignment-fields">
               <div>
-                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
+                <Label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                   Nhân viên được chọn
-                </label>
+                </Label>
                 <SmartSelect
                   label="Tìm nhân viên để xếp ca"
                   placeholder="Gõ tên hoặc tài khoản nhân viên"
@@ -461,15 +490,15 @@ export function ManagerWorkforcePanel({
                     }))
                   }}
                   disabled={!assignableStaffOptions.length}
-                  options={assignableStaffOptions.map(item => ({ value: resolveUsername(item), label: `${item.ho_ten || resolveUsername(item)} (${String(item.vai_tro || '').toUpperCase()})`, keywords: item.email }))}
+                  options={assignableStaffOptions.map(workforceOption)}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
+                <Label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                   Ngày làm việc
-                </label>
-                <input
+                </Label>
+                <Input
                   type="date"
                   value={workShiftForm.shift_date}
                   onChange={(e) => setWorkShiftForm((prev) => ({ ...prev, shift_date: e.target.value }))}
@@ -486,14 +515,14 @@ export function ManagerWorkforcePanel({
               </div>
 
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
+                <Label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                   Khung ca làm (Chọn 1 hoặc nhiều ca trong ngày)
-                </label>
-                <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+                </Label>
+                <div className="workforce-shift-choices">
                   {SHIFT_CODES.map((item) => {
                     const isSelected = selectedShiftCodes.includes(item.id)
                     return (
-                      <button
+                      <Button data-selected={isSelected} aria-pressed={isSelected}
                         key={item.id}
                         type="button"
                         onClick={() => toggleShiftCode(item.id)}
@@ -511,19 +540,20 @@ export function ManagerWorkforcePanel({
                           gap: '0.35rem'
                         }}
                       >
+                        <item.icon size={16} aria-hidden="true" />
+                        <span>{item.label} <small>{item.time}</small></span>
                         {isSelected ? <Check size={14} color="#1d4ed8" /> : <Plus size={14} />}
-                        {item.label}
-                      </button>
+                      </Button>
                     )
                   })}
                 </div>
               </div>
 
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
+                <Label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.35rem' }}>
                   Ghi chú phân công
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   value={workShiftForm.note}
                   onChange={(e) => setWorkShiftForm((prev) => ({ ...prev, note: e.target.value }))}
@@ -540,8 +570,8 @@ export function ManagerWorkforcePanel({
               </div>
             </div>
 
-            <div className="workspace-editor-actions"><button type="button" className="workspace-secondary-button" disabled={creatingWorkShift} onClick={() => setCreateOpen(false)}>Hủy</button>
-              <button
+            <div className="workspace-editor-actions"><Button data-intent="danger" type="button" className="workspace-secondary-button" disabled={creatingWorkShift} onClick={() => setCreateOpen(false)}>Hủy</Button>
+              <Button
                 type="submit"
                 disabled={creatingWorkShift || !workShiftForm.staff_username || !selectedShiftCodes.length}
                 style={{
@@ -561,12 +591,12 @@ export function ManagerWorkforcePanel({
               >
                 <PlusCircle size={16} />
                 {creatingWorkShift ? 'Đang tạo lịch...' : 'Tạo lịch làm việc'}
-              </button>
+              </Button>
             </div>
           </form></WorkspaceDialog>}
 
           {/* Checklist Mẫu */}
-          <div style={{
+          <details className="operation-surface workforce-checklist"><summary>Mẫu công việc cho ca làm</summary><div style={{
             background: '#ffffff',
             borderRadius: '16px',
             border: '1px solid #e2e4df',
@@ -582,7 +612,7 @@ export function ManagerWorkforcePanel({
 
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
               {TASK_TEMPLATES.map((item) => (
-                <button
+                <Button
                   key={item}
                   type="button"
                   onClick={() => setTaskDraft((prev) => (prev ? `${prev}\n- ${item}` : `- ${item}`))}
@@ -598,11 +628,11 @@ export function ManagerWorkforcePanel({
                   }}
                 >
                   + {item}
-                </button>
+                </Button>
               ))}
             </div>
 
-            <textarea
+            <Textarea
               rows={3}
               value={taskDraft}
               onChange={(e) => setTaskDraft(e.target.value)}
@@ -619,7 +649,7 @@ export function ManagerWorkforcePanel({
             />
 
             <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end' }}>
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   if (!taskDraft.trim()) return
@@ -640,8 +670,8 @@ export function ManagerWorkforcePanel({
                 }}
               >
                 Gắn vào ghi chú lịch đang tạo
-              </button>
-              <button
+              </Button>
+              <Button data-intent="danger"
                 type="button"
                 onClick={() => setTaskDraft('')}
                 style={{
@@ -656,9 +686,9 @@ export function ManagerWorkforcePanel({
                 }}
               >
                 Xóa checklist
-              </button>
+              </Button>
             </div>
-          </div>
+          </div></details>
         </div>
       )}
 
@@ -689,9 +719,9 @@ export function ManagerWorkforcePanel({
                       <strong style={{ fontSize: '1rem', color: '#30382e' }}>
                         {item.staff_name || item.staff_username}
                       </strong>
-                      <span className="workspace-inline-label" style={{ fontSize: '0.75rem', fontWeight: '700', background: "#f4f5f2", color: '#b45309', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
+                      <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{ fontSize: '0.75rem', fontWeight: '700', background: "#f4f5f2", color: '#b45309', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
                         Chờ duyệt
-                      </span>
+                      </Badge>
                     </div>
 
                     <div style={{ fontSize: '0.85rem', color: '#596255', fontWeight: '600' }}>
@@ -704,7 +734,7 @@ export function ManagerWorkforcePanel({
                       </div>
                     )}
 
-                    <textarea
+                    <Textarea
                       rows={2}
                       value={draft.review_note}
                       onChange={(e) => setRequestDrafts((prev) => ({
@@ -715,8 +745,8 @@ export function ManagerWorkforcePanel({
                       style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.825rem', boxSizing: 'border-box' }}
                     />
 
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
-                      <button
+                    <div data-modal-actions="true" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
+                      <Button data-intent="success"
                         type="button"
                         onClick={() => onHandleShiftRequest(item.ma_ca_lam_viec, {
                           status: 'APPROVED',
@@ -739,9 +769,9 @@ export function ManagerWorkforcePanel({
                         }}
                       >
                         <CheckCircle2 size={14} /> Duyệt ca
-                      </button>
+                      </Button>
 
-                      <button
+                      <Button data-intent="danger"
                         type="button"
                         onClick={() => onHandleShiftRequest(item.ma_ca_lam_viec, {
                           status: 'REJECTED',
@@ -763,7 +793,7 @@ export function ManagerWorkforcePanel({
                         }}
                       >
                         <XCircle size={14} /> Từ chối
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )
@@ -794,16 +824,16 @@ export function ManagerWorkforcePanel({
             flexWrap: 'wrap',
             gap: '0.85rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="workforce-person-filter">
               <Users size={18} color="#3b82f6" />
-              <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#414743' }}>Xem lịch làm theo Nhân viên:</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#414743' }}>Nhân viên:</span>
               <SmartSelect label="Lọc lịch theo nhân viên" value={selectedStaffFilter} onChange={setSelectedStaffFilter}
-                options={[{ value: 'ALL', label: `Tất cả nhân sự (${scheduleFilterOptions.length})` }, ...scheduleFilterOptions.map(item => ({ value: resolveUsername(item), label: `${item.ho_ten || resolveUsername(item)} (${String(item.vai_tro || '').toUpperCase()})`, keywords: item.email }))]} />
+                options={[{ value: 'ALL', label: `Tất cả nhân sự (${scheduleFilterOptions.length})` }, ...scheduleFilterOptions.map(workforceOption)]} />
             </div>
 
-            <span className="workspace-inline-label" style={{ fontSize: '0.825rem', color: '#2563eb', fontWeight: '700', background: "#f4f5f2", padding: '0.35rem 0.75rem', borderRadius: '9999px' }}>
+            <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{ fontSize: '0.825rem', color: '#2563eb', fontWeight: '700', background: "#f4f5f2", padding: '0.35rem 0.75rem', borderRadius: '9999px' }}>
               {calendarItems.length} ca làm đã xếp
-            </span>
+            </Badge>
           </div>
 
           <WorkforceCalendar
@@ -841,7 +871,7 @@ export function ManagerWorkforcePanel({
                     </span>
                   </div>
 
-                  <button
+                  <Button data-intent="danger"
                     type="button"
                     onClick={() => onDeleteWorkShift(selectedShiftDetails.ma_ca_lam_viec)}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
@@ -860,16 +890,16 @@ export function ManagerWorkforcePanel({
                     }}
                   >
                     <Trash2 size={14} /> Xóa lịch ca
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Edit Form */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0.85rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
+                    <Label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
                       Trạng thái chấm công
-                    </label>
-                    <select
+                    </Label>
+                    <SearchableSelect
                       value={normalizeAttendanceStatus(attendanceDraft.status)}
                       onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, status: e.target.value }))}
                       disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
@@ -879,14 +909,14 @@ export function ManagerWorkforcePanel({
                       <option value="PRESENT">Có mặt</option>
                       <option value="LATE">Đi muộn</option>
                       <option value="ABSENT">Vắng mặt</option>
-                    </select>
+                    </SearchableSelect>
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
+                    <Label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
                       Giờ Check-in
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="datetime-local"
                       value={attendanceDraft.checkInAt}
                       onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, checkInAt: e.target.value }))}
@@ -896,10 +926,10 @@ export function ManagerWorkforcePanel({
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
+                    <Label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
                       Giờ Check-out
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="datetime-local"
                       value={attendanceDraft.checkOutAt}
                       onChange={(e) => setAttendanceDraft((prev) => ({ ...prev, checkOutAt: e.target.value }))}
@@ -909,8 +939,8 @@ export function ManagerWorkforcePanel({
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                  <button
+                <div data-modal-actions="true" style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                  <Button data-intent="success"
                     type="button"
                     onClick={luuChamCongChiTiet}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
@@ -929,9 +959,9 @@ export function ManagerWorkforcePanel({
                     }}
                   >
                     <CheckCircle2 size={16} /> Lưu chấm công
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
                     onClick={taoCheckInNhanh}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
@@ -947,9 +977,9 @@ export function ManagerWorkforcePanel({
                     }}
                   >
                     Ghi nhận vào ca
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
                     onClick={taoCheckOutNhanh}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
@@ -965,7 +995,7 @@ export function ManagerWorkforcePanel({
                     }}
                   >
                     Ghi nhận ra ca
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}

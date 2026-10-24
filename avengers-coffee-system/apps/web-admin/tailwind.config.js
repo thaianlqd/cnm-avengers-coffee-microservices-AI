@@ -3,13 +3,13 @@ import plugin from 'tailwindcss/plugin.js'
 // Shared web-admin design vocabulary. Components consume these values through
 // theme() in CSS or Tailwind utilities. Actor-specific styles remain scoped.
 const admin = {
-  canvas: '#ffffff', surface: '#ffffff', subtle: '#f8fafc',
-  ink: '#09090b', body: '#1e293b', muted: '#64748b', border: '#e2e8f0',
-  primary: '#2563eb', hover: '#1d4ed8', focus: '#3b82f6',
-  danger: '#ef4444', dangerSoft: '#fef2f2', success: '#10b981', warning: '#f59e0b',
+  canvas: '#f6f8fa', surface: '#ffffff', subtle: '#f8fafc',
+  ink: '#142b3e', body: '#1e293b', muted: '#64748b', border: '#e2e8f0',
+  primary: '#16354d', hover: '#0f4d70', focus: '#0284c7',
+  danger: '#ef4444', dangerSoft: '#fef2f2', success: '#15803d', warning: '#f59e0b',
   mint: '#059669', mintSoft: '#ecfdf5', violet: '#6366f1', violetSoft: '#eef2ff', amber: '#d97706', amberSoft: '#fffbeb',
   chart: '#2563eb', chartSoft: '#eff6ff',
-  sidebar: '#0b0f19', sidebarHover: '#172033', sidebarActive: '#2563eb',
+  sidebar: '#102b40', sidebarHover: '#1b3e57', sidebarActive: '#164e70',
   sidebarText: '#94a3b8', sidebarMuted: '#64748b',
 }
 export default {
@@ -19,8 +19,8 @@ export default {
     extend: {
       colors: {
         admin,
-        primary: { DEFAULT: '#2563eb', hover: '#1d4ed8', light: '#eef4ff', subtle: '#e9ecef' },
-        secondary: '#6b7280', success: admin.success, warning: admin.warning,
+        primary: { DEFAULT: admin.primary, foreground: '#ffffff', hover: admin.hover, light: '#eef7fc', subtle: '#dceef8' },
+        background: '#ffffff', foreground: '#172b3a', card: { DEFAULT: '#ffffff', foreground: '#172b3a' }, popover: { DEFAULT: '#ffffff', foreground: '#172b3a' }, muted: { DEFAULT: '#f1f5f9', foreground: '#526174' }, accent: { DEFAULT: '#eaf4fb', foreground: '#075985' }, destructive: { DEFAULT: '#b91c1c', foreground: '#ffffff' }, border: '#e2e8f0', input: '#cbd5e1', ring: '#0284c7', secondary: { DEFAULT: '#f1f5f9', foreground: '#334155' }, success: admin.success, warning: admin.warning,
         danger: admin.danger, surface: '#f5f8ff',
       },
       fontFamily: { sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'] },
@@ -29,12 +29,13 @@ export default {
         'admin-body': ['14px', { lineHeight: '1.6' }],
         'admin-title': ['24px', { lineHeight: '1.3', fontWeight: '600', letterSpacing: '-0.035em' }],
       },
-      borderRadius: { control: '8px', card: '16px', dialog: '16px' },
+      borderRadius: { control: '8px', card: '12px', dialog: '12px' },
       spacing: { control: '40px', icon: '18px' },
       boxShadow: { 'admin-focus': '0 0 0 3px rgb(100 116 139 / 15%)', 'admin-dialog': '0 24px 80px rgb(0 0 0 / 18%)' },
     },
   },
-  plugins: [plugin(({ addComponents, theme }) => {
+  plugins: [plugin(({ addBase, addComponents, theme }) => {
+    addBase({ ':root': Object.fromEntries(Object.entries(admin).map(([key, value]) => ['--admin-' + key, value])) })
     const button = {
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
       minHeight: theme('spacing.control'), padding: '9px 16px',

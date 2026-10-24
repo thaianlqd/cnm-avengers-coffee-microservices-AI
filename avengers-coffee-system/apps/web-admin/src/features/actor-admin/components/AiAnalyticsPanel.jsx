@@ -1,3 +1,7 @@
+import { Badge } from '../../../components/ui/badge'
+import { Button } from '../../../components/ui/button'
+import { Table } from '../../../components/ui/table'
+import { Input } from '../../../components/ui/input'
 import { Coffee as WorkspaceSymbolCoffee, AlertTriangle as WorkspaceSymbolAlertTriangle, Flame as WorkspaceSymbolFlame, CreditCard as WorkspaceSymbolCreditCard, Heart as WorkspaceSymbolHeart, Ticket as WorkspaceSymbolTicket, Search as WorkspaceSymbolSearch } from '../../../components/console/WorkspaceIcons'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import { useMemo, useState } from 'react'
@@ -217,12 +221,12 @@ function RecommendCard({ item }) {
         <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: '#d65a12' }}>
           {fmtMoney(item.price)}
         </p>
-        <span style={{
+        <Badge variant="outline" data-quiet-label="true" style={{
           display: 'inline-block', marginTop: 4, fontSize: 10, padding: '2px 7px',
           borderRadius: 99, background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: 600,
         }}>
           {item.reason}
-        </span>
+        </Badge>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
         <div style={{ fontSize: 11, color: '#9ca3af' }}>Score</div>
@@ -419,7 +423,7 @@ export function AiAnalyticsPanel({ session }) {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
+          <Button
             type="button"
             disabled={retrainCfMutation.isPending}
             onClick={handleRetrainCf}
@@ -430,8 +434,8 @@ export function AiAnalyticsPanel({ session }) {
             }}
           >
             {retrainCfMutation.isPending ? 'Đang cập nhật mô hình gợi ý...' : 'Cập nhật mô hình gợi ý'}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             disabled={retrainForecastMutation.isPending}
             onClick={handleRetrainForecast}
@@ -442,7 +446,7 @@ export function AiAnalyticsPanel({ session }) {
             }}
           >
             {retrainForecastMutation.isPending ? 'Đang cập nhật mô hình dự báo...' : 'Cập nhật mô hình dự báo'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -520,7 +524,7 @@ export function AiAnalyticsPanel({ session }) {
             Bảng này giúp quản trị đọc nhanh AI đang nhìn thấy gì từ dữ liệu mua hàng để ra quyết định bán hàng.
           </p>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: '#f8f9f6', color: '#414743' }}>
                   <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}>Chỉ số</th>
@@ -537,7 +541,7 @@ export function AiAnalyticsPanel({ session }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Table>
           </div>
         </div>
       )}
@@ -554,13 +558,13 @@ export function AiAnalyticsPanel({ session }) {
             <p style={{ margin: '6px 0 0', fontSize: 12, color: '#69736a' }}>
               Tổng hợp dữ liệu thực từ đơn hàng, đánh giá, yêu thích và voucher để đồng bộ với gợi ý cho Khách hàng.
             </p>
-            <span className="workspace-inline-label" style={{ display: 'inline-block', marginTop: 8, padding: '3px 10px', borderRadius: 999, border: '1px solid #bfdbfe', background: 'var(--primary-light)', color: 'var(--primary-hover)', fontSize: 11, fontWeight: 700 }}>
+            <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{ display: 'inline-block', marginTop: 8, padding: '3px 10px', borderRadius: 999, border: '1px solid #bfdbfe', background: 'var(--primary-light)', color: 'var(--primary-hover)', fontSize: 11, fontWeight: 700 }}>
               Đồng bộ Khách hàng
-            </span>
+            </Badge>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <strong style={{ fontSize: 13, color: 'var(--primary)' }}>Tổng đơn đã phân tích: {fmtNum(behaviorInsights.totalOrders)}</strong>
-            <select
+            <SearchableSelect
               value={behaviorDays}
               onChange={(e) => setBehaviorDays(Number(e.target.value) || 30)}
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontWeight: 700 }}
@@ -569,7 +573,7 @@ export function AiAnalyticsPanel({ session }) {
               <option value={7}>7 ngày</option>
               <option value={30}>30 ngày</option>
               <option value={90}>90 ngày</option>
-            </select>
+            </SearchableSelect>
           </div>
         </div>
 
@@ -579,7 +583,7 @@ export function AiAnalyticsPanel({ session }) {
         {!behaviorQuery.isLoading && !behaviorQuery.isError ? (
           <>
             <div style={{ marginTop: 14, border: '1px solid #e2e4df', borderRadius: 12, background: '#f8f9f6', overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: 'var(--primary-light)' }}>
                     <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid var(--primary-subtle)' }}>#</th>
@@ -601,7 +605,7 @@ export function AiAnalyticsPanel({ session }) {
                     </tr>
                   ) : null}
                 </tbody>
-              </table>
+              </Table>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 20, marginTop: 16 }}>
@@ -736,23 +740,23 @@ export function AiAnalyticsPanel({ session }) {
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontWeight: 600 }}>
               {branchOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </SearchableSelect>
-            <select value={metric} onChange={e => setMetric(e.target.value)}
+            <SearchableSelect value={metric} onChange={e => setMetric(e.target.value)}
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontWeight: 600 }}>
               <option value="orders">Số đơn hàng</option>
               <option value="revenue">Doanh thu (VNĐ)</option>
-            </select>
-            <select value={historyDays} onChange={e => setHistoryDays(Number(e.target.value))}
+            </SearchableSelect>
+            <SearchableSelect value={historyDays} onChange={e => setHistoryDays(Number(e.target.value))}
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontWeight: 600 }}>
               <option value={14}>14 ngày lịch sử</option>
               <option value={30}>30 ngày lịch sử</option>
               <option value={60}>60 ngày lịch sử</option>
-            </select>
-            <select value={forecastDays} onChange={e => setForecastDays(Number(e.target.value))}
+            </SearchableSelect>
+            <SearchableSelect value={forecastDays} onChange={e => setForecastDays(Number(e.target.value))}
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontWeight: 600 }}>
               <option value={7}>Dự báo 7 ngày</option>
               <option value={14}>Dự báo 14 ngày</option>
               <option value={30}>Dự báo 30 ngày</option>
-            </select>
+            </SearchableSelect>
           </div>
         </div>
 
@@ -788,7 +792,7 @@ export function AiAnalyticsPanel({ session }) {
             </div>
 
             <div style={{ marginTop: 18, overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: '#f8f9f6', color: '#414743' }}>
                     <th style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Ngày dự báo</th>
@@ -813,7 +817,7 @@ export function AiAnalyticsPanel({ session }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Table>
             </div>
           </>
         )}
@@ -832,7 +836,7 @@ export function AiAnalyticsPanel({ session }) {
         </p>
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-          <input className="ui-input"
+          <Input className="ui-input"
             value={testUserId}
             onChange={e => setTestUserId(e.target.value)}
             placeholder="Nhập User ID (UUID) thật"
@@ -842,7 +846,7 @@ export function AiAnalyticsPanel({ session }) {
             }}
             onKeyDown={e => e.key === 'Enter' && recommendTargetUserId && runRecommendTest(recommendTargetUserId)}
           />
-          <button
+          <Button
             type="button"
             onClick={() => recommendTargetUserId && runRecommendTest(recommendTargetUserId)}
             disabled={!recommendTargetUserId}
@@ -853,7 +857,7 @@ export function AiAnalyticsPanel({ session }) {
             }}
           >
             <WorkspaceSymbolSearch size="1.1em" aria-hidden="true" /> Gợi ý
-          </button>
+          </Button>
         </div>
 
         {recommendQuery.isLoading && (
@@ -863,14 +867,14 @@ export function AiAnalyticsPanel({ session }) {
         {recs && (
           <>
             <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{
+              <Badge variant="outline" data-quiet-label="true" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
                 background: recs.is_personalized ? "#f4f5f2" : "#f4f5f2",
                 color: recs.is_personalized ? '#2563eb' : '#92400e',
               }}>
                 {recs.is_personalized ? "Gợi ý cá nhân hóa" : "Sản phẩm phổ biến (cold start)"}
-              </span>
+              </Badge>
               <span style={{ fontSize: 11, color: '#9ca3af' }}>
                 Model: {recs.model} · User: {recs.user_id?.slice(0, 16)}…
               </span>

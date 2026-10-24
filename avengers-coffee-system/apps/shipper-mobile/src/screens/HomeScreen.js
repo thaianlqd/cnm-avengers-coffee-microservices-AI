@@ -1,3 +1,4 @@
+import { isAcceptedDelivery } from '../lib/deliveryAcceptance.mjs'
 import { deliveryArray, deliveriesInRange, summarizeDeliveries } from '../lib/deliverySummary.mjs'
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
@@ -86,7 +87,7 @@ export function HomeScreen({ navigation }) {
           isBranchMatch(d.branch_code || d.co_so_ma || d.tracking?.branch_code, shipper.branch_code, branches) &&
           !ownedIds.has(d.ma_don_hang)
       )
-      return [...owned.map((d) => ({ ...d, _already_accepted: true })), ...fresh]
+      return [...owned.map((d) => ({ ...d, _already_accepted: isAcceptedDelivery(d.status), _assigned_pending: d.status === 'PENDING' })), ...fresh]
     },
     refetchInterval: focused ? 60000 : false,
   })
@@ -323,7 +324,7 @@ export function HomeScreen({ navigation }) {
                   },
                 ]}
               >
-                {item._already_accepted ? deliveryStatusLabels[item.status] || 'Đã nhận' : 'Đơn mới'}
+                {item._already_accepted ? deliveryStatusLabels[item.status] || 'Đã nhận' : item._assigned_pending ? 'Được phân công · Chờ nhận' : 'Đơn mới'}
               </Text>
             </View>
           </View>

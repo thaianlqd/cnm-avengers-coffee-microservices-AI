@@ -36,10 +36,10 @@ export default function OrderFooter({ onNavigate }) {
             <div className="flex items-center gap-3.5">
               <div className="bg-white rounded-2xl p-2 sm:p-2.5 inline-flex items-center justify-center shadow-md">
                 <img
-                  src="/hc-assets/logo-red.png"
+                  src="/images/brand/logo.svg"
                   alt="Avengers Coffee"
                   className="h-12 sm:h-14 w-auto object-contain"
-                  onError={(e) => { e.currentTarget.src = '/hc-assets/red_BG_logo800.png'; }}
+
                 />
               </div>
               <div>

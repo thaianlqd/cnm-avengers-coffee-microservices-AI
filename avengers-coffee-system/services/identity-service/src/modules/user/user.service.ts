@@ -1,3 +1,4 @@
+import { branchCoordinates, searchBranchAddresses } from './branch-location';
 import { selectedAddress } from './address-selection';
 import type { AddressPayload } from './address-selection';
 import { validateAvatarUrl } from './avatar-upload';
@@ -753,6 +754,22 @@ export class UserService implements OnModuleInit {
     };
   }
 
+  async taoNhanVienCuaHang(
+    manager: AuthUser,
+    payload: { ten_dang_nhap?: string; mat_khau?: string; ho_ten?: string; email?: string },
+  ) {
+    if (manager?.role !== 'MANAGER') throw new UnauthorizedException('Chi quan ly cua hang duoc tao nhan vien');
+    if (!manager.branchCode) throw new BadRequestException('Manager khong co co_so_ma hop le');
+    return this.taoTaiKhoanHeThong({
+      ten_dang_nhap: payload.ten_dang_nhap,
+      mat_khau: payload.mat_khau,
+      ho_ten: payload.ho_ten,
+      email: payload.email,
+      vai_tro: 'STAFF',
+      co_so_ma: manager.branchCode,
+    });
+  }
+
   async taoKioskStaff(
     manager: AuthUser,
     payload: {
@@ -1083,6 +1100,14 @@ export class UserService implements OnModuleInit {
     };
   }
 
+  async timDiaChiChiNhanh(query: string, city: string, ward: string) {
+    try { return { items: await searchBranchAddresses(query, city, ward) }; }
+    catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      throw new ServiceUnavailableException('Không kết nối được dịch vụ bản đồ. Vui lòng thử lại.');
+    }
+  }
+
   async taoChiNhanhAdmin(payload: {
     ma_chi_nhanh?: string;
     ten_chi_nhanh?: string;
@@ -1093,8 +1118,11 @@ export class UserService implements OnModuleInit {
     gio_mo_cua?: string;
     gio_dong_cua?: string;
     map_url?: string;
+    vi_do?: number;
+    kinh_do?: number;
     trang_thai?: 'ACTIVE' | 'INACTIVE';
   }) {
+    const coordinates = branchCoordinates(payload);
     const branchCode = this.normalizeBranchCode(payload.ma_chi_nhanh);
     const branchName = String(payload.ten_chi_nhanh || '').trim();
     const phone = payload.so_dien_thoai?.trim() || null;
@@ -1127,6 +1155,7 @@ export class UserService implements OnModuleInit {
     }
 
     const created = this.branchRepo.create({
+      ...coordinates,
       ma_chi_nhanh: branchCode,
       ten_chi_nhanh: branchName,
       dia_chi: address,
@@ -1157,9 +1186,12 @@ export class UserService implements OnModuleInit {
       gio_mo_cua?: string;
       gio_dong_cua?: string;
       map_url?: string;
+    vi_do?: number;
+    kinh_do?: number;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
     },
   ) {
+    const coordinates = branchCoordinates(payload);
     const normalizedCode = this.normalizeBranchCode(branchCode);
     if (!normalizedCode) {
       throw new BadRequestException('branchCode khong hop le');
@@ -1220,6 +1252,8 @@ export class UserService implements OnModuleInit {
       branch.trang_thai = status;
     }
 
+    if (coordinates) Object.assign(branch, coordinates);
+    else if (payload.dia_chi !== undefined || payload.thanh_pho !== undefined) { branch.vi_do = null; branch.kinh_do = null; }
     const saved = await this.branchRepo.save(branch);
 
     await this.userRepo

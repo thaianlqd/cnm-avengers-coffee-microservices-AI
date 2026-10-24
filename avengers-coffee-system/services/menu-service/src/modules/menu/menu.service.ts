@@ -14,7 +14,12 @@ export class MenuService {
 
   async layTatCaSanPham() {
     const products = await this.spRepo.find({ relations: ['danhMuc'] });
-    return salesBadges(this.spRepo.manager, products);
+    const sales = await this.spRepo.manager.query(`SELECT DISTINCT ON (product_id) product_id,sale_price,ends_at FROM orders.flash_sale WHERE enabled AND starts_at<=now() AND ends_at>now() ORDER BY product_id,sale_price`);
+    const priced = products.map(product => {
+      const sale = sales.find(row=>Number(row.product_id)===Number(product.ma_san_pham));
+      return sale ? {...product, gia_niem_yet:product.gia_ban,gia_ban:sale.sale_price,flash_sale_ends_at:sale.ends_at} : product;
+    });
+    return salesBadges(this.spRepo.manager, priced);
   }
 
   layTatCaDanhMuc() {

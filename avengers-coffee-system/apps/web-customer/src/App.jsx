@@ -64,8 +64,8 @@ const HC_IMG = {
   nuocNgon: '/hc-assets/web_banner_2000x2000.jpg',
   banhNgon: '/hc-assets/2.png',
   cuaHang: '/hc-assets/1_1.jpg',
-  ftLogo: '/hc-assets/ftlogo.png',
-  logo: '/hc-assets/red_BG_logo800.png',
+  ftLogo: '/images/brand/logo-white.svg',
+  logo: '/images/brand/logo.svg',
   social: ['/hc-assets/isoc1.png', '/hc-assets/isoc2.png', '/hc-assets/isoc3.png', '/hc-assets/isoc4.png'],
 };
 

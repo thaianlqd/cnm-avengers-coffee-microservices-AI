@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import {
   View,
+  Image,
   Text,
   StyleSheet,
   Pressable,
@@ -8,7 +9,6 @@ import {
   Dimensions,
   Modal,
   Platform,
-  Image,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors, radius, spacing } from '../theme'
@@ -103,7 +103,7 @@ export function DrawerMenu({ visible, onClose, activeTab, onNavigate, admin, ses
         <Animated.View style={[styles.drawer, { transform: [{ translateX: slideAnim }] }]}>
           <View style={styles.drawerContent}>
             <View style={styles.header}>
-              <Text style={styles.brand}>Avengers Admin</Text>
+              <View style={{flexDirection:"row",alignItems:"center",gap:10}}><Image source={require('../../assets/branding/logo-white.png')} resizeMode="contain" style={{width:44,height:36}}/><Text style={styles.brand}>Avengers Admin</Text></View>
               {role === 'ADMIN' ? (
                 <Text style={styles.userTag}>Đang đăng nhập: {admin?.tenDangNhap || admin?.ho_ten || 'admin'} (ADMIN)</Text>
               ) : (

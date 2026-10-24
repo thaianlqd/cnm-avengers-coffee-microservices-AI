@@ -730,36 +730,68 @@
   box-shadow: 0 24px 70px #0c162a40; backdrop-filter: blur(12px);
 }
 .console-role-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 6px;
-  border: 1px solid #ece3da;
-  border-radius: 13px;
-  background: #faf7f3;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f1f5f9;
 }
-.console-role-tabs button {
-  flex: 1;
+.console-role-tabs button,
+.console-role-tabs .console-role-tab {
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 5px;
   border: 0;
-  border-radius: 9px;
-  padding: 11px 3px;
+  border-radius: 8px;
+  padding: 8px 3px;
   background: transparent;
-  color: #8a7b70;
-  font-size: 10px;
-  font-weight: 600;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
   cursor: pointer;
   box-shadow: none !important;
+  transition: all 0.15s ease;
 }
-.console-role-tabs button[aria-selected="true"] {
-  color: var(--primary);
-  background: #fff;
-  box-shadow: 0 2px 9px #5e392012 !important;
+.console-role-tabs button svg,
+.console-role-tabs .console-role-tab svg {
+  color: inherit;
+  flex-shrink: 0;
+}
+.console-role-tabs button:hover:not([aria-selected="true"]),
+.console-role-tabs .console-role-tab:hover:not([aria-selected="true"]) {
+  background: rgba(255, 255, 255, 0.65);
+  color: #1e293b;
+}
+.console-role-tabs button[aria-selected="true"],
+.console-role-tabs .console-role-tab[aria-selected="true"] {
+  color: #ffffff !important;
+  background: #16354d !important;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(22, 53, 77, 0.25) !important;
+}
+.console-role-tabs button[aria-selected="true"] svg,
+.console-role-tabs .console-role-tab[aria-selected="true"] svg {
+  color: #ffffff !important;
+}
+.console-role-tab-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
 }
 .console-login-form h2 {
   font-size: 27px;
@@ -1319,8 +1351,8 @@
 [data-actor="admin"] { --primary: #2563eb; --primary-hover: #1d4ed8; --primary-light: #eff5ff; --primary-subtle: #dbe7fc; --accent-rgb: 37,99,235; --surface: #f5f6fa; }
 [data-actor="manager"] { --primary: #0e75b5; --primary-hover: #0b5e91; --primary-light: #eef7fd; --primary-subtle: #d6eafa; --accent-rgb: 14,117,181; --surface: #f5f7fa; }
 [data-actor="staff"] { --primary: #c64b12; --primary-hover: #a63d0b; --primary-light: #fff4ed; --primary-subtle: #ffe0cc; --accent-rgb: 198,75,18; --surface: #fff9f5; }
-[data-actor="partner"] { --primary: #007cad; --primary-hover: #00658d; --primary-light: #edf9ff; --primary-subtle: #c8eafb; --accent-rgb: 0,124,173; --surface: #f5faff; }
-[data-actor="accountant"] { --primary: #1764d8; --primary-hover: #1152b6; --primary-light: #edf4ff; --primary-subtle: #d0e2ff; --accent-rgb: 23,100,216; --surface: #f5f8ff; }
+[data-actor="partner"] { --primary: #b22830; --primary-hover: #8c1f25; --primary-light: #fef2f2; --primary-subtle: #fee2e2; --accent-rgb: 178,40,48; --surface: #f8fafc; }
+[data-actor="accountant"] { --primary: #b22830; --primary-hover: #8c1f25; --primary-light: #fef2f2; --primary-subtle: #fee2e2; --accent-rgb: 178,40,48; --surface: #f8fafc; }
 .console-shell { font-size: 13px; line-height: 1.6; }
 .console-shell :is(h1,h2,h3,h4) { font-weight: 600 !important; letter-spacing: -.025em; }
 .console-shell :is(strong,b) { font-weight: 600; }
@@ -1625,9 +1657,6 @@
 .console-login-form h2 { font-size: 25px; margin: 10px 0; }
 .console-login-form p { color: #52657c; font-size: 13px; }
 .console-login-form .console-eyebrow { color: var(--primary); font-weight: 500; }
-.console-role-tabs { background: #f4f5f2; border-color: #dbe7fb; gap: 3px; }
-.console-role-tabs button { color: #546b88; font-weight: 500; font-size: 10px; }
-.console-role-tabs button[aria-selected="true"] { color: #fff; background: var(--primary); box-shadow: 0 3px 9px rgba(var(--accent-rgb),.16) !important; }
 .console-login-fields { margin-top: 22px; }
 .console-login-fields input { min-height: 46px; padding: 13px; border-color: #d7e2f0; color: #263a53; }
 .console-login-fields label { color: #415571; }
@@ -1784,3 +1813,6 @@
 
 /* Preserve each chart gradient despite legacy global polygon styling. */
 .console-chart .console-plot polygon { fill: var(--chart-area-fill) !important; }
+.workspace-slow-load { padding:28px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; color:#263c50; }
+.workspace-slow-load h2 { margin:0 0 10px; font-size:18px; font-weight:600; color:#142b3e; }
+.workspace-slow-load p { margin:0 0 20px; font-size:14px; line-height:1.6; color:#526174; }

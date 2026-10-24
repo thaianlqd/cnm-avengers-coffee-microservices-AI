@@ -1,3 +1,6 @@
+import { Button } from '../../../components/ui/button'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
 import { useEffect, useState, useRef } from 'react'
 import {
   User,
@@ -16,6 +19,7 @@ import {
 } from '../../../components/console/WorkspaceIcons'
 import { readWorkspaceSession, saveWorkspaceSession } from '../../../lib/workspaceAuth'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
+import PersonalContactModal from './PersonalContactModal'
 
 function getSessionUserId(session) {
   return session?.user?.ma_nguoi_dung || session?.user?.maNguoiDung || session?.user?.id || ''
@@ -33,6 +37,13 @@ function getInitials(name = '') {
  * Modal: Quản lý hồ sơ cá nhân (Screenshot 2)
  */
 export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated }) {
+  const role = String(session?.user?.vaiTro || session?.user?.vai_tro || session?.user?.role || '').toUpperCase()
+  return ['KIOSK_STAFF', 'FRANCHISE_STAFF'].includes(role)
+    ? <PersonalContactModal isOpen={isOpen} onClose={onClose} session={session} onProfileUpdated={onProfileUpdated} />
+    : <GeneralProfileModal isOpen={isOpen} onClose={onClose} session={session} onProfileUpdated={onProfileUpdated} />
+}
+
+function GeneralProfileModal({ isOpen, onClose, session, onProfileUpdated }) {
   const userId = getSessionUserId(session)
   const user = session?.user || {}
 
@@ -54,7 +65,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
       setProfileForm({
         hoTen: payload?.ho_ten || user.hoTen || user.ho_ten || user.tenDangNhap || '',
         soDienThoai: payload?.so_dien_thoai || user.soDienThoai || '',
-        email: payload?.email || user.email || user.tenDangNhap || 'admin',
+        email: payload?.email || user.email || '',
         donVi: payload?.co_so_ten || user.coSoTen || user.donVi || 'Avengers Coffee System'
       })
       setProfileState((prev) => ({ ...prev, loading: false, error: '' }))
@@ -67,8 +78,8 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
     if (isOpen) {
       setProfileForm({
         hoTen: user.hoTen || user.ho_ten || user.tenDangNhap || 'Quản trị viên',
-        soDienThoai: user.soDienThoai || '0900000000',
-        email: user.email || user.tenDangNhap || 'admin',
+        soDienThoai: user.soDienThoai || user.so_dien_thoai || '',
+        email: user.email || '',
         donVi: user.coSoTen || user.donVi || 'Avengers Coffee System'
       })
       setProfileState({ loading: false, saving: false, error: '', success: '' })
@@ -121,10 +132,12 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
   }
 
   const displayName = profileForm.hoTen || user.hoTen || user.ho_ten || user.tenDangNhap || 'Quản trị viên'
-  const roleName = user.vaiTro || user.vai_tro || 'ADMIN'
+  const roleName = user.vaiTro || user.vai_tro || user.role || 'ADMIN'
   const roleSubtitle =
     roleName === 'ADMIN'
       ? 'Quản trị viên toàn hệ thống'
+      : roleName === 'ACCOUNTANT'
+      ? 'Quản lý nhượng quyền'
       : roleName === 'MANAGER'
       ? 'Quản lý cơ sở hệ thống'
       : 'Nhân viên hệ thống'
@@ -178,7 +191,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
               Quản lý hồ sơ cá nhân
             </h3>
           </div>
-          <button
+          <Button data-intent="danger"
             type="button"
             onClick={onClose}
             aria-label="Đóng cửa sổ"
@@ -198,7 +211,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
             onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
           >
             <X size={19} />
-          </button>
+          </Button>
         </div>
 
         {/* Modal Form Body */}
@@ -255,7 +268,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
 
             {/* Field 1: Email (Tài khoản) - ReadOnly */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label
+              <Label
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -267,8 +280,8 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
               >
                 <Mail size={15} color="#64748b" />
                 <span>Địa chỉ Email (Tài khoản)</span>
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 readOnly
                 value={profileForm.email}
@@ -289,7 +302,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
 
             {/* Field 2: Họ và tên * */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label
+              <Label
                 htmlFor="modal-profile-name"
                 style={{
                   display: 'flex',
@@ -302,8 +315,8 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
               >
                 <User size={15} color="#64748b" />
                 <span>Họ và tên *</span>
-              </label>
-              <input
+              </Label>
+              <Input
                 id="modal-profile-name"
                 type="text"
                 required
@@ -327,7 +340,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
 
             {/* Field 3: Tên doanh nghiệp hoặc đơn vị (Screenshot 2) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label
+              <Label
                 htmlFor="modal-profile-donvi"
                 style={{
                   display: 'flex',
@@ -340,8 +353,8 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
               >
                 <Building size={15} color="#64748b" />
                 <span>Tên doanh nghiệp hoặc đơn vị</span>
-              </label>
-              <input
+              </Label>
+              <Input
                 id="modal-profile-donvi"
                 type="text"
                 value={profileForm.donVi}
@@ -364,7 +377,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
 
             {/* Field 4: Số điện thoại liên hệ */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label
+              <Label
                 htmlFor="modal-profile-phone"
                 style={{
                   display: 'flex',
@@ -377,8 +390,8 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
               >
                 <Phone size={15} color="#64748b" />
                 <span>Số điện thoại liên hệ</span>
-              </label>
-              <input
+              </Label>
+              <Input
                 id="modal-profile-phone"
                 type="text"
                 value={profileForm.soDienThoai}
@@ -436,7 +449,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
           </div>
 
           {/* Modal Footer (Screenshot 2: Đóng (soft button), Lưu thay đổi (emerald green)) */}
-          <div
+          <div data-modal-actions="true"
             style={{
               padding: '0.95rem 1.4rem',
               borderTop: '1px solid #f1f5f9',
@@ -447,7 +460,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
               backgroundColor: '#ffffff'
             }}
           >
-            <button
+            <Button data-intent="danger"
               type="button"
               onClick={onClose}
               style={{
@@ -466,8 +479,8 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
             >
               Đóng
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={profileState.saving}
               style={{
@@ -490,7 +503,7 @@ export function UserProfileModal({ isOpen, onClose, session, onProfileUpdated })
               }}
             >
               {profileState.saving ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
@@ -611,7 +624,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
               Đổi mật khẩu
             </h3>
           </div>
-          <button
+          <Button data-intent="danger"
             type="button"
             onClick={onClose}
             aria-label="Đóng cửa sổ"
@@ -631,7 +644,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
             onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
           >
             <X size={19} />
-          </button>
+          </Button>
         </div>
 
         {/* Modal Form Body */}
@@ -639,7 +652,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
           <div style={{ padding: '1.35rem 1.4rem', display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
             {/* Field 1: Current Password */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label
+              <Label
                 htmlFor="modal-pwd-current"
                 style={{
                   display: 'flex',
@@ -652,9 +665,9 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
               >
                 <Lock size={15} color="#64748b" />
                 <span>Mật khẩu hiện tại *</span>
-              </label>
+              </Label>
               <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
-                <input
+                <Input
                   id="modal-pwd-current"
                   type={showCurrentPwd ? "text" : "password"}
                   required
@@ -674,7 +687,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
                     boxSizing: 'border-box'
                   }}
                 />
-                <button
+                <Button
                   type="button"
                   className="admin-password-toggle"
                   onClick={() => setShowCurrentPwd(!showCurrentPwd)}
@@ -700,13 +713,13 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
                   }}
                 >
                   {showCurrentPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Field 2: New Password */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label
+              <Label
                 htmlFor="modal-pwd-new"
                 style={{
                   display: 'flex',
@@ -719,9 +732,9 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
               >
                 <KeyRound size={15} color="#64748b" />
                 <span>Mật khẩu mới *</span>
-              </label>
+              </Label>
               <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
-                <input
+                <Input
                   id="modal-pwd-new"
                   type={showNewPwd ? "text" : "password"}
                   required
@@ -741,7 +754,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
                     boxSizing: 'border-box'
                   }}
                 />
-                <button
+                <Button
                   type="button"
                   className="admin-password-toggle"
                   onClick={() => setShowNewPwd(!showNewPwd)}
@@ -767,13 +780,13 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
                   }}
                 >
                   {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Field 3: Confirm Password */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label
+              <Label
                 htmlFor="modal-pwd-confirm"
                 style={{
                   display: 'flex',
@@ -786,9 +799,9 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
               >
                 <KeyRound size={15} color="#64748b" />
                 <span>Xác nhận mật khẩu mới *</span>
-              </label>
+              </Label>
               <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
-                <input
+                <Input
                   id="modal-pwd-confirm"
                   type={showConfirmPwd ? "text" : "password"}
                   required
@@ -808,7 +821,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
                     boxSizing: 'border-box'
                   }}
                 />
-                <button
+                <Button
                   type="button"
                   className="admin-password-toggle"
                   onClick={() => setShowConfirmPwd(!showConfirmPwd)}
@@ -834,7 +847,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
                   }}
                 >
                   {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -875,7 +888,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
           </div>
 
           {/* Modal Footer (Screenshot 3: Đóng, Đổi mật khẩu (solid dark navy/blue)) */}
-          <div
+          <div data-modal-actions="true"
             style={{
               padding: '0.95rem 1.4rem',
               borderTop: '1px solid #f1f5f9',
@@ -886,7 +899,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
               backgroundColor: '#ffffff'
             }}
           >
-            <button
+            <Button data-intent="danger"
               type="button"
               onClick={onClose}
               style={{
@@ -905,8 +918,8 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
             >
               Đóng
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={passwordState.saving}
               style={{
@@ -929,7 +942,7 @@ export function ChangePasswordModal({ isOpen, onClose, session }) {
               }}
             >
               {passwordState.saving ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
@@ -965,7 +978,8 @@ export function TopbarUserDropdown({ session, onLogout }) {
   return (
     <div ref={menuRef} style={{ position: 'relative', display: 'inline-block' }}>
       {/* Trigger Button (Screenshot 1: Blue border pill with avatar circle, name, chevron) */}
-      <button
+      <Button
+        className="workspace-profile-trigger"
         type="button"
         onClick={() => setMenuOpen((prev) => !prev)}
         style={{
@@ -983,6 +997,7 @@ export function TopbarUserDropdown({ session, onLogout }) {
         }}
       >
         <div
+          className="workspace-profile-avatar"
           style={{
             width: '28px',
             height: '28px',
@@ -1017,7 +1032,7 @@ export function TopbarUserDropdown({ session, onLogout }) {
             transition: 'transform 0.15s ease'
           }}
         />
-      </button>
+      </Button>
 
       {/* Floating Dropdown Menu (Screenshot 1) */}
       {menuOpen && (
@@ -1038,7 +1053,7 @@ export function TopbarUserDropdown({ session, onLogout }) {
           }}
         >
           {/* Item 1: Quản lý hồ sơ */}
-          <button
+          <Button
             type="button"
             onClick={() => {
               setMenuOpen(false)
@@ -1062,10 +1077,10 @@ export function TopbarUserDropdown({ session, onLogout }) {
           >
             <User size={16} color="#64748b" />
             <span>Quản lý hồ sơ</span>
-          </button>
+          </Button>
 
           {/* Item 2: Đổi mật khẩu */}
-          <button
+          <Button
             type="button"
             onClick={() => {
               setMenuOpen(false)
@@ -1089,12 +1104,12 @@ export function TopbarUserDropdown({ session, onLogout }) {
           >
             <KeyRound size={16} color="#64748b" />
             <span>Đổi mật khẩu</span>
-          </button>
+          </Button>
 
           <div style={{ height: '1px', backgroundColor: '#e2e8f0', margin: '0.3rem 0' }} />
 
           {/* Item 3: Đăng xuất */}
-          <button
+          <Button
             type="button"
             onClick={() => {
               setMenuOpen(false)
@@ -1118,7 +1133,7 @@ export function TopbarUserDropdown({ session, onLogout }) {
           >
             <LogOut size={16} color="#dc2626" />
             <span>Đăng xuất</span>
-          </button>
+          </Button>
         </div>
       )}
 

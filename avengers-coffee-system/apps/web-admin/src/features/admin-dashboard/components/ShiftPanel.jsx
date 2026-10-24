@@ -1,3 +1,11 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
+import { Table } from '../../../components/ui/table'
+import { Badge } from '../../../components/ui/badge'
+import { Button } from '../../../components/ui/button'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Textarea } from '../../../components/ui/textarea'
 import { PageNumbers } from '../../../components/console/CompactPagination'
 import CurrencyInput from '../../../components/console/CurrencyInput'
 import React, { useMemo, useState } from 'react'
@@ -135,7 +143,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
         marginBottom: '0.6rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <span style={{
+          <Badge variant="outline" data-quiet-label="true" style={{
             fontSize: '0.8rem',
             fontWeight: '600',
             color: '#30382e',
@@ -144,7 +152,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
             borderRadius: '6px'
           }}>
             #{item.ma_ca.slice(0, 8).toUpperCase()}
-          </span>
+          </Badge>
 
           <span style={{
             fontSize: '0.825rem',
@@ -157,26 +165,13 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
             <User size={14} color="var(--primary)" /> {item.staff_name || 'Không xác định'}
           </span>
 
-          <span className="workspace-inline-label" style={{
-            fontSize: '0.75rem',
-            fontWeight: '700',
-            padding: '0.2rem 0.55rem',
-            borderRadius: '9999px',
-            background: approvalMeta.background,
-            color: approvalMeta.color,
-            border: approvalMeta.border,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.25rem'
-          }}>
-            <StatusIcon size={12} /> {approvalMeta.label}
-          </span>
+          <StatusBadge status={item.approval_status}>{approvalMeta.label}</StatusBadge>
         </div>
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           {!editing && canEdit && (
-            <button
+            <Button
               type="button"
               onClick={() => setEditing(true)}
               disabled={lockedForStaff}
@@ -195,11 +190,11 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
               }}
             >
               <Edit3 size={13} /> Sửa
-            </button>
+            </Button>
           )}
 
           {canEdit && (
-            <button
+            <Button data-intent="danger"
               type="button"
               onClick={() => onDelete(item.ma_ca)}
               disabled={lockedForStaff}
@@ -218,7 +213,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
               }}
             >
               <Trash2 size={13} /> Xóa
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -255,9 +250,9 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
         }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.65rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#596255', display: 'block', marginBottom: '0.2rem' }}>
+              <Label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#596255', display: 'block', marginBottom: '0.2rem' }}>
                 Tiền đầu ca
-              </label>
+              </Label>
               <CurrencyInput
                 value={draft.cash_open}
                 onChange={(e) => {
@@ -269,9 +264,9 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
               />
             </div>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#596255', display: 'block', marginBottom: '0.2rem' }}>
+              <Label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#596255', display: 'block', marginBottom: '0.2rem' }}>
                 Tiền cuối ca
-              </label>
+              </Label>
               <CurrencyInput
                 value={draft.cash_close}
                 onChange={(e) => {
@@ -283,10 +278,10 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
               />
             </div>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#596255', display: 'block', marginBottom: '0.2rem' }}>
+              <Label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#596255', display: 'block', marginBottom: '0.2rem' }}>
                 Nhân viên
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 value={draft.staff_name}
                 onChange={(e) => setDraft((p) => ({ ...p, staff_name: e.target.value }))}
@@ -296,10 +291,10 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
           </div>
 
           <div>
-            <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#596255', display: 'block', marginBottom: '0.2rem' }}>
+            <Label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#596255', display: 'block', marginBottom: '0.2rem' }}>
               Ghi chú
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               value={draft.note}
               onChange={(e) => setDraft((p) => ({ ...p, note: e.target.value }))}
@@ -308,7 +303,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
-            <button
+            <Button
               type="button"
               onClick={handleSave}
               disabled={saving}
@@ -327,9 +322,9 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
               }}
             >
               <Save size={13} /> {saving ? 'Lưu...' : 'Lưu'}
-            </button>
+            </Button>
 
-            <button
+            <Button data-intent="danger"
               type="button"
               onClick={() => setEditing(false)}
               style={{
@@ -347,53 +342,13 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
               }}
             >
               <X size={13} /> Hủy
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
         <>
           {/* Stats Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(115px, 1fr))',
-            gap: '0.5rem',
-            marginBottom: '0.65rem'
-          }}>
-            <div style={{ background: '#f8f9f6', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid #f4f5f2' }}>
-              <span style={{ fontSize: '0.7rem', color: '#69736a', display: 'block' }}>Tiền đầu ca</span>
-              <strong style={{ fontSize: '0.825rem', color: '#30382e' }}>{fmtMoney(item.cash_open)}</strong>
-            </div>
-
-            <div style={{ background: '#f8f9f6', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid #f4f5f2' }}>
-              <span style={{ fontSize: '0.7rem', color: '#69736a', display: 'block' }}>Tiền cuối ca</span>
-              <strong style={{ fontSize: '0.825rem', color: '#30382e' }}>{fmtMoney(item.cash_close)}</strong>
-            </div>
-
-            <div style={{ background: '#f8f9f6', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid #f4f5f2' }}>
-              <span style={{ fontSize: '0.7rem', color: '#69736a', display: 'block' }}>Thực thu mặt</span>
-              <strong style={{ fontSize: '0.825rem', color: '#2563eb' }}>{fmtMoney(item.cash_revenue)}</strong>
-            </div>
-
-            <div style={{ background: '#f8f9f6', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid #f4f5f2' }}>
-              <span style={{ fontSize: '0.7rem', color: '#69736a', display: 'block' }}>Doanh thu</span>
-              <strong style={{ fontSize: '0.825rem', color: '#252927' }}>{fmtMoney(item.total_revenue)}</strong>
-            </div>
-
-            <div style={{
-              background: diffMeta.bg,
-              padding: '0.45rem 0.6rem',
-              borderRadius: '8px',
-              border: `1px solid ${diffMeta.border}`,
-              color: diffMeta.color
-            }}>
-              <span style={{ fontSize: '0.7rem', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                <DiffIcon size={11} /> Chênh lệch
-              </span>
-              <strong style={{ fontSize: '0.85rem', display: 'block', marginTop: '0.1rem' }}>
-                {diff >= 0 ? '+' : ''}{fmtMoney(diff)}
-              </strong>
-            </div>
-          </div>
+          <dl className="operation-facts"><div><dt>Tiền đầu ca</dt><dd>{fmtMoney(item.cash_open)}</dd></div><div><dt>Tiền kiểm đếm cuối ca</dt><dd>{fmtMoney(item.cash_close)}</dd></div><div><dt>Thực thu tiền mặt</dt><dd>{fmtMoney(item.cash_revenue)}</dd></div><div><dt>Doanh thu hệ thống</dt><dd>{fmtMoney(item.total_revenue)}</dd></div><div><dt>Chênh lệch</dt><dd><StatusBadge tone={diff === 0 ? 'success' : 'warning'}>{diff >= 0 ? '+' : ''}{fmtMoney(diff)}</StatusBadge></dd></div></dl>
 
           {/* Notes */}
           {item.note && (
@@ -443,7 +398,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
               flexDirection: 'column',
               gap: '0.5rem'
             }}>
-              <textarea
+              <Textarea
                 rows={1}
                 value={approvalNote}
                 onChange={(e) => setApprovalNote(e.target.value)}
@@ -459,7 +414,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
                 }}
               />
               <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
-                <button
+                <Button data-intent="success"
                   type="button"
                   onClick={() => handleApprove('APPROVED')}
                   disabled={approvingShiftId === item.ma_ca}
@@ -478,9 +433,9 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
                   }}
                 >
                   <CheckCircle2 size={14} /> Duyệt ca
-                </button>
+                </Button>
 
-                <button
+                <Button data-intent="danger"
                   type="button"
                   onClick={() => handleApprove('REJECTED')}
                   disabled={approvingShiftId === item.ma_ca}
@@ -499,7 +454,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
                   }}
                 >
                   <XCircle size={14} /> Từ chối
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -528,6 +483,8 @@ export function ShiftPanel({
   const [historyFilter, setHistoryFilter] = useState('today')
   const [historyPage, setHistoryPage] = useState(1)
   const [showDetails, setShowDetails] = useState(false)
+  const [selectedRecordId, setSelectedRecordId] = useState(null)
+  const selectedRecord = shiftHistory.find(item => item.ma_ca === selectedRecordId)
 
   const preview = shiftPreview
   const existingShift = preview?.existing_shift || null
@@ -570,562 +527,30 @@ export function ShiftPanel({
     setHistoryPage(1)
   }
 
-  return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-      gap: '1.25rem',
-      alignItems: 'start',
-      width: '100%'
-    }}>
-      {/* LEFT COLUMN / COMPACT FORM CARD */}
-      <section style={{
-        background: '#ffffff',
-        border: '1px solid #e2e4df',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {isApprovalMode ? (
-          <>
-            <div style={{
-              background: 'linear-gradient(135deg, #30382e 0%, #414743 100%)',
-              padding: '1rem 1.25rem',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.65rem'
-            }}>
-              <ShieldCheck size={22} color="#38bdf8" />
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#ffffff' }}>
-                  Kiểm tra biên bản chốt ca
-                </h2>
-                <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', opacity: 0.85 }}>
-                  Manager duyệt hoặc từ chối biên bản ca trực do nhân viên nộp.
-                </p>
-              </div>
-            </div>
+  return <div className={`manager-shifts ${isApprovalMode ? 'approval-layout' : 'closing-layout'}`}>
+    {!isApprovalMode && <section className="operation-surface shift-close-form">
+      <h2>Kiểm đếm và bàn giao</h2><p className="operation-note">Nhập tiền thực tế tại quầy để đối chiếu với số liệu hệ thống.</p>
+      <div className="operation-form-fields">
+        <Label htmlFor="shift-date">Ngày chốt ca<Input id="shift-date" type="date" value={shiftDate} onChange={e => setShiftDate(e.target.value)} /></Label>
+        <Label htmlFor="cash-open">Tiền đầu ca (VNĐ)<CurrencyInput id="cash-open" value={shiftInput.cashOpen} onChange={e => setShiftInput(p => ({ ...p, cashOpen: e.target.value === '' ? 0 : Number(e.target.value) }))} /></Label>
+        <Label htmlFor="cash-close">Tiền kiểm đếm cuối ca (VNĐ)<CurrencyInput id="cash-close" value={shiftInput.cashClose} onChange={e => setShiftInput(p => ({ ...p, cashClose: e.target.value === '' ? 0 : Number(e.target.value) }))} /></Label>
+        <Label htmlFor="shift-note">Ghi chú bàn giao<Textarea id="shift-note" rows={3} value={shiftInput.note} onChange={e => setShiftInput(p => ({ ...p, note: e.target.value }))} placeholder="Chênh lệch, sự cố hoặc lưu ý cho ca sau…" /></Label>
+      </div>
+      <dl className="operation-facts shift-reconciliation"><div><dt>Doanh thu hệ thống</dt><dd>{fmtMoney(preview?.system?.total_revenue ?? 0)}</dd></div><div><dt>Thực thu tiền mặt</dt><dd>{fmtMoney(preview?.system?.cash_revenue ?? 0)}</dd></div><div><dt>Tiền cuối ca dự kiến</dt><dd>{fmtMoney(expectedClose)}</dd></div><div><dt>Chênh lệch kiểm đếm</dt><dd><StatusBadge tone={diff === 0 ? 'success' : 'warning'}>{diff >= 0 ? '+' : ''}{fmtMoney(diff)}</StatusBadge></dd></div></dl>
+      <Button variant="ghost" onClick={() => setShowDetails(!showDetails)} aria-expanded={showDetails}>{showDetails ? 'Ẩn đối chiếu chi tiết' : 'Xem đối chiếu chi tiết'}<ChevronDown size={14} /></Button>
+      {showDetails && <dl className="operation-facts"><div><dt>Tiền khách đưa</dt><dd>{fmtMoney(preview?.system?.cash_in_gross ?? 0)}</dd></div><div><dt>Tiền trả lại khách</dt><dd>{fmtMoney(preview?.system?.cash_change_out ?? 0)}</dd></div><div><dt>Doanh thu online</dt><dd>{fmtMoney(preview?.system?.online_revenue ?? 0)}</dd></div><div><dt>Doanh thu tại quầy</dt><dd>{fmtMoney(preview?.system?.shop_revenue ?? 0)}</dd></div></dl>}
+      {existingShift && <p role="status" className="operation-note">Ngày này đã có biên bản chốt ca. Bạn có thể xem lại trong lịch sử.</p>}
+      {shiftStatus.error && <p className="console-error" role="alert">{shiftStatus.error}</p>}{shiftStatus.success && <p role="status">{shiftStatus.success}</p>}
+      <div className="operation-footer"><Button className="admin-button-primary" data-intent="success" onClick={chotCaTienMat} disabled={closingShift || shiftStatus.loading || Boolean(existingShift)}><CheckCircle2 size={16} />{closingShift ? 'Đang chốt ca…' : 'Xác nhận chốt ca làm việc'}</Button></div>
+    </section>}
+    <section className="operation-surface shift-history">
+      <div className="operation-section-heading"><h2>{isApprovalMode ? 'Danh sách biên bản chốt ca' : 'Lịch sử bàn giao'}</h2><span>{filteredHistory.length} biên bản</span></div>
+      <div className="operation-tabs" aria-label="Khoảng ngày chốt ca">{HISTORY_FILTERS.map(item => <Button variant="ghost" key={item.id} data-selected={historyFilter === item.id} aria-pressed={historyFilter === item.id} onClick={() => onChangeFilter(item.id)}>{item.label}</Button>)}</div>
+      {isApprovalMode && <p className="operation-note">Chọn biên bản để xem đối chiếu, nhập ghi chú và duyệt hoặc từ chối.</p>}
+      {!pagedHistory.length ? <p className="operation-empty">Chưa có biên bản trong khoảng thời gian này. Chọn “Tất cả” để xem lịch sử.</p> : <div className="operation-table-frame"><Table><thead><tr><th>Ngày / nhân viên</th><th>Tiền cuối ca</th><th>Chênh lệch</th><th>Trạng thái</th><th style={{width:'100px'}}>Biên bản</th></tr></thead><tbody>{pagedHistory.map(item => <tr key={item.ma_ca}><td><strong>{item.staff_name || 'Chưa cập nhật'}</strong><small>{new Date(item.created_at).toLocaleString('vi-VN')}</small></td><td>{fmtMoney(item.cash_close)}</td><td>{fmtMoney(item.difference || 0)}</td><td><StatusBadge status={item.approval_status}>{getApprovalBadgeStyle(item.approval_status).label}</StatusBadge></td><td><Button variant="outline" onClick={() => setSelectedRecordId(item.ma_ca)}>{isApprovalMode ? 'Kiểm tra' : 'Chi tiết'}</Button></td></tr>)}</tbody></Table></div>}
+      <nav className="operation-pagination" aria-label="Phân trang biên bản"><span>Trang {safePage} trên {totalPages}</span><div><Button variant="outline" disabled={safePage <= 1} onClick={() => setHistoryPage(p => Math.max(1, p - 1))}><ChevronLeft size={14} /></Button><PageNumbers page={safePage} totalPages={totalPages} onChange={setHistoryPage} /><Button variant="outline" disabled={safePage >= totalPages} onClick={() => setHistoryPage(p => Math.min(totalPages, p + 1))}><ChevronRight size={14} /></Button></div></nav>
+    </section>
+    {selectedRecord && <WorkspaceDialog title={`Biên bản chốt ca · ${selectedRecord.staff_name || selectedRecord.ma_ca.slice(0, 8)}`} onClose={() => setSelectedRecordId(null)} busy={approvingShiftId === selectedRecord.ma_ca} className="workspace-dialog--wide"><div data-modal-body="true" className="shift-record-detail"><ShiftHistoryItem key={selectedRecord.ma_ca} item={selectedRecord} canApprove={canApprove} canEdit={canEditHistory} approvingShiftId={approvingShiftId} onDelete={xoaCaLamViec} onSaveEdit={suaCaLamViec} onApprove={pheDuyetCaLamViec} /></div></WorkspaceDialog>}
+  </div>
 
-            <div style={{ padding: '1.25rem' }}>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.25rem 0.65rem',
-                borderRadius: '9999px',
-                background: 'var(--primary-light)',
-                color: 'var(--primary)',
-                fontSize: '0.8rem',
-                fontWeight: '700',
-                marginBottom: '0.85rem'
-              }}>
-                <UserCheck size={14} /> Manager: {currentUserName || 'Quản lý'}
-              </div>
-
-              {/* Approval Summary Cards Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.65rem' }}>
-                <div style={{ background: '#f8f9f6', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e4df' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#69736a' }}>Tổng số biên bản</span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#252927', marginTop: '0.1rem' }}>
-                    {approvalSummary.total}
-                  </div>
-                </div>
-
-                <div style={{ background: "#f4f5f2", padding: '0.75rem', borderRadius: '10px', border: '1px solid #fde68a' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#b45309' }}>Chờ phê duyệt</span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#b45309', marginTop: '0.1rem' }}>
-                    {approvalSummary.pending}
-                  </div>
-                </div>
-
-                <div style={{ background: "#f4f5f2", padding: '0.75rem', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#1d4ed8' }}>Đã chấp thuận</span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1d4ed8', marginTop: '0.1rem' }}>
-                    {approvalSummary.approved}
-                  </div>
-                </div>
-
-                <div style={{ background: "#f4f5f2", padding: '0.75rem', borderRadius: '10px', border: '1px solid #fca5a5' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#b91c1c' }}>Đã từ chối</span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#b91c1c', marginTop: '0.1rem' }}>
-                    {approvalSummary.rejected}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Header */}
-            <div style={{
-              background: 'var(--primary)',
-              padding: '1rem 1.25rem',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.65rem'
-            }}>
-              <Clock size={22} color="#ffffff" />
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#ffffff' }}>
-                  Chốt ca làm việc
-                </h2>
-                <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', opacity: 0.9 }}>
-                  {isManager ? 'Ghi nhận đối soát tiền mặt & ca trực Quản lý.' : 'Nhập tiền mặt thực tế và kiểm tra biên bản đối soát ca.'}
-                </p>
-              </div>
-            </div>
-
-            {/* Compact Form Body */}
-            <div style={{ padding: '1.15rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {/* Row 1: Date, Cash Open, Cash Close in 3 Inline Columns */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(105px, 1fr))', gap: '0.65rem' }}>
-                <div>
-                  <label htmlFor="shift-date" style={{ fontSize: '0.775rem', fontWeight: '700', color: '#414743', display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.25rem' }}>
-                    <Calendar size={13} color="var(--primary)" /> Ngày chốt
-                  </label>
-                  <input
-                    id="shift-date"
-                    type="date"
-                    value={shiftDate}
-                    onChange={(e) => setShiftDate(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.55rem',
-                      borderRadius: '8px',
-                      border: '1px solid #ccd3c7',
-                      fontSize: '0.825rem',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="cash-open" style={{ fontSize: '0.775rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
-                    Tiền đầu ca
-                  </label>
-                  <CurrencyInput
-                    id="cash-open"
-                    value={shiftInput.cashOpen}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      setShiftInput((p) => ({ ...p, cashOpen: val === '' ? 0 : Number(val) }))
-                    }}
-                    placeholder="0"
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.55rem',
-                      borderRadius: '8px',
-                      border: '1px solid #ccd3c7',
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="cash-close" style={{ fontSize: '0.775rem', fontWeight: '700', color: 'var(--primary)', display: 'block', marginBottom: '0.25rem' }}>
-                    Tiền cuối ca
-                  </label>
-                  <CurrencyInput
-                    id="cash-close"
-                    value={shiftInput.cashClose}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      setShiftInput((p) => ({ ...p, cashClose: val === '' ? 0 : Number(val) }))
-                    }}
-                    placeholder="0"
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem 0.55rem',
-                      borderRadius: '8px',
-                      border: '1.5px solid var(--primary)',
-                      fontSize: '0.85rem',
-                      fontWeight: '700',
-                      color: 'var(--primary)',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Row 2: Note Field */}
-              <div>
-                <label htmlFor="shift-note" style={{ fontSize: '0.775rem', fontWeight: '700', color: '#414743', display: 'block', marginBottom: '0.25rem' }}>
-                  Ghi chú bàn giao
-                </label>
-                <input
-                  id="shift-note"
-                  type="text"
-                  value={shiftInput.note}
-                  onChange={(e) => setShiftInput((p) => ({ ...p, note: e.target.value }))}
-                  placeholder="Ghi chú sự cố, chênh lệch hoặc lưu ý ca sau..."
-                  style={{
-                    width: '100%',
-                    padding: '0.45rem 0.65rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ccd3c7',
-                    fontSize: '0.825rem',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              {/* Compact 4-Card Financial Reconciliation Grid */}
-              <div style={{
-                background: '#f8f9f6',
-                borderRadius: '12px',
-                padding: '0.75rem',
-                border: '1px solid #e2e4df'
-              }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-                  {/* Card 1: Doanh thu ca */}
-                  <div style={{ background: '#ffffff', padding: '0.5rem 0.65rem', borderRadius: '8px', border: '1px solid #e2e4df' }}>
-                    <span style={{ fontSize: '0.725rem', color: '#69736a' }}>Doanh thu ({preview?.system?.total_orders ?? 0} đơn)</span>
-                    <strong style={{ fontSize: '0.9rem', display: 'block', color: '#252927', marginTop: '0.1rem' }}>
-                      {fmtMoney(preview?.system?.total_revenue ?? 0)}
-                    </strong>
-                  </div>
-
-                  {/* Card 2: Thực thu tiền mặt */}
-                  <div style={{ background: '#ffffff', padding: '0.5rem 0.65rem', borderRadius: '8px', border: '1px solid #e2e4df' }}>
-                    <span style={{ fontSize: '0.725rem', color: '#69736a' }}>Thực thu tiền mặt</span>
-                    <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
-                      {fmtMoney(preview?.system?.cash_revenue ?? 0)}
-                    </strong>
-                  </div>
-
-                  {/* Card 3: Kỳ vọng cuối ca */}
-                  <div style={{ background: '#ffffff', padding: '0.5rem 0.65rem', borderRadius: '8px', border: '1px solid #e2e4df' }}>
-                    <span style={{ fontSize: '0.725rem', color: '#69736a' }}>Kỳ vọng cuối ca</span>
-                    <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--primary)', fontWeight: '600', marginTop: '0.1rem' }}>
-                      {fmtMoney(expectedClose)}
-                    </strong>
-                  </div>
-
-                  {/* Card 4: Chênh lệch */}
-                  <div style={{
-                    background: diffMeta.bg,
-                    padding: '0.5rem 0.65rem',
-                    borderRadius: '8px',
-                    border: `1px solid ${diffMeta.border}`,
-                    color: diffMeta.color
-                  }}>
-                    <span style={{ fontSize: '0.725rem', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                      <DiffIcon size={12} /> {diffMeta.text}
-                    </span>
-                    <strong style={{ fontSize: '0.95rem', display: 'block', marginTop: '0.1rem' }}>
-                      {diff >= 0 ? '+' : ''}{fmtMoney(diff)}
-                    </strong>
-                  </div>
-                </div>
-
-                {/* Collapsible Advanced Breakdown */}
-                <div style={{ marginTop: '0.5rem', textAlign: 'center' }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowDetails(!showDetails)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--primary)',
-                      fontSize: '0.775rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '0.2rem 0.4rem'
-                    }}
-                  >
-                    {showDetails ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                    {showDetails ? 'Thu gọn chi tiết' : 'Xem chi tiết tiền thối & Online'}
-                  </button>
-
-                  {showDetails && (
-                    <div style={{
-                      marginTop: '0.5rem',
-                      paddingTop: '0.5rem',
-                      borderTop: '1px dashed #ccd3c7',
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      gap: '0.4rem',
-                      textAlign: 'left'
-                    }}>
-                      <div style={{ fontSize: '0.75rem', color: '#69736a' }}>
-                        Tiền mặt thu vào: <strong>{fmtMoney(preview?.system?.cash_in_gross ?? 0)}</strong>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#69736a' }}>
-                        Tiền thối khách: <strong>{fmtMoney(preview?.system?.cash_change_out ?? 0)}</strong>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#69736a' }}>
-                        Doanh thu Online: <strong>{fmtMoney(preview?.system?.online_revenue ?? 0)}</strong>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#69736a' }}>
-                        Doanh thu tại shop: <strong>{fmtMoney(preview?.system?.in_store_revenue ?? 0)}</strong>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Status Alert Messages */}
-              {existingShift && (
-                <div style={{
-                  padding: '0.6rem 0.75rem',
-                  borderRadius: '8px',
-                  background: "#f4f5f2",
-                  border: '1px solid #fecaca',
-                  color: '#b91c1c',
-                  fontSize: '0.8rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}>
-                  <AlertCircle size={15} style={{ flexShrink: 0 }} />
-                  <span>Ngày này đã chốt ca <strong>#{existingShift.ma_ca.slice(0, 8).toUpperCase()}</strong>.</span>
-                </div>
-              )}
-
-              {shiftStatus.error && (
-                <div style={{
-                  padding: '0.6rem 0.75rem',
-                  borderRadius: '8px',
-                  background: "#f4f5f2",
-                  border: '1px solid #fecaca',
-                  color: '#b91c1c',
-                  fontSize: '0.8rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}>
-                  <AlertCircle size={15} /> {shiftStatus.error}
-                </div>
-              )}
-
-              {shiftStatus.success && (
-                <div style={{
-                  padding: '0.6rem 0.75rem',
-                  borderRadius: '8px',
-                  background: "#f4f5f2",
-                  border: '1px solid #bfdbfe',
-                  color: '#1d4ed8',
-                  fontSize: '0.8rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}>
-                  <CheckCircle2 size={15} /> {shiftStatus.success}
-                </div>
-              )}
-
-              {/* Compact Submit Button */}
-              <button
-                type="button"
-                onClick={chotCaTienMat}
-                disabled={closingShift || shiftStatus.loading || Boolean(existingShift)}
-                style={{
-                  width: '100%',
-                  padding: '0.7rem 1rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: Boolean(existingShift) ? "#f4f5f2" : 'var(--primary)',
-                  color: '#ffffff',
-                  fontSize: '0.925rem',
-                  fontWeight: '700',
-                  cursor: Boolean(existingShift) ? 'not-allowed' : 'pointer',
-                  boxShadow: Boolean(existingShift) ? 'none' : '0 4px 10px rgba(59, 130, 246, 0.25)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.4rem',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {closingShift ? (
-                  <>
-                    <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> Đang xử lý...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 size={18} /> Xác nhận chốt ca làm việc
-                  </>
-                )}
-              </button>
-            </div>
-          </>
-        )}
-      </section>
-
-      {/* RIGHT COLUMN / SHIFT HISTORY PANEL */}
-      <section style={{
-        background: '#ffffff',
-        border: '1px solid #e2e4df',
-        borderRadius: '16px',
-        padding: '1.25rem',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* History Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1rem',
-          paddingBottom: '0.65rem',
-          borderBottom: '1px solid #f4f5f2'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ClipboardList size={20} color="var(--primary)" />
-            <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#252927' }}>
-              {isApprovalMode ? 'Biên bản chờ kiểm tra' : 'Lịch sử ca đã chốt'}
-            </h2>
-          </div>
-          <span className="workspace-inline-label" style={{
-            fontSize: '0.775rem',
-            fontWeight: '700',
-            background: 'var(--primary-light)',
-            color: 'var(--primary)',
-            padding: '0.2rem 0.55rem',
-            borderRadius: '9999px'
-          }}>
-            {filteredHistory.length} ca
-          </span>
-        </div>
-
-        {/* Filter Chips Row */}
-        <div style={{
-          display: 'flex',
-          gap: '0.4rem',
-          background: '#f4f5f2',
-          padding: '0.25rem',
-          borderRadius: '8px',
-          marginBottom: '1rem'
-        }}>
-          {HISTORY_FILTERS.map((item) => {
-            const isActive = historyFilter === item.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onChangeFilter(item.id)}
-                style={{
-                  flex: 1,
-                  padding: '0.4rem 0.6rem',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: isActive ? '#ffffff' : 'transparent',
-                  color: isActive ? '#252927' : '#69736a',
-                  fontWeight: isActive ? '700' : '500',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {item.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* History List or Empty State */}
-        {!pagedHistory.length ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '2.5rem 1rem',
-            background: '#f8f9f6',
-            borderRadius: '12px',
-            border: '1px dashed #ccd3c7'
-          }}>
-            <Inbox size={36} color="#85907d" style={{ marginBottom: '0.5rem' }} />
-            <h4 style={{ margin: '0 0 0.3rem 0', color: '#414743', fontSize: '1rem' }}>Chưa có biên bản ca phù hợp</h4>
-            <p style={{ margin: 0, color: '#69736a', fontSize: '0.825rem' }}>
-              {shiftHistory.length ? 'Thử chọn bộ lọc thời gian khác để xem biên bản.' : 'Chưa có ca làm việc nào được gửi.'}
-            </p>
-          </div>
-        ) : (
-          <div>
-            {pagedHistory.map((item) => (
-              <ShiftHistoryItem
-                key={item.ma_ca}
-                item={item}
-                canApprove={canApprove}
-                canEdit={canEditHistory}
-                approvingShiftId={approvingShiftId}
-                onDelete={xoaCaLamViec}
-                onSaveEdit={suaCaLamViec}
-                onApprove={pheDuyetCaLamViec}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Pagination Bar */}
-        {totalPages > 1 && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '0.4rem',
-            marginTop: '1rem',
-            paddingTop: '0.75rem',
-            borderTop: '1px solid #f4f5f2'
-          }}>
-            <button
-              type="button"
-              onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
-              disabled={safePage === 1}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.2rem',
-                padding: '0.35rem 0.65rem',
-                borderRadius: '6px',
-                border: '1px solid #ccd3c7',
-                background: '#ffffff',
-                color: safePage === 1 ? '#ccd3c7' : '#414743',
-                fontSize: '0.775rem',
-                fontWeight: '600',
-                cursor: safePage === 1 ? 'not-allowed' : 'pointer'
-              }}
-            >
-              <ChevronLeft size={14} /> Trước
-            </button>
-
-            <div style={{ display: 'flex', gap: '0.2rem' }}>
-              <PageNumbers page={safePage} totalPages={totalPages} onChange={setHistoryPage} />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setHistoryPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safePage === totalPages}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.2rem',
-                padding: '0.35rem 0.65rem',
-                borderRadius: '6px',
-                border: '1px solid #ccd3c7',
-                background: '#ffffff',
-                color: safePage === totalPages ? '#ccd3c7' : '#414743',
-                fontSize: '0.775rem',
-                fontWeight: '600',
-                cursor: safePage === totalPages ? 'not-allowed' : 'pointer'
-              }}
-            >
-              Tiếp <ChevronRight size={14} />
-            </button>
-          </div>
-        )}
-      </section>
-    </div>
-  )
 }

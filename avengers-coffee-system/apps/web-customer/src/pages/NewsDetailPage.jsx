@@ -8,7 +8,7 @@ import { NewsArticleSkeleton } from '../components/common/Skeleton';
 
 function parseInlineFormatting(text) {
   if (!text) return '';
-  const parts = text.split(/(\*\*.*?\*\*)/g);
+  const parts = text.split(/(\*\*.*?\*\*|\*[^*]+\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
@@ -17,6 +17,7 @@ function parseInlineFormatting(text) {
         </strong>
       );
     }
+    if (part.startsWith('*') && part.endsWith('*')) return <em key={i}>{part.slice(1,-1)}</em>;
     return part;
   });
 }

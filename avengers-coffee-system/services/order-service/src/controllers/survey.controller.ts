@@ -1,82 +1,67 @@
-import { Controller, Get, Post, Patch, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Delete, Param, Body, Query, UseGuards, ForbiddenException } from '@nestjs/common';
 import { SurveyService } from '../services/survey.service';
 import { CurrentUser, Roles } from '../auth/auth.decorators';
 import type { AuthUser } from '../auth/auth.types';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 
+export function surveyScope(user: AuthUser | null): string | null {
+  if (user?.role === 'ADMIN') return null;
+  if (user?.role !== 'MANAGER' || !user.branchCode?.trim()) throw new ForbiddenException('Tài khoản chưa được gắn với chi nhánh.');
+  return user.branchCode.trim().toUpperCase();
+}
+
 @Controller('surveys')
 export class SurveyController {
   constructor(private readonly surveyService: SurveyService) {}
 
-  // ═══════════════════════════════════════════════════════
-  //  SURVEY FORM ENDPOINTS
-  // ═══════════════════════════════════════════════════════
-
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles('ADMIN', 'MANAGER')
   @Post('forms')
-  async taoBieuMau(
-    @CurrentUser() currentUser: AuthUser | null,
-    @Body() body: { tieu_de: string; mo_ta?: string; cau_hoi: any[] },
-  ) {
-    return this.surveyService.taoBieuMau(body, currentUser?.username || currentUser?.email || 'manager');
+  taoBieuMau(@CurrentUser() user: AuthUser | null, @Body() body: { tieu_de: string; mo_ta?: string; cau_hoi: any[] }) {
+    return this.surveyService.taoBieuMau(body, user?.username || 'manager', surveyScope(user));
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles('ADMIN', 'MANAGER')
   @Get('forms')
-  async layDanhSachBieuMau() {
-    return this.surveyService.layDanhSachBieuMau();
+  layDanhSachBieuMau(@CurrentUser() user: AuthUser | null) {
+    return this.surveyService.layDanhSachBieuMau(surveyScope(user));
   }
 
   @Get('forms/active')
-  async layBieuMauActive() {
-    return this.surveyService.layBieuMauActive();
-  }
+  layBieuMauActive() { return this.surveyService.layBieuMauActive(); }
 
+  @Get('public/:id')
+  publicForm(@Param('id') id: string) { return this.surveyService.layBieuMauCongKhai(Number(id)); }
+
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles('ADMIN', 'MANAGER')
   @Patch('forms/:id/activate')
-  async kickHoatBieuMau(@Param('id') id: string) {
-    return this.surveyService.kickHoatBieuMau(Number(id));
+  kickHoatBieuMau(@Param('id') id: string, @CurrentUser() user: AuthUser | null) {
+    return this.surveyService.kickHoatBieuMau(Number(id), surveyScope(user));
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles('ADMIN', 'MANAGER')
   @Put('forms/:id')
-  async suaBieuMau(
-    @Param('id') id: string,
-    @Body() body: { tieu_de?: string; mo_ta?: string; cau_hoi?: any[]; trang_thai?: boolean },
-  ) {
-    return this.surveyService.suaBieuMau(Number(id), body);
+  suaBieuMau(@Param('id') id: string, @CurrentUser() user: AuthUser | null, @Body() body: { tieu_de?: string; mo_ta?: string; cau_hoi?: any[]; trang_thai?: boolean }) {
+    return this.surveyService.suaBieuMau(Number(id), body, surveyScope(user));
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles('ADMIN', 'MANAGER')
   @Delete('forms/:id')
-  async xoaBieuMau(@Param('id') id: string) {
-    return this.surveyService.xoaBieuMau(Number(id));
+  xoaBieuMau(@Param('id') id: string, @CurrentUser() user: AuthUser | null) {
+    return this.surveyService.xoaBieuMau(Number(id), surveyScope(user));
   }
-
-  // ═══════════════════════════════════════════════════════
-  //  SURVEY RESPONSE ENDPOINTS
-  // ═══════════════════════════════════════════════════════
 
   @Post('responses')
-  async guiPhanHoi(
-    @Body()
-    body: {
-      ma_bieu_mau: number;
-      ma_nguoi_dung?: string;
-      ten_nguoi_dung?: string;
-      so_dien_thoai?: string;
-      ma_don_hang?: string;
-      tra_loi: any[];
-    },
-  ) {
+  guiPhanHoi(@Body() body: { ma_bieu_mau: number; ma_nguoi_dung?: string; ten_nguoi_dung?: string; so_dien_thoai?: string; ma_don_hang?: string; tra_loi: any[] }) {
     return this.surveyService.guiPhanHoi(body);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'MANAGER')
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles('ADMIN', 'MANAGER')
   @Get('responses')
-  async layDanhSachPhanHoi(@Query('branch_code') branchCode?: string) {
-    return this.surveyService.layDanhSachPhanHoi(branchCode);
+  layDanhSachPhanHoi(@CurrentUser() user: AuthUser | null) {
+    return this.surveyService.layDanhSachPhanHoi(surveyScope(user));
   }
 
   @Get('check-status')
-  async checkStatus(@Query('userId') userId?: string) {
-    return this.surveyService.checkStatus(userId || '');
-  }
+  checkStatus(@Query('userId') userId?: string) { return this.surveyService.checkStatus(userId || ''); }
 }

@@ -1,3 +1,5 @@
+import { AdminFlashSalePanel, AdminProductRankingPanel } from './AdminCommercePanel'
+import { Button } from '../../../components/ui/button'
 import { AdminWorkspace } from './AdminWorkspace'
 import { DashboardSkeleton } from '../../../components/console/DashboardCharts'
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
@@ -43,6 +45,8 @@ const ADMIN_NAV_GROUPS = [
     { id: 'categories', label: 'Danh mục thực đơn', icon: FiFolder },
     { id: 'menu', label: 'Danh mục sản phẩm', icon: FiCoffee },
     { id: 'promotions', label: 'Khuyến mãi & voucher', icon: FiTag },
+    { id: 'flash-sales', label: 'Flash sale', icon: FiTag },
+    { id: 'product-ranking', label: 'Chấm điểm gợi ý món', icon: FiBarChart2 },
   ] },
   { label: 'Khách hàng', items: [
     { id: 'customers', label: 'Quản lý khách hàng', icon: FiUsers },
@@ -83,24 +87,24 @@ function buildPage(items = [], page = 1, pageSize = PAGE_SIZE) {
 function Pagination({ pageData, onPageChange }) {
   if (!pageData || pageData.total <= PAGE_SIZE) return null
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.875rem', color: '#6b7280', paddingTop: '0.85rem', marginTop: '0.5rem', borderTop: '1px solid #f4f5f2' }}>
+    <nav className="admin-pagination" aria-label="Phân trang danh sách">
       <span>Hiển thị {pageData.from} - {pageData.to} trên tổng số {pageData.total}</span>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-        <button type="button" className="admin-pg-btn" onClick={() => onPageChange(1)} disabled={pageData.page <= 1} title="Trang đầu">
+        <Button type="button" className="admin-pg-btn" onClick={() => onPageChange(1)} disabled={pageData.page <= 1} title="Trang đầu">
           <ChevronsLeft size={18} />
-        </button>
-        <button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page - 1)} disabled={pageData.page <= 1} title="Trang trước">
+        </Button>
+        <Button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page - 1)} disabled={pageData.page <= 1} title="Trang trước">
           <ChevronLeft size={18} />
-        </button>
+        </Button>
         <span style={{ margin: '0 0.5rem', fontWeight: '500', color: '#414743', fontSize: '0.825rem' }}>Trang {pageData.page} trên {pageData.totalPages}</span>
-        <button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page + 1)} disabled={pageData.page >= pageData.totalPages} title="Trang sau">
+        <Button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page + 1)} disabled={pageData.page >= pageData.totalPages} title="Trang sau">
           <ChevronRight size={18} />
-        </button>
-        <button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.totalPages)} disabled={pageData.page >= pageData.totalPages} title="Trang cuối">
+        </Button>
+        <Button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.totalPages)} disabled={pageData.page >= pageData.totalPages} title="Trang cuối">
           <ChevronsRight size={18} />
-        </button>
+        </Button>
       </div>
-    </div>
+    </nav>
   )
 }
 
@@ -253,7 +257,23 @@ export function AdminSystemConsole({
     const q = normalizeText(userFilters?.q)
     const role = String(userFilters?.role || '').trim().toUpperCase()
     const branchCode = String(userFilters?.branch_code || '').trim().toUpperCase()
-    const items = (usersState?.items || []).filter((u) => u && u.vai_tro !== 'CUSTOMER')
+
+    // Chỉ lấy nhân sự nội bộ (STAFF, MANAGER, DATA_ANALYST, ACCOUNTANT, SHIPPER, ADMIN), loại trừ khách hàng và các user nhượng quyền (FRANCHISEE, FRANCHISE_STAFF, KIOSK_STAFF)
+    const EXCLUDED_ROLES = new Set(['CUSTOMER', 'FRANCHISEE', 'FRANCHISE_STAFF', 'KIOSK_STAFF'])
+    const items = (usersState?.items || []).filter((u) => {
+      if (!u) return false
+      const userRole = String(u.vai_tro || '').trim().toUpperCase()
+      if (EXCLUDED_ROLES.has(userRole)) return false
+
+      // Loại bỏ tài khoản gán tại các điểm bán / kiosk nhượng quyền
+      const coSoMa = String(u.co_so_ma || '').toUpperCase()
+      const coSoTen = String(u.co_so_ten || '').toLowerCase()
+      if (/^(KSK|KVT|KIOSK)([-_]|$)/i.test(coSoMa)) return false
+      if (/^kiosk\b/i.test(coSoTen) || /nhượng quyền/i.test(coSoTen)) return false
+
+      return true
+    })
+
     return items.filter((item) => {
       if (role && String(item.vai_tro || '').toUpperCase() !== role) return false
       if (branchCode && String(item.co_so_ma || '').toUpperCase() !== branchCode) return false
@@ -517,6 +537,9 @@ export function AdminSystemConsole({
         {activeTab === 'kiosks' && (
           <AdminKioskManagementPanel session={session} />
         )}
+
+        {activeTab === 'flash-sales' && <AdminFlashSalePanel />}
+        {activeTab === 'product-ranking' && <AdminProductRankingPanel />}
 
         {activeTab === 'smtp' && (
           <AdminSmtpConfigPanel />

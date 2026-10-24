@@ -325,6 +325,7 @@ export class ShipperService {
       { possibleCodes },
     );
 
+    if (shipperId) query = query.andWhere(`NOT EXISTS (SELECT 1 FROM ${process.env.DB_SCHEMA || 'orders'}.shipper_delivery pending WHERE pending.ma_don_hang=don.ma_don_hang AND pending.status='PENDING' AND pending.shipper_id<>:assignedTo)`, { assignedTo: shipperId });
     query = query.orderBy('don.ngay_tao', 'DESC');
 
     const orders = await query.getMany();
@@ -442,6 +443,7 @@ export class ShipperService {
       throw new BadRequestException('Đơn hàng này đã được Shipper khác nhận');
     }
 
+    if (existing?.status === 'PENDING' && existing.shipper_id !== shipperId) throw new BadRequestException('Đơn đang được phân công cho tài xế khác.');
     this.requireReadyForOrders(shipper);
 
     // Hủy delivery record cũ nếu có (FAILED/CANCELLED/DELIVERED)
@@ -1120,15 +1122,41 @@ export class ShipperService {
     };
   }
 
-  async assignOrderToShipper(maDonHang: string, shipperId: string, _managerId: string, actorBranchCode?: string) {
-    // Manager assignment follows the same readiness, branch, status and
-    // concurrency checks as a driver's self-assignment.
-    if (actorBranchCode) {
-      const order = await this.donHangRepo.findOne({ where: { ma_don_hang: maDonHang } });
-      if (!order || !this.checkBranchMatch(actorBranchCode, order.co_so_ma)) throw new UnauthorizedException('Đơn hàng không thuộc chi nhánh của bạn');
+  private async withDispatchLock<T>(orderId: string, work: () => Promise<T>): Promise<T> {
+    const runner = this.deliveryRepo.manager?.connection?.createQueryRunner?.();
+    if (!runner) return work();
+    await runner.connect();
+    let locked = false;
+    try {
+      await runner.query('SELECT pg_advisory_lock(hashtext($1))', [`shipper-order:${orderId}`]);
+      locked = true;
+      return await work();
+    } finally {
+      try { if (locked) await runner.query('SELECT pg_advisory_unlock(hashtext($1))', [`shipper-order:${orderId}`]); }
+      finally { await runner.release(); }
     }
-    const result = await this.acceptOrder(shipperId, maDonHang);
-    return { ...result, message: `Đã phân công đơn ${maDonHang} cho Shipper` };
+  }
+
+  async assignOrderToShipper(maDonHang: string, shipperId: string, _managerId: string, actorBranchCode?: string) {
+    return this.withDispatchLock(maDonHang, async () => {
+      const order = await this.donHangRepo.findOne({ where: { ma_don_hang: maDonHang } });
+      if (!order) throw new NotFoundException('Đơn hàng không tồn tại');
+      if (actorBranchCode && !this.checkBranchMatch(actorBranchCode, order.co_so_ma)) throw new UnauthorizedException('Đơn hàng không thuộc chi nhánh của bạn');
+      if (!['DANG_CHUAN_BI', 'DANG_GIAO'].includes(order.trang_thai_don_hang)) throw new BadRequestException('Chỉ phân công đơn đang chuẩn bị hoặc chờ giao.');
+      const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
+      if (!shipper) throw new NotFoundException('Tài xế không tồn tại');
+      this.requireReadyForOrders(shipper);
+      const branches = await this.layDanhSachChiNhanh();
+      if (!shipper.branch_code || !order.co_so_ma || !this.checkBranchMatch(shipper.branch_code, order.co_so_ma, branches)) throw new BadRequestException('Tài xế không thuộc chi nhánh của đơn hàng.');
+      const existing = await this.deliveryRepo.findOne({ where: { ma_don_hang: maDonHang }, order: { assigned_at: 'DESC' } });
+      if (existing && ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT', 'DELIVERED'].includes(existing.status)) throw new BadRequestException('Đơn đã có tài xế nhận, không thể chỉ định lại.');
+      if (existing?.status === 'PENDING' && existing.shipper_id === shipperId) return { success: true, delivery: existing, message: 'Đang chờ tài xế nhận đơn trên ứng dụng.' };
+      if (existing) await this.deliveryRepo.update({ id: existing.id }, { status: 'CANCELLED' });
+      const delivery = await this.deliveryRepo.save(this.deliveryRepo.create({ ma_don_hang: maDonHang, shipper_id: shipperId, status: 'PENDING', delivery_address: order.dia_chi_giao_hang, delivery_fee: 15000 }));
+      await this.donHangRepo.update({ ma_don_hang: maDonHang }, { trang_thai_don_hang: 'DANG_GIAO' });
+      this.notificationGateway.phatSongDonHangChoShipper({ action: 'ORDER_ASSIGNED', orderId: maDonHang, shipperId, branchCode: order.co_so_ma });
+      return { success: true, delivery, message: 'Đã phân công. Chờ tài xế nhận đơn trên ứng dụng.' };
+    });
   }
 
   // ============ STAFF: Chuyển đơn sang DANG_GIAO cho Shipper nội bộ nhận ============
@@ -1138,6 +1166,10 @@ export class ShipperService {
    * Chuyển đơn sang DANG_GIAO để xuất hiện trong pool của Shipper.
    */
   async markOrderReadyForDelivery(maDonHang: string, actorBranchCode?: string) {
+    return this.withDispatchLock(maDonHang, () => this.markOrderReadyLocked(maDonHang, actorBranchCode));
+  }
+
+  private async markOrderReadyLocked(maDonHang: string, actorBranchCode?: string) {
     const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: maDonHang } });
     if (!donHang) throw new NotFoundException('Đơn hàng không tồn tại');
     if (actorBranchCode && !this.checkBranchMatch(actorBranchCode, donHang.co_so_ma)) throw new UnauthorizedException('Đơn hàng không thuộc chi nhánh của bạn');
@@ -1158,6 +1190,7 @@ export class ShipperService {
     });
     if (activeDelivery) throw new BadRequestException('Đơn đã có tài xế nhận. Hãy xử lý ngoại lệ trước khi phân lại.');
 
+    await this.deliveryRepo.update({ ma_don_hang: maDonHang, status: 'PENDING' }, { status: 'CANCELLED' });
     // Chuyển đơn sang DANG_GIAO
     if (donHang.trang_thai_don_hang !== 'DANG_GIAO') {
       await this.donHangRepo.update({ ma_don_hang: maDonHang }, { trang_thai_don_hang: 'DANG_GIAO' });
@@ -1176,9 +1209,10 @@ export class ShipperService {
     // Tìm delivery record active cho đơn này
     const delivery = await this.deliveryRepo.findOne({
       where: { ma_don_hang: orderId },
+      order: { assigned_at: 'DESC' },
     });
 
-    if (!delivery || ['FAILED', 'CANCELLED'].includes(delivery.status)) {
+    if (!delivery || !['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT', 'DELIVERED'].includes(delivery.status)) {
       return { has_shipper: false, message: 'Chưa có shipper nhận đơn này' };
     }
 
@@ -1282,6 +1316,7 @@ export class ShipperService {
       { possibleCodes },
     );
 
+    query = query.andWhere(`NOT EXISTS (SELECT 1 FROM ${process.env.DB_SCHEMA || 'orders'}.shipper_delivery pending WHERE pending.ma_don_hang=don.ma_don_hang AND pending.status='PENDING' AND pending.shipper_id<>:assignedTo)`, { assignedTo: shipperId });
     query = query.orderBy('don.ngay_tao', 'DESC');
     const orders = await query.getMany();
     const matchedOrders = orders.filter((o) => this.checkBranchMatch(shipper.branch_code, o.co_so_ma, branches));

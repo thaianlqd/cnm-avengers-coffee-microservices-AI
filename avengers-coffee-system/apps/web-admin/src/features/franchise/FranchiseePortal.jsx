@@ -1,9 +1,27 @@
+import ComboOrderDetail from './ComboOrderDetail'
+import { comboIsPaid, comboStatusLabel } from './comboInvoice'
+import KioskPosTerminal from './KioskPosTerminal'
+import { kioskCheckoutResult, kioskPaymentLabel, kioskSaleStatus } from './kioskPosModel'
+import KioskShiftPanel, { KioskTableLoading } from './KioskShiftPanel'
+import KioskDebtPanel from './KioskDebtPanel'
+import { Switch } from '../../components/ui/switch'
+import { useKioskAvailability } from './useKioskAvailability'
+import WorkspaceDialog from '../../components/console/WorkspaceDialog'
+import OperationalPageFrame from '../../components/console/OperationalPageFrame'
+import { KioskIdentity, KioskPosPicker, KioskScheduleGrid, KioskScopePicker } from './KioskWorkspaceComponents'
+import './KioskWorkspace.css'
+import StatusBadge from '../../components/console/StatusBadge'
+import { Button } from '../../components/ui/button'
+import { Label } from '../../components/ui/label'
+import { Badge } from '../../components/ui/badge'
+import { Input } from '../../components/ui/input'
+import { Table } from '../../components/ui/table'
+import { Textarea } from '../../components/ui/textarea'
 import { MapPin as WorkspaceSymbolMapPin, Store as WorkspaceSymbolStore, Check as WorkspaceSymbolCheck, Receipt as WorkspaceSymbolReceipt, CheckSquare as WorkspaceSymbolCheckSquare, BarChart3 as WorkspaceSymbolBarChart3, TrendingUp as WorkspaceSymbolTrendingUp, Award as WorkspaceSymbolAward, Printer as WorkspaceSymbolPrinter, CreditCard as WorkspaceSymbolCreditCard } from '../../components/console/WorkspaceIcons'
 import SearchableSelect from '../../components/console/SearchableSelect'
 import CurrencyInput from '../../components/console/CurrencyInput'
 import { PaginatedList, PageNumbers } from '../../components/console/CompactPagination'
-import { WorkspaceSidebar, WorkspaceSearch } from '../../components/console/WorkspaceNavigation'
-import { AdminNotificationBell } from '../shared/components/AdminNotificationBell'
+import { WorkspaceSidebar } from '../../components/console/WorkspaceNavigation'
 import { getAdminSession } from '../../lib/adminFetch'
 import { Chart, DashboardSkeleton } from '../../components/console/DashboardCharts'
 import { WorkspaceErrorBoundary } from '../../components/console/WorkspaceErrorBoundary'
@@ -77,7 +95,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: 40, background: "#f4f5f2", color: '#991b1b', minHeight: '100vh' }}>
+        <div style={{ padding: 40, background: "#f6f8fa", color: '#991b1b', minHeight: '100vh' }}>
           <h2>Đã xảy ra lỗi giao diện</h2>
           <details style={{ whiteSpace: 'pre-wrap' }}>
             {this.state.error && this.state.error.toString()}
@@ -95,9 +113,9 @@ import { API_BASE_URL } from '../admin-dashboard/constants'
 
 const fmtMoney = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ'
 const getCategoryName = (c) => {
-  if (!c) return '';
+  if (!c) return 'Khác';
   if (typeof c === 'string') return c;
-  return c.ten_danh_muc || c.ten_danh_muc_cha || 'Khác';
+  return c.ten_danh_muc || c.tenDanhMuc || c.ten_danh_muc_cha || c.name || c.ten || 'Khác';
 };
 
 const getComboPerks = (combo) => {
@@ -163,7 +181,7 @@ const Modal = ({ title, onClose, children }) => (
     <div style={{ background: '#fff', borderRadius: 16, padding: 28, minWidth: 0, maxWidth: 580, width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{title}</h3>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#6b7280' }}>×</button>
+        <Button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#6b7280' }}>×</Button>
       </div>
       {children}
     </div>
@@ -237,12 +255,12 @@ const SHIFT_TEMPLATES = [
     start: '06:00',
     end: '12:00',
     icon: Sun,
-    bg: '#f8f9f6',
-    headerBg: '#f4f5f2',
-    text: '#414743',
-    border: '#ccd3c7',
-    accent: '#596255',
-    pillBg: '#f4f5f2',
+    bg: '#f6f8fa',
+    headerBg: '#f6f8fa',
+    text: '#263c50',
+    border: '#cbd5e1',
+    accent: '#526174',
+    pillBg: '#f6f8fa',
   },
   {
     id: 'CHIEU',
@@ -252,12 +270,12 @@ const SHIFT_TEMPLATES = [
     start: '12:00',
     end: '18:00',
     icon: Sunset,
-    bg: '#f8f9f6',
-    headerBg: '#f4f5f2',
-    text: '#414743',
-    border: '#ccd3c7',
-    accent: '#596255',
-    pillBg: '#f4f5f2',
+    bg: '#f6f8fa',
+    headerBg: '#f6f8fa',
+    text: '#263c50',
+    border: '#cbd5e1',
+    accent: '#526174',
+    pillBg: '#f6f8fa',
   },
   {
     id: 'TOI',
@@ -267,49 +285,14 @@ const SHIFT_TEMPLATES = [
     start: '18:00',
     end: '23:00',
     icon: Moon,
-    bg: '#f8f9f6',
-    headerBg: '#f4f5f2',
-    text: '#414743',
-    border: '#ccd3c7',
-    accent: '#596255',
-    pillBg: '#f4f5f2',
+    bg: '#f6f8fa',
+    headerBg: '#f6f8fa',
+    text: '#263c50',
+    border: '#cbd5e1',
+    accent: '#526174',
+    pillBg: '#f6f8fa',
   },
 ];
-
-const ATTENDANCE_STATUS_CONFIG = {
-  ASSIGNED: {
-    label: 'Chờ nhận ca',
-    bg: '#f8f9f6',
-    text: '#596255',
-    border: '#ccd3c7',
-    dot: '#85907d',
-    icon: Clock,
-  },
-  PRESENT: {
-    label: 'Đúng giờ',
-    bg: "#f4f5f2",
-    text: '#1d4ed8',
-    border: '#bfdbfe',
-    dot: '#3b82f6',
-    icon: CheckCircle2,
-  },
-  LATE: {
-    label: 'Đi muộn',
-    bg: "#f4f5f2",
-    text: '#b45309',
-    border: '#fde68a',
-    dot: '#f59e0b',
-    icon: AlertTriangle,
-  },
-  ABSENT: {
-    label: 'Vắng mặt',
-    bg: "#f4f5f2",
-    text: '#dc2626',
-    border: '#fecaca',
-    dot: '#ef4444',
-    icon: XCircle,
-  },
-};
 
 const getStaffInitials = (name) => {
   if (!name) return 'NV';
@@ -325,10 +308,14 @@ export function FranchiseePortal({ session, onLogout }) {
 
   const [tab, setTab] = useState('dashboard')
   const [kiosks, setKiosks] = useState([])
+  const [posKioskSelected, setPosKioskSelected] = useState(false)
   const [combos, setCombos] = useState([])
   const [dons, setDons] = useState([])
+  const [selectedComboId,setSelectedComboId]=useState(null)
+  const [paymentBusy,setPaymentBusy]=useState(false)
   const [congNos, setCongNos] = useState([])
   const [royalties, setRoyalties] = useState([])
+  const [royaltyCalculating, setRoyaltyCalculating] = useState(false)
   
   // Wallet states
   const [walletInfo, setWalletInfo] = useState({ so_du_vi: 0, giao_dich: [] })
@@ -336,6 +323,11 @@ export function FranchiseePortal({ session, onLogout }) {
   const [depositLoading, setDepositLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState(null)
+  useEffect(() => {
+    if (!msg) return undefined
+    const timeout = window.setTimeout(() => setMsg(null), 3000)
+    return () => window.clearTimeout(timeout)
+  }, [msg])
   const [orderForm, setOrderForm] = useState({ kiosk_id: '', combo_id: '', so_luong: 1, phuong_thuc_thanh_toan: 'CONG_NO' })
   const [ordering, setOrdering] = useState(false)
 
@@ -391,7 +383,6 @@ export function FranchiseePortal({ session, onLogout }) {
   const [subStaffList, setSubStaffList] = useState([])
   const [subStaffLoading, setSubStaffLoading] = useState(false)
   const [staffSearch, setStaffSearch] = useState('')
-  const [staffKioskFilter, setStaffKioskFilter] = useState('')
   const [showCreateStaffModal, setShowCreateStaffModal] = useState(false)
   const [showEditStaffModal, setShowEditStaffModal] = useState(false)
   const [showResetPwdModal, setShowResetPwdModal] = useState(false)
@@ -452,16 +443,19 @@ export function FranchiseePortal({ session, onLogout }) {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [selectedToppings, setSelectedToppings] = useState([])
   const [posPayment, setPosPayment] = useState('TIEN_MAT')
+  const posSubmitLock = React.useRef(false)
   const [posSubmitting, setPosSubmitting] = useState(false)
   const [posOrderResult, setPosOrderResult] = useState(null)
   const [posCashInput, setPosCashInput] = useState('')
-  const [posViewMode, setPosViewMode] = useState('grid')
-  const [posPage, setPosPage] = useState(1)
   const [kioskPrices, setKioskPrices] = useState([])
 
   // POS Orders state & Refund/Void states (Thành An)
   const [posOrders, setPosOrders] = useState([])
   const [posOrderLoading, setPosOrderLoading] = useState(false)
+  const [posOrderError, setPosOrderError] = useState('')
+  const posOrderCache = React.useRef(new Map())
+  const posOrderRequests = React.useRef(new Map())
+  const posOrderScope = React.useRef('')
   const [posDateFilter, setPosDateFilter] = useState('today')
   const [voidModalOrder, setVoidModalOrder] = useState(null)
   const [showVoidModal, setShowVoidModal] = useState(false)
@@ -591,13 +585,11 @@ export function FranchiseePortal({ session, onLogout }) {
       })
       setRoyalties(royaltiesWithKiosk)
       if (k && k.length > 0) {
-        setActiveKioskId(prev => {
-          if (prev && k.some(kk => kk.id === prev)) return prev
-          const defaultKiosk = k.find(kk => kk.trang_thai === 'DANG_HOAT_DONG') || k[0]
-          return defaultKiosk.id
-        })
-        setOrderForm(f => ({ ...f, kiosk_id: f.kiosk_id || k[0].id }))
+        const selected = k.find(item=>item.id===activeKioskIdRef.current) || k.find(item=>item.trang_thai==='DANG_HOAT_DONG') || k[0]
+        setActiveKioskId(selected.id)
+        setOrderForm(f=>({...f,kiosk_id:selected.id}))
       }
+
     } catch (e) { setMsg({ type: 'error', text: e.message }) }
     finally { setLoading(false) }
   }
@@ -606,7 +598,7 @@ export function FranchiseePortal({ session, onLogout }) {
   const loadStaffList = async () => {
     setSubStaffLoading(true)
     try {
-      const data = await apiFetch(`/franchise/staff${staffKioskFilter ? `?kiosk_id=${staffKioskFilter}` : ''}`)
+      const data = await apiFetch(`/franchise/staff${activeKioskId ? `?kiosk_id=${activeKioskId}` : ''}`)
       setSubStaffList(Array.isArray(data) ? data : [])
     } catch (e) {
       console.error(e)
@@ -969,7 +961,7 @@ export function FranchiseePortal({ session, onLogout }) {
           note: closeShiftForm.note,
         })
       })
-      setMsg({ type: 'success', text: ` ${res.message || 'Chốt ca làm việc thành công!'}` })
+      setMsg({ type: 'success', text: ` ${res.message || 'Đã gửi yêu cầu chốt ca, đang chờ quản lý duyệt.'}` })
       setShowCloseShiftModal(false)
       loadActiveKioskShift(activeKioskId)
       loadKioskShiftHistory(activeKioskId)
@@ -1005,6 +997,24 @@ export function FranchiseePortal({ session, onLogout }) {
     }
   }
 
+  const handleKioskCloseApproval = async (decision, shift) => {
+    const kiosk = kiosks.find(k => k.id === activeKioskId)
+    if (!kiosk?.ma_kiosk || !shift?.id) return
+    setShiftActionSubmitting(true)
+    try {
+      const res = await apiFetch(`/staff/kiosk-shifts/${shift.id}/close-approval`, {
+        method: 'PATCH',
+        body: JSON.stringify({ branch_code: kiosk.ma_kiosk, decision }),
+      })
+      setMsg({ type: 'success', text: res.message || (decision === 'APPROVE' ? 'Đã duyệt chốt ca.' : 'Đã từ chối yêu cầu chốt ca.') })
+      await Promise.all([loadActiveKioskShift(activeKioskId), loadKioskShiftHistory(activeKioskId)])
+    } catch (err) {
+      setMsg({ type: 'error', text: err.message })
+    } finally {
+      setShiftActionSubmitting(false)
+    }
+  }
+
   const loadMenu = async () => {
     setMenuLoading(true)
     try {
@@ -1014,39 +1024,55 @@ export function FranchiseePortal({ session, onLogout }) {
     finally { setMenuLoading(false) }
   }
 
-  const loadPosOrders = async (customKioskId, customFilter) => {
+  const loadPosOrders = async (customKioskId, customFilter, force = false) => {
     const kId = customKioskId || activeKioskIdRef.current
     const kiosk = kiosksRef.current.find(k => k.id === kId) || kiosksRef.current[0]
     if (!kiosk) return
+    const filter = customFilter || posDateFilter
+    const key = `${kiosk.ma_kiosk}:${filter}`
+    posOrderScope.current = key
+    const cached = posOrderCache.current.get(key)
+    setPosOrders(cached?.orders || [])
+    setPosOrderError('')
+    if (!force && cached && Date.now() - cached.time < 15_000) { setPosOrderLoading(false); return }
     setPosOrderLoading(true)
     try {
-      const filter = customFilter || posDateFilter
-      let query = `?branch_code=${kiosk.ma_kiosk}`
-      const now = new Date()
-      let from, to
-      if (filter === 'today') {
-        from = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        to = new Date(from.getTime() + 24*60*60*1000 - 1)
-      } else if (filter === 'week') {
-        const day = now.getDay() || 7 
-        from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1)
-        to = new Date(from.getTime() + 7*24*60*60*1000 - 1)
-      } else if (filter === 'month') {
-        from = new Date(now.getFullYear(), now.getMonth(), 1)
-        to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-      } else if (filter === 'year') {
-        from = new Date(now.getFullYear(), 0, 1)
-        to = new Date(now.getFullYear(), 11, 31, 23, 59, 59)
+      let request = posOrderRequests.current.get(key)
+      if (!request) {
+        request = (async () => {
+            let query = `?branch_code=${encodeURIComponent(kiosk.ma_kiosk)}&limit=50`
+            const now = new Date()
+            let from, to
+            if (filter === 'today') {
+              from = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+              to = new Date(from.getTime() + 24*60*60*1000 - 1)
+            } else if (filter === 'week') {
+              const day = now.getDay() || 7
+              from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1)
+              to = new Date(from.getTime() + 7*24*60*60*1000 - 1)
+            } else if (filter === 'month') {
+              from = new Date(now.getFullYear(), now.getMonth(), 1)
+              to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+            } else if (filter === 'year') {
+              from = new Date(now.getFullYear(), 0, 1)
+              to = new Date(now.getFullYear(), 11, 31, 23, 59, 59)
+            }
+            if (from && to) {
+              query += `&date_from=${from.toISOString()}&date_to=${to.toISOString()}`
+            }
+            const data = await apiFetch(`/staff/orders${query}`)
+            const orders = Array.isArray(data?.orders) ? data.orders : []
+            posOrderCache.current.set(key, { orders, time: Date.now() })
+            return orders
+        })().finally(() => posOrderRequests.current.delete(key))
+        posOrderRequests.current.set(key, request)
       }
-      if (from && to) {
-        query += `&date_from=${from.toISOString()}&date_to=${to.toISOString()}`
-      }
-      const data = await apiFetch(`/staff/orders${query}`)
-      setPosOrders(data.orders || [])
+      const orders = await request
+      if (posOrderScope.current === key) setPosOrders(orders)
     } catch (e) {
-      console.error(e)
+      if (posOrderScope.current === key) setPosOrderError(e.message || 'Không tải được đơn bán hàng. Vui lòng thử lại.')
     } finally {
-      setPosOrderLoading(false)
+      if (posOrderScope.current === key) setPosOrderLoading(false)
     }
   }
 
@@ -1060,14 +1086,14 @@ export function FranchiseePortal({ session, onLogout }) {
         method: 'POST',
         body: JSON.stringify(finalPayload),
       })
-      setMsg({ type: 'success', text: ` ${res.message || 'Đã hoàn tiền mặt và hủy đơn hàng POS thành công!'}` })
+      setMsg({ type: 'success', text: ` ${res.message || 'Hoàn tiền thành công.'}` })
       setShowVoidModal(false)
       setVoidModalOrder(null)
       if (posOrderResult?.ma_don === orderId) {
-        setPosOrderResult(prev => prev ? { ...prev, voided: true } : null)
+        setPosOrderResult(prev => prev ? { ...prev, voided:true, order:{...prev.order,trang_thai_don_hang:'DA_HUY',trang_thai_thanh_toan:'DA_HOAN_TIEN'} } : null)
       }
       await Promise.all([
-        loadPosOrders(activeKioskId),
+        loadPosOrders(activeKioskId, posDateFilter, true),
         loadActiveKioskShift(activeKioskId)
       ])
     } catch (e) {
@@ -1079,6 +1105,7 @@ export function FranchiseePortal({ session, onLogout }) {
   }
 
   const addToCart = (item, selectedToppingsList = []) => {
+    if (!availability.ready || !availability.isSelling(item)) return
     setPosCart(prev => {
       const toppingPrice = selectedToppingsList.reduce((sum, t) => sum + Number(t.price || 0), 0)
       const basePrice = Number(item.gia_ban || item.gia || 0)
@@ -1100,8 +1127,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
   const posTotal = posCart.reduce((s, c) => s + Number(c.gia_ban || c.gia || 0) * c.sl, 0)
   const posCashNum = Number(posCashInput) || 0
-  const posChange = Math.max(0, posCashNum - posTotal)
-  const posCashInsufficient = posPayment === 'TIEN_MAT' && posCashNum > 0 && posCashNum < posTotal
+    const posCashInsufficient = posPayment === 'TIEN_MAT' && posCashNum < posTotal
 
   const submitPosOrder = async () => {
     if (!posCart.length || !activeKioskId) return
@@ -1118,11 +1144,14 @@ export function FranchiseePortal({ session, onLogout }) {
       return
     }
 
+    if (posCashInsufficient) { setPosOrderResult({ success:false, error:'Số tiền khách đưa chưa đủ.' }); return }
+    if (posSubmitLock.current) return
+    posSubmitLock.current = true
     setPosSubmitting(true)
     try {
       const body = {
         branch_code: kiosk.ma_kiosk,
-        loai_don_hang: 'TAI_CHO',
+        loai_don_hang: 'MANG_DI',
         phuong_thuc_thanh_toan: posPayment === 'TIEN_MAT' ? 'THANH_TOAN_KHI_NHAN_HANG' : posPayment,
         tien_khach_dua: posPayment === 'TIEN_MAT' && posCashInput ? Number(posCashInput) : undefined,
         items: posCart.map(c => ({ 
@@ -1134,20 +1163,14 @@ export function FranchiseePortal({ session, onLogout }) {
         }))
       }
       const data = await apiFetch('/staff/orders', { method: 'POST', body: JSON.stringify(body) })
-      setPosOrderResult({ 
-        success: true, 
-        ma_don: data.ma_don_hang || data.id || data.data?.ma_don_hang || data.order?.ma_don_hang, 
-        tong: posTotal,
-        method: posPayment,
-        payment_details: data.payment_details || data.paymentDetails || data.data?.payment_details,
-        vnpay_url: data.vnpay_url || data.vnpayUrl || data.data?.vnpay_url || data.data?.payment_details?.vnpay_url || data.redirect_url
-      })
+      posOrderCache.current.clear()
+      setPosOrderResult(kioskCheckoutResult(data, { total:posTotal, method:posPayment, cash:posCashInput }))
       setPosCart([])
       setPosCashInput('')
       loadActiveKioskShift(activeKioskId)
     } catch (e) {
       setPosOrderResult({ success: false, error: e.message })
-    } finally { setPosSubmitting(false) }
+    } finally { posSubmitLock.current = false; setPosSubmitting(false) }
   }
 
   // 1. Initial mount load
@@ -1213,7 +1236,8 @@ export function FranchiseePortal({ session, onLogout }) {
 
   // ★ COMPUTED from activeKioskId context
   const activeKiosk = kiosks.find(k => k.id === activeKioskId) || kiosks[0] || null
-  const congNoTheoKiosk = congNos.filter(c => !activeKioskId || c.kiosk_id === activeKioskId)
+  const availability = useKioskAvailability(activeKiosk?.ma_kiosk, session?.token || session?.accessToken)
+  const congNoTheoKiosk = congNos.filter(c => ['KHOI_TAO','NGUYEN_LIEU'].includes(c.loai_phat_sinh) && (!activeKioskId || c.kiosk_id === activeKioskId))
   const royaltyTheoKiosk = royalties.filter(r => !activeKioskId || r.kiosk_id === activeKioskId)
   const donTheoKiosk = dons.filter(d => !activeKioskId || d.kiosk_id === activeKioskId)
   const comboOrderTrend = useMemo(() => {
@@ -1228,9 +1252,9 @@ export function FranchiseePortal({ session, onLogout }) {
   }, [dons])
 
   const LOAI_KIOSK_LABEL = {
-    'XE_LUU_DONG': { label: 'Xe lưu động', color: '#0369a1', bg: "#f4f5f2" },
+    'XE_LUU_DONG': { label: 'Xe lưu động', color: '#0369a1', bg: "#f6f8fa" },
     'KIOSK_CO_DINH': { label: 'Kiosk cố định', color: 'var(--primary)', bg: 'var(--primary-light)' },
-    'CONTAINER_CAFE': { label: 'Container café', color: '#1e40af', bg: "#f4f5f2" },
+    'CONTAINER_CAFE': { label: 'Container café', color: '#1e40af', bg: "#f6f8fa" },
   }
 
   const filterMenuByKiosk = (items, kType) => {
@@ -1264,23 +1288,13 @@ export function FranchiseePortal({ session, onLogout }) {
 
   const availableMenu = filterMenuByKiosk(menuItems, activeKiosk?.loai_kiosk)
 
-  // POS Variables setup using availableMenu
-  const categoryCounts = useMemo(() => {
-    const m = new Map()
-    availableMenu.forEach(item => {
-      const cat = getCategoryName(item.danh_muc)
-      m.set(cat, (m.get(cat) || 0) + 1)
-    })
-    return m
-  }, [availableMenu])
-
   const packageMeta = useMemo(() => {
-    if (!activeKiosk) return { name: 'Đang tải...', short: '...', bg: '#f4f5f2', color: '#596255', border: '#ccd3c7' }
+    if (!activeKiosk) return { name: 'Đang tải...', short: '...', bg: '#f6f8fa', color: '#526174', border: '#cbd5e1' }
     if (activeKiosk.loai_kiosk === 'CONTAINER_CAFE') {
-      return { name: 'Gói VIP (Container)', short: 'VIP', bg: "#f4f5f2", color: '#991b1b', border: '#fecaca' }
+      return { name: 'Gói VIP (Container)', short: 'VIP', bg: "#f6f8fa", color: '#991b1b', border: '#fecaca' }
     }
     if (activeKiosk.loai_kiosk === 'XE_LUU_DONG') {
-      return { name: 'Gói Cơ Bản (Xe Kiosk)', short: 'Cơ Bản', bg: "#f4f5f2", color: '#1e40af', border: '#bfdbfe' }
+      return { name: 'Gói Cơ Bản (Xe Kiosk)', short: 'Cơ Bản', bg: "#f6f8fa", color: '#1e40af', border: '#bfdbfe' }
     }
     return { name: 'Gói Tiêu Chuẩn (Cố Định)', short: 'Tiêu Chuẩn', bg: 'var(--primary-light)', color: 'var(--primary)', border: '#bfdbfe' }
   }, [activeKiosk])
@@ -1302,33 +1316,22 @@ export function FranchiseePortal({ session, onLogout }) {
     });
   }, [availableMenu, kioskPrices])
 
-  const filteredProducts = useMemo(() => {
-    let list = packageAllowedMenu
-    if (menuCategory) {
-      list = list.filter(item => getCategoryName(item.danh_muc) === menuCategory)
-    }
-    if (menuSearch) {
-      const q = menuSearch.toLowerCase()
-      list = list.filter(item => (item.ten_san_pham || '').toLowerCase().includes(q))
-    }
-    return list
-  }, [packageAllowedMenu, menuCategory, menuSearch])
-
-  const ITEMS_PER_PAGE = posViewMode === 'grid' ? 12 : 20
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1
-  const paginatedProducts = useMemo(() => {
-    const start = (posPage - 1) * ITEMS_PER_PAGE
-    return filteredProducts.slice(start, start + ITEMS_PER_PAGE)
-  }, [filteredProducts, posPage, ITEMS_PER_PAGE])
-
   const switchKiosk = (kioskId) => {
+    if (kioskId === activeKioskId) return true
+    if (posCart.length && !window.confirm('Giỏ hàng chưa thanh toán sẽ được xóa khi đổi kiosk. Tiếp tục?')) return false
+    setPosKioskSelected(false)
+    setActiveKioskShift(null)
+    setKioskPrices([])
     setActiveKioskId(kioskId)
+    posOrderScope.current = ''
+    setPosOrders([])
     setOrderForm(f => ({ ...f, kiosk_id: kioskId, combo_id: '' }))
     setPosCart([])
     setPosOrderResult(null)
     setMenuSearch('')
     setMenuCategory('')
     loadActiveKioskShift(kioskId)
+    return true
   }
 
   // 2. Load tab-specific data on tab/kiosk change
@@ -1353,7 +1356,7 @@ export function FranchiseePortal({ session, onLogout }) {
       loadActiveKioskShift(activeKioskId)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, activeKioskId, posDateFilter, weekOffset, staffKioskFilter])
+  }, [tab, activeKioskId, posDateFilter, weekOffset])
 
   const TABS = [
     { id: 'dashboard', icon: Store, label: 'Tổng quan Kiosk' },
@@ -1367,24 +1370,23 @@ export function FranchiseePortal({ session, onLogout }) {
     { id: 'order', icon: Package, label: 'Đặt Combo' },
     { id: 'history', icon: FileText, label: 'Lịch sử nhập' },
     { id: 'debt', icon: CreditCard, label: 'Công nợ' },
-    { id: 'royalty', icon: TrendingUp, label: 'Royalty' },
+    { id: 'royalty', icon: TrendingUp, label: "Chia sẻ doanh thu" },
     { id: 'expansion', icon: Store, label: 'Mở rộng chi nhánh' },
   ]
 
   const alertBanner = msg && (
-    <div style={{
-      padding: '12px 18px', borderRadius: 12, marginBottom: 16,
-      background: msg.type === 'success' ? "#f4f5f2" : "#f4f5f2",
-      border: `1px solid ${msg.type === 'success' ? '#bfdbfe' : '#fecaca'}`,
-      color: msg.type === 'success' ? '#1e40af' : '#991b1b',
-      fontWeight: 600, fontSize: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+    <div className="kiosk-staff-toast" role={msg.type === 'error' ? 'alert' : 'status'} style={{
+      padding: '12px 18px', borderRadius: 8, marginBottom: 16,
+      background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2',
+      border: `1px solid ${msg.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
+      color: msg.type === 'success' ? '#166534' : '#991b1b',
+      fontWeight: 500, fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {msg.type === 'success' ? <CheckCircle2 size={18} color="#2563eb" /> : <AlertTriangle size={18} color="#dc2626" />}
+        {msg.type === 'success' ? <CheckCircle2 size={18} color="#15803d" /> : <AlertTriangle size={18} color="#dc2626" />}
         <span>{msg.text}</span>
       </div>
-      <button onClick={() => setMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'inherit' }}>×</button>
+      <Button onClick={() => setMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'inherit' }}>×</Button>
     </div>
   )
 
@@ -1394,7 +1396,7 @@ export function FranchiseePortal({ session, onLogout }) {
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      <div className="console-shell franchise-owner-workspace" data-actor="partner" style={{ display: 'flex', minHeight: '100vh', fontFamily: '"Segoe UI",Inter,system-ui,sans-serif', background: '#f8f9f6' }}>
+      <div className="console-shell franchise-owner-workspace kiosk-workspace" data-actor="partner" style={{ display: 'flex', minHeight: '100vh', fontFamily: '"Segoe UI",Inter,system-ui,sans-serif', background: '#f8fafc' }}>
         <WorkspaceSidebar groups={[
           { label: 'Điểm bán & vận hành', items: TABS.filter(item => ['dashboard','pos','staff_manage','shift_schedule','kiosk_shifts','pos_orders','menu'].includes(item.id)) },
           { label: 'Nguyên liệu & tài chính', items: TABS.filter(item => ['wallet','order','history','debt','royalty','expansion'].includes(item.id)) },
@@ -1402,73 +1404,17 @@ export function FranchiseePortal({ session, onLogout }) {
 
         {/* ── Main Content Area ───────────────────────────── */}
         <main className="console-main" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          {/* Top Bar */}
-          <header className="console-topbar" style={{
-            background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e2e4df',
-            padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            position: 'sticky', top: 0, zIndex: 50
-          }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: '#252927', display: 'flex', alignItems: 'center', gap: 10 }}>
-                {(() => {
-                  const currTab = TABS.find(t => t.id === tab)
-                  if (!currTab) return null
-                  const IconC = currTab.icon
-                  return <><IconC size={22} color="var(--primary)" /> {currTab.label}</>
-                })()}
-              </h2>
-              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#69736a', fontWeight: 500 }}>
-                {kiosks.length} Kiosk trực thuộc • {kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').length} đang hoạt động
-              </p>
-            </div>
-
-            <div className="workspace-topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <WorkspaceSearch items={TABS} onSelect={setTab} />
-              <AdminNotificationBell session={session} />
-              {tongCongNo > 0 && (
-                <div className="workspace-debt-badge">
-                  <CreditCard size={15} /> Công nợ: {fmtMoney(tongCongNo)}
-                </div>
-              )}
-
-              <button onClick={() => { loadAll(); loadActiveKioskShift(); }} style={{
-                padding: '8px 16px', border: '1px solid #ccd3c7', borderRadius: 10,
-                background: '#fff', cursor: 'pointer', fontSize: 13, color: '#414743', fontWeight: 700,
-                display: 'flex', alignItems: 'center', gap: 6, transition: 'background .2s'
-              }}>
-                <RefreshCw size={14} /> Làm mới
-              </button>
-            </div>
-          </header>
-
-          {/* KIOSK CONTEXT SELECTOR BAR */}
-          {tab !== 'dashboard' && tab !== 'wallet' && kiosks.length > 0 && (
-            <div className="console-context-bar" style={{ background: '#fff', borderBottom: '1px solid #e2e4df', padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <label style={{ fontSize: 14, fontWeight: 600, color: '#414743' }}>
-                Chọn Kiosk:
-              </label>
-              <SearchableSelect
-                className="franchise-filter-select"
-                value={activeKioskId || ''}
-                onChange={(e) => switchKiosk(e.target.value)}
-                style={{ padding: '8px 12px', border: '1px solid #ccd3c7', borderRadius: 6, fontSize: 14, minWidth: 250, outline: 'none', background: '#f8f9f6', color: '#252927', fontWeight: 500 }}
-              >
-                {kiosks.map(k => (
-                   <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>
-                ))}
-              </SearchableSelect>
-              {activeKiosk && (
-                <div style={{ fontSize: 13, color: '#69736a' }}>
-                  <WorkspaceSymbolMapPin size="1.1em" aria-hidden="true" /> {activeKiosk.dia_chi}, {activeKiosk.thanh_pho}
-                </div>
-              )}
-            </div>
-          )}
-
+          <OperationalPageFrame groups={[
+            {label:'Điểm bán & vận hành',items:TABS.filter(item=>['dashboard','pos','staff_manage','shift_schedule','kiosk_shifts','pos_orders','menu'].includes(item.id))},
+            {label:'Nguyên liệu & tài chính',items:TABS.filter(item=>['wallet','order','history','debt','royalty','expansion'].includes(item.id))}
+          ]} activeTab={tab} onSelect={setTab} session={session} onLogout={onLogout} branchName="Đối tác kiosk" headerContext={tab!=='wallet'&&kiosks.length>0?<KioskScopePicker kiosks={kiosks} value={activeKioskId} onChange={id=>{if(switchKiosk(id)&&tab==='pos')setPosKioskSelected(kiosks.find(k=>k.id===id)?.trang_thai==='DANG_HOAT_DONG')}}/>:null} pageDescriptions={{dashboard:'Theo dõi các kiosk, kết quả bán hàng và tình hình vận hành.',pos:'Chọn điểm bán, mở ca và nhận thanh toán tại kiosk.',shift_schedule:'Phân ca theo tuần, duyệt đăng ký và cập nhật chấm công.',staff_manage:'Quản lý tài khoản, quyền truy cập và kiosk được phân công.',kiosk_shifts:'Theo dõi ca bán hàng và đối chiếu tiền cuối ca.',pos_orders:'Tra cứu và xử lý các đơn bán tại kiosk.',order:'Chọn combo nguyên liệu và theo dõi thanh toán.',history:'Theo dõi các lần nhập combo của từng kiosk.',debt:'Đối chiếu công nợ và hạn thanh toán.',royalty:'Theo dõi khoản chia sẻ doanh thu với thương hiệu theo tỷ lệ phần trăm trong hợp đồng.',wallet:'Xem số dư và lịch sử giao dịch ví.',expansion:'Đăng ký thêm kiosk trong hệ thống.'}}>
           {/* Tab Body */}
           <div className="console-partner-body workspace-tab-content" style={{ padding: '24px 32px', flex: 1 }}>
             <WorkspaceErrorBoundary key={tab} inline>
             {alertBanner}
+            {tab === 'pos' && posKioskSelected && availability.loading && <p role="status">Đang tải trạng thái bán của kiosk…</p>}
+            {tab === 'pos' && posKioskSelected && availability.error && <div role="alert" className="workspace-form-error">{availability.error}<Button type="button" variant="outline" onClick={availability.reload}>Thử tải lại trạng thái bán</Button></div>}
+            {tab === 'pos' && !loading && (!posKioskSelected ? <KioskPosPicker kiosks={kiosks} onSelect={id=>{if(switchKiosk(id))setPosKioskSelected(true)}}/> : <KioskIdentity kiosk={activeKiosk}><Button type="button" variant="outline" onClick={()=>{if(posCart.length && !window.confirm('Giỏ hàng chưa thanh toán sẽ được xóa khi đổi kiosk. Tiếp tục?'))return;setPosCart([]);setPosKioskSelected(false)}}>Đổi kiosk</Button></KioskIdentity>)}
 
             {loading ? (
               <DashboardSkeleton />
@@ -1486,9 +1432,9 @@ export function FranchiseePortal({ session, onLogout }) {
 
                       return (
                         <div style={{
-                          background: isChuaTatToan ? '#f8fafc' : '#f0fdf4',
-                          border: `1.5px solid ${isChuaTatToan ? '#3b82f6' : '#bbf7d0'}`,
-                          borderRadius: 14,
+                          background: isChuaTatToan ? '#ffffff' : '#f0fdf4',
+                          border: `1px solid ${isChuaTatToan ? '#e2e8f0' : '#bbf7d0'}`,
+                          borderRadius: 12,
                           padding: '16px 20px',
                           marginBottom: 24,
                           display: 'flex',
@@ -1496,25 +1442,25 @@ export function FranchiseePortal({ session, onLogout }) {
                           alignItems: 'center',
                           flexWrap: 'wrap',
                           gap: 16,
-                          boxShadow: '0 1px 4px rgba(0,0,0,0.03)'
+                          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.02)'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                             <div style={{
                               width: 42, height: 42, borderRadius: 10,
-                              background: isChuaTatToan ? '#eff6ff' : '#dcfce7',
+                              background: isChuaTatToan ? '#fef2f2' : '#dcfce7',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: isChuaTatToan ? '#2563eb' : '#16a34a'
+                              color: isChuaTatToan ? '#b22830' : '#15803d'
                             }}>
                               {isChuaTatToan ? <CreditCard size={20} /> : <CheckCircle2 size={20} />}
                             </div>
                             <div>
-                              <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a' }}>
+                              <div style={{ fontSize: 14.5, fontWeight: 700, color: '#0f172a' }}>
                                 {isChuaTatToan ? 'Hợp Đồng Nhượng Quyền — Chờ Tất Toán 100%' : 'Hợp Đồng Nhượng Quyền Đã Hoàn Tất 100%'}
                               </div>
-                              <div style={{ fontSize: 13, color: '#475569', marginTop: 3 }}>
+                              <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>
                                 Kiosk: <b>{activeKiosk.ten_kiosk}</b> ({activeKiosk.ma_kiosk}) · Gói: <b>{activeKiosk.loai_kiosk}</b>
                                 {isChuaTatToan ? (
-                                  <span> · Đã đặt cọc: <b style={{ color: '#16a34a' }}>5.000.000đ</b> · Cần thanh toán nốt: <b style={{ color: '#dc2626' }}>{fmtMoney(goiDebt.so_tien)}</b></span>
+                                  <span> · Đã đặt cọc: <b style={{ color: '#15803d' }}>5.000.000đ</b> · Cần thanh toán nốt: <b style={{ color: '#b91c1c' }}>{fmtMoney(goiDebt.so_tien)}</b></span>
                                 ) : (
                                   <span> · Toàn bộ chi phí gói nhượng quyền đã được tất toán</span>
                                 )}
@@ -1524,28 +1470,28 @@ export function FranchiseePortal({ session, onLogout }) {
 
                           <div>
                             {isChuaTatToan ? (
-                              <button
+                              <Button
                                 onClick={() => openTatToanModal(activeKiosk.id)}
                                 style={{
-                                  padding: '9px 18px', borderRadius: 8, border: 'none',
-                                  background: '#2563eb', color: '#fff', fontSize: 13, fontWeight: 600,
+                                  padding: '8px 16px', borderRadius: 8, border: 'none',
+                                  background: '#b22830', color: '#fff', fontSize: 13, fontWeight: 600,
                                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                                  boxShadow: '0 2px 6px rgba(37,99,235,0.25)'
+                                  boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)'
                                 }}
                               >
                                 <CreditCard size={15} /> Thanh toán nốt gói ({fmtMoney(goiDebt.so_tien)})
-                              </button>
+                              </Button>
                             ) : (
-                              <button
+                              <Button
                                 onClick={() => openTatToanModal(activeKiosk.id)}
                                 style={{
-                                  padding: '7px 14px', borderRadius: 8, border: '1px solid #cbd5e1',
+                                  padding: '7px 14px', borderRadius: 8, border: '1px solid #e2e8f0',
                                   background: '#fff', color: '#475569', fontSize: 13, fontWeight: 500,
                                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
                                 }}
                               >
-                                <CheckCircle2 size={15} color="#16a34a" /> Xem thông tin gói
-                              </button>
+                                <CheckCircle2 size={15} color="#15803d" /> Xem thông tin gói
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -1553,21 +1499,23 @@ export function FranchiseePortal({ session, onLogout }) {
                     })()}
 
                     {/* Hero Stats */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 18, marginBottom: 32 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 16, marginBottom: 28 }}>
                       {[
-                        { icon: Store, label: 'Kiosk đang hoạt động', value: kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').length + ' / ' + kiosks.length, color: '#2563eb', bg: "#f4f5f2" },
-                        { icon: Users, label: 'Nhân sự con tại Kiosk', value: subStaffList.length, color: 'var(--primary)', bg: 'var(--primary-light)' },
-                        { icon: Package, label: 'Tổng combo nguyên liệu', value: kiosks.reduce((s, k) => s + (k.so_combo_hien_tai || 0), 0), color: '#e56723', bg: "#f4f5f2" },
-                        { icon: CreditCard, label: 'Công nợ chưa thanh toán', value: fmtMoney(tongCongNo), color: tongCongNo > 0 ? '#dc2626' : '#2563eb', bg: tongCongNo > 0 ? "#f4f5f2" : "#f4f5f2" },
+                        { icon: Store, label: 'Kiosk đang hoạt động', value: kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').length + ' / ' + kiosks.length, color: '#15803d', bg: "#f0fdf4" },
+                        { icon: Users, label: 'Nhân sự con tại Kiosk', value: subStaffList.length, color: '#b22830', bg: '#fef2f2' },
+                        { icon: Package, label: 'Tổng combo nguyên liệu', value: kiosks.reduce((s, k) => s + (k.so_combo_hien_tai || 0), 0), color: '#d97706', bg: "#fffbeb" },
+                        { icon: CreditCard, label: 'Công nợ chưa thanh toán', value: fmtMoney(tongCongNo), color: tongCongNo > 0 ? '#b91c1c' : '#15803d', bg: tongCongNo > 0 ? "#fef2f2" : "#f0fdf4" },
                       ].map((s, i) => {
                         const IconComp = s.icon
                         return (
-                          <div key={i} className="workspace-partner-stat" style={{ '--stat-color': s.color, background: '#fff', borderRadius: 20, padding: '22px', border: '1px solid #e2e4df', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
-                            <div style={{ width: 44, height: 44, borderRadius: 12, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                              <IconComp size={22} color={s.color} />
+                          <div key={i} className="workspace-partner-stat" style={{ background: '#ffffff', borderRadius: 12, padding: '20px 22px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.02)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                              <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600, letterSpacing: '0.02em' }}>{s.label}</span>
+                              <div style={{ width: 34, height: 34, borderRadius: 8, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <IconComp size={18} color={s.color} />
+                              </div>
                             </div>
-                            <div style={{ fontSize: 24, fontWeight: 600, color: '#252927' }}>{s.value}</div>
-                            <div style={{ fontSize: 13, color: '#69736a', marginTop: 4, fontWeight: 600 }}>{s.label}</div>
+                            <div style={{ fontSize: 26, fontWeight: 700, color: '#0f172a', fontVariantNumeric: 'tabular-nums' }}>{s.value}</div>
                           </div>
                         )
                       })}
@@ -1582,37 +1530,37 @@ export function FranchiseePortal({ session, onLogout }) {
 
                     {/* Kiosk list cards */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                      <h3 style={{ fontWeight: 600, fontSize: 18, color: '#252927', margin: 0 }}>Danh Sách Kiosk Của Tôi</h3>
-                      <button onClick={() => setTab('staff_manage')} style={{
-                        padding: '8px 16px', background: '#252927', color: '#fff', border: 'none', borderRadius: 8,
+                      <h3 style={{ fontWeight: 700, fontSize: 17, color: '#0f172a', margin: 0 }}>Danh Sách Kiosk Của Tôi</h3>
+                      <Button onClick={() => setTab('staff_manage')} style={{
+                        padding: '8px 14px', background: '#b22830', color: '#fff', border: 'none', borderRadius: 8,
                         fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)'
                       }}>
-                        <UserPlus size={16} /> Quản lý nhân viên
-                      </button>
+                        <UserPlus size={15} /> Quản lý nhân viên
+                      </Button>
                     </div>
 
-                    <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-                      <select className="franchise-filter-select" 
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+                      <SearchableSelect className="franchise-filter-select"
                         value={kioskFilterStatus} 
                         onChange={(e) => { setKioskFilterStatus(e.target.value); setKioskPage(1); }}
-                        style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccd3c7', fontSize: 13, background: '#fff', outline: 'none' }}
+                        style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, background: '#ffffff', color: '#0f172a', outline: 'none' }}
                       >
                         <option value="ALL">Tất cả trạng thái</option>
                         <option value="DANG_HOAT_DONG">Đang hoạt động</option>
                         <option value="TAM_DUNG">Tạm dừng</option>
-                      </select>
+                      </SearchableSelect>
 
-                      <select className="franchise-filter-select" 
+                      <SearchableSelect className="franchise-filter-select"
                         value={kioskFilterType} 
                         onChange={(e) => { setKioskFilterType(e.target.value); setKioskPage(1); }}
-                        style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccd3c7', fontSize: 13, background: '#fff', outline: 'none' }}
+                        style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, background: '#ffffff', color: '#0f172a', outline: 'none' }}
                       >
                         <option value="ALL">Tất cả loại hình</option>
                         {Object.keys(LOAI_KIOSK_LABEL).map(k => (
                           <option key={k} value={k}>{LOAI_KIOSK_LABEL[k].label}</option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </div>
 
                     <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
@@ -1626,99 +1574,96 @@ export function FranchiseePortal({ session, onLogout }) {
                         const totalPages = Math.ceil(filtered.length / limit) || 1;
                         const start = (kioskPage - 1) * limit;
                         const paginated = filtered.slice(start, start + limit);
-                        
-                        if (filtered.length === 0) return <div style={{ padding: 40, textAlign: 'center', color: '#69736a', gridColumn: '1 / -1' }}>Không tìm thấy Kiosk phù hợp</div>;
+
+                        if (filtered.length === 0) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', gridColumn: '1 / -1', background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0' }}>Không tìm thấy Kiosk phù hợp</div>;
 
                         return (
                           <>
                             {paginated.map(k => {
-                              const loai = LOAI_KIOSK_LABEL[k.loai_kiosk] || { label: k.loai_kiosk, emoji: <WorkspaceSymbolStore size="1em" aria-hidden="true" />, color: '#596255', bg: '#f8f9f6' }
+                              const loai = LOAI_KIOSK_LABEL[k.loai_kiosk] || { label: k.loai_kiosk, emoji: <WorkspaceSymbolStore size="1em" aria-hidden="true" />, color: '#64748b', bg: '#f8fafc' }
                               const kioskCongNo = congNos.filter(c => c.kiosk_id === k.id && c.trang_thai !== 'DA_THANH_TOAN')
                               const tongNoKiosk = kioskCongNo.reduce((s, c) => s + Number(c.so_tien), 0)
+                              const isActive = k.id === activeKioskId
                               return (
                                 <div key={k.id} style={{
-                                  background: '#fff', borderRadius: 12, border: `1px solid ${k.id === activeKioskId ? '#3b82f6' : '#ccd3c7'}`,
-                                  boxShadow: k.id === activeKioskId ? '0 0 0 1px #3b82f6' : '0 2px 8px rgba(0,0,0,0.02)',
-                                  overflow: 'hidden', transition: 'all .2s'
+                                  background: '#ffffff', borderRadius: 12, border: `1px solid ${isActive ? '#b22830' : '#e2e8f0'}`,
+                                  boxShadow: isActive ? '0 0 0 1.5px #b22830' : '0 1px 3px 0 rgba(0, 0, 0, 0.02)',
+                                  overflow: 'hidden', transition: 'all .15s ease'
                                 }}>
-                                  <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #f4f5f2' }}>
+                                  <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #f1f5f9' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                      <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f8f9f6', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e4df', fontSize: 20 }}>
+                                      <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', fontSize: 18, color: '#334155' }}>
                                         {loai.emoji}
                                       </div>
                                       <div>
-                                        <div style={{ fontWeight: 700, fontSize: 15, color: '#252927' }}>{k.ten_kiosk}</div>
-                                        <div style={{ fontSize: 12, color: '#69736a', fontWeight: 500, marginTop: 2 }}>{loai.label} • {k.ma_kiosk}</div>
+                                        <div style={{ fontWeight: 700, fontSize: 14.5, color: '#0f172a' }}>{k.ten_kiosk}</div>
+                                        <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500, marginTop: 2 }}>{loai.label} • <span style={{ fontFamily: 'monospace' }}>{k.ma_kiosk}</span></div>
                                       </div>
                                     </div>
-                                    <span style={{
-                                      padding: '4px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
-                                      background: k.trang_thai === 'DANG_HOAT_DONG' ? "#f4f5f2" : "#f4f5f2",
-                                      color: k.trang_thai === 'DANG_HOAT_DONG' ? '#2563eb' : '#dc2626',
-                                      border: `1px solid ${k.trang_thai === 'DANG_HOAT_DONG' ? '#bfdbfe' : '#fecaca'}`
-                                    }}>
+                                    <StatusBadge status={k.trang_thai}>
+
                                       {k.trang_thai === 'DANG_HOAT_DONG' ? 'Đang hoạt động' : 'Tạm dừng'}
-                                    </span>
+                                    </StatusBadge>
                                   </div>
 
-                                  <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: '#f8f9f6' }}>
+                                  <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: '#f8fafc' }}>
                                     <div>
-                                      <div style={{ fontSize: 11, color: '#69736a', fontWeight: 600 }}>COMBO NGUYÊN LIỆU</div>
-                                      <div style={{ fontSize: 16, fontWeight: 700, color: '#252927', marginTop: 4 }}>{k.so_combo_hien_tai || 0}</div>
+                                      <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, letterSpacing: '0.02em' }}>COMBO NGUYÊN LIỆU</div>
+                                      <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>{k.so_combo_hien_tai || 0}</div>
                                     </div>
                                     <div>
-                                      <div style={{ fontSize: 11, color: tongNoKiosk > 0 ? '#ef4444' : '#69736a', fontWeight: 600 }}>CÔNG NỢ</div>
-                                      <div style={{ fontSize: 16, fontWeight: 700, color: tongNoKiosk > 0 ? '#ef4444' : '#252927', marginTop: 4 }}>{fmtMoney(tongNoKiosk)}</div>
+                                      <div style={{ fontSize: 11, color: tongNoKiosk > 0 ? '#b91c1c' : '#64748b', fontWeight: 600, letterSpacing: '0.02em' }}>CÔNG NỢ</div>
+                                      <div style={{ fontSize: 16, fontWeight: 700, color: tongNoKiosk > 0 ? '#b91c1c' : '#0f172a', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(tongNoKiosk)}</div>
                                     </div>
                                   </div>
 
-                                  <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f4f5f2', background: '#fff' }}>
-                                    <div style={{ fontSize: 12, color: '#69736a', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+                                  <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', background: '#ffffff' }}>
+                                    <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
                                       <WorkspaceSymbolMapPin size="1.1em" aria-hidden="true" /> {k.dia_chi}
                                     </div>
                                     <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                                      <button onClick={() => openReviewModal(k)} style={{
-                                        padding: '6px 10px', borderRadius: 6, border: '1px solid #fde047', background: "#f4f5f2",
+                                      <Button onClick={() => openReviewModal(k)} style={{
+                                        padding: '5px 10px', borderRadius: 6, border: '1px solid #fef08a', background: '#fefce8',
                                         color: '#854d0e', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                                       }}>
-                                        <Star size={14} /> Đánh giá
-                                      </button>
-                                      <button onClick={() => { switchKiosk(k.id); setTab('kiosk_shifts'); }} style={{
-                                        padding: '6px 10px', borderRadius: 6, border: '1px solid #ccd3c7', background: '#fff',
-                                        color: '#414743', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                                        <Star size={13} /> Đánh giá
+                                      </Button>
+                                      <Button onClick={() => { switchKiosk(k.id); setTab('kiosk_shifts'); }} style={{
+                                        padding: '5px 10px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#ffffff',
+                                        color: '#334155', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                                       }}>
-                                        <Clock size={14} /> Ca trực
-                                      </button>
-                                      <button onClick={() => { switchKiosk(k.id); setTab('pos'); }} style={{
-                                        padding: '6px 10px', borderRadius: 6, border: 'none', background: 'var(--primary)',
-                                        color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                                        <Clock size={13} /> Ca trực
+                                      </Button>
+                                      <Button onClick={() => { switchKiosk(k.id); setTab('pos'); }} style={{
+                                        padding: '5px 12px', borderRadius: 6, border: 'none', background: '#b22830',
+                                        color: '#ffffff', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                                       }}>
-                                        <Coffee size={14} /> POS
-                                      </button>
+                                        <Coffee size={13} /> POS
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>
                               )
                             })}
-                            
+
                             {/* Pagination controls */}
                             {totalPages > 1 && (
-                              <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 12 }}>
-                                <button 
+                              <div data-modal-actions="true" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 14 }}>
+                                <Button
                                   disabled={kioskPage <= 1}
                                   onClick={() => setKioskPage(p => p - 1)}
-                                  style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #ccd3c7', background: kioskPage <= 1 ? '#f4f5f2' : '#fff', color: kioskPage <= 1 ? '#85907d' : '#252927', cursor: kioskPage <= 1 ? 'not-allowed' : 'pointer' }}
+                                  style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #e2e8f0', background: kioskPage <= 1 ? '#f8fafc' : '#ffffff', color: kioskPage <= 1 ? '#94a3b8' : '#334155', cursor: kioskPage <= 1 ? 'not-allowed' : 'pointer', fontSize: 12.5 }}
                                 >
                                   Trước
-                                </button>
-                                <span style={{ fontSize: 13, color: '#69736a', fontWeight: 500 }}>Trang {kioskPage} / {totalPages}</span>
-                                <button 
+                                </Button>
+                                <span style={{ fontSize: 12.5, color: '#64748b', fontWeight: 500 }}>Trang {kioskPage} / {totalPages}</span>
+                                <Button
                                   disabled={kioskPage >= totalPages}
                                   onClick={() => setKioskPage(p => p + 1)}
-                                  style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #ccd3c7', background: kioskPage >= totalPages ? '#f4f5f2' : '#fff', color: kioskPage >= totalPages ? '#85907d' : '#252927', cursor: kioskPage >= totalPages ? 'not-allowed' : 'pointer' }}
+                                  style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #e2e8f0', background: kioskPage >= totalPages ? '#f8fafc' : '#ffffff', color: kioskPage >= totalPages ? '#94a3b8' : '#334155', cursor: kioskPage >= totalPages ? 'not-allowed' : 'pointer', fontSize: 12.5 }}
                                 >
                                   Sau
-                                </button>
+                                </Button>
                               </div>
                             )}
                           </>
@@ -1736,13 +1681,7 @@ export function FranchiseePortal({ session, onLogout }) {
                   <div>
                     {/* Header & Actions */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
-                      <div>
-                        <h3 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: '#252927', letterSpacing: '-0.02em' }}>Danh Sách Nhân Viên Con Tại Kiosk</h3>
-                        <p style={{ margin: '6px 0 0', color: '#69736a', fontSize: 14 }}>
-                          Tạo tài khoản nhân viên, phân công Kiosk làm việc và phân quyền thao tác trên máy POS.
-                        </p>
-                      </div>
-                      <button onClick={() => {
+                      <Button onClick={() => {
                         setStaffForm({
                           ten_dang_nhap: '',
                           mat_khau: '123456',
@@ -1755,40 +1694,29 @@ export function FranchiseePortal({ session, onLogout }) {
                         });
                         setShowCreateStaffModal(true);
                       }} style={{
-                        padding: '12px 22px', background: '#252927', color: '#fff', border: 'none',
+                        padding: '12px 22px', background: 'var(--primary)', color: '#fff', border: 'none',
                         borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex',
                         alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'all .2s'
                       }}>
                         <UserPlus size={16} /> Thêm nhân viên con mới
-                      </button>
+                      </Button>
                     </div>
 
                     {/* Filter & Search Bar */}
-                    <div className="franchise-filter-bar" style={{ display: 'flex', gap: 14, marginBottom: 22, background: '#fff', padding: '14px 18px', borderRadius: 16, border: '1px solid #e2e4df', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1, minWidth: 260, position: 'relative' }}>
-                        <Search size={18} color="#85907d" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-                        <input
+                    <div className="franchise-filter-bar" style={{ display: 'flex', gap: 14, marginBottom: 22, background: '#fff', padding: '14px 18px', borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div className="kiosk-search-field" style={{ flex: 1, minWidth: 260, position: 'relative' }}>
+                        <Search size={18} color="#526174" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+                        <Input
                           type="text"
                           value={staffSearch}
                           onChange={e => setStaffSearch(e.target.value)}
                           placeholder="Tìm kiếm theo họ tên, tên đăng nhập, số điện thoại..."
-                          style={{ width: '100%', padding: '10px 14px 10px 42px', borderRadius: 12, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', background: '#f8f9f6', boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '10px 14px 10px 42px', borderRadius: 12, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', background: '#f6f8fa', boxSizing: 'border-box' }}
                         />
                       </div>
-                      <SearchableSelect
-                        className="franchise-filter-select"
-                        value={staffKioskFilter}
-                        onChange={e => setStaffKioskFilter(e.target.value)}
-                        style={{ padding: '10px 16px', borderRadius: 12, border: '1px solid #ccd3c7', fontSize: 14, background: '#f8f9f6', fontWeight: 600, color: '#414743', outline: 'none', cursor: 'pointer' }}
-                      >
-                        <option value=""> Tất cả Kiosk trực thuộc</option>
-                        {kiosks.map(k => (
-                          <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>
-                        ))}
-                      </SearchableSelect>
-                      <button onClick={loadStaffList} style={{ padding: '10px 16px', background: '#f4f5f2', border: '1px solid #e2e4df', borderRadius: 12, cursor: 'pointer', fontWeight: 700, color: '#596255', display: 'flex', alignItems: 'center', gap: 6, transition: 'background .15s' }}>
+                      <Button onClick={loadStaffList} style={{ padding: '10px 16px', background: '#f6f8fa', border: '1px solid #e2e8f0', borderRadius: 12, cursor: 'pointer', fontWeight: 700, color: '#526174', display: 'flex', alignItems: 'center', gap: 6, transition: 'background .15s' }}>
                         <RefreshCw size={14} /> Tải lại
-                      </button>
+                      </Button>
                       <div style={{ padding: '6px 14px', borderRadius: 99, background: 'var(--primary-light)', color: 'var(--primary-hover)', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Users size={15} /> {subStaffList.length} nhân sự
                       </div>
@@ -1796,76 +1724,65 @@ export function FranchiseePortal({ session, onLogout }) {
 
                     {/* Staff Table */}
                     {subStaffLoading ? (
-                      <div style={{ textAlign: 'center', padding: 80, color: '#69736a', fontSize: 15, background: '#fff', borderRadius: 20, border: '1px solid #e2e4df' }}>
-                        <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px', color: '#2563eb' }} />
+                      <div style={{ textAlign: 'center', padding: 80, color: '#526174', fontSize: 15, background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0' }}>
+                        <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px', color: '#16354d' }} />
                         <div style={{ fontWeight: 700 }}>Đang tải danh sách nhân viên con...</div>
                       </div>
                     ) : (
-                      <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #e2e4df', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                      <div className="kiosk-staff-table" style={{ background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                         <div style={{ overflowX: 'auto' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 920 }}>
+                          <Table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 900, tableLayout: 'fixed' }}>
                             <thead>
-                              <tr style={{ background: '#f8f9f6', borderBottom: '1px solid #e2e4df' }}>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#596255', textTransform: 'uppercase', letterSpacing: '0.05em', width: '22%' }}>Nhân Viên</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#596255', textTransform: 'uppercase', letterSpacing: '0.05em', width: '14%' }}>Tài Khoản</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#596255', textTransform: 'uppercase', letterSpacing: '0.05em', width: '18%' }}>Liên Hệ</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#596255', textTransform: 'uppercase', letterSpacing: '0.05em', width: '18%' }}>Kiosk Trực Thuộc</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#596255', textTransform: 'uppercase', letterSpacing: '0.05em', width: '24%' }}>Quyền Hạn POS</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#596255', textTransform: 'uppercase', letterSpacing: '0.05em', width: '12%', textAlign: 'center' }}>Trạng Thái</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#596255', textTransform: 'uppercase', letterSpacing: '0.05em', width: '16%', textAlign: 'right' }}>Hành Động</th>
+                              <tr style={{ background: '#f6f8fa', borderBottom: '1px solid #e2e8f0' }}>
+                                <th style={{ padding: '14px 16px', fontSize: 12, fontWeight: 600, color: '#526174', textTransform: 'uppercase', letterSpacing: '0.05em', width: '25%' }}>Nhân viên</th>
+                                <th style={{ padding: '14px 16px', fontSize: 12, fontWeight: 600, color: '#526174', textTransform: 'uppercase', letterSpacing: '0.05em', width: '25%' }}>Liên hệ</th>
+                                <th style={{ padding: '14px 16px', fontSize: 12, fontWeight: 600, color: '#526174', textTransform: 'uppercase', letterSpacing: '0.05em', width: '23%' }}>Kiosk</th>
+                                <th style={{ padding: '14px 16px', fontSize: 12, fontWeight: 600, color: '#526174', textTransform: 'uppercase', letterSpacing: '0.05em', width: 130, textAlign: 'center' }}>Trạng thái</th>
+                                <th style={{ padding: '14px 16px', fontSize: 12, fontWeight: 600, color: '#526174', textTransform: 'uppercase', letterSpacing: '0.05em', width: 140, textAlign: 'right' }}>Hành động</th>
                               </tr>
                             </thead>
                             <tbody>
                               <PaginatedList items={subStaffList.filter(s => {
-                                const matchKiosk = !staffKioskFilter || s.kiosk_id === staffKioskFilter || s.co_so_ma === staffKioskFilter
+                                const matchKiosk = !activeKioskId || s.kiosk_id === activeKioskId || s.co_so_ma === activeKiosk?.ma_kiosk
                                 const matchSearch = !staffSearch || (s.ho_ten || '').toLowerCase().includes(staffSearch.toLowerCase()) || (s.ten_dang_nhap || '').toLowerCase().includes(staffSearch.toLowerCase()) || (s.so_dien_thoai || '').includes(staffSearch)
                                 return matchKiosk && matchSearch
-                              })} resetKey={JSON.stringify([staffSearch,staffKioskFilter])} layout="table" columns={7}>{s => {
-                                const perms = Array.isArray(s.pos_permissions) ? s.pos_permissions : []
+                              })} resetKey={JSON.stringify([staffSearch,activeKioskId])} layout="table" columns={5}>{s => {
                                 const isActive = s.trang_thai === 'ACTIVE'
                                 const kioskObj = kiosks.find(k => k.id === s.kiosk_id)
                                 const kioskName = kioskObj?.ten_kiosk || s.co_so_ten || s.co_so_ma || 'Chưa gán'
 
                                 return (
-                                  <tr key={s.ma_nguoi_dung || s.id} style={{ borderBottom: '1px solid #f4f5f2', transition: 'background .15s' }} onMouseEnter={e => e.currentTarget.style.background = '#f8f9f6'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                  <tr key={s.ma_nguoi_dung || s.id} style={{ borderBottom: '1px solid #f6f8fa', transition: 'background .15s' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f8fa'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                     {/* Nhân viên */}
-                                    <td style={{ padding: '16px 20px' }}>
+                                    <td style={{ padding: '14px 16px' }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                         <div style={{
                                           width: 42, height: 42, borderRadius: '50%', flexShrink: 0,
-                                          background: '#f8f9f6', color: '#252927',
+                                          background: '#f6f8fa', color: '#142b3e',
                                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                          fontWeight: 600, fontSize: 16, border: '1px solid #ccd3c7'
+                                          fontWeight: 600, fontSize: 16, border: '1px solid #cbd5e1'
                                         }}>
                                           {s.ho_ten?.charAt(0).toUpperCase() || 'U'}
                                         </div>
-                                        <div>
-                                          <div style={{ fontWeight: 600, color: '#252927', fontSize: 14 }}>{s.ho_ten}</div>
-                                          <div style={{ fontSize: 12, color: '#69736a', marginTop: 2 }}>Tham gia: {fmtDate(s.ngay_tao)}</div>
+                                        <div style={{ minWidth: 0 }}>
+                                          <div style={{ fontWeight: 600, color: '#142b3e', fontSize: 14 }}>{s.ho_ten}</div>
+                                          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px', marginTop: 3 }}>
+                                            <span style={{ fontSize: 12, color: '#526174' }}>@{s.ten_dang_nhap}</span>
+                                          </div>
                                         </div>
                                       </div>
                                     </td>
 
-                                    {/* Tài khoản */}
-                                    <td style={{ padding: '16px 20px' }}>
-                                      <span style={{
-                                        fontWeight: 700, color: '#414743', fontSize: 13, background: '#f8f9f6',
-                                        padding: '4px 10px', borderRadius: 8, display: 'inline-block', border: '1px solid #ccd3c7'
-                                      }}>
-                                        @{s.ten_dang_nhap}
-                                      </span>
-                                    </td>
-
                                     {/* Liên hệ */}
-                                    <td style={{ padding: '16px 20px' }}>
+                                    <td style={{ padding: '14px 16px', overflowWrap: 'anywhere' }}>
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#414743', fontWeight: 600 }}>
-                                          <Phone size={13} color="#69736a" />
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#263c50', fontWeight: 600 }}>
+                                          <Phone size={13} color="#526174" />
                                           <span>{s.so_dien_thoai || '—'}</span>
                                         </div>
                                         {s.email && (
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#69736a' }}>
-                                            <Mail size={13} color="#85907d" />
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#526174' }}>
+                                            <Mail size={13} color="#526174" />
                                             <span>{s.email}</span>
                                           </div>
                                         )}
@@ -1873,62 +1790,19 @@ export function FranchiseePortal({ session, onLogout }) {
                                     </td>
 
                                     {/* Kiosk trực thuộc */}
-                                    <td style={{ padding: '16px 20px' }}>
-                                      <div style={{
-                                        display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px',
-                                        borderRadius: 8, background: '#f8f9f6', color: '#414743', fontSize: 12,
-                                        fontWeight: 700, border: '1px solid #ccd3c7', maxWidth: 220, whiteSpace: 'nowrap'
-                                      }}>
-                                        <Store size={14} />
-                                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{kioskName}</span>
-                                      </div>
-                                    </td>
-
-                                    {/* Quyền hạn POS */}
-                                    <td style={{ padding: '16px 20px' }}>
-                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                                        {perms.length === 0 ? (
-                                          <span style={{ fontSize: 12, color: '#85907d', fontStyle: 'italic' }}>Chưa cấp quyền</span>
-                                        ) : perms.length === 5 ? (
-                                          <span style={{ padding: '4px 10px', borderRadius: 8, background: '#252927', color: '#ffffff', fontSize: 12, fontWeight: 700, border: '1px solid #252927', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                            Toàn quyền POS
-                                          </span>
-                                        ) : (
-                                          perms.map(p => {
-                                            const pObj = POS_PERMISSIONS_LIST.find(x => x.id === p)
-                                            return (
-                                              <span key={p} style={{
-                                                padding: '3px 8px', borderRadius: 6, background: '#f8f9f6',
-                                                color: '#414743', fontSize: 11, fontWeight: 600, border: '1px solid #ccd3c7',
-                                                whiteSpace: 'nowrap'
-                                              }} title={pObj?.desc}>
-                                                <WorkspaceSymbolCheck size="1.1em" aria-hidden="true" /> {pObj?.label || p}
-                                              </span>
-                                            )
-                                          })
-                                        )}
-                                      </div>
+                                    <td style={{ padding: '14px 16px' }}>
+                                      <span className="kiosk-staff-location"><Store size={15} /><span>{kioskName}</span></span>
                                     </td>
 
                                     {/* Trạng thái */}
-                                    <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                                      <span style={{
-                                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                                        padding: '5px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
-                                        background: isActive ? "#f4f5f2" : "#f4f5f2",
-                                        color: isActive ? '#1e40af' : '#991b1b',
-                                        border: `1px solid ${isActive ? '#bfdbfe' : '#fecaca'}`,
-                                        whiteSpace: 'nowrap'
-                                      }}>
-                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#3b82f6' : '#ef4444' }}></span>
-                                        {isActive ? 'Hoạt động' : 'Đã khóa'}
-                                      </span>
+                                    <td style={{ padding: '14px 12px', textAlign: 'center' }}>
+                                      <StatusBadge status={isActive ? 'ACTIVE' : 'INACTIVE'}>{isActive ? 'Hoạt động' : 'Đã khóa'}</StatusBadge>
                                     </td>
 
                                     {/* Hành động */}
-                                    <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                                        <button onClick={() => {
+                                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                                      <div className="kiosk-staff-row-actions">
+                                        <Button variant="outline" size="icon" aria-label={`Sửa nhân viên ${s.ho_ten}`} onClick={() => {
                                           setSelectedStaff(s);
                                           setStaffForm({
                                             ho_ten: s.ho_ten || '',
@@ -1944,42 +1818,42 @@ export function FranchiseePortal({ session, onLogout }) {
                                           borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 12, display: 'inline-flex',
                                           alignItems: 'center', gap: 4, transition: 'all .15s'
                                         }} title="Sửa thông tin & phân quyền POS">
-                                          <Edit3 size={13} /> Sửa
-                                        </button>
-                                        <button onClick={() => {
+                                          <Edit3 size={16} />
+                                        </Button>
+                                        <Button variant="outline" size="icon" aria-label={`Đặt lại mật khẩu ${s.ho_ten}`} onClick={() => {
                                           setSelectedStaff(s);
                                           setResetPwdInput('123456');
                                           setShowResetPwdModal(true);
                                         }} style={{
-                                          padding: '6px 10px', background: "#f4f5f2", color: '#d97706', border: '1px solid #fde68a',
+                                          padding: '6px 10px', background: "#f6f8fa", color: '#d97706', border: '1px solid #fde68a',
                                           borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 12, display: 'inline-flex',
                                           alignItems: 'center', gap: 4, transition: 'all .15s'
                                         }} title="Đặt lại mật khẩu">
-                                          <Key size={13} /> Đổi MK
-                                        </button>
-                                        <button onClick={() => handleDeleteStaff(s)} style={{
-                                          padding: '6px 10px', background: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca',
+                                          <Key size={16} />
+                                        </Button>
+                                        <Button variant="outline" size="icon" data-intent="danger" aria-label={`Khóa nhân viên ${s.ho_ten}`} onClick={() => handleDeleteStaff(s)} style={{
+                                          padding: '6px 10px', background: "#f6f8fa", color: '#dc2626', border: '1px solid #fecaca',
                                           borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 12, display: 'inline-flex',
                                           alignItems: 'center', gap: 4, transition: 'all .15s'
                                         }} title="Vô hiệu hóa tài khoản nhân viên">
-                                          <Trash2 size={13} /> Khóa
-                                        </button>
+                                          <Trash2 size={16} />
+                                        </Button>
                                       </div>
                                     </td>
                                   </tr>
                                 )
                               }}</PaginatedList>
                             </tbody>
-                          </table>
+                          </Table>
                         </div>
 
                         {subStaffList.length === 0 && (
-                          <div style={{ textAlign: 'center', padding: 60, color: '#69736a' }}>
-                            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f4f5f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-                              <Users size={28} color="#85907d" />
+                          <div style={{ textAlign: 'center', padding: 60, color: '#526174' }}>
+                            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f6f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                              <Users size={28} color="#526174" />
                             </div>
-                            <div style={{ fontWeight: 600, fontSize: 16, color: '#252927' }}>Chưa có tài khoản nhân viên con nào</div>
-                            <p style={{ fontSize: 13, color: '#69736a', marginTop: 4, maxWidth: 400, margin: '4px auto 0' }}>Bấm nút "Thêm nhân viên con mới" ở góc trên để cấp tài khoản cho nhân viên Kiosk của bạn.</p>
+                            <div style={{ fontWeight: 600, fontSize: 16, color: '#142b3e' }}>Chưa có tài khoản nhân viên con nào</div>
+                            <p style={{ fontSize: 13, color: '#526174', marginTop: 4, maxWidth: 400, margin: '4px auto 0' }}>Bấm nút "Thêm nhân viên con mới" ở góc trên để cấp tài khoản cho nhân viên Kiosk của bạn.</p>
                           </div>
                         )}
                       </div>
@@ -1991,492 +1865,18 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* TAB 3: PHÂN CA LÀM VIỆC (WORK SHIFT SCHEDULING) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {tab === 'shift_schedule' && (
-                  <div>
-                    {/* ── Header Controls ── */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                          <h3 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: '#252927', letterSpacing: '-0.02em' }}>Lịch & Phân Ca Làm Việc Tại Kiosk</h3>
-                          {activeKiosk && (
-                            <span style={{
-                              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px',
-                              borderRadius: 99, background: "#f4f5f2", border: '1px solid #bfdbfe',
-                              color: '#1e40af', fontSize: 12, fontWeight: 600
-                            }}>
-                              <Store size={14} color="#2563eb" />
-                              <span>{activeKiosk.ten_kiosk} ({activeKiosk.ma_kiosk})</span>
-                            </span>
-                          )}
-                        </div>
-                        <p style={{ margin: '6px 0 0', color: '#69736a', fontSize: 14 }}>
-                          Lập lịch phân công ca làm việc theo tuần cho nhân viên và theo dõi chấm công tại kiosk.
-                        </p>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                        {/* Kiosk quick switch if multiple kiosks */}
-                        {kiosks.length > 1 && (
-                          <SearchableSelect
-                            className="franchise-filter-select"
-                            value={activeKioskId}
-                            onChange={e => switchKiosk(e.target.value)}
-                            style={{
-                              padding: '9px 14px', borderRadius: 12, border: '1px solid #ccd3c7',
-                              background: '#fff', fontSize: 13, fontWeight: 700, color: '#414743',
-                              outline: 'none', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-                            }}
-                          >
-                            {kiosks.map(k => (
-                              <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>
-                            ))}
-                          </SearchableSelect>
-                        )}
-
-                        {/* Week Navigator */}
-                        <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ccd3c7', borderRadius: 14, padding: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-                          <button
-                            onClick={() => setWeekOffset(w => w - 1)}
-                            style={{
-                              padding: '8px 12px', border: 'none', background: 'transparent',
-                              cursor: 'pointer', borderRadius: 10, fontWeight: 700, fontSize: 13,
-                              color: '#596255', display: 'flex', alignItems: 'center', gap: 4,
-                              transition: 'background .15s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = '#f4f5f2'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                          >
-                            <ChevronLeft size={16} /> Tuần trước
-                          </button>
-                          <button
-                            onClick={() => setWeekOffset(0)}
-                            style={{
-                              padding: '8px 14px', border: weekOffset === 0 ? '1px solid #252927' : '1px solid transparent',
-                              background: weekOffset === 0 ? '#252927' : 'transparent',
-                              color: weekOffset === 0 ? '#ffffff' : '#69736a',
-                              cursor: 'pointer', borderRadius: 10, fontWeight: 600, fontSize: 13,
-                              display: 'flex', alignItems: 'center', gap: 6, transition: 'all .15s'
-                            }}
-                          >
-                            <Calendar size={14} />
-                            <span>Tuần này ({currentWeekDays[0]?.dateKey?.split('-').slice(1).reverse().join('/')} - {currentWeekDays[6]?.dateKey?.split('-').slice(1).reverse().join('/')})</span>
-                          </button>
-                          <button
-                            onClick={() => setWeekOffset(w => w + 1)}
-                            style={{
-                              padding: '8px 12px', border: 'none', background: 'transparent',
-                              cursor: 'pointer', borderRadius: 10, fontWeight: 700, fontSize: 13,
-                              color: '#596255', display: 'flex', alignItems: 'center', gap: 4,
-                              transition: 'background .15s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = '#f4f5f2'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                          >
-                            Tuần sau <ChevronRight size={16} />
-                          </button>
-                        </div>
-
-                        {/* Reload Button */}
-                        <button
-                          onClick={() => loadWorkShifts(activeKioskId, weekOffset)}
-                          title="Tải lại lịch phân ca"
-                          style={{
-                            padding: '10px', background: '#fff', border: '1px solid #ccd3c7',
-                            borderRadius: 12, cursor: 'pointer', color: '#596255', display: 'flex',
-                            alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-                          }}
-                        >
-                          <RefreshCw size={15} className={workShiftsLoading ? 'animate-spin' : ''} />
-                        </button>
-
-                        {/* Add Shift Button (Green CTA) */}
-                        <button
-                          onClick={() => {
-                            setShiftScheduleForm({
-                              staff_username: subStaffList[0]?.ten_dang_nhap || '',
-                              staff_name: subStaffList[0]?.ho_ten || '',
-                              shift_date: new Date().toISOString().split('T')[0],
-                              shift_code: 'SANG',
-                              note: '',
-                            });
-                            setShowCreateShiftModal(true);
-                          }}
-                          style={{
-                            padding: '10px 18px', background: '#252927',
-                            color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 13,
-                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'all .2s'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                          onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                        >
-                          <Plus size={16} /> Phân ca mới
-                        </button>
-                      </div>
+                  <div className="kiosk-schedule-panel">
+                    <div className="kiosk-schedule-toolbar">
+                      <div className="kiosk-week-navigation"><Button type="button" variant="outline" size="icon" aria-label="Tuần trước" onClick={()=>setWeekOffset(w=>w-1)}><ChevronLeft size={17}/></Button><span>{currentWeekDays[0]?.dateKey?.split('-').reverse().join('/')} – {currentWeekDays[6]?.dateKey?.split('-').reverse().join('/')}</span><Button type="button" variant="outline" size="icon" aria-label="Tuần sau" onClick={()=>setWeekOffset(w=>w+1)}><ChevronRight size={17}/></Button><Button type="button" variant="outline" onClick={()=>setWeekOffset(0)}>Tuần hiện tại</Button></div>
+                      <div><Button type="button" variant="outline" size="icon" aria-label="Tải lại lịch phân ca" disabled={workShiftsLoading} onClick={()=>loadWorkShifts(activeKioskId,weekOffset)}><RefreshCw size={16}/></Button><Button type="button" variant="default" onClick={()=>{setShiftScheduleForm({staff_username:subStaffList[0]?.ten_dang_nhap||'',staff_name:subStaffList[0]?.ho_ten||'',shift_date:new Date().toLocaleDateString('sv-SE'),shift_code:'SANG',note:''});setShowCreateShiftModal(true)}}><Plus size={16}/>Phân ca mới</Button></div>
                     </div>
 
-                    {/* ── Pending Shift Requests Banner for Franchisee ── */}
-                    {(() => {
-                      const pendingList = shiftRequests.filter(r => r.trang_thai_yeu_cau === 'PENDING')
-                      if (pendingList.length === 0) return null
+                    {shiftRequests.some(r=>r.trang_thai_yeu_cau==='PENDING')&&<div className="kiosk-pending-requests"><StatusBadge status="PENDING">{shiftRequests.filter(r=>r.trang_thai_yeu_cau==='PENDING').length} yêu cầu chờ duyệt</StatusBadge><span>Xem nguyện vọng đăng ký trước khi chốt lịch làm việc.</span><Button type="button" variant="outline" onClick={()=>setShowShiftRequestsModal(true)}>Xem yêu cầu</Button><Button type="button" variant="default" disabled={shiftRequestsLoading} onClick={handleApproveAllPending}><Check size={15}/>Duyệt tất cả</Button></div>}
 
-                      return (
-                        <div style={{
-                          marginBottom: 16, padding: '12px 18px', borderRadius: 14,
-                          background: "linear-gradient(135deg, #f4f5f2, #f4f5f2)",
-                          border: '1px solid #fcd34d', display: 'flex', alignItems: 'center',
-                          justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
-                          boxShadow: '0 4px 12px rgba(217,119,6,0.06)'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{
-                              width: 38, height: 38, borderRadius: 10, background: "#f4f5f2",
-                              color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              border: '1px solid #fcd34d', flexShrink: 0
-                            }}>
-                              <CalendarCheck size={20} />
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: 600, fontSize: 14, color: '#92400e' }}>
-                                Có {pendingList.length} yêu cầu đăng ký ca làm việc mới chờ duyệt
-                              </div>
-                              <div style={{ fontSize: 12, color: '#b45309', marginTop: 2 }}>
-                                Hãy xem xét và bấm Duyệt để chuyển thành ca làm việc chính thức cho Kiosk.
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <button
-                              onClick={() => setShowShiftRequestsModal(true)}
-                              style={{
-                                padding: '7px 12px', background: '#ffffff', border: '1px solid #ccd3c7',
-                                borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#596255',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.02)', transition: 'all .15s'
-                              }}
-                              onMouseEnter={e => e.currentTarget.style.background = '#f8f9f6'}
-                              onMouseLeave={e => e.currentTarget.style.background = '#ffffff'}
-                            >
-                              <FileText size={14} /> Danh sách chờ ({pendingList.length})
-                            </button>
-                            <button
-                              onClick={handleApproveAllPending}
-                              disabled={shiftRequestsLoading}
-                              style={{
-                                padding: '7px 14px', background: '#252927',
-                                border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#ffffff',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
-                                boxShadow: '0 3px 8px rgba(0,0,0,0.1)', transition: 'all .15s'
-                              }}
-                              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                            >
-                              <Check size={14} /> Duyệt tất cả ({pendingList.length} ca)
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })()}
+                    <KioskScheduleGrid days={currentWeekDays} templates={SHIFT_TEMPLATES} items={workShifts} loading={workShiftsLoading} handlingId={approvingRequestId}
+                      onAssign={(day,code)=>{setShiftScheduleForm({staff_username:subStaffList[0]?.ten_dang_nhap||'',staff_name:subStaffList[0]?.ho_ten||'',shift_date:day,shift_code:code,note:''});setShowCreateShiftModal(true)}}
+                      onDelete={handleDeleteWorkShift} onApprove={handleApproveShiftRequest} onReject={handleRejectShiftRequest} onAttendance={handleUpdateAttendance}/>
 
-                    {/* ── Weekly Schedule Grid ── */}
-                    {workShiftsLoading ? (
-                      <div style={{ textAlign: 'center', padding: 80, color: '#69736a', background: '#fff', borderRadius: 20, border: '1px solid #e2e4df' }}>
-                        <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px', color: '#2563eb' }} />
-                        <div style={{ fontWeight: 700 }}>Đang tải lịch phân ca làm việc tuần...</div>
-                      </div>
-                    ) : (
-                      <div style={{ overflowX: 'auto', paddingBottom: 10 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(180px, 1fr))', gap: 12, minWidth: 1260 }}>
-                          {currentWeekDays.map((day) => {
-                            const dayShifts = workShifts.filter(s => s.ngay_lam_viec === day.dateKey)
-                            const activeDayShifts = dayShifts.filter(s => s.trang_thai_yeu_cau !== 'REJECTED')
-
-                            return (
-                              <div key={day.dateKey} style={{
-                                background: '#fff', borderRadius: 16,
-                                border: day.isToday ? '2px solid #252927' : '1px solid #e2e4df',
-                                overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 560,
-                                boxShadow: day.isToday ? '0 8px 24px -4px rgba(0,0,0,0.1)' : '0 2px 10px rgba(0,0,0,0.03)',
-                                transition: 'all .2s'
-                              }}>
-                                {/* Day Header */}
-                                <div style={{
-                                  padding: '14px 10px',
-                                  background: day.isToday ? '#252927' : '#f8f9f6',
-                                  borderBottom: day.isToday ? 'none' : '1px solid #e2e4df',
-                                  textAlign: 'center', color: day.isToday ? '#fff' : '#252927'
-                                }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                                    <span style={{ fontWeight: 600, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{day.label}</span>
-                                    <span style={{
-                                      padding: '1px 6px', borderRadius: 6,
-                                      background: day.isToday ? 'rgba(255,255,255,0.2)' : "#f4f5f2",
-                                      fontSize: 10, fontWeight: 600,
-                                      color: day.isToday ? '#ffffff' : '#596255'
-                                    }}>
-                                      {activeDayShifts.length} ca
-                                    </span>
-                                  </div>
-
-                                  <div style={{
-                                    display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 99,
-                                    background: day.isToday ? '#ffffff' : '#f4f5f2',
-                                    fontSize: 11, fontWeight: 600, color: day.isToday ? '#252927' : '#596255',
-                                    border: day.isToday ? 'none' : '1px solid #e2e4df'
-                                  }}>
-                                    {String(day.date.getDate()).padStart(2, '0')}/{String(day.date.getMonth() + 1).padStart(2, '0')}
-                                  </div>
-
-                                  {day.isToday && (
-                                    <div style={{ marginTop: 4 }}>
-                                      <span style={{
-                                        display: 'inline-flex', alignItems: 'center', gap: 4,
-                                        background: 'rgba(255,255,255,0.2)', padding: '2px 8px',
-                                        borderRadius: 99, fontSize: 10, fontWeight: 600, color: '#ffffff'
-                                      }}>
-                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffffff', display: 'inline-block' }} />
-                                        Hôm nay
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Shift slots */}
-                                <div style={{ padding: 10, flex: 1, display: 'flex', flexDirection: 'column', gap: 10, overflowX: 'hidden', overflowY: 'auto' }}>
-                                  {SHIFT_TEMPLATES.map((tmpl) => {
-                                    const matchingShifts = activeDayShifts.filter(s => s.ma_khung_ca === tmpl.id)
-                                    const ShiftIcon = tmpl.icon
-                                    return (
-                                      <div key={tmpl.id} style={{
-                                        background: tmpl.bg, borderRadius: 12, padding: 10, border: `1px solid ${tmpl.border}`,
-                                        display: 'flex', flexDirection: 'column', gap: 8
-                                      }}>
-                                        {/* Slot Header */}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                            <ShiftIcon size={14} color={tmpl.accent} />
-                                            <span style={{ fontWeight: 600, fontSize: 12, color: tmpl.text, letterSpacing: '0.01em' }}>
-                                              {tmpl.name}
-                                            </span>
-                                          </div>
-                                          <span style={{
-                                            fontSize: 10, color: tmpl.accent, fontWeight: 700,
-                                            background: 'rgba(255,255,255,0.92)', padding: '2px 6px',
-                                            borderRadius: 6, border: '1px solid rgba(0,0,0,0.06)', whiteSpace: 'nowrap'
-                                          }}>
-                                            {tmpl.start} - {tmpl.end}
-                                          </span>
-                                        </div>
-
-                                        {/* Matching Shifts (Official + Pending) */}
-                                        {matchingShifts.length === 0 ? (
-                                          <button
-                                            onClick={() => {
-                                              setShiftScheduleForm({
-                                                staff_username: subStaffList[0]?.ten_dang_nhap || '',
-                                                staff_name: subStaffList[0]?.ho_ten || '',
-                                                shift_date: day.dateKey,
-                                                shift_code: tmpl.id,
-                                                note: '',
-                                              });
-                                              setShowCreateShiftModal(true);
-                                            }}
-                                            style={{
-                                              border: `1px dashed ${tmpl.border}`, background: 'rgba(255,255,255,0.7)',
-                                              borderRadius: 8, padding: '9px 4px', color: tmpl.accent,
-                                              fontSize: 11, fontWeight: 700, cursor: 'pointer', textAlign: 'center',
-                                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                                              transition: 'all .15s'
-                                            }}
-                                            onMouseEnter={e => {
-                                              e.currentTarget.style.background = '#ffffff'
-                                              e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.05)'
-                                            }}
-                                            onMouseLeave={e => {
-                                              e.currentTarget.style.background = 'rgba(255,255,255,0.7)'
-                                              e.currentTarget.style.boxShadow = 'none'
-                                            }}
-                                          >
-                                            <Plus size={13} /> Phân ca
-                                          </button>
-                                        ) : (
-                                          matchingShifts.map((shift) => {
-                                            const isPending = shift.trang_thai_yeu_cau === 'PENDING'
-                                            const attStatus = shift.trang_thai_cham_cong || 'ASSIGNED'
-                                            const statusCfg = ATTENDANCE_STATUS_CONFIG[attStatus] || ATTENDANCE_STATUS_CONFIG.ASSIGNED
-                                            const staffDisplay = shift.staff_name || shift.staff_username
-                                            const initials = getStaffInitials(staffDisplay)
-
-                                            // Card Ca Chờ Duyệt
-                                            if (isPending) {
-                                              return (
-                                                <div key={shift.ma_ca_lam_viec} style={{
-                                                  background: '#fffdf5', borderRadius: 10, padding: 8,
-                                                  border: '1.5px dashed #f59e0b',
-                                                  boxShadow: '0 2px 6px rgba(245,158,11,0.08)',
-                                                  display: 'flex', flexDirection: 'column', gap: 6
-                                                }}>
-                                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <span style={{
-                                                      fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 6,
-                                                      background: "#f4f5f2", color: '#b45309', border: '1px solid #fde68a',
-                                                      display: 'inline-flex', alignItems: 'center', gap: 3
-                                                    }}>
-                                                      <Clock size={10} /> Chờ duyệt
-                                                    </span>
-                                                    <span style={{ fontSize: 9, color: '#85907d', fontWeight: 600 }}>Nguyện vọng</span>
-                                                  </div>
-
-                                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                                                    <div style={{
-                                                      width: 28, height: 28, borderRadius: '50%',
-                                                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                                                      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                      fontSize: 11, fontWeight: 600, flexShrink: 0
-                                                    }}>
-                                                      {initials}
-                                                    </div>
-                                                    <div style={{ minWidth: 0 }}>
-                                                      <div style={{ fontWeight: 600, fontSize: 12, color: '#252927', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={staffDisplay}>
-                                                        {staffDisplay}
-                                                      </div>
-                                                      <div style={{ fontSize: 10, color: '#69736a' }}>
-                                                        @{shift.staff_username}
-                                                      </div>
-                                                    </div>
-                                                  </div>
-
-                                                  {(shift.ghi_chu || shift.note) && (
-                                                    <div style={{
-                                                      fontSize: 10, color: '#92400e', background: 'rgba(254,243,199,0.5)',
-                                                      padding: '3px 6px', borderRadius: 4, fontStyle: 'italic',
-                                                      textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap'
-                                                    }} title={shift.ghi_chu || shift.note}>
-                                                      "{shift.ghi_chu || shift.note}"
-                                                    </div>
-                                                  )}
-
-                                                  {/* Action Buttons for Pending Shift */}
-                                                  <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
-                                                    <button
-                                                      onClick={() => handleApproveShiftRequest(shift.ma_ca_lam_viec)}
-                                                      disabled={approvingRequestId === shift.ma_ca_lam_viec}
-                                                      style={{
-                                                        flex: 1, padding: '5px 8px',
-                                                        background: "linear-gradient(135deg, var(--primary), var(--primary))",
-                                                        color: '#fff', border: 'none', borderRadius: 8,
-                                                        fontWeight: 600, fontSize: 11, cursor: 'pointer',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        gap: 3, boxShadow: '0 2px 6px rgba(16,185,129,0.25)',
-                                                        transition: 'all .15s'
-                                                      }}
-                                                      title="Duyệt ca này thành lịch chính thức"
-                                                    >
-                                                      <Check size={12} /> Duyệt ca
-                                                    </button>
-                                                    <button
-                                                      onClick={() => handleRejectShiftRequest(shift.ma_ca_lam_viec)}
-                                                      disabled={approvingRequestId === shift.ma_ca_lam_viec}
-                                                      style={{
-                                                        padding: '5px 8px', background: "#f4f5f2", color: '#dc2626',
-                                                        border: '1px solid #fee2e2', borderRadius: 8,
-                                                        fontWeight: 700, fontSize: 11, cursor: 'pointer',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        gap: 3, transition: 'all .15s'
-                                                      }}
-                                                      title="Từ chối yêu cầu ca"
-                                                    >
-                                                      <X size={12} /> Từ chối
-                                                    </button>
-                                                  </div>
-                                                </div>
-                                              )
-                                            }
-
-                                            // Card Ca Đã Duyệt / Chính Thức
-                                            return (
-                                              <div key={shift.ma_ca_lam_viec} style={{
-                                                background: '#fff', borderRadius: 10, padding: 8, border: '1px solid #e2e4df',
-                                                boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: 6
-                                              }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
-                                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                                                    <div style={{
-                                                      width: 28, height: 28, borderRadius: '50%',
-                                                      background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                                                      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                      fontSize: 11, fontWeight: 600, flexShrink: 0
-                                                    }}>
-                                                      {initials}
-                                                    </div>
-                                                    <div style={{ minWidth: 0 }}>
-                                                      <div style={{ fontWeight: 600, fontSize: 12, color: '#252927', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={staffDisplay}>
-                                                        {staffDisplay}
-                                                      </div>
-                                                      <div style={{ fontSize: 10, color: '#69736a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                                                        @{shift.staff_username}
-                                                      </div>
-                                                    </div>
-                                                  </div>
-
-                                                  <button
-                                                    onClick={() => handleDeleteWorkShift(shift.ma_ca_lam_viec)}
-                                                    style={{
-                                                      background: "#f4f5f2", border: '1px solid #fee2e2', color: '#dc2626',
-                                                      borderRadius: 6, cursor: 'pointer', padding: '4px', display: 'flex',
-                                                      alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
-                                                      flexShrink: 0
-                                                    }}
-                                                    title="Hủy ca làm việc"
-                                                    onMouseEnter={e => e.currentTarget.style.background = '#fee2e2'}
-                                                    onMouseLeave={e => e.currentTarget.style.background = '#fef2f2'}
-                                                  >
-                                                    <Trash2 size={12} />
-                                                  </button>
-                                                </div>
-
-                                                {(shift.ghi_chu || shift.note) && (
-                                                  <div style={{
-                                                    fontSize: 10, color: '#69736a', fontStyle: 'italic',
-                                                    background: '#f8f9f6', padding: '3px 6px', borderRadius: 4,
-                                                    textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap'
-                                                  }} title={shift.ghi_chu || shift.note}>
-                                                    Ghi chú: {shift.ghi_chu || shift.note}
-                                                  </div>
-                                                )}
-
-                                                {/* Attendance Selector */}
-                                                <div>
-                                                  <select
-                                                    value={attStatus}
-                                                    onChange={e => handleUpdateAttendance(shift.ma_ca_lam_viec, e.target.value)}
-                                                    style={{
-                                                      width: '100%', fontSize: 11, fontWeight: 600, padding: '4px 6px', borderRadius: 6,
-                                                      border: `1px solid ${statusCfg.border}`,
-                                                      background: statusCfg.bg,
-                                                      color: statusCfg.text,
-                                                      outline: 'none', cursor: 'pointer'
-                                                    }}
-                                                  >
-                                                    <option value="ASSIGNED">Chờ nhận ca</option>
-                                                    <option value="PRESENT">Đúng giờ (Có mặt)</option>
-                                                    <option value="LATE">Đi muộn</option>
-                                                    <option value="ABSENT">Vắng mặt</option>
-                                                  </select>
-                                                </div>
-                                              </div>
-                                            )
-                                          })
-                                        )}
-                                      </div>
-                                    )
-                                  })}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
 
@@ -2486,308 +1886,9 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* TAB: GIÁM SÁT CA TRỰC & ĐỐI SOÁT KÉT TIỀN (kiosk_shifts) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
-                {tab === 'kiosk_shifts' && (() => {
-                  const lastClosedShift = kioskShiftHistory.find(s => s.trang_thai === 'CLOSED' || s.trang_thai === 'FORCE_CLOSED') || kioskShiftHistory[0]
-
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                      {/* Tiêu đề & Công cụ quản trị */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
-                        <div>
-                          <h3 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: '#252927' }}>Giám Sát Ca Trực và Đối Soát Két Tiền</h3>
-                          <p style={{ margin: '4px 0 0', color: '#69736a', fontSize: 14 }}>
-                            Theo dõi tình trạng hoạt động thực tế tại Kiosk, kiểm soát dòng tiền đầu ca, doanh thu và đối soát chốt két của nhân viên.
-                          </p>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                          <button
-                            onClick={() => { loadActiveKioskShift(); loadKioskShiftHistory(); }}
-                            style={{
-                              padding: '10px 18px', background: '#ffffff', border: '1.5px solid #ccd3c7', borderRadius: 12,
-                              fontWeight: 700, fontSize: 13, color: '#414743', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.03)', transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <RefreshCw size={15} /> Làm mới số liệu
-                          </button>
-
-                          <button
-                            onClick={() => setTab('shift_schedule')}
-                            style={{
-                              padding: '10px 18px', background: "#f4f5f2", border: '1.5px solid #bfdbfe', borderRadius: 12,
-                              fontWeight: 700, fontSize: 13, color: "var(--primary)", cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                              boxShadow: '0 2px 6px rgba(6,95,70,0.05)', transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <CalendarDays size={15} /> Xem lịch phân ca
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 1. THẺ GIÁM SÁT CA TRỰC HIỆN THỜI */}
-                      {activeKioskShiftLoading ? (
-                        <div style={{ textAlign: 'center', padding: '40px 20px', background: '#ffffff', borderRadius: 20, border: '1px solid #e2e4df', color: '#69736a' }}>
-                          Đang kiểm tra trạng thái ca trực thời gian thực...
-                        </div>
-                      ) : activeKioskShift?.has_open_shift ? (
-                        /* Đang có ca trực mở tại Kiosk */
-                        <div style={{
-                          background: '#252927', borderRadius: 24, padding: '28px', color: '#ffffff',
-                          boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-                            <div>
-                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.18)', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.04em' }}>
-                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#38bdf8', display: 'inline-block' }}></span>
-                                CA TRỰC ĐANG HOẠT ĐỘNG
-                              </div>
-
-                              <h2 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 600, color: '#ffffff' }}>
-                                Thu ngân: {activeKioskShift.active_shift?.staff_name || activeKioskShift.active_shift?.staff_username}
-                              </h2>
-
-                              <div style={{ fontSize: 14, opacity: 0.9 }}>
-                                Tài khoản: @{activeKioskShift.active_shift?.staff_username} • Bắt đầu ca: {fmtDate(activeKioskShift.active_shift?.thoi_gian_mo_ca)} (Thời gian đã trực: {activeKioskShift.live_stats?.duration_minutes} phút)
-                              </div>
-                            </div>
-
-                            {/* Quyền quản trị của Admin */}
-                            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                              <button
-                                onClick={() => setTab('pos_orders')}
-                                style={{
-                                  padding: '11px 18px', background: 'rgba(255,255,255,0.16)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)',
-                                  borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
-                                }}
-                              >
-                                <Receipt size={15} /> Xem đơn trong ca
-                              </button>
-
-                              <button
-                                onClick={() => setShowForceCloseModal(true)}
-                                style={{
-                                  padding: '11px 18px', background: '#ffffff', color: '#dc2626', border: 'none',
-                                  borderRadius: 12, fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                                }}
-                                title="Cưỡng chế đóng ca khi nhân viên trước quên chốt hoặc bỏ ca"
-                              >
-                                <ShieldAlert size={15} /> Cưỡng chế đóng ca
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* 4 Thẻ số liệu tài chính thời gian thực */}
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginTop: 24, paddingTop: 22, borderTop: '1px solid rgba(255,255,255,0.18)' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '16px' }}>
-                              <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 700 }}>Tiền mặt đầu ca bàn giao</div>
-                              <div style={{ fontSize: 22, fontWeight: 600, marginTop: 6 }}>{fmtMoney(activeKioskShift.active_shift?.tien_dau_ca)}</div>
-                            </div>
-
-                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '16px' }}>
-                              <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 700 }}>Doanh thu tạm tính trong ca</div>
-                              <div style={{ fontSize: 22, fontWeight: 600, marginTop: 6 }}>{fmtMoney(activeKioskShift.live_stats?.total_revenue)}</div>
-                            </div>
-
-                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '16px' }}>
-                              <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 700 }}>Số đơn đã bán tại quầy</div>
-                              <div style={{ fontSize: 22, fontWeight: 600, marginTop: 6 }}>{activeKioskShift.live_stats?.total_orders} đơn</div>
-                            </div>
-
-                            <div style={{ background: 'rgba(255,255,255,0.16)', borderRadius: 14, padding: '16px', border: '1px solid rgba(255,255,255,0.22)' }}>
-                              <div style={{ fontSize: 12, opacity: 0.95, fontWeight: 600, color: '#fef08a' }}>Tiền mặt kỳ vọng trong két</div>
-                              <div style={{ fontSize: 24, fontWeight: 600, color: '#fef08a', marginTop: 6 }}>{fmtMoney(activeKioskShift.live_stats?.expected_cash)}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Kiosk hiện chưa mở ca - Thiết kế quản trị chuyên nghiệp */
-                        <div style={{
-                          background: '#ffffff', borderRadius: 24, padding: '32px', border: '1.5px solid #e2e4df',
-                          boxShadow: '0 4px 18px rgba(0,0,0,0.03)'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
-                            <div style={{ maxWidth: 640 }}>
-                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: '#f4f5f2', color: '#596255', fontSize: 12, fontWeight: 600, marginBottom: 14 }}>
-                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#85907d', display: 'inline-block' }}></span>
-                                HIỆN CHƯA CÓ CA TRỰC MỞ
-                              </div>
-
-                              <h3 style={{ margin: '0 0 10px', fontSize: 22, fontWeight: 600, color: '#252927' }}>
-                                Kiosk Hiện Đang Chờ Mở Ca Trực
-                              </h3>
-
-                              <p style={{ margin: 0, color: '#69736a', fontSize: 14, lineHeight: 1.6 }}>
-                                Chi nhánh <b>{activeKiosk?.ten_kiosk}</b> ({activeKiosk?.ma_kiosk}) hiện chưa có nhân viên đăng nhập mở ca trên máy POS.
-                                Khi nhân viên bắt đầu ca làm việc và kê khai vốn tiền mặt ban đầu, toàn bộ dữ liệu đối soát và dòng tiền thời gian thực sẽ tự động kích hoạt tại bảng giám sát này.
-                              </p>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 240 }}>
-                              <button
-                                onClick={() => setTab('shift_schedule')}
-                                style={{
-                                  padding: '12px 20px', background: '#252927', color: '#ffffff', border: 'none',
-                                  borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'background 0.15s ease'
-                                }}
-                              >
-                                <CalendarDays size={16} /> Kiểm tra lịch phân ca
-                              </button>
-
-                              <button
-                                onClick={() => setTab('staff_manage')}
-                                style={{
-                                  padding: '11px 20px', background: '#f8f9f6', color: '#414743', border: '1px solid #ccd3c7',
-                                  borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-                                }}
-                              >
-                                <Users size={15} /> Quản lý danh sách nhân viên
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Thẻ tóm tắt thông tin ca gần nhất vừa đóng */}
-                          {lastClosedShift && (
-                            <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #f4f5f2', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, background: '#f8f9f6', padding: '16px 20px', borderRadius: 14 }}>
-                              <div>
-                                <span style={{ fontSize: 12, fontWeight: 600, color: '#69736a', textTransform: 'uppercase' }}>Ca trực kết thúc gần nhất:</span>
-                                <div style={{ fontSize: 14, fontWeight: 600, color: '#252927', marginTop: 2 }}>
-                                  Thu ngân: {lastClosedShift.staff_name || lastClosedShift.staff_username} (Đóng lúc: {fmtDate(lastClosedShift.thoi_gian_dong_ca)})
-                                </div>
-                              </div>
-
-                              <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-                                <div>
-                                  <span style={{ fontSize: 12, color: '#69736a' }}>Tiền thực tế cuối ca:</span>
-                                  <div style={{ fontSize: 15, fontWeight: 600, color: '#252927' }}>{fmtMoney(lastClosedShift.tien_cuoi_ca)}</div>
-                                </div>
-                                <div>
-                                  <span style={{ fontSize: 12, color: '#69736a' }}>Chênh lệch đối soát:</span>
-                                  <div>
-                                    {lastClosedShift.chenh_lech === 0 ? (
-                                      <span style={{ fontSize: 13, fontWeight: 600, color: '#2563eb' }}>Khớp chuẩn 0đ</span>
-                                    ) : (lastClosedShift.chenh_lech > 0 ? (
-                                      <span style={{ fontSize: 13, fontWeight: 600, color: '#d97706' }}>+ {fmtMoney(lastClosedShift.chenh_lech)} (Thừa)</span>
-                                    ) : (
-                                      <span style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>- {fmtMoney(Math.abs(lastClosedShift.chenh_lech))} (Thiếu)</span>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* 2. BẢNG LỊCH SỬ CA TRỰC & ĐỐI SOÁT KÉT TIỀN */}
-                      <div style={{ background: '#ffffff', borderRadius: 22, border: '1px solid #e2e4df', padding: 26, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-                          <div>
-                            <h4 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#252927' }}>
-                              Lịch Sử Ca Trực và Đối Soát Két Tiền Kiosk
-                            </h4>
-                            <p style={{ margin: '4px 0 0', color: '#69736a', fontSize: 13 }}>
-                              Bảng kê chi tiết các ca làm việc, số tiền thực thu và đối soát sai lệch két tiền giữa ca.
-                            </p>
-                          </div>
-
-                          <div style={{ fontSize: 13, color: '#69736a', fontWeight: 600 }}>
-                            Tổng cộng: <b style={{ color: '#252927' }}>{kioskShiftHistory.length}</b> ca đã ghi nhận
-                          </div>
-                        </div>
-
-                        {kioskShiftHistoryLoading ? (
-                          <div style={{ textAlign: 'center', padding: '48px 20px', color: '#69736a' }}>Đang tải lịch sử ca trực...</div>
-                        ) : kioskShiftHistory.length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '48px 20px', color: '#85907d', fontSize: 14 }}>
-                            Chưa có ca trực nào được ghi nhận trên Kiosk này.
-                          </div>
-                        ) : (
-                          <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                              <thead>
-                                <tr style={{ background: '#f8f9f6', borderBottom: '1.5px solid #e2e4df' }}>
-                                  {['Thời Gian Ca', 'Thu Ngân Phụ Trách', 'Tiền Đầu Ca', 'Doanh Thu Hệ Thống', 'Số Đơn', 'Thực Tế Cuối Ca', 'Chênh Lệch Đối Soát', 'Trạng Thái'].map(h => (
-                                    <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#596255', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <PaginatedList items={kioskShiftHistory} resetKey={activeKioskId} layout="table" columns={9}>{shift => {
-                                  const isForceClosed = shift.trang_thai === 'FORCE_CLOSED'
-                                  const isOpen = shift.trang_thai === 'OPEN'
-                                  const diff = shift.chenh_lech
-                                  return (
-                                    <tr key={shift.id} style={{ borderBottom: '1px solid #f4f5f2' }}>
-                                      <td style={{ padding: '16px', fontSize: 13, color: '#30382e' }}>
-                                        <div style={{ fontWeight: 700 }}>Mở: {fmtDate(shift.thoi_gian_mo_ca)}</div>
-                                        <div style={{ fontSize: 12, color: '#69736a', marginTop: 2 }}>
-                                          Đóng: {shift.thoi_gian_dong_ca ? fmtDate(shift.thoi_gian_dong_ca) : 'Đang trong ca'}
-                                        </div>
-                                      </td>
-
-                                      <td style={{ padding: '16px', fontSize: 13, color: '#252927', fontWeight: 700 }}>
-                                        <div>{shift.staff_name || shift.staff_username}</div>
-                                        <div style={{ fontSize: 12, color: '#69736a', fontWeight: 500 }}>@{shift.staff_username}</div>
-                                      </td>
-
-                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 700, color: '#596255' }}>
-                                        {fmtMoney(shift.tien_dau_ca)}
-                                      </td>
-
-                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 600, color: '#2563eb' }}>
-                                        {fmtMoney(shift.doanh_thu_he_thong)}
-                                      </td>
-
-                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 700, color: '#30382e' }}>
-                                        {shift.tong_don_hang} đơn
-                                      </td>
-
-                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 600, color: '#252927' }}>
-                                        {shift.tien_cuoi_ca !== null ? fmtMoney(shift.tien_cuoi_ca) : '—'}
-                                      </td>
-
-                                      <td style={{ padding: '16px', fontSize: 13 }}>
-                                        {diff === null || diff === undefined ? (
-                                          <span style={{ color: '#85907d' }}>Chưa chốt</span>
-                                        ) : diff === 0 ? (
-                                          <span className="workspace-inline-label" style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: "#f4f5f2", color: '#1d4ed8', border: '1px solid #bfdbfe' }}>
-                                            Khớp chuẩn 0đ
-                                          </span>
-                                        ) : diff > 0 ? (
-                                          <span className="workspace-inline-label" style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: "#f4f5f2", color: '#b45309', border: '1px solid #fde68a' }}>
-                                            + {fmtMoney(diff)} (Thừa)
-                                          </span>
-                                        ) : (
-                                          <span className="workspace-inline-label" style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca' }}>
-                                            - {fmtMoney(Math.abs(diff))} (Thiếu)
-                                          </span>
-                                        )}
-                                      </td>
-
-                                      <td style={{ padding: '16px' }}>
-                                        <span className="workspace-inline-label" style={{
-                                          padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
-                                          background: isOpen ? "#f4f5f2" : isForceClosed ? "#f4f5f2" : '#f4f5f2',
-                                          color: isOpen ? '#1d4ed8' : isForceClosed ? '#dc2626' : '#596255',
-                                          border: `1px solid ${isOpen ? '#bfdbfe' : isForceClosed ? '#fecaca' : '#ccd3c7'}`
-                                        }}>
-                                          {isOpen ? 'Đang mở' : isForceClosed ? 'Ép đóng ca' : 'Đã chốt ca'}
-                                        </span>
-                                      </td>
-                                    </tr>
-                                  )
-                                }}</PaginatedList>
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })()}
+                {tab === 'kiosk_shifts' && <KioskShiftPanel active={activeKioskShift} history={kioskShiftHistory} loading={activeKioskShiftLoading} historyLoading={kioskShiftHistoryLoading} busy={shiftActionSubmitting}
+                  onRefresh={() => { loadActiveKioskShift(activeKioskId); loadKioskShiftHistory(activeKioskId) }}
+                  onOpen={() => setShowOpenShiftModal(true)} onClose={() => setShowCloseShiftModal(true)} onForceClose={() => setShowForceCloseModal(true)} onOrders={() => setTab('pos_orders')} onReview={handleKioskCloseApproval} />}
 
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* TAB: ĐƠN BÁN HÀNG POS (pos_orders) */}
@@ -2795,36 +1896,37 @@ export function FranchiseePortal({ session, onLogout }) {
                 {tab === 'pos_orders' && (
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                      <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: '#30382e' }}><WorkspaceSymbolReceipt size="1.1em" aria-hidden="true" /> Đơn Bán Hàng Tại Quầy Kiosk</h3>
+
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#69736a' }}>Thời gian:</span>
-                        <select className="franchise-filter-select" value={posDateFilter} onChange={e => setPosDateFilter(e.target.value)}
-                          style={{ padding: '8px 12px', border: '1px solid #ccd3c7', borderRadius: 8, fontSize: 14, background: '#fff', outline: 'none', fontWeight: 600 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#526174' }}>Thời gian:</span>
+                        <SearchableSelect className="franchise-filter-select" value={posDateFilter} onChange={e => setPosDateFilter(e.target.value)}
+                          style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14, background: '#fff', outline: 'none', fontWeight: 600 }}>
                           <option value="today">Hôm nay</option>
                           <option value="week">Tuần này</option>
                           <option value="month">Tháng này</option>
                           <option value="all">Tất cả</option>
-                        </select>
-                        <button onClick={loadPosOrders} style={{ padding: '8px 14px', background: '#f4f5f2', border: '1px solid #ccd3c7', borderRadius: 8, cursor: 'pointer', fontWeight: 700, color: '#596255' }}>
+                        </SearchableSelect>
+                        <Button onClick={() => loadPosOrders(activeKioskId, posDateFilter, true)} disabled={posOrderLoading} style={{ padding: '8px 14px', background: '#f6f8fa', border: '1px solid #cbd5e1', borderRadius: 8, cursor: 'pointer', fontWeight: 700, color: '#526174' }}>
                           <RefreshCw size={14} /> Tải lại
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
-                    {posOrderLoading ? (
-                      <div style={{ textAlign: 'center', padding: 60, color: '#69736a', fontSize: 15 }}>⏳ Đang tải dữ liệu đơn...</div>
+                    {posOrderError && <p className="workspace-form-error" role="alert">{posOrderError}</p>}
+                    {posOrderLoading && !posOrders.length ? (
+                      <KioskTableLoading label="Đang tải đơn bán hàng" />
                     ) : (
-                      <div style={{ overflowX: 'auto', background: '#fff', borderRadius: 20, border: '1px solid #e2e4df', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <div style={{ overflowX: 'auto', background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+                        <Table style={{ width: '100%', borderCollapse: 'collapse' }}>
                           <thead>
-                            <tr style={{ background: '#f8f9f6', borderBottom: '1px solid #e2e4df' }}>
+                            <tr style={{ background: '#f6f8fa', borderBottom: '1px solid #e2e8f0' }}>
                               {['Mã Đơn', 'Ngày tạo', 'Khách hàng', 'Tổng tiền', 'Thanh toán', 'Chi tiết món', 'Trạng thái', 'Thao tác'].map(h => (
-                                <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#69736a', textTransform: 'uppercase' }}>{h}</th>
+                                <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#526174', textTransform: 'uppercase' }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
-                            <PaginatedList items={posOrders} resetKey={JSON.stringify([activeKioskId,posDateFilter])} layout="table" columns={9}>{(d) => {
+                            <PaginatedList items={posOrders} resetKey={JSON.stringify([activeKioskId,posDateFilter])} layout="table" columns={8}>{(d) => {
                               const isVoided = d.trang_thai_don_hang === 'DA_HUY' || d.trang_thai_thanh_toan === 'DA_HOAN_TIEN'
                               const isShiftOpen = !!activeKioskShift?.has_open_shift
                               const shiftOpenTime = activeKioskShift?.active_shift?.thoi_gian_mo_ca ? new Date(activeKioskShift.active_shift.thoi_gian_mo_ca).getTime() : 0
@@ -2832,50 +1934,37 @@ export function FranchiseePortal({ session, onLogout }) {
                               const isWithinActiveShift = isShiftOpen && orderTime >= shiftOpenTime
 
                               return (
-                                <tr key={d.ma_don_hang} style={{ borderBottom: '1px solid #f4f5f2', background: isVoided ? '#fff7f7' : 'transparent' }}>
-                                  <td style={{ padding: '14px 16px', fontWeight: 600, color: isVoided ? '#85907d' : '#30382e', fontSize: 13 }}>
+                                <tr key={d.ma_don_hang} style={{ borderBottom: '1px solid #f6f8fa', background: isVoided ? '#fff7f7' : 'transparent' }}>
+                                  <td style={{ padding: '14px 16px', fontWeight: 600, color: isVoided ? '#526174' : '#30382e', fontSize: 13 }}>
                                     #{d.ma_don_hang.substring(0, 8).toUpperCase()}
                                   </td>
-                                  <td style={{ padding: '14px 16px', color: '#69736a', fontSize: 13, fontWeight: 500 }}>{fmtDate(d.ngay_tao)}</td>
-                                  <td style={{ padding: '14px 16px', color: '#596255', fontSize: 13, fontWeight: 600 }}>{d.ten_khach_hang || 'Khách tại quầy'}</td>
-                                  <td style={{ padding: '14px 16px', fontWeight: 600, color: isVoided ? '#85907d' : '#252927', fontSize: 15, textDecoration: isVoided ? 'line-through' : 'none' }}>
+                                  <td style={{ padding: '14px 16px', color: '#526174', fontSize: 13, fontWeight: 500 }}>{fmtDate(d.ngay_tao)}</td>
+                                  <td style={{ padding: '14px 16px', color: '#526174', fontSize: 13, fontWeight: 600 }}>{d.ten_khach_hang || 'Khách tại quầy'}</td>
+                                  <td style={{ padding: '14px 16px', fontWeight: 600, color: isVoided ? '#526174' : '#142b3e', fontSize: 15, textDecoration: isVoided ? 'line-through' : 'none' }}>
                                     {fmtMoney(d.tong_tien)}
                                   </td>
-                                  <td style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#596255' }}>
-                                    {d.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? "Tiền mặt" : d.phuong_thuc_thanh_toan}
+                                  <td style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#526174' }}>
+                                    {kioskPaymentLabel(d.phuong_thuc_thanh_toan)}
                                   </td>
                                   <td style={{ padding: '14px 16px', fontSize: 12 }}>
                                     {d.chi_tiet?.map((ct, idx) => (
                                       <div key={idx} style={{ marginBottom: 2 }}>
-                                        <span style={{ fontWeight: 700, color: isVoided ? '#85907d' : '#414743' }}>{ct.so_luong}x {ct.ten_san_pham}</span>
+                                        <span style={{ fontWeight: 700, color: isVoided ? '#526174' : '#263c50' }}>{ct.so_luong}x {ct.ten_san_pham}</span>
                                       </div>
                                     ))}
                                   </td>
                                   <td style={{ padding: '14px 16px' }}>
-                                    {isVoided ? (
-                                      <span style={{
-                                        padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600,
-                                        background: "#f4f5f2", color: '#991b1b', border: '1px solid #fecaca', display: 'inline-flex', alignItems: 'center', gap: 4
-                                      }}>
-                                        <RotateCcw size={11} /> Đã hủy &amp; Hoàn tiền
-                                      </span>
-                                    ) : (
-                                      <span style={{
-                                        padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600,
-                                        background: d.trang_thai_don_hang === 'HOAN_THANH' ? "#f4f5f2" : "#f4f5f2",
-                                        color: d.trang_thai_don_hang === 'HOAN_THANH' ? '#2563eb' : '#d97706',
-                                      }}>
-                                        {d.trang_thai_don_hang === 'HOAN_THANH' ? 'Hoàn thành' : d.trang_thai_don_hang}
-                                      </span>
-                                    )}
+                                    <StatusBadge status={kioskSaleStatus(d).status}>{kioskSaleStatus(d).label}</StatusBadge>
                                   </td>
                                   <td style={{ padding: '14px 16px' }}>
                                     {isVoided ? (
-                                      <span style={{ fontSize: 11, fontWeight: 700, color: '#991b1b', background: "#f4f5f2", padding: '4px 8px', borderRadius: 6 }}>
-                                        <WorkspaceSymbolCheck size="1.1em" aria-hidden="true" /> Đã xuất quỹ hoàn trả
-                                      </span>
+                                      <Badge variant="outline" data-quiet-label="true" style={{ fontSize: 11, fontWeight: 700, color: '#991b1b', background: "#f6f8fa", padding: '4px 8px', borderRadius: 6 }}>
+                                        <WorkspaceSymbolCheck size="1.1em" aria-hidden="true" /> {d.trang_thai_thanh_toan === 'DA_HOAN_TIEN' ? 'Đã hoàn tiền' : 'Đã hủy'}
+                                      </Badge>
+                                    ) : d.trang_thai_thanh_toan !== 'DA_THANH_TOAN' ? (
+                                      <span className="kiosk-muted">Chưa ghi nhận thu tiền</span>
                                     ) : isWithinActiveShift ? (
-                                      <button
+                                      <Button data-intent="danger"
                                         type="button"
                                         onClick={() => {
                                           setVoidModalOrder(d)
@@ -2884,7 +1973,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                         style={{
                                           padding: '6px 12px',
                                           borderRadius: 8,
-                                          border: '1.5px solid #e2e4df',
+                                          border: '1.5px solid #e2e8f0',
                                           backgroundColor: '#ffffff',
                                           color: '#dc2626',
                                           fontWeight: 600,
@@ -2898,19 +1987,19 @@ export function FranchiseePortal({ session, onLogout }) {
                                         }}
                                       >
                                         <RotateCcw size={13} color="#dc2626" />
-                                        <span>Hoàn Tiền &amp; Hủy POS</span>
-                                      </button>
+                                        <span>Hoàn tiền</span>
+                                      </Button>
                                     ) : (
-                                      <button
+                                      <Button data-intent="danger"
                                         type="button"
                                         disabled
                                         title={!isShiftOpen ? "Kiosk chưa mở ca làm việc" : "Đơn thuộc ca làm việc trước đã chốt - Không thể hoàn/hủy"}
                                         style={{
                                           padding: '6px 12px',
                                           borderRadius: 8,
-                                          border: '1px solid #ccd3c7',
-                                          backgroundColor: '#f8f9f6',
-                                          color: '#85907d',
+                                          border: '1px solid #cbd5e1',
+                                          backgroundColor: '#f6f8fa',
+                                          color: '#526174',
                                           fontWeight: 600,
                                           fontSize: 12,
                                           cursor: 'not-allowed',
@@ -2920,17 +2009,17 @@ export function FranchiseePortal({ session, onLogout }) {
                                           gap: 5
                                         }}
                                       >
-                                        <RotateCcw size={13} color="#85907d" />
-                                        <span>Hoàn Tiền &amp; Hủy POS</span>
-                                      </button>
+                                        <RotateCcw size={13} color="#526174" />
+                                        <span>Hoàn tiền</span>
+                                      </Button>
                                     )}
                                   </td>
                                 </tr>
                               )
                             }}</PaginatedList>
                           </tbody>
-                        </table>
-                        {posOrders.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#69736a' }}>Chưa có đơn bán hàng nào trong thời gian này.</div>}
+                        </Table>
+                        {posOrders.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#526174' }}>Chưa có đơn bán hàng nào trong thời gian này.</div>}
                       </div>
                     )}
                   </div>
@@ -2940,7 +2029,7 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* TAB: THỰC ĐƠN (menu) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {tab === 'menu' && (() => {
-                  const filteredMenu = availableMenu.filter(m => {
+                  const filteredMenu = packageAllowedMenu.filter(m => {
                     const matchSearch = !menuSearch || (m.ten_san_pham || m.tenSanPham || '').toLowerCase().includes(menuSearch.toLowerCase())
                     const matchCat = !menuCategory || getCategoryName(m.danh_muc || m.danhMuc) === menuCategory
                     return matchSearch && matchCat
@@ -2952,36 +2041,36 @@ export function FranchiseePortal({ session, onLogout }) {
                   return (
                     <div>
                       {/* Thống kê gói & bộ lọc tìm kiếm */}
-                      <div style={{ background: '#ffffff', padding: '18px 24px', borderRadius: 16, border: '1px solid #e2e4df', marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                      <div style={{ background: '#ffffff', padding: '18px 24px', borderRadius: 16, border: '1px solid #e2e8f0', marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{
-                              padding: '5px 12px', borderRadius: 8, background: "#f4f5f2",
+                            <Badge variant="outline" data-quiet-label="true" style={{
+                              padding: '5px 12px', borderRadius: 8, background: "#f6f8fa",
                               color: '#1e40af', border: '1px solid #bfdbfe', fontSize: 13, fontWeight: 600
                             }}>
                               Gói {currentKioskLabel}
-                            </span>
-                            <span style={{ fontSize: 13, color: '#69736a', fontWeight: 600 }}>
-                              Áp dụng: <strong style={{ color: '#252927' }}>{availableMenu.length}</strong> món chuẩn gói nhượng quyền
+                            </Badge>
+                            <span style={{ fontSize: 13, color: '#526174', fontWeight: 600 }}>
+                              Áp dụng: <strong style={{ color: '#142b3e' }}>{availableMenu.length}</strong> món chuẩn gói nhượng quyền
                             </span>
                           </div>
-                          <div style={{ fontSize: 13, color: '#69736a' }}>
+                          <div style={{ fontSize: 13, color: '#526174' }}>
                             Đang xem <b>{filteredMenu.length}</b> món phù hợp
                           </div>
                         </div>
 
                         <div className="franchise-filter-bar" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                          <input
+                          <Input
                             value={menuSearch}
                             onChange={e => { setMenuSearch(e.target.value); setMenuPage(1); }}
                             placeholder="Tìm kiếm tên món..."
-                            style={{ flex: 1, minWidth: 220, padding: '10px 16px', border: '1.5px solid #ccd3c7', borderRadius: 10, fontSize: 14, outline: 'none', background: '#f8f9f6', color: '#252927' }}
+                            style={{ flex: 1, minWidth: 220, padding: '10px 16px', border: '1.5px solid #cbd5e1', borderRadius: 10, fontSize: 14, outline: 'none', background: '#f6f8fa', color: '#142b3e' }}
                           />
                           <SearchableSelect
                             className="franchise-filter-select"
                             value={menuCategory}
                             onChange={e => { setMenuCategory(e.target.value); setMenuPage(1); }}
-                            style={{ padding: '10px 16px', border: '1.5px solid #ccd3c7', borderRadius: 10, fontSize: 14, background: '#f8f9f6', outline: 'none', fontWeight: 700, color: '#414743' }}
+                            style={{ padding: '10px 16px', border: '1.5px solid #cbd5e1', borderRadius: 10, fontSize: 14, background: '#f6f8fa', outline: 'none', fontWeight: 700, color: '#263c50' }}
                           >
                             <option value=''>Tất cả danh mục ({availableMenu.length})</option>
                             {categories.map(c => {
@@ -2992,6 +2081,8 @@ export function FranchiseePortal({ session, onLogout }) {
                         </div>
                       </div>
 
+                      {availability.error&&<div role="alert" className="workspace-form-error">{availability.error}<Button type="button" variant="outline" onClick={availability.reload}>Thử tải lại trạng thái bán</Button></div>}
+                      {availability.loading&&<p role="status">Đang tải trạng thái bán của kiosk…</p>}
                       {/* Lưới sản phẩm */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 20 }}>
                         {filteredMenu.slice((menuPage - 1) * itemsPerPage, menuPage * itemsPerPage).map((m, i) => {
@@ -2999,33 +2090,26 @@ export function FranchiseePortal({ session, onLogout }) {
                           const price = m.gia_ban || m.gia || 0
                           const img = m.hinh_anh_url || m.hinhAnhUrl || m.hinh_anh || m.hinhAnh || m.imageUrl
                           return (
-                            <div key={i} style={{ background: '#ffffff', borderRadius: 18, border: '1px solid #e2e4df', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
+                            <div key={i} style={{ background: '#ffffff', borderRadius: 18, border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
                               {img ? (
-                                <div style={{ width: '100%', height: 160, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, borderBottom: '1px solid #f4f5f2' }}>
+                                <div style={{ width: '100%', height: 160, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, borderBottom: '1px solid #f6f8fa' }}>
                                   <img src={img} alt={name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                 </div>
                               ) : (
-                                <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: '#f8f9f6', borderBottom: '1px solid #f4f5f2' }}>
-                                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#85907d', fontWeight: 700 }}>
+                                <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: '#f6f8fa', borderBottom: '1px solid #f6f8fa' }}>
+                                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#526174', fontWeight: 700 }}>
                                     Hình ảnh món
                                   </div>
                                 </div>
                               )}
                               <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <div>
-                                  <div style={{ fontWeight: 600, fontSize: 16, color: '#252927', marginBottom: 4 }}>{name}</div>
-                                  <div style={{ fontSize: 12, color: '#69736a', fontWeight: 500 }}>{getCategoryName(m.danh_muc || m.danhMuc)}</div>
+                                  <div style={{ fontWeight: 600, fontSize: 16, color: '#142b3e', marginBottom: 4 }}>{name}</div>
+                                  <div style={{ fontSize: 12, color: '#526174', fontWeight: 500 }}>{getCategoryName(m.danh_muc || m.danhMuc)}</div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
-                                  <div style={{ fontWeight: 600, color: '#252927', fontSize: 17 }}>{fmtMoney(price)}</div>
-                                  <span
-                                    style={{
-                                      padding: '5px 12px', background: '#f8f9f6', color: '#414743',
-                                      borderRadius: 8, fontSize: 12, fontWeight: 700, border: '1px solid #ccd3c7'
-                                    }}
-                                  >
-                                    Đang phục vụ
-                                  </span>
+                                <div className="kiosk-menu-footer">
+                                  <div style={{ fontWeight: 600, color: '#142b3e', fontSize: 17 }}>{fmtMoney(price)}</div>
+                                  <div className="kiosk-menu-selling"><StatusBadge status={availability.isSelling(m)}>{availability.isSelling(m)?'Đang bán':'Tạm ngưng'}</StatusBadge><Switch aria-label={`Bán ${name}`} checked={availability.isSelling(m)} disabled={!availability.ready||availability.savingId!==null||m.trang_thai===false} onCheckedChange={next=>availability.toggle(m,next)}/></div>
                                 </div>
                               </div>
                             </div>
@@ -3034,7 +2118,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       </div>
 
                       {filteredMenu.length === 0 && (
-                        <div style={{ textAlign: 'center', padding: '48px 20px', background: '#ffffff', borderRadius: 16, border: '1px dashed #ccd3c7', color: '#69736a', marginTop: 12 }}>
+                        <div style={{ textAlign: 'center', padding: '48px 20px', background: '#ffffff', borderRadius: 16, border: '1px dashed #cbd5e1', color: '#526174', marginTop: 12 }}>
                           Không tìm thấy món phù hợp với tiêu chí tìm kiếm.
                         </div>
                       )}
@@ -3043,45 +2127,45 @@ export function FranchiseePortal({ session, onLogout }) {
                       {filteredMenu.length > 0 && (
                         <div style={{
                           marginTop: 24, padding: '16px 20px', background: '#ffffff', borderRadius: 16,
-                          border: '1px solid #e2e4df', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12
+                          border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12
                         }}>
-                          <div style={{ fontSize: 13, color: '#69736a' }}>
+                          <div style={{ fontSize: 13, color: '#526174' }}>
                             Hiển thị <b>{(menuPage - 1) * itemsPerPage + 1}</b> – <b>{Math.min(menuPage * itemsPerPage, filteredMenu.length)}</b> trong tổng số <b>{filteredMenu.length}</b> món
                           </div>
 
                           {totalPages > 1 && (
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                              <button
+                              <Button
                                 disabled={menuPage <= 1}
                                 onClick={() => setMenuPage(p => Math.max(1, p - 1))}
                                 style={{
                                   padding: '7px 14px', borderRadius: 8,
-                                  border: '1px solid #ccd3c7',
-                                  background: menuPage <= 1 ? '#f4f5f2' : '#ffffff',
-                                  color: menuPage <= 1 ? '#85907d' : '#30382e',
+                                  border: '1px solid #cbd5e1',
+                                  background: menuPage <= 1 ? '#f6f8fa' : '#ffffff',
+                                  color: menuPage <= 1 ? '#526174' : '#30382e',
                                   fontWeight: 700, fontSize: 13,
                                   cursor: menuPage <= 1 ? 'not-allowed' : 'pointer'
                                 }}
                               >
                                 Trang trước
-                              </button>
+                              </Button>
 
                               <PageNumbers page={menuPage} totalPages={totalPages} onChange={setMenuPage} />
 
-                              <button
+                              <Button
                                 disabled={menuPage >= totalPages}
                                 onClick={() => setMenuPage(p => Math.min(totalPages, p + 1))}
                                 style={{
                                   padding: '7px 14px', borderRadius: 8,
-                                  border: '1px solid #ccd3c7',
-                                  background: menuPage >= totalPages ? '#f4f5f2' : '#ffffff',
-                                  color: menuPage >= totalPages ? '#85907d' : '#30382e',
+                                  border: '1px solid #cbd5e1',
+                                  background: menuPage >= totalPages ? '#f6f8fa' : '#ffffff',
+                                  color: menuPage >= totalPages ? '#526174' : '#30382e',
                                   fontWeight: 700, fontSize: 13,
                                   cursor: menuPage >= totalPages ? 'not-allowed' : 'pointer'
                                 }}
                               >
                                 Trang sau
-                              </button>
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -3100,10 +2184,10 @@ export function FranchiseePortal({ session, onLogout }) {
                       const isActive = selectedKiosk?.trang_thai === 'DANG_HOAT_DONG';
                       if (!isActive) {
                         return (
-                          <div style={{ background: '#f8f9f6', border: '1px solid #e2e4df', borderRadius: 16, padding: 32, textAlign: 'center' }}>
-                            <AlertCircle size={40} color="#69736a" style={{ margin: '0 auto 16px' }} />
-                            <div style={{ fontSize: 18, fontWeight: 700, color: '#414743', marginBottom: 8 }}>Kiosk chưa khai trương chính thức</div>
-                            <div style={{ fontSize: 14, color: '#69736a', lineHeight: 1.6 }}>
+                          <div style={{ background: '#f6f8fa', border: '1px solid #e2e8f0', borderRadius: 16, padding: 32, textAlign: 'center' }}>
+                            <AlertCircle size={40} color="#526174" style={{ margin: '0 auto 16px' }} />
+                            <div style={{ fontSize: 18, fontWeight: 700, color: '#263c50', marginBottom: 8 }}>Kiosk chưa khai trương chính thức</div>
+                            <div style={{ fontSize: 14, color: '#526174', lineHeight: 1.6 }}>
                               Kiosk <b>{selectedKiosk?.ten_kiosk || selectedKiosk?.ma_kiosk}</b> đang ở trạng thái <b>{selectedKiosk?.trang_thai || 'chưa xác định'}</b>.<br/>
                               Chỉ có thể đặt mua combo sau khi kiosk đã <b>ĐANG HOẠT ĐỘNG</b> chính thức.
                             </div>
@@ -3111,32 +2195,26 @@ export function FranchiseePortal({ session, onLogout }) {
                         );
                       }
                       return (
-                    <div style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #e2e4df', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                      <h3 style={{ margin: '0 0 24px', fontSize: 18, fontWeight: 700, color: '#252927', display: 'flex', alignItems: 'center', gap: 8 }}><Package size={20} /> Đặt Mua Combo Nguyên Liệu</h3>
-                      
-                      <div style={{ marginBottom: 20 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#596255', marginBottom: 8 }}>Kiosk nhận hàng</label>
-                        <SearchableSelect value={orderForm.kiosk_id} onChange={e => switchKiosk(e.target.value)}
-                          style={{ width: '100%', padding: '10px 12px', border: '1px solid #ccd3c7', borderRadius: 8, fontSize: 14, background: '#fff', color: '#30382e', outline: 'none' }}>
-                          {kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').map(k => <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>)}
-                        </SearchableSelect>
-                      </div>
+                    <div style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <h3 style={{ margin: '0 0 24px', fontSize: 18, fontWeight: 700, color: '#142b3e', display: 'flex', alignItems: 'center', gap: 8 }}><Package size={20} /> Đặt Mua Combo Nguyên Liệu</h3>
+
+
 
                       <div style={{ marginBottom: 24 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#596255', marginBottom: 12 }}>Chọn gói combo</label>
+                        <Label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#526174', marginBottom: 12 }}>Chọn gói combo</Label>
                         <div style={{ display: 'grid', gap: 12 }}>
                           <PaginatedList items={availableCombos} resetKey={activeKioskId}>{c => (
                             <div key={c.id} onClick={() => setOrderForm(f => ({ ...f, combo_id: c.id }))} style={{
-                              padding: '16px', border: `1px solid ${orderForm.combo_id === c.id ? 'var(--primary)' : '#e2e4df'}`,
+                              padding: '16px', border: `1px solid ${orderForm.combo_id === c.id ? 'var(--primary)' : '#e2e8f0'}`,
                               borderRadius: 12, cursor: 'pointer', background: orderForm.combo_id === c.id ? 'var(--primary-light)' : '#fff',
                               transition: 'all 0.2s'
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
-                                  <div style={{ fontWeight: 600, fontSize: 15, color: orderForm.combo_id === c.id ? 'var(--primary)' : '#252927' }}>{c.ten_combo}</div>
-                                  <div style={{ fontSize: 13, color: '#69736a', marginTop: 4 }}>Ước tính ~{c.so_ly_pha_che_uoc_tinh} ly</div>
+                                  <div style={{ fontWeight: 600, fontSize: 15, color: orderForm.combo_id === c.id ? 'var(--primary)' : '#142b3e' }}>{c.ten_combo}</div>
+                                  <div style={{ fontSize: 13, color: '#526174', marginTop: 4 }}>Ước tính ~{c.so_ly_pha_che_uoc_tinh} ly</div>
                                 </div>
-                                <div style={{ fontSize: 16, fontWeight: 700, color: '#252927' }}>{fmtMoney(c.gia_ban)}</div>
+                                <div style={{ fontSize: 16, fontWeight: 700, color: '#142b3e' }}>{fmtMoney(c.gia_ban)}</div>
                               </div>
                             </div>
                           )}</PaginatedList>
@@ -3145,31 +2223,31 @@ export function FranchiseePortal({ session, onLogout }) {
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#596255', marginBottom: 8 }}>Số lượng</label>
-                          <input type="number" min="1" max="50" value={orderForm.so_luong}
+                          <Label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#526174', marginBottom: 8 }}>Số lượng</Label>
+                          <Input type="number" min="1" max="50" value={orderForm.so_luong}
                             onChange={e => setOrderForm(f => ({ ...f, so_luong: Number(e.target.value) }))}
-                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #ccd3c7', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', outline: 'none' }} />
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', outline: 'none' }} />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#596255', marginBottom: 8 }}>Phương thức thanh toán</label>
-                          <select value={orderForm.phuong_thuc_thanh_toan}
+                          <Label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#526174', marginBottom: 8 }}>Phương thức thanh toán</Label>
+                          <SearchableSelect value={orderForm.phuong_thuc_thanh_toan}
                             onChange={e => setOrderForm(f => ({ ...f, phuong_thuc_thanh_toan: e.target.value }))}
-                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #ccd3c7', borderRadius: 8, fontSize: 14, background: '#fff', outline: 'none' }}>
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14, background: '#fff', outline: 'none' }}>
                             <option value="CONG_NO">Ghi nợ (Trả sau)</option>
                             <option value="VNPAY">VNPAY</option>
                             <option value="VI_DIEN_TU">Ví điện tử</option>
-                          </select>
+                          </SearchableSelect>
                         </div>
                       </div>
 
-                      <button className="franchise-action" onClick={datMuaCombo} disabled={ordering}
+                      <Button className="franchise-action" onClick={datMuaCombo} disabled={ordering}
                         style={{
-                          padding: '12px 20px', background: ordering ? "#f4f5f2" : '#252927',
+                          padding: '12px 20px', background: ordering ? "#f6f8fa" : '#142b3e',
                           color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer',
                           display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, transition: 'background 0.2s'
                         }}>
                         {ordering ? 'Đang xử lý...' : <><Check size={18} /> Xác nhận đặt mua</>}
-                      </button>
+                      </Button>
                     </div>
                       );
                     })()}
@@ -3179,37 +2257,13 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* TAB: LỊCH SỬ NHẬP (history) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
-                {tab === 'history' && (
-                  <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e4df', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ background: '#f8f9f6', borderBottom: '1px solid #e2e4df' }}>
-                          {['Combo', 'Kiosk', 'Số lượng', 'Tổng tiền', 'Thanh toán', 'Ngày đặt', 'Trạng thái'].map(h => (
-                            <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#69736a' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <PaginatedList items={donTheoKiosk} resetKey={activeKioskId} layout="table" columns={8}>{(d) => (
-                          <tr key={d.id} style={{ borderBottom: '1px solid #f4f5f2' }}>
-                            <td style={{ padding: '12px 16px', fontWeight: 500, color: '#252927', fontSize: 14 }}>{d.combo?.ten_combo || 'Combo'}</td>
-                            <td style={{ padding: '12px 16px', color: '#69736a', fontSize: 13 }}>{d.kiosk?.ten_kiosk}</td>
-                            <td style={{ padding: '12px 16px', color: '#414743', fontSize: 14 }}>{d.so_luong}</td>
-                            <td style={{ padding: '12px 16px', fontWeight: 600, color: '#252927', fontSize: 14 }}>{fmtMoney(d.tong_tien)}</td>
-                            <td style={{ padding: '12px 16px', fontSize: 13, color: '#596255' }}>{d.phuong_thuc_thanh_toan}</td>
-                            <td style={{ padding: '12px 16px', color: '#69736a', fontSize: 13 }}>{fmtDate(d.ngay_dat)}</td>
-                            <td style={{ padding: '12px 16px' }}>
-                              <span style={{ padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: d.trang_thai === 'DA_GIAO' ? "#f4f5f2" : '#f8f9f6', color: d.trang_thai === 'DA_GIAO' ? '#2563eb' : '#596255', border: `1px solid ${d.trang_thai === 'DA_GIAO' ? '#bfdbfe' : '#e2e4df'}` }}>
-                                {d.trang_thai === 'DA_GIAO' ? 'Đã giao' : d.trang_thai}
-                              </span>
-                            </td>
-                          </tr>
-                        )}</PaginatedList>
-                      </tbody>
-                    </table>
-                    {donTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#69736a', fontSize: 14 }}>Chưa có đơn nhập combo nào.</div>}
-                  </div>
-                )}
+                {tab === 'history' && <div className="combo-purchase-history"><Table><colgroup><col style={{width:'16%'}}/><col style={{width:'31%'}}/><col style={{width:'18%'}}/><col style={{width:'18%'}}/><col style={{width:'17%'}}/></colgroup><thead><tr>{['Đơn hàng','Kiosk / Combo','Tổng tiền','Thanh toán','Trạng thái'].map(title=><th key={title}>{title}</th>)}</tr></thead><tbody><PaginatedList items={donTheoKiosk} resetKey={activeKioskId} layout="table" columns={5}>{order=><tr key={order.id} className="franchise-click-row" onClick={()=>setSelectedComboId(order.id)}><td><Button variant="link" onClick={event=>{event.stopPropagation();setSelectedComboId(order.id)}} aria-label={`Xem đơn ${String(order.id).slice(0,8)}`}>#{String(order.id).slice(0,8).toUpperCase()}</Button><small>{fmtDate(order.ngay_dat)}</small></td><td><strong>{order.kiosk?.ten_kiosk}</strong><small>{order.so_luong} × {order.combo?.ten_combo || 'Combo'}</small></td><td>{fmtMoney(order.tong_tien)}</td><td><StatusBadge tone={comboIsPaid(order)?'success':'warning'}>{comboIsPaid(order)?'Đã thanh toán':'Chưa thanh toán'}</StatusBadge></td><td>{comboStatusLabel(order.trang_thai)}</td></tr>}</PaginatedList></tbody></Table>{!donTheoKiosk.length&&<p className="franchise-empty">Chưa có đơn nhập combo.</p>}</div>}
+                {selectedComboId && dons.find(order=>order.id===selectedComboId) && <ComboOrderDetail order={dons.find(order=>order.id===selectedComboId)} onClose={()=>setSelectedComboId(null)} busy={paymentBusy} onPay={async()=>{
+                  const order=dons.find(order=>order.id===selectedComboId)
+                  if(paymentBusy || !order?.cong_no_id || !window.confirm(`Thanh toán đơn ${fmtMoney(order.tong_can_thanh_toan ?? order.tong_tien)} bằng ví?`))return
+                  setPaymentBusy(true)
+                  try{await apiFetch(`/franchise/cong-no/${order.cong_no_id}/thanh-toan-vi`,{method:'PATCH'});setMsg({type:'success',text:'Đã thanh toán đơn combo.'});await loadAll(false)}catch(error){setMsg({type:'error',text:error.message})}finally{setPaymentBusy(false)}
+                }}/>}
 
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* TAB: VÍ ĐIỆN TỬ (wallet) */}
@@ -3217,32 +2271,32 @@ export function FranchiseePortal({ session, onLogout }) {
                 {tab === 'wallet' && (
                   <div className="franchise-page franchise-wallet">
                     {/* Số dư ví */}
-                    <div style={{ background: '#ffffff', border: '1px solid #ccd3c7', borderRadius: 16, padding: 32, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                    <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 32, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                           <div style={{ width: 56, height: 56, borderRadius: 12, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Wallet size={28} color="var(--primary)" />
                           </div>
                           <div>
-                            <div style={{ color: '#69736a', fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Số dư khả dụng</div>
-                            <div style={{ fontSize: 36, fontWeight: 600, color: '#252927', marginTop: 4 }}>
+                            <div style={{ color: '#526174', fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Số dư khả dụng</div>
+                            <div style={{ fontSize: 36, fontWeight: 600, color: '#142b3e', marginTop: 4 }}>
                               {fmtMoney(walletInfo?.so_du_vi || 0)}
                             </div>
                           </div>
                         </div>
                       </div>
-                      
-                      <div style={{ display: 'flex', gap: 12, borderTop: '1px solid #e2e4df', paddingTop: 24 }}>
+
+                      <div style={{ display: 'flex', gap: 12, borderTop: '1px solid #e2e8f0', paddingTop: 24 }}>
                         <div style={{ flex: 1 }}>
-                          <div style={{ color: '#596255', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Nạp tiền vào ví</div>
+                          <div style={{ color: '#526174', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Nạp tiền vào ví</div>
                           <div className="franchise-deposit-controls" style={{ display: 'flex', gap: 12 }}>
                             <CurrencyInput 
                               placeholder="Nhập số tiền cần nạp..."
                               value={depositAmount}
                               onChange={e => setDepositAmount(e.target.value)}
-                              style={{ flex: 1, padding: '12px 16px', borderRadius: 8, border: '1px solid #ccd3c7', outline: 'none', fontSize: 15, background: '#f8f9f6', color: '#252927' }}
+                              style={{ flex: 1, padding: '12px 16px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none', fontSize: 15, background: '#f6f8fa', color: '#142b3e' }}
                             />
-                            <button 
+                            <Button
                               disabled={depositLoading || !depositAmount || depositAmount <= 0}
                               onClick={async () => {
                                 setDepositLoading(true)
@@ -3268,32 +2322,32 @@ export function FranchiseePortal({ session, onLogout }) {
                               }}
                             >
                               {depositLoading ? 'Đang nạp...' : 'Nạp ngay'}
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Lịch sử giao dịch */}
-                    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #ccd3c7', padding: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-                      <h4 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#252927' }}>Lịch sử giao dịch</h4>
+                    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #cbd5e1', padding: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                      <h4 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#142b3e' }}>Lịch sử giao dịch</h4>
                       {(!walletInfo?.giao_dich || walletInfo.giao_dich.length === 0) ? (
-                        <div style={{ textAlign: 'center', padding: 40, color: '#69736a' }}>Chưa có giao dịch nào</div>
+                        <div style={{ textAlign: 'center', padding: 40, color: '#526174' }}>Chưa có giao dịch nào</div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                           <PaginatedList items={walletInfo.giao_dich} resetKey={activeKioskId}>{(tx, idx) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: 12, background: '#f8f9f6', border: '1px solid #e2e4df' }}>
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: 12, background: '#f6f8fa', border: '1px solid #e2e8f0' }}>
                               <div>
                                 <div style={{ fontWeight: 600, color: '#30382e', fontSize: 14 }}>
                                   {tx.loai_giao_dich === 'NAP_TIEN' ? 'Nạp tiền vào ví' :
                                    tx.loai_giao_dich === 'MUA_COMBO' ? 'Thanh toán đơn mua combo' :
                                    tx.loai_giao_dich === 'TRA_CONG_NO' ? 'Thanh toán công nợ' : tx.loai_giao_dich}
                                 </div>
-                                <div style={{ fontSize: 12, color: '#69736a', marginTop: 4 }}>
+                                <div style={{ fontSize: 12, color: '#526174', marginTop: 4 }}>
                                   {fmtDate(tx.ngay_giao_dich)} • {tx.mo_ta}
                                 </div>
                               </div>
-                              <div style={{ fontWeight: 700, fontSize: 16, color: tx.so_tien > 0 ? '#2563eb' : '#ef4444' }}>
+                              <div style={{ fontWeight: 700, fontSize: 16, color: tx.so_tien > 0 ? '#16354d' : '#ef4444' }}>
                                 {tx.so_tien > 0 ? '+' : ''}{fmtMoney(tx.so_tien)}
                               </div>
                             </div>
@@ -3307,135 +2361,80 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* TAB: CÔNG NỢ (debt) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
-                {tab === 'debt' && (
-                  <div className="franchise-page franchise-debt">
-                    <div style={{ display: 'grid', gap: 16 }}>
-                      <PaginatedList items={congNoTheoKiosk} resetKey={activeKioskId}>{c => (
-                        <div key={c.id} style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #e2e4df', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                          <div className="franchise-debt-summary" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                              <div style={{ fontWeight: 600, color: '#252927', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                {c.loai_phat_sinh === 'KHOI_TAO' ? <Store size={16} color="#69736a" /> : <Package size={16} color="#69736a" />}
-                                {c.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền ban đầu' : 'Công nợ nguyên liệu'}
-                              </div>
-                              <div style={{ fontSize: 13, color: '#69736a', marginTop: 6 }}>Kiosk: {c.kiosk?.ten_kiosk} ({c.kiosk?.ma_kiosk})</div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: 18, fontWeight: 700, color: '#252927' }}>{fmtMoney(c.so_tien)}</div>
-                              <span style={{ display: 'inline-block', marginTop: 6, padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: c.trang_thai === 'DA_THANH_TOAN' ? "#f4f5f2" : "#f4f5f2", color: c.trang_thai === 'DA_THANH_TOAN' ? '#2563eb' : '#e11d48', border: `1px solid ${c.trang_thai === 'DA_THANH_TOAN' ? '#bfdbfe' : '#fecdd3'}` }}>
-                                {c.trang_thai === 'DA_THANH_TOAN' ? 'Đã thanh toán' : 'Chưa thanh toán'}
-                              </span>
-                            </div>
-                          </div>
-                          {c.trang_thai !== 'DA_THANH_TOAN' && (
-                            <div className="franchise-payment-actions" style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #f4f5f2', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                              {c.loai_phat_sinh === 'KHOI_TAO' ? (
-                                <button
-                                  onClick={() => openTatToanModal(c.kiosk_id)}
-                                  style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, boxShadow: '0 2px 4px rgba(37,99,235,0.2)' }}
-                                >
-                                  <CreditCard size={16} /> Tất toán nốt gói nhượng quyền (VietQR / VNPay / Ví)
-                                </button>
-                              ) : (
-                                <>
-                                  <button
-                                    onClick={async () => {
-                                      if (!window.confirm(`Xác nhận thanh toán ${fmtMoney(c.so_tien)} bằng ví?`)) return;
-                                      try {
-                                        await apiFetch(`/franchise/cong-no/${c.id}/thanh-toan-vi`, { method: 'PATCH' });
-                                        setMsg({ type: 'success', text: 'Thanh toán công nợ thành công!' });
-                                        loadAll(false);
-                                      } catch (e) {
-                                        setMsg({ type: 'error', text: e.message || 'Thanh toán thất bại' });
-                                      }
-                                    }}
-                                    style={{ padding: '10px 18px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 500, fontSize: 14, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
-                                  >
-                                    <Wallet size={16} /> Thanh toán Ví
-                                  </button>
-                                  <button
-                                    onClick={async () => {
-                                      try {
-                                        const res = await apiFetch(`/franchise/cong-no/${c.id}/tua-nhanh`, { method: 'POST' });
-                                        if (res.vnpay_url) { window.location.href = res.vnpay_url; return; }
-                                        setMsg({ type: 'error', text: 'Không lấy được link VNPay' });
-                                      } catch (e) {
-                                        setMsg({ type: 'error', text: e.message || 'Lỗi tạo link VNPay' });
-                                      }
-                                    }}
-                                    style={{ padding: '10px 18px', borderRadius: 8, border: '1px solid #ccd3c7', background: '#fff', color: '#414743', fontWeight: 500, fontSize: 14, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
-                                  >
-                                    <CreditCard size={16} /> Thanh toán VNPay
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}</PaginatedList>
-                      {congNoTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#69736a', fontSize: 14, background: '#f8f9f6', borderRadius: 16, border: '1px solid #e2e4df' }}>Không có khoản nợ nào.</div>}
-                    </div>
-                  </div>
-                )}
-
+                {tab === 'debt' && <KioskDebtPanel debts={congNoTheoKiosk} scope={activeKioskId} onSettle={debt => openTatToanModal(debt.kiosk_id)}
+                  onWalletPay={async debt => {
+                    if (!window.confirm(`Xác nhận thanh toán ${fmtMoney(Number(debt.so_tien) + Number(debt.phi_phat_tre_han || 0))} bằng ví?`)) return
+                    try { await apiFetch(`/franchise/cong-no/${debt.id}/thanh-toan-vi`, { method: 'PATCH' }); setMsg({ type: 'success', text: 'Thanh toán công nợ thành công!' }); await loadAll(false) } catch (e) { setMsg({ type: 'error', text: e.message || 'Thanh toán thất bại' }) }
+                  }} onVnpayPay={async debt => {
+                    try { const res = await apiFetch(`/franchise/cong-no/${debt.id}/tua-nhanh`, { method: 'POST' }); if (res.vnpay_url) window.location.href = res.vnpay_url; else setMsg({ type: 'error', text: 'Không lấy được link VNPay' }) } catch (e) { setMsg({ type: 'error', text: e.message }) }
+                  }} />}
 
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* TAB: ROYALTY (royalty) */}
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {tab === 'royalty' && (
-                  <div className="franchise-page franchise-royalty">
+                  <div className="franchise-page franchise-revenue-share">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#252927' }}>Bảng Kê Royalty</h3>
-                      <button 
+                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#142b3e' }}>Bảng kê chia sẻ doanh thu</h3>
+                      <Button
+                        disabled={royaltyCalculating}
                         onClick={async () => {
+                          setRoyaltyCalculating(true)
                           try {
-                            const d = new Date()
-                            d.setMonth(d.getMonth() - 1)
+                            const now = new Date()
+                            const d = new Date(now.getFullYear(), now.getMonth() - 1, 1)
                             const thangTruoc = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`
                             const res = await apiFetch('/franchise/royalty/tinh-thang', { 
                               method: 'POST', 
                               body: JSON.stringify({ thang: thangTruoc }) 
                             })
-                            setMsg({ type: 'success', text: `${res.message || 'Đã tính Royalty thành công!'}` })
-                            setTimeout(() => window.location.reload(), 1500)
+                            setMsg({ type: 'success', text: `${res.message || "Đã tính Chia sẻ doanh thu thành công!"}` })
+                            const data = await apiFetch('/franchise/royalty/cua-toi')
+                            setRoyalties((Array.isArray(data) ? data : []).map(row => ({ ...row, kiosk: kiosks.find(k => k.id === row.kiosk_id) })))
                           } catch (e) {
                             setMsg({ type: 'error', text: e.message })
-                          }
+                          } finally { setRoyaltyCalculating(false) }
                         }}
-                        style={{ padding: '8px 14px', background: '#f8f9f6', color: '#414743', border: '1px solid #ccd3c7', borderRadius: 8, fontWeight: 500, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
+                        style={{ padding: '8px 14px', background: '#f6f8fa', color: '#263c50', border: '1px solid #cbd5e1', borderRadius: 8, fontWeight: 500, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
                       >
-                        <RefreshCw size={14} /> Tính Royalty Tháng Trước
-                      </button>
+                        <RefreshCw size={14} className={royaltyCalculating ? 'animate-spin' : undefined} /> {royaltyCalculating ? 'Đang tính…' : 'Tính chia sẻ doanh thu tháng trước'}
+                      </Button>
                     </div>
                     <div style={{ display: 'grid', gap: 16 }}>
                       <PaginatedList items={royaltyTheoKiosk} resetKey={activeKioskId}>{r => (
-                        <div key={r.id} style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #e2e4df', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <div key={r.id} style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                             <div>
-                              <div style={{ fontWeight: 700, color: '#252927', fontSize: 16 }}>Tháng {r.thang}</div>
-                              <div style={{ fontSize: 13, color: '#69736a', marginTop: 4 }}>Kiosk: {r.kiosk?.ten_kiosk}</div>
+                              <div style={{ fontWeight: 700, color: '#142b3e', fontSize: 16 }}>Tháng {r.thang}</div>
+                              <div style={{ fontSize: 13, color: '#526174', marginTop: 4 }}>Kiosk: {r.kiosk?.ten_kiosk}</div>
                             </div>
-                            <span style={{ padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: r.trang_thai === 'DA_THANH_TOAN' ? "#f4f5f2" : '#f8f9f6', color: r.trang_thai === 'DA_THANH_TOAN' ? '#2563eb' : '#596255', border: `1px solid ${r.trang_thai === 'DA_THANH_TOAN' ? '#bfdbfe' : '#e2e4df'}` }}>
-                              {r.trang_thai === 'DA_THANH_TOAN' ? 'Đã thanh toán' : 'Chờ đối soát'}
-                            </span>
+                            <StatusBadge status={r.trang_thai}>
+                              {r.trang_thai === 'DA_THANH_TOAN' ? 'Đã nộp' : r.trang_thai === 'DA_XAC_NHAN' ? 'Chờ nộp' : 'Chờ xác nhận bảng kê'}
+                            </StatusBadge>
                           </div>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-                            <div style={{ borderTop: '1px solid #f4f5f2', paddingTop: 12 }}>
-                              <div style={{ fontSize: 12, color: '#69736a', fontWeight: 500 }}>Doanh thu</div>
-                              <div style={{ fontSize: 15, fontWeight: 600, color: '#252927', marginTop: 4 }}>{fmtMoney(r.doanh_thu_thuc_te)}</div>
+                            <div style={{ borderTop: '1px solid #f6f8fa', paddingTop: 12 }}>
+                              <div style={{ fontSize: 12, color: '#526174', fontWeight: 500 }}>Doanh thu</div>
+                              <div style={{ fontSize: 15, fontWeight: 600, color: '#142b3e', marginTop: 4 }}>{fmtMoney(r.doanh_thu_thuc_te)}</div>
                             </div>
-                            <div style={{ borderTop: '1px solid #f4f5f2', paddingTop: 12 }}>
-                              <div style={{ fontSize: 12, color: '#69736a', fontWeight: 500 }}>Tỷ lệ</div>
-                              <div style={{ fontSize: 15, fontWeight: 600, color: '#414743', marginTop: 4 }}>{r.ty_le_royalty}%</div>
+                            <div style={{ borderTop: '1px solid #f6f8fa', paddingTop: 12 }}>
+                              <div style={{ fontSize: 12, color: '#526174', fontWeight: 500 }}>Tỷ lệ</div>
+                              <div style={{ fontSize: 15, fontWeight: 600, color: '#263c50', marginTop: 4 }}>{r.ty_le_royalty}%</div>
                             </div>
-                            <div style={{ borderTop: '1px solid #f4f5f2', paddingTop: 12 }}>
-                              <div style={{ fontSize: 12, color: '#69736a', fontWeight: 500 }}>Phí phải nộp</div>
-                              <div style={{ fontSize: 15, fontWeight: 700, color: '#252927', marginTop: 4 }}>{fmtMoney(r.so_tien_royalty)}</div>
+                            <div style={{ borderTop: '1px solid #f6f8fa', paddingTop: 12 }}>
+                              <div style={{ fontSize: 12, color: '#526174', fontWeight: 500 }}>Phí phải nộp</div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: '#142b3e', marginTop: 4 }}>{fmtMoney(r.so_tien_royalty)}</div>
                             </div>
                           </div>
+                          {r.trang_thai !== 'DA_THANH_TOAN' && Number(r.phi_phat_tre_han)>0 && <p style={{marginTop:16,fontSize:13,color:'#92400e'}}>Phí chậm nộp: {fmtMoney(r.phi_phat_tre_han)} · Tổng cần nộp: {fmtMoney(r.so_tien_can_nop)}</p>}
+                          {r.trang_thai === 'DA_XAC_NHAN' && <div style={{display:'flex',justifyContent:'flex-end',marginTop:20}}><Button disabled={paymentBusy} onClick={async()=>{
+                            if(paymentBusy || !window.confirm(`Nộp chia sẻ doanh thu tháng ${r.thang}: ${fmtMoney(r.so_tien_can_nop ?? r.so_tien_royalty)} bằng ví?`))return
+                            setPaymentBusy(true)
+                            try{await apiFetch(`/franchise/royalty/${r.id}/thanh-toan-vi`,{method:'PATCH'});setMsg({type:'success',text:'Đã nộp chia sẻ doanh thu. Hệ thống đã cập nhật bảng kê.'});await loadAll(false)}catch(error){setMsg({type:'error',text:error.message})}finally{setPaymentBusy(false)}
+                          }}>{paymentBusy?'Đang thanh toán…':'Nộp qua ví điện tử'}</Button></div>}
                         </div>
                       )}</PaginatedList>
-                      {royaltyTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#69736a', fontSize: 14, background: '#fff', border: '1px solid #e2e4df', borderRadius: 16 }}>Chưa có dữ liệu royalty.</div>}
+                      {royaltyTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#526174', fontSize: 14, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16 }}>Chưa có dữ liệu chia sẻ doanh thu.</div>}
                     </div>
                   </div>
                 )}
@@ -3445,8 +2444,8 @@ export function FranchiseePortal({ session, onLogout }) {
                 {tab === 'expansion' && (
                   <div className="franchise-page franchise-expansion" style={{ animation: 'fadeIn 0.3s' }}>
                     <div style={{ marginBottom: 32 }}>
-                      <h2 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 700, color: '#252927' }}>Mở Rộng Chi Nhánh</h2>
-                      <p style={{ margin: 0, color: '#69736a', fontSize: 14 }}>
+                      <h2 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 700, color: '#142b3e' }}>Mở Rộng Chi Nhánh</h2>
+                      <p style={{ margin: 0, color: '#526174', fontSize: 14 }}>
                         Đăng ký mở thêm Kiosk nhượng quyền. Chọn mô hình phù hợp với khu vực kinh doanh mới của bạn.
                       </p>
                     </div>
@@ -3458,21 +2457,21 @@ export function FranchiseePortal({ session, onLogout }) {
                         onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'XE_LUU_DONG' }))}
                         style={{ 
                           background: '#fff', 
-                          border: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '2px solid var(--primary)' : '1px solid #e2e4df',
+                          border: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '2px solid var(--primary)' : '1px solid #e2e8f0',
                           borderRadius: 16, padding: 24, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
                         {expansionForm.goi_kiosk === 'XE_LUU_DONG' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="var(--primary)" /></div>}
                         <div style={{ marginBottom: 16 }}>
-                          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#252927' }}>Xe Lưu Động</h3>
-                          <span style={{ color: '#69736a', fontSize: 12 }}>Vốn thấp nhất</span>
+                          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#142b3e' }}>Xe Lưu Động</h3>
+                          <span style={{ color: '#526174', fontSize: 12 }}>Vốn thấp nhất</span>
                         </div>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: '#252927', marginBottom: 12 }}>Từ 35 triệu</div>
-                        <div style={{ fontSize: 13, color: '#69736a', marginBottom: 20, lineHeight: 1.5 }}>Phù hợp người mới bắt đầu. Di chuyển linh hoạt.</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#414743', borderTop: '1px solid #f4f5f2', paddingTop: 16 }}>
-                          <div><div style={{ color: '#85907d', marginBottom: 2, fontSize: 11 }}>Không gian</div><div style={{ fontWeight: 500 }}>Xe đẩy/Xe máy</div></div>
-                          <div style={{ textAlign: 'right' }}><div style={{ color: '#85907d', marginBottom: 2, fontSize: 11 }}>Phí duy trì</div><div style={{ fontWeight: 500 }}>4% / tháng</div></div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#142b3e', marginBottom: 12 }}>Từ 35 triệu</div>
+                        <div style={{ fontSize: 13, color: '#526174', marginBottom: 20, lineHeight: 1.5 }}>Phù hợp người mới bắt đầu. Di chuyển linh hoạt.</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#263c50', borderTop: '1px solid #f6f8fa', paddingTop: 16 }}>
+                          <div><div style={{ color: '#526174', marginBottom: 2, fontSize: 11 }}>Không gian</div><div style={{ fontWeight: 500 }}>Xe đẩy/Xe máy</div></div>
+                          <div style={{ textAlign: 'right' }}><div style={{ color: '#526174', marginBottom: 2, fontSize: 11 }}>Phí duy trì</div><div style={{ fontWeight: 500 }}>4% / tháng</div></div>
                         </div>
                       </div>
 
@@ -3481,21 +2480,21 @@ export function FranchiseePortal({ session, onLogout }) {
                         onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'KIOSK_CO_DINH' }))}
                         style={{ 
                           background: '#fff', 
-                          border: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '2px solid var(--primary)' : '1px solid #e2e4df',
+                          border: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '2px solid var(--primary)' : '1px solid #e2e8f0',
                           borderRadius: 16, padding: 24, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
                         {expansionForm.goi_kiosk === 'KIOSK_CO_DINH' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="var(--primary)" /></div>}
                         <div style={{ marginBottom: 16 }}>
-                          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#252927' }}>Kiosk Cố Định</h3>
-                          <span style={{ color: '#69736a', fontSize: 12 }}>Phổ biến nhất</span>
+                          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#142b3e' }}>Kiosk Cố Định</h3>
+                          <span style={{ color: '#526174', fontSize: 12 }}>Phổ biến nhất</span>
                         </div>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: '#252927', marginBottom: 12 }}>Từ 60 triệu</div>
-                        <div style={{ fontSize: 13, color: '#69736a', marginBottom: 20, lineHeight: 1.5 }}>Quầy kiosk mang đi phù hợp mặt tiền nhỏ, sảnh.</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#414743', borderTop: '1px solid #f4f5f2', paddingTop: 16 }}>
-                          <div><div style={{ color: '#85907d', marginBottom: 2, fontSize: 11 }}>Không gian</div><div style={{ fontWeight: 500 }}>6 - 15 m²</div></div>
-                          <div style={{ textAlign: 'right' }}><div style={{ color: '#85907d', marginBottom: 2, fontSize: 11 }}>Phí duy trì</div><div style={{ fontWeight: 500 }}>6% / tháng</div></div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#142b3e', marginBottom: 12 }}>Từ 60 triệu</div>
+                        <div style={{ fontSize: 13, color: '#526174', marginBottom: 20, lineHeight: 1.5 }}>Quầy kiosk mang đi phù hợp mặt tiền nhỏ, sảnh.</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#263c50', borderTop: '1px solid #f6f8fa', paddingTop: 16 }}>
+                          <div><div style={{ color: '#526174', marginBottom: 2, fontSize: 11 }}>Không gian</div><div style={{ fontWeight: 500 }}>6 - 15 m²</div></div>
+                          <div style={{ textAlign: 'right' }}><div style={{ color: '#526174', marginBottom: 2, fontSize: 11 }}>Phí duy trì</div><div style={{ fontWeight: 500 }}>6% / tháng</div></div>
                         </div>
                       </div>
 
@@ -3504,410 +2503,93 @@ export function FranchiseePortal({ session, onLogout }) {
                         onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'CONTAINER_CAFE' }))}
                         style={{ 
                           background: '#fff', 
-                          border: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '2px solid var(--primary)' : '1px solid #e2e4df',
+                          border: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '2px solid var(--primary)' : '1px solid #e2e8f0',
                           borderRadius: 16, padding: 24, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
                         {expansionForm.goi_kiosk === 'CONTAINER_CAFE' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="var(--primary)" /></div>}
                         <div style={{ marginBottom: 16 }}>
-                          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#252927' }}>Container Café</h3>
-                          <span style={{ color: '#69736a', fontSize: 12 }}>Cao cấp</span>
+                          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#142b3e' }}>Container Café</h3>
+                          <span style={{ color: '#526174', fontSize: 12 }}>Cao cấp</span>
                         </div>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: '#252927', marginBottom: 12 }}>Từ 150 triệu</div>
-                        <div style={{ fontSize: 13, color: '#69736a', marginBottom: 20, lineHeight: 1.5 }}>Không gian container có chỗ ngồi mini, phá cách.</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#414743', borderTop: '1px solid #f4f5f2', paddingTop: 16 }}>
-                          <div><div style={{ color: '#85907d', marginBottom: 2, fontSize: 11 }}>Không gian</div><div style={{ fontWeight: 500 }}>15 - 25 m²</div></div>
-                          <div style={{ textAlign: 'right' }}><div style={{ color: '#85907d', marginBottom: 2, fontSize: 11 }}>Phí duy trì</div><div style={{ fontWeight: 500 }}>7% / tháng</div></div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#142b3e', marginBottom: 12 }}>Từ 150 triệu</div>
+                        <div style={{ fontSize: 13, color: '#526174', marginBottom: 20, lineHeight: 1.5 }}>Không gian container có chỗ ngồi mini, phá cách.</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#263c50', borderTop: '1px solid #f6f8fa', paddingTop: 16 }}>
+                          <div><div style={{ color: '#526174', marginBottom: 2, fontSize: 11 }}>Không gian</div><div style={{ fontWeight: 500 }}>15 - 25 m²</div></div>
+                          <div style={{ textAlign: 'right' }}><div style={{ color: '#526174', marginBottom: 2, fontSize: 11 }}>Phí duy trì</div><div style={{ fontWeight: 500 }}>7% / tháng</div></div>
                         </div>
                       </div>
                     </div>
 
-                    <form className="workspace-form" onSubmit={handleExpansionSubmit} style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #e2e4df', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                      <h3 style={{ margin: '0 0 24px', fontSize: 18, fontWeight: 600, color: '#252927' }}>Thông tin mặt bằng dự kiến</h3>
+                    <form className="workspace-form" onSubmit={handleExpansionSubmit} style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <h3 style={{ margin: '0 0 24px', fontSize: 18, fontWeight: 600, color: '#142b3e' }}>Thông tin mặt bằng dự kiến</h3>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 32 }}>
                         <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#596255', marginBottom: 8 }}>Địa chỉ mặt bằng dự kiến *</label>
-                          <input type="text" required value={expansionForm.dia_chi_mat_bang} onChange={e => setExpansionForm(f => ({ ...f, dia_chi_mat_bang: e.target.value }))} placeholder="Số nhà, tên đường..." style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none' }} />
+                          <Label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#526174', marginBottom: 8 }}>Địa chỉ mặt bằng dự kiến *</Label>
+                          <Input type="text" required value={expansionForm.dia_chi_mat_bang} onChange={e => setExpansionForm(f => ({ ...f, dia_chi_mat_bang: e.target.value }))} placeholder="Số nhà, tên đường..." style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }} />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#596255', marginBottom: 8 }}>Phường / Xã *</label>
-                          <input type="text" required value={expansionForm.phuong_xa} onChange={e => setExpansionForm(f => ({ ...f, phuong_xa: e.target.value }))} placeholder="Nhập Phường/Xã" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none' }} />
+                          <Label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#526174', marginBottom: 8 }}>Phường / Xã *</Label>
+                          <Input type="text" required value={expansionForm.phuong_xa} onChange={e => setExpansionForm(f => ({ ...f, phuong_xa: e.target.value }))} placeholder="Nhập Phường/Xã" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }} />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#596255', marginBottom: 8 }}>Thành phố / Tỉnh *</label>
-                          <input type="text" required value={expansionForm.thanh_pho} onChange={e => setExpansionForm(f => ({ ...f, thanh_pho: e.target.value }))} placeholder="Nhập Thành phố/Tỉnh" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none' }} />
+                          <Label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#526174', marginBottom: 8 }}>Thành phố / Tỉnh *</Label>
+                          <Input type="text" required value={expansionForm.thanh_pho} onChange={e => setExpansionForm(f => ({ ...f, thanh_pho: e.target.value }))} placeholder="Nhập Thành phố/Tỉnh" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }} />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#596255', marginBottom: 8 }}>Diện tích dự kiến (m2)</label>
-                          <input type="number" value={expansionForm.dien_tich_m2} onChange={e => setExpansionForm(f => ({ ...f, dien_tich_m2: e.target.value }))} placeholder="VD: 15" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none' }} />
+                          <Label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#526174', marginBottom: 8 }}>Diện tích dự kiến (m2)</Label>
+                          <Input type="number" value={expansionForm.dien_tich_m2} onChange={e => setExpansionForm(f => ({ ...f, dien_tich_m2: e.target.value }))} placeholder="VD: 15" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none' }} />
                         </div>
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                        <button type="submit" disabled={expansionSubmitting} style={{
-                          padding: '12px 24px', borderRadius: 8, border: 'none', background: '#252927', color: '#fff', fontSize: 14, fontWeight: 600, cursor: expansionSubmitting ? 'not-allowed' : 'pointer', opacity: expansionSubmitting ? 0.7 : 1, transition: 'all 0.2s'
+                        <Button type="submit" disabled={expansionSubmitting} style={{
+                          padding: '12px 24px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: expansionSubmitting ? 'not-allowed' : 'pointer', opacity: expansionSubmitting ? 0.7 : 1, transition: 'all 0.2s'
                         }}>
                           {expansionSubmitting ? 'Đang gửi yêu cầu...' : 'Gửi yêu cầu mở rộng'}
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </div>
                 )}
                 {/* ── Bán hàng POS ── */}
-                {tab === 'pos' && (
+                {tab === 'pos' && posKioskSelected && (
                   activeKiosk?.trang_thai !== 'DANG_HOAT_DONG' ? (
-                    <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e2e4df', margin: '0 auto', maxWidth: 600, marginTop: 40 }}>
-                      <Lock size={48} color="#85907d" style={{ margin: '0 auto 16px' }} />
-                      <h2 style={{ fontSize: 20, fontWeight: 600, color: '#414743', marginBottom: 8 }}>Kiosk Chưa Hoạt Động</h2>
-                      <p style={{ color: '#69736a' }}>Kiosk này hiện chưa khai trương chính thức hoặc chưa hoàn tất mua Combo nhượng quyền.<br />Vui lòng liên hệ Quản lý để biết thêm chi tiết.</p>
+                    <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', margin: '0 auto', maxWidth: 600, marginTop: 40 }}>
+                      <Lock size={48} color="#526174" style={{ margin: '0 auto 16px' }} />
+                      <h2 style={{ fontSize: 20, fontWeight: 600, color: '#263c50', marginBottom: 8 }}>Kiosk Chưa Hoạt Động</h2>
+                      <p style={{ color: '#526174' }}>Kiosk này hiện chưa khai trương chính thức hoặc chưa hoàn tất mua Combo nhượng quyền.<br />Vui lòng liên hệ Quản lý để biết thêm chi tiết.</p>
+                    </div>
+                  ) : activeKioskShiftLoading ? (
+                    <div className="operation-surface operation-empty" role="status">Đang kiểm tra ca làm việc trước khi mở POS…</div>
+                  ) : !activeKioskShift?.has_open_shift ? (
+                    <div className="operation-surface kiosk-pos-shift-gate" role="status">
+                      <Lock size={30} />
+                      <h2>Cần mở ca trước khi bán hàng</h2>
+                      <p>Mở ca và kiểm đếm tiền đầu ca để bắt đầu tạo đơn tại kiosk. Ca đã chốt chờ duyệt riêng trong lịch sử.</p>
+                      <Button type="button" onClick={() => setTab('kiosk_shifts')}>Mở ca tại kiosk</Button>
                     </div>
                   ) : (
-                  <div className="console-pos-layout" style={{
-                    display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: 20,
-                    alignItems: 'start', width: '100%', height: 'calc(100vh - 150px)', minHeight: 640
-                  }}>
-                    {/* Left: Menu & Product Select */}
-                    <div style={{
-                      background: '#ffffff', borderRadius: 16, border: '1px solid #e2e4df',
-                      padding: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', minWidth: 0,
-                      width: '100%', height: '100%', boxSizing: 'border-box', display: 'flex',
-                      flexDirection: 'column', overflow: 'hidden'
-                    }}>
-                      {/* Header cố định */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{
-                            padding: '4px 10px', borderRadius: 8, background: packageMeta.bg,
-                            color: packageMeta.color, border: `1px solid ${packageMeta.border}`,
-                            fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6
-                          }}>
-                            <Package size={14} />
-                            <span>{packageMeta.name}</span>
-                          </span>
-                          <span style={{ fontSize: 12, color: '#69736a' }}>
-                            Áp dụng: <b>{packageAllowedMenu.length}</b> món theo gói
-                          </span>
-                        </div>
-
-                        {/* Nút chuyển chế độ xem */}
-                        <div style={{ display: 'flex', alignItems: 'center', background: '#f4f5f2', borderRadius: 8, padding: 2 }}>
-                          <button
-                            onClick={() => setPosViewMode('grid')}
-                            title="Dạng lưới hình ảnh"
-                            style={{
-                              padding: '5px 10px', border: 'none', borderRadius: 6, cursor: 'pointer',
-                              background: posViewMode === 'grid' ? '#ffffff' : 'transparent',
-                              color: posViewMode === 'grid' ? "var(--primary)" : '#69736a',
-                              fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
-                              boxShadow: posViewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                            }}
-                          >
-                            <Store size={14} /> Lưới
-                          </button>
-                          <button
-                            onClick={() => setPosViewMode('compact')}
-                            title="Dạng danh sách gọn"
-                            style={{
-                              padding: '5px 10px', border: 'none', borderRadius: 6, cursor: 'pointer',
-                              background: posViewMode === 'compact' ? '#ffffff' : 'transparent',
-                              color: posViewMode === 'compact' ? "var(--primary)" : '#69736a',
-                              fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
-                              boxShadow: posViewMode === 'compact' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                            }}
-                          >
-                            <FileText size={14} /> Gọn
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Ô tìm kiếm nhanh */}
-                      <div style={{ position: 'relative', width: '100%', marginBottom: 10 }}>
-                        <Search size={16} color="#85907d" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-                        <input
-                          type="text"
-                          value={menuSearch}
-                          onChange={(e) => setMenuSearch(e.target.value)}
-                          placeholder="Tìm kiếm nhanh tên món cafe, trà, bánh..."
-                          style={{
-                            width: '100%', padding: '9px 12px 9px 36px', borderRadius: 10,
-                            border: '1px solid #ccd3c7', fontSize: 13, outline: 'none', boxSizing: 'border-box'
-                          }}
-                        />
-                        {menuSearch && (
-                          <button
-                            onClick={() => setMenuSearch('')}
-                            style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#85907d' }}
-                          >
-                            <X size={14} />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Thanh lọc danh mục với số lượng món */}
-                      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', width: '100%', maxWidth: '100%', paddingBottom: 6, marginBottom: 10, scrollbarWidth: 'thin' }}>
-                        <button
-                          onClick={() => setMenuCategory('')}
-                          style={{
-                            padding: '6px 14px', borderRadius: 8,
-                            border: '1px solid ' + (!menuCategory ? '#252927' : '#ccd3c7'),
-                            background: !menuCategory ? '#252927' : '#ffffff',
-                            color: !menuCategory ? '#ffffff' : '#596255',
-                            fontWeight: !menuCategory ? 700 : 500, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
-                            transition: 'all .15s ease', flexShrink: 0
-                          }}
-                        >
-                          Tất cả ({packageAllowedMenu.length})
-                        </button>
-                        {Array.from(categoryCounts.entries()).map(([cat, count]) => {
-                          const isCatActive = menuCategory === cat
-                          return (
-                            <button
-                              key={cat}
-                              onClick={() => setMenuCategory(cat)}
-                              style={{
-                                padding: '6px 14px', borderRadius: 8,
-                                border: '1px solid ' + (isCatActive ? '#252927' : '#ccd3c7'),
-                                background: isCatActive ? '#252927' : '#ffffff',
-                                color: isCatActive ? '#ffffff' : '#596255',
-                                fontWeight: isCatActive ? 700 : 500, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
-                                transition: 'all .15s ease', flexShrink: 0
-                              }}
-                            >
-                              {cat} ({count})
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      {/* Vùng hiển thị sản phẩm */}
-                      <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4, minHeight: 0 }}>
-                        {menuLoading ? (
-                          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#69736a' }}>
-                            <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 10px', color: 'var(--primary)' }} />
-                            <div style={{ fontSize: 13, fontWeight: 600 }}>Đang tải thực đơn...</div>
-                          </div>
-                        ) : filteredProducts.length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '50px 20px', color: '#69736a', background: '#f8f9f6', borderRadius: 12 }}>
-                            <Coffee size={32} style={{ margin: '0 auto 10px', opacity: 0.4 }} />
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#414743' }}>Không tìm thấy sản phẩm phù hợp</div>
-                          </div>
-                        ) : posViewMode === 'grid' ? (
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, boxSizing: 'border-box' }}>
-                            {paginatedProducts.map((item) => (
-                              <div
-                                key={item.ma_san_pham}
-                                onClick={() => addToCart(item)}
-                                style={{
-                                  background: '#ffffff', borderRadius: 12, border: '1px solid #ccd3c7',
-                                  padding: 10, cursor: 'pointer', display: 'flex', flexDirection: 'column',
-                                  justifyContent: 'space-between', minHeight: 180, transition: 'all .15s ease',
-                                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden',
-                                  boxSizing: 'border-box'
-                                }}
-                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#85907d'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#ccd3c7'; }}
-                              >
-                                <div style={{ width: '100%', height: 100, borderRadius: 8, background: '#f8f9f6', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 8, boxSizing: 'border-box' }}>
-                                  {item.hinh_anh_url ? (
-                                    <img src={item.hinh_anh_url} alt={item.ten_san_pham} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                  ) : (
-                                    <Coffee size={32} color="#ccd3c7" />
-                                  )}
-                                </div>
-                                <div>
-                                  <div style={{ fontWeight: 700, fontSize: 13, color: '#252927', marginBottom: 4, lineHeight: 1.3 }}>{item.ten_san_pham}</div>
-                                  <span style={{ fontSize: 10, color: '#69736a', background: '#f4f5f2', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>{item.danh_muc}</span>
-                                </div>
-                                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontWeight: 600, fontSize: 14, color: '#252927' }}>{fmtMoney(item.gia_ban)}</span>
-                                  <span style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600 }}>+</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            {paginatedProducts.map((item) => (
-                              <div
-                                key={item.ma_san_pham}
-                                onClick={() => addToCart(item)}
-                                style={{
-                                  background: '#ffffff', borderRadius: 10, border: '1px solid #ccd3c7',
-                                  padding: '10px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
-                                  alignItems: 'center', transition: 'all .15s ease'
-                                }}
-                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#85907d'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#ccd3c7'; }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-                                  <div style={{ width: 40, height: 40, borderRadius: 8, background: '#f8f9f6', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, padding: 4 }}>
-                                    {item.hinh_anh_url ? (
-                                      <img src={item.hinh_anh_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                    ) : (
-                                      <Coffee size={20} color="#ccd3c7" />
-                                    )}
-                                  </div>
-                                  <div style={{ minWidth: 0 }}>
-                                    <div style={{ fontSize: 14, fontWeight: 700, color: '#252927', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.ten_san_pham}</div>
-                                    <span style={{ fontSize: 11, color: '#69736a' }}>{item.danh_muc}</span>
-                                  </div>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                                  <span style={{ fontWeight: 600, fontSize: 14, color: '#252927' }}>{fmtMoney(item.gia_ban)}</span>
-                                  <button type="button" style={{ padding: '6px 12px', borderRadius: 6, background: 'var(--primary-light)', color: 'var(--primary)', border: 'none', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
-                                    Thêm
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Footer cố định: Thanh phân trang */}
-                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e2e4df', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                        <span style={{ fontSize: 12, color: '#69736a' }}>
-                          Hiển thị <b>{(posPage - 1) * ITEMS_PER_PAGE + 1}</b> – <b>{Math.min(posPage * ITEMS_PER_PAGE, filteredProducts.length)}</b> / <b>{filteredProducts.length}</b> món
-                        </span>
-                        {totalPages > 1 && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <button
-                              disabled={posPage <= 1} onClick={() => setPosPage((p) => Math.max(1, p - 1))}
-                              style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ccd3c7', background: posPage <= 1 ? '#f8f9f6' : '#ffffff', color: posPage <= 1 ? '#85907d' : '#414743', cursor: posPage <= 1 ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}
-                            >Trước</button>
-                            <button
-                              disabled={posPage >= totalPages} onClick={() => setPosPage((p) => Math.min(totalPages, p + 1))}
-                              style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ccd3c7', background: posPage >= totalPages ? '#f8f9f6' : '#ffffff', color: posPage >= totalPages ? '#85907d' : '#414743', cursor: posPage >= totalPages ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}
-                            >Sau</button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: Cart & Order Summary */}
-                    <div style={{
-                      background: '#ffffff', borderRadius: 16, border: '1px solid #e2e4df',
-                      padding: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.02)', minWidth: 0,
-                      boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#252927', display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <Receipt size={18} color="#252927" /> Đơn hàng Kiosk
-                        </h3>
-                        {posCart.length > 0 && (
-                          <button onClick={() => setPosCart([])} style={{ background: "#f4f5f2", border: '1px solid #fecaca', color: '#dc2626', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                            Xóa tất cả
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Cart Item List */}
-                      <div style={{ flex: 1, overflowY: 'auto', marginBottom: 16, paddingRight: 4 }}>
-                        {posCart.length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '60px 0', color: '#85907d' }}>
-                            <Package size={40} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-                            <div style={{ fontSize: 14, fontWeight: 500 }}>Chưa có món nào được chọn</div>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            {posCart.map((item) => (
-                              <div key={item.cartItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f4f5f2' }}>
-                                <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
-                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#252927', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginBottom: 4 }}>{item.ten_san_pham}</div>
-                                  <div style={{ fontSize: 13, color: '#252927', fontWeight: 600 }}>{fmtMoney(item.gia_ban)}</div>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <button onClick={() => updateCartQty(item.cartItemId, item.sl - 1)} style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #ccd3c7', background: '#f8f9f6', cursor: 'pointer', fontWeight: 700, color: '#414743', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
-                                  <span style={{ fontSize: 14, fontWeight: 700, width: 24, textAlign: 'center', color: '#252927' }}>{item.sl}</span>
-                                  <button onClick={() => updateCartQty(item.cartItemId, item.sl + 1)} style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #ccd3c7', background: '#f8f9f6', cursor: 'pointer', fontWeight: 700, color: '#414743', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
-                                  <button onClick={() => removeFromCart(item.cartItemId)} style={{ width: 26, height: 26, borderRadius: 6, border: 'none', background: "#f4f5f2", color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}><Trash2 size={13} /></button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Calculation Breakdown */}
-                      <div style={{ background: '#f8f9f6', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid #e2e4df' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#69736a', marginBottom: 8 }}>
-                          <span>Tạm tính ({posCart.reduce((a, c) => a + c.sl, 0)} món):</span>
-                          <span style={{ fontWeight: 600, color: '#252927' }}>{fmtMoney(posTotal)}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 600, color: '#252927', paddingTop: 12, borderTop: '1px dashed #ccd3c7' }}>
-                          <span>Tổng thanh toán:</span>
-                          <span>{fmtMoney(posTotal)}</span>
-                        </div>
-                      </div>
-
-                      {/* Payment Methods */}
-                      <div style={{ marginBottom: 16 }}>
-                        <label style={{ fontSize: 13, fontWeight: 700, color: '#414743', display: 'block', marginBottom: 8 }}>Phương thức thanh toán</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 8 }}>
-                          {[{ id: 'TIEN_MAT', label: 'Tiền mặt' }, { id: 'NGAN_HANG_QR', label: 'QR Pay' }, { id: 'THE', label: 'Thẻ' }].map((m) => {
-                            const isSelected = posPayment === m.id
-                            return (
-                              <button
-                                key={m.id} onClick={() => setPosPayment(m.id)}
-                                style={{
-                                  padding: '8px 4px', borderRadius: 8, border: '1px solid ' + (isSelected ? '#252927' : '#ccd3c7'),
-                                  background: isSelected ? '#252927' : '#fff', color: isSelected ? '#ffffff' : '#596255',
-                                  fontWeight: isSelected ? 700 : 600, fontSize: 12, cursor: 'pointer', transition: 'all .15s ease'
-                                }}
-                              >{m.label}</button>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Cash Given & Change */}
-                      {posPayment === 'TIEN_MAT' && (
-                        <div style={{ marginBottom: 16 }}>
-                          <CurrencyInput
-                            value={posCashInput}
-                            onChange={(e) => setPosCashInput(e.target.value)}
-                            placeholder="Nhập số tiền..."
-                            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-                          />
-                          {Number(posCashInput) > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginTop: 8, fontWeight: 700, color: '#252927' }}>
-                              <span>Tiền thối lại:</span>
-                              <span>{fmtMoney(posChange)}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Checkout CTA Button */}
-                      <button
-                        onClick={submitPosOrder} disabled={posCart.length === 0 || posSubmitting}
-                        style={{
-                          width: '100%', padding: '14px', borderRadius: 10, border: 'none',
-                          background: posCart.length === 0 ? "#f4f5f2" : '#252927',
-                          color: '#fff', fontSize: 14, fontWeight: 600, cursor: posCart.length === 0 ? 'not-allowed' : 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all .2s ease'
-                        }}
-                      >
-                        {posSubmitting ? (
-                          <>
-                            <RefreshCw size={16} className="animate-spin" />
-                            <span>Đang xử lý...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>Thanh toán {fmtMoney(posTotal)}</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                  <KioskPosTerminal key={activeKioskId}
+                    products={availability.ready ? packageAllowedMenu.filter(availability.isSelling) : []}
+                    loading={menuLoading || !availability.ready} packageName={packageMeta.name}
+                    cart={posCart.map(item => ({ id:item.cartItemId, productId:item.ma_san_pham, name:item.ten_san_pham, price:Number(item.gia_ban || item.gia || 0), quantity:item.sl, toppings:item.selectedToppings }))}
+                    total={posTotal} payment={posPayment} cash={posCashInput} submitting={posSubmitting} result={posOrderResult}
+                    onAdd={addToCart} onQuantity={updateCartQty} onRemove={removeFromCart} onClear={() => setPosCart([])}
+                    onPayment={setPosPayment} onCash={setPosCashInput} onCheckout={submitPosOrder} onResult={setPosOrderResult}
+                    onCheckPayment={async id => {
+                      const response = await apiFetch(`/staff/orders?branch_code=${encodeURIComponent(activeKiosk.ma_kiosk)}&q=${encodeURIComponent(id)}&limit=1`)
+                      return (response.orders || response.items || []).find(order => order.ma_don_hang === id)
+                    }}
+                    onOrders={() => { posOrderCache.current.clear(); setTab('pos_orders') }} />
                   )
                 )}
               </>
             )}
             </WorkspaceErrorBoundary>
           </div>
+          </OperationalPageFrame>
         </main>
 
         {/* ═══════════════════════════════════════════════════════════ */}
@@ -3919,81 +2601,81 @@ export function FranchiseePortal({ session, onLogout }) {
             background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
           }} onClick={() => setShowCreateStaffModal(false)}>
-            <div style={{
-              background: '#fff', borderRadius: 24, width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto',
+            <div className="kiosk-staff-dialog" style={{
+              background: '#fff', borderRadius: 24, width: '100%', maxWidth: 820, maxHeight: '90vh', overflowY: 'auto',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.2s ease-out'
             }} onClick={e => e.stopPropagation()}>
-              <div style={{ padding: '24px', borderBottom: '1px solid #f4f5f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '24px', borderBottom: '1px solid #f6f8fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f4f5f2', color: '#252927', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f6f8fa', color: '#142b3e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <UserPlus size={20} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#252927' }}>Tạo Tài Khoản Nhân Viên Con</h3>
-                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#69736a' }}>Phân quyền trực tiếp cho nhân viên vận hành Kiosk</p>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#142b3e' }}>Tạo Tài Khoản Nhân Viên Con</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#526174' }}>Phân quyền trực tiếp cho nhân viên vận hành Kiosk</p>
                   </div>
                 </div>
-                <button onClick={() => setShowCreateStaffModal(false)} style={{ background: '#f4f5f2', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#69736a' }}>×</button>
+                <Button onClick={() => setShowCreateStaffModal(false)} style={{ background: '#f6f8fa', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#526174' }}>×</Button>
               </div>
 
-              <form className="workspace-form" onSubmit={handleCreateStaff} style={{ padding: 24 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Họ và tên *</label>
-                    <input type="text" required value={staffForm.ho_ten} onChange={e => setStaffForm(f => ({ ...f, ho_ten: e.target.value }))} placeholder="Nguyễn Văn A"
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+              <form className="workspace-form kiosk-staff-form" onSubmit={handleCreateStaff} style={{ padding: 26 }}>
+                <div className="kiosk-staff-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                  <div className="kiosk-staff-field">
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Họ và tên *</Label>
+                    <Input type="text" required value={staffForm.ho_ten} onChange={e => setStaffForm(f => ({ ...f, ho_ten: e.target.value }))} placeholder="Nguyễn Văn A"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Tên đăng nhập *</label>
-                    <input type="text" required value={staffForm.ten_dang_nhap} onChange={e => setStaffForm(f => ({ ...f, ten_dang_nhap: e.target.value.toLowerCase().replace(/\s+/g, '') }))} placeholder="staff_an1"
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  <div className="kiosk-staff-field">
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Tên đăng nhập *</Label>
+                    <Input type="text" required value={staffForm.ten_dang_nhap} onChange={e => setStaffForm(f => ({ ...f, ten_dang_nhap: e.target.value.toLowerCase().replace(/\s+/g, '') }))} placeholder="staff_an1"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Mật khẩu khởi tạo *</label>
+                <div className="kiosk-staff-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                  <div className="kiosk-staff-field">
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Mật khẩu khởi tạo *</Label>
                     <div style={{ position: 'relative' }}>
-                      <input type={showStaffPassword ? "text" : "password"} required value={staffForm.mat_khau} onChange={e => setStaffForm(f => ({ ...f, mat_khau: e.target.value }))} placeholder="••••••"
-                        style={{ width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
-                      <button 
+                      <Input type={showStaffPassword ? "text" : "password"} required value={staffForm.mat_khau} onChange={e => setStaffForm(f => ({ ...f, mat_khau: e.target.value }))} placeholder="••••••"
+                        style={{ width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                      <Button
                         type="button" 
                         onClick={() => setShowStaffPassword(!showStaffPassword)}
-                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#69736a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#526174', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         {showStaffPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+                      </Button>
                     </div>
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Kiosk phân công *</label>
+                  <div className="kiosk-staff-field">
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Kiosk phân công *</Label>
                     <SearchableSelect value={staffForm.kiosk_id || activeKioskId} onChange={e => setStaffForm(f => ({ ...f, kiosk_id: e.target.value }))}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', background: '#f8f9f6', fontWeight: 600, boxSizing: 'border-box' }}>
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', background: '#f6f8fa', fontWeight: 600, boxSizing: 'border-box' }}>
                       {kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').map(k => <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>)}
                     </SearchableSelect>
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Số điện thoại</label>
-                    <input type="tel" value={staffForm.so_dien_thoai} onChange={e => setStaffForm(f => ({ ...f, so_dien_thoai: e.target.value }))} placeholder="0901234567"
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                <div className="kiosk-staff-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                  <div className="kiosk-staff-field">
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Số điện thoại</Label>
+                    <Input type="tel" value={staffForm.so_dien_thoai} onChange={e => setStaffForm(f => ({ ...f, so_dien_thoai: e.target.value }))} placeholder="0901234567"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Email</label>
-                    <input type="email" value={staffForm.email} onChange={e => setStaffForm(f => ({ ...f, email: e.target.value }))} placeholder="staff@gmail.com"
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  <div className="kiosk-staff-field">
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Email</Label>
+                    <Input type="email" value={staffForm.email} onChange={e => setStaffForm(f => ({ ...f, email: e.target.value }))} placeholder="staff@gmail.com"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                 </div>
 
                 {/* Phân quyền POS chi tiết */}
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: '#252927', textTransform: 'uppercase' }}>Phân quyền thao tác POS</label>
+                    <Label style={{ fontSize: 13, fontWeight: 600, color: '#142b3e', textTransform: 'uppercase' }}>Phân quyền thao tác POS</Label>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button type="button" onClick={() => setStaffForm(f => ({ ...f, pos_permissions: POS_PERMISSIONS_LIST.map(p => p.id) }))} style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: '#f4f5f2', border: 'none', cursor: 'pointer' }}>Chọn tất cả</button>
-                      <button type="button" onClick={() => setStaffForm(f => ({ ...f, pos_permissions: ['pos_allow_order'] }))} style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: '#f4f5f2', border: 'none', cursor: 'pointer' }}>Chỉ bán hàng</button>
+                      <Button type="button" onClick={() => setStaffForm(f => ({ ...f, pos_permissions: POS_PERMISSIONS_LIST.map(p => p.id) }))} style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: '#f6f8fa', border: 'none', cursor: 'pointer' }}>Chọn tất cả</Button>
+                      <Button type="button" onClick={() => setStaffForm(f => ({ ...f, pos_permissions: ['pos_allow_order'] }))} style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: '#f6f8fa', border: 'none', cursor: 'pointer' }}>Chỉ bán hàng</Button>
                     </div>
                   </div>
 
@@ -4001,9 +2683,9 @@ export function FranchiseePortal({ session, onLogout }) {
                     {POS_PERMISSIONS_LIST.map(perm => {
                       const isChecked = (staffForm.pos_permissions || []).includes(perm.id)
                       return (
-                        <label key={perm.id} style={{
+                        <Label key={perm.id} className="kiosk-staff-permission" style={{
                           display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px', borderRadius: 10,
-                          border: `1px solid ${isChecked ? '#252927' : '#e2e4df'}`, background: isChecked ? '#f8f9f6' : '#fff',
+                          border: `1px solid ${isChecked ? 'var(--primary)' : '#e2e8f0'}`, background: isChecked ? '#f6f8fa' : '#fff',
                           cursor: 'pointer', transition: 'all .15s'
                         }}>
                           <input type="checkbox" checked={isChecked} onChange={() => {
@@ -4016,20 +2698,20 @@ export function FranchiseePortal({ session, onLogout }) {
                             })
                           }} style={{ marginTop: 3 }} />
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: 13, color: '#252927' }}>{perm.label}</div>
-                            <div style={{ fontSize: 11, color: '#69736a' }}>{perm.desc}</div>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: '#142b3e' }}>{perm.label}</div>
+                            <div style={{ fontSize: 11, color: '#526174' }}>{perm.desc}</div>
                           </div>
-                        </label>
+                        </Label>
                       )
                     })}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" onClick={() => setShowCreateStaffModal(false)} style={{ flex: 1, padding: '12px', background: '#f4f5f2', color: '#596255', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#252927', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  <Button data-intent="danger" type="button" onClick={() => setShowCreateStaffModal(false)} style={{ flex: 1, padding: '12px', background: '#f6f8fa', color: '#526174', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</Button>
+                  <Button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                     {staffSubmitting ? 'Đang lưu...' : "Xác nhận tạo tài khoản"}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -4049,41 +2731,41 @@ export function FranchiseePortal({ session, onLogout }) {
               background: '#fff', borderRadius: 24, width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.2s ease-out'
             }} onClick={e => e.stopPropagation()}>
-              <div style={{ padding: '24px', borderBottom: '1px solid #f4f5f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '24px', borderBottom: '1px solid #f6f8fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#252927' }}>Chỉnh Sửa Nhân Viên: @{selectedStaff.ten_dang_nhap}</h3>
-                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#69736a' }}>Cập nhật thông tin và điều chỉnh quyền hạn POS</p>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#142b3e' }}>Chỉnh Sửa Nhân Viên: @{selectedStaff.ten_dang_nhap}</h3>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#526174' }}>Cập nhật thông tin và điều chỉnh quyền hạn POS</p>
                 </div>
-                <button onClick={() => setShowEditStaffModal(false)} style={{ background: '#f4f5f2', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#69736a' }}>×</button>
+                <Button onClick={() => setShowEditStaffModal(false)} style={{ background: '#f6f8fa', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#526174' }}>×</Button>
               </div>
 
               <form className="workspace-form" onSubmit={handleUpdateStaff} style={{ padding: 24 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Họ và tên</label>
-                    <input type="text" value={staffForm.ho_ten} onChange={e => setStaffForm(f => ({ ...f, ho_ten: e.target.value }))}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Họ và tên</Label>
+                    <Input type="text" value={staffForm.ho_ten} onChange={e => setStaffForm(f => ({ ...f, ho_ten: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Trạng thái tài khoản</label>
-                    <select value={staffForm.trang_thai} onChange={e => setStaffForm(f => ({ ...f, trang_thai: e.target.value }))}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, background: '#f8f9f6', fontWeight: 600, boxSizing: 'border-box' }}>
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Trạng thái tài khoản</Label>
+                    <SearchableSelect value={staffForm.trang_thai} onChange={e => setStaffForm(f => ({ ...f, trang_thai: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, background: '#f6f8fa', fontWeight: 600, boxSizing: 'border-box' }}>
                       <option value="ACTIVE">Hoạt động (Active)</option>
                       <option value="INACTIVE">Khóa tài khoản (Inactive)</option>
-                    </select>
+                    </SearchableSelect>
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Số điện thoại</label>
-                    <input type="tel" value={staffForm.so_dien_thoai} onChange={e => setStaffForm(f => ({ ...f, so_dien_thoai: e.target.value }))}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Số điện thoại</Label>
+                    <Input type="tel" value={staffForm.so_dien_thoai} onChange={e => setStaffForm(f => ({ ...f, so_dien_thoai: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Kiosk trực thuộc</label>
+                    <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Kiosk trực thuộc</Label>
                     <SearchableSelect value={staffForm.kiosk_id || ''} onChange={e => setStaffForm(f => ({ ...f, kiosk_id: e.target.value }))}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, background: '#f8f9f6', fontWeight: 600, boxSizing: 'border-box' }}>
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, background: '#f6f8fa', fontWeight: 600, boxSizing: 'border-box' }}>
                       {kiosks.map(k => <option key={k.id} value={k.id}>{k.ten_kiosk} ({k.ma_kiosk})</option>)}
                     </SearchableSelect>
                   </div>
@@ -4091,14 +2773,14 @@ export function FranchiseePortal({ session, onLogout }) {
 
                 {/* Phân quyền POS */}
                 <div style={{ marginBottom: 24 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#252927', textTransform: 'uppercase', marginBottom: 10 }}>Cấp quyền thao tác POS</label>
+                  <Label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#142b3e', textTransform: 'uppercase', marginBottom: 10 }}>Cấp quyền thao tác POS</Label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {POS_PERMISSIONS_LIST.map(perm => {
                       const isChecked = (staffForm.pos_permissions || []).includes(perm.id)
                       return (
-                        <label key={perm.id} style={{
+                        <Label key={perm.id} style={{
                           display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px', borderRadius: 10,
-                          border: `1px solid ${isChecked ? '#252927' : '#e2e4df'}`, background: isChecked ? '#f8f9f6' : '#fff',
+                          border: `1px solid ${isChecked ? 'var(--primary)' : '#e2e8f0'}`, background: isChecked ? '#f6f8fa' : '#fff',
                           cursor: 'pointer'
                         }}>
                           <input type="checkbox" checked={isChecked} onChange={() => {
@@ -4111,20 +2793,20 @@ export function FranchiseePortal({ session, onLogout }) {
                             })
                           }} style={{ marginTop: 3 }} />
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: 13, color: '#252927' }}>{perm.label}</div>
-                            <div style={{ fontSize: 11, color: '#69736a' }}>{perm.desc}</div>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: '#142b3e' }}>{perm.label}</div>
+                            <div style={{ fontSize: 11, color: '#526174' }}>{perm.desc}</div>
                           </div>
-                        </label>
+                        </Label>
                       )
                     })}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" onClick={() => setShowEditStaffModal(false)} style={{ flex: 1, padding: '12px', background: '#f4f5f2', color: '#596255', border: '1px solid #e2e4df', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#252927', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  <Button data-intent="danger" type="button" onClick={() => setShowEditStaffModal(false)} style={{ flex: 1, padding: '12px', background: '#f6f8fa', color: '#526174', border: '1px solid #e2e8f0', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</Button>
+                  <Button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                     {staffSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -4144,26 +2826,26 @@ export function FranchiseePortal({ session, onLogout }) {
               background: '#fff', borderRadius: 24, width: '100%', maxWidth: 420, overflow: 'hidden',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.2s ease-out'
             }} onClick={e => e.stopPropagation()}>
-              <div style={{ padding: '24px', borderBottom: '1px solid #f4f5f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '24px', borderBottom: '1px solid #f6f8fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#252927' }}>Đặt Lại Mật Khẩu</h3>
-                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#69736a' }}>Cho nhân viên: <b>@{selectedStaff.ten_dang_nhap}</b></p>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#142b3e' }}>Đặt Lại Mật Khẩu</h3>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#526174' }}>Cho nhân viên: <b>@{selectedStaff.ten_dang_nhap}</b></p>
                 </div>
-                <button onClick={() => setShowResetPwdModal(false)} style={{ background: '#f4f5f2', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#69736a' }}>×</button>
+                <Button onClick={() => setShowResetPwdModal(false)} style={{ background: '#f6f8fa', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#526174' }}>×</Button>
               </div>
 
               <form className="workspace-form" onSubmit={handleResetPassword} style={{ padding: 24 }}>
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Mật khẩu mới *</label>
-                  <input type="password" required value={resetPwdInput} onChange={e => setResetPwdInput(e.target.value)} placeholder="Nhập mật khẩu mới..."
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 15, outline: 'none', boxSizing: 'border-box' }} />
+                  <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Mật khẩu mới *</Label>
+                  <Input type="password" required value={resetPwdInput} onChange={e => setResetPwdInput(e.target.value)} placeholder="Nhập mật khẩu mới..."
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 15, outline: 'none', boxSizing: 'border-box' }} />
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" onClick={() => setShowResetPwdModal(false)} style={{ flex: 1, padding: '12px', background: '#f4f5f2', color: '#596255', border: '1px solid #e2e4df', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#252927', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  <Button data-intent="danger" type="button" onClick={() => setShowResetPwdModal(false)} style={{ flex: 1, padding: '12px', background: '#f6f8fa', color: '#526174', border: '1px solid #e2e8f0', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</Button>
+                  <Button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                     {staffSubmitting ? 'Đang lưu...' : 'Xác nhận đổi MK'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -4173,191 +2855,14 @@ export function FranchiseePortal({ session, onLogout }) {
         {/* ═══════════════════════════════════════════════════════════ */}
         {/* MODAL 4: PHÂN CA LÀM VIỆC (SCHEDULE SHIFT) */}
         {/* ═══════════════════════════════════════════════════════════ */}
-        {showCreateShiftModal && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
-            background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(6px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-          }} onClick={() => setShowCreateShiftModal(false)}>
-            <div style={{
-              background: '#fff', borderRadius: 24, width: '100%', maxWidth: 520, overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.2s ease-out'
-            }} onClick={e => e.stopPropagation()}>
-              {/* Modal Header */}
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f4f5f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: 12,
-                    background: "linear-gradient(135deg, #f4f5f2, #f4f5f2)",
-                    color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    <CalendarDays size={22} />
-                  </div>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#252927' }}>Phân Ca Làm Việc Tại Kiosk</h3>
-                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#69736a' }}>
-                      Kiosk: <b>{activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</b>
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCreateShiftModal(false)}
-                  style={{
-                    background: '#f4f5f2', border: 'none', width: 32, height: 32,
-                    borderRadius: 16, cursor: 'pointer', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', color: '#69736a', transition: 'all .15s'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#e2e4df'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#f4f5f2'}
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              {/* Modal Form */}
-              <form className="workspace-form" onSubmit={handleCreateWorkShift} style={{ padding: 24 }}>
-                {/* Chọn nhân viên */}
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>
-                    Nhân viên nhận ca *
-                  </label>
-                  <SearchableSelect
-                    required
-                    value={shiftScheduleForm.staff_username}
-                    onChange={e => setShiftScheduleForm(f => ({ ...f, staff_username: e.target.value }))}
-                    style={{
-                      width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid #ccd3c7',
-                      fontSize: 14, background: '#f8f9f6', fontWeight: 600, outline: 'none',
-                      boxSizing: 'border-box', cursor: 'pointer'
-                    }}
-                  >
-                    <option value="">-- Chọn nhân viên kiosk --</option>
-                    {subStaffList.map(s => (
-                      <option key={s.ma_nguoi_dung} value={s.ten_dang_nhap}>
-                        {s.ho_ten} (@{s.ten_dang_nhap})
-                      </option>
-                    ))}
-                  </SearchableSelect>
-                </div>
-
-                {/* Ngày làm việc */}
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>
-                    Ngày làm việc *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={shiftScheduleForm.shift_date}
-                    onChange={e => setShiftScheduleForm(f => ({ ...f, shift_date: e.target.value }))}
-                    style={{
-                      width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7',
-                      fontSize: 14, outline: 'none', boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                {/* Khung ca làm việc (Visual Selector Cards) */}
-                <div style={{ marginBottom: 18 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 8 }}>
-                    Khung ca làm việc *
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 10 }}>
-                    {SHIFT_TEMPLATES.map((tmpl) => {
-                      const isSelected = shiftScheduleForm.shift_code === tmpl.id
-                      const IconComp = tmpl.icon
-                      return (
-                        <div
-                          key={tmpl.id}
-                          onClick={() => setShiftScheduleForm(f => ({ ...f, shift_code: tmpl.id }))}
-                          style={{
-                            padding: '12px 10px', borderRadius: 12, cursor: 'pointer',
-                            border: isSelected ? '2px solid #2563eb' : '1px solid #e2e4df',
-                            background: isSelected ? "#f4f5f2" : '#ffffff',
-                            textAlign: 'center', transition: 'all .15s',
-                            boxShadow: isSelected ? '0 4px 12px rgba(5,150,105,0.15)' : 'none',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
-                          }}
-                        >
-                          <IconComp size={20} color={isSelected ? '#2563eb' : tmpl.accent} />
-                          <div style={{ fontWeight: 600, fontSize: 12, color: isSelected ? '#1d4ed8' : '#252927' }}>
-                            {tmpl.name}
-                          </div>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: '#69736a' }}>
-                            {tmpl.time}
-                          </div>
-                          {isSelected && (
-                            <div style={{ marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 2, color: '#2563eb', fontSize: 10, fontWeight: 600 }}>
-                              <Check size={12} /> Đã chọn
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Ghi chú ca */}
-                <div style={{ marginBottom: 22 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>
-                    Ghi chú ca làm (tùy chọn)
-                  </label>
-                  <input
-                    type="text"
-                    value={shiftScheduleForm.note}
-                    onChange={e => setShiftScheduleForm(f => ({ ...f, note: e.target.value }))}
-                    placeholder="Ví dụ: Phụ trách pha chế máy 1, chốt doanh thu ca..."
-                    style={{
-                      width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7',
-                      fontSize: 14, outline: 'none', boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                {/* Buttons */}
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateShiftModal(false)}
-                    style={{
-                      flex: 1, padding: '12px', background: '#f4f5f2', color: '#596255',
-                      border: '1px solid #e2e4df', borderRadius: 12, fontWeight: 700,
-                      cursor: 'pointer', transition: 'background .15s'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#e2e4df'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#f4f5f2'}
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={shiftScheduleSubmitting}
-                    style={{
-                      flex: 2, padding: '12px',
-                      background: "linear-gradient(135deg, var(--primary), var(--primary))",
-                      color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600,
-                      fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 14px rgba(16,185,129,0.35)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      transition: 'all .2s'
-                    }}
-                  >
-                    {shiftScheduleSubmitting ? (
-                      <>
-                        <RefreshCw size={15} className="animate-spin" />
-                        <span>Đang lưu...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Check size={16} />
-                        <span>Xác nhận phân ca</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        {showCreateShiftModal && <WorkspaceDialog title="Phân ca làm việc" subtitle={`${activeKiosk?.ten_kiosk || 'Kiosk'} · ${activeKiosk?.ma_kiosk || ''}`} icon={CalendarDays} busy={shiftScheduleSubmitting} onClose={()=>setShowCreateShiftModal(false)} className="kiosk-assignment-dialog">
+          <form className="kiosk-assignment-form" onSubmit={handleCreateWorkShift}>
+            <div className="kiosk-assignment-fields"><div><Label htmlFor="kiosk-shift-employee">Nhân viên nhận ca</Label><SearchableSelect id="kiosk-shift-employee" aria-label="Nhân viên nhận ca" required disabled={shiftScheduleSubmitting} value={shiftScheduleForm.staff_username} onChange={e=>setShiftScheduleForm(f=>({...f,staff_username:e.target.value}))} options={subStaffList.filter(staff=>!staff.kiosk_id||staff.kiosk_id===activeKioskId).map(staff=>({value:staff.ten_dang_nhap,label:`${staff.ho_ten||staff.ten_dang_nhap} · @${staff.ten_dang_nhap}`}))}/></div><div><Label htmlFor="kiosk-shift-date">Ngày làm việc</Label><Input id="kiosk-shift-date" type="date" required value={shiftScheduleForm.shift_date} disabled={shiftScheduleSubmitting} onChange={e=>setShiftScheduleForm(f=>({...f,shift_date:e.target.value}))}/></div></div>
+            <fieldset className="kiosk-shift-options" disabled={shiftScheduleSubmitting}><legend>Chọn khung ca</legend><div>{SHIFT_TEMPLATES.map(template=>{const Icon=template.icon,selected=shiftScheduleForm.shift_code===template.id;return <Button type="button" variant={selected?'default':'outline'} key={template.id} aria-pressed={selected} onClick={()=>setShiftScheduleForm(f=>({...f,shift_code:template.id}))}><Icon size={25}/><strong>{template.name}</strong><span>{template.start}–{template.end}</span>{selected&&<Check size={15}/>}</Button>})}</div></fieldset>
+            <div><Label htmlFor="kiosk-shift-note">Ghi chú phân công</Label><Textarea id="kiosk-shift-note" rows={3} value={shiftScheduleForm.note} disabled={shiftScheduleSubmitting} onChange={e=>setShiftScheduleForm(f=>({...f,note:e.target.value}))} placeholder="Nhiệm vụ hoặc lưu ý cho nhân viên…"/></div>
+            <footer className="operation-footer"><Button type="button" variant="outline" disabled={shiftScheduleSubmitting} onClick={()=>setShowCreateShiftModal(false)}>Hủy</Button><Button type="submit" variant="default" disabled={shiftScheduleSubmitting||!shiftScheduleForm.staff_username}><Check size={16}/>{shiftScheduleSubmitting?'Đang lưu…':'Xác nhận phân ca'}</Button></footer>
+          </form>
+        </WorkspaceDialog>}
 
         {/* ═══════════════════════════════════════════════════════════ */}
         {/* MODAL 4.1: DUYỆT YÊU CẦU ĐĂNG KÝ CA LÀM VIỆC */}
@@ -4374,66 +2879,66 @@ export function FranchiseePortal({ session, onLogout }) {
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.2s ease-out'
             }} onClick={e => e.stopPropagation()}>
               {/* Header */}
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f4f5f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f6f8fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 42, height: 42, borderRadius: 12,
-                    background: "linear-gradient(135deg, #f4f5f2, #fde68a)",
+                    background: "linear-gradient(135deg, #f6f8fa, #fde68a)",
                     color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
                     <CalendarCheck size={22} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#252927' }}>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#142b3e' }}>
                       Duyệt Yêu Cầu Đăng Ký Ca Làm Việc
                     </h3>
-                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#69736a' }}>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#526174' }}>
                       Kiosk: <b>{activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</b>
                     </p>
                   </div>
                 </div>
-                <button
+                <Button
                   onClick={() => setShowShiftRequestsModal(false)}
                   style={{
-                    background: '#f4f5f2', border: 'none', width: 32, height: 32,
+                    background: '#f6f8fa', border: 'none', width: 32, height: 32,
                     borderRadius: 16, cursor: 'pointer', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', color: '#69736a', transition: 'all .15s'
+                    justifyContent: 'center', color: '#526174', transition: 'all .15s'
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#e2e4df'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#f4f5f2'}
+                  onMouseEnter={e => e.currentTarget.style.background = '#e2e8f0'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#f6f8fa'}
                 >
                   <X size={16} />
-                </button>
+                </Button>
               </div>
 
               {/* Filter Tabs */}
-              <div style={{ padding: '12px 24px', borderBottom: '1px solid #f4f5f2', display: 'flex', gap: 8, background: '#f8f9f6' }}>
+              <div style={{ padding: '12px 24px', borderBottom: '1px solid #f6f8fa', display: 'flex', gap: 8, background: '#f6f8fa' }}>
                 {[
                   { id: 'PENDING', label: 'Chờ duyệt', count: shiftRequests.filter(r => r.trang_thai_yeu_cau === 'PENDING').length, color: '#d97706', activeBg: '#fef3c7' },
-                  { id: 'APPROVED', label: 'Đã duyệt (Chính thức)', count: shiftRequests.filter(r => r.trang_thai_yeu_cau === 'APPROVED').length, color: '#2563eb', activeBg: '#eff6ff' },
+                  { id: 'APPROVED', label: 'Đã duyệt (Chính thức)', count: shiftRequests.filter(r => r.trang_thai_yeu_cau === 'APPROVED').length, color: '#16354d', activeBg: '#eff6ff' },
                   { id: 'REJECTED', label: 'Đã từ chối', count: shiftRequests.filter(r => r.trang_thai_yeu_cau === 'REJECTED').length, color: '#dc2626', activeBg: '#fef2f2' },
-                  { id: 'ALL', label: 'Tất cả yêu cầu', count: shiftRequests.length, color: '#596255', activeBg: '#e2e4df' },
+                  { id: 'ALL', label: 'Tất cả yêu cầu', count: shiftRequests.length, color: '#526174', activeBg: '#e2e8f0' },
                 ].map(f => {
                   const isSel = shiftRequestTabFilter === f.id
                   return (
-                    <button
+                    <Button
                       key={f.id}
                       onClick={() => setShiftRequestTabFilter(f.id)}
                       style={{
-                        padding: '6px 14px', borderRadius: 99, border: isSel ? `1px solid ${f.color}` : '1px solid #e2e4df',
-                        background: isSel ? f.activeBg : '#fff', color: isSel ? f.color : '#69736a',
+                        padding: '6px 14px', borderRadius: 99, border: isSel ? `1px solid ${f.color}` : '1px solid #e2e8f0',
+                        background: isSel ? f.activeBg : '#fff', color: isSel ? f.color : '#526174',
                         fontWeight: isSel ? 800 : 600, fontSize: 12, cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: 6, transition: 'all .15s'
                       }}
                     >
                       <span>{f.label}</span>
-                      <span style={{
+                      <Badge variant="outline" data-quiet-label="true" style={{
                         padding: '1px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600,
-                        background: isSel ? f.color : '#f4f5f2', color: isSel ? '#fff' : '#69736a'
+                        background: isSel ? f.color : '#f6f8fa', color: isSel ? '#fff' : '#526174'
                       }}>
                         {f.count}
-                      </span>
-                    </button>
+                      </Badge>
+                    </Button>
                   )
                 })}
               </div>
@@ -4448,12 +2953,12 @@ export function FranchiseePortal({ session, onLogout }) {
 
                   if (filtered.length === 0) {
                     return (
-                      <div style={{ textAlign: 'center', padding: 50, color: '#69736a' }}>
-                        <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f4f5f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                          <CheckCircle2 size={24} color="#85907d" />
+                      <div style={{ textAlign: 'center', padding: 50, color: '#526174' }}>
+                        <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f6f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                          <CheckCircle2 size={24} color="#526174" />
                         </div>
-                        <div style={{ fontWeight: 600, fontSize: 15, color: '#252927' }}>Không có yêu cầu đăng ký ca nào</div>
-                        <p style={{ fontSize: 12, color: '#69736a', marginTop: 4 }}>
+                        <div style={{ fontWeight: 600, fontSize: 15, color: '#142b3e' }}>Không có yêu cầu đăng ký ca nào</div>
+                        <p style={{ fontSize: 12, color: '#526174', marginTop: 4 }}>
                           {shiftRequestTabFilter === 'PENDING'
                             ? 'Toàn bộ ca làm việc đăng ký đã được duyệt hoặc chưa có yêu cầu mới.'
                             : 'Không tìm thấy bản ghi phù hợp với bộ lọc.'}
@@ -4476,7 +2981,7 @@ export function FranchiseePortal({ session, onLogout }) {
                           <div key={req.ma_ca_lam_viec} style={{
                             background: isPending ? '#fffdf5' : '#ffffff',
                             borderRadius: 14, padding: 14,
-                            border: isPending ? '1.5px solid #fde68a' : '1px solid #e2e4df',
+                            border: isPending ? '1.5px solid #fde68a' : '1px solid #e2e8f0',
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                             gap: 16, flexWrap: 'wrap', boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
                           }}>
@@ -4486,30 +2991,30 @@ export function FranchiseePortal({ session, onLogout }) {
                                 width: 38, height: 38, borderRadius: '50%',
                                 background: isPending
                                   ? 'linear-gradient(135deg, #f59e0b, #d97706)'
-                                  : isApproved ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : '#85907d',
+                                  : isApproved ? 'linear-gradient(135deg, #16354d, #1d4ed8)' : '#526174',
                                 color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 fontSize: 13, fontWeight: 600, flexShrink: 0
                               }}>
                                 {initials}
                               </div>
                               <div>
-                                <div style={{ fontWeight: 600, fontSize: 14, color: '#252927' }}>
-                                  {req.staff_name} <span style={{ fontSize: 12, fontWeight: 600, color: '#69736a' }}>@{req.staff_username}</span>
+                                <div style={{ fontWeight: 600, fontSize: 14, color: '#142b3e' }}>
+                                  {req.staff_name} <span style={{ fontSize: 12, fontWeight: 600, color: '#526174' }}>@{req.staff_username}</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: '#252927', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <Calendar size={13} color="#69736a" /> {req.ngay_lam_viec}
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: '#142b3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <Calendar size={13} color="#526174" /> {req.ngay_lam_viec}
                                   </span>
-                                  <span style={{
+                                  <Badge variant="outline" data-quiet-label="true" style={{
                                     display: 'inline-flex', alignItems: 'center', gap: 4,
                                     fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
                                     background: tmpl.bg, border: `1px solid ${tmpl.border}`, color: tmpl.text
                                   }}>
                                     <ShiftIcon size={12} color={tmpl.accent} /> {tmpl.name} ({tmpl.start}-{tmpl.end})
-                                  </span>
+                                  </Badge>
                                 </div>
                                 {req.note && (
-                                  <div style={{ fontSize: 12, color: '#69736a', marginTop: 4, fontStyle: 'italic' }}>
+                                  <div style={{ fontSize: 12, color: '#526174', marginTop: 4, fontStyle: 'italic' }}>
                                     Ghi chú: &quot;{req.note}&quot;
                                   </div>
                                 )}
@@ -4525,7 +3030,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                               {isPending && (
                                 <div style={{ display: 'flex', gap: 8 }}>
-                                  <button
+                                  <Button data-intent="success"
                                     onClick={() => handleApproveShiftRequest(req.ma_ca_lam_viec)}
                                     disabled={approvingRequestId === req.ma_ca_lam_viec}
                                     style={{
@@ -4536,37 +3041,37 @@ export function FranchiseePortal({ session, onLogout }) {
                                     }}
                                   >
                                     <Check size={14} /> Duyệt ca
-                                  </button>
-                                  <button
+                                  </Button>
+                                  <Button data-intent="danger"
                                     onClick={() => handleRejectShiftRequest(req.ma_ca_lam_viec)}
                                     disabled={approvingRequestId === req.ma_ca_lam_viec}
                                     style={{
-                                      padding: '8px 12px', background: "#f4f5f2", color: '#dc2626',
+                                      padding: '8px 12px', background: "#f6f8fa", color: '#dc2626',
                                       border: '1px solid #fee2e2', borderRadius: 10, fontWeight: 700, fontSize: 12,
                                       cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                                     }}
                                   >
                                     <X size={14} /> Từ chối
-                                  </button>
+                                  </Button>
                                 </div>
                               )}
                               {isApproved && (
-                                <span style={{
+                                <Badge variant="outline" data-quiet-label="true" style={{
                                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                                  padding: '4px 10px', borderRadius: 99, background: "#f4f5f2",
-                                  color: '#2563eb', fontSize: 12, fontWeight: 600, border: '1px solid #bfdbfe'
+                                  padding: '4px 10px', borderRadius: 99, background: "#f6f8fa",
+                                  color: '#16354d', fontSize: 12, fontWeight: 600, border: '1px solid #bfdbfe'
                                 }}>
                                   <CheckCircle2 size={13} /> Đã duyệt chính thức
-                                </span>
+                                </Badge>
                               )}
                               {isRejected && (
-                                <span style={{
+                                <Badge variant="outline" data-quiet-label="true" style={{
                                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                                  padding: '4px 10px', borderRadius: 99, background: "#f4f5f2",
+                                  padding: '4px 10px', borderRadius: 99, background: "#f6f8fa",
                                   color: '#dc2626', fontSize: 12, fontWeight: 600, border: '1px solid #fecaca'
                                 }}>
                                   <XCircle size={13} /> Đã từ chối
-                                </span>
+                                </Badge>
                               )}
                             </div>
                           </div>
@@ -4578,22 +3083,22 @@ export function FranchiseePortal({ session, onLogout }) {
               </div>
 
               {/* Footer */}
-              <div style={{ padding: '16px 24px', borderTop: '1px solid #f4f5f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8f9f6' }}>
-                <div style={{ fontSize: 12, color: '#69736a' }}>
+              <div style={{ padding: '16px 24px', borderTop: '1px solid #f6f8fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f6f8fa' }}>
+                <div style={{ fontSize: 12, color: '#526174' }}>
                   Tổng cộng: <b>{shiftRequests.length}</b> yêu cầu | Chờ duyệt: <b style={{ color: '#d97706' }}>{shiftRequests.filter(r => r.trang_thai_yeu_cau === 'PENDING').length}</b>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button
+                  <Button data-intent="danger"
                     onClick={() => setShowShiftRequestsModal(false)}
                     style={{
-                      padding: '8px 16px', background: '#fff', border: '1px solid #ccd3c7',
-                      borderRadius: 10, fontWeight: 700, fontSize: 13, color: '#596255', cursor: 'pointer'
+                      padding: '8px 16px', background: '#fff', border: '1px solid #cbd5e1',
+                      borderRadius: 10, fontWeight: 700, fontSize: 13, color: '#526174', cursor: 'pointer'
                     }}
                   >
                     Đóng
-                  </button>
+                  </Button>
                   {shiftRequests.filter(r => r.trang_thai_yeu_cau === 'PENDING').length > 0 && (
-                    <button
+                    <Button data-intent="success"
                       onClick={handleApproveAllPending}
                       disabled={shiftRequestsLoading}
                       style={{
@@ -4604,7 +3109,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       }}
                     >
                       <Check size={16} /> Duyệt tất cả ({shiftRequests.filter(r => r.trang_thai_yeu_cau === 'PENDING').length} ca)
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -4624,29 +3129,29 @@ export function FranchiseePortal({ session, onLogout }) {
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.3s ease-out',
             display: 'flex', flexDirection: 'column', maxHeight: '90vh'
           }}>
-            <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid #f4f5f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#252927', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid #f6f8fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#142b3e', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span><WorkspaceSymbolCheckSquare size="1.1em" aria-hidden="true" /></span> Tiêu Chí Chấm Điểm Kiosk
               </h3>
-              <button onClick={() => setScoringCriteriaModal(false)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#69736a' }}>×</button>
+              <Button onClick={() => setScoringCriteriaModal(false)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#526174' }}>×</Button>
             </div>
             <div style={{ padding: 24, overflowY: 'auto' }}>
-              <p style={{ margin: '0 0 20px', color: '#596255', fontSize: 14, lineHeight: 1.6 }}>
+              <p style={{ margin: '0 0 20px', color: '#526174', fontSize: 14, lineHeight: 1.6 }}>
                 Điểm đánh giá hiệu suất của mỗi Kiosk được hệ thống tính toán <b>tự động & minh bạch</b> dựa trên hoạt động kinh doanh thực tế. Điểm khởi điểm là <b>100đ</b>.
               </p>
               
               <div style={{ marginBottom: 24 }}>
-                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#252927', textTransform: 'uppercase' }}><WorkspaceSymbolBarChart3 size="1.1em" aria-hidden="true" /> Điểm Trừ (Vi phạm)</h4>
+                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#142b3e', textTransform: 'uppercase' }}><WorkspaceSymbolBarChart3 size="1.1em" aria-hidden="true" /> Điểm Trừ (Vi phạm)</h4>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  <div style={{ background: "#f4f5f2", padding: '12px 16px', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ background: "#f6f8fa", padding: '12px 16px', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#991b1b', fontWeight: 600, fontSize: 13 }}>Nợ quá hạn / Chưa thanh toán</span>
                     <span style={{ color: '#dc2626', fontWeight: 600 }}>-10đ / Khoản</span>
                   </div>
-                  <div style={{ background: "#f4f5f2", padding: '12px 16px', borderRadius: 12, border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ background: "#f6f8fa", padding: '12px 16px', borderRadius: 12, border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#92400e', fontWeight: 600, fontSize: 13 }}>Biên bản Đối soát: Cảnh báo Vàng</span>
                     <span style={{ color: '#d97706', fontWeight: 600 }}>-15đ / Biên bản</span>
                   </div>
-                  <div style={{ background: "#f4f5f2", padding: '12px 16px', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ background: "#f6f8fa", padding: '12px 16px', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#991b1b', fontWeight: 600, fontSize: 13 }}>Biên bản Đối soát: Cảnh báo Đỏ</span>
                     <span style={{ color: '#dc2626', fontWeight: 600 }}>-30đ / Biên bản</span>
                   </div>
@@ -4654,31 +3159,31 @@ export function FranchiseePortal({ session, onLogout }) {
               </div>
 
               <div style={{ marginBottom: 24 }}>
-                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#252927', textTransform: 'uppercase' }}><WorkspaceSymbolTrendingUp size="1.1em" aria-hidden="true" /> Điểm Cộng (Thành tích)</h4>
+                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#142b3e', textTransform: 'uppercase' }}><WorkspaceSymbolTrendingUp size="1.1em" aria-hidden="true" /> Điểm Cộng (Thành tích)</h4>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  <div style={{ background: "#f4f5f2", padding: '12px 16px', borderRadius: 12, border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ background: "#f6f8fa", padding: '12px 16px', borderRadius: 12, border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#1e40af', fontWeight: 600, fontSize: 13 }}>Tiêu thụ tích lũy &gt; 50 Combo gốc</span>
-                    <span style={{ color: '#2563eb', fontWeight: 600 }}>+10đ</span>
+                    <span style={{ color: '#16354d', fontWeight: 600 }}>+10đ</span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#252927', textTransform: 'uppercase' }}><WorkspaceSymbolAward size="1.1em" aria-hidden="true" /> Xếp Hạng</h4>
+                <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#142b3e', textTransform: 'uppercase' }}><WorkspaceSymbolAward size="1.1em" aria-hidden="true" /> Xếp Hạng</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 8, textAlign: 'center' }}>
                   <div style={{ background: '#fef08a', padding: '10px', borderRadius: 12 }}>
                     <div style={{ fontWeight: 600, color: '#854d0e', fontSize: 20 }}>S</div>
                     <div style={{ fontSize: 11, color: '#a16207', fontWeight: 700, marginTop: 4 }}>≥ 90đ</div>
                   </div>
-                  <div style={{ background: "#f4f5f2", padding: '10px', borderRadius: 12 }}>
+                  <div style={{ background: "#f6f8fa", padding: '10px', borderRadius: 12 }}>
                     <div style={{ fontWeight: 600, color: 'var(--primary)', fontSize: 20 }}>A</div>
                     <div style={{ fontSize: 11, color: 'var(--primary-hover)', fontWeight: 700, marginTop: 4 }}>≥ 70đ</div>
                   </div>
-                  <div style={{ background: "#f4f5f2", padding: '10px', borderRadius: 12 }}>
+                  <div style={{ background: "#f6f8fa", padding: '10px', borderRadius: 12 }}>
                     <div style={{ fontWeight: 600, color: '#1e3a8a', fontSize: 20 }}>B</div>
                     <div style={{ fontSize: 11, color: '#1d4ed8', fontWeight: 700, marginTop: 4 }}>≥ 50đ</div>
                   </div>
-                  <div style={{ background: "#f4f5f2", padding: '10px', borderRadius: 12 }}>
+                  <div style={{ background: "#f6f8fa", padding: '10px', borderRadius: 12 }}>
                     <div style={{ fontWeight: 600, color: '#7f1d1d', fontSize: 20 }}>C</div>
                     <div style={{ fontSize: 11, color: '#b91c1c', fontWeight: 700, marginTop: 4 }}>&lt; 50đ</div>
                   </div>
@@ -4686,10 +3191,10 @@ export function FranchiseePortal({ session, onLogout }) {
               </div>
 
             </div>
-            <div style={{ padding: 20, background: '#f8f9f6', borderTop: '1px solid #e2e4df' }}>
-              <button onClick={() => setScoringCriteriaModal(false)} style={{ width: '100%', padding: '12px', background: '#252927', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+            <div style={{ padding: 20, background: '#f6f8fa', borderTop: '1px solid #e2e8f0' }}>
+              <Button onClick={() => setScoringCriteriaModal(false)} style={{ width: '100%', padding: '12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
                 Đã hiểu
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -4710,11 +3215,11 @@ export function FranchiseePortal({ session, onLogout }) {
             <div style={{ marginBottom: 15, fontSize: 13, lineHeight: '1.6' }}>
               <div><b>Khách hàng:</b> {invoiceModal.kiosk?.ten_kiosk}</div>
               <div><b>Mã Kiosk:</b> {invoiceModal.kiosk?.ma_kiosk}</div>
-              <div><b>Nội dung xuất:</b> {invoiceModal.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền và setup ban đầu' : 'Thanh toán công nợ / Royalty'}</div>
+              <div><b>Nội dung xuất:</b> {invoiceModal.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền và setup ban đầu' : "Thanh toán công nợ / Chia sẻ doanh thu"}</div>
               <div><b>Ngày thanh toán:</b> {new Date().toLocaleDateString('vi-VN')}</div>
             </div>
 
-            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse', marginBottom: 15 }}>
+            <Table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse', marginBottom: 15 }}>
               <thead>
                 <tr style={{ borderBottom: '1px dashed #ccc', textAlign: 'left' }}>
                   <th style={{ paddingBottom: 5 }}>Nội dung</th>
@@ -4735,16 +3240,16 @@ export function FranchiseePortal({ session, onLogout }) {
                   <td style={{ paddingTop: 10, borderTop: '1px dashed #ccc', textAlign: 'right' }}>{fmtMoney(Number(invoiceModal.so_tien) + Number(invoiceModal.phi_phat_tre_han||0))}</td>
                 </tr>
               </tbody>
-            </table>
+            </Table>
             
             <div style={{ textAlign: 'center', fontSize: 12, marginTop: 30, color: '#6b7280' }}>
               <div>(Đã ký bởi Công ty CP Avengers Coffee)</div>
               <div style={{ marginTop: 4 }}>* Đây là hóa đơn giả lập cho bài Demo.</div>
             </div>
           </div>
-          <div style={{ marginTop: 20, textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button onClick={() => setInvoiceModal(null)} style={{ padding: '8px 16px', background: '#fff', color: '#414743', borderRadius: 8, border: '1px solid #d1d5db', fontWeight: 600, cursor: 'pointer' }}>Đóng</button>
-            <button onClick={() => {
+          <div data-modal-actions="true" style={{ marginTop: 20, textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <Button data-intent="danger" onClick={() => setInvoiceModal(null)} style={{ padding: '8px 16px', background: '#fff', color: '#263c50', borderRadius: 8, border: '1px solid #d1d5db', fontWeight: 600, cursor: 'pointer' }}>Đóng</Button>
+            <Button onClick={() => {
               const printContent = document.getElementById('invoice-print-area').innerHTML;
               const printWindow = window.open('', '_blank');
               printWindow.document.write(`
@@ -4773,7 +3278,7 @@ export function FranchiseePortal({ session, onLogout }) {
                 printWindow.print();
                 printWindow.close();
               }, 250);
-            }} style={{ padding: '8px 16px', background: "var(--primary)", color: '#fff', borderRadius: 8, border: 'none', fontWeight: 600, cursor: 'pointer' }}><WorkspaceSymbolPrinter size="1.1em" aria-hidden="true" /> In Hóa Đơn (PDF)</button>
+            }} style={{ padding: '8px 16px', background: "var(--primary)", color: '#fff', borderRadius: 8, border: 'none', fontWeight: 600, cursor: 'pointer' }}><WorkspaceSymbolPrinter size="1.1em" aria-hidden="true" /> In Hóa Đơn (PDF)</Button>
           </div>
         </Modal>
       )}
@@ -4789,7 +3294,7 @@ export function FranchiseePortal({ session, onLogout }) {
             background: '#fff', borderRadius: 24, width: '100%', maxWidth: 400, overflow: 'hidden',
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.3s ease-out'
           }} onClick={e => e.stopPropagation()}>
-            <div style={{ background: 'linear-gradient(135deg, var(--primary-hover), #3b82f6)', padding: '24px', textAlign: 'center', color: '#fff' }}>
+            <div style={{ background: 'linear-gradient(135deg, var(--primary-hover), #0f4d70)', padding: '24px', textAlign: 'center', color: '#fff' }}>
               <div style={{ fontSize: 40, marginBottom: 8 }}><WorkspaceSymbolCreditCard size="1.1em" aria-hidden="true" /></div>
               <h3 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>Avengers Pay</h3>
               <p style={{ margin: '4px 0 0', fontSize: 14, opacity: 0.8 }}>Thanh toán công nợ</p>
@@ -4797,46 +3302,46 @@ export function FranchiseePortal({ session, onLogout }) {
             
             <div style={{ padding: 24 }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontSize: 14, color: '#69736a', fontWeight: 600, textTransform: 'uppercase' }}>Số tiền cần thanh toán</div>
+                <div style={{ fontSize: 14, color: '#526174', fontWeight: 600, textTransform: 'uppercase' }}>Số tiền cần thanh toán</div>
                 <div style={{ fontSize: 36, fontWeight: 600, color: '#30382e', marginTop: 4 }}>
                   {fmtMoney(selectedDebt.so_tien)}
                 </div>
-                <div style={{ fontSize: 14, color: '#3b82f6', fontWeight: 700, marginTop: 4 }}>
+                <div style={{ fontSize: 14, color: '#0f4d70', fontWeight: 700, marginTop: 4 }}>
                   {selectedDebt.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền ban đầu' : 'Thanh toán hóa đơn'}
                 </div>
               </div>
 
-              <div style={{ background: '#f8f9f6', padding: 16, borderRadius: 16, border: '1px solid #e2e4df', marginBottom: 24 }}>
+              <div style={{ background: '#f6f8fa', padding: 16, borderRadius: 16, border: '1px solid #e2e8f0', marginBottom: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: 14, color: '#69736a', fontWeight: 600 }}>Số dư ví hiện tại:</span>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: walletBalance >= Number(selectedDebt.so_tien) ? '#2563eb' : '#dc2626' }}>
+                  <span style={{ fontSize: 14, color: '#526174', fontWeight: 600 }}>Số dư ví hiện tại:</span>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: walletBalance >= Number(selectedDebt.so_tien) ? '#16354d' : '#dc2626' }}>
                     {fmtMoney(walletBalance)}
                   </span>
                 </div>
                 {walletBalance < Number(selectedDebt.so_tien) && (
-                  <button onClick={handleNapTien} type="button" style={{
+                  <Button onClick={handleNapTien} type="button" style={{
                     width: '100%', padding: '10px', background: 'var(--primary-subtle)', color: 'var(--primary-hover)',
                     border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 8
                   }}>
                     + Nạp thêm tiền vào ví
-                  </button>
+                  </Button>
                 )}
               </div>
 
               <div style={{ display: 'flex', gap: 12 }}>
-                <button type="button" onClick={() => { setShowPayment(false); setSelectedDebt(null); }} disabled={paymentProcessing}
-                  style={{ flex: 1, padding: '14px', background: '#f4f5f2', color: '#596255', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}>
+                <Button data-intent="danger" type="button" onClick={() => { setShowPayment(false); setSelectedDebt(null); }} disabled={paymentProcessing}
+                  style={{ flex: 1, padding: '14px', background: '#f6f8fa', color: '#526174', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: paymentProcessing ? 'not-allowed' : 'pointer' }}>
                   Hủy bỏ
-                </button>
-                <button type="button" onClick={handleThanhToan} disabled={walletBalance < Number(selectedDebt.so_tien) || paymentProcessing}
+                </Button>
+                <Button type="button" onClick={handleThanhToan} disabled={walletBalance < Number(selectedDebt.so_tien) || paymentProcessing}
                   style={{
-                    flex: 2, padding: '14px', background: walletBalance < Number(selectedDebt.so_tien) ? "#f4f5f2" : 'var(--primary)',
+                    flex: 2, padding: '14px', background: walletBalance < Number(selectedDebt.so_tien) ? "#f6f8fa" : 'var(--primary)',
                     color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600,
                     cursor: walletBalance < Number(selectedDebt.so_tien) || paymentProcessing ? 'not-allowed' : 'pointer',
                     boxShadow: walletBalance < Number(selectedDebt.so_tien) ? 'none' : '0 4px 14px rgba(79,70,229,0.4)'
                   }}>
                   {paymentProcessing ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -4857,57 +3362,57 @@ export function FranchiseePortal({ session, onLogout }) {
               background: '#fff', borderRadius: 24, width: '100%', maxWidth: 460, overflow: 'hidden',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.2s ease-out'
             }} onClick={e => e.stopPropagation()}>
-              <div style={{ padding: '24px', borderBottom: '1px solid #f4f5f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '24px', borderBottom: '1px solid #f6f8fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "#f4f5f2", color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "#f6f8fa", color: '#16354d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <PlayCircle size={22} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#252927' }}>Mở Ca Làm Việc Trực Tiếp</h3>
-                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#69736a' }}>Kiosk: <b>{activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</b></p>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#142b3e' }}>Mở Ca Làm Việc Trực Tiếp</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#526174' }}>Kiosk: <b>{activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</b></p>
                   </div>
                 </div>
-                <button onClick={() => setShowOpenShiftModal(false)} style={{ background: '#f4f5f2', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#69736a' }}>×</button>
+                <Button onClick={() => setShowOpenShiftModal(false)} style={{ background: '#f6f8fa', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#526174' }}>×</Button>
               </div>
 
               <form className="workspace-form" onSubmit={handleOpenKioskShift} style={{ padding: 24 }}>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Nhân viên trực ca *</label>
+                  <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Nhân viên trực ca *</Label>
                   <SearchableSelect required value={openShiftForm.staff_username} onChange={e => {
                     const matched = subStaffList.find(s => s.ten_dang_nhap === e.target.value)
                     setOpenShiftForm(f => ({ ...f, staff_username: e.target.value, staff_name: matched?.ho_ten || e.target.value }))
                   }}
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, background: '#f8f9f6', fontWeight: 600, outline: 'none', boxSizing: 'border-box' }}>
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, background: '#f6f8fa', fontWeight: 600, outline: 'none', boxSizing: 'border-box' }}>
                     <option value={userName}>{userName} (Chủ nhượng quyền / Admin)</option>
                     {subStaffList.map(s => <option key={s.ma_nguoi_dung} value={s.ten_dang_nhap}>{s.ho_ten} (@{s.ten_dang_nhap})</option>)}
                   </SearchableSelect>
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Tiền mặt bàn giao đầu ca (VNĐ) *</label>
+                  <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Tiền mặt bàn giao đầu ca (VNĐ) *</Label>
                   <CurrencyInput
                     required
                     value={openShiftForm.cash_open}
                     onChange={e => setOpenShiftForm(f => ({ ...f, cash_open: Number(e.target.value) }))}
                     placeholder="VD: 1.000.000"
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 16, fontWeight: 600, outline: 'none', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 600, outline: 'none', boxSizing: 'border-box' }}
                   />
-                  <div style={{ fontSize: 12, color: '#2563eb', fontWeight: 700, marginTop: 4 }}>
+                  <div style={{ fontSize: 12, color: '#16354d', fontWeight: 700, marginTop: 4 }}>
                     Tiền lẻ mở két: {fmtMoney(openShiftForm.cash_open)}
                   </div>
                 </div>
 
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Ghi chú mở ca</label>
-                  <input type="text" value={openShiftForm.note} onChange={e => setOpenShiftForm(f => ({ ...f, note: e.target.value }))} placeholder="Ví dụ: Bàn giao tiền lẻ đầy đủ..."
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Ghi chú mở ca</Label>
+                  <Input type="text" value={openShiftForm.note} onChange={e => setOpenShiftForm(f => ({ ...f, note: e.target.value }))} placeholder="Ví dụ: Bàn giao tiền lẻ đầy đủ..."
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" onClick={() => setShowOpenShiftModal(false)} style={{ flex: 1, padding: '12px', background: '#f4f5f2', color: '#596255', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: "var(--primary)", color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
+                  <Button data-intent="danger" type="button" onClick={() => setShowOpenShiftModal(false)} style={{ flex: 1, padding: '12px', background: '#f6f8fa', color: '#526174', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</Button>
+                  <Button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: "var(--primary)", color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
                     {shiftActionSubmitting ? 'Đang mở ca...' : "Bắt đầu mở ca"}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -4927,43 +3432,43 @@ export function FranchiseePortal({ session, onLogout }) {
               background: '#fff', borderRadius: 24, width: '100%', maxWidth: 480, overflow: 'hidden',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.2s ease-out'
             }} onClick={e => e.stopPropagation()}>
-              <div style={{ padding: '24px', borderBottom: '1px solid #f4f5f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '24px', borderBottom: '1px solid #f6f8fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "#f4f5f2", color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "#f6f8fa", color: '#16354d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <CheckCircle2 size={22} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#252927' }}>Chốt Ca Kiểm Tiền Kiosk</h3>
-                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#69736a' }}>Kiosk: <b>{activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</b></p>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#142b3e' }}>Chốt Ca Kiểm Tiền Kiosk</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#526174' }}>Kiosk: <b>{activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</b></p>
                   </div>
                 </div>
-                <button onClick={() => setShowCloseShiftModal(false)} style={{ background: '#f4f5f2', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#69736a' }}>×</button>
+                <Button onClick={() => setShowCloseShiftModal(false)} style={{ background: '#f6f8fa', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#526174' }}>×</Button>
               </div>
 
               <form className="workspace-form" onSubmit={handleCloseKioskShift} style={{ padding: 24 }}>
-                <div style={{ background: '#f8f9f6', borderRadius: 14, padding: 16, marginBottom: 16, border: '1px solid #e2e4df' }}>
+                <div style={{ background: '#f6f8fa', borderRadius: 14, padding: 16, marginBottom: 16, border: '1px solid #e2e8f0' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
-                    <span style={{ color: '#69736a' }}>Tiền mặt đầu ca:</span>
-                    <span style={{ fontWeight: 700, color: '#252927' }}>{fmtMoney(activeKioskShift.active_shift?.tien_dau_ca)}</span>
+                    <span style={{ color: '#526174' }}>Tiền mặt đầu ca:</span>
+                    <span style={{ fontWeight: 700, color: '#142b3e' }}>{fmtMoney(activeKioskShift.active_shift?.tien_dau_ca)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
-                    <span style={{ color: '#69736a' }}>Tiền mặt thu được trong ca:</span>
-                    <span style={{ fontWeight: 700, color: '#2563eb' }}>{fmtMoney(activeKioskShift.live_stats?.cash_revenue)}</span>
+                    <span style={{ color: '#526174' }}>Tiền mặt thu được trong ca:</span>
+                    <span style={{ fontWeight: 700, color: '#16354d' }}>{fmtMoney(activeKioskShift.live_stats?.cash_revenue)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e2e4df', paddingTop: 8, fontSize: 14 }}>
-                    <span style={{ fontWeight: 600, color: '#252927' }}>Tiền mặt kỳ vọng trong két:</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: 8, fontSize: 14 }}>
+                    <span style={{ fontWeight: 600, color: '#142b3e' }}>Tiền mặt kỳ vọng trong két:</span>
                     <span style={{ fontWeight: 600, color: '#d97706', fontSize: 16 }}>{fmtMoney(activeKioskShift.live_stats?.expected_cash)}</span>
                   </div>
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Tiền mặt thực tế đếm được cuối ca (VNĐ) *</label>
+                  <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Tiền mặt thực tế đếm được cuối ca (VNĐ) *</Label>
                   <CurrencyInput
                     required
                     value={closeShiftForm.cash_close}
                     onChange={e => setCloseShiftForm(f => ({ ...f, cash_close: Number(e.target.value) }))}
                     placeholder="VD: 5.000.000"
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 16, fontWeight: 600, outline: 'none', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 600, outline: 'none', boxSizing: 'border-box' }}
                   />
                   
                   {/* Difference feedback */}
@@ -4972,8 +3477,8 @@ export function FranchiseePortal({ session, onLogout }) {
                     return (
                       <div style={{
                         marginTop: 8, padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                        background: diff === 0 ? "#f4f5f2" : diff > 0 ? "#f4f5f2" : "#f4f5f2",
-                        color: diff === 0 ? '#2563eb' : diff > 0 ? '#d97706' : '#dc2626',
+                        background: diff === 0 ? "#f6f8fa" : diff > 0 ? "#f6f8fa" : "#f6f8fa",
+                        color: diff === 0 ? '#16354d' : diff > 0 ? '#d97706' : '#dc2626',
                         display: 'flex', justifyContent: 'space-between'
                       }}>
                         <span>Chênh lệch két tiền:</span>
@@ -4984,16 +3489,16 @@ export function FranchiseePortal({ session, onLogout }) {
                 </div>
 
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Ghi chú chốt ca</label>
-                  <textarea value={closeShiftForm.note} onChange={e => setCloseShiftForm(f => ({ ...f, note: e.target.value }))} placeholder="Lý do chênh lệch hoặc ghi chú bàn giao..."
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, minHeight: 70, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+                  <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Ghi chú chốt ca</Label>
+                  <Textarea value={closeShiftForm.note} onChange={e => setCloseShiftForm(f => ({ ...f, note: e.target.value }))} placeholder="Lý do chênh lệch hoặc ghi chú bàn giao..."
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, minHeight: 70, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" onClick={() => setShowCloseShiftModal(false)} style={{ flex: 1, padding: '12px', background: '#f4f5f2', color: '#596255', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: "var(--primary)", color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
+                  <Button data-intent="danger" type="button" onClick={() => setShowCloseShiftModal(false)} style={{ flex: 1, padding: '12px', background: '#f6f8fa', color: '#526174', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</Button>
+                  <Button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: "var(--primary)", color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
                     {shiftActionSubmitting ? 'Đang chốt ca...' : "Xác nhận chốt ca"}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -5013,34 +3518,34 @@ export function FranchiseePortal({ session, onLogout }) {
               background: '#fff', borderRadius: 24, width: '100%', maxWidth: 440, overflow: 'hidden',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.2s ease-out'
             }} onClick={e => e.stopPropagation()}>
-              <div style={{ padding: '24px', borderBottom: '1px solid #fee2e2', background: "#f4f5f2", display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '24px', borderBottom: '1px solid #fee2e2', background: "#f6f8fa", display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f4f5f2", color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f6f8fa", color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ShieldAlert size={20} />
                   </div>
                   <div>
                     <h3 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: '#991b1b' }}>Cưỡng Chế Đóng Ca Trực Kiosk</h3>
                   </div>
                 </div>
-                <button onClick={() => setShowForceCloseModal(false)} style={{ background: "#f4f5f2", border: 'none', width: 28, height: 28, borderRadius: 14, cursor: 'pointer', fontWeight: 600, color: '#991b1b' }}>×</button>
+                <Button onClick={() => setShowForceCloseModal(false)} style={{ background: "#f6f8fa", border: 'none', width: 28, height: 28, borderRadius: 14, cursor: 'pointer', fontWeight: 600, color: '#991b1b' }}>×</Button>
               </div>
 
               <form className="workspace-form" onSubmit={handleForceCloseKioskShift} style={{ padding: 24 }}>
-                <p style={{ margin: '0 0 16px', color: '#69736a', fontSize: 13, lineHeight: 1.5 }}>
+                <p style={{ margin: '0 0 16px', color: '#526174', fontSize: 13, lineHeight: 1.5 }}>
                   Dùng chức năng này khi nhân viên trước đã về mà <b>quên chốt ca</b>, giúp giải phóng Kiosk để nhân viên ca sau có thể mở ca làm việc.
                 </p>
 
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#414743', marginBottom: 6 }}>Lý do cưỡng chế bàn giao *</label>
-                  <input type="text" required value={forceCloseReason} onChange={e => setForceCloseReason(e.target.value)}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ccd3c7', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  <Label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#263c50', marginBottom: 6 }}>Lý do cưỡng chế bàn giao *</Label>
+                  <Input type="text" required value={forceCloseReason} onChange={e => setForceCloseReason(e.target.value)}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" onClick={() => setShowForceCloseModal(false)} style={{ flex: 1, padding: '12px', background: '#f4f5f2', color: '#596255', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(220,38,38,0.3)' }}>
+                  <Button data-intent="danger" type="button" onClick={() => setShowForceCloseModal(false)} style={{ flex: 1, padding: '12px', background: '#f6f8fa', color: '#526174', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</Button>
+                  <Button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(220,38,38,0.3)' }}>
                     {shiftActionSubmitting ? 'Đang đóng ca...' : "Xác nhận ép đóng ca"}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -5051,7 +3556,7 @@ export function FranchiseePortal({ session, onLogout }) {
         {/* MODAL 8: HOÀN TIỀN MẶT & HỦY ĐƠN HÀNG POS (Thành An) */}
         {/* ═══════════════════════════════════════════════════════════ */}
         {showVoidModal && voidModalOrder && (
-          <PosRefundVoidModal
+          <PosRefundVoidModal refundOnly
             order={voidModalOrder}
             activeShift={activeKioskShift?.active_shift || activeKioskShift}
             isOpen={showVoidModal}
@@ -5067,23 +3572,23 @@ export function FranchiseePortal({ session, onLogout }) {
         {reviewModal && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, padding: '1rem' }}>
             <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
-              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #e2e4df', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8f9f6' }}>
-                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f6f8fa' }}>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#142b3e', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                   <MessageSquare size={18} color="#eab308" /> Đánh Giá Khách Hàng - {reviewModal.ten_kiosk} ({reviewModal.ma_kiosk})
                 </h3>
-                <button type="button" onClick={() => setReviewModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#69736a' }}>
+                <Button type="button" onClick={() => setReviewModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#526174' }}>
                   <X size={20} />
-                </button>
+                </Button>
               </div>
               
               <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
                 {loadingReviews ? (
-                  <div style={{ textAlign: 'center', color: '#69736a', fontSize: '0.875rem' }}>Đang tải danh sách đánh giá...</div>
+                  <div style={{ textAlign: 'center', color: '#526174', fontSize: '0.875rem' }}>Đang tải danh sách đánh giá...</div>
                 ) : reviews.length === 0 ? (
-                  <div style={{ textAlign: 'center', color: '#69736a', fontSize: '0.875rem' }}>Kiosk này chưa có đánh giá nào.</div>
+                  <div style={{ textAlign: 'center', color: '#526174', fontSize: '0.875rem' }}>Kiosk này chưa có đánh giá nào.</div>
                 ) : (
                   <>
-                    <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: "#f4f5f2", borderRadius: '8px', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: "#f6f8fa", borderRadius: '8px', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: '600', color: '#92400e' }}>Đánh giá trung bình:</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <strong style={{ fontSize: '1.1rem', color: '#b45309' }}>{reviewStats.avg} / 5.0</strong>
@@ -5092,18 +3597,18 @@ export function FranchiseePortal({ session, onLogout }) {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       <PaginatedList items={reviews} resetKey={activeKioskId}>{(rv, idx) => (
-                        <div key={idx} style={{ padding: '1rem', border: '1px solid #e2e4df', borderRadius: '8px', backgroundColor: '#f8f9f6', position: 'relative' }}>
-                          <button onClick={() => deleteReview(rv.id)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: "#f4f5f2", color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>Xóa</button>
+                        <div key={idx} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f6f8fa', position: 'relative' }}>
+                          <Button data-intent="danger" onClick={() => deleteReview(rv.id)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: "#f6f8fa", color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>Xóa</Button>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', paddingRight: '3rem' }}>
-                            <strong style={{ fontSize: '0.9rem', color: '#252927' }}>{rv.ten_nguoi_dung || 'Khách hàng ẩn danh'}</strong>
-                            <span style={{ fontSize: '0.8rem', color: '#69736a' }}>{new Date(rv.ngay_tao).toLocaleDateString('vi-VN')}</span>
+                            <strong style={{ fontSize: '0.9rem', color: '#142b3e' }}>{rv.ten_nguoi_dung || 'Khách hàng ẩn danh'}</strong>
+                            <span style={{ fontSize: '0.8rem', color: '#526174' }}>{new Date(rv.ngay_tao).toLocaleDateString('vi-VN')}</span>
                           </div>
                           <div style={{ display: 'flex', gap: '4px', marginBottom: '0.5rem' }}>
                             {Array.from({ length: 5 }).map((_, i) => (
-                              <Star key={i} size={14} fill={i < (rv.diem_tong_quan || 5) ? '#facc15' : 'transparent'} color={i < (rv.diem_tong_quan || 5) ? '#facc15' : '#ccd3c7'} />
+                              <Star key={i} size={14} fill={i < (rv.diem_tong_quan || 5) ? '#facc15' : 'transparent'} color={i < (rv.diem_tong_quan || 5) ? '#facc15' : '#cbd5e1'} />
                             ))}
                           </div>
-                          {rv.nhan_xet && <div style={{ fontSize: '0.85rem', color: '#414743', fontStyle: 'italic' }}>"{rv.nhan_xet}"</div>}
+                          {rv.nhan_xet && <div style={{ fontSize: '0.85rem', color: '#263c50', fontStyle: 'italic' }}>"{rv.nhan_xet}"</div>}
                         </div>
                       )}</PaginatedList>
                     </div>
@@ -5128,13 +3633,13 @@ export function FranchiseePortal({ session, onLogout }) {
                 <p style={{ margin: '0 0 20px', color: '#475569', fontSize: 14, lineHeight: 1.5 }}>
                   Hợp đồng nhượng quyền cho Kiosk <b>{tatToanInfo?.kiosk?.ten_kiosk}</b> đã được thanh toán hoàn tất 100%. Hệ thống đã cập nhật Kiosk sang trạng thái bàn giao thiết bị và thiết lập vận hành!
                 </p>
-                <button
+                <Button data-intent="danger"
                   type="button"
                   onClick={() => { setShowTatToanModal(false); loadAll(); }}
                   style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: 'var(--primary, #0f172a)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
                 >
                   Xong & Đóng
-                </button>
+                </Button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -5162,29 +3667,29 @@ export function FranchiseePortal({ session, onLogout }) {
                 <div style={{ background: '#eff6ff', padding: 16, borderRadius: 12, border: '1.5px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: 12, color: '#1e40af', fontWeight: 600, textTransform: 'uppercase' }}>Số tiền còn lại cần thanh toán</div>
-                    <div style={{ fontSize: 11, color: '#3b82f6', marginTop: 2 }}>Tất toán 100% hợp đồng gói nhượng quyền</div>
+                    <div style={{ fontSize: 11, color: '#0f4d70', marginTop: 2 }}>Tất toán 100% hợp đồng gói nhượng quyền</div>
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#2563eb' }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#16354d' }}>
                     {fmtMoney(tatToanInfo?.so_tien_con_lai)}
                   </div>
                 </div>
 
                 {/* Chọn phương thức */}
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 8 }}>Chọn hình thức thanh toán:</label>
+                  <Label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 8 }}>Chọn hình thức thanh toán:</Label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                     {[
                       { id: 'VIETQR', label: 'VietQR Ngân hàng', icon: Store },
                       { id: 'VNPAY', label: 'Cổng VNPay', icon: CreditCard },
                       { id: 'VI_DOI_TAC', label: 'Ví Đối Tác', icon: Wallet },
                     ].map(m => (
-                      <button
+                      <Button
                         key={m.id}
                         type="button"
                         onClick={() => setTatToanMethod(m.id)}
                         style={{
                           padding: '10px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                          border: tatToanMethod === m.id ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                          border: tatToanMethod === m.id ? '2px solid #16354d' : '1px solid #cbd5e1',
                           background: tatToanMethod === m.id ? '#eff6ff' : '#fff',
                           color: tatToanMethod === m.id ? '#1e40af' : '#475569',
                           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6
@@ -5192,7 +3697,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       >
                         <m.icon size={18} />
                         {m.label}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -5211,7 +3716,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       <div>Ngân hàng: <b>MBBank (Quân Đội)</b></div>
                       <div>STK: <b style={{ fontFamily: 'monospace' }}>{tatToanInfo?.thong_tin_chuyen_khoan?.so_tai_khoan}</b></div>
                       <div>Chủ TK: <b>{tatToanInfo?.thong_tin_chuyen_khoan?.chu_tai_khoan}</b></div>
-                      <div>Nội dung CK: <b style={{ color: '#2563eb', fontFamily: 'monospace' }}>{tatToanInfo?.thong_tin_chuyen_khoan?.noi_dung}</b></div>
+                      <div>Nội dung CK: <b style={{ color: '#16354d', fontFamily: 'monospace' }}>{tatToanInfo?.thong_tin_chuyen_khoan?.noi_dung}</b></div>
                     </div>
                   </div>
                 )}
@@ -5238,26 +3743,26 @@ export function FranchiseePortal({ session, onLogout }) {
                 )}
 
                 {/* Nút hành động */}
-                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8, paddingTop: 14, borderTop: '1px solid #e2e8f0' }}>
-                  <button
+                <div data-modal-actions="true" style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8, paddingTop: 14, borderTop: '1px solid #e2e8f0' }}>
+                  <Button data-intent="danger"
                     type="button"
                     onClick={() => setShowTatToanModal(false)}
                     style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 500 }}
                   >
                     Đóng
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     disabled={tatToanLoading || (tatToanMethod === 'VI_DOI_TAC' && (walletBalance || 0) < (tatToanInfo?.so_tien_con_lai || 0))}
                     onClick={handleXacNhanTatToanGoi}
                     style={{
-                      padding: '8px 20px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff',
+                      padding: '8px 20px', borderRadius: 8, border: 'none', background: '#16354d', color: '#fff',
                       fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
                       opacity: (tatToanLoading || (tatToanMethod === 'VI_DOI_TAC' && (walletBalance || 0) < (tatToanInfo?.so_tien_con_lai || 0))) ? 0.6 : 1
                     }}
                   >
                     {tatToanLoading ? 'Đang xử lý...' : `Xác Nhận Tất Toán ${fmtMoney(tatToanInfo?.so_tien_con_lai)}`}
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}

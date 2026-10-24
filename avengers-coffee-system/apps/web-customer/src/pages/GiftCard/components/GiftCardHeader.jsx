@@ -18,7 +18,7 @@ export const GiftCardHeader = ({ activePage, onNavigate }) => {
       <div className="mx-auto flex py-2.5 w-full max-w-[1280px] items-center px-4 md:px-8">
         {/* Logo */}
         <button onClick={() => onNavigate('home')} className="flex-shrink-0 focus:outline-none">
-          <img src="/images/brand/logo-white.png" alt="Avengers Coffee" className="h-[72px] py-1 w-auto object-contain" />
+          <img src="/images/brand/logo-white.svg" alt="Avengers Coffee" className="h-[72px] py-1 w-auto object-contain" />
         </button>
 
         {/* Nav - right aligned */}

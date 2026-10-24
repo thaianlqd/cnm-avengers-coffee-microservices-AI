@@ -45,6 +45,39 @@ describe('Shipper readiness is explicit and shared by all dispatch paths', () =>
   test('a ready driver still receives an assignment through the existing flow', async () => {
     shipperRepo.findOne.mockResolvedValue({ id:'s1', branch_code:'D9', status:'ACTIVE' });
     await service.assignOrderToShipper('o1','s1','m1');
-    expect(deliveryRepo.save).toHaveBeenCalled();
+    expect(deliveryRepo.save).toHaveBeenCalledWith(expect.objectContaining({status:'PENDING',shipper_id:'s1'}));
+    expect(shipperRepo.increment).not.toHaveBeenCalled();
   });
+  test('handing over an unclaimed order does not create a driver acceptance',async()=>{
+    await service.markOrderReadyForDelivery('o1','D9');
+    expect(deliveryRepo.save).not.toHaveBeenCalled();expect(shipperRepo.increment).not.toHaveBeenCalled();
+  });
+  test('a pending assignment can be changed but an accepted delivery cannot',async()=>{
+    shipperRepo.findOne.mockResolvedValue({id:'s2',branch_code:'D9',status:'ACTIVE'});
+    deliveryRepo.findOne.mockResolvedValue({id:'pending',shipper_id:'s1',status:'PENDING'});
+    await service.assignOrderToShipper('o1','s2','manager');
+    expect(deliveryRepo.update).toHaveBeenCalledWith({id:'pending'},{status:'CANCELLED'});
+    expect(deliveryRepo.save).toHaveBeenCalledWith(expect.objectContaining({shipper_id:'s2',status:'PENDING'}));
+    deliveryRepo.save.mockClear();deliveryRepo.findOne.mockResolvedValue({id:'claimed',shipper_id:'s1',status:'CONFIRMED'});
+    await expect(service.assignOrderToShipper('o1','s2','manager')).rejects.toThrow('đã có tài xế nhận');
+    expect(deliveryRepo.save).not.toHaveBeenCalled();
+  });
+  test('only the assigned driver can accept a pending assignment, then it becomes confirmed',async()=>{
+    shipperRepo.findOne.mockResolvedValue({id:'s1',branch_code:'D9',status:'ACTIVE'});
+    deliveryRepo.findOne.mockResolvedValue({id:'pending',shipper_id:'s2',status:'PENDING'});
+    await expect(service.acceptOrder('s1','o1')).rejects.toThrow('tài xế khác');expect(deliveryRepo.save).not.toHaveBeenCalled();
+    deliveryRepo.findOne.mockResolvedValue({id:'pending',shipper_id:'s1',status:'PENDING'});
+    await service.acceptOrder('s1','o1');
+    expect(deliveryRepo.save).toHaveBeenCalledWith(expect.objectContaining({status:'CONFIRMED',shipper_id:'s1'}));
+    expect(shipperRepo.increment).toHaveBeenCalledTimes(1);
+  });
+
+  test('customer delivery lookup uses the latest record and only reports accepted drivers',async()=>{
+    deliveryRepo.findOne.mockResolvedValue({id:'pending',status:'PENDING',shipper_id:'s1'});
+    expect((await service.getCustomerDeliveryInfo('o1')).has_shipper).toBe(false);
+    expect(deliveryRepo.findOne).toHaveBeenLastCalledWith({where:{ma_don_hang:'o1'},order:{assigned_at:'DESC'}});
+    deliveryRepo.findOne.mockResolvedValue({id:'confirmed',status:'CONFIRMED',shipper_id:'s1'});
+    expect((await service.getCustomerDeliveryInfo('o1')).has_shipper).toBe(true);
+  });
+
 });

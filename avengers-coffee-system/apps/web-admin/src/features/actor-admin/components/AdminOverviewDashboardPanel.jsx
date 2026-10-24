@@ -1,7 +1,11 @@
+import { Button } from '../../../components/ui/button'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Table } from '../../../components/ui/table'
 import { selectChartPeriod, vietnamDay } from '../../../components/console/chartPeriod';
 import { money, number } from "../../../components/console/chartModel";
 import { useState } from "react";
-import { Users, Store, Coffee, UserCheck, Search } from '../../../components/console/WorkspaceIcons';
+import { Users, Store, Coffee, UserCheck, ShoppingBag } from '../../../components/console/WorkspaceIcons';
 import {
   Chart,
   Metric,
@@ -151,7 +155,7 @@ export function AdminOverviewDashboardPanel({
         <>
           <div className="console-kpis">
             <Metric
-              label="Nhân viên hệ thống"
+              label="Tổng tài khoản"
               value={number(dashboardSummary.totalUsers)}
               icon={Users}
             />
@@ -176,6 +180,18 @@ export function AdminOverviewDashboardPanel({
                 " chương trình khuyến mãi đã tải"
               }
               icon={Coffee}
+            />
+            <Metric
+              label="Khách hàng"
+              value={number(dashboardSummary.customerCount)}
+              note="Theo thống kê tài khoản hệ thống"
+              icon={Users}
+            />
+            <Metric
+              label="Đơn hàng đã tải"
+              value={recentOrdersState.loading ? '…' : number(recentOrders.length)}
+              note="Tập đơn gần đây, không phải tổng hệ thống"
+              icon={ShoppingBag}
             />
           </div>
           <div className="console-charts">
@@ -217,13 +233,13 @@ export function AdminOverviewDashboardPanel({
         </div>
         <div className="console-segments">
           {[7, 30].map((value) => (
-            <button
+            <Button
               key={value}
               aria-pressed={days === value}
               onClick={() => setDays(value)}
             >
               {value} ngày
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -272,18 +288,18 @@ export function AdminOverviewDashboardPanel({
       <article className="console-card admin-activity-card">
         <div className="console-page-heading workspace-section-heading">
           <h3 style={{ margin: 0 }}>Nhật ký hoạt động</h3>
-          <label className="workspace-field admin-activity-search">
+          <Label className="workspace-field admin-activity-search">
 
-            <input className="ui-input"
+            <Input className="ui-input"
               aria-label="Tìm hoạt động"
               placeholder="Tìm đơn, tài khoản…"
               value={keyword}
               onChange={(event) => setKeyword(event.target.value)}
             />
-          </label>
+          </Label>
         </div>
         <div className="console-table-scroll">
-          <table>
+          <Table>
             <thead>
               <tr>
                 <th style={{ width: '45%' }}>Hoạt động</th>
@@ -304,7 +320,7 @@ export function AdminOverviewDashboardPanel({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Table>
           {!activities.length && (
             <p className="console-muted">Không có hoạt động phù hợp.</p>
           )}

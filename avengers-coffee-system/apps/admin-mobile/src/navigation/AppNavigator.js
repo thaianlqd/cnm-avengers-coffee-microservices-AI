@@ -2,6 +2,7 @@ import React from 'react'
 import {
   ActivityIndicator,
   View,
+  Image,
   Text,
   StyleSheet,
 } from 'react-native'
@@ -22,7 +23,7 @@ export function AppNavigator() {
       <View style={styles.loadingScreen}>
         <LinearGradient colors={['#0d0a08', '#1a1410', '#2d1e0f']} style={styles.loadingGradient}>
           <LinearGradient colors={['#f26b1d', '#d4560e']} style={styles.loadingLogo}>
-            <Text style={styles.loadingEmoji}>☕</Text>
+            <Image source={require('../../assets/branding/logo-white.png')} resizeMode="contain" style={{width:64,height:52}}/>
           </LinearGradient>
           <ActivityIndicator size="large" color="#f26b1d" style={{ marginTop: 20 }} />
           <Text style={styles.loadingBrand}>Avengers Admin</Text>

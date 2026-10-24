@@ -2,7 +2,7 @@ import type { AddressPayload } from './address-selection';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { avatarDataUrl, MAX_AVATAR_BYTES } from './avatar-upload';
 import type { AvatarFile } from './avatar-upload';
-import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query, UnauthorizedException, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query, UnauthorizedException, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { PublicBrowseCache } from '../../public-browse-cache';
 import { AllowInternal, CurrentUser, Public, Roles } from '../../auth/auth.decorators';
@@ -113,6 +113,16 @@ export class UserController {
   }
 
   @Roles('MANAGER')
+  @Post('users/manager/staff')
+  async taoNhanVienCuaHang(
+    @Body() body: { ten_dang_nhap?: string; mat_khau?: string; ho_ten?: string; email?: string },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    if (!currentUser) throw new UnauthorizedException();
+    return this.userService.taoNhanVienCuaHang(currentUser, body);
+  }
+
+  @Roles('MANAGER')
   @Post('users/manager/kiosk-staff')
   async taoKioskStaff(
     @Body()
@@ -160,6 +170,12 @@ export class UserController {
     return this.userService.layThongKeHeThong();
   }
 
+  @Roles('ADMIN')
+  @Get('users/admin/branch-addresses')
+  async timDiaChiChiNhanh(@Query('q') query = '', @Query('city') city = '', @Query('ward') ward = '') {
+    return this.userService.timDiaChiChiNhanh(query, city, ward);
+  }
+
   @Roles('ADMIN', 'MANAGER')
   @Get('users/admin/branches')
   async layDanhSachChiNhanhAdmin() {
@@ -186,6 +202,8 @@ export class UserController {
       gio_mo_cua?: string;
       gio_dong_cua?: string;
       map_url?: string;
+      vi_do?: number;
+      kinh_do?: number;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
     },
   ) {
@@ -206,6 +224,8 @@ export class UserController {
       gio_mo_cua?: string;
       gio_dong_cua?: string;
       map_url?: string;
+      vi_do?: number;
+      kinh_do?: number;
       trang_thai?: 'ACTIVE' | 'INACTIVE';
     },
   ) {
@@ -218,14 +238,14 @@ export class UserController {
     return this.userService.xoaChiNhanhAdmin(branchCode);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE', 'KIOSK_STAFF', 'FRANCHISE_STAFF', 'ACCOUNTANT')
   @Get('users/:userId/profile')
   async layThongTinCaNhan(@Param('userId') userId: string, @CurrentUser() currentUser: AuthUser | null) {
     this.ensureSelfOrAdmin(currentUser, userId);
     return this.userService.layThongTinCaNhan(userId);
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE', 'KIOSK_STAFF', 'FRANCHISE_STAFF', 'ACCOUNTANT')
   @Patch('users/:userId/profile')
   async capNhatThongTinCaNhan(
     @Param('userId') userId: string,
@@ -233,6 +253,16 @@ export class UserController {
     @Body() body: { hoTen?: string; soDienThoai?: string; avatarUrl?: string; email?: string },
   ) {
     this.ensureSelfOrAdmin(currentUser, userId);
+    if (['KIOSK_STAFF', 'FRANCHISE_STAFF'].includes(String(currentUser?.role || '').toUpperCase())) {
+      if (body.hoTen !== undefined && (typeof body.hoTen !== 'string' || !body.hoTen.trim() || body.hoTen.trim().length > 120)) {
+        throw new BadRequestException('Họ và tên phải có từ 1 đến 120 ký tự.');
+      }
+      const phone = typeof body.soDienThoai === 'string' ? body.soDienThoai.replace(/[\s()+.-]/g, '') : body.soDienThoai;
+      if (body.soDienThoai !== undefined && (typeof phone !== 'string' || (phone && !/^(?:0\d{9,10}|84\d{9})$/.test(phone)))) {
+        throw new BadRequestException('Vui lòng nhập số điện thoại Việt Nam gồm 10–11 số.');
+      }
+      return this.userService.capNhatThongTinCaNhan(userId, { hoTen:body.hoTen?.trim(), soDienThoai:phone });
+    }
     return this.userService.capNhatThongTinCaNhan(userId, body);
   }
 
@@ -248,7 +278,7 @@ export class UserController {
     return this.userService.capNhatThongTinCaNhan(userId, { avatarUrl: avatarDataUrl(file) });
   }
 
-  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE')
+  @Roles('ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER', 'FRANCHISEE', 'KIOSK_STAFF', 'FRANCHISE_STAFF', 'ACCOUNTANT')
   @Post('users/:userId/change-password')
   async doiMatKhau(
     @Param('userId') userId: string,

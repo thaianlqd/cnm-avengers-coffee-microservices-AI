@@ -1,3 +1,9 @@
+import OperationalPageFrame from '../../components/console/OperationalPageFrame'
+import WorkspaceLoading from '../../components/console/WorkspaceLoading'
+import { franchiseApi } from './franchiseApi'
+import { FranchiseActionProvider } from './FranchiseWorkspaceUI'
+import './AccountantWorkspace.css'
+import { Button } from '../../components/ui/button'
 import { WorkspaceSidebar, WorkspaceSearch } from '../../components/console/WorkspaceNavigation'
 import { AdminNotificationBell } from '../shared/components/AdminNotificationBell'
 import { TopbarUserDropdown } from '../shared/components/UserProfileModals'
@@ -61,6 +67,7 @@ const AuditLogTab = lazy(() =>
 
 // ─── Cấu Trúc Nhóm Nghiệp Vụ Quản Trị Nhượng Quyền ──────────────────────────
 const MODULE_GROUPS = [
+  { label: "TỔNG QUAN", items: [{ id: "bi", label: "Tổng quan", icon: ChartNoAxesCombined, subtitle: "Theo dõi hoạt động kiosk, doanh thu và các khoản cần thu." }] },
   {
     label: "ĐỐI TÁC & KIOSK",
     items: [
@@ -72,10 +79,9 @@ const MODULE_GROUPS = [
   {
     label: "TÀI CHÍNH & DÒNG TIỀN",
     items: [
-      { id: "bi", label: "Báo cáo tài chính", icon: ChartNoAxesCombined, subtitle: "Báo cáo doanh thu chuỗi · Phân tích dòng tiền & Chỉ số KPI" },
-      { id: "thu-chi", label: "Thu chi Kiosk", icon: Wallet, subtitle: "Theo dõi dòng tiền cọc, tất toán gói, combo, royalty & Lập phiếu giao dịch" },
+      { id: "thu-chi", label: "Thu chi Kiosk", icon: Wallet, subtitle: "Theo dõi dòng tiền cọc, tất toán gói, combo, chia sẻ doanh thu & Lập phiếu giao dịch" },
       { id: "cong-no", label: "Công nợ Kiosk", icon: CreditCard, subtitle: "Theo dõi công nợ gói, combo nguyên liệu, nhắc nợ & Hóa đơn VAT" },
-      { id: "royalty", label: "Phí Royalty", icon: DollarSign, subtitle: "Bảng kê phí bản quyền thương hiệu hàng tháng của mạng lưới Kiosk" },
+      { id: "royalty", label: "Chia sẻ doanh thu", icon: DollarSign, subtitle: "Bảng kê khoản chia sẻ doanh thu với thương hiệu theo tỷ lệ trong hợp đồng" },
     ],
   },
   {
@@ -88,7 +94,7 @@ const MODULE_GROUPS = [
 ];
 
 export function AccountantFranchiseShell({ session, onLogout }) {
-  const [currentModule, setCurrentModule] = useState("ho-so");
+  const [currentModule, setCurrentModule] = useState("bi");
   const [biData, setBiData] = useState(null);
   const [biError, setBiError] = useState("");
   const [revision, setRevision] = useState(0);
@@ -99,20 +105,15 @@ export function AccountantFranchiseShell({ session, onLogout }) {
     return MODULE_GROUPS.flatMap((group) => group.items);
   }, []);
 
-  const activeModuleInfo = useMemo(() => {
-    return allModules.find((m) => m.id === currentModule) || allModules[0];
-  }, [allModules, currentModule]);
-
   useEffect(() => {
     if (currentModule !== "bi") return;
     const controller = new AbortController();
-    fetch(`${API_BASE_URL}/franchise/dashboard/admin`, {
+    franchiseApi('/franchise/dashboard/admin', {
       signal: controller.signal,
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     })
-      .then(async (response) => {
-        const payload = await response.json();
-        if (!response.ok || !payload.success || !payload.data)
+      .then((payload) => {
+        if (!payload.success || !payload.data)
           throw new Error(
             payload.message ||
               "Không tải được báo cáo tài chính. Vui lòng thử lại.",
@@ -138,7 +139,7 @@ export function AccountantFranchiseShell({ session, onLogout }) {
   };
 
   return (
-    <div className="console-shell franchise-manager-workspace" data-actor="accountant">
+    <FranchiseActionProvider><div className="console-shell franchise-manager-workspace" data-actor="accountant" style={{ background: '#f8fafc', minHeight: '100vh' }}>
       <WorkspaceSidebar
         groups={MODULE_GROUPS}
         activeTab={currentModule}
@@ -147,34 +148,13 @@ export function AccountantFranchiseShell({ session, onLogout }) {
         label="Quản lý nhượng quyền"
         onLogout={onLogout}
       />
-      <main className="console-main">
-        <header className="console-topbar">
-          <div>
-            <span className="console-eyebrow">ĐIỀU HÀNH NHƯỢNG QUYỀN</span>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#0f172a', margin: '2px 0 0' }}>
-              {activeModuleInfo?.label}
-            </h2>
-            {activeModuleInfo?.subtitle && (
-              <div style={{ fontSize: 12, color: '#64748b', marginTop: 2, fontWeight: 400 }}>
-                {activeModuleInfo.subtitle}
-              </div>
-            )}
-          </div>
-          <div className="workspace-topbar-actions">
-            <WorkspaceSearch items={allModules} onSelect={changeModule} />
-            <AdminNotificationBell session={session} />
-            <TopbarUserDropdown session={session} onLogout={onLogout} />
-            {currentModule === "bi" && (
-              <button className="console-button" onClick={refresh}>
-                <RefreshCw size={16} /> Làm mới báo cáo
-              </button>
-            )}
-          </div>
-        </header>
-
-        <div key={currentModule} className="console-page" style={{ padding: '24px 32px' }}>
+      <main className="console-main" style={{ background: '#f8fafc', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <OperationalPageFrame groups={MODULE_GROUPS} activeTab={currentModule} onSelect={changeModule} session={session} onLogout={onLogout} branchName="Quản lý nhượng quyền"
+          pageDescriptions={Object.fromEntries(allModules.map(item=>[item.id,item.subtitle]))}
+          headingActions={currentModule === 'bi' ? <Button variant="outline" onClick={refresh}><RefreshCw size={15}/>Làm mới báo cáo</Button> : null}>
+        <div key={currentModule} className="accountant-module" data-module={currentModule}>
           <WorkspaceErrorBoundary key={currentModule} inline>
-            <Suspense fallback={<DashboardSkeleton />}>
+            <Suspense fallback={<WorkspaceLoading />}>
               {currentModule === "ho-so" ? (
                 <HoSoDangKyManager />
               ) : currentModule === "kiosk" ? (
@@ -195,9 +175,9 @@ export function AccountantFranchiseShell({ session, onLogout }) {
                 biError ? (
                   <div className="console-error" role="alert">
                     {biError}
-                    <button className="console-button" onClick={refresh}>
+                    <Button className="console-button" onClick={refresh}>
                       Thử lại
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <BiDashboard data={biData} />
@@ -208,7 +188,8 @@ export function AccountantFranchiseShell({ session, onLogout }) {
             </Suspense>
           </WorkspaceErrorBoundary>
         </div>
+        </OperationalPageFrame>
       </main>
-    </div>
+    </div></FranchiseActionProvider>
   );
 }

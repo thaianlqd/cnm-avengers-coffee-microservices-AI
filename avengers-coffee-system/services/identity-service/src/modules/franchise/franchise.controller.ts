@@ -155,6 +155,12 @@ export class FranchiseController {
     return res.redirect(302, redirectUrl);
   }
 
+  @Roles('ACCOUNTANT', 'ADMIN')
+  @Patch('don-mua-combo/:id/chap-nhan')
+  async chapNhanDonCombo(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.chapNhanDonCombo(id, user.sub);
+  }
+
   @Roles('ADMIN', 'ACCOUNTANT')
   @Patch('don-mua-combo/:id/giao')
   async xacNhanGiao(@Param('id') id: string, @CurrentUser() user: AuthUser, @Body() body: any) {
@@ -205,7 +211,7 @@ export class FranchiseController {
     return this.franchiseService.layRoyaltyCuaToi(user.sub);
   }
 
-  @Roles('ADMIN', 'FRANCHISEE')
+  @Roles('ADMIN', 'ACCOUNTANT', 'FRANCHISEE')
   @Post('royalty/tinh-thang')
   async tinhRoyaltyThang(@Body() body: any, @CurrentUser() user: AuthUser) {
     return this.franchiseService.tinhRoyaltyThang(user.sub, body.thang);
@@ -221,6 +227,12 @@ export class FranchiseController {
   @Patch('royalty/:id/thanh-toan')
   async ghiNhanThanhToanRoyalty(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.franchiseService.ghiNhanThanhToanRoyalty(id, user.sub);
+  }
+
+  @Roles('FRANCHISEE')
+  @Patch('royalty/:id/thanh-toan-vi')
+  async thanhToanViRoyalty(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.franchiseService.thanhToanViRoyalty(id, user.sub);
   }
 
   // ─── UC-B06: Đối soát ─────────────────────────────
@@ -305,7 +317,7 @@ export class FranchiseController {
   }
 
   // ─── Audit Log ──────────────────────────────────
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTANT')
   @Get('audit-logs')
   async getAuditLogs() {
     const logs = await this.franchiseService.getAuditLogs();

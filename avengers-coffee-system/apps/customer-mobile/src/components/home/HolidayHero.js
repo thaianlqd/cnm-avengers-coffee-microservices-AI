@@ -45,7 +45,7 @@ export default function HolidayHero({ navigation, cartCount, unread, user, topIn
   return <>
     <View style={styles.hero} testID="holiday-hero">
       <View style={[styles.header, { paddingTop: topInset + 14 }]}>
-        <Pressable accessibilityLabel="Tài khoản" onPress={() => go(user ? 'Profile' : 'Login')} style={styles.brand}><Image source={require('../../../assets/branding/logo.png')} resizeMode="contain" allowDownscaling={false} style={{ width: 78, height: 60 }} accessibilityLabel="Highlands Coffee" /></Pressable>
+        <Pressable accessibilityLabel="Tài khoản" onPress={() => go(user ? 'Profile' : 'Login')} style={styles.brand}><Image source={require('../../../assets/branding/logo.png')} resizeMode="contain" allowDownscaling={false} style={{ width: 78, height: 60 }} accessibilityLabel="Avengers Coffee" /></Pressable>
         <View style={styles.headerActions}>
           <Pressable accessibilityLabel="Tìm món" onPress={() => go('Menu', { focusSearch: true })} style={styles.icon}><Ionicons name="search-outline" size={23} color="#fff" /></Pressable>
           <Pressable accessibilityLabel="Mở nhắn tin" onPress={() => go('Chat', { mode: 'staff' })} style={styles.icon}><Ionicons name="chatbubble-ellipses-outline" size={22} color="#fff" /></Pressable>

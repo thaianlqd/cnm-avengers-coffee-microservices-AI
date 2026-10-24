@@ -17,6 +17,14 @@ export class InventoryController {
     return this.inventoryService.upsertStock(payload);
   }
 
+  @Patch('items/:maSanPham/selling')
+  updateSelling(
+    @Param('maSanPham') maSanPham: string,
+    @Body() payload: { branch_code: string; dang_kinh_doanh: boolean },
+  ) {
+    return this.inventoryService.updateSelling(Number(maSanPham), payload);
+  }
+
   @Patch('items/:maSanPham/adjust')
   adjustItem(
     @Param('maSanPham') maSanPham: string,

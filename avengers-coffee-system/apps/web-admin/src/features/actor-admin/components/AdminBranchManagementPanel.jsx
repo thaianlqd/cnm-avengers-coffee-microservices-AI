@@ -1,3 +1,10 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import { Button } from '../../../components/ui/button'
+import { Card } from '../../../components/ui/card'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Table } from '../../../components/ui/table'
+import BranchAddressPicker from '../../../components/console/BranchAddressPicker'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import React, { useState, useMemo, useEffect } from 'react'
@@ -24,7 +31,8 @@ import {
   Users,
   Star,
   MoreVertical,
-  Upload
+  Upload,
+  XCircle
 } from '../../../components/console/WorkspaceIcons'
 
 function fmtNumber(value) {
@@ -39,7 +47,7 @@ function BranchPagination({ pageData, onPageChange }) {
         Hiển thị {pageData.from} - {pageData.to} trên tổng số {pageData.total} chi nhánh
       </span>
       <div className="branch-pagination-actions">
-        <button
+        <Button
           type="button"
           className="branch-pg-btn"
           onClick={() => onPageChange(1)}
@@ -47,8 +55,8 @@ function BranchPagination({ pageData, onPageChange }) {
           title="Trang đầu"
         >
           <ChevronsLeft size={16} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className="branch-pg-btn"
           onClick={() => onPageChange(pageData.page - 1)}
@@ -56,11 +64,11 @@ function BranchPagination({ pageData, onPageChange }) {
           title="Trang trước"
         >
           <ChevronLeft size={16} />
-        </button>
+        </Button>
         <span className="branch-pg-current">
           Trang {pageData.page} / {pageData.totalPages}
         </span>
-        <button
+        <Button
           type="button"
           className="branch-pg-btn"
           onClick={() => onPageChange(pageData.page + 1)}
@@ -68,8 +76,8 @@ function BranchPagination({ pageData, onPageChange }) {
           title="Trang sau"
         >
           <ChevronRight size={16} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className="branch-pg-btn"
           onClick={() => onPageChange(pageData.totalPages)}
@@ -77,7 +85,7 @@ function BranchPagination({ pageData, onPageChange }) {
           title="Trang cuối"
         >
           <ChevronsRight size={16} />
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -196,21 +204,21 @@ export function AdminBranchManagementPanel({
       {formOpen && (
         <WorkspaceDialog label={editingBranchCode ? 'Chỉnh sửa chi nhánh' : 'Thêm chi nhánh'} onClose={handleCloseForm} busy={savingBranch}>
           {formError && <p className="workspace-form-error" role="alert">{formError}</p>}
-          <div
+          <Card
             className="system-admin-card admin-surface"
             aria-label={editingBranchCode ? 'Chỉnh sửa chi nhánh' : 'Thêm chi nhánh'}
             style={{
               backgroundColor: '#ffffff',
               border: '1px solid var(--border-light)',
               borderRadius: '12px',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+              boxShadow: "none",
               transition: 'all 0.25s ease',
               width: '100%',
               maxWidth: '820px'
             }}
           >
             {/* Form Header */}
-            <div className="admin-card-header" style={{ padding: '1.1rem 1.5rem', backgroundColor: '#ffffff', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTopLeftRadius: '11px', borderTopRightRadius: '11px' }}>
+            <div data-modal-body="true" className="admin-card-header" style={{ padding: '1.1rem 1.5rem', backgroundColor: '#ffffff', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTopLeftRadius: '11px', borderTopRightRadius: '11px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div className="admin-icon-tile" style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#f1f5fb', color: 'var(--text-main)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {editingBranchCode ? <Edit3 size={19} /> : <Store size={19} />}
@@ -220,7 +228,7 @@ export function AdminBranchManagementPanel({
                 </h3>
               </div>
 
-              <button className="admin-icon-button" aria-label="Đóng form"
+              <Button data-intent="danger" className="admin-icon-button" aria-label="Đóng form"
                 type="button"
                 onClick={handleCloseForm}
                 style={{
@@ -239,19 +247,19 @@ export function AdminBranchManagementPanel({
                 title="Đóng form"
               >
                 <X size={16} />
-              </button>
+              </Button>
             </div>
 
             {/* Form Body - 2 Column Balanced Grid */}
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div data-modal-body="true" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div className="admin-responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
 
                 {/* Field: Branch Code */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span>Mã chi nhánh</span> <span style={{ color: '#ef4444', fontWeight: '600' }}>*</span>
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     className="shadcn-input ui-input"
                     value={safeBranchForm.ma_chi_nhanh || ''}
@@ -265,10 +273,10 @@ export function AdminBranchManagementPanel({
 
                 {/* Field: Branch Name */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span>Tên chi nhánh</span> <span style={{ color: '#ef4444', fontWeight: '600' }}>*</span>
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     className="shadcn-input ui-input"
                     value={safeBranchForm.ten_chi_nhanh || ''}
@@ -277,11 +285,67 @@ export function AdminBranchManagementPanel({
                   />
                 </div>
 
-                {/* Field: Province / City (34 Provinces after merger) */}
+                {/* Field: Phone */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
+                    Số điện thoại liên hệ
+                  </Label>
+                  <Input
+                    type="text"
+                    className="shadcn-input ui-input"
+                    value={safeBranchForm.so_dien_thoai || ''}
+                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, so_dien_thoai: e.target.value }))}
+                    placeholder="VD: 028 1234 5678"
+                  />
+                </div>
+
+                {/* Field: Status */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
+                    Trạng thái hoạt động
+                  </Label>
+                  <SearchableSelect
+                    value={safeBranchForm.trang_thai || 'ACTIVE'}
+                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, trang_thai: e.target.value }))}
+                  >
+                    <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
+                    <option value="INACTIVE">Tạm dừng hoạt động (INACTIVE)</option>
+                  </SearchableSelect>
+                </div>
+
+                {/* Field: Opening Time */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
+                    Giờ mở cửa
+                  </Label>
+                  <Input
+                    type="text"
+                    className="shadcn-input ui-input"
+                    value={safeBranchForm.gio_mo_cua || ''}
+                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, gio_mo_cua: e.target.value }))}
+                    placeholder="VD: 07:00"
+                  />
+                </div>
+
+                {/* Field: Closing Time */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
+                    Giờ đóng cửa
+                  </Label>
+                  <Input
+                    type="text"
+                    className="shadcn-input ui-input"
+                    value={safeBranchForm.gio_dong_cua || ''}
+                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, gio_dong_cua: e.target.value }))}
+                    placeholder="VD: 22:00"
+                  />
+                </div>
+
+                {/* Field: Province / City (Moved near address) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span>Tỉnh / Thành phố</span> <span style={{ color: '#ef4444', fontWeight: '600' }}>*</span>
-                  </label>
+                  </Label>
                   <SearchableSelect
                     value={safeBranchForm.thanh_pho || ''}
                     onChange={(e) => {
@@ -290,7 +354,8 @@ export function AdminBranchManagementPanel({
                         ...p,
                         thanh_pho: newCity,
                         quan_huyen: '',
-                        phuong_xa: ''
+                        phuong_xa: '',
+                        dia_chi_chi_tiet: '', dia_chi_ban_do: '', vi_do: null, kinh_do: null, map_url: ''
                       }))
                       setLocationSearch && setLocationSearch((p) => ({ ...p, ward: '' }))
                     }}
@@ -306,12 +371,12 @@ export function AdminBranchManagementPanel({
 
                 {/* Field: Ward (Directly filtered by Province) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span>Phường / Xã</span>
-                  </label>
+                  </Label>
                   <SearchableSelect
                     value={safeBranchForm.phuong_xa || ''}
-                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, phuong_xa: e.target.value }))}
+                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, phuong_xa: e.target.value, dia_chi_chi_tiet: '', dia_chi_ban_do: '', vi_do: null, kinh_do: null, map_url: '' }))}
                     disabled={!safeBranchForm.thanh_pho || !safeWardOptions.length}
                     placeholder={safeBranchForm.thanh_pho ? '-- Chọn Phường / Xã --' : 'Vui lòng chọn Tỉnh/Thành trước'}
                   >
@@ -323,86 +388,19 @@ export function AdminBranchManagementPanel({
                   </SearchableSelect>
                 </div>
 
-                {/* Field: Phone */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
-                    Số điện thoại liên hệ
-                  </label>
-                  <input
-                    type="text"
-                    className="shadcn-input ui-input"
-                    value={safeBranchForm.so_dien_thoai || ''}
-                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, so_dien_thoai: e.target.value }))}
-                    placeholder="VD: 028 1234 5678"
-                  />
-                </div>
-
-                {/* Field: Status */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
-                    Trạng thái hoạt động
-                  </label>
-                  <SearchableSelect
-                    value={safeBranchForm.trang_thai || 'ACTIVE'}
-                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, trang_thai: e.target.value }))}
-                  >
-                    <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
-                    <option value="INACTIVE">Tạm dừng hoạt động (INACTIVE)</option>
-                  </SearchableSelect>
-                </div>
-
-                {/* Field: Opening Time */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
-                    Giờ mở cửa
-                  </label>
-                  <input
-                    type="text"
-                    className="shadcn-input ui-input"
-                    value={safeBranchForm.gio_mo_cua || ''}
-                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, gio_mo_cua: e.target.value }))}
-                    placeholder="VD: 07:00"
-                  />
-                </div>
-
-                {/* Field: Closing Time */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
-                    Giờ đóng cửa
-                  </label>
-                  <input
-                    type="text"
-                    className="shadcn-input ui-input"
-                    value={safeBranchForm.gio_dong_cua || ''}
-                    onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, gio_dong_cua: e.target.value }))}
-                    placeholder="VD: 22:00"
-                  />
-                </div>
-
                 {/* Field: Detailed Address (Full Width) */}
                 <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span>Địa chỉ chi tiết (Số nhà, Tên đường, Tòa nhà)</span> <span style={{ color: '#ef4444', fontWeight: '600' }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="shadcn-input ui-input"
-                    value={safeBranchForm.dia_chi_chi_tiet || ''}
-                    onChange={(e) =>
-                      setBranchForm && setBranchForm((p) => ({ ...p, dia_chi_chi_tiet: e.target.value }))
-                    }
-                    placeholder="VD: 72 Lê Thánh Tôn"
-                  />
+                  <BranchAddressPicker form={safeBranchForm} setForm={setBranchForm} />
                 </div>
 
                 {/* Field: Image URL & Local Upload */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
                     Ảnh chi nhánh
-                  </label>
+                  </Label>
                   <div className="admin-image-picker">
                     <div className="admin-image-picker-controls" style={{ display: 'flex', alignItems: 'stretch', width: '100%', height: '40px' }}>
-                      <input
+                      <Input
                         type="text"
                         className="shadcn-input ui-input"
                         value={safeBranchForm.hinh_anh_url || ''}
@@ -422,7 +420,7 @@ export function AdminBranchManagementPanel({
                           margin: 0
                         }}
                       />
-                      <label
+                      <Label
                         className="admin-image-upload-btn"
                         title="Chọn tệp ảnh từ máy tính"
                         style={{
@@ -438,10 +436,10 @@ export function AdminBranchManagementPanel({
                           borderBottomLeftRadius: 0,
                           borderTopRightRadius: '8px',
                           borderBottomRightRadius: '8px',
-                          border: '1px solid #cbd5e1',
-                          borderLeft: '1px solid #e2e8f0',
-                          backgroundColor: '#f8fafc',
-                          color: '#334155',
+                          border: "1px solid var(--border-light)",
+                          borderLeft: "1px solid var(--border-light)",
+                          backgroundColor: "var(--surface-low)",
+                          color: "var(--text-body)",
                           fontSize: '13px',
                           fontWeight: 600,
                           cursor: 'pointer',
@@ -469,7 +467,7 @@ export function AdminBranchManagementPanel({
                             reader.readAsDataURL(file);
                           }}
                         />
-                      </label>
+                      </Label>
                     </div>
 
                     {safeBranchForm.hinh_anh_url && (
@@ -484,14 +482,14 @@ export function AdminBranchManagementPanel({
                           <span className="admin-image-preview-url" title={safeBranchForm.hinh_anh_url}>
                             {safeBranchForm.hinh_anh_url.startsWith('data:') ? 'Ảnh tải lên từ máy tính' : safeBranchForm.hinh_anh_url}
                           </span>
-                          <button
+                          <Button
                             type="button"
                             className="admin-image-clear-btn"
                             onClick={() => setBranchForm && setBranchForm((p) => ({ ...p, hinh_anh_url: '' }))}
                           >
                             <Trash2 size={12} />
                             <span>Gỡ ảnh này</span>
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}
@@ -500,13 +498,14 @@ export function AdminBranchManagementPanel({
 
                 {/* Field: Google Maps URL */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
-                    Link Google Maps
-                  </label>
-                  <input
+                  <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
+                    Link bản đồ (tự động)
+                  </Label>
+                  <Input
                     type="text"
                     className="shadcn-input ui-input"
                     value={safeBranchForm.map_url || ''}
+                    readOnly
                     onChange={(e) => setBranchForm && setBranchForm((p) => ({ ...p, map_url: e.target.value }))}
                     placeholder="https://www.google.com/maps/search/?api=1&query=..."
                   />
@@ -520,17 +519,17 @@ export function AdminBranchManagementPanel({
                     alignItems: 'flex-start',
                     gap: '0.75rem',
                     padding: '0.85rem 1rem',
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    backgroundColor: "var(--surface-low)",
+                    border: "1px solid var(--border-light)",
                     borderRadius: '8px',
-                    color: '#334155',
+                    color: "var(--text-body)",
                     fontSize: '0.8125rem',
                   }}
                 >
-                  <MapPin size={18} style={{ color: '#2563eb', flexShrink: 0, marginTop: '2px' }} />
+                  <MapPin size={18} style={{ color: "var(--primary)", flexShrink: 0, marginTop: '2px' }} />
                   <div>
-                    <span style={{ fontWeight: '600', color: '#1e293b' }}>Địa chỉ hoàn chỉnh: </span>
-                    <span style={{ color: branchAddressPreview ? '#0f172a' : '#94a3b8' }}>
+                    <span style={{ fontWeight: '600', color: "var(--text-body)" }}>Địa chỉ hoàn chỉnh: </span>
+                    <span style={{ color: branchAddressPreview ? "var(--text-main)" : "var(--text-muted)" }}>
                       {branchAddressPreview || 'Vui lòng nhập địa chỉ chi tiết và chọn tỉnh/thành'}
                     </span>
                   </div>
@@ -539,17 +538,17 @@ export function AdminBranchManagementPanel({
               </div>
 
               {/* Form Footer Actions */}
-              <div className="admin-editor-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid #e2e4df', paddingTop: '1.25rem' }}>
-                <button
+              <div data-modal-footer="inset" data-modal-actions="true" className="admin-editor-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid #e2e4df', paddingTop: '1.25rem' }}>
+                <Button data-intent="danger"
                   type="button"
                   onClick={handleCloseForm}
                   className="btn-cancel"
                   style={{ height: '38px', padding: '0 1.25rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
                 >
                   <X size={15} /> Hủy bỏ
-                </button>
+                </Button>
 
-                <button
+                <Button data-intent="success"
                   type="button"
                   className="btn-save"
                   onClick={async () => {
@@ -564,22 +563,22 @@ export function AdminBranchManagementPanel({
                 >
                   <CheckCircle2 size={17} color="#ffffff" />
                   <span>{savingBranch ? 'Đang lưu...' : (editingBranchCode ? 'Lưu chi nhánh' : 'Tạo chi nhánh')}</span>
-                </button>
+                </Button>
               </div>
 
             </div>
-          </div>
+          </Card>
         </WorkspaceDialog>
       )}
 
       {/* Main List Card & Filters */}
-      <div className="branch-list-card admin-branch-directory"><div className="admin-section-intro"><div><h2>Danh sách chi nhánh</h2><p>Thông tin liên hệ, trạng thái hoạt động và đánh giá tại từng chi nhánh.</p></div></div>
+      <Card className="branch-list-card admin-branch-directory">
         <div className="branch-toolbar admin-branch-toolbar">
           <div className="branch-search-group">
             <div className="branch-search-box">
               <div className="branch-search-input-wrap">
 
-                <input className="ui-input"
+                <Input className="ui-input"
                   type="text"
                   value={keyword}
                   onChange={(e) => {
@@ -589,7 +588,7 @@ export function AdminBranchManagementPanel({
                   placeholder="Tìm theo tên, mã, địa chỉ chi nhánh..."
                 />
                 {keyword && (
-                  <button
+                  <Button data-intent="danger"
                     type="button"
                     className="branch-search-clear"
                     onClick={() => {
@@ -599,7 +598,7 @@ export function AdminBranchManagementPanel({
                     title="Xóa tìm kiếm"
                   >
                     <X size={14} />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -624,43 +623,15 @@ export function AdminBranchManagementPanel({
           </div>
 
           <div className="admin-branch-toolbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {loadBranches && (
-              <button
-                type="button"
-                className="branch-refresh-btn"
-                onClick={loadBranches}
-                title="Tải lại dữ liệu"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '7px',
-                  height: '40px',
-                  minHeight: '40px',
-                  padding: '0 15px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#334155',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  flexShrink: 0
-                }}
-              >
-                <RefreshCw size={15} />
-                <span>Tải lại</span>
-              </button>
-            )}
-
             {!showForm && (
-              <button
+              <Button
                 type="button"
                 className="branch-btn branch-btn--create"
                 onClick={handleOpenAddForm}
               >
                 <Plus size={18} strokeWidth={2.5} style={{ stroke: '#ffffff' }} />
                 <span>Thêm chi nhánh mới</span>
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -689,16 +660,15 @@ export function AdminBranchManagementPanel({
                 <span>Không tìm thấy chi nhánh nào phù hợp.</span>
               </div>
             ) : (
-              <div className="branch-table-wrapper" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
-                <table className="branch-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8125rem' }}>
+              <div className="branch-table-wrapper" style={{ border: "1px solid var(--border-light)", borderRadius: '12px', overflow: 'hidden', boxShadow: "none" }}>
+                <Table className="branch-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8125rem' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
-                      <th style={{ width: '24%', padding: '0.75rem 1rem' }}>Chi nhánh</th>
-                      <th style={{ width: '27%', padding: '0.75rem 1rem' }}>Địa chỉ &amp; Bản đồ</th>
-                      <th style={{ width: '18%', padding: '0.75rem 1rem' }}>Liên hệ &amp; Giờ mở cửa</th>
-                      <th style={{ width: '9%', padding: '0.75rem 1rem', textAlign: 'center' }}>Tài khoản</th>
-                      <th style={{ width: '10%', padding: '0.75rem 1rem' }}>Trạng thái</th>
-                      <th style={{ width: '12%', textAlign: 'center', padding: '0.75rem 1rem' }}>Thao tác</th>
+                    <tr style={{ backgroundColor: "var(--surface-low)", borderBottom: "1px solid var(--border-light)", color: "var(--text-body)", fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: "600", letterSpacing: '0.04em' }}>
+                      <th style={{ width: '28%', padding: '0.75rem 1rem' }}>Chi nhánh</th>
+                      <th style={{ width: '30%', padding: '0.75rem 1rem' }}>Địa chỉ &amp; Bản đồ</th>
+                      <th style={{ padding: '0.75rem 1rem' }}>Liên hệ &amp; Giờ mở cửa</th>
+                      <th style={{ width: '136px', padding: '0.75rem 1rem' }}>Trạng thái</th>
+                      <th style={{ width: '132px', textAlign: 'center', padding: '0.75rem 1rem' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -716,14 +686,14 @@ export function AdminBranchManagementPanel({
                           onClick={() => setSelectedBranchForReview && setSelectedBranchForReview(branch)}
                           title="Bấm vào dòng để xem chi tiết &amp; đánh giá chi nhánh"
                           style={{
-                            borderBottom: '1px solid #f1f5f9',
+                            borderBottom: "1px solid var(--border-subtle)",
                             cursor: 'pointer',
                             transition: 'background-color 0.15s ease'
                           }}
                         >
                           <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
-                            <div className="branch-info-cell" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <div className="branch-thumb-wrapper" style={{ width: '40px', height: '40px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+                            <div className="branch-info-cell" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: '0.75rem', minWidth: 0, width: '100%' }}>
+                              <div className="branch-thumb-wrapper" style={{ width: '40px', height: '40px', borderRadius: '8px', overflow: 'hidden', border: "1px solid var(--border-light)", flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: "var(--surface-low)" }}>
                                 {hasImage ? (
                                   <img
                                     src={branch.hinh_anh_url}
@@ -734,13 +704,13 @@ export function AdminBranchManagementPanel({
                                     }}
                                   />
                                 ) : (
-                                  <div className="branch-thumb-fallback" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', background: '#f1f5f9' }}>
+                                  <div className="branch-thumb-fallback" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: "var(--text-muted)", background: "var(--border-subtle)" }}>
                                     <Store size={18} />
                                   </div>
                                 )}
                               </div>
-                              <div className="branch-title-meta" style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                                <strong className="branch-name branch-name-title" style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#0f172a', lineHeight: 1.35, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              <div className="branch-title-meta" style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: '1 1 0%', textAlign: 'left' }}>
+                                <strong className="branch-name branch-name-title" title={branchName} style={{ fontSize: '0.8125rem', fontWeight: '600', color: "var(--text-main)", lineHeight: 1.35, display: 'block', whiteSpace: 'normal', overflowWrap: 'break-word', textAlign: 'left' }}>
                                   {branchName}
                                 </strong>
                               </div>
@@ -749,7 +719,7 @@ export function AdminBranchManagementPanel({
 
                           <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
                             <div className="branch-address-cell" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              <span className="branch-address-text" style={{ fontSize: '0.8125rem', color: '#334155', lineHeight: 1.4 }} title={branch?.dia_chi || 'Chưa có địa chỉ'}>
+                              <span className="branch-address-text" style={{ fontSize: '0.8125rem', color: "var(--text-body)", lineHeight: 1.4 }} title={branch?.dia_chi || 'Chưa có địa chỉ'}>
                                 {branch?.dia_chi || '---'}
                               </span>
                               {branch?.map_url && (
@@ -759,7 +729,7 @@ export function AdminBranchManagementPanel({
                                   rel="noopener noreferrer"
                                   className="branch-map-link"
                                   onClick={(e) => e.stopPropagation()}
-                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', fontWeight: '500', color: '#2563eb', textDecoration: 'none', width: 'fit-content' }}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', fontWeight: '500', color: "var(--primary)", textDecoration: 'none', width: 'fit-content' }}
                                   title="Xem trên Google Maps"
                                 >
                                   <ExternalLink size={11} />
@@ -771,11 +741,11 @@ export function AdminBranchManagementPanel({
 
                           <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
                             <div className="branch-contact-cell" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              <div className="branch-contact-item" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.78125rem', color: '#334155' }}>
+                              <div className="branch-contact-item" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.78125rem', color: "var(--text-body)" }}>
                                 <Phone size={12} color="#64748b" style={{ flexShrink: 0 }} />
                                 <span>{branch?.so_dien_thoai || '---'}</span>
                               </div>
-                              <div className="branch-contact-item" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', color: '#64748b' }}>
+                              <div className="branch-contact-item" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', color: "var(--text-muted)" }}>
                                 <Clock size={12} color="#94a3b8" style={{ flexShrink: 0 }} />
                                 <span>
                                   {branch?.gio_mo_cua || '07:00'} - {branch?.gio_dong_cua || '22:00'}
@@ -784,40 +754,23 @@ export function AdminBranchManagementPanel({
                             </div>
                           </td>
 
-                          <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle', textAlign: 'center' }}>
-                            <div className="branch-account-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '5px', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', fontSize: '0.75rem', fontWeight: '500' }}>
-                              <Users size={12} color="#64748b" />
-                              <span>{fmtNumber(accountCount)}</span>
-                            </div>
-                          </td>
-
                           <td style={{ padding: '0.75rem 1rem', verticalAlign: 'middle' }}>
-                            <span
-                              className={`branch-status-pill ${
-                                branch?.trang_thai === 'ACTIVE' ? 'active' : 'inactive'
-                              }`}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                padding: '2.5px 8px',
-                                borderRadius: '9999px',
-                                fontSize: '0.72rem',
-                                fontWeight: '500',
-                                backgroundColor: branch?.trang_thai === 'ACTIVE' ? '#f0fdf4' : '#fef2f2',
-                                color: branch?.trang_thai === 'ACTIVE' ? '#166534' : '#991b1b',
-                                border: branch?.trang_thai === 'ACTIVE' ? '1px solid #bbf7d0' : '1px solid #fecaca',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: branch?.trang_thai === 'ACTIVE' ? '#16a34a' : '#dc2626' }}></span>
-                              <span>{branch?.trang_thai === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'}</span>
-                            </span>
+                            {branch?.trang_thai === 'ACTIVE' ? (
+                              <StatusBadge tone="success" className="menu-status-badge menu-status-badge--active">
+
+                                <span>Hoạt động</span>
+                              </StatusBadge>
+                            ) : (
+                              <StatusBadge tone="secondary" className="menu-status-badge menu-status-badge--inactive">
+
+                                <span>Tạm dừng</span>
+                              </StatusBadge>
+                            )}
                           </td>
 
                           <td style={{ textAlign: 'center', whiteSpace: 'nowrap', padding: '0.75rem 1rem', verticalAlign: 'middle' }} onClick={(e) => e.stopPropagation()}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
-                              <button
+                            <div className="branch-row-actions" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
+                              <Button
                                 type="button"
                                 className="admin-table-action-btn btn-special"
                                 onClick={() => setSelectedBranchForReview && setSelectedBranchForReview(branch)}
@@ -826,7 +779,7 @@ export function AdminBranchManagementPanel({
                                   width: '30px',
                                   height: '30px',
                                   borderRadius: '6px',
-                                  border: '1px solid #e2e8f0',
+                                  border: "1px solid var(--border-light)",
                                   background: '#ffffff',
                                   color: '#d97706',
                                   display: 'inline-flex',
@@ -836,10 +789,10 @@ export function AdminBranchManagementPanel({
                                   transition: 'all 0.15s ease'
                                 }}
                               >
-                                <Star size={14} fill="#fef3c7" />
-                              </button>
+                                <Star size={14} />
+                              </Button>
 
-                              <button
+                              <Button
                                 type="button"
                                 className="admin-table-action-btn btn-edit"
                                 onClick={() => startEditBranch && startEditBranch(branch)}
@@ -848,9 +801,9 @@ export function AdminBranchManagementPanel({
                                   width: '30px',
                                   height: '30px',
                                   borderRadius: '6px',
-                                  border: '1px solid #e2e8f0',
+                                  border: "1px solid var(--border-light)",
                                   background: '#ffffff',
-                                  color: '#2563eb',
+                                  color: "var(--primary)",
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -859,9 +812,9 @@ export function AdminBranchManagementPanel({
                                 }}
                               >
                                 <Edit3 size={14} />
-                              </button>
+                              </Button>
 
-                              <button
+                              <Button data-intent="danger"
                                 type="button"
                                 className="admin-table-action-btn btn-delete"
                                 onClick={() => deleteBranch && deleteBranch(branchCode)}
@@ -870,7 +823,7 @@ export function AdminBranchManagementPanel({
                                   width: '30px',
                                   height: '30px',
                                   borderRadius: '6px',
-                                  border: '1px solid #e2e8f0',
+                                  border: "1px solid var(--border-light)",
                                   background: '#ffffff',
                                   color: '#dc2626',
                                   display: 'inline-flex',
@@ -881,21 +834,21 @@ export function AdminBranchManagementPanel({
                                 }}
                               >
                                 <Trash2 size={14} />
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </tr>
                       )
                     })}
                   </tbody>
-                </table>
+                </Table>
               </div>
             )}
 
             <BranchPagination pageData={pageData} onPageChange={setCurrentPage} />
           </>
         )}
-      </div>
+      </Card>
     </div>
   )
 }

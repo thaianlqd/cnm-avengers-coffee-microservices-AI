@@ -12,8 +12,8 @@ describe('authenticated cart quote HTTP contract', () => {
 
   beforeEach(async () => {
     const voucher = { kiemTraVoucher: jest.fn(async () => ({ so_tien_giam: 61600, voucher: { ma_voucher: 'KS20_A' } })) };
-    const service = new CartService({} as any, {} as any, voucher as any);
-    jest.spyOn(service, 'layGiỏHàng').mockResolvedValue({ items: [], subtotal: 308000, item_count: 2 } as any);
+    const service = new CartService({} as any, { query: async (sql: string) => sql.includes('FROM menu.san_pham') ? [{ma_san_pham:1,gia_ban:154000,trang_thai:true}] : [] } as any, voucher as any);
+    jest.spyOn(service, 'layGiỏHàng').mockResolvedValue({ items: [{ ma_san_pham:1, quantity:2 }], subtotal: 308000, item_count: 2 } as any);
     const module = await Test.createTestingModule({
       imports: [JwtModule.register({ secret: 'quote-regression-test-only' })],
       controllers: [CartController],

@@ -1170,29 +1170,58 @@ ${options.noticeHtml ? `<div style="margin-top:24px;padding:16px 0;border-top:1p
     return { success, isValid: true };
   }
 
+  private async enrichComboOrders(orders: DonMuaCombo[]) {
+    if (!orders.length) return [];
+    const [combos, kiosks, debts] = await Promise.all([
+      this.comboRepo.findBy({ id: In([...new Set(orders.map(d => d.combo_id))]) }),
+      this.kioskRepo.findBy({ id: In([...new Set(orders.map(d => d.kiosk_id))]) }),
+      this.congNoRepo.findBy({ don_mua_combo_id: In(orders.map(d => d.id)) }),
+    ]);
+    return orders.map(d => {
+      const debt = debts.find(c => c.don_mua_combo_id === d.id);
+      return { ...d, combo: combos.find(c => c.id === d.combo_id), kiosk: kiosks.find(k => k.id === d.kiosk_id),
+        da_thanh_toan: d.thanh_toan_ngay || debt?.trang_thai === 'DA_THANH_TOAN',
+        cong_no_id: debt?.id, han_thanh_toan: debt?.han_thanh_toan,
+        phi_phat_tre_han: Number(debt?.phi_phat_tre_han || 0),
+        tong_can_thanh_toan: Number(d.tong_tien) + Number(debt?.phi_phat_tre_han || 0),
+        ngay_thanh_toan: debt?.ngay_xac_nhan_thanh_toan };
+    });
+  }
+
   async layDanhSachDonMuaCombo(trang_thai?: string, kiosk_id?: string) {
     const query = this.donMuaComboRepo.createQueryBuilder('d').orderBy('d.ngay_tao', 'DESC');
     if (trang_thai) query.andWhere('d.trang_thai = :trang_thai', { trang_thai });
     if (kiosk_id) query.andWhere('d.kiosk_id = :kiosk_id', { kiosk_id });
-    const dons = await query.getMany();
-    return Promise.all(dons.map(async (d) => {
-      const combo = await this.comboRepo.findOne({ where: { id: d.combo_id } });
-      const kiosk = await this.kioskRepo.findOne({ where: { id: d.kiosk_id } });
-      return { ...d, combo, kiosk };
-    }));
+    return this.enrichComboOrders(await query.getMany());
   }
 
   async layDonMuaComboCuaToi(franchiseeId: string) {
     const kiosks = await this.kioskRepo.find({ where: { franchisee_id: franchiseeId } });
-    const kioskIds = kiosks.map(k => k.id);
-    if (!kioskIds.length) return [];
-    const dons = await this.donMuaComboRepo.createQueryBuilder('d')
-      .where('d.kiosk_id IN (:...ids)', { ids: kioskIds })
-      .orderBy('d.ngay_tao', 'DESC').getMany();
-    return Promise.all(dons.map(async (d) => {
-      const combo = await this.comboRepo.findOne({ where: { id: d.combo_id } });
-      return { ...d, combo };
-    }));
+    if (!kiosks.length) return [];
+    const orders = await this.donMuaComboRepo.createQueryBuilder('d')
+      .where('d.kiosk_id IN (:...ids)', { ids: kiosks.map(k => k.id) }).orderBy('d.ngay_tao', 'DESC').getMany();
+    return this.enrichComboOrders(orders);
+  }
+
+  async chapNhanDonCombo(id: string, adminId: string) {
+    const order = await this.dataSource.transaction(async manager => {
+      const orders = manager.getRepository(DonMuaCombo);
+      const order = await orders.findOne({ where: { id }, lock: { mode: 'pessimistic_write' } });
+      if (!order) throw new NotFoundException('Không tìm thấy đơn');
+      if (order.trang_thai !== 'DA_DAT') throw new BadRequestException('Chỉ chấp nhận đơn đang chờ duyệt');
+      order.trang_thai = 'DA_XAC_NHAN';
+      order.nguoi_xu_ly_id = adminId;
+      if (!order.thanh_toan_ngay && order.phuong_thuc_thanh_toan === 'CONG_NO') {
+        const debts = manager.getRepository(CongNo);
+        const due = new Date(); due.setDate(due.getDate() + 14);
+        await debts.save(debts.create({ kiosk_id: order.kiosk_id, don_mua_combo_id: order.id,
+          loai_phat_sinh: 'NGUYEN_LIEU', so_tien: order.tong_tien,
+          han_thanh_toan: due.toISOString().slice(0, 10), trang_thai: 'CON_NO' }));
+      }
+      return orders.save(order);
+    });
+    await this.logAction(adminId, 'CHAP_NHAN_DON_COMBO', `Đơn: ${id}`);
+    return { success: true, message: 'Đã chấp nhận đơn. Hóa đơn đã sẵn sàng.', data: order };
   }
 
   async xacNhanDaGiaoCombo(donId: string, adminId: string, ghi_chu?: string) {
@@ -1200,7 +1229,7 @@ ${options.noticeHtml ? `<div style="margin-top:24px;padding:16px 0;border-top:1p
       const orders = manager.getRepository(DonMuaCombo);
       const order = await orders.findOne({ where: { id: donId }, lock: { mode: 'pessimistic_write' } });
       if (!order) throw new NotFoundException('Không tìm thấy đơn');
-      if (order.trang_thai !== 'DA_DAT') throw new BadRequestException('Đơn không ở trạng thái đã đặt');
+      if (order.trang_thai !== 'DA_XAC_NHAN') throw new BadRequestException('Cần chấp nhận đơn trước khi giao');
       if (!order.thanh_toan_ngay && order.phuong_thuc_thanh_toan !== 'CONG_NO') throw new BadRequestException('Đơn combo chưa được xác nhận thanh toán');
       order.trang_thai = 'DA_GIAO';
       order.ngay_giao = new Date();
@@ -1212,7 +1241,8 @@ ${options.noticeHtml ? `<div style="margin-top:24px;padding:16px 0;border-top:1p
         const hanThanhToan = new Date();
         hanThanhToan.setDate(hanThanhToan.getDate() + 14);
         const debts = manager.getRepository(CongNo);
-        await debts.save(debts.create({ kiosk_id: order.kiosk_id, don_mua_combo_id: order.id,
+        const existing = await debts.findOne({ where: { don_mua_combo_id: order.id } });
+        if (!existing) await debts.save(debts.create({ kiosk_id: order.kiosk_id, don_mua_combo_id: order.id,
           loai_phat_sinh: 'NGUYEN_LIEU', so_tien: order.tong_tien,
           han_thanh_toan: hanThanhToan.toISOString().split('T')[0], trang_thai: 'CON_NO' }));
       }
@@ -1266,53 +1296,59 @@ ${options.noticeHtml ? `<div style="margin-top:24px;padding:16px 0;border-top:1p
   }
 
   async xacNhanThanhToanCongNo(id: string, accountantId: string, ghi_chu?: string) {
-    const congNo = await this.congNoRepo.findOne({ where: { id } });
-    if (!congNo) throw new NotFoundException('Không tìm thấy công nợ');
-    if (congNo.trang_thai === 'DA_THANH_TOAN') throw new BadRequestException('Công nợ này đã được thanh toán');
-    congNo.trang_thai = 'DA_THANH_TOAN';
-    congNo.ngay_xac_nhan_thanh_toan = new Date();
-    congNo.nguoi_xac_nhan_id = accountantId;
-    congNo.ghi_chu = ghi_chu || null;
-    await this.congNoRepo.save(congNo);
+    const debt = await this.settleDebt(id, accountantId, false, ghi_chu);
     await this.logAction(accountantId, 'XAC_NHAN_THANH_TOAN_CONG_NO', `Công nợ: ${id}`);
-    return { success: true, message: 'Đã xác nhận thanh toán công nợ thành công.', data: congNo };
+    return { success: true, message: 'Đã xác nhận thanh toán.', data: debt };
   }
 
   async thanhToanViCongNo(id: string, franchiseeId: string) {
-    const congNo = await this.congNoRepo.findOne({ where: { id } });
-    if (!congNo) throw new NotFoundException('Không tìm thấy công nợ');
-    const kiosk = await this.kioskRepo.findOne({ where: { id: congNo.kiosk_id, franchisee_id: franchiseeId } });
-    if (!kiosk) throw new BadRequestException('Không có quyền thanh toán công nợ này');
-    if (congNo.trang_thai === 'DA_THANH_TOAN') throw new BadRequestException('Công nợ này đã được thanh toán');
-    
-    // Check wallet balance
-    const user = await this.userRepo.findOne({ where: { ma_nguoi_dung: franchiseeId } });
-    if (!user) throw new NotFoundException('Không tìm thấy tài khoản');
-    
-    const tongTienThanhToan = Number(congNo.so_tien) + Number(congNo.phi_phat_tre_han || 0);
-    const currentBalance = Number(user.so_du_vi || 0);
-    if (currentBalance < tongTienThanhToan) {
-      throw new BadRequestException(`Số dư ví không đủ để thanh toán. Bạn cần ${tongTienThanhToan.toLocaleString('vi-VN')}đ nhưng ví chỉ có ${currentBalance.toLocaleString('vi-VN')}đ. Vui lòng nạp thêm tiền.`);
-    }
+    const debt = await this.settleDebt(id, franchiseeId, true);
+    return { success: true, message: 'Thanh toán thành công.', data: debt };
+  }
 
-    // Deduct balance
-    user.so_du_vi = currentBalance - tongTienThanhToan;
-    await this.userRepo.save(user);
+  private async settleDebt(id: string, actorId: string, fromWallet: boolean, note?: string) {
+    return this.dataSource.transaction(async manager => {
+      const debts = manager.getRepository(CongNo);
+      const debt = await debts.findOne({ where: { id }, lock: { mode: 'pessimistic_write' } });
+      if (!debt) throw new NotFoundException('Không tìm thấy khoản thanh toán');
+      if (fromWallet) {
+        const kiosk = await manager.getRepository(Kiosk).findOne({ where: { id: debt.kiosk_id, franchisee_id: actorId } });
+        if (!kiosk) throw new BadRequestException('Không có quyền thanh toán khoản này');
+      }
+      if (debt.trang_thai === 'DA_THANH_TOAN') throw new BadRequestException('Khoản này đã được thanh toán');
+      const amount = Number(debt.so_tien) + Number(debt.phi_phat_tre_han || 0);
+      if (!Number.isFinite(amount) || amount < 0) throw new BadRequestException('Số tiền thanh toán không hợp lệ');
+      if (fromWallet && amount > 0) {
+        const users = manager.getRepository(User);
+        const user = await users.findOne({ where: { ma_nguoi_dung: actorId }, lock: { mode: 'pessimistic_write' } });
+        if (!user) throw new NotFoundException('Không tìm thấy tài khoản');
+        if (Number(user.so_du_vi || 0) < amount) throw new BadRequestException('Số dư ví không đủ. Vui lòng nạp thêm tiền.');
+        user.so_du_vi = Number(user.so_du_vi || 0) - amount;
+        await users.save(user);
+        const wallet = manager.getRepository(WalletTransaction);
+        await wallet.save(wallet.create({ ma_nguoi_dung: actorId, so_tien: -amount,
+          loai_giao_dich: 'TRA_CONG_NO', mo_ta: `Thanh toán ${debt.royalty_id ? 'chia sẻ doanh thu' : 'công nợ'} #${debt.id}` }));
+      }
+      const paidAt = new Date();
+      debt.trang_thai = 'DA_THANH_TOAN';
+      debt.ngay_xac_nhan_thanh_toan = paidAt;
+      debt.nguoi_xac_nhan_id = actorId;
+      debt.ghi_chu = fromWallet ? 'Thanh toán qua ví điện tử' : (note || null);
+      await debts.save(debt);
+      if (debt.royalty_id) {
+        await manager.getRepository(RoyaltyHangThang).update({ id: debt.royalty_id },
+          { trang_thai: 'DA_THANH_TOAN', ngay_thanh_toan: paidAt });
+      }
+      return debt;
+    });
+  }
 
-    // Create wallet transaction
-    await this.walletTxRepo.save(this.walletTxRepo.create({
-      ma_nguoi_dung: franchiseeId,
-      so_tien: -tongTienThanhToan,
-      loai_giao_dich: 'TRA_CONG_NO',
-      mo_ta: `Thanh toán công nợ Kiosk ${kiosk.ma_kiosk}`
-    }));
-
-    congNo.trang_thai = 'DA_THANH_TOAN';
-    congNo.ngay_xac_nhan_thanh_toan = new Date();
-    congNo.nguoi_xac_nhan_id = franchiseeId; // Tự thanh toán qua ví
-    congNo.ghi_chu = (congNo.ghi_chu || '') + ' [Thanh toán qua ví điện tử]';
-    await this.congNoRepo.save(congNo);
-    return { success: true, message: 'Thanh toán thành công.', data: congNo };
+  async thanhToanViRoyalty(id: string, franchiseeId: string) {
+    const royalty = await this.royaltyRepo.findOne({ where: { id } });
+    if (!royalty || royalty.trang_thai !== 'DA_XAC_NHAN') throw new BadRequestException('Bảng kê chưa sẵn sàng thanh toán hoặc đã thanh toán');
+    const debt = await this.congNoRepo.findOne({ where: { royalty_id: id } });
+    if (!debt) throw new NotFoundException('Không tìm thấy khoản thanh toán của bảng kê');
+    return this.thanhToanViCongNo(debt.id, franchiseeId);
   }
 
   // ─────────────────────────────────────────────
@@ -1323,18 +1359,31 @@ ${options.noticeHtml ? `<div style="margin-top:24px;padding:16px 0;border-top:1p
     const query = this.royaltyRepo.createQueryBuilder('r').orderBy('r.thang', 'DESC');
     if (thang) query.where('r.thang = :thang', { thang });
     if (kiosk_id) query.andWhere('r.kiosk_id = :kiosk_id', { kiosk_id });
-    const royalties = await query.getMany();
-    return Promise.all(royalties.map(async (r) => {
-      const kiosk = await this.kioskRepo.findOne({ where: { id: r.kiosk_id } });
-      return { ...r, kiosk };
-    }));
+    return this.enrichRoyalty(await query.getMany());
+  }
+
+  private async enrichRoyalty(items: RoyaltyHangThang[]) {
+    if (!items.length) return [];
+    const [debts, kiosks] = await Promise.all([
+      this.congNoRepo.findBy({ royalty_id: In(items.map(r => r.id)) }),
+      this.kioskRepo.findBy({ id: In([...new Set(items.map(r => r.kiosk_id))]) }),
+    ]);
+    return items.map(r => {
+      const debt = debts.find(c => c.royalty_id === r.id);
+      const paid = debt?.trang_thai === 'DA_THANH_TOAN' ? debt : null;
+      return { ...r, kiosk: kiosks.find(k => k.id === r.kiosk_id),
+        phi_phat_tre_han: Number(debt?.phi_phat_tre_han || 0),
+        so_tien_can_nop: Number(r.so_tien_royalty || 0) + Number(debt?.phi_phat_tre_han || 0),
+        ...(paid ? { trang_thai: 'DA_THANH_TOAN', ngay_thanh_toan: paid.ngay_xac_nhan_thanh_toan } : {}) };
+    });
   }
 
   async layRoyaltyCuaToi(franchiseeId: string) {
     const kiosks = await this.kioskRepo.find({ where: { franchisee_id: franchiseeId } });
     const ids = kiosks.map(k => k.id);
     if (!ids.length) return [];
-    return this.royaltyRepo.createQueryBuilder('r').where('r.kiosk_id IN (:...ids)', { ids }).orderBy('r.thang', 'DESC').getMany();
+    const items = await this.royaltyRepo.createQueryBuilder('r').where('r.kiosk_id IN (:...ids)', { ids }).orderBy('r.thang', 'DESC').getMany();
+    return this.enrichRoyalty(items);
   }
 
   async tinhRoyaltyThang(adminId: string, thang?: string) {
@@ -1395,41 +1444,29 @@ ${options.noticeHtml ? `<div style="margin-top:24px;padding:16px 0;border-top:1p
   }
 
   async xacNhanRoyalty(id: string, accountantId: string, ghi_chu?: string) {
-    const royalty = await this.royaltyRepo.findOne({ where: { id } });
-    if (!royalty) throw new NotFoundException('Không tìm thấy bảng kê royalty');
-    if (royalty.trang_thai !== 'CHO_XAC_NHAN') throw new BadRequestException('Bảng kê không ở trạng thái chờ xác nhận');
-    royalty.trang_thai = 'DA_XAC_NHAN';
-    royalty.ngay_xac_nhan = new Date();
-    royalty.nguoi_xac_nhan_id = accountantId;
-    royalty.ghi_chu_ke_toan = ghi_chu || null;
-    await this.royaltyRepo.save(royalty);
-
-    // Tạo công nợ royalty
-    await this.congNoRepo.save(this.congNoRepo.create({
-      kiosk_id: royalty.kiosk_id,
-      royalty_id: royalty.id,
-      loai_phat_sinh: 'ROYALTY',
-      so_tien: royalty.so_tien_royalty,
-      han_thanh_toan: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0],
-      trang_thai: 'CON_NO',
-    }));
-
-    return { success: true, message: 'Đã xác nhận bảng kê royalty và tạo công nợ.', data: royalty };
+    const royalty = await this.dataSource.transaction(async manager => {
+      const statements = manager.getRepository(RoyaltyHangThang);
+      const royalty = await statements.findOne({ where: { id }, lock: { mode: 'pessimistic_write' } });
+      if (!royalty) throw new NotFoundException('Không tìm thấy bảng kê');
+      if (royalty.trang_thai !== 'CHO_XAC_NHAN') throw new BadRequestException('Bảng kê không ở trạng thái chờ xác nhận');
+      royalty.trang_thai = 'DA_XAC_NHAN';
+      royalty.ngay_xac_nhan = new Date();
+      royalty.nguoi_xac_nhan_id = accountantId;
+      royalty.ghi_chu_ke_toan = ghi_chu || null;
+      const debts = manager.getRepository(CongNo);
+      await debts.save(debts.create({ kiosk_id: royalty.kiosk_id, royalty_id: royalty.id,
+        loai_phat_sinh: 'ROYALTY', so_tien: royalty.so_tien_royalty,
+        han_thanh_toan: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10), trang_thai: 'CON_NO' }));
+      return statements.save(royalty);
+    });
+    return { success: true, message: 'Đã xác nhận bảng kê. Đối tác có thể nộp qua ví.', data: royalty };
   }
 
   async ghiNhanThanhToanRoyalty(id: string, accountantId: string) {
-    const royalty = await this.royaltyRepo.findOne({ where: { id } });
-    if (!royalty) throw new NotFoundException('Không tìm thấy bảng kê royalty');
-    if (royalty.trang_thai !== 'DA_XAC_NHAN') throw new BadRequestException('Cần xác nhận bảng kê trước');
-    royalty.trang_thai = 'DA_THANH_TOAN';
-    royalty.ngay_thanh_toan = new Date();
-    royalty.nguoi_xac_nhan_id = accountantId;
-    await this.royaltyRepo.save(royalty);
-    // Cập nhật công nợ royalty tương ứng
-    await this.congNoRepo.createQueryBuilder().update(CongNo)
-      .set({ trang_thai: 'DA_THANH_TOAN', ngay_xac_nhan_thanh_toan: new Date(), nguoi_xac_nhan_id: accountantId })
-      .where('royalty_id = :id', { id }).execute();
-    return { success: true, message: 'Đã ghi nhận thanh toán royalty thành công.', data: royalty };
+    const debt = await this.congNoRepo.findOne({ where: { royalty_id: id } });
+    if (!debt) throw new NotFoundException('Cần xác nhận bảng kê trước');
+    const paid = await this.settleDebt(debt.id, accountantId, false, 'Quản lý xác nhận đã thu chia sẻ doanh thu');
+    return { success: true, message: 'Đã ghi nhận thanh toán chia sẻ doanh thu.', data: paid };
   }
 
   // ─────────────────────────────────────────────

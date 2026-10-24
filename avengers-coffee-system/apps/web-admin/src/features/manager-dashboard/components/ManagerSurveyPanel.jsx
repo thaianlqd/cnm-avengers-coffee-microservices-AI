@@ -1,3 +1,9 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Table } from '../../../components/ui/table'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog';
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import { PageNumbers } from '../../../components/console/CompactPagination'
@@ -33,7 +39,7 @@ import {
   Clock,
   Gift,
   Sparkles,
-  Award
+  Award, QrCode, Copy, ExternalLink
 } from '../../../components/console/WorkspaceIcons';
 
 const DEFAULT_REALISTIC_SURVEY_QUESTIONS = [
@@ -261,7 +267,7 @@ function CustomQuestionTypeDropdown({ value, onChange }) {
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative', width: '220px' }}>
-      <button
+      <Button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -288,7 +294,7 @@ function CustomQuestionTypeDropdown({ value, onChange }) {
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOpt.label}</span>
         </div>
         <ChevronDown size={16} color={isOpen ? '#2563eb' : '#64748b'} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', flexShrink: 0 }} />
-      </button>
+      </Button>
 
       {isOpen && (
         <div
@@ -353,6 +359,7 @@ function CustomQuestionTypeDropdown({ value, onChange }) {
 }
 
 export function ManagerSurveyPanel({
+  branchCode,
   surveysState = { items: [], loading: false },
   surveyResponsesState = { items: [], loading: false },
   onKichHoatForm,
@@ -362,6 +369,9 @@ export function ManagerSurveyPanel({
   onTaiForms,
   onTaiResponses,
 }) {
+  const [shareForm,setShareForm]=useState(null);
+  const [copyStatus,setCopyStatus]=useState('');
+  const shareUrl=shareForm ? `${import.meta.env.VITE_TABLE_ORDER_URL || `${window.location.protocol}//${window.location.hostname}:5176`}/survey/${shareForm.id}` : '';
   const [activeSubTab, setActiveSubTab] = useState('forms'); // 'forms' | 'responses' | 'analytics'
   const [isEditing, setIsEditing] = useState(false);
   const [editingFormId, setEditingFormId] = useState(null); // null = create new
@@ -376,7 +386,7 @@ export function ManagerSurveyPanel({
   const pageSize = 10;
 
   // Selected form for analytics tab
-  const [selectedAnalyticsFormId, setSelectedAnalyticsFormId] = useState('ALL');
+  const [selectedAnalyticsFormId, setSelectedAnalyticsFormId] = useState('');
 
   useEffect(() => {
     if (onTaiForms) onTaiForms();
@@ -384,8 +394,8 @@ export function ManagerSurveyPanel({
   }, []); // Only fetch when this panel is opened
 
   const startCreateNew = () => {
-    setFormTitle('Khảo sát trải nghiệm khách hàng toàn diện 2026');
-    setFormDesc('Hoàn thành khảo sát 20 câu hỏi để nhận ngay Voucher 20% giảm giá');
+    setFormTitle(branchCode ? 'Khảo sát trải nghiệm tại cửa hàng' : 'Khảo sát trải nghiệm khách hàng toàn hệ thống');
+    setFormDesc(branchCode ? 'Chia sẻ trải nghiệm của bạn để cửa hàng phục vụ tốt hơn.' : 'Chia sẻ trải nghiệm của bạn với Avengers Coffee.');
     setQuestions(
       DEFAULT_REALISTIC_SURVEY_QUESTIONS.map((q, idx) => ({
         ...q,
@@ -405,14 +415,23 @@ export function ManagerSurveyPanel({
   };
 
   const handleAddQuestion = () => {
+    const newId = 'q_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
     const newQ = {
-      id: 'q_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      id: newId,
       tieu_de: '',
       loai: 'choice',
       bat_buoc: true,
       lua_chon: ['Lựa chọn 1', 'Lựa chọn 2', 'Lựa chọn 3']
     };
-    setQuestions([...questions, newQ]);
+    setQuestions((prev) => [...prev, newQ]);
+    setTimeout(() => {
+      const el = document.getElementById(`question-card-${newId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const inputEl = el.querySelector('input[type="text"]');
+        inputEl?.focus();
+      }
+    }, 120);
   };
 
   const handleRemoveQuestion = (id) => {
@@ -633,49 +652,51 @@ export function ManagerSurveyPanel({
 
   return (
     <section className="panel admin-survey-workbench" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {branchCode && <p className="operation-note">Khảo sát riêng của chi nhánh {branchCode}. Chỉ quản lý chi nhánh này xem được phản hồi. Kích hoạt biểu mẫu trước khi chia sẻ.</p>}
+      {shareForm && <WorkspaceDialog title="Chia sẻ khảo sát cửa hàng" onClose={()=>setShareForm(null)}><div data-modal-body="true" className="survey-share"><h3>{shareForm.tieu_de}</h3>{shareForm.trang_thai ? <><img src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(shareUrl)}`} alt="Mã QR mở khảo sát chi nhánh"/><Input readOnly aria-label="Liên kết khảo sát" value={shareUrl}/><div><Button variant="outline" type="button" onClick={async()=>{try{await navigator.clipboard.writeText(shareUrl);setCopyStatus('Đã sao chép liên kết.')}catch{setCopyStatus('Hãy chọn và sao chép liên kết ở trên.')}}}><Copy size={15}/>Sao chép</Button><Button asChild><a href={shareUrl} target="_blank" rel="noreferrer"><ExternalLink size={15}/>Mở khảo sát</a></Button></div>{copyStatus&&<p role="status">{copyStatus}</p>}</>:<p>Khảo sát chưa được kích hoạt. Đóng cửa sổ và chọn “Kích hoạt” để nhận phản hồi.</p>}</div></WorkspaceDialog>}
       
       {/* SUBTABS TOOLBAR & ACTION HEADER */}
       <div className="admin-survey-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div className="survey-nav-tabs" style={{ display: 'inline-flex', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '12px', border: '1px solid #e2e8f0', gap: '4px' }}>
-          <button
+          <Button
             type="button"
             className={`survey-nav-tab ${activeSubTab === 'forms' ? 'is-active' : ''}`}
             onClick={() => { setActiveSubTab('forms'); setIsEditing(false); }}
           >
             <FileText size={16} />
             <span>Biểu mẫu khảo sát</span>
-            <span className="tab-badge">{surveysState.items.length}</span>
-          </button>
+            <Badge variant="outline" className="tab-badge">{surveysState.items.length}</Badge>
+          </Button>
 
-          <button
+          <Button
             type="button"
             className={`survey-nav-tab ${activeSubTab === 'responses' ? 'is-active' : ''}`}
             onClick={() => { setActiveSubTab('responses'); setIsEditing(false); }}
           >
             <MessageSquare size={16} />
             <span>Bảng phản hồi</span>
-            <span className="tab-badge">{totalResponses}</span>
-          </button>
+            <Badge variant="outline" className="tab-badge">{totalResponses}</Badge>
+          </Button>
 
-          <button
+          <Button
             type="button"
             className={`survey-nav-tab ${activeSubTab === 'analytics' ? 'is-active' : ''}`}
             onClick={() => { setActiveSubTab('analytics'); setIsEditing(false); }}
           >
             <BarChart3 size={16} />
             <span>Thống kê chi tiết</span>
-          </button>
+          </Button>
         </div>
 
         {activeSubTab === 'forms' && !isEditing && (
-          <button
+          <Button
             type="button"
             className="survey-btn-primary"
             onClick={startCreateNew}
           >
             <Plus size={16} strokeWidth={2.5} />
             <span>Thiết kế biểu mẫu mới</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -693,10 +714,10 @@ export function ManagerSurveyPanel({
                 </div>
                 <p style={{ margin: 0, fontWeight: '700', fontSize: '1.05rem', color: '#0f172a' }}>Chưa có biểu mẫu khảo sát nào</p>
                 <p style={{ margin: '0.35rem 0 1rem 0', fontSize: '0.84rem', color: '#64748b' }}>Nhấp nút thiết kế biểu mẫu mới để bắt đầu tạo câu hỏi thu thập ý kiến khách hàng.</p>
-                <button type="button" onClick={startCreateNew} className="survey-btn-primary">
+                <Button type="button" onClick={startCreateNew} className="survey-btn-primary">
                   <Plus size={16} strokeWidth={2.5} />
                   <span>Thiết kế biểu mẫu mới</span>
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="admin-survey-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
@@ -718,33 +739,18 @@ export function ManagerSurveyPanel({
                     {/* Form Card Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#475569', backgroundColor: '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid #e2e8f0', flexShrink: 0 }}>
+                        <Badge variant="outline" data-quiet-label="true" style={{ fontSize: '0.75rem', fontWeight: '600', color: '#475569', backgroundColor: '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid #e2e8f0', flexShrink: 0 }}>
                           #{form.id}
-                        </span>
+                        </Badge>
                         <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: '#0f172a', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {form.tieu_de}
                         </h4>
                       </div>
 
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          backgroundColor: form.trang_thai ? '#ecfdf5' : '#f8fafc',
-                          color: form.trang_thai ? '#059669' : '#64748b',
-                          fontSize: '0.75rem',
-                          fontWeight: '600',
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '9999px',
-                          border: form.trang_thai ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0
-                        }}
-                      >
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: form.trang_thai ? '#10b981' : '#94a3b8' }}></span>
+                      <StatusBadge status={form.trang_thai}>
+
                         {form.trang_thai ? 'Đang hoạt động' : 'Tạm dừng'}
-                      </span>
+                      </StatusBadge>
                     </div>
 
                     {/* Form Reward / Description box */}
@@ -771,9 +777,9 @@ export function ManagerSurveyPanel({
                     </div>
 
                     {/* Action Buttons UXUI */}
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', borderTop: '1px solid #f1f5f9', paddingTop: '0.75rem' }}>
+                    <div data-modal-actions="true" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', borderTop: '1px solid #f1f5f9', paddingTop: '0.75rem' }}>
                       {!form.trang_thai && (
-                        <button
+                        <Button
                           type="button"
                           className="survey-btn-activate"
                           onClick={() => onKichHoatForm(form.id)}
@@ -781,10 +787,12 @@ export function ManagerSurveyPanel({
                         >
                           <CheckCircle2 size={15} color="#2563eb" />
                           <span>Kích hoạt</span>
-                        </button>
+                        </Button>
                       )}
 
-                      <button
+                      {branchCode && <Button variant="outline" type="button" onClick={()=>{setShareForm(form);setCopyStatus('')}}><QrCode size={15}/>Chia sẻ khảo sát</Button>}
+
+                      <Button
                         type="button"
                         className="survey-btn-edit"
                         onClick={() => startEdit(form)}
@@ -792,9 +800,9 @@ export function ManagerSurveyPanel({
                       >
                         <Edit3 size={15} color="#2563eb" />
                         <span>Sửa</span>
-                      </button>
+                      </Button>
 
-                      <button
+                      <Button data-intent="danger"
                         type="button"
                         className="survey-btn-delete"
                         onClick={() => handleDeleteForm(form)}
@@ -802,7 +810,7 @@ export function ManagerSurveyPanel({
                       >
                         <Trash2 size={15} color="#dc2626" />
                         <span>Xóa</span>
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -820,9 +828,9 @@ export function ManagerSurveyPanel({
               onClose={() => setIsEditing(false)}
               className="workspace-dialog--wide"
             >
-              <form className="workspace-form" onSubmit={handleSaveForm} style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '82vh', overflow: 'hidden' }}>
+              <form data-modal-frame="true" className="workspace-form" onSubmit={handleSaveForm} style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '82vh', overflow: 'hidden' }}>
                 {/* MODAL SCROLLABLE BODY */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div data-modal-body="true" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   
                   {/* FORM GENERAL INFO CARD */}
                   <div style={{
@@ -855,14 +863,15 @@ export function ManagerSurveyPanel({
                     {/* Inputs Grid */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <label style={{ color: '#0f172a', fontWeight: '600', fontSize: '0.9rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Label htmlFor="survey-form-title" style={{ color: '#0f172a', fontWeight: '600', fontSize: '0.9rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span>Tiêu đề biểu mẫu khảo sát</span>
                           <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
-                        <div style={{ position: 'relative', width: '100%' }}>
-                          <Tag size={17} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                          <input
+                        </Label>
+                        <div className="survey-input-wrapper" style={{ position: 'relative', width: '100%' }}>
+                          <Tag size={17} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }} />
+                          <Input id="survey-form-title" data-input-prefix="true"
                             type="text"
+                            className="survey-has-icon-input !pl-11"
                             value={formTitle}
                             onChange={(e) => setFormTitle(e.target.value)}
                             placeholder="VD: Khảo sát trải nghiệm khách hàng & Chất lượng dịch vụ..."
@@ -870,7 +879,7 @@ export function ManagerSurveyPanel({
                             style={{
                               width: '100%',
                               height: '44px',
-                              paddingLeft: '42px',
+                              paddingLeft: '44px',
                               paddingRight: '14px',
                               borderRadius: '9px',
                               border: '1.5px solid #cbd5e1',
@@ -888,20 +897,21 @@ export function ManagerSurveyPanel({
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <label style={{ color: '#0f172a', fontWeight: '600', fontSize: '0.9rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Label htmlFor="survey-form-description" style={{ color: '#0f172a', fontWeight: '600', fontSize: '0.9rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span>Mô tả ngắn & Quà tặng trải nghiệm</span>
-                        </label>
-                        <div style={{ position: 'relative', width: '100%' }}>
-                          <Gift size={17} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                          <input
+                        </Label>
+                        <div className="survey-input-wrapper" style={{ position: 'relative', width: '100%' }}>
+                          <Gift size={17} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }} />
+                          <Input id="survey-form-description" data-input-prefix="true"
                             type="text"
+                            className="survey-has-icon-input !pl-11"
                             value={formDesc}
                             onChange={(e) => setFormDesc(e.target.value)}
                             placeholder="VD: Nhận ngay Voucher giảm giá 15% (tối đa 50.000đ) khi hoàn tất đánh giá..."
                             style={{
                               width: '100%',
                               height: '44px',
-                              paddingLeft: '42px',
+                              paddingLeft: '44px',
                               paddingRight: '14px',
                               borderRadius: '9px',
                               border: '1.5px solid #cbd5e1',
@@ -926,21 +936,13 @@ export function ManagerSurveyPanel({
                     <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <Layers size={18} color="#2563eb" /> Danh sách câu hỏi ({questions.length})
                     </h3>
-                    <button
-                      type="button"
-                      onClick={handleAddQuestion}
-                      className="survey-btn-primary"
-                      style={{ height: '36px', padding: '0 1rem', fontSize: '0.8125rem' }}
-                    >
-                      <Plus size={16} strokeWidth={2.5} />
-                      <span>Thêm câu hỏi</span>
-                    </button>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {questions.map((q, qIndex) => (
                       <div
                         key={q.id || qIndex}
+                        id={`question-card-${q.id}`}
                         style={{
                           backgroundColor: '#ffffff',
                           border: '1px solid #e2e8f0',
@@ -974,7 +976,7 @@ export function ManagerSurveyPanel({
                             >
                               #{qIndex + 1}
                             </div>
-                            <input
+                            <Input
                               type="text"
                               value={q.tieu_de}
                               onChange={(e) => handleQuestionChange(q.id, 'tieu_de', e.target.value)}
@@ -1000,7 +1002,7 @@ export function ManagerSurveyPanel({
                               onChange={(newType) => handleQuestionChange(q.id, 'loai', newType)}
                             />
 
-                            <button
+                            <Button data-intent="danger"
                               type="button"
                               onClick={() => handleRemoveQuestion(q.id)}
                               style={{
@@ -1019,7 +1021,7 @@ export function ManagerSurveyPanel({
                               title="Xóa câu hỏi này"
                             >
                               <Trash2 size={16} />
-                            </button>
+                            </Button>
                           </div>
                         </div>
 
@@ -1030,7 +1032,7 @@ export function ManagerSurveyPanel({
                             {(q.lua_chon || []).map((opt, optIdx) => (
                               <div key={optIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <span style={{ color: '#94a3b8', fontSize: '0.8125rem' }}>•</span>
-                                <input
+                                <Input
                                   type="text"
                                   value={opt}
                                   onChange={(e) => handleOptionChange(q.id, optIdx, e.target.value)}
@@ -1048,19 +1050,19 @@ export function ManagerSurveyPanel({
                                   }}
                                 />
                                 {(q.lua_chon || []).length > 1 && (
-                                  <button
+                                  <Button data-intent="danger"
                                     type="button"
                                     onClick={() => handleRemoveOption(q.id, optIdx)}
                                     style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center' }}
                                     title="Xóa lựa chọn"
                                   >
                                     <X size={15} />
-                                  </button>
+                                  </Button>
                                 )}
                               </div>
                             ))}
 
-                            <button
+                            <Button
                               type="button"
                               onClick={() => handleAddOption(q.id)}
                               style={{
@@ -1077,13 +1079,13 @@ export function ManagerSurveyPanel({
                               }}
                             >
                               + Thêm lựa chọn
-                            </button>
+                            </Button>
                           </div>
                         )}
 
                         {/* Mandatory Toggle */}
                         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.6rem' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#475569', cursor: 'pointer' }}>
+                          <Label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#475569', cursor: 'pointer' }}>
                             <input
                               type="checkbox"
                               checked={Boolean(q.bat_buoc)}
@@ -1091,16 +1093,50 @@ export function ManagerSurveyPanel({
                               style={{ width: '16px', height: '16px', accentColor: '#2563eb', cursor: 'pointer' }}
                             />
                             Bắt buộc trả lời
-                          </label>
+                          </Label>
                         </div>
                       </div>
                     ))}
+
+                    {/* Nút thêm câu hỏi ở cuối danh sách câu hỏi */}
+                    <Button
+                      type="button"
+                      onClick={handleAddQuestion}
+                      style={{
+                        width: '100%',
+                        height: '46px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        backgroundColor: '#f8fafc',
+                        border: '1.5px dashed #93c5fd',
+                        borderRadius: '10px',
+                        color: '#2563eb',
+                        fontWeight: '600',
+                        fontSize: '0.875rem',
+                        cursor: 'pointer',
+                        marginTop: '0.35rem',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#eff6ff'
+                        e.currentTarget.style.borderColor = '#3b82f6'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8fafc'
+                        e.currentTarget.style.borderColor = '#93c5fd'
+                      }}
+                    >
+                      <Plus size={18} strokeWidth={2.5} />
+                      <span>+ Thêm câu hỏi mới</span>
+                    </Button>
                   </div>
                 </div>
               </div>
 
                 {/* PINNED MODAL ACTIONS FOOTER (RULE 8) */}
-                <div style={{
+                <div data-modal-footer="edge" data-modal-actions="true" style={{
                   display: 'flex',
                   justifyContent: 'flex-end',
                   alignItems: 'center',
@@ -1111,7 +1147,7 @@ export function ManagerSurveyPanel({
                   boxShadow: '0 -4px 12px rgba(15, 23, 42, 0.04)',
                   flexShrink: 0
                 }}>
-                  <button
+                  <Button data-intent="danger"
                     type="button"
                     onClick={() => setIsEditing(false)}
                     style={{
@@ -1130,8 +1166,8 @@ export function ManagerSurveyPanel({
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = '#475569'; }}
                   >
                     Hủy bỏ
-                  </button>
-                  <button
+                  </Button>
+                  <Button data-intent="success"
                     type="submit"
                     style={{
                       backgroundColor: '#2563eb',
@@ -1154,7 +1190,7 @@ export function ManagerSurveyPanel({
                   >
                     <CheckCircle2 size={17} color="#ffffff" />
                     <span>Lưu Biểu Mẫu Khảo Sát</span>
-                  </button>
+                  </Button>
                 </div>
               </form>
             </WorkspaceDialog>
@@ -1168,17 +1204,18 @@ export function ManagerSurveyPanel({
           
           {/* SEARCH & CSV EXPORT HEADER BAR */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', backgroundColor: '#ffffff', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: '280px', maxWidth: '520px' }}>
-              <Search size={17} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-              <input
+            <div className="survey-input-wrapper" style={{ position: 'relative', flex: 1, minWidth: '280px', maxWidth: '520px' }}>
+              <Search size={17} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }} />
+              <Input data-input-prefix="true"
                 type="text"
+                className="survey-has-icon-input !pl-11"
                 placeholder="Tìm kiếm theo tên khách, SĐT, mã đơn hoặc câu trả lời..."
                 value={searchText}
                 onChange={(e) => { setSearchText(e.target.value); setCurrentPage(1); }}
                 style={{
                   width: '100%',
                   height: '42px',
-                  paddingLeft: '42px',
+                  paddingLeft: '44px',
                   paddingRight: searchText ? '36px' : '14px',
                   borderRadius: '9px',
                   border: '1.5px solid #cbd5e1',
@@ -1190,25 +1227,25 @@ export function ManagerSurveyPanel({
                 }}
               />
               {searchText && (
-                <button
+                <Button
                   type="button"
                   onClick={() => { setSearchText(''); setCurrentPage(1); }}
                   style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontWeight: '700', fontSize: '1.1rem', padding: '2px' }}
                 >
                   &times;
-                </button>
+                </Button>
               )}
             </div>
 
             {/* EXPORT CSV BUTTON */}
-            <button
+            <Button
               type="button"
               className="survey-btn-csv"
               onClick={exportResponsesToCSV}
             >
               <FileSpreadsheet size={18} color="#10b981" />
               <span>Xuất kết quả CSV</span>
-            </button>
+            </Button>
           </div>
 
           {/* RESPONSES DATA TABLE */}
@@ -1222,7 +1259,7 @@ export function ManagerSurveyPanel({
           ) : (
             <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+                <Table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
                       <th style={{ padding: '0.9rem 1rem', width: '70px', textAlign: 'center', whiteSpace: 'nowrap' }}>STT</th>
@@ -1246,7 +1283,7 @@ export function ManagerSurveyPanel({
                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                         >
                           <td style={{ padding: '0.9rem 1rem', textAlign: 'center', verticalAlign: 'middle' }}>
-                            <span style={{
+                            <Badge variant="outline" data-quiet-label="true" style={{
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -1263,7 +1300,7 @@ export function ManagerSurveyPanel({
                               lineHeight: 1
                             }}>
                               {absoluteIndex < 10 ? `0${absoluteIndex}` : absoluteIndex}
-                            </span>
+                            </Badge>
                           </td>
                           <td style={{ padding: '0.9rem 1rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -1278,7 +1315,7 @@ export function ManagerSurveyPanel({
                           </td>
                           <td style={{ padding: '0.9rem 1rem', whiteSpace: 'nowrap' }}>
                             {resp.ma_don_hang ? (
-                              <span
+                              <Badge variant="outline" data-quiet-label="true"
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -1298,7 +1335,7 @@ export function ManagerSurveyPanel({
                                 }}
                               >
                                 {resp.ma_don_hang.startsWith('#') ? resp.ma_don_hang : `#${resp.ma_don_hang}`}
-                              </span>
+                              </Badge>
                             ) : (
                               <span
                                 style={{
@@ -1326,7 +1363,7 @@ export function ManagerSurveyPanel({
                             </div>
                           </td>
                           <td style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>
-                            <button
+                            <Button
                               type="button"
                               className="survey-btn-view"
                               onClick={() => setSelectedResponse(resp)}
@@ -1334,13 +1371,13 @@ export function ManagerSurveyPanel({
                             >
                               <Eye size={15} />
                               <span>Xem</span>
-                            </button>
+                            </Button>
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
-                </table>
+                </Table>
               </div>
 
               {/* PAGINATION FOOTER */}
@@ -1350,25 +1387,25 @@ export function ManagerSurveyPanel({
                 </span>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                     style={{ border: '1.5px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0.4rem 0.85rem', borderRadius: '7px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.45 : 1, fontSize: '0.8125rem', fontWeight: '600', color: '#334155', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
                   >
                     Trang trước
-                  </button>
+                  </Button>
 
                   <PageNumbers page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
 
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
                     style={{ border: '1.5px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0.4rem 0.85rem', borderRadius: '7px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.45 : 1, fontSize: '0.8125rem', fontWeight: '600', color: '#334155', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
                   >
                     Trang sau
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1386,7 +1423,7 @@ export function ManagerSurveyPanel({
             >
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '82vh', overflow: 'hidden' }}>
                 {/* Scrollable Modal Content */}
-                <div style={{ flex: 1, padding: '1.5rem 1.75rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div data-modal-body="true" style={{ flex: 1, padding: '1.5rem 1.75rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {/* Customer Meta 3-Card Grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
                     <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem 1rem' }}>
@@ -1414,9 +1451,9 @@ export function ManagerSurveyPanel({
                     {(selectedResponse.tra_loi || []).map((ans, idx) => (
                       <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#2563eb', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                          <Badge variant="outline" data-quiet-label="true" style={{ fontSize: '0.75rem', fontWeight: '700', color: '#2563eb', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
                             Câu {idx + 1}
-                          </span>
+                          </Badge>
                           <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0f172a' }}>
                             {ans.cau_hoi_tieu_de}
                           </span>
@@ -1435,9 +1472,9 @@ export function ManagerSurveyPanel({
                           ) : Array.isArray(ans.cau_tra_loi) ? (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
                               {ans.cau_tra_loi.map((item, i) => (
-                                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '600' }}>
+                                <Badge variant="outline" data-quiet-label="true" key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '600' }}>
                                   <Check size={13} color="#2563eb" /> {item}
-                                </span>
+                                </Badge>
                               ))}
                             </div>
                           ) : (
@@ -1452,7 +1489,7 @@ export function ManagerSurveyPanel({
                 </div>
 
                 {/* PINNED MODAL ACTIONS FOOTER (RULE 8) */}
-                <div style={{
+                <div data-modal-footer="edge" data-modal-actions="true" style={{
                   display: 'flex',
                   justifyContent: 'flex-end',
                   alignItems: 'center',
@@ -1462,7 +1499,7 @@ export function ManagerSurveyPanel({
                   boxShadow: '0 -4px 12px rgba(15, 23, 42, 0.04)',
                   flexShrink: 0
                 }}>
-                  <button
+                  <Button data-intent="danger"
                     type="button"
                     onClick={() => setSelectedResponse(null)}
                     style={{
@@ -1481,7 +1518,7 @@ export function ManagerSurveyPanel({
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = '#475569'; }}
                   >
                     Đóng cửa sổ
-                  </button>
+                  </Button>
                 </div>
               </div>
             </WorkspaceDialog>
@@ -1505,54 +1542,25 @@ export function ManagerSurveyPanel({
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <span style={{ fontSize: '0.84rem', fontWeight: '600', color: '#475569' }}>Chọn bài khảo sát:</span>
-              <SearchableSelect
-                style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', fontWeight: '600', color: '#0f172a', cursor: 'pointer', height: '40px', backgroundColor: '#ffffff' }}
-                value={selectedAnalyticsFormId}
-                onChange={(e) => setSelectedAnalyticsFormId(e.target.value)}
-              >
-                {activeForms.map(f => (
-                  <option key={f.id} value={f.id}>{f.tieu_de}</option>
-                ))}
-              </SearchableSelect>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.84rem', fontWeight: '600', color: '#475569', whiteSpace: 'nowrap' }}>Chọn bài khảo sát:</span>
+              <div style={{ width: '360px', minWidth: '280px', maxWidth: '480px' }}>
+                <SearchableSelect
+                  style={{ width: '100%', height: '40px' }}
+                  value={selectedForm?.id ? String(selectedForm.id) : String(selectedAnalyticsFormId || '')}
+                  onChange={(e) => setSelectedAnalyticsFormId(e.target.value)}
+                  placeholder="Chọn bài khảo sát..."
+                >
+                  {activeForms.map(f => (
+                    <option key={f.id} value={String(f.id)}>{f.tieu_de}</option>
+                  ))}
+                </SearchableSelect>
+              </div>
             </div>
           </div>
 
           {/* OVERVIEW STATS CARDS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <MessageSquare size={22} color="#2563eb" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>TỔNG PHẢN HỒI THU THẬP</span>
-                <strong style={{ display: 'block', fontSize: '1.35rem', color: '#0f172a', marginTop: '0.15rem' }}>{totalResponses} bài</strong>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Star size={22} color="#d97706" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>ĐÁNH GIÁ TRUNG BÌNH</span>
-                <strong style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '1.35rem', color: '#d97706', marginTop: '0.15rem' }}>
-                  <Star size={20} fill="#f59e0b" color="#f59e0b" /> {avgRating} / 5.0
-                </strong>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle2 size={22} color="#059669" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>TỔNG SỐ CÂU HỎI</span>
-                <strong style={{ display: 'block', fontSize: '1.35rem', color: '#059669', marginTop: '0.15rem' }}>{targetQuestions.length} câu hỏi</strong>
-              </div>
-            </div>
-          </div>
+          <p className="operation-note">{totalResponses} phản hồi đã thu thập · {targetQuestions.length} câu hỏi trong biểu mẫu đang chọn.</p>
 
           {/* QUESTION ANALYTICS CARDS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -1583,21 +1591,21 @@ export function ManagerSurveyPanel({
                   {/* Question Title & Meta Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: '240px' }}>
-                      <span style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
+                      <Badge variant="outline" data-quiet-label="true" style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
                         Câu {qIdx + 1}
-                      </span>
+                      </Badge>
                       <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: '700', color: '#0f172a' }}>
                         {q.tieu_de}
                       </h4>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#475569', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', padding: '0.25rem 0.65rem', borderRadius: '9999px', fontWeight: '600' }}>
+                      <Badge variant="outline" data-quiet-label="true" style={{ fontSize: '0.75rem', color: '#475569', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', padding: '0.25rem 0.65rem', borderRadius: '9999px', fontWeight: '600' }}>
                         {q.loai === 'rating' ? 'Đánh giá sao' : q.loai === 'choice' ? 'Trắc nghiệm' : q.loai === 'checkbox' ? 'Hộp kiểm' : q.loai === 'dropdown' ? 'Menu thả xuống' : 'Văn bản'}
-                      </span>
-                      <span style={{ fontSize: '0.75rem', color: '#059669', backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '9999px', fontWeight: '700' }}>
+                      </Badge>
+                      <Badge variant="outline" data-quiet-label="true" style={{ fontSize: '0.75rem', color: '#059669', backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '9999px', fontWeight: '700' }}>
                         {qAnswers.length} lượt trả lời
-                      </span>
+                      </Badge>
                     </div>
                   </div>
 

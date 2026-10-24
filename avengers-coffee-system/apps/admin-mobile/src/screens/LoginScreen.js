@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import {
   View,
+  Image,
   Text,
   StyleSheet,
   TextInput,
@@ -47,7 +48,7 @@ export function LoginScreen() {
           {/* Logo */}
           <View style={styles.logoSection}>
             <LinearGradient colors={[ORANGE, '#d4560e']} style={styles.logoCircle}>
-              <Text style={styles.logoEmoji}>☕</Text>
+              <Image source={require('../../assets/branding/logo-white.png')} resizeMode="contain" style={{width:64,height:52}}/>
             </LinearGradient>
             <Text style={styles.brandName}>Avengers Admin</Text>
             <Text style={styles.brandSub}>STAFF CONSOLE</Text>

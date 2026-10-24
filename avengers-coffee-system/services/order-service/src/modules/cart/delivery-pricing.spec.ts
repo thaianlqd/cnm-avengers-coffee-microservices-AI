@@ -29,8 +29,8 @@ describe('authoritative delivery pricing', () => {
   it.each([undefined, 'GIAO_TAN_NOI', 'LAY_TAI_QUAN', 'DUNG_TAI_CHO'])('cart quote matches payment total for %s', async mode => {
     membership();
     const voucher = { kiemTraVoucher: jest.fn(async () => ({so_tien_giam:62600,voucher:{ma_voucher:'SAVE20'}})) };
-    const cart = new CartService({} as any, {} as any, voucher as any);
-    jest.spyOn(cart, 'layGiỏHàng').mockResolvedValue({items:[],subtotal:313000,item_count:2} as any);
+    const cart = new CartService({} as any, { query: async (sql: string) => sql.includes('FROM menu.san_pham') ? [{ma_san_pham:1,gia_ban:156500,trang_thai:true}] : [] } as any, voucher as any);
+    jest.spyOn(cart, 'layGiỏHàng').mockResolvedValue({items:[{ma_san_pham:1,quantity:2}],subtotal:313000,item_count:2} as any);
     const quote = await cart.quote('user','SAVE20',mode);
     expect(quote.final_total).toBe(mode === 'GIAO_TAN_NOI' ? 265400 : 250400);
     expect(quote.subtotal).toBe(313000);
@@ -48,8 +48,8 @@ describe('authoritative delivery pricing', () => {
   ])('quote %s uses authoritative membership and voucher (benefit %s)', async (mode, benefit, fee, total) => {
     membership(Number(benefit), 100000);
     const voucher = { kiemTraVoucher: jest.fn(async () => ({ so_tien_giam: 61600, voucher: { ma_voucher: 'KS20_A' } })) };
-    const cart = new CartService({} as any, {} as any, voucher as any);
-    jest.spyOn(cart, 'layGiỏHàng').mockResolvedValue({ items: [], subtotal: 308000, item_count: 2 } as any);
+    const cart = new CartService({} as any, { query: async (sql: string) => sql.includes('FROM menu.san_pham') ? [{ma_san_pham:1,gia_ban:154000,trang_thai:true}] : [] } as any, voucher as any);
+    jest.spyOn(cart, 'layGiỏHàng').mockResolvedValue({ items: [{ ma_san_pham:1, quantity:2 }], subtotal: 308000, item_count: 2 } as any);
     const result = await cart.quote('user', 'KS20_A', String(mode));
     expect(result.delivery_fee).toBe(fee);
     expect(result.final_total).toBe(total);

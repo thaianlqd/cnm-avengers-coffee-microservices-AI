@@ -1,7 +1,8 @@
+import { Button } from '../../../components/ui/button'
 import { CheckCircle as WorkspaceSymbolCheckCircle } from '../../../components/console/WorkspaceIcons'
 import { PaginatedList } from '../../../components/console/CompactPagination'
 import { useState, useEffect, useCallback } from 'react'
-import { Package, PackageCheck, RefreshCw, Clock } from '../../../components/console/WorkspaceIcons'
+import { Package, PackageCheck, Clock } from '../../../components/console/WorkspaceIcons'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 
 function apiFetch(token, path, options = {}) {
@@ -61,9 +62,6 @@ export function KioskComboReceiver({ session }) {
             <p style={{ margin: 0, fontSize: 12, color: '#69736a' }}>Kiosk: <strong>{branchCode}</strong> — Xác nhận nhận hàng từ chi nhánh mẹ</p>
           </div>
         </div>
-        <button onClick={load} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #e2e4df', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-          <RefreshCw size={14} /> Làm mới
-        </button>
       </div>
 
       {/* Summary cards */}
@@ -83,9 +81,9 @@ export function KioskComboReceiver({ session }) {
       {/* Tabs */}
       <div style={{ display: 'flex', marginBottom: '1rem', borderBottom: '2px solid #f4f5f2' }}>
         {[{ id: 'pending', label: `Chờ nhận (${pending.length})` }, { id: 'received', label: `Đã nhận (${received.length})` }].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '9px 18px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: tab === t.id ? '#ea580c' : '#69736a', borderBottom: tab === t.id ? '2px solid #ea580c' : '2px solid transparent', marginBottom: -2 }}>
+          <Button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '9px 18px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: tab === t.id ? '#ea580c' : '#69736a', borderBottom: tab === t.id ? '2px solid #ea580c' : '2px solid transparent', marginBottom: -2 }}>
             {t.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -119,13 +117,13 @@ export function KioskComboReceiver({ session }) {
                 </div>
               </div>
               {c.trang_thai === 'PENDING' && (
-                <button
+                <Button
                   onClick={() => handleReceive(c.id)}
                   disabled={receivingId === c.id}
                   style={{ padding: '10px 18px', borderRadius: 8, border: 'none', background: "linear-gradient(135deg, var(--primary), var(--primary))", color: 'white', cursor: receivingId === c.id ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, opacity: receivingId === c.id ? 0.7 : 1, whiteSpace: 'nowrap', boxShadow: '0 4px 10px rgba(16,185,129,0.25)' }}
                 >
                   {receivingId === c.id ? 'Đang xử lý...' : "Xác nhận nhận"}
-                </button>
+                </Button>
               )}
             </div>
           )}</PaginatedList>

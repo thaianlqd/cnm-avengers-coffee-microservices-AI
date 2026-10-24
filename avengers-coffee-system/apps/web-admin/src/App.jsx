@@ -1,10 +1,15 @@
+import OperationalPageFrame from './components/console/OperationalPageFrame'
+import WorkspaceLoading from './components/console/WorkspaceLoading'
+import './ManagerWorkspace.css'
 import { WorkspaceSidebar, WorkspaceSearch } from './components/console/WorkspaceNavigation'
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 import './App.css'
 import './Console.css'
 import './Workspace.css'
+import './AdminTheme.css'
 import { DashboardSkeleton } from './components/console/DashboardCharts'
 import { WorkspaceErrorBoundary } from './components/console/WorkspaceErrorBoundary'
+import { updateContactInputValidity } from './utils/contactFieldValidation'
 import {
   ACCOUNT_TAB,
   DASHBOARD_ROLES,
@@ -77,6 +82,19 @@ function AppContent() {
   const showAdminToast = (title, message) => {
     setAdminToast({ title, message })
   }
+
+  useEffect(() => {
+    const validateContact = (event) => {
+      const input = event.target
+      if (input instanceof HTMLInputElement) updateContactInputValidity(input)
+    }
+    document.addEventListener('input', validateContact, true)
+    document.addEventListener('blur', validateContact, true)
+    return () => {
+      document.removeEventListener('input', validateContact, true)
+      document.removeEventListener('blur', validateContact, true)
+    }
+  }, [])
 
   const {
     loginForm,
@@ -175,6 +193,7 @@ function AppContent() {
     taiDanhSachBieuMau,
     taiDanhSachPhanHoi,
     taoKioskStaff,
+    taoNhanVienCuaHang,
     pendingPasswordChange,
     confirmFirstLoginPasswordChange,
   } = useAdminDashboard()
@@ -196,7 +215,7 @@ function AppContent() {
       ...(isKioskStaff ? [{ id: 'kiosk-combo', label: 'Nhận combo nguyên liệu', icon: FiCoffee }] : []),
     ] },
     ...(!isKioskStaff ? [{ label: 'Sản phẩm & tin tức', items: [{ id: 'menu', label: 'Thực đơn', icon: FiCoffee }, { id: 'news', label: 'Tin tức', icon: FiFileText }] }] : []),
-    { label: isManager ? 'Nhân sự & chăm sóc khách hàng' : 'Ca làm & cá nhân', items: [
+    { label: isManager ? 'Nhân sự & CSKH' : 'Ca làm & cá nhân', items: [
       { id: 'workforce', label: 'Lịch làm của tôi', icon: FiCalendar },
       ...(['STAFF', 'MANAGER'].includes(userRole) ? [{ id: 'messages', label: 'Tin nhắn khách hàng', icon: FiMessageSquare }] : []),
       ...(isManager ? [
@@ -241,7 +260,7 @@ function AppContent() {
 
   useEffect(() => {
     if (!adminToast) return
-    const timeout = setTimeout(() => setAdminToast(null), 4500)
+    const timeout = setTimeout(() => setAdminToast(null), 3000)
     return () => clearTimeout(timeout)
   }, [adminToast])
 
@@ -308,17 +327,7 @@ function AppContent() {
       <WorkspaceSidebar groups={operationalGroups} activeTab={activeTab} onSelect={setActiveTab} session={session} label={isManager ? 'Quản lý cửa hàng' : 'Nhân viên cửa hàng'} onLogout={logout} />
 
       <main ref={consoleMainRef} className="content-area console-main">
-        <header className="content-header" style={{ padding: '1rem 1.75rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e2e4df', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="content-header-title">
-            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#252927' }}>Trung tâm vận hành cửa hàng</h1>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8125rem', color: '#69736a' }}>Xin chào <strong>{session.user?.tenDangNhap || session.user?.email || 'nhan vien'}</strong>, cơ sở {branchName}.</p>
-          </div>
-          <div className="header-right-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <WorkspaceSearch items={operationalGroups.flatMap(group => group.items.map(item => ({ ...item, group: group.label })))} onSelect={setActiveTab} />
-            <AdminNotificationBell session={session} />
-            <TopbarUserDropdown session={session} onLogout={logout} />
-          </div>
-        </header>
+        <OperationalPageFrame key={activeTab} groups={operationalGroups} activeTab={activeTab} onSelect={setActiveTab} session={session} onLogout={logout} branchName={branchName}>
 
         <WorkspaceErrorBoundary key={activeTab} inline><div key={activeTab} className="workspace-tab-content"><Suspense fallback={<DashboardSkeleton />}>
         {activeTab === 'overview' ? (
@@ -344,7 +353,7 @@ function AppContent() {
           />
         )}
 
-        {activeTab === 'delivery' && <StaffDeliveryPanel />}
+        {activeTab === 'delivery' && <StaffDeliveryPanel session={session} />}
 
         {activeTab === 'menu' && (
           <MenuPanel
@@ -407,6 +416,7 @@ function AppContent() {
         {activeTab === 'pos' && (
           <PosOrderPanel
             isKioskStaff={isKioskStaff}
+            isManager={isManager}
             isStaff={userRole === DASHBOARD_ROLES.STAFF}
             activeKioskShift={activeKioskShift}
             moCaKiosk={moCaKiosk}
@@ -486,6 +496,7 @@ function AppContent() {
             onUpdateAttendance={capNhatChamCong}
             updatingWorkShiftId={updatingWorkShiftId}
             taoKioskStaff={taoKioskStaff}
+            taoNhanVienCuaHang={taoNhanVienCuaHang}
             session={session}
           />
         )}
@@ -502,6 +513,7 @@ function AppContent() {
 
         {activeTab === 'survey-manage' && isManager && (
           <ManagerSurveyPanel
+            branchCode={session?.user?.coSoMa || session?.user?.co_so_ma}
             surveysState={surveysState}
             surveyResponsesState={surveyResponsesState}
             onKichHoatForm={kichHoatBieuMauKhaoSat}
@@ -526,11 +538,14 @@ function AppContent() {
         {activeTab === 'messages' && ['STAFF', 'MANAGER'].includes(userRole) && <StaffInbox key={session?.user?.id || session?.user?.maNguoiDung || session?.user?.tenDangNhap} session={session} />}
 
         </Suspense></div></WorkspaceErrorBoundary>
+        </OperationalPageFrame>
       </main>
         {['STAFF', 'MANAGER'].includes(userRole) && <AdminChatWidget session={session} onOpenInbox={() => setActiveTab('messages')} hidden={activeTab === 'messages'} />}
 
         {adminToast ? (
           <div
+            className="admin-global-toast"
+            role="status"
             style={{
               position: 'fixed',
               bottom: '20px',
@@ -554,6 +569,6 @@ function AppContent() {
 }
 
 function App() {
-  return <WorkspaceErrorBoundary><Suspense fallback={<div className="console-shell"><div className="console-page"><DashboardSkeleton /></div></div>}><AppContent /></Suspense></WorkspaceErrorBoundary>
+  return <WorkspaceErrorBoundary><Suspense fallback={<div className="console-shell"><div className="console-page"><WorkspaceLoading /></div></div>}><AppContent /></Suspense></WorkspaceErrorBoundary>
 }
 export default App

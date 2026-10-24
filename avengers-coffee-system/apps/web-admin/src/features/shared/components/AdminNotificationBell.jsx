@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/button'
 import React, { useEffect, useMemo, useRef, useState, lazy, Suspense, useId } from 'react'
 import {
   Bell,
@@ -249,9 +250,9 @@ export function AdminNotificationBell({ session }) {
   }
 
   return <div className="workspace-notifications" ref={wrapperRef}>
-    <button ref={buttonRef} type="button" className="workspace-icon-button" onClick={() => setOpen(value => !value)} aria-label={unreadCount ? `Thông báo, ${unreadCount} chưa đọc` : 'Xem thông báo'} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? panelId : undefined}>
+    <Button ref={buttonRef} type="button" className="workspace-icon-button" onClick={() => setOpen(value => !value)} aria-label={unreadCount ? `Thông báo, ${unreadCount} chưa đọc` : 'Xem thông báo'} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? panelId : undefined}>
       <Bell size={19} />{unreadCount > 0 && <span className="workspace-unread-count">{unreadCount > 99 ? '99+' : unreadCount}</span>}
-    </button>
+    </Button>
     {open && <Suspense fallback={<div className="workspace-notification-panel" role="status"><div className="workspace-shimmer" /><p>Đang tải thông báo…</p></div>}>
       <NotificationPanel anchorRef={buttonRef} id={panelId} state={state} pageItems={pageItems} unreadCount={unreadCount} markingAll={markingAll} markingId={markingId} markAllRead={markAllRead} markOneRead={markOneRead} onRetry={loadNotifications} page={safePage} totalPages={totalPages} setPage={setPage} formatText={fixNotificationText} formatTime={fmtDateTime} onClose={() => { setOpen(false); buttonRef.current?.focus() }} />
     </Suspense>}

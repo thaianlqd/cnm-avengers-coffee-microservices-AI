@@ -17,7 +17,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <img src="/images/logo-white.png" alt="Avengers Coffee" className="h-9 w-auto object-contain" />
+            <img src="/images/brand/logo-white.svg" alt="Avengers Coffee" className="h-9 w-auto object-contain" />
             <div>
               <h1 className="text-2xl font-bold">Avengers Delivery</h1>
             </div>

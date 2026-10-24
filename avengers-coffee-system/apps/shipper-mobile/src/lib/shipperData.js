@@ -27,7 +27,7 @@ export function formatDateTime(value) {
 }
 
 export const deliveryStatusLabels = {
-  PENDING: 'Chờ lấy hàng',
+  PENDING: 'Chờ nhận đơn',
   CONFIRMED: 'Đã xác nhận',
   PICKING_UP: 'Đang lấy hàng',
   IN_TRANSIT: 'Đang giao hàng',

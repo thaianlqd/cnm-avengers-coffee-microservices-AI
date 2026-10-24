@@ -1,3 +1,11 @@
+import { Table } from '../../../components/ui/table'
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import StatusBadge from '../../../components/console/StatusBadge'
+import { Button } from '../../../components/ui/button'
+import { Input } from '../../../components/ui/input'
+import { Badge } from '../../../components/ui/badge'
+import { Label } from '../../../components/ui/label'
+import SearchableSelect from '../../../components/console/SearchableSelect'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import { PageNumbers } from '../../../components/console/CompactPagination'
 import SmartSelect from '../../../components/console/SmartSelect'
@@ -51,6 +59,11 @@ function roleBadgeLabel(role) {
   if (r === 'MANAGER') return 'Quản lý cửa hàng'
   if (r === 'STAFF') return 'Nhân viên phục vụ / Pha chế'
   return r || 'Nhân sự'
+}
+
+function roleBadgeClass(role) {
+  const normalized = String(role || '').toLowerCase()
+  return `employee-role-badge employee-role-badge--${normalized}`
 }
 
 function statusBadgeConfig(statusKey) {
@@ -116,6 +129,7 @@ export function ManagerEmployeePanel({
   workShiftState = { items: [], loading: false, error: null },
   workforceUsersState = { items: [], loading: false, error: null },
   taoKioskStaff,
+  taoNhanVienCuaHang,
   session
 }) {
   const [keyword, setKeyword] = useState('')
@@ -125,38 +139,21 @@ export function ManagerEmployeePanel({
   const [showAddModal, setShowAddModal] = useState(false)
   const [addError, setAddError] = useState('')
   const [showAddPassword, setShowAddPassword] = useState(false)
-  const [addForm, setAddForm] = useState({ ho_ten: '', ten_dang_nhap: '', mat_khau: '', co_so_ma: '' })
-  const [kiosks, setKiosks] = useState([])
+  const [addForm, setAddForm] = useState({ ho_ten: '', ten_dang_nhap: '', mat_khau: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (showAddModal) {
-      fetch(`${API_BASE_URL}/branches/public`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.items) {
-            const myKiosks = data.items.filter(b => b.chi_nhanh_me_ma === session?.user?.coSoMa && b.loai_diem_ban === 'KIOSK_VE_TINH')
-            setKiosks(myKiosks)
-          }
-        })
-        .catch(console.error)
-    }
-  }, [showAddModal, session])
 
   const handleAddSubmit = async (e) => {
     e.preventDefault()
-    if (!taoKioskStaff) return
-    if (!addForm.co_so_ma) { setAddError('Vui lòng chọn kiosk trực thuộc.'); return }
+    if (!taoNhanVienCuaHang) { setAddError('Chưa thể thêm nhân viên. Vui lòng tải lại trang.'); return }
     if (isSubmitting) return
     setAddError('')
     setIsSubmitting(true)
     let res
-    try { res = await taoKioskStaff(addForm) } catch (error) { setAddError(error.message || 'Không thể tạo tài khoản.'); setIsSubmitting(false); return }
+    try { res = await taoNhanVienCuaHang(addForm) } catch (error) { setAddError(error.message || 'Không thể tạo tài khoản.'); setIsSubmitting(false); return }
     setIsSubmitting(false)
     if (res.ok) {
       setShowAddModal(false)
-      setAddForm({ ho_ten: '', ten_dang_nhap: '', mat_khau: '', co_so_ma: '' })
-      window.location.reload()
+      setAddForm({ ho_ten: '', ten_dang_nhap: '', mat_khau: '' })
     } else {
       setAddError(res?.message || 'Không thể tạo tài khoản.')
     }
@@ -271,7 +268,7 @@ export function ManagerEmployeePanel({
   }, [keyword, statusFilter])
 
   return (
-    <div className="panel-container" style={{
+    <div className="panel-container manager-employees" style={{
       padding: '1.75rem',
       background: '#f8f9f6',
       borderRadius: '20px',
@@ -279,7 +276,7 @@ export function ManagerEmployeePanel({
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)'
     }}>
       {/* Top Header */}
-      <div style={{
+      <div className="employee-page-actions" style={{
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
@@ -287,7 +284,7 @@ export function ManagerEmployeePanel({
         gap: '1rem',
         marginBottom: '1.5rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <WorkspacePanelIntro><div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
             width: '42px',
             height: '42px',
@@ -309,8 +306,8 @@ export function ManagerEmployeePanel({
               Theo dõi danh sách nhân sự, thông tin liên hệ và tình hình điểm danh ca làm hôm nay
             </span>
           </div>
-        </div>
-        <button
+        </div></WorkspacePanelIntro>
+        <Button
           onClick={() => setShowAddModal(true)}
           style={{
             display: 'flex',
@@ -327,131 +324,12 @@ export function ManagerEmployeePanel({
             boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)'
           }}
         >
-          <UserPlus size={18} /> Thêm nhân viên Kiosk
-        </button>
+          <UserPlus size={18} /> Thêm nhân viên
+        </Button>
       </div>
 
       {/* Summary KPI Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-        gap: '1rem',
-        marginBottom: '1.5rem'
-      }}>
-        <div style={{
-          background: '#ffffff',
-          padding: '1rem 1.15rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Users size={18} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#69736a', fontWeight: '500' }}>Tổng nhân viên</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: '#30382e', display: 'block' }}>{summary.total} người</strong>
-          </div>
-        </div>
 
-        <div style={{
-          background: '#ffffff',
-          padding: '1rem 1.15rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: "#f4f5f2", color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <UserCheck size={18} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#69736a', fontWeight: '500' }}>Đang vào ca</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: '#2563eb', display: 'block' }}>{summary.CHECKED_IN} ca</strong>
-          </div>
-        </div>
-
-        <div style={{
-          background: '#ffffff',
-          padding: '1rem 1.15rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary-subtle)', color: 'var(--primary-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle2 size={18} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#69736a', fontWeight: '500' }}>Đã check-out</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--primary-hover)', display: 'block' }}>{summary.COMPLETED} ca</strong>
-          </div>
-        </div>
-
-        <div style={{
-          background: '#ffffff',
-          padding: '1rem 1.15rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: "#f4f5f2", color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertTriangle size={18} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#69736a', fontWeight: '500' }}>Đi muộn / Về sớm</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: '#b45309', display: 'block' }}>{summary.LATE} ca</strong>
-          </div>
-        </div>
-
-        <div style={{
-          background: '#ffffff',
-          padding: '1rem 1.15rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary-subtle)', color: 'var(--primary-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Clock size={18} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#69736a', fontWeight: '500' }}>Có lịch chưa vào</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--primary-hover)', display: 'block' }}>{summary.SCHEDULED} ca</strong>
-          </div>
-        </div>
-
-        <div style={{
-          background: '#ffffff',
-          padding: '1rem 1.15rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: "#f4f5f2", color: '#b91c1c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <UserX size={18} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: '#69736a', fontWeight: '500' }}>Vắng mặt</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: '#b91c1c', display: 'block' }}>{summary.ABSENT} ca</strong>
-          </div>
-        </div>
-      </div>
 
       {/* Toolbar Filter */}
       <div style={{
@@ -468,7 +346,7 @@ export function ManagerEmployeePanel({
       }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '420px' }}>
           <Search size={18} color="#85907d" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-          <input
+          <Input data-input-prefix="true"
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
@@ -484,7 +362,7 @@ export function ManagerEmployeePanel({
             }}
           />
           {keyword && (
-            <button
+            <Button
               type="button"
               onClick={() => setKeyword('')}
               style={{
@@ -499,13 +377,13 @@ export function ManagerEmployeePanel({
               }}
             >
               <X size={16} />
-            </button>
+            </Button>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '0 1 280px', minWidth: '220px' }}>
           <Filter size={16} color="#69736a" />
-          <select
+          <SearchableSelect
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             style={{
@@ -525,7 +403,7 @@ export function ManagerEmployeePanel({
             <option value="SCHEDULED">Có lịch chưa vào</option>
             <option value="ABSENT">Vắng mặt</option>
             <option value="OFF">Nghỉ / không có lịch</option>
-          </select>
+          </SearchableSelect>
         </div>
       </div>
 
@@ -550,173 +428,7 @@ export function ManagerEmployeePanel({
         </div>
       ) : (
         /* Employee Card Grid */
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: '1.25rem'
-        }}>
-          {pageRows.map((row) => {
-            const StatusIcon = row.statusMeta.icon
-
-            return (
-              <div
-                key={row.user.ma_nguoi_dung || row.username}
-                style={{
-                  background: '#ffffff',
-                  borderRadius: '16px',
-                  border: '1px solid #e2e4df',
-                  padding: '1.25rem',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {/* Header info */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                    <div style={{
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, var(--primary-light) 0%, var(--primary-subtle) 100%)',
-                      color: 'var(--primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: '600',
-                      fontSize: '1.1rem',
-                      border: '1px solid #bfdbfe',
-                      flexShrink: 0
-                    }}>
-                      <User size={22} color="var(--primary)" />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#252927', wordBreak: 'break-word' }}>
-                        {row.fullName}
-                      </h3>
-                      <span style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500', display: 'block', wordBreak: 'break-all' }}>
-                        @{row.username}
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className="workspace-inline-label" style={{
-                    fontSize: '0.75rem',
-                    fontWeight: '700',
-                    padding: '0.25rem 0.65rem',
-                    borderRadius: '9999px',
-                    background: row.statusMeta.bg,
-                    color: row.statusMeta.color,
-                    border: `1px solid ${row.statusMeta.border}`,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                    flexShrink: 0
-                  }}>
-                    <StatusIcon size={13} />
-                    {row.statusMeta.label}
-                  </span>
-                </div>
-
-                {/* Vertical Metadata List (Fixes text overflow and awkward line breaks) */}
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.55rem',
-                  fontSize: '0.825rem',
-                  color: '#596255',
-                  background: '#f8f9f6',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '12px',
-                  border: '1px solid #f4f5f2'
-                }}>
-                  {/* Role Tag & Branch */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span style={{
-                      fontSize: '0.725rem',
-                      fontWeight: '700',
-                      color: row.role === 'MANAGER' ? 'var(--primary-hover)' : '#0369a1',
-                      background: row.role === 'MANAGER' ? 'var(--primary-subtle)' : "#f4f5f2",
-                      padding: '0.2rem 0.55rem',
-                      borderRadius: '6px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.25rem'
-                    }}>
-                      <Shield size={12} /> {roleBadgeLabel(row.role)}
-                    </span>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#596255', fontSize: '0.8rem', fontWeight: '600' }}>
-                      <Store size={14} color="#69736a" style={{ flexShrink: 0 }} />
-                      <span style={{ wordBreak: 'break-word' }}>{row.branchName}</span>
-                    </div>
-                  </div>
-
-                  <div style={{ height: '1px', background: "#f4f5f2", margin: '0.1rem 0' }} />
-
-                  {/* Email */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
-                    <Mail size={14} color="#69736a" style={{ flexShrink: 0 }} />
-                    <span style={{ color: '#414743', fontWeight: '500', wordBreak: 'break-all' }}>{row.email}</span>
-                  </div>
-
-                  {/* Phone */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Phone size={14} color="#69736a" style={{ flexShrink: 0 }} />
-                    <span style={{ color: '#414743', fontWeight: '500' }}>SĐT: {row.phone}</span>
-                  </div>
-                </div>
-
-                {/* Today Shift Box */}
-                <div style={{
-                  background: 'var(--primary-light)',
-                  border: '1px solid #bfdbfe',
-                  borderRadius: '12px',
-                  padding: '0.85rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.35rem'
-                }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: '700', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Clock size={16} color="var(--primary)" style={{ flexShrink: 0 }} /> {toShiftLabel(row.primaryShift)}
-                  </div>
-                  <span style={{ fontSize: '0.775rem', color: '#3b82f6', fontWeight: '500' }}>
-                    Tổng số ca hôm nay: <strong>{row.shiftsToday.length} ca</strong>
-                  </span>
-                </div>
-
-                {/* Attendance details if shift exists */}
-                {row.primaryShift && (
-                  <div style={{
-                    fontSize: '0.775rem',
-                    color: '#69736a',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.25rem',
-                    paddingTop: '0.5rem',
-                    borderTop: '1px solid #f4f5f2'
-                  }}>
-                    <div>
-                      Check-in: <strong>{row.primaryShift.check_in_at ? new Date(row.primaryShift.check_in_at).toLocaleString('vi-VN') : 'Chưa điểm danh'}</strong>
-                    </div>
-                    <div>
-                      Check-out: <strong>{row.primaryShift.check_out_at ? new Date(row.primaryShift.check_out_at).toLocaleString('vi-VN') : 'Chưa điểm danh'}</strong>
-                    </div>
-                    {row.primaryInsight && (
-                      <div style={{ color: '#2563eb', fontWeight: '600', marginTop: '0.15rem' }}>
-                        Giờ làm thực tế: {row.primaryInsight.workedHours || 0}
-                        {row.primaryInsight.isLate ? ` • Muộn ${formatMinutesLabel(row.primaryInsight.lateMinutes)}` : ''}
-                        {row.primaryInsight.leftEarly ? ` • Về sớm ${formatMinutesLabel(row.primaryInsight.earlyLeaveMinutes)}` : ''}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        <div className="operation-table-frame manager-employee-table"><Table><thead><tr><th style={{width:'24%'}}>Nhân viên</th><th style={{width:'22%'}}>Liên hệ</th><th style={{width:'16%'}}>Vai trò</th><th style={{width:'23%'}}>Ca làm hôm nay</th><th style={{width:'15%'}}>Tình trạng</th></tr></thead><tbody>{pageRows.map(row => <tr key={row.user.ma_nguoi_dung || row.username}><td><strong>{row.fullName}</strong><small>@{row.username}</small></td><td>{row.email}<small>{row.phone}</small></td><td><Badge variant="outline" className={roleBadgeClass(row.role)}>{roleBadgeLabel(row.role)}</Badge></td><td>{toShiftLabel(row.primaryShift)}{row.primaryShift && <small>Vào: {row.primaryShift.check_in_at ? new Date(row.primaryShift.check_in_at).toLocaleTimeString('vi-VN') : 'Chưa chấm công'} · Ra: {row.primaryShift.check_out_at ? new Date(row.primaryShift.check_out_at).toLocaleTimeString('vi-VN') : 'Chưa chấm công'}</small>}{row.primaryInsight && <small>{row.primaryInsight.workedHours || 0} giờ{row.primaryInsight.isLate ? ` · Muộn ${formatMinutesLabel(row.primaryInsight.lateMinutes)}` : ''}{row.primaryInsight.leftEarly ? ` · Về sớm ${formatMinutesLabel(row.primaryInsight.earlyLeaveMinutes)}` : ''}</small>}</td><td><StatusBadge status={row.statusKey} tone={row.statusKey === 'OFF' ? 'secondary' : row.statusKey === 'SCHEDULED' ? 'warning' : row.statusKey === 'LATE' ? 'warning' : row.statusKey === 'ABSENT' ? 'destructive' : 'success'}>{row.statusMeta.label}</StatusBadge><small>{row.shiftsToday.length} ca đã xếp</small></td></tr>)}</tbody></Table></div>
       )}
 
       {/* Pagination Bar */}
@@ -736,7 +448,7 @@ export function ManagerEmployeePanel({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
+            <Button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
@@ -755,13 +467,13 @@ export function ManagerEmployeePanel({
               }}
             >
               <ChevronLeft size={16} /> Trước
-            </button>
+            </Button>
 
             <div style={{ display: 'flex', gap: '0.25rem' }}>
               <PageNumbers page={safePage} totalPages={totalPages} onChange={setPage} />
             </div>
 
-            <button
+            <Button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
@@ -780,67 +492,24 @@ export function ManagerEmployeePanel({
               }}
             >
               Tiếp <ChevronRight size={16} />
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
-      {/* Add Modal */}
-      {showAddModal && (
-        <WorkspaceDialog label="Thêm nhân viên kiosk" busy={isSubmitting} onClose={() => setShowAddModal(false)}>
-          <div style={{ background: '#fff', padding: '1.5rem 2rem', borderRadius: '16px', width: '400px', maxWidth: '90vw', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#252927', fontWeight: '600' }}>Thêm Kiosk Staff</h3>
-            {addError && <p className="workspace-form-error" role="alert">{addError}</p>}
-            <form className="workspace-form" onSubmit={handleAddSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#414743' }}>Họ tên</label>
-                <input required type="text" value={addForm.ho_ten} onChange={e => setAddForm({ ...addForm, ho_ten: e.target.value })} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.9rem' }} placeholder="Nguyễn Văn A" />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#414743' }}>Tên đăng nhập</label>
-                <input required type="text" value={addForm.ten_dang_nhap} onChange={e => setAddForm({ ...addForm, ten_dang_nhap: e.target.value })} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.9rem' }} placeholder="vana_kiosk1" />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#414743' }}>Mật khẩu (Tối thiểu 6 ký tự)</label>
-                <div className="admin-password-field">
-                  <input
-                    required
-                    type={showAddPassword ? "text" : "password"}
-                    value={addForm.mat_khau}
-                    onChange={e => setAddForm({ ...addForm, mat_khau: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem 2.5rem 0.5rem 0.5rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.9rem', boxSizing: 'border-box' }}
-                    placeholder="••••••••"
-                    minLength={6}
-                  />
-                  <button
-                    type="button"
-                    className="admin-password-toggle"
-                    onClick={() => setShowAddPassword(!showAddPassword)}
-                    title={showAddPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    aria-label={showAddPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  >
-                    {showAddPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#414743' }}>Kiosk trực thuộc</label>
-                <SmartSelect label="Tìm kiosk trực thuộc" placeholder="Gõ tên hoặc mã kiosk" value={addForm.co_so_ma}
-                  onChange={code => setAddForm({ ...addForm, co_so_ma: code })}
-                  options={kiosks.map(k => ({ value: k.ma_chi_nhanh, label: k.ten_chi_nhanh, keywords: k.ma_chi_nhanh }))} />
-                {kiosks.length === 0 && <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem', display: 'block' }}>Chưa có kiosk nào thuộc quản lý của bạn.</span>}
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" disabled={isSubmitting} onClick={() => setShowAddModal(false)} style={{ padding: '0.5rem 1rem', background: '#f4f5f2', color: '#596255', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Hủy</button>
-                <button type="submit" disabled={isSubmitting || kiosks.length === 0 || !addForm.co_so_ma} style={{ padding: '0.5rem 1rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: (isSubmitting || kiosks.length === 0) ? 'not-allowed' : 'pointer', opacity: (isSubmitting || kiosks.length === 0) ? 0.6 : 1 }}>
-                  {isSubmitting ? 'Đang lưu...' : 'Tạo tài khoản'}
-                </button>
-              </div>
-            </form>
+      {showAddModal && <WorkspaceDialog className="employee-create-dialog" title="Thêm nhân viên cửa hàng" subtitle="Tạo tài khoản và gắn nhân viên vào cửa hàng bạn đang quản lý." busy={isSubmitting} onClose={() => setShowAddModal(false)}>
+        <form data-modal-body="true" className="employee-create-form" onSubmit={handleAddSubmit}>
+          {addError && <p className="workspace-form-error" role="alert">{addError}</p>}
+          <div className="employee-create-context"><Store size={20}/><div><strong>{session?.user?.coSoTen || session?.user?.co_so_ten || 'Cơ sở đang quản lý'}</strong><span><Badge variant="secondary" className="employee-role-badge employee-role-badge--staff">Nhân viên cửa hàng</Badge>Vai trò và cửa hàng được gắn tự động</span></div></div>
+          <div className="employee-create-fields">
+            <div className="employee-name-field"><Label htmlFor="manager-staff-ho_ten">Họ và tên</Label><Input id="manager-staff-ho_ten" required autoComplete="name" disabled={isSubmitting} value={addForm.ho_ten} onChange={e=>setAddForm({...addForm,ho_ten:e.target.value})} placeholder="Nhập họ tên nhân viên"/></div>
+            <div><Label htmlFor="manager-staff-ten_dang_nhap">Tên đăng nhập</Label><Input id="manager-staff-ten_dang_nhap" required autoComplete="off" disabled={isSubmitting} value={addForm.ten_dang_nhap} onChange={e=>setAddForm({...addForm,ten_dang_nhap:e.target.value})} placeholder="Ví dụ: vana_cuahang"/></div>
+            <div><Label htmlFor="manager-staff-mat_khau">Mật khẩu</Label><div className="admin-password-field"><Input id="manager-staff-mat_khau" required minLength={6} autoComplete="new-password" disabled={isSubmitting} type={showAddPassword?'text':'password'} value={addForm.mat_khau} onChange={e=>setAddForm({...addForm,mat_khau:e.target.value})} placeholder="Ít nhất 6 ký tự"/><Button variant="ghost" size="icon" type="button" className="admin-password-toggle" onClick={()=>setShowAddPassword(!showAddPassword)} aria-label={showAddPassword?'Ẩn mật khẩu':'Hiện mật khẩu'}>{showAddPassword?<EyeOff size={16}/>:<Eye size={16}/>}</Button></div></div>
           </div>
-        </WorkspaceDialog>
-      )}
+          <div data-modal-footer="inset" className="employee-create-actions"><Button type="button" variant="outline" disabled={isSubmitting} onClick={()=>setShowAddModal(false)}>Hủy</Button><Button variant="default" className="admin-button-primary" type="submit" disabled={isSubmitting}><UserPlus size={16}/>{isSubmitting?'Đang tạo…':'Tạo tài khoản'}</Button></div>
+        </form>
+      </WorkspaceDialog>}
+
     </div>
   )
 }

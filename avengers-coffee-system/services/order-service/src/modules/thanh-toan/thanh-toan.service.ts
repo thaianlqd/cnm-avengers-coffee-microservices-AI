@@ -5,6 +5,7 @@ import { Brackets, EntityManager, In, Not, Repository } from 'typeorm';
 import { RedisCacheService } from '../../infrastructure/cache/redis-cache.service';
 import { RabbitMqService } from '../../infrastructure/messaging/rabbitmq.service';
 import { quoteDeliveryFee } from '../cart/delivery-pricing';
+import { repriceCartLines } from '../cart/menu-pricing';
 import { deliveryDistanceKm, deliveryRegion, MAX_DELIVERY_DISTANCE_KM, validCoordinates } from './delivery-distance';
 import { orderRevision, canonicalOrderLine, amendedAmounts, claimedVoucherDiscount } from './order-amendment';
 import { orderEditPolicy, orderEditAmounts } from './order-edit-policy';
@@ -1893,6 +1894,10 @@ export class ThanhToanService {
       throw new BadRequestException('Gio hang trong, khong the thanh toan');
     }
 
+    if (!isKiosk) {
+      gioHang = await repriceCartLines(this.donHangRepo.manager.query.bind(this.donHangRepo.manager), gioHang);
+    }
+
     // ── KIOSK: Override giá từ bảng franchise.gia_san_pham_kiosk (backend verify, chống hack) ──
     if (isKiosk && dto.ma_kiosk) {
       const maKiosk = dto.ma_kiosk.trim();
@@ -2553,7 +2558,7 @@ export class ThanhToanService {
       }
       await this.capNhatTrangThaiDonHangHeThong(giaoDich.ma_don_hang, {
         trang_thai_thanh_toan: 'DA_THANH_TOAN',
-        trang_thai_don_hang: 'DA_XAC_NHAN',
+        trang_thai_don_hang: this.isKioskCounterOrder(paidOrder) ? 'HOAN_THANH' : 'DA_XAC_NHAN',
         ghi_chu: 'Thanh toan VNPAY thanh cong',
       });
       const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: giaoDich.ma_don_hang } });
@@ -2689,7 +2694,7 @@ export class ThanhToanService {
       }
       await this.capNhatTrangThaiDonHangHeThong(giaoDich.ma_don_hang, {
         trang_thai_thanh_toan: 'DA_THANH_TOAN',
-        trang_thai_don_hang: 'DA_XAC_NHAN',
+        trang_thai_don_hang: this.isKioskCounterOrder(paidOrder) ? 'HOAN_THANH' : 'DA_XAC_NHAN',
         ghi_chu: 'Nhan thanh toan QR thanh cong',
       });
       const donHang = await this.donHangRepo.findOne({ where: { ma_don_hang: giaoDich.ma_don_hang } });
@@ -2714,8 +2719,9 @@ export class ThanhToanService {
     return { success: true };
   }
 
-  async taoDonTaiQuayChoStaff(dto: TaoDonTaiQuayDto, ipAddr = '127.0.0.1') {
-    const loaiDon = dto.loai_don_hang;
+  async taoDonTaiQuayChoStaff(dto: TaoDonTaiQuayDto, ipAddr = '127.0.0.1', sessionScope: 'FRANCHISE_KIOSK' | 'STORE_BRANCH' = 'STORE_BRANCH') {
+    const isKioskSale = sessionScope === 'FRANCHISE_KIOSK';
+    const loaiDon = isKioskSale ? 'MANG_DI' : dto.loai_don_hang;
     if (!['TAI_CHO', 'MANG_DI'].includes(loaiDon)) {
       throw new BadRequestException('loai_don_hang khong hop le');
     }
@@ -2757,10 +2763,11 @@ export class ThanhToanService {
 
     // ─── RÀNG BUỘC 1: Nhân viên chỉ thao tác trong ca đang mở ───
     const activeShift = await this.kioskShiftSessionRepo.findOne({
-      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+      where: { co_so_ma: branchCode, session_scope: sessionScope, trang_thai: 'OPEN' },
     });
     if (!activeShift && (branchCode.startsWith('KSK') || branchCode !== 'MAC_DINH_CHI')) {
-      throw new BadRequestException(`Kiosk ${branchCode} hiện chưa mở ca làm việc. Vui lòng thực hiện mở ca trước khi thao tác bán hàng POS!`);
+      const diemBanLabel = sessionScope === 'STORE_BRANCH' ? 'Cơ sở' : 'Kiosk';
+      throw new BadRequestException(`${diemBanLabel} ${branchCode} hiện chưa mở ca bán hàng. Vui lòng mở ca tại POS trước khi tạo đơn!`);
     }
 
     const isCash = phuongThuc === 'THANH_TOAN_KHI_NHAN_HANG';
@@ -2772,8 +2779,9 @@ export class ThanhToanService {
     const maNguoiDung = dto.ma_nguoi_dung?.trim() || `anon-pos-${Date.now()}`;
     const maDonHang = crypto.randomUUID();
 
-    const trangThaiDon = 'MOI_TAO';
-    const trangThaiThanhToan = isCash ? 'CHO_THANH_TOAN_KHI_NHAN_HANG' : 'CHO_XU_LY';
+    const completedCashSale = isKioskSale && isCash;
+    const trangThaiDon = completedCashSale ? 'HOAN_THANH' : 'MOI_TAO';
+    const trangThaiThanhToan = completedCashSale ? 'DA_THANH_TOAN' : isCash ? 'CHO_THANH_TOAN_KHI_NHAN_HANG' : 'CHO_XU_LY';
     const diaChi = loaiDon === 'TAI_CHO' ? `Tai quay${dto.ma_ban?.trim() ? ` - Ban ${dto.ma_ban.trim()}` : ''}` : 'Mang di tai quay';
 
     const taoDonResult = await this.donHangRepo.manager.transaction(async (manager) => {
@@ -2842,7 +2850,7 @@ export class ThanhToanService {
           cong_thanh_toan: phuongThuc,
           ma_tham_chieu: maThamChieu,
           so_tien: tongTien,
-          trang_thai: 'CHO_THANH_TOAN',
+          trang_thai: completedCashSale ? 'THANH_CONG' : 'CHO_THANH_TOAN',
         }),
       );
 
@@ -3142,7 +3150,7 @@ export class ThanhToanService {
       .skip(skip)
       .getMany();
 
-    const maDonHangs = danhSach.map(d => d.ma_don_hang);
+    const maDonHangs = danhSach.filter(d => !['TAI_CHO', 'MANG_DI', 'KIOSK', 'LAY_TAI_QUAN', 'DUNG_TAI_CHO'].includes(String(d.loai_don_hang))).map(d => d.ma_don_hang);
     let trackings: any[] = [];
     if (maDonHangs.length > 0) {
       trackings = await this.deliveryTrackingService.getTrackingsByOrderIds(maDonHangs);
@@ -3737,6 +3745,10 @@ export class ThanhToanService {
       throw new NotFoundException('Khong tim thay don hang');
     }
 
+    if (this.isKioskCounterOrder(donHang)) {
+      throw new BadRequestException('Đơn bán mang đi tại kiosk tự hoàn tất khi thanh toán. Chỉ sử dụng chức năng hoàn tiền.');
+    }
+
     const allowed = ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO', 'HOAN_THANH', 'DA_HUY'];
     if (!allowed.includes(trangThai)) {
       throw new BadRequestException('Trang thai don hang khong hop le');
@@ -3998,6 +4010,10 @@ export class ThanhToanService {
     };
   }
 
+  private isKioskCounterOrder(order?: DonHang | null) {
+    return !!order && /^KSK/i.test(String(order.co_so_ma || '')) && ['TAI_CHO', 'MANG_DI'].includes(order.loai_don_hang || '');
+  }
+
   private kiemTraChuyenTrangThaiDonHopLe(currentStatus: string, nextStatus: string) {
     if (currentStatus === nextStatus) {
       return true;
@@ -4230,12 +4246,33 @@ export class ThanhToanService {
     cash_open: number;
     note?: string;
   }) {
+    return this.moCaTaiDiem(input, 'FRANCHISE_KIOSK', 'Kiosk');
+  }
+
+  async moCaChiNhanh(input: {
+    branch_code: string;
+    staff_username?: string;
+    staff_name?: string;
+    cash_open: number;
+    note?: string;
+  }) {
+    return this.moCaTaiDiem(input, 'STORE_BRANCH', 'Cơ sở');
+  }
+
+  private async moCaTaiDiem(input: {
+    branch_code: string;
+    staff_username?: string;
+    staff_name?: string;
+    cash_open: number;
+    note?: string;
+  }, sessionScope: 'FRANCHISE_KIOSK' | 'STORE_BRANCH', diemBanLabel: string) {
     const branchCode = this.normalizeBranchCode(input.branch_code);
     const cashOpen = this.chuanHoaSoTien(input.cash_open, 0);
 
     // ─── RÀNG BUỘC 2: Không cho 2 người mở ca cùng lúc trên 1 Kiosk ───
     const existingOpenShift = await this.kioskShiftSessionRepo.findOne({
-      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+      where: { co_so_ma: branchCode, session_scope: sessionScope, trang_thai: 'OPEN' },
+      order: { thoi_gian_mo_ca: 'DESC' },
     });
 
     if (existingOpenShift) {
@@ -4249,14 +4286,15 @@ export class ThanhToanService {
       }
 
       throw new BadRequestException(
-        `Kiosk ${branchCode} đang có ca làm việc mở bởi nhân viên "${opener}" (mở lúc ${openTimeStr}). Không thể mở 2 ca cùng lúc trên 1 Kiosk! Vui lòng yêu cầu chốt ca trước khi mở ca mới.`,
+        `${diemBanLabel} ${branchCode} đang có ca làm việc mở bởi nhân viên "${opener}" (mở lúc ${openTimeStr}). Không thể mở 2 ca cùng lúc tại một điểm bán. Vui lòng chốt ca hiện tại trước.`,
       );
     }
 
     const newShift = this.kioskShiftSessionRepo.create({
       co_so_ma: branchCode,
+      session_scope: sessionScope,
       staff_username: input.staff_username?.trim() || null,
-      staff_name: input.staff_name?.trim() || input.staff_username?.trim() || 'Nhân viên Kiosk',
+      staff_name: input.staff_name?.trim() || input.staff_username?.trim() || 'Nhân viên cửa hàng',
       trang_thai: 'OPEN',
       thoi_gian_mo_ca: new Date(),
       tien_dau_ca: cashOpen,
@@ -4274,9 +4312,13 @@ export class ThanhToanService {
     const saved = await this.kioskShiftSessionRepo.save(newShift);
 
     return {
-      message: `Mở ca làm việc tại Kiosk ${branchCode} thành công!`,
+      message: `Mở ca làm việc tại ${diemBanLabel} ${branchCode} thành công!`,
       shift: saved,
     };
+  }
+
+  async layCaChiNhanhDangMo(branchCodeRaw: string) {
+    return this.layCaDiemDangMo(branchCodeRaw, 'STORE_BRANCH');
   }
 
   async chotCaKiosk(input: {
@@ -4284,16 +4326,112 @@ export class ThanhToanService {
     cash_close: number;
     note?: string;
     staff_username?: string;
+    allow_manager_close?: boolean;
   }) {
+    const branchCode = this.normalizeBranchCode(input.branch_code);
+    const activeShift = await this.kioskShiftSessionRepo.findOne({
+      where: { co_so_ma: branchCode, session_scope: 'FRANCHISE_KIOSK', trang_thai: 'OPEN' },
+    });
+
+    if (!activeShift) {
+      throw new BadRequestException(`Kiosk ${branchCode} hiện không có ca đang mở để gửi yêu cầu chốt.`);
+    }
+    if (!input.allow_manager_close && input.staff_username && activeShift.staff_username && input.staff_username !== activeShift.staff_username) {
+      throw new BadRequestException('Chỉ nhân viên đã mở ca mới được gửi yêu cầu chốt ca này.');
+    }
+
+    const now = new Date();
+    const startTime = new Date(activeShift.thoi_gian_mo_ca);
+    const tongHop = await this.tinhTongHopDoiSoat(startTime, now, branchCode);
+    const cashClose = this.chuanHoaSoTien(input.cash_close, 0);
+    const openingCash = Number(activeShift.tien_dau_ca || 0);
+    const systemCash = tongHop.tienMatThucThu || 0;
+
+    activeShift.trang_thai = 'CLOSE_PENDING';
+    activeShift.thoi_gian_dong_ca = now;
+    activeShift.dong_ca_boi = input.staff_username || activeShift.staff_username;
+    activeShift.close_requested_at = now;
+    activeShift.close_requested_by = input.staff_username || activeShift.staff_username;
+    activeShift.tien_cuoi_ca = cashClose;
+    activeShift.tien_mat_he_thong = systemCash;
+    activeShift.doanh_thu_he_thong = tongHop.doanhThuDonHoanThanh || 0;
+    activeShift.tien_mat_ky_vong = openingCash + systemCash;
+    activeShift.chenh_lech = cashClose - activeShift.tien_mat_ky_vong;
+    activeShift.tong_don_hang = tongHop.tongDon || 0;
+    activeShift.tong_don_tien_mat = tongHop.tongDonTienMat || 0;
+    activeShift.ghi_chu = input.note?.trim() || activeShift.ghi_chu;
+    activeShift.du_lieu_chi_tiet = {
+      non_cash_revenue: tongHop.doanhThuKhongTienMat,
+      cash_in_gross: tongHop.tienMatThuVao,
+      cash_change_out: tongHop.tienThoi,
+      online_revenue: tongHop.doanhThuOnline,
+      in_store_revenue: tongHop.doanhThuTaiShop,
+    };
+    const updated = await this.kioskShiftSessionRepo.save(activeShift);
+    return { message: 'Đã chốt ca và gửi đối soát cho quản lý. Kiosk có thể mở ca mới ngay.', shift: updated };
+  }
+
+  async xuLyYeuCauChotCaKiosk(input: {
+    shift_id: string;
+    branch_code: string;
+    decision: 'APPROVE' | 'REJECT';
+    manager_username?: string;
+    note?: string;
+  }) {
+    const branchCode = this.normalizeBranchCode(input.branch_code);
+    const shift = await this.kioskShiftSessionRepo.findOne({ where: { id: input.shift_id } });
+    if (!shift || shift.session_scope !== 'FRANCHISE_KIOSK' || shift.co_so_ma !== branchCode) {
+      throw new NotFoundException('Không tìm thấy ca kiosk cần xử lý.');
+    }
+    if (shift.trang_thai !== 'CLOSE_PENDING') {
+      throw new BadRequestException('Yêu cầu chốt ca này đã được xử lý hoặc không còn chờ duyệt.');
+    }
+
+    shift.close_approved_by = input.manager_username || null;
+    shift.close_approved_at = new Date();
+    shift.close_approval_note = input.note?.trim() || null;
+    if (input.decision === 'APPROVE') {
+      shift.trang_thai = 'CLOSED';
+      shift.thoi_gian_dong_ca = shift.close_requested_at || new Date();
+      shift.dong_ca_boi = shift.close_requested_by || shift.staff_username;
+    } else {
+      // Review concerns the recorded reconciliation only; it never reopens a
+      // finished session or overwrites the next cashier's active session.
+      shift.trang_thai = 'CLOSE_REJECTED';
+      shift.thoi_gian_dong_ca = shift.thoi_gian_dong_ca || shift.close_requested_at || new Date();
+    }
+
+    const updated = await this.kioskShiftSessionRepo.save(shift);
+    return {
+      message: input.decision === 'APPROVE' ? 'Đã duyệt chốt ca kiosk.' : 'Đã đánh dấu đối soát cần kiểm tra lại. Ca bán hàng đã kết thúc vẫn được giữ nguyên.',
+      shift: updated,
+    };
+  }
+
+  async chotCaChiNhanh(input: {
+    branch_code: string;
+    cash_close: number;
+    note?: string;
+    staff_username?: string;
+  }) {
+    return this.chotCaDiemBan(input, 'STORE_BRANCH', 'Cơ sở');
+  }
+
+  private async chotCaDiemBan(input: {
+    branch_code: string;
+    cash_close: number;
+    note?: string;
+    staff_username?: string;
+  }, sessionScope: 'FRANCHISE_KIOSK' | 'STORE_BRANCH', diemBanLabel: string) {
     const branchCode = this.normalizeBranchCode(input.branch_code);
     const cashClose = this.chuanHoaSoTien(input.cash_close, 0);
 
     const activeShift = await this.kioskShiftSessionRepo.findOne({
-      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+      where: { co_so_ma: branchCode, session_scope: sessionScope, trang_thai: 'OPEN' },
     });
 
     if (!activeShift) {
-      throw new BadRequestException(`Kiosk ${branchCode} hiện không có ca làm việc nào đang mở để chốt ca.`);
+      throw new BadRequestException(`${diemBanLabel} ${branchCode} hiện không có ca làm việc nào đang mở để chốt ca.`);
     }
 
     const now = new Date();
@@ -4328,7 +4466,7 @@ export class ThanhToanService {
     const updated = await this.kioskShiftSessionRepo.save(activeShift);
 
     return {
-      message: `Chốt ca làm việc Kiosk ${branchCode} thành công!`,
+      message: `Chốt ca làm việc tại ${diemBanLabel} ${branchCode} thành công!`,
       shift: updated,
     };
   }
@@ -4341,7 +4479,7 @@ export class ThanhToanService {
     const branchCode = this.normalizeBranchCode(input.branch_code);
 
     const activeShift = await this.kioskShiftSessionRepo.findOne({
-      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+      where: { co_so_ma: branchCode, session_scope: 'FRANCHISE_KIOSK', trang_thai: 'OPEN' },
     });
 
     if (!activeShift) {
@@ -4381,10 +4519,15 @@ export class ThanhToanService {
   }
 
   async layCaKioskDangMo(branchCodeRaw: string) {
+    return this.layCaDiemDangMo(branchCodeRaw, 'FRANCHISE_KIOSK');
+  }
+
+  private async layCaDiemDangMo(branchCodeRaw: string, sessionScope: 'FRANCHISE_KIOSK' | 'STORE_BRANCH') {
     const branchCode = this.normalizeBranchCode(branchCodeRaw);
 
     const activeShift = await this.kioskShiftSessionRepo.findOne({
-      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+      where: { co_so_ma: branchCode, session_scope: sessionScope, trang_thai: 'OPEN' },
+      order: { thoi_gian_mo_ca: 'DESC' },
     });
 
     if (!activeShift) {
@@ -4446,7 +4589,7 @@ export class ThanhToanService {
   // 6. HOÀN / HỦY ĐƠN HÀNG POS TẠI KIOSK (REFUND / VOID) (THÀNH AN)
   // ─────────────────────────────────────────────────────────────
 
-  async kiemTraHopLeHoanHuyPos(maDonHang: string, branchCodeRaw?: string) {
+  async kiemTraHopLeHoanHuyPos(maDonHang: string, branchCodeRaw?: string, sessionScope: 'FRANCHISE_KIOSK' | 'STORE_BRANCH' = 'FRANCHISE_KIOSK') {
     const branchCode = this.normalizeBranchCode(branchCodeRaw);
     const donHang = await this.donHangRepo.findOne({
       where: { ma_don_hang: maDonHang, co_so_ma: branchCode },
@@ -4469,13 +4612,13 @@ export class ThanhToanService {
     }
 
     const activeShift = await this.kioskShiftSessionRepo.findOne({
-      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+      where: { co_so_ma: branchCode, session_scope: sessionScope, trang_thai: 'OPEN' },
     });
 
     if (!activeShift) {
       return {
         hop_le: false,
-        ly_do: 'Kiosk hiện chưa mở ca làm việc hoặc ca đã chốt',
+        ly_do: `${sessionScope === 'STORE_BRANCH' ? 'Cơ sở' : 'Kiosk'} hiện chưa mở ca làm việc hoặc ca đã chốt`,
         active_shift: null,
       };
     }
@@ -4513,9 +4656,11 @@ export class ThanhToanService {
       branch_code?: string;
       staff_username?: string;
       staff_name?: string;
+      session_scope?: 'FRANCHISE_KIOSK' | 'STORE_BRANCH';
     },
   ) {
     const branchCode = this.normalizeBranchCode(input.branch_code);
+    const sessionScope = input.session_scope || 'FRANCHISE_KIOSK';
     const reason = String(input.reason || '').trim();
     if (!reason) {
       throw new BadRequestException('Vui lòng cung cấp lý do hoàn/hủy đơn hàng POS!');
@@ -4536,12 +4681,12 @@ export class ThanhToanService {
 
     // ─── RÀNG BUỘC 1: Phải có ca Kiosk đang mở ───
     const activeShift = await this.kioskShiftSessionRepo.findOne({
-      where: { co_so_ma: branchCode, trang_thai: 'OPEN' },
+      where: { co_so_ma: branchCode, session_scope: sessionScope, trang_thai: 'OPEN' },
     });
 
     if (!activeShift) {
       throw new BadRequestException(
-        `Kiosk ${branchCode} hiện chưa mở ca làm việc hoặc ca đã chốt. Chỉ được phép hoàn/hủy đơn hàng trong ca đang mở!`,
+        `${sessionScope === 'STORE_BRANCH' ? 'Cơ sở' : 'Kiosk'} ${branchCode} hiện chưa mở ca làm việc hoặc ca đã chốt. Chỉ được phép hoàn/hủy đơn hàng trong ca đang mở!`,
       );
     }
 

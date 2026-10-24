@@ -1,8 +1,18 @@
+import OrderStatusControl from '../../../components/console/OrderStatusControl'
+import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover'
+import { MoreVertical } from '../../../components/console/WorkspaceIcons'
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import StatusBadge from '../../../components/console/StatusBadge'
+import OrderDetailView from './OrderDetailView'
+import { Input } from '../../../components/ui/input'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { Label } from '../../../components/ui/label'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import CurrencyInput from '../../../components/console/CurrencyInput'
 import { useEffect, useMemo, useState } from 'react'
 import { ORDER_STATUSES, ORDER_STATUS_LABEL } from '../constants'
-import { fmtMoney, normalizeOrderStatus, normalizeViText, paymentTag } from '../utils'
+import { fmtMoney, normalizeOrderStatus, normalizeViText, paymentTag, orderCancellationReason } from '../utils'
 import {
   ShoppingBag,
   CheckCircle2,
@@ -167,6 +177,7 @@ export function OrdersPanel({
   onUpdateOrder,
   onDeleteOrder,
 }) {
+  const [selectedOrder, setSelectedOrder] = useState(null)
   const [searchText, setSearchText] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -405,75 +416,28 @@ export function OrdersPanel({
     }
   }
 
+  if (selectedOrder) {
+    const currentOrder = (ordersState?.items || []).find(item => item.ma_don_hang === selectedOrder.ma_don_hang) || selectedOrder
+    return <OrderDetailView order={currentOrder} onBack={() => setSelectedOrder(null)} onEdit={() => { batDauSuaDon(currentOrder); setSelectedOrder(null) }} canEdit={coTheSuaDon(currentOrder)} editReason={lyDoKhongSuaDon(currentOrder)} />
+  }
+
   return (
-    <section className="panel system-admin-panel" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+    <section className="panel system-admin-panel manager-orders" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
       
       {/* HEADER TITLE */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e4df', paddingBottom: '0.85rem' }}>
-        <div>
+        <WorkspacePanelIntro><div>
           <h1 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '700', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <ShoppingBag size={20} color="var(--primary)" /> Quản Lý Đơn Hàng
           </h1>
           <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78125rem', color: '#69736a' }}>
             Theo dõi, lọc đơn hàng real-time, xử lý trạng thái và quản lý doanh thu đối soát theo ca làm việc.
           </p>
-        </div>
+        </div></WorkspacePanelIntro>
       </div>
 
       {/* KPI SUMMARY CARDS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.85rem' }}>
-        
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: "#f4f5f2", color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <CheckCircle2 size={18} color="#2563eb" />
-          </div>
-          <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Đơn hoàn thành</span>
-            <strong style={{ display: 'block', fontSize: '1.1rem', color: '#252927', marginTop: '0.05rem' }}>{financeSummary.completedCount}</strong>
-          </div>
-        </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <TrendingUp size={18} color="var(--primary)" />
-          </div>
-          <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Doanh thu hoàn thành</span>
-            <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--primary)', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tongDoanhThu)}</strong>
-          </div>
-        </div>
-
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Coins size={18} color="var(--primary)" />
-          </div>
-          <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền mặt thu vào</span>
-            <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--primary)', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienMatThuVao)}</strong>
-          </div>
-        </div>
-
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: "#f4f5f2", color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <ArrowRightLeft size={18} color="#d97706" />
-          </div>
-          <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền thối khách</span>
-            <strong style={{ display: 'block', fontSize: '1.05rem', color: '#d97706', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienThoi)}</strong>
-          </div>
-        </div>
-
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: "#f4f5f2", color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Wallet size={18} color="#2563eb" />
-          </div>
-          <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78125rem', color: '#69736a', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền mặt thực thu</span>
-            <strong style={{ display: 'block', fontSize: '1.05rem', color: '#2563eb', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienMatThucThu)}</strong>
-          </div>
-        </div>
-
-      </div>
 
       {/* COMPACT & NEAT FILTER BAR CARD */}
       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '14px', padding: '1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
@@ -482,7 +446,7 @@ export function OrdersPanel({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div className="console-search-field" style={{ display: 'flex', alignItems: 'center', height: '38px', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: '#f8f9f6', padding: '0 0.75rem', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
             <Search size={15} color="#69736a" style={{ flexShrink: 0 }} />
-            <input
+            <Input
               style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.8125rem', color: '#252927' }}
               type="text"
               placeholder="Tìm kiếm mã đơn, tên khách, số điện thoại, thu ngân..."
@@ -490,9 +454,9 @@ export function OrdersPanel({
               onChange={(e) => setSearchText(e.target.value)}
             />
             {searchText && (
-              <button type="button" onClick={() => setSearchText('')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}>
+              <Button type="button" onClick={() => setSearchText('')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}>
                 <X size={14} color="#69736a" />
-              </button>
+              </Button>
             )}
           </div>
 
@@ -500,9 +464,9 @@ export function OrdersPanel({
             {hasActiveFilter ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>Khớp: <strong style={{ color: 'var(--primary)' }}>{filteredOrders.length}</strong> / {(ordersState?.items || []).length} đơn</span>
-                <button type="button" onClick={resetFilters} style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.72rem', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                <Button data-intent="danger" type="button" onClick={resetFilters} style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.2rem 0.6rem', fontSize: '0.72rem', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                   <RotateCcw size={12} /> Xóa bộ lọc
-                </button>
+                </Button>
               </div>
             ) : (
               <span>Tổng số: <strong style={{ color: '#252927' }}>{(ordersState?.items || []).length}</strong> đơn</span>
@@ -514,7 +478,7 @@ export function OrdersPanel({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.6rem', alignItems: 'center' }}>
           
           {/* Select: Trạng thái */}
-          <select
+          <SearchableSelect
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: filterStatus ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterStatus ? '700' : '500', color: filterStatus ? 'var(--primary-hover)' : '#414743', cursor: 'pointer' }}
@@ -522,10 +486,10 @@ export function OrdersPanel({
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
             ))}
-          </select>
+          </SearchableSelect>
 
           {/* Select: Loại đơn */}
-          <select
+          <SearchableSelect
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: filterType ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterType ? '700' : '500', color: filterType ? 'var(--primary-hover)' : '#414743', cursor: 'pointer' }}
@@ -533,10 +497,10 @@ export function OrdersPanel({
             {ORDER_TYPE_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
             ))}
-          </select>
+          </SearchableSelect>
 
           {/* Select: Thanh toán */}
-          <select
+          <SearchableSelect
             value={filterPayment}
             onChange={(e) => setFilterPayment(e.target.value)}
             style={{ height: '36px', padding: '0 0.65rem', borderRadius: '8px', border: '1px solid #ccd3c7', backgroundColor: filterPayment ? 'var(--primary-light)' : '#ffffff', fontSize: '0.8125rem', fontWeight: filterPayment ? '700' : '500', color: filterPayment ? 'var(--primary-hover)' : '#414743', cursor: 'pointer' }}
@@ -544,10 +508,10 @@ export function OrdersPanel({
             {PAYMENT_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
             ))}
-          </select>
+          </SearchableSelect>
 
           {/* Input: Ngày */}
-          <input
+          <Input
             type="date"
             title="Lọc theo ngày"
             value={filterDate}
@@ -559,7 +523,7 @@ export function OrdersPanel({
           />
 
           {/* Input: Tháng */}
-          <input
+          <Input
             type="month"
             title="Lọc theo tháng"
             value={filterMonth}
@@ -593,9 +557,9 @@ export function OrdersPanel({
             <Search size={32} color="#85907d" />
             <p style={{ margin: 0, fontWeight: '600', fontSize: '0.84rem' }}>{hasActiveFilter ? 'Không có đơn hàng nào khớp với bộ lọc.' : 'Chưa có đơn hàng để hiển thị.'}</p>
             {hasActiveFilter && (
-              <button type="button" onClick={resetFilters} style={{ backgroundColor: '#f4f5f2', color: '#414743', border: '1px solid #ccd3c7', borderRadius: '6px', padding: '0.35rem 0.85rem', fontSize: '0.78125rem', fontWeight: '600', cursor: 'pointer' }}>
+              <Button data-intent="danger" type="button" onClick={resetFilters} style={{ backgroundColor: '#f4f5f2', color: '#414743', border: '1px solid #ccd3c7', borderRadius: '6px', padding: '0.35rem 0.85rem', fontSize: '0.78125rem', fontWeight: '600', cursor: 'pointer' }}>
                 Xóa tất cả bộ lọc
-              </button>
+              </Button>
             )}
           </div>
         ) : null}
@@ -620,195 +584,30 @@ export function OrdersPanel({
               }}
             >
               {/* Order Header Info */}
-              <div className="console-order-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid #f4f5f2', paddingBottom: '0.65rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <strong style={{ fontSize: '0.92rem', fontWeight: '600', color: '#252927', letterSpacing: '0.01em' }}>
-                      #{order.ma_don_hang.slice(0, 8).toUpperCase()}
-                    </strong>
-                    
-                    <span className="workspace-inline-label" style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '600', backgroundColor: '#f4f5f2', color: '#414743', border: '1px solid #ccd3c7' }}>
-                      {getOrderTypeLabel(order.loai_don_hang)}
-                    </span>
+              <div className="manager-order-row manager-order-row--workflow">
+ <div className="manager-order-identity"><Button variant="link" className="record-name-link" onClick={() => setSelectedOrder(order)} aria-label={`Xem chi tiết đơn ${order.ma_don_hang}`}>#{order.ma_don_hang.slice(0, 8).toUpperCase()}</Button><strong>{order.ten_khach_hang || 'Khách vãng lai'}</strong><span>{getOrderTypeLabel(order.loai_don_hang)} · {new Date(order.ngay_tao).toLocaleString('vi-VN')}</span></div>
+ <div className="manager-order-total"><strong>{fmtMoney(order.tong_tien)}</strong><span>{paymentTag(order.phuong_thuc_thanh_toan)}</span></div>
+ <StatusBadge status={status}>{ORDER_STATUS_LABEL[status] || status}</StatusBadge>
+ {(() => {
+   const statusOptions = [...new Set([...layDanhSachTrangThaiCoTheChon(status, order.loai_don_hang), ...(order.loai_don_hang === 'GIAO_TAN_NOI' && ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI'].includes(status) ? ['DANG_GIAO'] : [])])]
+   return <div className="manager-order-workflow">
+     <OrderStatusControl current={status} options={statusOptions} isDelivery={order.loai_don_hang === 'GIAO_TAN_NOI'} busy={updatingOrderId === order.ma_don_hang} onChange={value => onUpdateStatus(order.ma_don_hang, value)} />
+     <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" className="order-menu-trigger" aria-label={`Thao tác đơn ${order.ma_don_hang}`}><MoreVertical size={18} /></Button></PopoverTrigger><PopoverContent align="end" className="workspace-action-popover"><Button variant="ghost" onClick={() => setSelectedOrder(order)}>Xem chi tiết</Button><Button variant="ghost" disabled={updatingOrderId === order.ma_don_hang || !coTheSuaDon(order)} title={lyDoKhongSuaDon(order)} onClick={() => batDauSuaDon(order)}><Edit3 size={14} />Sửa đơn</Button>{statusOptions.includes('DA_HUY') && <Button variant="ghost" data-intent="danger" disabled={updatingOrderId === order.ma_don_hang} onClick={() => onUpdateStatus(order.ma_don_hang, 'DA_HUY')}><XCircle size={14} />Hủy đơn</Button>}<Button variant="ghost" data-intent="danger" disabled={updatingOrderId === order.ma_don_hang || !coTheXoaDon(order)} title={lyDoKhongXoaDon(order)} onClick={() => xuLyXoaDon(order)}><Trash2 size={14} />Xóa đơn</Button></PopoverContent></Popover>
+   </div>
+ })()}
+ </div>
 
-                    {['DUNG_TAI_CHO', 'TAI_CHO'].includes(order.loai_don_hang) && order.ma_ban && (
-                      <span className="workspace-inline-label" style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '700', backgroundColor: "#f4f5f2", color: '#b45309', border: '1px solid #fef08a', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <MapPin size={11} color="#b45309" /> Bàn {order.ma_ban}
-                      </span>
-                    )}
-
-                    {order.loai_don_hang === 'GIAO_TAN_NOI' && (
-                      <span className="workspace-inline-label" style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '700', backgroundColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? "#f4f5f2" : 'var(--primary-subtle)', color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#c2410c' : 'var(--primary-hover)', border: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '1px solid #ffedd5' : '1px solid #e8cdbb', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <Truck size={11} /> {order.phuong_thuc_giao_hang === 'LALAMOVE' ? 'Lalamove' : 'Shipper Nội Bộ'}
-                      </span>
-                    )}
-                  </div>
-
-                  <div style={{ fontSize: '0.78125rem', color: '#69736a', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
-                    <span>Khách: <strong style={{ color: '#414743', fontWeight: '600' }}>{normalizeViText(order.ten_khach_hang) || order.ma_nguoi_dung}</strong></span>
-                    <span>Địa chỉ: <strong style={{ color: '#414743', fontWeight: '500' }}>{normalizeViText(order.dia_chi_giao_hang) || 'Tại quán'}</strong></span>
-                    <span>Thu ngân: <strong style={{ color: '#414743', fontWeight: '500' }}>{normalizeViText(order.ten_thu_ngan) || 'N/A'}</strong></span>
-                  </div>
-                </div>
-
-                {/* Right side: Amount & Status Badge */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25rem' }}>
-                  <span style={{ fontSize: '1rem', color: '#252927', fontWeight: '500' }}>
-                    {fmtMoney(order.tong_tien)}
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: '700', padding: '0.1rem 0.45rem', borderRadius: '4px', backgroundColor: '#f8f9f6', border: '1px solid #ccd3c7', color: '#596255' }}>
-                      {paymentTag(order.phuong_thuc_thanh_toan)}
-                    </span>
-                    <span className={`status-pill ${TONE_CLASS[status] || 'tone-new'}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.55rem' }}>
-                      {ORDER_STATUS_LABEL[status] || status}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
               {/* Order Actions Row */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem' }}>
-                
-                {/* Status Dropdown selector */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <label htmlFor={`status-${order.ma_don_hang}`} style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#596255' }}>
-                    Cập nhật trạng thái:
-                  </label>
-                  <select
-                    id={`status-${order.ma_don_hang}`}
-                    value={status}
-                    onChange={(e) => onUpdateStatus(order.ma_don_hang, e.target.value)}
-                    disabled={updatingOrderId === order.ma_don_hang}
-                    style={{ height: '32px', padding: '0 0.6rem', borderRadius: '6px', border: '1px solid #ccd3c7', backgroundColor: '#ffffff', fontSize: '0.78125rem', fontWeight: '700', color: '#252927', cursor: 'pointer' }}
-                  >
-                    {layDanhSachTrangThaiCoTheChon(status, order.loai_don_hang).map((st) => (
-                      <option key={st} value={st}>
-                        {ORDER_STATUS_LABEL[st]}
-                      </option>
-                    ))}
-                  </select>
-                  <span style={{ fontSize: '0.72rem', color: '#85907d', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                    <Clock size={12} color="#85907d" />
-                    {new Date(order.ngay_tao).toLocaleString('vi-VN')}
-                  </span>
-                </div>
-
-                {/* Direct Action Quick Buttons */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                  
-                  {/* Edit button */}
-                  <button
-                    type="button"
-                    disabled={updatingOrderId === order.ma_don_hang || !coTheSuaDon(order)}
-                    title={!coTheSuaDon(order) ? lyDoKhongSuaDon(order) : ''}
-                    onClick={() => batDauSuaDon(order)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      height: '32px',
-                      padding: '0 0.75rem',
-                      borderRadius: '6px',
-                      border: '1px solid #bfdbfe',
-                      backgroundColor: 'var(--primary-light)',
-                      color: 'var(--primary)',
-                      fontSize: '0.76rem',
-                      fontWeight: '600',
-                      cursor: coTheSuaDon(order) ? 'pointer' : 'not-allowed',
-                      opacity: coTheSuaDon(order) ? 1 : 0.4
-                    }}
-                  >
-                    <Edit3 size={13} color="var(--primary)" /> Sửa đơn
-                  </button>
-
-                  {/* Delete button */}
-                  <button
-                    type="button"
-                    disabled={updatingOrderId === order.ma_don_hang || !coTheXoaDon(order)}
-                    title={!coTheXoaDon(order) ? lyDoKhongXoaDon(order) : ''}
-                    onClick={() => xuLyXoaDon(order)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      height: '32px',
-                      padding: '0 0.75rem',
-                      borderRadius: '6px',
-                      border: '1px solid #fecaca',
-                      backgroundColor: "#f4f5f2",
-                      color: '#dc2626',
-                      fontSize: '0.76rem',
-                      fontWeight: '600',
-                      cursor: coTheXoaDon(order) ? 'pointer' : 'not-allowed',
-                      opacity: coTheXoaDon(order) ? 1 : 0.4
-                    }}
-                  >
-                    <Trash2 size={13} color="#dc2626" /> Xóa đơn
-                  </button>
-
-                  {/* Bàn giao Shipper button */}
-                  {order.loai_don_hang === 'GIAO_TAN_NOI' && ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI'].includes(status) && (
-                    <button
-                      type="button"
-                      disabled={updatingOrderId === order.ma_don_hang}
-                      onClick={() => onUpdateStatus(order.ma_don_hang, 'DANG_GIAO')}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        height: '32px',
-                        padding: '0 0.85rem',
-                        borderRadius: '6px',
-                        border: 'none',
-                        backgroundColor: 'var(--primary)',
-                        color: '#ffffff',
-                        fontSize: '0.76rem',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
-                      }}
-                    >
-                      <Bike size={14} color="#ffffff" /> Bàn giao Shipper
-                    </button>
-                  )}
-
-                  {/* Hoàn thành button */}
-                  {['DUNG_TAI_CHO', 'TAI_CHO', 'LAY_TAI_QUAN'].includes(order.loai_don_hang) && ['MOI_TAO', 'DA_XAC_NHAN', 'DANG_CHUAN_BI', 'DANG_GIAO'].includes(status) && (
-                    <button
-                      type="button"
-                      disabled={updatingOrderId === order.ma_don_hang}
-                      onClick={() => onUpdateStatus(order.ma_don_hang, 'HOAN_THANH')}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        height: '32px',
-                        padding: '0 0.85rem',
-                        borderRadius: '6px',
-                        border: 'none',
-                        backgroundColor: "var(--primary)",
-                        color: '#ffffff',
-                        fontSize: '0.76rem',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 4px rgba(5,150,105,0.2)'
-                      }}
-                    >
-                      <CheckCircle2 size={14} color="#ffffff" /> Đã phục vụ / Giao khách
-                    </button>
-                  )}
-
-                </div>
-              </div>
+              <details className="order-disclosure"><summary>Thông tin giao nhận và ghi chú</summary><dl className="operation-facts">{orderCancellationReason(order) && <div className="order-cancellation-fact"><dt>Lý do hủy</dt><dd>{orderCancellationReason(order)}</dd></div>}<div><dt>Địa chỉ / bàn</dt><dd>{normalizeViText(order.dia_chi_giao_hang) || order.ma_ban || 'Tại quầy'}</dd></div>{['TAI_CHO', 'MANG_DI'].includes(order.loai_don_hang) && order.ten_thu_ngan && <div><dt>Nhân viên tạo đơn</dt><dd>{normalizeViText(order.ten_thu_ngan)}</dd></div>}<div><dt>Ghi chú</dt><dd>{order.ghi_chu || 'Không có ghi chú'}</dd></div></dl></details>
 
               {/* Edit Form Draft (if active) */}
               {editingOrderId === order.ma_don_hang && editDraft ? (
                 <div style={{ marginTop: '0.5rem', borderTop: '1px dashed #ccd3c7', paddingTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Tên khách hàng</label>
-                      <input
+                      <Label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Tên khách hàng</Label>
+                      <Input
                         type="text"
                         style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927' }}
                         value={editDraft.ten_khach_hang}
@@ -817,8 +616,8 @@ export function OrdersPanel({
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Mã bàn</label>
-                      <input
+                      <Label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Mã bàn</Label>
+                      <Input
                         type="text"
                         style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927' }}
                         value={editDraft.ma_ban}
@@ -827,8 +626,8 @@ export function OrdersPanel({
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Địa chỉ giao hàng</label>
-                      <input
+                      <Label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Địa chỉ giao hàng</Label>
+                      <Input
                         type="text"
                         style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927' }}
                         value={editDraft.dia_chi_giao_hang}
@@ -837,8 +636,8 @@ export function OrdersPanel({
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Ghi chú đơn</label>
-                      <input
+                      <Label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Ghi chú đơn</Label>
+                      <Input
                         type="text"
                         style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.8125rem', color: '#252927' }}
                         value={editDraft.ghi_chu}
@@ -866,7 +665,7 @@ export function OrdersPanel({
                               ))}
                             </SearchableSelect>
 
-                            <input
+                            <Input
                               type="number"
                               min="1"
                               value={line.so_luong}
@@ -882,7 +681,7 @@ export function OrdersPanel({
                               title="Giá bán"
                             />
 
-                            <input
+                            <Input
                               type="text"
                               value={(Number(line.gia_ban || 0) * Number(line.so_luong || 0)).toLocaleString('vi-VN')}
                               readOnly
@@ -890,40 +689,40 @@ export function OrdersPanel({
                               style={{ width: '100px', height: '34px', padding: '0 0.45rem', borderRadius: '6px', border: '1px solid #ccd3c7', backgroundColor: "#f4f5f2", fontSize: '0.78125rem', fontWeight: '700', color: '#252927' }}
                             />
 
-                            <button type="button" onClick={() => xoaDongMon(index)} style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', height: '34px', padding: '0 0.65rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.75rem' }}>
+                            <Button data-intent="danger" type="button" onClick={() => xoaDongMon(index)} style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', height: '34px', padding: '0 0.65rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.75rem' }}>
                               Xóa
-                            </button>
+                            </Button>
                           </div>
 
                           <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             {matchedMenu?.sizes && Object.keys(matchedMenu.sizes).length > 0 ? (
-                              <select value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }}>
+                              <SearchableSelect value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }}>
                                 <option value="">Size...</option>
                                 {Object.keys(matchedMenu.sizes).map(s => <option key={s} value={s}>{s}</option>)}
-                              </select>
+                              </SearchableSelect>
                             ) : (
-                              <input type="text" placeholder="Size" value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ height: '30px', width: '65px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
+                              <Input type="text" placeholder="Size" value={line.kich_co || ''} onChange={(e) => capNhatDongMon(index, 'kich_co', e.target.value)} style={{ height: '30px', width: '65px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
                             )}
                             
                             {matchedMenu?.luong_da && Object.keys(matchedMenu.luong_da).length > 0 ? (
-                              <select value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }}>
+                              <SearchableSelect value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }}>
                                 <option value="">Đá...</option>
                                 {Object.keys(matchedMenu.luong_da).map(s => <option key={s} value={s}>{s}</option>)}
-                              </select>
+                              </SearchableSelect>
                             ) : (
-                              <input type="text" placeholder="Đá (50%)" value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ height: '30px', width: '75px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
+                              <Input type="text" placeholder="Đá (50%)" value={line.luong_da || ''} onChange={(e) => capNhatDongMon(index, 'luong_da', e.target.value)} style={{ height: '30px', width: '75px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
                             )}
 
                             {matchedMenu?.do_ngot && Object.keys(matchedMenu.do_ngot).length > 0 ? (
-                              <select value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }}>
+                              <SearchableSelect value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ height: '30px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }}>
                                 <option value="">Ngọt...</option>
                                 {Object.keys(matchedMenu.do_ngot).map(s => <option key={s} value={s}>{s}</option>)}
-                              </select>
+                              </SearchableSelect>
                             ) : (
-                              <input type="text" placeholder="Ngọt (50%)" value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ height: '30px', width: '75px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
+                              <Input type="text" placeholder="Ngọt (50%)" value={line.do_ngot || ''} onChange={(e) => capNhatDongMon(index, 'do_ngot', e.target.value)} style={{ height: '30px', width: '75px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
                             )}
 
-                            <input type="text" placeholder="Ghi chú món" value={line.ghi_chu || ''} onChange={(e) => capNhatDongMon(index, 'ghi_chu', e.target.value)} style={{ height: '30px', flex: 1, minWidth: '110px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
+                            <Input type="text" placeholder="Ghi chú món" value={line.ghi_chu || ''} onChange={(e) => capNhatDongMon(index, 'ghi_chu', e.target.value)} style={{ height: '30px', flex: 1, minWidth: '110px', padding: '0 0.35rem', borderRadius: '4px', border: '1px solid #ccd3c7', fontSize: '0.75rem' }} />
                           </div>
                         </div>
                       )
@@ -939,7 +738,7 @@ export function OrdersPanel({
                     </div>
 
                     <div style={{ backgroundColor: '#f8f9f6', borderRadius: '8px', padding: '0.75rem', border: '1px solid #e2e4df' }}>
-                      <label htmlFor={`edit-cash-${order.ma_don_hang}`} style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600', display: 'block' }}>Tiền khách đưa (VNĐ)</label>
+                      <Label htmlFor={`edit-cash-${order.ma_don_hang}`} style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600', display: 'block' }}>Tiền khách đưa (VNĐ)</Label>
                       <CurrencyInput
                         id={`edit-cash-${order.ma_don_hang}`}
                         style={{ height: '32px', width: '100%', padding: '0 0.55rem', borderRadius: '6px', border: '1px solid #ccd3c7', fontSize: '0.84rem', fontWeight: '700', marginTop: '0.2rem' }}
@@ -958,15 +757,15 @@ export function OrdersPanel({
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem' }}>
-                    <button type="button" onClick={themDongMon} disabled={!(inventoryState?.items || []).length} style={{ backgroundColor: '#f8f9f6', color: '#414743', border: '1px solid #ccd3c7', height: '34px', padding: '0 0.85rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.78125rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Button type="button" onClick={themDongMon} disabled={!(inventoryState?.items || []).length} style={{ backgroundColor: '#f8f9f6', color: '#414743', border: '1px solid #ccd3c7', height: '34px', padding: '0 0.85rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.78125rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                       <Plus size={14} /> Thêm món
-                    </button>
+                    </Button>
 
-                    <button type="button" onClick={huySuaDon} style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', height: '34px', padding: '0 0.85rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.78125rem' }}>
+                    <Button data-intent="danger" type="button" onClick={huySuaDon} style={{ backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', height: '34px', padding: '0 0.85rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.78125rem' }}>
                       Hủy bỏ
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button data-intent="success"
                       type="button"
                       className="btn-save-green"
                       onClick={() => luuSuaDon(order)}
@@ -975,7 +774,7 @@ export function OrdersPanel({
                     >
                       <Check size={15} color="#ffffff" />
                       <span>{updatingOrderId === order.ma_don_hang ? 'Đang lưu...' : 'Lưu Cập Nhật Đơn'}</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : null}
@@ -991,19 +790,19 @@ export function OrdersPanel({
           <span>Hiển thị <strong>{(safePage - 1) * PAGE_SIZE + 1} - {Math.min(safePage * PAGE_SIZE, filteredOrders.length)}</strong> trên tổng số <strong>{filteredOrders.length}</strong> đơn hàng</span>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <button type="button" className="admin-pg-btn" onClick={() => setPage(1)} disabled={safePage <= 1} title="Trang đầu">
+            <Button type="button" className="admin-pg-btn" onClick={() => setPage(1)} disabled={safePage <= 1} title="Trang đầu">
               <ChevronsLeft size={16} />
-            </button>
-            <button type="button" className="admin-pg-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1} title="Trang trước">
+            </Button>
+            <Button type="button" className="admin-pg-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1} title="Trang trước">
               <ChevronLeft size={16} />
-            </button>
+            </Button>
             <span style={{ margin: '0 0.5rem', fontWeight: '700', color: '#414743', fontSize: '0.78125rem' }}>Trang {safePage} / {totalPages}</span>
-            <button type="button" className="admin-pg-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages} title="Trang sau">
+            <Button type="button" className="admin-pg-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages} title="Trang sau">
               <ChevronRight size={16} />
-            </button>
-            <button type="button" className="admin-pg-btn" onClick={() => setPage(totalPages)} disabled={safePage >= totalPages} title="Trang cuối">
+            </Button>
+            <Button type="button" className="admin-pg-btn" onClick={() => setPage(totalPages)} disabled={safePage >= totalPages} title="Trang cuối">
               <ChevronsRight size={16} />
-            </button>
+            </Button>
           </div>
         </div>
       )}

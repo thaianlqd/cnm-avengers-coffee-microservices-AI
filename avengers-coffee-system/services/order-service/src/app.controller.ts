@@ -66,6 +66,26 @@ export class AppController {
     }
   }
 
+  private storeBranch(user: AuthUser | null, requested?: string) {
+    const branch = String(requested || user?.branchCode || '').trim().toUpperCase();
+    if (!branch || (user?.role !== 'ADMIN' && branch !== String(user?.branchCode || '').trim().toUpperCase())) {
+      throw new ForbiddenException('Chỉ được mở hoặc chốt ca tại chi nhánh được phân công.');
+    }
+    return branch;
+  }
+
+  private getPosSessionScope(currentUser: AuthUser | null): 'FRANCHISE_KIOSK' | 'STORE_BRANCH' {
+    return ['FRANCHISEE', 'FRANCHISE_STAFF', 'KIOSK_STAFF'].includes(String(currentUser?.role || '').toUpperCase())
+      ? 'FRANCHISE_KIOSK'
+      : 'STORE_BRANCH';
+  }
+
+  private kioskOrderBranch(user: AuthUser | null, requested?: string) {
+    return ['KIOSK_STAFF', 'FRANCHISE_STAFF'].includes(String(user?.role || '').toUpperCase())
+      ? this.storeBranch(user, requested)
+      : requested;
+  }
+
   @Get()
   getHello(): string {
     return this.appService.getHello();
@@ -329,6 +349,7 @@ export class AppController {
     @Query('limit') limit?: string,
     @Query('page') page?: string,
   ) {
+    branchCode = this.kioskOrderBranch(currentUser, branchCode);
     const allBranches = String(branchCode || '').trim().toUpperCase() === 'ALL';
     if (allBranches && currentUser?.role !== 'ADMIN') throw new ForbiddenException('Chỉ ADMIN được đọc đơn toàn hệ thống');
     return this.thanhToanService.layDanhSachDonHangChoStaff({
@@ -401,8 +422,10 @@ export class AppController {
   ) {
     return this.thanhToanService.hoanHuyDonHangPos(orderId, {
       ...payload,
+      branch_code: this.kioskOrderBranch(currentUser, payload.branch_code),
       staff_username: currentUser?.username || 'staff',
       staff_name: payload.staff_name || currentUser?.username || 'Nhân viên Kiosk',
+      session_scope: this.getPosSessionScope(currentUser),
     });
   }
 
@@ -411,9 +434,10 @@ export class AppController {
   @Get('staff/orders/:orderId/refund-eligibility')
   checkRefundEligibility(
     @Param('orderId') orderId: string,
+    @CurrentUser() currentUser: AuthUser | null,
     @Query('branch_code') branchCode?: string,
   ) {
-    return this.thanhToanService.kiemTraHopLeHoanHuyPos(orderId, branchCode);
+    return this.thanhToanService.kiemTraHopLeHoanHuyPos(orderId, this.kioskOrderBranch(currentUser, branchCode), this.getPosSessionScope(currentUser));
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -440,8 +464,9 @@ export class AppController {
         toppings?: string[];
       }>;
     },
+    @CurrentUser() currentUser: AuthUser | null,
   ) {
-    return this.thanhToanService.taoDonTaiQuayChoStaff(payload, req.ip || '127.0.0.1');
+    return this.thanhToanService.taoDonTaiQuayChoStaff({ ...payload, ten_thu_ngan: currentUser?.username || currentUser?.sub || undefined }, req.ip || '127.0.0.1', this.getPosSessionScope(currentUser));
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -510,7 +535,7 @@ export class AppController {
 
   // ─── KIOSK SHIFT SESSIONS (RÀNG BUỘC MỞ CA & 1 CA/KIOSK) ───
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'FRANCHISE_STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('FRANCHISE_STAFF', 'FRANCHISEE')
   @Post('staff/kiosk-shifts/open')
   openKioskShift(
     @Body()
@@ -525,13 +550,13 @@ export class AppController {
   ) {
     return this.thanhToanService.moCaKiosk({
       ...payload,
-      staff_username: payload.staff_username || currentUser?.username || undefined,
-      staff_name: payload.staff_name || currentUser?.username || undefined,
+      staff_username: currentUser?.role === 'FRANCHISEE' ? payload.staff_username || currentUser?.username || undefined : currentUser?.username || undefined,
+      staff_name: currentUser?.role === 'FRANCHISEE' ? payload.staff_name || currentUser?.username || undefined : currentUser?.username || undefined,
     });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('STAFF', 'FRANCHISE_STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE')
+  @Roles('FRANCHISE_STAFF', 'FRANCHISEE')
   @Post('staff/kiosk-shifts/close')
   closeKioskShift(
     @Body()
@@ -545,7 +570,25 @@ export class AppController {
   ) {
     return this.thanhToanService.chotCaKiosk({
       ...payload,
-      staff_username: payload.staff_username || currentUser?.username || undefined,
+      staff_username: currentUser?.username || undefined,
+      allow_manager_close: currentUser?.role === 'FRANCHISEE',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FRANCHISEE')
+  @Patch('staff/kiosk-shifts/:id/close-approval')
+  approveKioskShiftClose(
+    @Param('id') id: string,
+    @Body() payload: { branch_code: string; decision: 'APPROVE' | 'REJECT'; note?: string },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    return this.thanhToanService.xuLyYeuCauChotCaKiosk({
+      shift_id: id,
+      branch_code: payload.branch_code,
+      decision: payload.decision,
+      note: payload.note,
+      manager_username: currentUser?.username || undefined,
     });
   }
 
@@ -572,6 +615,44 @@ export class AppController {
   @Get('staff/kiosk-shifts/active')
   getActiveKioskShift(@Query('branch_code') branchCode: string) {
     return this.thanhToanService.layCaKioskDangMo(branchCode);
+  }
+
+  // A store POS has its own branch-scoped session route; franchise kiosk users
+  // continue to use the kiosk routes above.
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Post('staff/branch-shifts/open')
+  openBranchShift(
+    @Body() payload: { branch_code: string; cash_open: number; staff_username?: string; staff_name?: string; note?: string },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    return this.thanhToanService.moCaChiNhanh({
+      ...payload,
+      branch_code: this.storeBranch(currentUser, payload.branch_code),
+      staff_username: payload.staff_username || currentUser?.username || undefined,
+      staff_name: payload.staff_name || currentUser?.username || undefined,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Get('staff/branch-shifts/active')
+  getActiveBranchShift(@Query('branch_code') branchCode: string, @CurrentUser() currentUser: AuthUser | null) {
+    return this.thanhToanService.layCaChiNhanhDangMo(this.storeBranch(currentUser, branchCode));
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STAFF', 'MANAGER', 'ADMIN')
+  @Post('staff/branch-shifts/close')
+  closeBranchShift(
+    @Body() payload: { branch_code: string; cash_close: number; note?: string },
+    @CurrentUser() currentUser: AuthUser | null,
+  ) {
+    return this.thanhToanService.chotCaChiNhanh({
+      ...payload,
+      branch_code: this.storeBranch(currentUser, payload.branch_code),
+      staff_username: currentUser?.username || undefined,
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -1,3 +1,11 @@
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import { ORDER_STATUS_LABEL } from '../../admin-dashboard/constants'
+import StatusBadge from '../../../components/console/StatusBadge'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { Label } from '../../../components/ui/label'
+import { Table } from '../../../components/ui/table'
+import { Textarea } from '../../../components/ui/textarea'
 import { Star as WorkspaceSymbolStar } from '../../../components/console/WorkspaceIcons'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import { PaginatedList } from '../../../components/console/CompactPagination'
@@ -11,7 +19,6 @@ import {
   AlertTriangle,
   BarChart3,
   Users,
-  RefreshCw,
   CheckCircle2,
   XCircle,
   Clock,
@@ -75,11 +82,16 @@ const EXCEPTION_TYPE_LABEL = {
 
 const TABS = [
   { id: 'shippers', label: 'Danh sách đội giao hàng', icon: Bike },
-  { id: 'map', label: 'Bản đồ trực tuyến', icon: MapPin },
-  { id: 'assign', label: 'Phân công đơn hàng', icon: ClipboardList },
+  { id: 'map', label: 'Bản đồ khu vực', icon: MapPin },
   { id: 'exceptions', label: 'Duyệt ngoại lệ', icon: AlertTriangle },
   { id: 'kpi', label: 'Báo cáo KPI', icon: BarChart3 },
 ]
+
+function DriverRating({ value }) {
+  const rating = Number(value || 0)
+  if (!rating) return <span className="driver-rating-empty">Chưa có đánh giá</span>
+  return <span className="driver-rating" aria-label={`Đánh giá ${rating.toFixed(1)} trên 5 sao`}><span aria-hidden="true">{Array.from({ length: 5 }, (_, index) => <WorkspaceSymbolStar key={index} size={13} fill={rating >= index + 0.5 ? 'currentColor' : 'none'} />)}</span><strong>{rating.toFixed(1)}</strong></span>
+}
 
 export function ManagerShipperPanel({ session }) {
   const branchCode = session?.user?.coSoMa || session?.user?.co_so_ma || null
@@ -200,18 +212,18 @@ export function ManagerShipperPanel({ session }) {
   const offlineShippers = shippers.filter((s) => s.status !== 'ACTIVE')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', padding: '1.25rem 1.5rem' }}>
+    <div className="manager-shippers" style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', padding: '1.25rem 1.5rem' }}>
       
       {/* PAGE HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem', borderBottom: '1px solid #e2e4df', paddingBottom: '0.85rem' }}>
-        <div>
+        <WorkspacePanelIntro><div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <Bike size={20} color="var(--primary)" /> Quản lý NV giao hàng
           </h1>
           <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78125rem', color: '#69736a' }}>
             Theo dõi đội ngũ giao nhận, điều phối phân công đơn hàng và xử lý sự cố ngoại lệ thời gian thực.
           </p>
-        </div>
+        </div></WorkspacePanelIntro>
       </div>
 
       {/* SUB-TABS */}
@@ -220,7 +232,7 @@ export function ManagerShipperPanel({ session }) {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
           return (
-            <button
+            <Button data-selected={isActive}
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
@@ -242,7 +254,7 @@ export function ManagerShipperPanel({ session }) {
             >
               <Icon size={14} />
               <span>{tab.label}</span>
-            </button>
+            </Button>
           )
         })}
       </div>
@@ -252,26 +264,7 @@ export function ManagerShipperPanel({ session }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
           
           {/* Summary KPIs */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.9rem 1.1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-              <span style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600', display: 'block' }}>TỔNG SHIPPER</span>
-              <strong style={{ fontSize: '1.15rem', color: '#252927', fontWeight: '700', marginTop: '0.1rem', display: 'block' }}>{shippers.length}</strong>
-            </div>
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.9rem 1.1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-              <span style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600', display: 'block' }}>ĐANG TRỰC TUYẾN</span>
-              <strong style={{ fontSize: '1.15rem', color: '#2563eb', fontWeight: '700', marginTop: '0.1rem', display: 'block' }}>{onlineShippers.length}</strong>
-            </div>
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.9rem 1.1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-              <span style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600', display: 'block' }}>NGOẠI TUYẾN</span>
-              <strong style={{ fontSize: '1.15rem', color: '#69736a', fontWeight: '700', marginTop: '0.1rem', display: 'block' }}>{offlineShippers.length}</strong>
-            </div>
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '0.9rem 1.1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-              <span style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600', display: 'block' }}>ĐƠN ĐANG GIAO</span>
-              <strong style={{ fontSize: '1.15rem', color: 'var(--primary)', fontWeight: '700', marginTop: '0.1rem', display: 'block' }}>
-                {shippers.reduce((sum, s) => sum + (s.active_delivery_count || 0), 0)}
-              </strong>
-            </div>
-          </div>
+
 
           {/* Shipper List Cards */}
           {shippersLoading ? (
@@ -283,63 +276,8 @@ export function ManagerShipperPanel({ session }) {
               <p style={{ margin: 0, fontSize: '0.8125rem', color: '#69736a' }}>Chưa có Shipper nào được phân công cho chi nhánh này.</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-              <PaginatedList items={shippers} resetKey={activeTab}>{(shipper) => (
-                <div key={shipper.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '12px', padding: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: '700', color: '#252927' }}>
-                        {shipper.full_name || shipper.username}
-                      </h3>
-                      <span style={{ fontSize: '0.72rem', color: '#69736a' }}>@{shipper.username} · {shipper.phone || shipper.phone_number || 'N/A'}</span>
-                    </div>
-
-                    <span className="workspace-inline-label" style={{
-                      padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.68rem', fontWeight: '700',
-                      backgroundColor: shipper.status === 'ACTIVE' ? "#f4f5f2" : '#f4f5f2',
-                      color: shipper.status === 'ACTIVE' ? '#2563eb' : '#69736a',
-                      border: shipper.status === 'ACTIVE' ? '1px solid #bfdbfe' : '1px solid #ccd3c7',
-                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem'
-                    }}>
-                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: shipper.status === 'ACTIVE' ? '#2563eb' : '#69736a' }} />
-                      {shipper.status === 'ACTIVE' ? 'Trực tuyến' : 'Ngoại tuyến'}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', backgroundColor: '#f8f9f6', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e4df', textAlign: 'center' }}>
-                    <div>
-                      <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--primary)', fontWeight: '700' }}>{shipper.active_delivery_count || 0}</strong>
-                      <span style={{ fontSize: '0.65rem', color: '#69736a', fontWeight: '600' }}>Đang giao</span>
-                    </div>
-                    <div>
-                      <strong style={{ display: 'block', fontSize: '0.9rem', color: '#2563eb', fontWeight: '700' }}>{shipper.total_delivered_today || 0}</strong>
-                      <span style={{ fontSize: '0.65rem', color: '#69736a', fontWeight: '600' }}>Đã xong</span>
-                    </div>
-                    <div>
-                      <strong style={{ display: 'block', fontSize: '0.9rem', color: '#d97706', fontWeight: '700' }}>{shipper.rating ? Number(shipper.rating).toFixed(1) : '—'}</strong>
-                      <span style={{ fontSize: '0.65rem', color: '#69736a', fontWeight: '600' }}>Đánh giá</span>
-                    </div>
-                  </div>
-
-                  {shipper.current_location_updated_at && (
-                    <span style={{ fontSize: '0.7rem', color: '#85907d', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                      <Clock size={11} /> Vị trí: {fmtDateTime(shipper.current_location_updated_at)}
-                    </span>
-                  )}
-                </div>
-              )}</PaginatedList>
-            </div>
+            <div className="operation-table-frame manager-driver-table"><Table><thead><tr><th style={{width:'22%'}}>Tài xế</th><th style={{width:'18%'}}>Liên hệ</th><th style={{width:'16%'}}>Trạng thái</th><th style={{width:'14%'}}>Đang giao</th><th style={{width:'15%'}}>Đã giao hôm nay</th><th style={{width:'15%'}}>Đánh giá</th></tr></thead><tbody><PaginatedList items={shippers} resetKey={activeTab} layout="table" columns={6}>{shipper => <tr key={shipper.id}><td><strong>{shipper.full_name || shipper.username}</strong><small>@{shipper.username}</small></td><td>{shipper.phone || shipper.phone_number || 'Chưa cập nhật'}</td><td><StatusBadge status={shipper.status}>{shipper.status === 'ACTIVE' ? 'Trực tuyến' : 'Ngoại tuyến'}</StatusBadge></td><td>{shipper.active_delivery_count || 0}</td><td>{shipper.total_delivered_today || 0}</td><td><DriverRating value={shipper.rating} /></td></tr>}</PaginatedList></tbody></Table></div>
           )}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-            <button
-              type="button"
-              onClick={loadShippers}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', height: '32px', padding: '0 0.75rem', borderRadius: '6px', backgroundColor: '#ffffff', color: '#414743', border: '1px solid #ccd3c7', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer' }}
-            >
-              <RefreshCw size={13} /> Làm mới danh sách
-            </button>
-          </div>
         </div>
       )}
 
@@ -348,10 +286,10 @@ export function ManagerShipperPanel({ session }) {
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e4df', borderRadius: '14px', padding: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '700', color: '#252927', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <MapPin size={15} color="var(--primary)" /> Bản đồ thời gian thực đội giao hàng
+              <MapPin size={15} color="var(--primary)" /> Bản đồ khu vực tham khảo
             </h3>
             <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.75rem', color: '#69736a' }}>
-              Theo dõi vị trí của từng Shipper trực tuyến trong khu vực chi nhánh.
+              Bản đồ tham khảo; danh sách bên dưới hiển thị tài xế trực tuyến, chưa thể hiện vị trí GPS trên bản đồ.
             </p>
           </div>
 
@@ -393,9 +331,9 @@ export function ManagerShipperPanel({ session }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#414743' }}>
+              <Label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#414743' }}>
                 1. Chọn đơn hàng cần giao ({pendingOrders.length} đơn)
-              </label>
+              </Label>
               <SearchableSelect
                 value={assigningOrderId}
                 onChange={(e) => setAssigningOrderId(e.target.value)}
@@ -412,9 +350,9 @@ export function ManagerShipperPanel({ session }) {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#414743' }}>
+              <Label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#414743' }}>
                 2. Chọn Shipper phân công
-              </label>
+              </Label>
               <SearchableSelect
                 value={assigningShipperId}
                 onChange={(e) => setAssigningShipperId(e.target.value)}
@@ -432,7 +370,7 @@ export function ManagerShipperPanel({ session }) {
           </div>
 
           <div style={{ display: 'flex', gap: '0.55rem' }}>
-            <button
+            <Button data-intent="success"
               type="button"
               className="btn-save-green"
               onClick={handleAssign}
@@ -440,15 +378,7 @@ export function ManagerShipperPanel({ session }) {
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', height: '34px', padding: '0 1.1rem', borderRadius: '6px', fontSize: '0.78125rem', fontWeight: '700', cursor: 'pointer' }}
             >
               <Check size={14} /> {isAssigning ? 'Đang phân công...' : 'Xác Nhận Phân Công'}
-            </button>
-
-            <button
-              type="button"
-              onClick={loadPendingOrders}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', height: '34px', padding: '0 0.85rem', borderRadius: '6px', backgroundColor: '#ffffff', color: '#414743', border: '1px solid #ccd3c7', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer' }}
-            >
-              <RefreshCw size={13} /> Làm mới danh sách đơn
-            </button>
+            </Button>
           </div>
 
           {/* Pending Orders Table */}
@@ -458,7 +388,7 @@ export function ManagerShipperPanel({ session }) {
                 Đơn hàng đang chờ Shipper giao ({pendingOrders.length})
               </h4>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78125rem' }}>
+                <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78125rem' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#f8f9f6', borderBottom: '1px solid #e2e4df' }}>
                       <th style={{ padding: '0.55rem 0.65rem', textAlign: 'left', color: '#69736a', fontWeight: '700' }}>Mã đơn</th>
@@ -473,15 +403,15 @@ export function ManagerShipperPanel({ session }) {
                         <td style={{ padding: '0.55rem 0.65rem', fontWeight: '700', color: 'var(--primary)' }}>#{String(o.ma_don_hang || '').slice(0, 8).toUpperCase()}</td>
                         <td style={{ padding: '0.55rem 0.65rem', color: '#414743' }}>{o.dia_chi_giao_hang || 'Chưa có địa chỉ'}</td>
                         <td style={{ padding: '0.55rem 0.65rem' }}>
-                          <span className="workspace-inline-label" style={{ padding: '0.12rem 0.45rem', borderRadius: '9999px', backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', fontSize: '0.68rem', fontWeight: '700' }}>
-                            {DELIVERY_STATUS_LABEL[o.trang_thai] || o.trang_thai || 'DANG_GIAO'}
-                          </span>
+                          <StatusBadge status={o.trang_thai || o.trang_thai_don_hang}>
+                            {DELIVERY_STATUS_LABEL[o.trang_thai] || ORDER_STATUS_LABEL[o.trang_thai_don_hang] || o.trang_thai || 'Chưa cập nhật'}
+                          </StatusBadge>
                         </td>
                         <td style={{ padding: '0.55rem 0.65rem', color: '#69736a', fontSize: '0.72rem' }}>{fmtDateTime(o.tao_luc)}</td>
                       </tr>
                     )}</PaginatedList>
                   </tbody>
-                </table>
+                </Table>
               </div>
             </div>
           )}
@@ -504,14 +434,12 @@ export function ManagerShipperPanel({ session }) {
               <PaginatedList items={exceptions} resetKey={activeTab}>{(exc) => {
                 const isHandling = handlingExceptionId === exc.id
                 return (
-                  <div key={exc.id} style={{ backgroundColor: '#ffffff', border: '1px solid #fde68a', borderLeft: '4px solid #d97706', borderRadius: '12px', padding: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div key={exc.id} style={{ backgroundColor: '#ffffff', border: '1px solid #fde68a', borderRadius: '12px', padding: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <h3 style={{ margin: 0, fontSize: '0.84rem', fontWeight: '700', color: '#b45309', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <AlertTriangle size={14} color="#d97706" /> {EXCEPTION_TYPE_LABEL[exc.exception_type] || exc.exception_type}
                       </h3>
-                      <span className="workspace-inline-label" style={{ padding: '0.12rem 0.45rem', borderRadius: '9999px', backgroundColor: "#f4f5f2", color: '#b45309', fontSize: '0.68rem', fontWeight: '700', border: '1px solid #fef3c7' }}>
-                        CHỜ DUYỆT
-                      </span>
+                      <StatusBadge status="PENDING">Chờ duyệt</StatusBadge>
                     </div>
 
                     <div style={{ fontSize: '0.78125rem', color: '#414743' }}>
@@ -528,8 +456,8 @@ export function ManagerShipperPanel({ session }) {
                     </span>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Ghi chú xử lý:</label>
-                      <textarea
+                      <Label style={{ fontSize: '0.75rem', fontWeight: '600', color: '#414743' }}>Ghi chú xử lý:</Label>
+                      <Textarea
                         rows={2}
                         placeholder="Nhập hướng dẫn xử lý cho Shipper..."
                         value={exceptionNote}
@@ -539,8 +467,8 @@ export function ManagerShipperPanel({ session }) {
                       />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.55rem', marginTop: '0.2rem' }}>
-                      <button
+                    <div data-modal-actions="true" style={{ display: 'flex', gap: '0.55rem', marginTop: '0.2rem' }}>
+                      <Button data-intent="success"
                         type="button"
                         className="btn-save-green"
                         onClick={() => handleException(exc.id, 'approve', exceptionNote)}
@@ -548,16 +476,16 @@ export function ManagerShipperPanel({ session }) {
                         style={{ flex: 1, height: '32px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}
                       >
                         <Check size={14} /> Duyệt báo cáo
-                      </button>
+                      </Button>
 
-                      <button
+                      <Button data-intent="danger"
                         type="button"
                         onClick={() => handleException(exc.id, 'reject', exceptionNote)}
                         disabled={isHandling}
                         style={{ flex: 1, height: '32px', borderRadius: '6px', backgroundColor: "#f4f5f2", color: '#dc2626', border: '1px solid #fecaca', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}
                       >
                         <X size={14} /> Từ chối
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )
@@ -579,20 +507,7 @@ export function ManagerShipperPanel({ session }) {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
-            <div style={{ backgroundColor: '#f8f9f6', border: '1px solid #e2e4df', borderRadius: '10px', padding: '0.85rem' }}>
-              <span style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600' }}>TỶ LỆ GIAO ĐÚNG GIỜ</span>
-              <strong style={{ display: 'block', fontSize: '1.15rem', color: '#2563eb', fontWeight: '700', marginTop: '0.15rem' }}>98.5%</strong>
-            </div>
-            <div style={{ backgroundColor: '#f8f9f6', border: '1px solid #e2e4df', borderRadius: '10px', padding: '0.85rem' }}>
-              <span style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600' }}>THỜI GIAN GIAO TB</span>
-              <strong style={{ display: 'block', fontSize: '1.15rem', color: 'var(--primary)', fontWeight: '700', marginTop: '0.15rem' }}>22 Phút</strong>
-            </div>
-            <div style={{ backgroundColor: '#f8f9f6', border: '1px solid #e2e4df', borderRadius: '10px', padding: '0.85rem' }}>
-              <span style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600' }}>ĐÁNH GIÁ TRUNG BÌNH</span>
-              <strong style={{ display: 'block', fontSize: '1.15rem', color: '#d97706', fontWeight: '700', marginTop: '0.15rem' }}>4.9 <WorkspaceSymbolStar size="1.1em" aria-hidden="true" /></strong>
-            </div>
-          </div>
+          <div className="operation-table-frame manager-driver-table"><Table><thead><tr><th style={{width:'34%'}}>Tài xế</th><th style={{width:'20%'}}>Đơn đang giao</th><th style={{width:'22%'}}>Hoàn tất hôm nay</th><th style={{width:'24%'}}>Đánh giá</th></tr></thead><tbody>{shippers.map(shipper => <tr key={shipper.id}><td><strong>{shipper.full_name || shipper.username}</strong><small>@{shipper.username}</small></td><td>{shipper.active_delivery_count || 0}</td><td>{shipper.total_delivered_today || 0}</td><td><DriverRating value={shipper.rating} /></td></tr>)}</tbody></Table>{!shippers.length && <p className="operation-empty">Chưa có dữ liệu tài xế để đánh giá hiệu suất.</p>}</div>
         </div>
       )}
 

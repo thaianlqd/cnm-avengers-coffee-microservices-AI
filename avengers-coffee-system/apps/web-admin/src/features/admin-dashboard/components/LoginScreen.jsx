@@ -1,3 +1,7 @@
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
 import { useState } from "react";
 import {
   Coffee,
@@ -13,6 +17,7 @@ const workspaces = [
   {
     id: "admin",
     label: "Admin",
+    tabLabel: "Admin",
     icon: ShieldCheck,
     title: "Quản trị toàn hệ thống",
     description:
@@ -24,6 +29,7 @@ const workspaces = [
   {
     id: "manager",
     label: "Quản lý",
+    tabLabel: "Quản lý",
     icon: Store,
     title: "Nắm trọn vận hành cửa hàng",
     description:
@@ -35,6 +41,7 @@ const workspaces = [
   {
     id: "staff",
     label: "Nhân viên",
+    tabLabel: "Nhân viên",
     icon: Users,
     title: "Một ca làm việc thật thuận tiện",
     description:
@@ -46,17 +53,19 @@ const workspaces = [
   {
     id: "partner",
     label: "Đối tác kiosk",
+    tabLabel: "Đối tác Kiosk",
     icon: Coffee,
     title: "Phát triển kiosk cùng Avengers",
     description:
       "Quản lý điểm bán, nguyên liệu, nhân sự và công nợ của mạng lưới kiosk.",
-    tags: ["Điểm bán kiosk", "Nhập combo", "Công nợ & royalty"],
+    tags: ["Điểm bán kiosk", "Nhập combo", "Công nợ & chia sẻ doanh thu"],
     image: '/images/login/highlands-roastery.jpg',
     imageAlt: 'Không gian rang xay cà phê tại Highlands Coffee',
   },
   {
     id: "accountant",
     label: "Quản lý nhượng quyền",
+    tabLabel: "Quản lý nhượng quyền",
     icon: Wallet,
     title: "Điều hành mạng lưới kiosk",
     description:
@@ -131,9 +140,9 @@ export function LoginScreen({
           <h2>Đổi mật khẩu mới</h2>
           <p>Xin chào, {pendingPasswordChange.user?.hoTen}</p>
           <form onSubmit={handleConfirm} className="console-login-fields">
-            <label htmlFor="newPassword">Mật khẩu mới</label>
+            <Label htmlFor="newPassword">Mật khẩu mới</Label>
             <div className="console-password">
-              <input
+              <Input
                 id="newPassword"
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
@@ -142,18 +151,18 @@ export function LoginScreen({
                 autoComplete="new-password"
                 required
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => setShowNewPassword((v) => !v)}
                 aria-label={showNewPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
                 {showNewPassword ? <EyeOff size={19} /> : <Eye size={19} />}
-              </button>
+              </Button>
             </div>
 
-            <label htmlFor="confirmPassword">Nhập lại mật khẩu mới</label>
+            <Label htmlFor="confirmPassword">Nhập lại mật khẩu mới</Label>
             <div className="console-password">
-              <input
+              <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
@@ -162,22 +171,22 @@ export function LoginScreen({
                 autoComplete="new-password"
                 required
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => setShowConfirmPassword((v) => !v)}
                 aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
                 {showConfirmPassword ? <EyeOff size={19} /> : <Eye size={19} />}
-              </button>
+              </Button>
             </div>
 
             {(localError || loginStatus.error) && (
               <p className="error-text">{localError || loginStatus.error}</p>
             )}
 
-            <button className="console-login-submit" type="submit" disabled={loginStatus.loading}>
+            <Button className="console-login-submit" type="submit" disabled={loginStatus.loading}>
               {loginStatus.loading ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
-            </button>
+            </Button>
           </form>
           </div>
         </section>
@@ -190,9 +199,9 @@ export function LoginScreen({
       <img key={selected.image} className="console-login-photo" src={selected.image} alt={selected.imageAlt} fetchPriority="high" />
       <section className="console-login-story" data-workspace={workspace}>
         <div className="console-login-logo">
-          <span style={{ display: 'inline-grid', placeItems: 'center', width: 44, height: 44, borderRadius: 12, background: '#ffffff', padding: 5, boxShadow: '0 4px 12px rgba(0,0,0,0.18)' }}>
-            <img src="/images/highlands-logo-red.svg" onError={(e) => { e.currentTarget.src = '/images/logo-red.png' }} alt="Avengers Coffee" style={{ width: 34, height: 34, objectFit: 'contain' }} />
-          </span>
+          <Badge variant="outline" data-quiet-label="true" style={{ display: 'inline-grid', placeItems: 'center', width: 44, height: 44, borderRadius: 12, background: '#ffffff', padding: 5, boxShadow: '0 4px 12px rgba(0,0,0,0.18)' }}>
+            <img src="/images/brand/logo.svg"  alt="Avengers Coffee" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+          </Badge>
           <span>Avengers Coffee</span>
         </div>
         <div className="console-login-copy">
@@ -214,18 +223,21 @@ export function LoginScreen({
           role="tablist"
           aria-label="Chọn nhóm đăng nhập"
         >
-          {workspaces.map(({ id, label, icon }) => {
+          {workspaces.map(({ id, label, tabLabel, icon }) => {
             const Icon = icon;
+            const isSelected = workspace === id;
             return (
               <button
                 type="button"
                 key={id}
                 role="tab"
                 id={"login-tab-" + id}
-                aria-selected={workspace === id}
+                className={`console-role-tab ${isSelected ? "active" : ""}`}
+                aria-selected={isSelected}
                 aria-controls="login-workspace"
+                title={label}
                 disabled={loginStatus.loading}
-                tabIndex={workspace === id ? 0 : -1}
+                tabIndex={isSelected ? 0 : -1}
                 onKeyDown={(event) => {
                   if (
                     ["ArrowRight", "ArrowLeft", "Home", "End"].includes(
@@ -254,7 +266,7 @@ export function LoginScreen({
                 onClick={() => selectWorkspace(id)}
               >
                 <Icon size={18} />
-                {label}
+                <span className="console-role-tab-label">{tabLabel || label}</span>
               </button>
             );
           })}
@@ -270,8 +282,8 @@ export function LoginScreen({
             Sẵn sàng cho một ngày làm việc hiệu quả.
           </p>
           <form onSubmit={(event) => { setSubmittedWorkspace(workspace); onLogin(event, workspace); }} className="console-login-fields">
-            <label htmlFor="identifier">Tên đăng nhập hoặc email</label>
-            <input
+            <Label htmlFor="identifier">Tên đăng nhập hoặc email</Label>
+            <Input
               id="identifier"
               value={loginForm.identifier}
               onChange={(event) =>
@@ -284,9 +296,9 @@ export function LoginScreen({
               autoComplete="username"
               required
             />
-            <label htmlFor="password">Mật khẩu</label>
+            <Label htmlFor="password">Mật khẩu</Label>
             <div className="console-password">
-              <input
+              <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={loginForm.password}
@@ -300,20 +312,20 @@ export function LoginScreen({
                 autoComplete="current-password"
                 required
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
                 {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
-              </button>
+              </Button>
             </div>
             {loginStatus.error && workspace === submittedWorkspace && (
               <p className="console-error" role="alert">
                 {loginStatus.error}
               </p>
             )}
-            <button
+            <Button
               type="submit"
               className="console-login-submit"
               disabled={loginStatus.loading}
@@ -321,7 +333,7 @@ export function LoginScreen({
               {loginStatus.loading
                 ? "Đang đăng nhập…"
                 : "Đăng nhập vào không gian làm việc"}
-            </button>
+            </Button>
           </form>
           <p className="console-login-note">
             <ShieldCheck size={17} /> Chỉ tài khoản thuộc nhóm {selected.label} mới đăng nhập được tại đây.

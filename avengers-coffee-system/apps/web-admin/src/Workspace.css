@@ -51,24 +51,24 @@
   --accent-rgb: 198, 75, 18;
 }
 
-/* 4. Franchise Partner / Kiosk Owner: Teal (#007cad) */
+/* 4. Franchise Partner / Kiosk Owner: Avengers Crimson (#b22830) */
 .console-shell[data-actor="partner"],
 .console-login[data-actor="partner"] {
-  --primary: #007cad;
-  --primary-hover: #00658d;
-  --primary-light: #edf9ff;
-  --primary-subtle: #c8eafb;
-  --accent-rgb: 0, 124, 173;
+  --primary: #b22830;
+  --primary-hover: #8c1f25;
+  --primary-light: #fef2f2;
+  --primary-subtle: #fee2e2;
+  --accent-rgb: 178, 40, 48;
 }
 
-/* 5. Franchise Manager / Accountant: Indigo / Violet (#4f46e5) */
+/* 5. Franchise Manager / Accountant: Avengers Crimson (#b22830) */
 .console-shell[data-actor="accountant"],
 .console-login[data-actor="accountant"] {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: #eef2ff;
-  --primary-subtle: #e0e7ff;
-  --accent-rgb: 79, 70, 229;
+  --primary: #b22830;
+  --primary-hover: #8c1f25;
+  --primary-light: #fef2f2;
+  --primary-subtle: #fee2e2;
+  --accent-rgb: 178, 40, 48;
 }
 .console-shell svg.workspace-icon,
 .console-shell svg.workspace-icon * { fill: currentColor; stroke: none !important; }
@@ -518,19 +518,11 @@
   justify-content: space-between !important;
   gap: 16px !important;
   padding: 20px 28px !important;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  background: #fff !important;
   border-bottom: 1.5px solid #e2e8f0 !important;
   position: relative !important;
 }
-.console-shell :is(.workspace-dialog-heading,.cat-modal-head,.menu-modal-head,.promo-modal-head,.branch-form-header)::before {
-  content: '' !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  height: 3.5px !important;
-  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%) !important;
-}
+.console-shell :is(.workspace-dialog-heading,.cat-modal-head,.menu-modal-head,.promo-modal-head,.branch-form-header)::before { content: none; }
 .console-shell :is(.workspace-dialog-heading,.cat-modal-head,.menu-modal-head,.promo-modal-head,.branch-form-header) :is(h2,h3) {
   margin: 0 !important;
   font-size: 1.15rem !important;
@@ -659,7 +651,7 @@
 .console-shell button.workspace-back-button :is(svg, span) {
   color: inherit !important;
 }
-.console-shell .workspace-form-error { padding: 12px 14px; border: 1px solid #fecaca; border-left: 3px solid #dc2626; border-radius: 6px; color: #991b1b; background: #fff; line-height: 1.5; margin: 0 0 18px; font-size: 13px; }
+.console-shell .workspace-form-error { padding: 12px 14px; border: 1px solid #fecaca; border-left: 1px solid #fecaca; border-radius: 6px; color: #991b1b; background: #fff; line-height: 1.5; margin: 0 0 18px; font-size: 13px; }
 .console-shell .management-dialog > .workspace-form-error { margin: 20px 24px 0; }
 .console-shell .smart-select { min-width: 0 !important; min-height: 38px; padding: 0 11px !important; border: 1px solid var(--border-light) !important; border-radius: 6px !important; background: #fff !important; gap: 8px; color: #71717a; }
 .console-shell .smart-select:focus-within { border-color: #09090b !important; outline: 1px solid #09090b; }
@@ -920,12 +912,12 @@ input.standard-select-input {
    ========================================================================== */
 
 /* 1. Universal sibling selector: Any input preceded by an SVG / icon */
-.console-shell :is(svg, [class*="icon"], [class*="leading"], [class*="search"]) ~ :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]), .shadcn-input):not(.workspace-field input) {
+.console-shell :is(svg, .input-icon, .leading-icon, .search-icon, [data-input-icon]) ~ :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]), .shadcn-input):not(.workspace-field input) {
   padding-left: 40px !important;
 }
 
 /* 2. Universal parent selector: Any wrapper containing a leading icon and an input */
-.console-shell :is(div, label, span):has(> :is(svg, [class*="icon"], [class*="leading"], [class*="search"]):first-child) > :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]), .shadcn-input):not(.workspace-field input) {
+.console-shell :is(div, label, span):has(> :is(svg, .input-icon, .leading-icon, .search-icon, [data-input-icon]):first-child) > :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]), .shadcn-input):not(.workspace-field input) {
   padding-left: 40px !important;
 }
 
@@ -1581,3 +1573,28 @@ input.standard-select-input {
   color: #71717a;
   text-align: center;
 }
+
+.contact-validation-host::after {
+  content: attr(data-contact-validation-error);
+  display: block;
+  margin-top: 5px;
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.console-shell input[aria-invalid="true"] { border-color:#d92d20 !important; box-shadow:0 0 0 2px #fee4e2 !important; }
+.admin-global-toast {
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  z-index:10050;
+  width:min(380px,calc(100vw - 32px));
+  padding:16px 18px;
+  border:1px solid #d7e2eb;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 14px 38px #142b3e24;
+}
+.admin-global-toast p:first-child { color:#142b3e !important; }
+.admin-global-toast p:last-child { color:#526174 !important; line-height:1.5; }
+@media(max-width:600px) { .kiosk-staff-toast,.admin-global-toast { top:auto; right:12px; bottom:12px; width:calc(100vw - 24px); } }

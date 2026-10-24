@@ -1,0 +1,94 @@
+/* The counter follows one path: find a drink, check the receipt, collect payment. */
+.kiosk-sale-terminal { --sale-navy:#16354d; --sale-ink:#142b3e; --sale-muted:#526174; --sale-line:#e2e8f0; display:grid; grid-template-columns:minmax(0,1fr) 360px; align-items:start; gap:24px; width:100%; color:var(--sale-ink); }
+.kiosk-sale-terminal button[data-ui="button"] { border-style:solid; }
+.kiosk-sale-catalog { min-width:0; padding:20px; border:1px solid var(--sale-line); border-radius:12px; background:#fff; }
+.kiosk-sale-catalog-header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
+.kiosk-sale-catalog-header h2,.kiosk-sale-receipt h2 { margin:0; font-size:17px; font-weight:600; line-height:1.4; color:var(--sale-ink); }
+.kiosk-sale-catalog-header p { margin:5px 0 0; font-size:12px; line-height:1.5; color:var(--sale-muted); }
+.kiosk-sale-search { position:relative; margin-bottom:16px; }
+.kiosk-sale-search > svg { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--sale-muted); pointer-events:none; }
+:is(#root,body) .console-shell .kiosk-sale-search input { min-height:46px; padding:10px 44px !important; border:1px solid #cbd5e1; border-radius:7px; font-size:14px; }
+:is(#root,body) .console-shell .kiosk-sale-search > button { position:absolute; right:5px; top:5px; height:36px; min-height:36px; width:36px; padding:0; }
+.kiosk-sale-categories { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding-bottom:20px; }
+:is(#root,body) .console-shell .kiosk-sale-categories > button { min-height:36px; height:auto; padding:7px 11px; font-size:12px; gap:6px; border-radius:6px; white-space:normal; line-height:1.4; }
+.kiosk-sale-categories button > span { opacity:.8; font-variant-numeric:tabular-nums; }
+.kiosk-sale-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; align-items:stretch; }
+:is(#root,body) .console-shell button.kiosk-sale-product { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; gap:0; height:auto; min-height:260px; padding:12px; background:#fff; color:var(--sale-ink); border:1px solid var(--sale-line); border-radius:12px; text-align:left; white-space:normal; font-family:inherit; box-shadow:none; transition:border-color 160ms ease,background-color 160ms ease; }
+:is(#root,body) .console-shell button.kiosk-sale-product:hover { border-color:#94afc2; background:#f9fbfd; }
+:is(#root,body) .console-shell button.kiosk-sale-product.is-selected { border-color:#8fb5cc; background:#f5fafd; }
+:is(#root,body) .console-shell button.kiosk-sale-product:focus-visible { outline:2px solid #0284c7; outline-offset:3px; }
+.kiosk-sale-product-image { position:relative; display:flex; align-items:center; justify-content:center; height:146px; margin-bottom:12px; background:#f6f8fa; border-radius:8px; color:var(--sale-muted); }
+.kiosk-sale-product-image > img { width:100%; height:100%; object-fit:contain; padding:10px; }
+.kiosk-sale-product-count { position:absolute; top:6px; right:6px; display:grid; place-items:center; min-width:25px; height:25px; padding:0 6px; border-radius:6px; background:var(--sale-navy); color:#fff; font-size:12px; }
+.kiosk-sale-product-name { display:block; margin-bottom:6px; font-size:14px; font-weight:600; line-height:1.5; overflow-wrap:anywhere; }
+.kiosk-sale-product [data-ui="badge"] { align-self:flex-start; max-width:100%; margin-bottom:12px; white-space:normal; font-size:10px; }
+.kiosk-sale-product-bottom { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; }
+.kiosk-sale-product-bottom > strong { font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; }
+.kiosk-sale-add { display:grid; place-items:center; width:32px; height:32px; border-radius:6px; background:#eef7fc; color:var(--sale-navy); }
+.kiosk-sale-placeholder { height:280px; border-radius:12px; }
+.kiosk-sale-pagination { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:20px; padding-top:16px; border-top:1px solid var(--sale-line); font-size:12px; color:var(--sale-muted); }
+.kiosk-sale-pagination > div { display:flex; align-items:center; gap:12px; }
+:is(#root,body) .console-shell .kiosk-sale-pagination button { width:36px; height:36px; min-height:36px; padding:0; }
+.kiosk-sale-no-results { display:flex; flex-direction:column; align-items:center; padding:60px 20px; text-align:center; color:var(--sale-muted); }
+.kiosk-sale-no-results h3 { font-size:16px; color:var(--sale-ink); margin:16px 0 4px; }
+.kiosk-sale-no-results p { font-size:13px; margin:0 0 20px; }
+.kiosk-sale-receipt { min-width:0; position:sticky; top:0; align-self:start; border:1px solid var(--sale-line); border-radius:12px; background:#fff; overflow:hidden; }
+.kiosk-sale-receipt-header { display:flex; align-items:center; gap:10px; padding:20px; border-bottom:1px solid var(--sale-line); }
+.kiosk-sale-receipt-header > div { flex:1; display:flex; align-items:center; gap:10px; }
+.kiosk-sale-receipt-header > span { font-size:12px; color:var(--sale-muted); white-space:nowrap; }
+:is(#root,body) .console-shell .kiosk-sale-receipt-header > button { width:32px; height:32px; min-height:32px; padding:0; color:#b91c1c; }
+.kiosk-sale-lines { max-height:360px; overflow-y:auto; overscroll-behavior:contain; padding:0 20px; scrollbar-width:thin; scrollbar-color:#b8cbd9 transparent; }
+.kiosk-sale-empty { padding:32px 8px; text-align:center; color:var(--sale-muted); }
+.kiosk-sale-empty > svg { display:block; margin:0 auto 12px; color:#70879a; }
+.kiosk-sale-empty h3 { margin:0; font-size:14px; font-weight:500; }
+.kiosk-sale-empty p { margin:5px 0 0; font-size:12px; }
+.kiosk-sale-line { padding:14px 0; border-bottom:1px solid #edf1f5; }
+.kiosk-sale-line:last-child { border-bottom:0; }
+.kiosk-sale-line-top { display:flex; align-items:flex-start; gap:12px; }
+.kiosk-sale-line-top > strong { flex:1; font-size:13px; font-weight:600; line-height:1.5; }
+:is(#root,body) .console-shell .kiosk-sale-line-top button { width:24px; height:24px; min-height:24px; padding:0; color:var(--sale-muted); flex-shrink:0; }
+.kiosk-sale-line > small { display:block; font-size:11px; color:var(--sale-muted); margin:4px 0; }
+.kiosk-sale-line-bottom { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:10px; }
+.kiosk-sale-line-bottom > strong { font-size:14px; font-variant-numeric:tabular-nums; }
+.kiosk-sale-quantity { display:flex; align-items:center; gap:8px; }
+.kiosk-sale-quantity > span { min-width:20px; text-align:center; font-size:13px; font-variant-numeric:tabular-nums; }
+:is(#root,body) .console-shell .kiosk-sale-quantity button { width:32px; height:32px; min-height:32px; padding:0; }
+.kiosk-sale-settlement { display:flex; flex-direction:column; padding:20px; gap:10px; background:#fbfcfd; border-top:1px solid var(--sale-line); }
+.kiosk-sale-total { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:16px; margin-bottom:4px; border-bottom:1px solid var(--sale-line); }
+.kiosk-sale-total > span { font-size:14px; font-weight:500; }
+.kiosk-sale-total > strong { color:var(--sale-navy); font-size:24px; font-weight:600; letter-spacing:-.025em; font-variant-numeric:tabular-nums; }
+.kiosk-sale-settlement > label { font-size:12px; font-weight:500; color:var(--sale-muted); margin-top:4px; }
+.kiosk-sale-settlement .standard-searchable-select { width:100%; }
+:is(#root,body) .console-shell .kiosk-sale-settlement > input { width:100%; min-height:44px; border:1px solid #cbd5e1; border-radius:6px; padding:10px 12px !important; color:var(--sale-ink); font-size:14px; background:#fff; }
+:is(#root,body) .console-shell .kiosk-sale-settlement > input[aria-invalid="true"] { border-color:#b91c1c; }
+.kiosk-sale-cash-shortcuts { display:flex; flex-wrap:wrap; gap:6px; }
+:is(#root,body) .console-shell .kiosk-sale-cash-shortcuts button { height:30px; min-height:30px; padding:4px 9px; font-size:11px; background:#fff; }
+.kiosk-sale-change { display:flex; justify-content:space-between; gap:12px; margin:2px 0 8px; font-size:12px; color:var(--sale-muted); }
+.kiosk-sale-change > strong { color:var(--sale-ink); font-variant-numeric:tabular-nums; }
+.kiosk-sale-error { margin:0; padding:10px 12px; border-radius:6px; background:#fff1f2; color:#b91c1c !important; font-size:12px; line-height:1.6; }
+:is(#root,body) .console-shell :is(.kiosk-sale-pay,.kiosk-sale-new-order) { min-height:46px; height:auto; width:100%; gap:12px; padding:12px 16px; background:var(--sale-navy); color:#fff; font-size:14px; }
+:is(#root,body) .console-shell .kiosk-sale-pay:disabled { opacity:1; background:#e2e8f0; color:#526174; cursor:not-allowed; }
+.kiosk-sale-footnote { margin:0; font-size:11px; line-height:1.5; color:var(--sale-muted); text-align:center; }
+.kiosk-sale-result { display:flex; align-items:center; flex-direction:column; gap:10px; padding:36px 24px 24px; text-align:center; min-height:450px; }
+.kiosk-sale-result h3 { font-size:20px; font-weight:600; letter-spacing:-.025em; color:var(--sale-ink); margin:8px 0 0; }
+.kiosk-sale-result > p { margin:0; font-size:13px; color:var(--sale-muted); line-height:1.6; }
+.kiosk-sale-result-amount { margin-top:10px; color:var(--sale-ink); font-size:30px; letter-spacing:-.025em; font-weight:600; font-variant-numeric:tabular-nums; }
+.kiosk-sale-result .kiosk-sale-result-code { font-size:12px; margin-bottom:10px; }
+.kiosk-sale-result-cash { width:100%; margin:0 0 16px; border-top:1px solid var(--sale-line); padding-top:16px; }
+.kiosk-sale-result-cash > div { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; font-size:13px; color:var(--sale-muted); }
+.kiosk-sale-result-cash dd { margin:0; color:var(--sale-ink); font-weight:500; }
+.kiosk-sale-success { width:84px; height:84px; overflow:visible; fill:none; color:#22833d; }
+.kiosk-sale-success-ring { stroke:currentColor; stroke-width:3; stroke-linecap:round; transform-origin:40px 40px; animation:kiosk-sale-ring 850ms cubic-bezier(.16,1,.3,1) both; }
+.kiosk-sale-success-check { stroke:currentColor; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:48; stroke-dashoffset:0; animation:kiosk-sale-check 450ms cubic-bezier(.16,1,.3,1) 650ms both; }
+.kiosk-sale-payment-wait { color:var(--sale-navy); padding:20px; }
+.kiosk-sale-payment-wait > svg { animation:kiosk-sale-wait 1.5s linear infinite; }
+.kiosk-sale-payment-qr { width:210px; height:210px; object-fit:contain; }
+.kiosk-sale-payment-link { display:flex; align-items:center; gap:8px; color:#0f4d70; font-size:14px; text-decoration:underline; text-underline-offset:3px; padding:12px; }
+@keyframes kiosk-sale-ring { 0% { stroke-dasharray:65 149; transform:rotate(-120deg); } 65% { stroke-dasharray:150 64; } 100% { stroke-dasharray:214 0; transform:rotate(240deg); } }
+@keyframes kiosk-sale-check { from { stroke-dashoffset:48; } to { stroke-dashoffset:0; } }
+@keyframes kiosk-sale-wait { to { transform:rotate(360deg); } }
+@media(min-width:1600px) { .kiosk-sale-terminal { grid-template-columns:minmax(0,1fr) 390px; } .kiosk-sale-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .kiosk-sale-product-image { height:170px; } }
+@media(max-width:1100px) { .kiosk-sale-terminal { grid-template-columns:minmax(0,1fr) 320px; gap:16px; } .kiosk-sale-catalog { padding:16px; } .kiosk-sale-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; } .kiosk-sale-product-image { height:130px; } }
+@media(max-width:800px) { .kiosk-sale-terminal { grid-template-columns:minmax(0,1fr); } .kiosk-sale-receipt { position:static; } .kiosk-sale-lines { max-height:none; } }
+@media(max-width:480px) { .kiosk-sale-catalog { padding:12px; } .kiosk-sale-grid { gap:8px; } :is(#root,body) .console-shell button.kiosk-sale-product { padding:8px; min-height:230px; } .kiosk-sale-product-image { height:116px; } .kiosk-sale-product-name { font-size:13px; } }
+@media(prefers-reduced-motion:reduce) { .kiosk-sale-success-ring,.kiosk-sale-success-check,.kiosk-sale-payment-wait > svg { animation:none; } .kiosk-sale-product { transition:none; } }

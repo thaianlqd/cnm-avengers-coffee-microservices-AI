@@ -1,3 +1,10 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import { useWorkspacePage } from '../../../components/console/WorkspacePageContext'
+import { Badge } from '../../../components/ui/badge'
+import { Button } from '../../../components/ui/button'
+import { Card } from '../../../components/ui/card'
+import { Input } from '../../../components/ui/input'
+import { Table } from '../../../components/ui/table'
 import React, { useState, useEffect } from 'react'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import SearchableSelect from '../../../components/console/SearchableSelect'
@@ -7,19 +14,15 @@ import {
   CheckCircle2,
   XCircle,
   Search,
-  RefreshCw,
   FileText,
   AlertTriangle,
   Building2,
-  Calendar,
-  Printer,
   X,
   Star,
   MessageSquare,
   PauseCircle,
   PowerOff,
   Trash2,
-  Eye,
   MapPin,
   ChevronRight,
   ArrowLeft,
@@ -103,7 +106,7 @@ export function AdminKioskManagementPanel({ session }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedKiosk, setSelectedKiosk] = useState(null)
-  const [contractModal, setContractModal] = useState(null)
+  useWorkspacePage(selectedKiosk?.ten_kiosk, 'Thông tin vận hành, đối tác và tình trạng tài chính của kiosk.')
   const [reviewModal, setReviewModal] = useState(null)
   const [reviews, setReviews] = useState([])
   const [loadingReviews, setLoadingReviews] = useState(false)
@@ -185,7 +188,7 @@ export function AdminKioskManagementPanel({ session }) {
 
   // Actions
   const handleSignContract = async (k) => {
-    if (!window.confirm(`Xác nhận tạo và ký hợp đồng cho Kiosk ${k.ten_kiosk} (${k.ma_kiosk}) với mức Royalty mặc định 7%?`)) return
+    if (!window.confirm(`Xác nhận tạo và ký hợp đồng cho Kiosk ${k.ten_kiosk} (${k.ma_kiosk}) với mức Chia sẻ doanh thu mặc định 7%?`)) return
     try {
       const fileUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
       const token = getAdminAccessToken() || session?.token
@@ -369,44 +372,39 @@ export function AdminKioskManagementPanel({ session }) {
     switch (status) {
       case 'DANG_HOAT_DONG':
         return (
-          <span className="workspace-inline-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', backgroundColor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16a34a' }}></span>
+          <StatusBadge status={status} className="workspace-inline-label" style={{ whiteSpace: 'nowrap' }}>
             Đang hoạt động
-          </span>
+          </StatusBadge>
         )
       case 'CHO_KY_HOP_DONG':
         return (
-          <span className="workspace-inline-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2563eb' }}></span>
+          <StatusBadge status={status} className="workspace-inline-label" style={{ whiteSpace: 'nowrap' }}>
             Chờ ký hợp đồng
-          </span>
+          </StatusBadge>
         )
       case 'DANG_THIET_LAP':
         return (
-          <span className="workspace-inline-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', backgroundColor: '#fffbeb', color: '#b45309', border: '1px solid #fde68a' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }}></span>
+          <StatusBadge status={status} className="workspace-inline-label" style={{ whiteSpace: 'nowrap' }}>
             Đang thiết lập
-          </span>
+          </StatusBadge>
         )
       case 'TAM_DUNG':
         return (
-          <span className="workspace-inline-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', backgroundColor: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ea580c' }}></span>
+          <StatusBadge status={status} className="workspace-inline-label" style={{ whiteSpace: 'nowrap' }}>
             Tạm dừng
-          </span>
+          </StatusBadge>
         )
       case 'NGUNG_HOAT_DONG':
         return (
-          <span className="workspace-inline-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
+          <StatusBadge status={status} className="workspace-inline-label" style={{ whiteSpace: 'nowrap' }}>
             Ngừng hoạt động
-          </span>
+          </StatusBadge>
         )
       default:
         return (
-          <span className="workspace-inline-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', backgroundColor: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0' }}>
+          <StatusBadge status={status} className="workspace-inline-label" style={{ whiteSpace: 'nowrap' }}>
             {status || 'Không xác định'}
-          </span>
+          </StatusBadge>
         )
     }
   }
@@ -417,8 +415,8 @@ export function AdminKioskManagementPanel({ session }) {
       {selectedKiosk ? (
         <div className="kiosk-detail-page" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Top Bar with Back Button */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <button
+          <div className="record-page-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <Button
               type="button"
               className="admin-button-secondary"
               onClick={() => setSelectedKiosk(null)}
@@ -428,42 +426,42 @@ export function AdminKioskManagementPanel({ session }) {
                 gap: '0.5rem',
                 padding: '0.5rem 1.15rem',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
+                border: "1px solid var(--border-light)",
                 background: '#ffffff',
-                color: '#1e293b',
+                color: "var(--text-body)",
                 fontWeight: '600',
                 fontSize: '0.8125rem',
                 cursor: 'pointer',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                boxShadow: "none",
                 transition: 'all 0.15s ease'
               }}
             >
               <ArrowLeft size={16} /> Quay lại danh sách
-            </button>
+            </Button>
 
-            <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-              <span>Danh sách kiosk</span> <span style={{ margin: '0 0.35rem' }}>/</span> <strong style={{ color: '#0f172a' }}>{selectedKiosk.ten_kiosk}</strong>
+            <div style={{ fontSize: '0.8125rem', color: "var(--text-muted)" }}>
+              <span>Danh sách kiosk</span> <span style={{ margin: '0 0.35rem' }}>/</span> <strong style={{ color: "var(--text-main)" }}>{selectedKiosk.ten_kiosk}</strong>
             </div>
           </div>
 
           {/* SINGLE BIG UNIFIED SECTION */}
           <div
-            className="admin-surface kiosk-detail-unified-section"
+            className="record-detail-layout"
             style={{
               background: '#ffffff',
-              borderRadius: '14px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 2px 8px -2px rgba(15, 23, 42, 0.05), 0 1px 4px -1px rgba(15, 23, 42, 0.03)',
+              borderRadius: "10px",
+              border: "1px solid var(--border-light)",
+              boxShadow: "none",
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column'
             }}
           >
             {/* Header & Quick Action Toolbar */}
-            <div
+            <Card className="record-summary-header"
               style={{
                 padding: '1.35rem 1.75rem',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: "1px solid var(--border-subtle)",
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
@@ -474,11 +472,11 @@ export function AdminKioskManagementPanel({ session }) {
             >
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.01em' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: "700", color: "var(--text-main)", letterSpacing: '-0.015em' }}>
                     {selectedKiosk.ten_kiosk}
                   </h2>
                   {selectedKiosk.xep_hang && (
-                    <span
+                    <Badge variant="outline" data-quiet-label="true"
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -486,33 +484,47 @@ export function AdminKioskManagementPanel({ session }) {
                         padding: '0.2rem 0.65rem',
                         borderRadius: '9999px',
                         fontSize: '0.75rem',
-                        fontWeight: '700',
-                        backgroundColor: selectedKiosk.xep_hang === 'S' ? '#fef08a' : selectedKiosk.xep_hang === 'A' ? '#dbeafe' : selectedKiosk.xep_hang === 'B' ? '#fed7aa' : '#fee2e2',
-                        color: selectedKiosk.xep_hang === 'S' ? '#854d0e' : selectedKiosk.xep_hang === 'A' ? '#1e40af' : selectedKiosk.xep_hang === 'B' ? '#9a3412' : '#991b1b',
+                        fontWeight: "600",
+                        backgroundColor: selectedKiosk.xep_hang === 'S' ? '#fef08a' : selectedKiosk.xep_hang === 'A' ? "var(--primary-subtle)" : selectedKiosk.xep_hang === 'B' ? '#fed7aa' : '#fee2e2',
+                        color: selectedKiosk.xep_hang === 'S' ? '#854d0e' : selectedKiosk.xep_hang === 'A' ? "var(--primary-hover)" : selectedKiosk.xep_hang === 'B' ? '#9a3412' : '#991b1b',
                         border: `1px solid ${selectedKiosk.xep_hang === 'S' ? '#eab308' : selectedKiosk.xep_hang === 'A' ? '#3b82f6' : selectedKiosk.xep_hang === 'B' ? '#f97316' : '#ef4444'}`
                       }}
                     >
-                      Hạng {selectedKiosk.xep_hang} • {selectedKiosk.diem_danh_gia || 0} điểm
-                    </span>
+                      Hiệu quả {selectedKiosk.xep_hang} · {selectedKiosk.diem_danh_gia || 0} điểm
+                    </Badge>
                   )}
                   {getStatusBadge(selectedKiosk.trang_thai)}
                 </div>
 
-                <div style={{ fontSize: '0.8125rem', color: '#64748b', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <span>Mã Kiosk: <strong style={{ color: '#0f172a', fontFamily: 'monospace' }}>{selectedKiosk.ma_kiosk}</strong></span>
-                  <span style={{ color: '#cbd5e1' }}>•</span>
-                  <span>Mô hình: <strong style={{ color: '#334155' }}>{selectedKiosk.loai_kiosk || 'Kiosk Tiêu Chuẩn'}</strong></span>
-                  <span style={{ color: '#cbd5e1' }}>•</span>
-                  <span>Khởi tạo: <span style={{ color: '#475569' }}>{fmtDate(selectedKiosk.ngay_tao)}</span></span>
-                  <span style={{ color: '#cbd5e1' }}>•</span>
-                  <span>Cập nhật: <span style={{ color: '#475569' }}>{fmtDate(selectedKiosk.ngay_cap_nhat)}</span></span>
+                {/* Natural, uncluttered metadata line without badge abuse */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.45rem', flexWrap: 'wrap', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span>Mã Kiosk:</span>
+                    <strong style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: '600' }}>{selectedKiosk.ma_kiosk}</strong>
+                  </div>
+                  <span style={{ color: 'var(--border-light)', userSelect: 'none' }}>•</span>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span>Mô hình:</span>
+                    <strong style={{ color: 'var(--text-main)', fontWeight: '600' }}>{selectedKiosk.loai_kiosk || 'Kiosk Tiêu Chuẩn'}</strong>
+                  </div>
+                  <span style={{ color: 'var(--border-light)', userSelect: 'none' }}>•</span>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span>Khởi tạo:</span>
+                    <span style={{ color: 'var(--text-body)', fontWeight: '500' }}>{fmtDate(selectedKiosk.ngay_tao)}</span>
+                  </div>
+                  <span style={{ color: 'var(--border-light)', userSelect: 'none' }}>•</span>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span>Cập nhật:</span>
+                    <span style={{ color: 'var(--text-body)', fontWeight: '500' }}>{fmtDate(selectedKiosk.ngay_cap_nhat)}</span>
+                  </div>
                 </div>
               </div>
 
               {/* Action Toolbar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {selectedKiosk.trang_thai === 'CHO_KY_HOP_DONG' && (
-                  <button
+                  <Button
+                    data-intent="success"
                     type="button"
                     className="admin-button-primary"
                     onClick={() => handleSignContract(selectedKiosk)}
@@ -521,7 +533,7 @@ export function AdminKioskManagementPanel({ session }) {
                       padding: '0 0.95rem',
                       borderRadius: '8px',
                       border: 'none',
-                      background: '#2563eb',
+                      background: "var(--primary)",
                       color: '#ffffff',
                       fontWeight: '600',
                       fontSize: '0.8125rem',
@@ -531,12 +543,12 @@ export function AdminKioskManagementPanel({ session }) {
                       cursor: 'pointer'
                     }}
                   >
-                    <FileText size={15} /> Ký hợp đồng nhượng quyền
-                  </button>
+                    <FileText size={15} /> Duyệt hợp đồng
+                  </Button>
                 )}
 
                 {selectedKiosk.trang_thai === 'DANG_THIET_LAP' && (
-                  <button
+                  <Button
                     type="button"
                     className="admin-button-primary"
                     onClick={() => handleLaunchKiosk(selectedKiosk)}
@@ -556,11 +568,11 @@ export function AdminKioskManagementPanel({ session }) {
                     }}
                   >
                     <WorkspaceSymbolSparkles size={15} /> Khai trương Kiosk
-                  </button>
+                  </Button>
                 )}
 
                 {selectedKiosk.trang_thai === 'DANG_HOAT_DONG' && (
-                  <button
+                  <Button
                     type="button"
                     onClick={() => handleToggleStatus(selectedKiosk, 'TAM_DUNG')}
                     style={{
@@ -579,20 +591,20 @@ export function AdminKioskManagementPanel({ session }) {
                     }}
                   >
                     <PauseCircle size={15} /> Tạm dừng
-                  </button>
+                  </Button>
                 )}
 
                 {selectedKiosk.trang_thai === 'TAM_DUNG' && (
-                  <button
+                  <Button
                     type="button"
                     onClick={() => handleToggleStatus(selectedKiosk, 'DANG_HOAT_DONG')}
                     style={{
                       height: '36px',
                       padding: '0 0.95rem',
                       borderRadius: '8px',
-                      border: '1px solid #bfdbfe',
-                      background: '#eff6ff',
-                      color: '#2563eb',
+                      border: "1px solid var(--border-light)",
+                      background: "var(--primary-light)",
+                      color: "var(--primary)",
                       fontWeight: '600',
                       fontSize: '0.8125rem',
                       display: 'inline-flex',
@@ -602,11 +614,11 @@ export function AdminKioskManagementPanel({ session }) {
                     }}
                   >
                     <CheckCircle2 size={15} /> Mở lại hoạt động
-                  </button>
+                  </Button>
                 )}
 
                 {selectedKiosk.trang_thai !== 'NGUNG_HOAT_DONG' && (
-                  <button
+                  <Button data-intent="danger"
                     type="button"
                     onClick={() => handleCloseKiosk(selectedKiosk)}
                     style={{
@@ -625,34 +637,12 @@ export function AdminKioskManagementPanel({ session }) {
                     }}
                   >
                     <PowerOff size={15} /> Đóng điểm
-                  </button>
+                  </Button>
                 )}
 
-                {selectedKiosk.hop_dong && (
-                  <button
-                    type="button"
-                    className="admin-button-secondary"
-                    onClick={() => setContractModal(selectedKiosk)}
-                    style={{
-                      height: '36px',
-                      padding: '0 0.95rem',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      background: '#ffffff',
-                      color: '#0f172a',
-                      fontWeight: '600',
-                      fontSize: '0.8125rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <Printer size={15} /> In hợp đồng
-                  </button>
-                )}
 
-                <button
+
+                <Button data-intent="danger"
                   type="button"
                   className="admin-button-danger"
                   onClick={() => handleDeleteKiosk(selectedKiosk)}
@@ -673,70 +663,70 @@ export function AdminKioskManagementPanel({ session }) {
                   title="Xóa vĩnh viễn Kiosk khỏi hệ thống"
                 >
                   <Trash2 size={15} /> Xóa
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
 
             {/* BLOCK 1: 3-COLUMN INFORMATION MATRIX */}
             <div
-              className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/70 p-6 gap-6 lg:gap-0"
+              className="record-facts-grid grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/70 p-6 gap-6 lg:gap-0"
               style={{
                 background: '#ffffff'
               }}
             >
               {/* Column 1: Vận hành & Mô hình */}
-              <div className="flex flex-col gap-3 lg:pr-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                <div style={{ fontWeight: '700', fontSize: '0.875rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+              <Card data-record-card="true" className="flex flex-col gap-3 lg:pr-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: "1px solid var(--border-subtle)" }}>
                   <Store size={17} color="#2563eb" /> Mô hình kinh doanh & Vận hành
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem', fontSize: '0.8125rem' }}>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Loại mô hình Kiosk</div>
-                    <div style={{ fontWeight: '600', color: '#0f172a' }}>{selectedKiosk.loai_kiosk || 'Kiosk Tiêu Chuẩn'}</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Loại mô hình Kiosk</div>
+                    <div style={{ fontWeight: '600', color: "var(--text-main)" }}>{selectedKiosk.loai_kiosk || 'Kiosk Tiêu Chuẩn'}</div>
                   </div>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Số Combo nguyên liệu</div>
-                    <div style={{ fontWeight: '600', color: '#0f172a' }}>{selectedKiosk.so_combo_hien_tai ?? 0} combo</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Số Combo nguyên liệu</div>
+                    <div style={{ fontWeight: '600', color: "var(--text-main)" }}>{selectedKiosk.so_combo_hien_tai ?? 0} combo</div>
                   </div>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Điểm tích lũy</div>
-                    <div style={{ fontWeight: '600', color: '#0f172a' }}>{selectedKiosk.diem_danh_gia || 0} điểm</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Điểm tích lũy</div>
+                    <div style={{ fontWeight: '600', color: "var(--text-main)" }}>{selectedKiosk.diem_danh_gia || 0} điểm</div>
                   </div>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Hạng hiệu quả (Rank)</div>
-                    <div style={{ fontWeight: '600', color: '#0f172a' }}>Hạng {selectedKiosk.xep_hang || 'Chưa xếp hạng'}</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Xếp loại vận hành</div>
+                    <div style={{ fontWeight: '600', color: "var(--text-main)" }}>Hạng {selectedKiosk.xep_hang || 'Chưa xếp hạng'}</div>
                   </div>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Ngày khởi tạo</div>
-                    <div style={{ fontWeight: '500', color: '#334155' }}>{fmtDate(selectedKiosk.ngay_tao)}</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Ngày khởi tạo</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-body)" }}>{fmtDate(selectedKiosk.ngay_tao)}</div>
                   </div>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Cập nhật gần nhất</div>
-                    <div style={{ fontWeight: '500', color: '#334155' }}>{fmtDate(selectedKiosk.ngay_cap_nhat)}</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Cập nhật gần nhất</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-body)" }}>{fmtDate(selectedKiosk.ngay_cap_nhat)}</div>
                   </div>
                 </div>
-              </div>
+              </Card>
 
               {/* Column 2: Địa điểm & Vị trí kinh doanh */}
-              <div className="flex flex-col gap-3 pt-6 lg:pt-0 lg:px-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                <div style={{ fontWeight: '700', fontSize: '0.875rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+              <Card data-record-card="true" className="flex flex-col gap-3 pt-6 lg:pt-0 lg:px-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: "1px solid var(--border-subtle)" }}>
                   <MapPin size={17} color="#059669" /> Địa điểm & Vị trí kinh doanh
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.8125rem' }}>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Địa chỉ chi tiết</div>
-                    <div style={{ fontWeight: '600', color: '#0f172a', lineHeight: '1.35' }}>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Địa chỉ chi tiết</div>
+                    <div style={{ fontWeight: '600', color: "var(--text-main)", lineHeight: '1.35' }}>
                       {selectedKiosk.dia_chi_day_du || selectedKiosk.dia_chi || 'Chưa cập nhật địa chỉ'}
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>
                     <div>
-                      <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Tỉnh / Thành phố</div>
-                      <div style={{ fontWeight: '600', color: '#0f172a' }}>{selectedKiosk.thanh_pho || 'Toàn quốc'}</div>
+                      <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Tỉnh / Thành phố</div>
+                      <div style={{ fontWeight: '600', color: "var(--text-main)" }}>{selectedKiosk.thanh_pho || 'Toàn quốc'}</div>
                     </div>
                     <div>
-                      <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Tọa độ GPS</div>
-                      <div style={{ fontWeight: '500', color: '#334155', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                      <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Tọa độ GPS</div>
+                      <div style={{ fontWeight: '500', color: "var(--text-body)", fontFamily: 'monospace', fontSize: '0.75rem' }}>
                         {selectedKiosk.vi_do && selectedKiosk.kinh_do ? `${selectedKiosk.vi_do}, ${selectedKiosk.kinh_do}` : 'Chưa định vị GPS'}
                       </div>
                     </div>
@@ -751,7 +741,7 @@ export function AdminKioskManagementPanel({ session }) {
                         alignItems: 'center',
                         gap: '0.35rem',
                         fontSize: '0.75rem',
-                        color: '#2563eb',
+                        color: "var(--primary)",
                         fontWeight: '600',
                         textDecoration: 'none',
                         marginTop: '0.15rem'
@@ -761,94 +751,84 @@ export function AdminKioskManagementPanel({ session }) {
                     </a>
                   )}
                 </div>
-              </div>
+              </Card>
 
               {/* Column 3: Đối tác nhận quyền (Franchisee) */}
-              <div className="flex flex-col gap-3 pt-6 lg:pt-0 lg:pl-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                <div style={{ fontWeight: '700', fontSize: '0.875rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+              <Card data-record-card="true" className="flex flex-col gap-3 pt-6 lg:pt-0 lg:pl-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: "1px solid var(--border-subtle)" }}>
                   <Building2 size={17} color="#7c3aed" /> Đối tác nhận quyền (Franchisee)
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.8125rem' }}>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Mã định danh đối tác (Franchisee ID)</div>
-                    <div style={{ fontWeight: '600', color: '#0f172a', fontFamily: 'monospace', wordBreak: 'break-all', fontSize: '0.8125rem' }}>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Mã định danh đối tác (Franchisee ID)</div>
+                    <div style={{ fontWeight: '600', color: "var(--text-main)", fontFamily: 'monospace', wordBreak: 'break-all', fontSize: '0.8125rem' }}>
                       {selectedKiosk.franchisee_id || 'Chưa liên kết đối tác'}
                     </div>
                   </div>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Hồ sơ đăng ký nhượng quyền</div>
-                    <div style={{ fontWeight: '500', color: '#475569', fontFamily: 'monospace', wordBreak: 'break-all', fontSize: '0.8125rem' }}>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Hồ sơ đăng ký nhượng quyền</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-body)", fontFamily: 'monospace', wordBreak: 'break-all', fontSize: '0.8125rem' }}>
                       {selectedKiosk.ho_so_id || 'Chưa gán mã hồ sơ'}
                     </div>
                   </div>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Tình trạng liên kết</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Tình trạng liên kết</div>
                     <span style={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.35rem',
                       fontSize: '0.75rem',
                       fontWeight: '600',
-                      color: selectedKiosk.franchisee_id ? '#16a34a' : '#64748b'
+                      color: selectedKiosk.franchisee_id ? '#16a34a' : "var(--text-muted)"
                     }}>
                       {selectedKiosk.franchisee_id ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
                       {selectedKiosk.franchisee_id ? 'Đã liên kết tài khoản đối tác' : 'Chưa liên kết đối tác'}
                     </span>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
 
             {/* BLOCK 2: HỢP ĐỒNG & CÔNG NỢ */}
-            <div
+            <div data-record-finance="true"
               className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/70 p-5 gap-6 lg:gap-0"
               style={{
-                borderTop: '1px solid #f1f5f9',
+                borderTop: "1px solid var(--border-subtle)",
                 background: '#fafbfd'
               }}
             >
               {/* Contract sub-panel */}
-              <div className="flex flex-col gap-3 lg:pr-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div style={{ fontWeight: '700', fontSize: '0.875rem', color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div data-record-card="true" className="flex flex-col gap-3 lg:pr-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <FileText size={16} color="#d97706" /> Hợp đồng nhượng quyền
+                    <FileText size={16} color="#d97706" /> Hợp đồng nhượng quyền thương mại
                   </span>
-                  {selectedKiosk.hop_dong && (
-                    <button
-                      type="button"
-                      onClick={() => setContractModal(selectedKiosk)}
-                      style={{ background: 'none', border: 'none', color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '600' }}
-                    >
-                      Mở bản in hợp đồng →
-                    </button>
-                  )}
+
                 </div>
 
                 {selectedKiosk.hop_dong ? (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', fontSize: '0.8125rem' }}>
                     <div>
-                      <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Tỷ lệ Royalty</div>
-                      <div style={{ fontWeight: '700', color: '#0284c7' }}>{selectedKiosk.hop_dong.ty_le_royalty_phan_tram || 7}% doanh thu</div>
+                      <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Tỷ lệ chia sẻ doanh thu</div>
+                      <div style={{ fontWeight: "600", color: '#0284c7' }}>{selectedKiosk.hop_dong.ty_le_royalty_phan_tram || 7}% doanh thu</div>
                     </div>
                     <div>
-                      <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Ngày ký kết</div>
-                      <div style={{ fontWeight: '500', color: '#334155' }}>{fmtDate(selectedKiosk.hop_dong.ngay_ky)}</div>
+                      <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Ngày ký kết</div>
+                      <div style={{ fontWeight: '500', color: "var(--text-body)" }}>{fmtDate(selectedKiosk.hop_dong.ngay_ky)}</div>
                     </div>
                     <div>
-                      <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Hạn hợp đồng</div>
-                      <div style={{ fontWeight: '500', color: '#334155' }}>{fmtDate(selectedKiosk.hop_dong.ngay_het_han)}</div>
+                      <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Hạn hợp đồng</div>
+                      <div style={{ fontWeight: '500', color: "var(--text-body)" }}>{fmtDate(selectedKiosk.hop_dong.ngay_het_han)}</div>
                     </div>
                   </div>
                 ) : (
-                  <div style={{ padding: '0.65rem 0.85rem', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a', color: '#92400e', fontSize: '0.75rem' }}>
-                    Kiosk này chưa có hợp đồng chính thức trên hệ thống.
-                  </div>
+                  <p className="kiosk-contract-empty">Kiosk này chưa có hợp đồng chính thức trên hệ thống.</p>
                 )}
               </div>
 
               {/* Debt & Financial sub-panel */}
-              <div className="flex flex-col gap-3 pt-6 lg:pt-0 lg:pl-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div style={{ fontWeight: '700', fontSize: '0.875rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <Card data-record-card="true" className="flex flex-col gap-3 pt-6 lg:pt-0 lg:pl-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                   <AlertTriangle size={16} color="#0284c7" /> Tình trạng tài chính & Công nợ
                 </div>
 
@@ -861,13 +841,13 @@ export function AdminKioskManagementPanel({ session }) {
                     <CheckCircle2 size={15} /> Tình trạng tài chính tốt, không có công nợ tồn đọng.
                   </div>
                 )}
-              </div>
+              </Card>
             </div>
 
             {/* BLOCK 3: ĐÁNH GIÁ & TRẢI NGHIỆM KHÁCH HÀNG */}
-            <div
+            <Card data-record-full="true"
               style={{
-                borderTop: '1px solid #f1f5f9',
+                borderTop: "1px solid var(--border-subtle)",
                 padding: '1.25rem 1.75rem',
                 display: 'flex',
                 alignItems: 'center',
@@ -882,16 +862,16 @@ export function AdminKioskManagementPanel({ session }) {
                   <Star size={20} fill="#f59e0b" color="#f59e0b" />
                 </div>
                 <div>
-                  <div style={{ fontWeight: '700', fontSize: '0.875rem', color: '#0f172a' }}>
+                  <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)" }}>
                     Đánh giá & Trải nghiệm khách hàng
                   </div>
-                  <div style={{ fontSize: '0.8125rem', color: '#64748b', marginTop: '0.15rem' }}>
+                  <div style={{ fontSize: '0.8125rem', color: "var(--text-muted)", marginTop: '0.15rem' }}>
                     Điểm tích lũy hiện tại: <strong style={{ color: '#b45309' }}>{selectedKiosk.diem_danh_gia || 0} điểm</strong> (Hạng <strong>{selectedKiosk.xep_hang || '—'}</strong>). Nhấn nút bên cạnh để xem phản hồi chi tiết từ khách hàng.
                   </div>
                 </div>
               </div>
 
-              <button
+              <Button
                 type="button"
                 className="admin-button-secondary"
                 onClick={() => openReviewModal(selectedKiosk)}
@@ -899,36 +879,32 @@ export function AdminKioskManagementPanel({ session }) {
                   height: '36px',
                   padding: '0 1rem',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
+                  border: "1px solid var(--border-light)",
                   background: '#ffffff',
-                  color: '#1e293b',
+                  color: "var(--text-body)",
                   fontWeight: '600',
                   fontSize: '0.8125rem',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.45rem',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                  boxShadow: "none",
                   transition: 'all 0.15s ease'
                 }}
               >
                 <MessageSquare size={15} color="#f59e0b" /> Quản lý danh sách đánh giá
-              </button>
-            </div>
+              </Button>
+            </Card>
           </div>
         </div>
       ) : (
         /* List Mode (Table Only) */
         <>
           {/* Header Intro */}
-          <div className="admin-section-intro">
-            <div>
-              <h2>Danh sách kiosk nhượng quyền</h2>
-            </div>
-          </div>
+
 
           {/* Filter & Toolbar */}
-          <div className="admin-surface admin-kiosk-filters" style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', backgroundColor: '#ffffff', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--border-light)', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+          <Card className="admin-surface admin-kiosk-filters" style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', backgroundColor: '#ffffff', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--border-light)', flexWrap: 'wrap', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flex: 1, minWidth: '320px', flexWrap: 'wrap' }}>
               {/* Search Box */}
               <div style={{ position: 'relative', flex: '1 1 320px', minWidth: '260px' }}>
@@ -938,7 +914,7 @@ export function AdminKioskManagementPanel({ session }) {
                     left: '14px',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    color: '#94a3b8',
+                    color: "var(--text-muted)",
                     pointerEvents: 'none',
                     display: 'flex',
                     alignItems: 'center',
@@ -948,9 +924,11 @@ export function AdminKioskManagementPanel({ session }) {
                 >
                   <Search size={16} />
                 </span>
-                <input
+                <Input data-input-prefix="true"
                   type="text"
                   className="kiosk-search-input"
+                  id="system-admin-kiosk-search"
+                  aria-label="Tìm kiosk"
                   placeholder="Tìm theo tên hoặc mã Kiosk (VD: KSK-149, ksk149, Đà Nẵng...)"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -968,7 +946,7 @@ export function AdminKioskManagementPanel({ session }) {
                   }}
                 />
                 {searchTerm && (
-                  <button
+                  <Button data-intent="danger"
                     type="button"
                     className="admin-search-clear-btn"
                     onClick={() => setSearchTerm('')}
@@ -981,7 +959,7 @@ export function AdminKioskManagementPanel({ session }) {
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
-                      color: '#94a3b8',
+                      color: "var(--text-muted)",
                       padding: 0,
                       width: '22px',
                       height: '22px',
@@ -993,7 +971,7 @@ export function AdminKioskManagementPanel({ session }) {
                     }}
                   >
                     <X size={14} />
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -1017,7 +995,7 @@ export function AdminKioskManagementPanel({ session }) {
 
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <button
+              <Button
                 className="admin-button-danger"
                 type="button"
                 onClick={async () => {
@@ -1054,35 +1032,9 @@ export function AdminKioskManagementPanel({ session }) {
                 }}
               >
                 <AlertTriangle size={15} /> Xử lý nợ quá hạn
-              </button>
-
-              <button
-                className="admin-button-secondary"
-                type="button"
-                onClick={() => loadKiosks(true)}
-                disabled={loading || refreshing}
-                style={{
-                  padding: '0 0.85rem',
-                  height: '40px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-light)',
-                  backgroundColor: '#ffffff',
-                  color: 'var(--text-main)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  cursor: loading || refreshing ? 'not-allowed' : 'pointer',
-                  fontWeight: '600',
-                  fontSize: '0.8125rem',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {refreshing ? <GlobalSpinner size={14} color="#2563eb" /> : <RefreshCw size={15} />}
-                {refreshing ? 'Đang làm mới...' : 'Làm mới'}
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
           {/* ERROR / LOADING */}
           {error && <div style={{ padding: '0.85rem 1.15rem', background: '#fef2f2', color: '#b91c1c', borderRadius: '8px', border: '1px solid #fecaca', fontSize: '0.8125rem', fontWeight: '600' }}>{error}</div>}
@@ -1098,29 +1050,29 @@ export function AdminKioskManagementPanel({ session }) {
           {(!loading || kiosks.length > 0) && !error && (
             <>
               {filteredKiosks.length === 0 ? (
-                <div className="admin-surface" style={{ background: '#ffffff', padding: '3rem', textAlign: 'center', borderRadius: '12px', border: '1px solid var(--border-light)', color: '#64748b' }}>
+                <Card className="admin-surface" style={{ background: '#ffffff', padding: '3rem', textAlign: 'center', borderRadius: '12px', border: '1px solid var(--border-light)', color: "var(--text-muted)" }}>
                   Không tìm thấy kiosk nào phù hợp với bộ lọc tìm kiếm.
-                </div>
+                </Card>
               ) : (
-                <div className="admin-surface kiosk-table-wrapper" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', width: '100%' }}>
+                <Card className="admin-surface kiosk-table-wrapper" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: "none", width: '100%' }}>
                   <div className="admin-table-scroll" style={{ overflowX: 'auto', width: '100%' }}>
-                    <table className="kiosk-table admin-table" style={{ width: '100%', minWidth: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8125rem', tableLayout: 'fixed' }}>
+                    <Table className="kiosk-table admin-table" style={{ width: '100%', minWidth: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8125rem', tableLayout: 'fixed' }}>
                       <colgroup>
-                        <col style={{ width: '25%' }} />
+                        <col style={{ width: '22%' }} />
+                        <col style={{ width: '16%' }} />
                         <col style={{ width: '18%' }} />
-                        <col style={{ width: '21%' }} />
                         <col style={{ width: '14%' }} />
+                        <col style={{ width: '18%' }} />
                         <col style={{ width: '12%' }} />
-                        <col style={{ width: '10%' }} />
                       </colgroup>
                       <thead>
-                        <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #cbd5e1' }}>
-                          <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#334155', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Điểm Kiosk</th>
-                          <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#334155', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mô hình &amp; Đối tác</th>
-                          <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#334155', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Địa điểm</th>
-                          <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#334155', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hợp đồng &amp; Công nợ</th>
-                          <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#334155', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>Trạng thái</th>
-                          <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#334155', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right', whiteSpace: 'nowrap' }}>Chi tiết</th>
+                        <tr style={{ background: "var(--border-subtle)", borderBottom: "1.5px solid var(--border-light)" }}>
+                          <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Điểm Kiosk</th>
+                          <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mô hình &amp; Đối tác</th>
+                          <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Địa điểm</th>
+                          <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hợp đồng &amp; Công nợ</th>
+                          <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center', minWidth: '160px', whiteSpace: 'nowrap' }}>Trạng thái</th>
+                          <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right', whiteSpace: 'nowrap' }}>Chi tiết</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1139,7 +1091,7 @@ export function AdminKioskManagementPanel({ session }) {
                                 onClick={() => setSelectedKiosk(k)}
                                 style={{
                                   cursor: 'pointer',
-                                  borderBottom: '1px solid #f1f5f9',
+                                  borderBottom: "1px solid var(--border-subtle)",
                                   transition: 'background-color 0.15s ease'
                                 }}
                               >
@@ -1149,7 +1101,7 @@ export function AdminKioskManagementPanel({ session }) {
                                     <span
                                       style={{
                                         fontWeight: '600',
-                                        color: '#0f172a',
+                                        color: "var(--text-main)",
                                         fontSize: '0.84rem',
                                         lineHeight: 1.35
                                       }}
@@ -1157,7 +1109,7 @@ export function AdminKioskManagementPanel({ session }) {
                                       {k.ten_kiosk}
                                     </span>
                                     {k.xep_hang && (
-                                      <span
+                                      <Badge variant="outline" data-quiet-label="true"
                                         style={{
                                           display: 'inline-flex',
                                           alignItems: 'center',
@@ -1165,21 +1117,21 @@ export function AdminKioskManagementPanel({ session }) {
                                           width: '18px',
                                           height: '18px',
                                           borderRadius: '50%',
-                                          fontSize: '0.65rem',
-                                          fontWeight: '700',
-                                          backgroundColor: k.xep_hang === 'S' ? '#fef08a' : k.xep_hang === 'A' ? '#dbeafe' : k.xep_hang === 'B' ? '#fed7aa' : '#fee2e2',
-                                          color: k.xep_hang === 'S' ? '#854d0e' : k.xep_hang === 'A' ? '#1e40af' : k.xep_hang === 'B' ? '#9a3412' : '#991b1b',
+                                          fontSize: "12px",
+                                          fontWeight: "600",
+                                          backgroundColor: k.xep_hang === 'S' ? '#fef08a' : k.xep_hang === 'A' ? "var(--primary-subtle)" : k.xep_hang === 'B' ? '#fed7aa' : '#fee2e2',
+                                          color: k.xep_hang === 'S' ? '#854d0e' : k.xep_hang === 'A' ? "var(--primary-hover)" : k.xep_hang === 'B' ? '#9a3412' : '#991b1b',
                                           border: `1px solid ${k.xep_hang === 'S' ? '#eab308' : k.xep_hang === 'A' ? '#3b82f6' : k.xep_hang === 'B' ? '#f97316' : '#ef4444'}`,
                                           flexShrink: 0
                                         }}
-                                        title={`Hạng ${k.xep_hang} • Điểm: ${k.diem_danh_gia || 0}`}
+                                        className="kiosk-performance-rank" title={`Hạng ${k.xep_hang} • Điểm: ${k.diem_danh_gia || 0}`}
                                       >
-                                        {k.xep_hang}
-                                      </span>
+                                        Hiệu quả {k.xep_hang}
+                                      </Badge>
                                     )}
                                   </div>
-                                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                                    <span>Mã: <strong style={{ color: '#334155' }}>{k.ma_kiosk}</strong></span>
+                                  <div style={{ fontSize: '0.75rem', color: "var(--text-muted)", marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                                    <span>Mã: <strong style={{ color: "var(--text-body)" }}>{k.ma_kiosk}</strong></span>
                                     {k.diem_danh_gia !== undefined && k.diem_danh_gia !== null ? <span>• {k.diem_danh_gia} điểm</span> : null}
                                     {k.so_combo_hien_tai !== undefined && k.so_combo_hien_tai !== null ? (
                                       <span>• {k.so_combo_hien_tai} combo</span>
@@ -1189,20 +1141,20 @@ export function AdminKioskManagementPanel({ session }) {
 
                                 {/* Mô hình & Đối tác */}
                                 <td style={{ padding: '0.85rem 1rem', verticalAlign: 'middle' }}>
-                                  <div style={{ fontWeight: '600', color: '#1e293b', fontSize: '0.8125rem' }}>
+                                  <div style={{ fontWeight: '600', color: "var(--text-body)", fontSize: '0.8125rem' }}>
                                     {k.loai_kiosk || 'TIÊU CHUẨN'}
                                   </div>
-                                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`ID đối tác: ${k.franchisee_id || 'Chưa gán'}`}>
+                                  <div style={{ fontSize: '0.75rem', color: "var(--text-muted)", marginTop: '0.2rem', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`ID đối tác: ${k.franchisee_id || 'Chưa gán'}`}>
                                     {k.franchisee_id ? `${k.franchisee_id.slice(0, 10)}...` : 'Chưa gán đối tác'}
                                   </div>
                                 </td>
 
                                 {/* Địa điểm */}
                                 <td style={{ padding: '0.85rem 1rem', verticalAlign: 'middle' }}>
-                                  <div style={{ color: '#334155', fontSize: '0.8125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={k.dia_chi_day_du || k.dia_chi || k.thanh_pho || 'Chưa cập nhật'}>
+                                  <div style={{ color: "var(--text-body)", fontSize: '0.8125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={k.dia_chi_day_du || k.dia_chi || k.thanh_pho || 'Chưa cập nhật'}>
                                     {k.dia_chi || k.dia_chi_day_du || 'Chưa cập nhật'}
                                   </div>
-                                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
+                                  <div style={{ fontSize: '0.75rem', color: "var(--text-muted)", marginTop: '0.15rem' }}>
                                     {k.thanh_pho || 'Toàn quốc'}
                                   </div>
                                 </td>
@@ -1212,14 +1164,14 @@ export function AdminKioskManagementPanel({ session }) {
                                   {k.hop_dong ? (
                                     <div>
                                       <div style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: '600' }}>
-                                        Royalty: {k.hop_dong.ty_le_royalty_phan_tram || 7}%
+                                        Chia sẻ doanh thu: {k.hop_dong.ty_le_royalty_phan_tram || 7}%
                                       </div>
-                                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
+                                      <div style={{ fontSize: '0.75rem', color: "var(--text-muted)", marginTop: '0.15rem' }}>
                                         Hạn: {fmtDate(k.hop_dong.ngay_het_han)}
                                       </div>
                                     </div>
                                   ) : (
-                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                                    <span style={{ fontSize: '0.75rem', color: "var(--text-muted)", fontStyle: 'italic' }}>
                                       Chưa có HĐ
                                     </span>
                                   )}
@@ -1231,7 +1183,7 @@ export function AdminKioskManagementPanel({ session }) {
                                 </td>
 
                                 {/* Trạng thái */}
-                                <td style={{ padding: '0.85rem 1rem', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                                <td style={{ padding: '0.85rem 1rem', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap', minWidth: '160px' }}>
                                   {getStatusBadge(k.trang_thai)}
                                 </td>
 
@@ -1244,7 +1196,7 @@ export function AdminKioskManagementPanel({ session }) {
                                       gap: '0.25rem',
                                       fontSize: '0.8rem',
                                       fontWeight: '600',
-                                      color: '#2563eb'
+                                      color: "var(--primary)"
                                     }}
                                   >
                                     Chi tiết <ChevronRight size={14} />
@@ -1255,151 +1207,37 @@ export function AdminKioskManagementPanel({ session }) {
                           }}
                         </PaginatedList>
                       </tbody>
-                    </table>
+                    </Table>
                   </div>
-                </div>
+                </Card>
               )}
             </>
           )}
         </>
       )}
 
-      {/* MODAL 1: CONTRACT MODAL */}
-      {contractModal && (
-        <WorkspaceDialog label="Hợp đồng nhượng quyền" onClose={() => setContractModal(null)}>
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '720px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
-            <div className="admin-card-header" style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <FileText size={18} color="var(--primary)" /> Hợp Đồng Nhượng Quyền Thương Mại
-              </h3>
-              <button className="admin-icon-button"
-                type="button"
-                onClick={() => setContractModal(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 0 }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div id="contract-print-area" style={{ padding: '2rem', overflowY: 'auto', flex: 1, fontFamily: 'serif', color: 'var(--text-main)', lineHeight: '1.7' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
-                </h2>
-                <div style={{ fontWeight: 'bold', textDecoration: 'underline' }}>Độc lập - Tự do - Hạnh phúc</div>
-                <h3 style={{ marginTop: '1.5rem', fontSize: '1.25rem', color: '#30382e' }}>HỢP ĐỒNG NHƯỢNG QUYỀN THƯƠNG MẠI</h3>
-                <div style={{ fontStyle: 'italic', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Số: {contractModal.ma_kiosk}/HĐNQ-AVG</div>
-              </div>
-
-              <div style={{ marginBottom: '1rem', fontSize: '0.925rem' }}>
-                <p>Hôm nay, ngày {new Date(contractModal.hop_dong?.ngay_ky || Date.now()).getDate()} tháng {new Date(contractModal.hop_dong?.ngay_ky || Date.now()).getMonth() + 1} năm {new Date(contractModal.hop_dong?.ngay_ky || Date.now()).getFullYear()}, tại Văn phòng Công ty Cổ phần Avengers Coffee. Chúng tôi gồm có:</p>
-                <div style={{ fontWeight: 'bold', marginTop: '0.75rem' }}>BÊN NHƯỢNG QUYỀN (BÊN A): CÔNG TY CỔ PHẦN AVENGERS COFFEE</div>
-                <div>Địa chỉ: 123 Đường Nhượng Quyền, Quận 1, TP. Hồ Chí Minh</div>
-                <div>Mã số thuế: 0123456789</div>
-
-                <div style={{ fontWeight: 'bold', marginTop: '0.75rem' }}>BÊN NHẬN QUYỀN (BÊN B): ĐỐI TÁC FRANCHISE</div>
-                <div>Tên Kiosk: {contractModal.ten_kiosk}</div>
-                <div>Mã Kiosk: {contractModal.ma_kiosk}</div>
-                <div>Địa chỉ kinh doanh: {contractModal.dia_chi_day_du || contractModal.dia_chi || '---'}</div>
-                <div>Mã đối tác: {contractModal.franchisee_id}</div>
-              </div>
-
-              <div style={{ marginBottom: '1rem', fontSize: '0.925rem' }}>
-                <div style={{ fontWeight: 'bold', textDecoration: 'underline' }}>ĐIỀU 1: NỘI DUNG NHƯỢNG QUYỀN</div>
-                <p>Bên A đồng ý cấp cho Bên B quyền sử dụng thương hiệu "Avengers Coffee" để kinh doanh theo mô hình {contractModal.loai_kiosk || 'Kiosk'}.</p>
-
-                <div style={{ fontWeight: 'bold', textDecoration: 'underline' }}>ĐIỀU 2: PHÍ NHƯỢNG QUYỀN (ROYALTY)</div>
-                <p>Bên B có nghĩa vụ thanh toán phí Royalty định kỳ cho Bên A với tỷ lệ là: <b>{contractModal.hop_dong?.ty_le_royalty_phan_tram || 7}%</b> trên tổng doanh thu hàng tháng.</p>
-
-                <div style={{ fontWeight: 'bold', textDecoration: 'underline' }}>ĐIỀU 3: THỜI HẠN HỢP ĐỒNG</div>
-                <p>Hợp đồng có hiệu lực kể từ ngày {fmtDate(contractModal.hop_dong?.ngay_ky)} và kết thúc vào ngày {fmtDate(contractModal.hop_dong?.ngay_het_han)}.</p>
-              </div>
-
-              <table style={{ width: '100%', marginTop: '2.5rem', textAlign: 'center' }}>
-                <tbody>
-                  <tr>
-                    <td style={{ width: '50%' }}>
-                      <div style={{ fontWeight: 'bold' }}>ĐẠI DIỆN BÊN A</div>
-                      <div style={{ fontStyle: 'italic', fontSize: '0.75rem' }}>(Ký, đóng dấu điện tử)</div>
-                      <div style={{ marginTop: '2.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>[ĐÃ KÝ ĐIỆN TỬ]</div>
-                    </td>
-                    <td style={{ width: '50%' }}>
-                      <div style={{ fontWeight: 'bold' }}>ĐẠI DIỆN BÊN B</div>
-                      <div style={{ fontStyle: 'italic', fontSize: '0.75rem' }}>(Ký, ghi rõ họ tên)</div>
-                      <div style={{ marginTop: '2.5rem', fontWeight: 'bold', color: '#2563eb' }}>[ĐÃ KÝ ĐIỆN TỬ]</div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div style={{ padding: '0.85rem 1.5rem', borderTop: '1px solid var(--border-light)', backgroundColor: '#ffffff', display: 'flex', justifyContent: 'flex-end', gap: '0.65rem' }}>
-              <button className="admin-button-secondary"
-                type="button"
-                onClick={() => setContractModal(null)}
-                style={{ height: '38px', padding: '0 1.15rem', borderRadius: '8px', border: '1px solid var(--border-light)', backgroundColor: '#ffffff', color: '#414743', cursor: 'pointer', fontWeight: '600', fontSize: '0.8125rem' }}
-              >
-                Đóng
-              </button>
-              <button className="admin-button-primary"
-                type="button"
-                onClick={() => {
-                  const content = document.getElementById('contract-print-area').innerHTML
-                  const printWindow = window.open('', '_blank')
-                  printWindow.document.write(`
-                    <html>
-                      <head>
-                        <title>Hop Dong Nhuong Quyen - ${contractModal.ma_kiosk}</title>
-                        <style>
-                          body { font-family: 'Times New Roman', serif; padding: 40px; color: #000; line-height: 1.6; font-size: 14pt; }
-                          h2, h3 { text-align: center; }
-                          @media print {
-                            @page { margin: 20mm; size: A4 portrait; }
-                            body { padding: 0; }
-                          }
-                        </style>
-                      </head>
-                      <body>${content}</body>
-                    </html>
-                  `)
-                  printWindow.document.close()
-                  printWindow.focus()
-                  setTimeout(() => {
-                    printWindow.print()
-                    printWindow.close()
-                  }, 500)
-                }}
-                style={{ height: '38px', padding: '0 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: 'var(--primary)', color: '#ffffff', cursor: 'pointer', fontWeight: '700', fontSize: '0.8125rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.25)' }}
-              >
-                <Printer size={15} /> In / Lưu Hợp Đồng
-              </button>
-            </div>
-          </div>
-        </WorkspaceDialog>
-      )}
-
       {/* MODAL 3: REVIEWS MODAL */}
       {reviewModal && (
         <WorkspaceDialog label="Đánh giá kiosk" onClose={() => setReviewModal(null)}>
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
-            <div className="admin-card-header" style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: "10px", width: '100%', maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: "none", overflow: 'hidden' }}>
+            <div data-modal-body="true" className="admin-card-header" style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: "600", color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <MessageSquare size={18} color="#eab308" /> Đánh Giá Khách Hàng - {reviewModal.ten_kiosk} ({reviewModal.ma_kiosk})
               </h3>
-              <button className="admin-icon-button" type="button" onClick={() => setReviewModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+              <Button className="admin-icon-button" type="button" onClick={() => setReviewModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <X size={20} />
-              </button>
+              </Button>
             </div>
 
-            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+            <div data-modal-body="true" style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
               {loadingReviews ? (
                 <GlobalLoading size="sm" text="Đang tải danh sách đánh giá..." minHeight="140px" />
               ) : reviews.length === 0 ? (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Kiosk này chưa có đánh giá nào.</div>
               ) : (
                 <>
-                  <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: '600', color: '#1e293b' }}>Đánh giá trung bình:</span>
+                  <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: "var(--surface-low)", borderRadius: '8px', border: "1px solid var(--border-light)", display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '600', color: "var(--text-body)" }}>Đánh giá trung bình:</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <strong style={{ fontSize: '1.1rem', color: '#b45309' }}>{reviewStats.avg} / 5.0</strong>
                       <span style={{ fontSize: '0.85rem', color: '#d97706' }}>({reviewStats.total} đánh giá)</span>
@@ -1407,8 +1245,8 @@ export function AdminKioskManagementPanel({ session }) {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {reviews.map((rv, idx) => (
-                      <div className="admin-surface" key={idx} style={{ padding: '1rem', border: '1px solid var(--border-light)', borderRadius: '8px', backgroundColor: '#ffffff', position: 'relative' }}>
-                        <button className="admin-button-danger" onClick={() => deleteReview(rv.id)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>Xóa</button>
+                      <Card className="admin-surface" key={idx} style={{ padding: '1rem', border: '1px solid var(--border-light)', borderRadius: '8px', backgroundColor: '#ffffff', position: 'relative' }}>
+                        <Button data-intent="danger" className="admin-button-danger" onClick={() => deleteReview(rv.id)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>Xóa</Button>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', paddingRight: '3rem' }}>
                           <strong style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{rv.ten_nguoi_dung || 'Khách hàng ẩn danh'}</strong>
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(rv.ngay_tao).toLocaleDateString('vi-VN')}</span>
@@ -1419,7 +1257,7 @@ export function AdminKioskManagementPanel({ session }) {
                           ))}
                         </div>
                         {rv.nhan_xet && <div style={{ fontSize: '0.85rem', color: '#414743', fontStyle: 'italic' }}>"{rv.nhan_xet}"</div>}
-                      </div>
+                      </Card>
                     ))}
                   </div>
                 </>

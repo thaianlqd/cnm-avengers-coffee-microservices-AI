@@ -304,8 +304,7 @@ export class DeliveryTrackingService {
     const isDeliveryValid =
       shipperDelivery &&
       shipperDelivery.shipper_id &&
-      shipperDelivery.status !== 'CANCELLED' &&
-      shipperDelivery.status !== 'FAILED';
+      ['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT', 'DELIVERED'].includes(shipperDelivery.status);
 
     if (isOrderConfirmedOrInProgress && isDeliveryValid) {
       const shipper = await this.shipperRepo.findOne({ where: { id: shipperDelivery.shipper_id } });
@@ -539,6 +538,8 @@ export class DeliveryTrackingService {
         }
         : null,
       shipper: shipperInfo,
+      assignment_status: shipperDelivery?.status || null,
+      assigned_shipper_id: shipperDelivery?.status === 'PENDING' ? shipperDelivery.shipper_id : null,
       realtime: shipperInfo?.id && isOrderConfirmedOrInProgress && isDeliveryValid
         ? this.trackingStomp.issue(donHang.ma_don_hang,shipperInfo.id) : null,
       shipper_location: shipperLocation,
@@ -639,7 +640,7 @@ export class DeliveryTrackingService {
       order: { assigned_at: 'DESC' },
     });
 
-    if (!shipperDelivery?.shipper_id) {
+    if (!shipperDelivery?.shipper_id || !['CONFIRMED', 'PICKING_UP', 'IN_TRANSIT', 'DELIVERED'].includes(shipperDelivery.status)) {
       // Thử Lalamove
       const tracking = await this.trackingRepo.findOne({
         where: { ma_don_hang: maDonHang },

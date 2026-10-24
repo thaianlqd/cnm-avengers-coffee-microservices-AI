@@ -692,7 +692,7 @@ export default function FranchisePage({ onNavigate }) {
                   <div style={{ display: 'flex', gap: 24, marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
                     {[
                       { label: 'Không gian', v: pkg.area },
-                      { label: 'Phí duy trì', v: pkg.royalty },
+                      { label: 'Chia sẻ doanh thu', v: pkg.royalty },
                     ].map((item, i) => (
                       <div key={i} style={{ fontSize: 13 }}>
                         <div style={{ color: '#64748b', fontSize: 12 }}>{ui(item.label)}</div>

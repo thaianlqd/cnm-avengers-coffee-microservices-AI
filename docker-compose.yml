@@ -388,6 +388,21 @@ services:
         limits:
           memory: 512M
 
+  web-table-order:
+    build:
+      context: ./avengers-coffee-system/apps/web-table-order
+    container_name: avengers_web_table_order
+    restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: http://api-gateway:3000
+    volumes:
+      - ./avengers-coffee-system/apps/web-table-order:/app
+      - web_table_order_node_modules:/app/node_modules
+    ports:
+      - "5176:5176"
+    networks:
+      - avengers-network
+
   web-admin:
     build:
       context: ./avengers-coffee-system/apps/web-admin
@@ -417,6 +432,7 @@ services:
           memory: 512M
 
 volumes:
+  web_table_order_node_modules:
   avengers_pgdata:
 
 networks:

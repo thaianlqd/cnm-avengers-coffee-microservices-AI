@@ -69,7 +69,7 @@ export default function MembershipCard({ user, tier, points = 0, tierName: custo
         className="rounded-2xl border p-7 text-white sm:p-9">
         <div className="flex items-start justify-between gap-6">
           <img
-            src="/hc-assets/logo-red.png"
+            src="/images/brand/logo.svg"
             alt="Avengers Coffee"
             className="h-12 w-auto object-contain bg-white rounded-xl p-1.5 shadow-sm"
           />

@@ -1,3 +1,9 @@
+import { Button } from '../../../components/ui/button'
+import { Card } from '../../../components/ui/card'
+import { Input } from '../../../components/ui/input'
+import { Table } from '../../../components/ui/table'
+import { Badge } from '../../../components/ui/badge'
+import { Label } from '../../../components/ui/label'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import React, { useState, useMemo, useEffect } from 'react'
@@ -133,7 +139,7 @@ function CategoryPagination({ pageData, onPageChange }) {
         Hiển thị {pageData.from} - {pageData.to} trên tổng số {pageData.total} danh mục
       </span>
       <div className="cat-pagination-actions">
-        <button
+        <Button
           type="button"
           className="cat-pg-btn"
           onClick={() => onPageChange(1)}
@@ -141,8 +147,8 @@ function CategoryPagination({ pageData, onPageChange }) {
           title="Trang đầu"
         >
           <ChevronsLeft size={18} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className="cat-pg-btn"
           onClick={() => onPageChange(pageData.page - 1)}
@@ -150,11 +156,11 @@ function CategoryPagination({ pageData, onPageChange }) {
           title="Trang trước"
         >
           <ChevronLeft size={18} />
-        </button>
+        </Button>
         <span className="cat-pg-current">
           Trang {pageData.page} trên {pageData.totalPages}
         </span>
-        <button
+        <Button
           type="button"
           className="cat-pg-btn"
           onClick={() => onPageChange(pageData.page + 1)}
@@ -162,8 +168,8 @@ function CategoryPagination({ pageData, onPageChange }) {
           title="Trang sau"
         >
           <ChevronRight size={18} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className="cat-pg-btn"
           onClick={() => onPageChange(pageData.totalPages)}
@@ -171,7 +177,7 @@ function CategoryPagination({ pageData, onPageChange }) {
           title="Trang cuối"
         >
           <ChevronsRight size={18} />
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -308,36 +314,36 @@ export function AdminCategoryManagementPanel({
   return (
     <div className="cat-manage-container">
       {/* Category List & Data Table (FULL WIDTH 100%) */}
-      <div className="cat-list-card cat-list-card--full">
+      <Card className="cat-list-card cat-list-card--full">
         {/* List Toolbar & Filters */}
-        <div className="workspace-section-title"><div><h2>Danh mục thực đơn</h2><p>Phân nhóm và sắp xếp danh mục cho thực đơn món.</p></div></div>
+
         <div className="cat-toolbar">
           <div className="cat-filter-pills">
-              <button aria-pressed={levelFilter === 'ALL'}
+              <Button aria-pressed={levelFilter === 'ALL'}
                 type="button"
                 className={`cat-pill ${levelFilter === 'ALL' ? 'active' : ''}`}
                 onClick={() => handleLevelFilterChange('ALL')}
               >
                 Tất cả ({stats.total})
-              </button>
-              <button aria-pressed={levelFilter === '1'}
+              </Button>
+              <Button aria-pressed={levelFilter === '1'}
                 type="button"
                 className={`cat-pill ${levelFilter === '1' ? 'active' : ''}`}
                 onClick={() => handleLevelFilterChange('1')}
               >
                 Danh mục chính ({stats.level1Count})
-              </button>
-              <button aria-pressed={levelFilter === '2'}
+              </Button>
+              <Button aria-pressed={levelFilter === '2'}
                 type="button"
                 className={`cat-pill ${levelFilter === '2' ? 'active' : ''}`}
                 onClick={() => handleLevelFilterChange('2')}
               >
                 Danh mục phụ ({stats.level2Count})
-              </button>
+              </Button>
             </div>
           <div className="cat-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', width: '100%' }}>
             <div className="cat-search-box" style={{ flex: '0 1 320px', minWidth: '220px' }}>
-              <input className="ui-input"
+              <Input className="ui-input"
                 type="text"
                 value={categoryKeyword}
                 onChange={(e) => {
@@ -347,44 +353,17 @@ export function AdminCategoryManagementPanel({
                 placeholder="Tìm kiếm danh mục theo tên hoặc mã..."
               />
               {categoryKeyword && (
-                <button
+                <Button data-intent="danger"
                   type="button"
                   aria-label="Xóa tìm kiếm" className="cat-search-clear"
                   onClick={() => setCategoryKeyword('')}
                 >
                   <X size={14} />
-                </button>
+                </Button>
               )}
             </div>
 
-            {onRefresh && (
-              <button
-                type="button"
-                className="cat-refresh-btn"
-                onClick={onRefresh}
-                title="Tải lại dữ liệu"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '7px',
-                  height: '40px',
-                  minHeight: '40px',
-                  padding: '0 15px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#334155',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  flexShrink: 0
-                }}
-              >
-                <RefreshCw size={15} />
-                <span>Tải lại</span>
-              </button>
-            )}
-            <button
+            <Button
               type="button"
               className="cat-btn cat-btn--success cat-btn--sm cat-create-btn"
               onClick={handleOpenAddModal}
@@ -404,7 +383,7 @@ export function AdminCategoryManagementPanel({
             >
               <Plus size={16} />
               <span>Tạo danh mục</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -433,7 +412,7 @@ export function AdminCategoryManagementPanel({
               </div>
             ) : (
               <div className="cat-table-wrapper">
-                <table className="cat-table">
+                <Table className="cat-table">
                   <thead>
                     <tr>
                       <th style={{ width: '25%' }}>Tên danh mục</th>
@@ -496,21 +475,21 @@ export function AdminCategoryManagementPanel({
 
                           {/* Category Code */}
                           <td>
-                            <span className="cat-code-badge">{cat.code}</span>
+                            <Badge variant="outline" className="cat-code-badge">{cat.code}</Badge>
                           </td>
 
                           {/* Level Badge */}
                           <td>
                             {isLevel1 ? (
-                              <span className="cat-level-badge cat-level-badge--1">
+                              <Badge variant="outline" className="cat-level-badge cat-level-badge--1">
                                 <Layers size={12} />
                                 <span>Danh mục chính</span>
-                              </span>
+                              </Badge>
                             ) : (
-                              <span className="cat-level-badge cat-level-badge--2">
+                              <Badge variant="outline" className="cat-level-badge cat-level-badge--2">
                                 <Tag size={12} />
                                 <span>Danh mục phụ</span>
-                              </span>
+                              </Badge>
                             )}
                           </td>
 
@@ -535,7 +514,7 @@ export function AdminCategoryManagementPanel({
 
                           <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
-                              <button
+                              <Button
                                 type="button"
                                 className="admin-table-action-btn btn-edit"
                                 onClick={() => {
@@ -546,9 +525,9 @@ export function AdminCategoryManagementPanel({
                                 title="Chỉnh sửa danh mục"
                               >
                                 <Edit3 size={15} />
-                              </button>
+                              </Button>
 
-                              <button aria-label={productCount > 0 ? `Không thể xóa vì danh mục đang chứa ${productCount} sản phẩm` : 'Xóa danh mục này'}
+                              <Button data-intent="danger" aria-label={productCount > 0 ? `Không thể xóa vì danh mục đang chứa ${productCount} sản phẩm` : 'Xóa danh mục này'}
                                 type="button"
                                 className="admin-table-action-btn btn-delete"
                                 disabled={productCount > 0}
@@ -560,14 +539,14 @@ export function AdminCategoryManagementPanel({
                                 style={{ opacity: productCount > 0 ? 0.4 : 1, cursor: productCount > 0 ? 'not-allowed' : 'pointer' }}
                               >
                                 <Trash2 size={15} />
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </tr>
                       )
                     })}
                   </tbody>
-                </table>
+                </Table>
               </div>
             )}
 
@@ -575,7 +554,7 @@ export function AdminCategoryManagementPanel({
             <CategoryPagination pageData={pageData} onPageChange={setCategoriesPage} />
           </>
         )}
-      </div>
+      </Card>
 
       {/* MODAL DIALOG FOR CREATE / EDIT CATEGORY */}
       {isModalOpen && (
@@ -601,19 +580,19 @@ export function AdminCategoryManagementPanel({
                   </>
                 )}
               </div>
-              <button type="button" disabled={savingCategory} aria-label="Đóng cửa sổ" className="cat-modal-close" onClick={handleCloseModal} title="Đóng">
+              <Button data-intent="danger" type="button" disabled={savingCategory} aria-label="Đóng cửa sổ" className="cat-modal-close" onClick={handleCloseModal} title="Đóng">
                 <X size={18} />
-              </button>
+              </Button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="cat-modal-body">
+            <form data-modal-body="true" onSubmit={handleFormSubmit} className="cat-modal-body">
               {formError && <p className="workspace-form-error" role="alert">{formError}</p>}
               {/* Input: Category Label */}
               <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="cat-modal-label" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
+                <Label htmlFor="cat-modal-label" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
                   Tên danh mục <span className="cat-required" style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
+                </Label>
+                <Input
                   id="cat-modal-label"
                   type="text"
                   className="shadcn-input ui-input"
@@ -627,7 +606,7 @@ export function AdminCategoryManagementPanel({
 
               {/* Input: Category Level */}
               <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="cat-modal-level" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>Cấp bậc danh mục</label>
+                <Label htmlFor="cat-modal-level" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>Cấp bậc danh mục</Label>
                 <SearchableSelect
                   id="cat-modal-level"
                   value={categoryForm.cap_bac}
@@ -643,9 +622,9 @@ export function AdminCategoryManagementPanel({
               {/* Input: Parent Category (Only if Level 2) */}
               {Number(categoryForm.cap_bac) === 2 && (
                 <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label htmlFor="cat-modal-parent" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
+                  <Label htmlFor="cat-modal-parent" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
                     Danh mục cha <span className="cat-required" style={{ color: '#ef4444' }}>*</span>
-                  </label>
+                  </Label>
                   <SearchableSelect
                     id="cat-modal-parent"
                     value={categoryForm.ma_danh_muc_cha || ''}
@@ -669,12 +648,12 @@ export function AdminCategoryManagementPanel({
 
               {/* Input: Category Image URL or Local File Upload */}
               <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="cat-modal-icon" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
+                <Label htmlFor="cat-modal-icon" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#414743' }}>
                   Hình ảnh danh mục
-                </label>
+                </Label>
                 <div className="admin-image-picker">
                   <div className="admin-image-picker-controls" style={{ display: 'flex', alignItems: 'stretch', width: '100%', height: '40px' }}>
-                    <input
+                    <Input
                       id="cat-modal-icon"
                       type="text"
                       className="shadcn-input ui-input"
@@ -695,7 +674,7 @@ export function AdminCategoryManagementPanel({
                         margin: 0
                       }}
                     />
-                    <label
+                    <Label
                       className="admin-image-upload-btn"
                       title="Chọn tệp ảnh từ máy tính"
                       style={{
@@ -711,10 +690,10 @@ export function AdminCategoryManagementPanel({
                         borderBottomLeftRadius: 0,
                         borderTopRightRadius: '8px',
                         borderBottomRightRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        borderLeft: '1px solid #e2e8f0',
-                        backgroundColor: '#f8fafc',
-                        color: '#334155',
+                        border: "1px solid var(--border-light)",
+                        borderLeft: "1px solid var(--border-light)",
+                        backgroundColor: "var(--surface-low)",
+                        color: "var(--text-body)",
                         fontSize: '13px',
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -742,7 +721,7 @@ export function AdminCategoryManagementPanel({
                           reader.readAsDataURL(file);
                         }}
                       />
-                    </label>
+                    </Label>
                   </div>
 
                   {categoryForm.icon && (
@@ -757,14 +736,14 @@ export function AdminCategoryManagementPanel({
                         <span className="admin-image-preview-url" title={categoryForm.icon}>
                           {categoryForm.icon.startsWith('data:') ? 'Ảnh tải lên từ máy tính' : categoryForm.icon}
                         </span>
-                        <button
+                        <Button
                           type="button"
                           className="admin-image-clear-btn"
                           onClick={() => setCategoryForm((p) => ({ ...p, icon: '' }))}
                         >
                           <Trash2 size={12} />
                           <span>Gỡ ảnh này</span>
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -777,7 +756,7 @@ export function AdminCategoryManagementPanel({
                     {CUSTOMER_ICON_PRESETS.map((preset) => {
                       const isSelected = categoryForm.icon === preset.url
                       return (
-                        <button aria-label={preset.label}
+                        <Button aria-label={preset.label}
                           key={preset.url}
                           type="button"
                           className={`cat-preset-chip ${isSelected ? 'is-selected' : ''}`}
@@ -787,19 +766,19 @@ export function AdminCategoryManagementPanel({
                             gap: '6px',
                             padding: '4px 10px',
                             borderRadius: '6px',
-                            border: isSelected ? '1.5px solid #0f172a' : '1px solid var(--border-light)',
-                            background: isSelected ? '#f1f5f9' : '#ffffff',
-                            color: '#0f172a',
+                            border: isSelected ? "1.5px solid var(--text-main)" : '1px solid var(--border-light)',
+                            background: isSelected ? "var(--border-subtle)" : '#ffffff',
+                            color: "var(--text-main)",
                             fontSize: '12px',
                             cursor: 'pointer',
-                            fontWeight: isSelected ? '700' : '400'
+                            fontWeight: isSelected ? "600" : '400'
                           }}
                           onClick={() => setCategoryForm((p) => ({ ...p, icon: preset.url }))}
                           title={preset.label}
                         >
                           <img src={preset.url} alt={preset.label} style={{ width: 18, height: 18, objectFit: 'contain' }} />
                           <span>{preset.label}</span>
-                        </button>
+                        </Button>
                       )
                     })}
                   </div>
@@ -807,8 +786,8 @@ export function AdminCategoryManagementPanel({
               </div>
 
               {/* Form Actions */}
-              <div className="cat-modal-footer">
-                <button
+              <div data-modal-footer="inset" className="cat-modal-footer">
+                <Button data-intent="danger"
                   type="button"
                   className="cat-btn cat-btn--neutral btn-cancel"
                   onClick={handleCloseModal}
@@ -831,9 +810,9 @@ export function AdminCategoryManagementPanel({
                   }}
                 >
                   <X size={15} style={{ color: '#dc2626' }} /><span>Hủy bỏ</span>
-                </button>
+                </Button>
 
-                <button
+                <Button data-intent="success"
                   type="submit"
                   className="cat-btn cat-btn--success btn-save"
                   disabled={savingCategory || !categoryForm.label.trim()}
@@ -850,7 +829,7 @@ export function AdminCategoryManagementPanel({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    boxShadow: "none"
                   }}
                 >
                   {savingCategory ? (
@@ -869,7 +848,7 @@ export function AdminCategoryManagementPanel({
                       <span>Tạo danh mục</span>
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

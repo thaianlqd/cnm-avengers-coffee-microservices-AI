@@ -1,3 +1,8 @@
+import { Card } from '../../../components/ui/card'
+import { Badge } from '../../../components/ui/badge'
+import { Button } from '../../../components/ui/button'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
 import { Check as WorkspaceSymbolCheck, Info as WorkspaceSymbolInfo, ShieldCheck as WorkspaceSymbolShieldCheck } from '../../../components/console/WorkspaceIcons'
 import { readWorkspaceSession, saveWorkspaceSession } from '../../../lib/workspaceAuth'
 import { useEffect, useMemo, useState } from 'react'
@@ -286,7 +291,7 @@ export function AccountCenterPanel({ session }) {
       {/* ========================================================================= */}
       {/* 1 SINGLE UNIFIED CARD: HỒ SƠ & BẢO MẬT HỆ THỐNG */}
       {/* ========================================================================= */}
-      <div
+      <Card
         className="admin-surface admin-settings-card"
         style={{
           width: '100%',
@@ -345,10 +350,10 @@ export function AccountCenterPanel({ session }) {
 
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-                <h1 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: '#0f172a', letterSpacing: '-0.01em' }}>
+                <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: '#0f172a', letterSpacing: '-0.01em' }}>
                   {displayName}
-                </h1>
-                <span
+                </h2>
+                <Badge variant="outline" data-quiet-label="true"
                   style={{
                     padding: '0.15rem 0.6rem',
                     borderRadius: '9999px',
@@ -360,7 +365,7 @@ export function AccountCenterPanel({ session }) {
                   }}
                 >
                   {userRole}
-                </span>
+                </Badge>
               </div>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78125rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -416,7 +421,7 @@ export function AccountCenterPanel({ session }) {
             overflowX: 'auto'
           }}
         >
-          <button
+          <Button
             type="button"
             className="account-tab-btn"
             onClick={() => setActiveTab('profile')}
@@ -440,9 +445,9 @@ export function AccountCenterPanel({ session }) {
             }}
           >
             <User size={15} /> Hồ sơ cá nhân
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             className="account-tab-btn"
             onClick={() => setActiveTab('security')}
@@ -466,7 +471,7 @@ export function AccountCenterPanel({ session }) {
             }}
           >
             <Lock size={15} /> Đổi mật khẩu &amp; Bảo mật
-          </button>
+          </Button>
         </div>
 
         {/* SECTION 3: TAB CONTENT BODY */}
@@ -489,11 +494,11 @@ export function AccountCenterPanel({ session }) {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
                   {/* Full Name */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label htmlFor="account-profile-name" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                    <Label htmlFor="account-profile-name" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
                       <User size={14} color="#64748b" />
                       <span>Họ tên đầy đủ</span>
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       id="account-profile-name"
                       type="text"
                       value={profileForm.hoTen}
@@ -516,11 +521,11 @@ export function AccountCenterPanel({ session }) {
 
                   {/* Phone Number */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label htmlFor="account-profile-phone" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                    <Label htmlFor="account-profile-phone" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
                       <Phone size={14} color="#64748b" />
                       <span>Số điện thoại</span>
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       id="account-profile-phone"
                       type="text"
                       value={profileForm.soDienThoai}
@@ -544,11 +549,11 @@ export function AccountCenterPanel({ session }) {
 
                 {/* Email */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label htmlFor="account-profile-email" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                  <Label htmlFor="account-profile-email" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
                     <Mail size={14} color="#64748b" />
                     <span>Email liên hệ</span>
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     id="account-profile-email"
                     type="email"
                     value={profileForm.email}
@@ -571,11 +576,11 @@ export function AccountCenterPanel({ session }) {
 
                 {/* Avatar URL */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label htmlFor="account-profile-avatar" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                  <Label htmlFor="account-profile-avatar" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
                     <Image size={14} color="#64748b" />
                     <span>Đường dẫn Ảnh Avatar (URL)</span>
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     id="account-profile-avatar"
                     type="text"
                     value={profileForm.avatarUrl}
@@ -609,7 +614,7 @@ export function AccountCenterPanel({ session }) {
                 )}
 
                 <div style={{ marginTop: '0.5rem' }}>
-                  <button
+                  <Button data-intent="success"
                     type="submit"
                     disabled={profileState.saving || !userId}
                     className="admin-button-primary btn-save"
@@ -629,7 +634,7 @@ export function AccountCenterPanel({ session }) {
                     }}
                   >
                     <CheckCircle2 size={15} /> {profileState.saving ? 'Đang lưu...' : 'Lưu thay đổi hồ sơ'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -648,12 +653,12 @@ export function AccountCenterPanel({ session }) {
               <form onSubmit={changePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                 {/* Current Password */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label htmlFor="account-pwd-current" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                  <Label htmlFor="account-pwd-current" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
                     <Lock size={14} color="#64748b" />
                     <span>Mật khẩu hiện tại</span>
-                  </label>
+                  </Label>
                   <div className="admin-password-field">
-                    <input
+                    <Input
                       id="account-pwd-current"
                       type={showCurrentPwd ? "text" : "password"}
                       value={passwordForm.currentPassword}
@@ -672,7 +677,7 @@ export function AccountCenterPanel({ session }) {
                         boxSizing: 'border-box'
                       }}
                     />
-                    <button
+                    <Button
                       type="button"
                       className="admin-password-toggle"
                       onClick={() => setShowCurrentPwd(!showCurrentPwd)}
@@ -680,19 +685,19 @@ export function AccountCenterPanel({ session }) {
                       aria-label={showCurrentPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                     >
                       {showCurrentPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
                   {/* New Password */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label htmlFor="account-pwd-new" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                    <Label htmlFor="account-pwd-new" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
                       <KeyRound size={14} color="#64748b" />
                       <span>Mật khẩu mới</span>
-                    </label>
+                    </Label>
                     <div className="admin-password-field">
-                      <input
+                      <Input
                         id="account-pwd-new"
                         type={showNewPwd ? "text" : "password"}
                         value={passwordForm.newPassword}
@@ -711,7 +716,7 @@ export function AccountCenterPanel({ session }) {
                           boxSizing: 'border-box'
                         }}
                       />
-                      <button
+                      <Button
                         type="button"
                         className="admin-password-toggle"
                         onClick={() => setShowNewPwd(!showNewPwd)}
@@ -719,18 +724,18 @@ export function AccountCenterPanel({ session }) {
                         aria-label={showNewPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                       >
                         {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
                   {/* Confirm Password */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label htmlFor="account-pwd-confirm" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                    <Label htmlFor="account-pwd-confirm" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
                       <KeyRound size={14} color="#64748b" />
                       <span>Xác nhận mật khẩu mới</span>
-                    </label>
+                    </Label>
                     <div className="admin-password-field">
-                      <input
+                      <Input
                         id="account-pwd-confirm"
                         type={showConfirmPwd ? "text" : "password"}
                         value={passwordForm.confirmPassword}
@@ -749,7 +754,7 @@ export function AccountCenterPanel({ session }) {
                           boxSizing: 'border-box'
                         }}
                       />
-                      <button
+                      <Button
                         type="button"
                         className="admin-password-toggle"
                         onClick={() => setShowConfirmPwd(!showConfirmPwd)}
@@ -757,7 +762,7 @@ export function AccountCenterPanel({ session }) {
                         aria-label={showConfirmPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                       >
                         {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -775,7 +780,7 @@ export function AccountCenterPanel({ session }) {
                 )}
 
                 <div style={{ marginTop: '0.5rem' }}>
-                  <button
+                  <Button data-intent="success"
                     type="submit"
                     disabled={passwordState.saving || !userId}
                     className="admin-button-primary btn-save"
@@ -795,13 +800,13 @@ export function AccountCenterPanel({ session }) {
                     }}
                   >
                     <KeyRound size={15} /> {passwordState.saving ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

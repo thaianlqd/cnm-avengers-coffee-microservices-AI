@@ -1,108 +1,37 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { X } from './WorkspaceIcons'
+import { Button } from '../ui/button'
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog'
 
-const dialogs = []
-let savedOverflow = ''
-const focusable = node => [...node.querySelectorAll('input:not([type="hidden"]),textarea,select,button,a[href],[tabindex="0"]')]
-  .filter(element => !element.disabled && element.getAttribute('tabindex') !== '-1' && element.getClientRects().length)
-
-export default function WorkspaceDialog({
-  title,
-  subtitle,
-  icon: Icon,
-  label = title,
-  onClose,
-  busy = false,
-  footer,
-  children,
-  className = ''
-}) {
+/** Shared shadcn/Radix dialog keeps each existing form and save handler intact. */
+export default function WorkspaceDialog({ title, subtitle, icon: Icon, label = title, onClose, busy = false, footer, children, className = '' }) {
   const panel = useRef(null)
-  const close = useRef(onClose)
-  const saving = useRef(busy)
-  useLayoutEffect(() => { close.current = onClose; saving.current = busy }, [onClose, busy])
-  useEffect(() => {
-    const node = panel.current
-    const previous = document.activeElement
-    if (!dialogs.length) { savedOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden' }
-    dialogs.push(node)
-    const first = node?.querySelector('input:not([type="hidden"]):not(:disabled),textarea:not(:disabled),select:not(:disabled)') || focusable(node)[0]
-    ;(first || node)?.focus()
-    const keydown = event => {
-      if (dialogs.at(-1) !== node || event.defaultPrevented) return
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        event.stopPropagation()
-        if (!saving.current) close.current?.()
-      }
-      if (event.key !== 'Tab') return
-      const controls = focusable(node), first = controls[0], last = controls.at(-1)
-      if (!controls.length) { event.preventDefault(); node.focus(); return }
-      const outside = !node.contains(document.activeElement)
-      if (event.shiftKey && (document.activeElement === first || outside || document.activeElement === node)) { event.preventDefault(); last.focus() }
-      else if (!event.shiftKey && (document.activeElement === last || outside || document.activeElement === node)) { event.preventDefault(); first.focus() }
-    }
-    document.addEventListener('keydown', keydown)
-    return () => {
-      document.removeEventListener('keydown', keydown)
-      const index = dialogs.indexOf(node)
-      if (index >= 0) dialogs.splice(index, 1)
-      if (!dialogs.length) document.body.style.overflow = savedOverflow
-      if (previous?.isConnected) previous.focus?.()
-    }
-  }, [])
+  const descriptionId = useId()
+  const previous = useRef(typeof document !== 'undefined' ? document.activeElement : null)
   useEffect(() => {
     if (busy) return
     const error = panel.current?.querySelector('.workspace-form-error')
-    if (error) {
-      error.tabIndex = -1
-      error.focus({ preventScroll: true })
-      error.scrollIntoView({ block: 'nearest' })
-    }
+    if (error) { error.tabIndex = -1; error.focus({ preventScroll: true }); error.scrollIntoView({ block: 'nearest' }) }
   }, [busy])
-  return (
-    <div className="management-dialog-backdrop" onMouseDown={event => { if (!saving.current && event.target === event.currentTarget) close.current?.() }}>
-      <section
-        ref={panel}
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-        aria-busy={busy || undefined}
-        tabIndex={-1}
-        className={`management-dialog workspace-dialog ${className}`}
-      >
-        {title && (
-          <header className="workspace-dialog-heading">
-            <div className="workspace-dialog-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-              {Icon && (
-                <div className="workspace-dialog-icon-badge" style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon size={19} />
-                </div>
-              )}
-              <div>
-                <h3 className="workspace-dialog-title" style={{ margin: 0, fontSize: '1.125rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.015em' }}>{title}</h3>
-                {subtitle && <p className="workspace-dialog-subtitle" style={{ margin: '3px 0 0 0', fontSize: '0.8125rem', color: '#64748b', fontWeight: '500' }}>{subtitle}</p>}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="workspace-icon-button workspace-dialog-close"
-              onClick={onClose}
-              disabled={busy}
-              aria-label="Đóng cửa sổ"
-              title="Đóng cửa sổ"
-            >
-              <X size={18} />
-            </button>
-          </header>
-        )}
-        {children}
-        {footer && (
-          <footer className="workspace-dialog-footer">
-            {footer}
-          </footer>
-        )}
-      </section>
-    </div>
-  )
+  return <Dialog open onOpenChange={open => { if (!open && !busy) onClose?.() }}>
+    <DialogContent ref={panel} portalContainer={document.querySelector('.console-shell') || document.body} showCloseButton={false}
+      overlayClassName="workspace-radix-overlay" className={`management-dialog workspace-dialog workspace-radix-dialog ${className}`}
+      style={{ maxHeight: 'calc(100dvh - 36px)', overflowY: 'auto' }}
+      aria-busy={busy || undefined} aria-describedby={subtitle ? descriptionId : undefined}
+      onOpenAutoFocus={event => { event.preventDefault(); const first = panel.current?.querySelector('input:not([type="hidden"]):not(:disabled),textarea:not(:disabled),[role="combobox"]'); (first || panel.current)?.focus() }}
+      onCloseAutoFocus={event => { event.preventDefault(); if (previous.current?.isConnected) previous.current.focus() }}
+      onEscapeKeyDown={event => { if (busy) event.preventDefault() }}
+      onInteractOutside={event => { if (busy || event.target.closest?.('.workspace-select-popover')) event.preventDefault() }}>
+      {!title && <DialogTitle className="sr-only">{label || 'Biểu mẫu'}</DialogTitle>}
+      {title && <header className="workspace-dialog-heading">
+        <div className="workspace-dialog-header-left">
+          {Icon && <div className="workspace-dialog-icon-badge"><Icon size={20} /></div>}
+          <div><DialogTitle className="workspace-dialog-title">{title}</DialogTitle>{subtitle && <DialogDescription id={descriptionId} className="workspace-dialog-subtitle">{subtitle}</DialogDescription>}</div>
+        </div>
+        <Button type="button" variant="ghost" size="icon" className="workspace-dialog-close" data-intent="danger" onClick={onClose} disabled={busy} aria-label="Đóng cửa sổ"><X size={18} /></Button>
+      </header>}
+      {children}
+      {footer && <DialogFooter data-modal-footer="edge" className="workspace-dialog-footer">{footer}</DialogFooter>}
+    </DialogContent>
+  </Dialog>
 }

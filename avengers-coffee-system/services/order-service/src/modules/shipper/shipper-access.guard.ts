@@ -22,7 +22,10 @@ export class ShipperAccessGuard implements CanActivate {
     req.user = user;
     const path = String(req.path || '').replace(/^\/shippers\/?/, '');
     const method = String(req.method || '').toUpperCase();
-    if (MANAGEMENT_ROLES.has(role)) return true;
+    if (MANAGEMENT_ROLES.has(role)) {
+      if (method==='POST' && (/^[^/]+\/accept\//.test(path) || /^[^/]+\/batch-orders\/(create|[^/]+\/accept)$/.test(path))) throw new ForbiddenException('Tài xế phải đăng nhập ứng dụng để nhận đơn.');
+      return true;
+    }
     if (role === 'STAFF') {
       const branch = String(user.branchCode || '').trim().toUpperCase().replace(/-/g, '_');
       if (!branch) throw new ForbiddenException('Nhân viên chưa được phân chi nhánh');

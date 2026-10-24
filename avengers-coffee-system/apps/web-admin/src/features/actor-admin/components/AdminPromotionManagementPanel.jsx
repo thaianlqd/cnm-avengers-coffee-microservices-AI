@@ -1,3 +1,12 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import DateTimePicker from '../../../components/console/DateTimePicker'
+import { Card } from '../../../components/ui/card'
+import { Button } from '../../../components/ui/button'
+import { Input } from '../../../components/ui/input'
+import { Table } from '../../../components/ui/table'
+import { Badge } from '../../../components/ui/badge'
+import { Label } from '../../../components/ui/label'
+import { Textarea } from '../../../components/ui/textarea'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import CurrencyInput from '../../../components/console/CurrencyInput'
@@ -14,8 +23,6 @@ import {
   Sparkles,
   Tag,
   Gift,
-  CheckCircle2,
-  XCircle,
   AlertCircle,
   Info,
   ChevronLeft,
@@ -63,15 +70,15 @@ class PanelErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="admin-surface" style={{ padding: '2.5rem 1.5rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #fee2e2', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <Card className="admin-surface" style={{ padding: '2.5rem 1.5rem', textAlign: 'center', background: '#ffffff', borderRadius: "10px", border: '1px solid #fee2e2', boxShadow: "none" }}>
           <AlertCircle size={32} color="#dc2626" style={{ marginBottom: '0.75rem' }} />
-          <h3 style={{ color: '#dc2626', margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: '700' }}>
+          <h3 style={{ color: '#dc2626', margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: "600" }}>
             Không thể hiển thị Giao diện Khuyến mãi và Voucher
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
             Chi tiết lỗi: {this.state.error?.message || 'Có sự cố xảy ra khi xử lý dữ liệu khuyến mãi.'}
           </p>
-          <button className="admin-button-primary"
+          <Button className="admin-button-primary"
             type="button"
             onClick={() => this.setState({ hasError: false })}
             style={{
@@ -85,8 +92,8 @@ class PanelErrorBoundary extends Component {
             }}
           >
             Thử tải lại giao diện
-          </button>
-        </div>
+          </Button>
+        </Card>
       )
     }
     return this.props.children
@@ -101,7 +108,7 @@ function PromoPagination({ pageData, onPageChange }) {
         Hiển thị {pageData.from} - {pageData.to} trên tổng số {pageData.total} mã
       </span>
       <div className="promo-pagination-actions">
-        <button
+        <Button
           type="button"
           className="admin-pg-btn"
           onClick={() => onPageChange(1)}
@@ -109,8 +116,8 @@ function PromoPagination({ pageData, onPageChange }) {
           title="Trang đầu"
         >
           <ChevronsLeft size={18} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className="admin-pg-btn"
           onClick={() => onPageChange(pageData.page - 1)}
@@ -118,11 +125,11 @@ function PromoPagination({ pageData, onPageChange }) {
           title="Trang trước"
         >
           <ChevronLeft size={18} />
-        </button>
+        </Button>
         <span className="promo-pg-current">
           Trang {pageData.page} trên {pageData.totalPages}
         </span>
-        <button
+        <Button
           type="button"
           className="admin-pg-btn"
           onClick={() => onPageChange(pageData.page + 1)}
@@ -130,8 +137,8 @@ function PromoPagination({ pageData, onPageChange }) {
           title="Trang sau"
         >
           <ChevronRight size={18} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className="admin-pg-btn"
           onClick={() => onPageChange(pageData.totalPages)}
@@ -139,7 +146,7 @@ function PromoPagination({ pageData, onPageChange }) {
           title="Trang cuối"
         >
           <ChevronsRight size={18} />
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -299,16 +306,13 @@ function AdminPromotionManagementPanelContent({
   return (
     <div className="promo-manage-container">
       {/* Full Width Card */}
-      <div className="promo-list-card">
+      <Card className="promo-list-card">
         {/* Toolbar & Filters */}
-        <div className="workspace-section-title">
-          <div><h2>Danh sách khuyến mãi & voucher</h2><p>Voucher công khai và voucher phát cho thành viên hệ thống.</p></div>
-          <span className="workspace-record-count">{stats.total} chương trình</span>
-        </div>
+        <span className="workspace-record-count">{stats.total} chương trình</span>
         <div className="promo-toolbar">
           {/* Main Distribution Tabs (Public vs Template) */}
           <div className="promo-type-tabs" role="group" aria-label="Loại chương trình">
-            <button
+            <Button
               type="button"
               aria-pressed={activeDistributionTab === 'PUBLIC'}
               className={`promo-type-tab promo-type-tab--public ${activeDistributionTab === 'PUBLIC' ? 'active' : ''}`}
@@ -317,9 +321,9 @@ function AdminPromotionManagementPanelContent({
               <Tag size={18}  style={{ flexShrink: 0 }} className="promo-type-tab-icon" />
               <span>Voucher công khai</span>
               <span className="workspace-tab-count">{stats.publicCount}</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
               aria-pressed={activeDistributionTab === 'TEMPLATE'}
               className={`promo-type-tab promo-type-tab--template ${activeDistributionTab === 'TEMPLATE' ? 'active' : ''}`}
@@ -328,14 +332,14 @@ function AdminPromotionManagementPanelContent({
               <Sparkles size={18}  style={{ flexShrink: 0 }} className="promo-type-tab-icon" />
               <span>Voucher thành viên hệ thống</span>
               <span className="workspace-tab-count">{stats.templateCount}</span>
-            </button>
+            </Button>
           </div>
 
           <div className="promo-filter-group" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', width: '100%' }}>
             {/* Search Input with right-side button */}
             <div className="promo-search-box" style={{ flex: '0 1 320px', minWidth: '220px' }}>
               <div className="promo-search-input-wrap">
-                <input className="ui-input"
+                <Input className="ui-input"
                   type="text"
                   value={promotionFilter.q || ''}
                   onChange={(e) => setPromotionFilter && setPromotionFilter((p) => ({ ...p, q: e.target.value }))}
@@ -343,14 +347,14 @@ function AdminPromotionManagementPanelContent({
                   placeholder="Tìm mã hoặc tên chương trình…"
                 />
                 {promotionFilter.q && (
-                  <button
+                  <Button data-intent="danger"
                     type="button"
                     className="promo-search-clear"
                     onClick={() => setPromotionFilter && setPromotionFilter((p) => ({ ...p, q: '' }))}
                     title="Xóa tìm kiếm"
                   >
                     <X size={14} />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -374,36 +378,7 @@ function AdminPromotionManagementPanelContent({
               </SearchableSelect>
             </div>
 
-            {loadPromotions && (
-              <button
-                type="button"
-                className="promo-refresh-btn"
-                onClick={loadPromotions}
-                title="Tải lại dữ liệu"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '7px',
-                  height: '40px',
-                  minHeight: '40px',
-                  padding: '0 15px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#334155',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                  margin: 0
-                }}
-              >
-                <RefreshCw size={15} />
-                <span>Tải lại</span>
-              </button>
-            )}
-
-            <button
+            <Button
               type="button"
               className="promo-btn promo-btn--success promo-create-btn"
               onClick={() => handleOpenAddModal(activeDistributionTab)}
@@ -423,7 +398,7 @@ function AdminPromotionManagementPanelContent({
             >
               <Plus size={18}  style={{ flexShrink: 0 }} />
               <span>{activeDistributionTab === 'PUBLIC' ? 'Tạo voucher mới' : 'Tạo voucher thành viên'}</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -453,7 +428,7 @@ function AdminPromotionManagementPanelContent({
             ) : activeDistributionTab === 'PUBLIC' ? (
               /* TABLE FOR PUBLIC CODES */
               <div className="promo-table-wrapper">
-                <table className="promo-table">
+                <Table className="promo-table">
                   <thead>
                     <tr>
                       <th style={{ width: '25%' }}>Mã và Tên chương trình</th>
@@ -491,7 +466,7 @@ function AdminPromotionManagementPanelContent({
                           {/* Code & Name */}
                           <td>
                             <div className="promo-code-cell">
-                              <span className="promo-code-badge">{code}</span>
+                              <Badge variant="outline" className="promo-code-badge">{code}</Badge>
                               <span className="promo-name-title">{item.ten_khuyen_mai || item.ten_voucher}</span>
                               {item.mo_ta && <span className="promo-desc-text">{item.mo_ta}</span>}
                             </div>
@@ -523,21 +498,21 @@ function AdminPromotionManagementPanelContent({
                           {/* Status */}
                           <td>
                             {item.trang_thai === 'ACTIVE' ? (
-                              <span className="promo-status-badge promo-status-badge--active">
-                                <CheckCircle2 size={12} />
+                              <StatusBadge tone="success" className="promo-status-badge promo-status-badge--active">
+
                                 <span>Hoạt động</span>
-                              </span>
+                              </StatusBadge>
                             ) : (
-                              <span className="promo-status-badge promo-status-badge--inactive">
-                                <XCircle size={12} />
+                              <StatusBadge tone="secondary" className="promo-status-badge promo-status-badge--inactive">
+
                                 <span>Tạm dừng</span>
-                              </span>
+                              </StatusBadge>
                             )}
                           </td>
 
                           <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
-                              <button
+                              <Button
                                 type="button"
                                 className="admin-table-action-btn btn-edit"
                                 onClick={() => {
@@ -548,9 +523,9 @@ function AdminPromotionManagementPanelContent({
                                 title="Chỉnh sửa mã voucher"
                               >
                                 <Edit3 size={15} />
-                              </button>
+                              </Button>
 
-                              <button
+                              <Button data-intent="danger"
                                 type="button"
                                 className="admin-table-action-btn btn-delete"
                                 onClick={() => {
@@ -559,19 +534,19 @@ function AdminPromotionManagementPanelContent({
                                 title="Xóa mã voucher"
                               >
                                 <Trash2 size={15} />
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </tr>
                       )
                     })}
                   </tbody>
-                </table>
+                </Table>
               </div>
             ) : (
               /* TABLE FOR INTERNAL TEMPLATES */
               <div className="promo-table-wrapper">
-                <table className="promo-table">
+                <Table className="promo-table">
                   <thead>
                     <tr>
                       <th style={{ width: '25%' }}>Mẫu Template</th>
@@ -611,7 +586,7 @@ function AdminPromotionManagementPanelContent({
                           {/* Template Name & Code */}
                           <td>
                             <div className="promo-code-cell">
-                              <span className="promo-code-badge promo-code-badge--template">{code}</span>
+                              <Badge variant="outline" className="promo-code-badge promo-code-badge--template">{code}</Badge>
                               <span className="promo-name-title">{item.ten_khuyen_mai || item.ten_voucher}</span>
                             </div>
                           </td>
@@ -645,7 +620,7 @@ function AdminPromotionManagementPanelContent({
                           {/* Actions */}
                           <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
-                              <button
+                              <Button
                                 type="button"
                                 className="admin-table-action-btn btn-edit"
                                 onClick={() => {
@@ -656,9 +631,9 @@ function AdminPromotionManagementPanelContent({
                                 title="Chỉnh sửa template"
                               >
                                 <Edit3 size={15} />
-                              </button>
+                              </Button>
 
-                              <button
+                              <Button data-intent="danger"
                                 type="button"
                                 className="admin-table-action-btn btn-delete"
                                 onClick={() => {
@@ -667,14 +642,14 @@ function AdminPromotionManagementPanelContent({
                                 title="Xóa template"
                               >
                                 <Trash2 size={15} />
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </tr>
                       )
                     })}
                   </tbody>
-                </table>
+                </Table>
               </div>
             )}
 
@@ -682,7 +657,7 @@ function AdminPromotionManagementPanelContent({
             <PromoPagination pageData={pageData} onPageChange={setPage} />
           </>
         )}
-      </div>
+      </Card>
 
       {/* POPUP MODAL DIALOG FOR ADD / EDIT PROMOTION */}
       {isModalOpen && (
@@ -716,33 +691,33 @@ function AdminPromotionManagementPanelContent({
                   </>
                 )}
               </div>
-              <button type="button" disabled={savingPromotion} aria-label="Đóng cửa sổ" className="promo-modal-close" onClick={handleCloseModal} title="Đóng">
+              <Button data-intent="danger" type="button" disabled={savingPromotion} aria-label="Đóng cửa sổ" className="promo-modal-close" onClick={handleCloseModal} title="Đóng">
                 <X size={18} />
-              </button>
+              </Button>
             </div>
 
             {/* Modal Internal Tabs */}
             <div className="promo-modal-tabs">
-              <button aria-pressed={modalActiveTab === 'basic'}
+              <Button aria-pressed={modalActiveTab === 'basic'}
                 type="button"
                 className={`promo-modal-tab-btn ${modalActiveTab === 'basic' ? 'active' : ''}`}
                 onClick={() => setModalActiveTab('basic')}
               >
                 <Ticket size={15} />
                 <span>Thông tin và Quy tắc giảm giá</span>
-              </button>
+              </Button>
 
-              <button aria-pressed={modalActiveTab === 'rules'}
+              <Button aria-pressed={modalActiveTab === 'rules'}
                 type="button"
                 className={`promo-modal-tab-btn ${modalActiveTab === 'rules' ? 'active' : ''}`}
                 onClick={() => setModalActiveTab('rules')}
               >
                 <Sliders size={15} />
                 <span>{safeForm.loai_phan_phoi === 'TEMPLATE' ? 'Ngữ cảnh tự động' : 'Điều kiện và Phân phối'}</span>
-              </button>
+              </Button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="promo-modal-body">
+            <form data-modal-body="true" onSubmit={handleFormSubmit} className="promo-modal-body">
               {formError && <p className="workspace-form-error" role="alert">{formError}</p>}
               {/* TAB 1: BASIC & DISCOUNT RULES */}
               {modalActiveTab === 'basic' && (
@@ -751,10 +726,10 @@ function AdminPromotionManagementPanelContent({
                   <div className="promo-form-grid">
                     {/* Program Name */}
                     <div className="promo-form-group">
-                      <label htmlFor="promo-name-input">
+                      <Label htmlFor="promo-name-input">
                         {safeForm.loai_phan_phoi === 'PUBLIC' ? 'Tên chương trình' : 'Tên mẫu Template'} <span className="promo-required">*</span>
-                      </label>
-                      <input className="ui-input"
+                      </Label>
+                      <Input className="ui-input"
                         id="promo-name-input"
                         type="text"
                         value={safeForm.ten_khuyen_mai || ''}
@@ -768,11 +743,11 @@ function AdminPromotionManagementPanelContent({
                     {/* Program Code */}
                     <div className="promo-form-group">
                       <div className="promo-label-row">
-                        <label htmlFor="promo-code-input">
+                        <Label htmlFor="promo-code-input">
                           {safeForm.loai_phan_phoi === 'PUBLIC' ? 'Mã Voucher' : 'Mã Template'} <span className="promo-required">*</span>
-                        </label>
+                        </Label>
                         {safeForm.loai_phan_phoi === 'PUBLIC' && !editingPromotionCode && (
-                          <button
+                          <Button
                             type="button"
                             className="promo-link-btn"
                             title="Tạo ngẫu nhiên mã voucher"
@@ -783,10 +758,10 @@ function AdminPromotionManagementPanelContent({
                           >
                             <Sparkles size={12} />
                             <span>Tạo mã tự động</span>
-                          </button>
+                          </Button>
                         )}
                       </div>
-                      <input className="ui-input"
+                      <Input className="ui-input"
                         id="promo-code-input"
                         type="text"
                         value={safeForm.ma_khuyen_mai || ''}
@@ -805,8 +780,8 @@ function AdminPromotionManagementPanelContent({
 
                     {/* Discount Type */}
                     <div className="promo-form-group">
-                      <label htmlFor="promo-type-select">Hình thức giảm giá</label>
-                      <select
+                      <Label htmlFor="promo-type-select">Hình thức giảm giá</Label>
+                      <SearchableSelect
                         id="promo-type-select"
                         value={safeForm.loai_khuyen_mai || 'PERCENT'}
                         onChange={(e) => setPromotionForm && setPromotionForm((p) => ({ ...p, loai_khuyen_mai: e.target.value }))}
@@ -816,18 +791,18 @@ function AdminPromotionManagementPanelContent({
                             {t.label}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </div>
 
                     {/* Discount Value */}
                     <div className="promo-form-group">
-                      <label htmlFor="promo-value-input">
+                      <Label htmlFor="promo-value-input">
                         {safeForm.loai_khuyen_mai === 'PERCENT'
                           ? 'Mức giảm (%)'
                           : safeForm.loai_khuyen_mai === 'FIXED'
                             ? 'Số tiền giảm (VNĐ)'
                             : 'Giá trị giảm'}
-                      </label>
+                      </Label>
                       {safeForm.loai_khuyen_mai === 'FIXED' ? (
                         <CurrencyInput
                           id="promo-value-input"
@@ -836,7 +811,7 @@ function AdminPromotionManagementPanelContent({
                           placeholder="Ví dụ: 30.000"
                         />
                       ) : (
-                        <input className="ui-input"
+                        <Input className="ui-input"
                           id="promo-value-input"
                           type="number"
                           min="0"
@@ -853,7 +828,7 @@ function AdminPromotionManagementPanelContent({
                     <div className="promo-form-group">
                       {safeForm.loai_khuyen_mai === 'PERCENT' ? (
                         <>
-                          <label htmlFor="promo-max-discount">Số tiền giảm tối đa (VNĐ)</label>
+                          <Label htmlFor="promo-max-discount">Số tiền giảm tối đa (VNĐ)</Label>
                           <CurrencyInput
                             id="promo-max-discount"
                             value={safeForm.giam_toi_da || ''}
@@ -863,8 +838,8 @@ function AdminPromotionManagementPanelContent({
                         </>
                       ) : safeForm.loai_khuyen_mai === 'FREE_ITEM' ? (
                         <>
-                          <label htmlFor="promo-free-item-select">Sản phẩm tặng kèm</label>
-                          <select
+                          <Label htmlFor="promo-free-item-select">Sản phẩm tặng kèm</Label>
+                          <SearchableSelect
                             id="promo-free-item-select"
                             className="shadcn-select"
                             value={safeForm.ten_san_pham_tang || ''}
@@ -876,12 +851,12 @@ function AdminPromotionManagementPanelContent({
                                 {item.name} ({fmtNumber(item.price)} đ)
                               </option>
                             ))}
-                          </select>
+                          </SearchableSelect>
                         </>
                       ) : (
                         <>
-                          <label htmlFor="promo-max-disc-disabled">Giảm tối đa (VNĐ)</label>
-                          <input className="ui-input"
+                          <Label htmlFor="promo-max-disc-disabled">Giảm tối đa (VNĐ)</Label>
+                          <Input className="ui-input"
                             id="promo-max-disc-disabled"
                             disabled
                             placeholder="Không áp dụng cho giảm cố định"
@@ -892,7 +867,7 @@ function AdminPromotionManagementPanelContent({
 
                     {/* Minimum Order Amount */}
                     <div className="promo-form-group">
-                      <label htmlFor="promo-min-order-input">Đơn hàng tối thiểu (VNĐ)</label>
+                      <Label htmlFor="promo-min-order-input">Đơn hàng tối thiểu (VNĐ)</Label>
                       <CurrencyInput
                         id="promo-min-order-input"
                         value={safeForm.gia_tri_don_toi_thieu ?? ''}
@@ -903,10 +878,10 @@ function AdminPromotionManagementPanelContent({
 
                     {/* Banner Image URL & File Upload */}
                     <div className="promo-form-group promo-form-group--full">
-                      <label htmlFor="promo-image-url">Ảnh Banner chương trình ưu đãi</label>
+                      <Label htmlFor="promo-image-url">Ảnh Banner chương trình ưu đãi</Label>
                       <div className="admin-image-picker">
                         <div className="admin-image-picker-controls" style={{ display: 'flex', alignItems: 'stretch', width: '100%', height: '40px' }}>
-                          <input className="ui-input"
+                          <Input className="ui-input"
                             id="promo-image-url"
                             type="text"
                             value={safeForm.hinh_anh || ''}
@@ -926,7 +901,7 @@ function AdminPromotionManagementPanelContent({
                               margin: 0
                             }}
                           />
-                          <label
+                          <Label
                             className="admin-image-upload-btn"
                             title="Chọn tệp banner từ máy tính"
                             style={{
@@ -942,10 +917,10 @@ function AdminPromotionManagementPanelContent({
                               borderBottomLeftRadius: 0,
                               borderTopRightRadius: '8px',
                               borderBottomRightRadius: '8px',
-                              border: '1px solid #cbd5e1',
-                              borderLeft: '1px solid #e2e8f0',
-                              backgroundColor: '#f8fafc',
-                              color: '#334155',
+                              border: "1px solid var(--border-light)",
+                              borderLeft: "1px solid var(--border-light)",
+                              backgroundColor: "var(--surface-low)",
+                              color: "var(--text-body)",
                               fontSize: '13px',
                               fontWeight: 600,
                               cursor: 'pointer',
@@ -973,7 +948,7 @@ function AdminPromotionManagementPanelContent({
                                 reader.readAsDataURL(file);
                               }}
                             />
-                          </label>
+                          </Label>
                         </div>
 
                         {safeForm.hinh_anh && (
@@ -989,14 +964,14 @@ function AdminPromotionManagementPanelContent({
                               <span className="admin-image-preview-url" title={safeForm.hinh_anh}>
                                 {safeForm.hinh_anh.startsWith('data:') ? 'Ảnh tải lên từ máy tính' : safeForm.hinh_anh}
                               </span>
-                              <button
+                              <Button
                                 type="button"
                                 className="admin-image-clear-btn"
                                 onClick={() => setPromotionForm && setPromotionForm((p) => ({ ...p, hinh_anh: '' }))}
                               >
                                 <Trash2 size={12} />
                                 <span>Gỡ banner này</span>
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -1005,8 +980,8 @@ function AdminPromotionManagementPanelContent({
 
                     {/* Description */}
                     <div className="promo-form-group promo-form-group--full">
-                      <label htmlFor="promo-desc-textarea">Mô tả chương trình ưu đãi</label>
-                      <textarea
+                      <Label htmlFor="promo-desc-textarea">Mô tả chương trình ưu đãi</Label>
+                      <Textarea
                         id="promo-desc-textarea"
                         rows={2}
                         value={safeForm.mo_ta || ''}
@@ -1025,8 +1000,8 @@ function AdminPromotionManagementPanelContent({
                     /* PUBLIC VOUCHER RULES */
                     <div className="promo-form-grid">
                       <div className="promo-form-group">
-                        <label htmlFor="promo-total-qty">Tổng lượt phát hành tối đa</label>
-                        <input className="ui-input"
+                        <Label htmlFor="promo-total-qty">Tổng lượt phát hành tối đa</Label>
+                        <Input className="ui-input"
                           id="promo-total-qty"
                           type="number"
                           min="0"
@@ -1037,8 +1012,8 @@ function AdminPromotionManagementPanelContent({
                       </div>
 
                       <div className="promo-form-group">
-                        <label htmlFor="promo-per-user-qty">Lượt dùng tối đa mỗi khách</label>
-                        <input className="ui-input"
+                        <Label htmlFor="promo-per-user-qty">Lượt dùng tối đa mỗi khách</Label>
+                        <Input className="ui-input"
                           id="promo-per-user-qty"
                           type="number"
                           min="1"
@@ -1048,39 +1023,39 @@ function AdminPromotionManagementPanelContent({
                       </div>
 
                       <div className="promo-form-group">
-                        <label htmlFor="promo-status-select">Trạng thái hoạt động</label>
-                        <select
+                        <Label htmlFor="promo-status-select">Trạng thái hoạt động</Label>
+                        <SearchableSelect
                           id="promo-status-select"
                           value={safeForm.trang_thai || 'ACTIVE'}
                           onChange={(e) => setPromotionForm && setPromotionForm((p) => ({ ...p, trang_thai: e.target.value }))}
                         >
                           <option value="ACTIVE">Hoạt động</option>
                           <option value="INACTIVE">Tạm dừng</option>
-                        </select>
+                        </SearchableSelect>
                       </div>
 
                       <div className="promo-form-group">
-                        <label htmlFor="promo-start-date">Thời gian bắt đầu</label>
-                        <input className="ui-input"
+                        <Label htmlFor="promo-start-date">Thời gian bắt đầu</Label>
+                        <DateTimePicker className="ui-input"
                           id="promo-start-date"
-                          type="datetime-local"
+
                           value={safeForm.ngay_bat_dau || ''}
                           onChange={(e) => setPromotionForm && setPromotionForm((p) => ({ ...p, ngay_bat_dau: e.target.value }))}
                         />
                       </div>
 
                       <div className="promo-form-group">
-                        <label htmlFor="promo-end-date">Thời gian kết thúc</label>
-                        <input className="ui-input"
+                        <Label htmlFor="promo-end-date">Thời gian kết thúc</Label>
+                        <DateTimePicker className="ui-input"
                           id="promo-end-date"
-                          type="datetime-local"
+
                           value={safeForm.ngay_ket_thuc || ''}
                           onChange={(e) => setPromotionForm && setPromotionForm((p) => ({ ...p, ngay_ket_thuc: e.target.value }))}
                         />
                       </div>
 
                       <div className="promo-form-group">
-                        <label htmlFor="hien_thi_cho_khach_chk">Hiển thị trên ứng dụng</label>
+                        <Label htmlFor="hien_thi_cho_khach_chk">Hiển thị trên ứng dụng</Label>
                         <div className="promo-checkbox-card">
                           <input className="ui-input"
                             type="checkbox"
@@ -1090,7 +1065,7 @@ function AdminPromotionManagementPanelContent({
                               setPromotionForm && setPromotionForm((p) => ({ ...p, hien_thi_cho_khach: e.target.checked }))
                             }
                           />
-                          <label htmlFor="hien_thi_cho_khach_chk">Hiển thị trong trang Khuyến mãi cho khách</label>
+                          <Label htmlFor="hien_thi_cho_khach_chk">Hiển thị trong trang Khuyến mãi cho khách</Label>
                         </div>
                       </div>
                     </div>
@@ -1098,7 +1073,7 @@ function AdminPromotionManagementPanelContent({
                     /* TEMPLATE RULES */
                     <div className="promo-form-grid">
                       <div className="promo-form-group promo-form-group--full">
-                        <label htmlFor="promotionmanagementpanel-45837">Ngữ cảnh tự động cấp voucher cho người dùng</label>
+                        <Label htmlFor="promotionmanagementpanel-45837">Ngữ cảnh tự động cấp voucher cho người dùng</Label>
                         <div className="promo-context-grid">
                           {TRIGGER_CONTEXTS.map((ctx) => {
                             const currentContexts = Array.isArray(safeForm.ngu_canh_su_dung)
@@ -1109,7 +1084,7 @@ function AdminPromotionManagementPanelContent({
 
                             const isChecked = currentContexts.includes(ctx.code)
                             return (
-                              <label key={ctx.code} className={`promo-context-item ${isChecked ? 'is-selected' : ''}`}>
+                              <Label key={ctx.code} className={`promo-context-item ${isChecked ? 'is-selected' : ''}`}>
                                 <input className="ui-input" id="promotionmanagementpanel-45837"
                                   type="checkbox"
                                   checked={isChecked}
@@ -1126,15 +1101,15 @@ function AdminPromotionManagementPanelContent({
                                   }}
                                 />
                                 <span>{ctx.label}</span>
-                              </label>
+                              </Label>
                             )
                           })}
                         </div>
                       </div>
 
                       <div className="promo-form-group">
-                        <label htmlFor="promo-valid-days">Hạn sử dụng sau khi cấp (ngày)</label>
-                        <input className="ui-input"
+                        <Label htmlFor="promo-valid-days">Hạn sử dụng sau khi cấp (ngày)</Label>
+                        <Input className="ui-input"
                           id="promo-valid-days"
                           type="number"
                           min="1"
@@ -1149,8 +1124,8 @@ function AdminPromotionManagementPanelContent({
               )}
 
               {/* Modal Footer Actions */}
-              <div className="promo-modal-footer">
-                <button
+              <div data-modal-footer="inset" className="promo-modal-footer">
+                <Button data-intent="danger"
                   type="button"
                   className="promo-btn promo-btn--neutral"
                   onClick={handleCloseModal}
@@ -1172,9 +1147,9 @@ function AdminPromotionManagementPanelContent({
                   }}
                 >
                   <X size={15} /><span>Hủy bỏ</span>
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="submit"
                   className="promo-btn promo-btn--success"
                   disabled={savingPromotion || !String(safeForm.ten_khuyen_mai || '').trim() || !safeForm.ma_khuyen_mai}
@@ -1191,7 +1166,7 @@ function AdminPromotionManagementPanelContent({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    boxShadow: "none"
                   }}
                 >
                   {savingPromotion ? (
@@ -1210,7 +1185,7 @@ function AdminPromotionManagementPanelContent({
                       <span>Tạo chương trình</span>
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

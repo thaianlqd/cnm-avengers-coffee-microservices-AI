@@ -1,3 +1,10 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import { Button } from '../../../components/ui/button'
+import { Card } from '../../../components/ui/card'
+import { Input } from '../../../components/ui/input'
+import { Label } from '../../../components/ui/label'
+import { Table } from '../../../components/ui/table'
+import { Badge } from '../../../components/ui/badge'
 import SmartSelect from '../../../components/console/SmartSelect'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import SearchableSelect from '../../../components/console/SearchableSelect'
@@ -297,7 +304,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
 
   const getVehicleIcon = (type) => {
     if (type === 'CAR') return <Car size={16} style={{ color: 'var(--primary)' }} />
-    if (type === 'BICYCLE') return <Motorbike size={16} style={{ color: '#2563eb' }} />
+    if (type === 'BICYCLE') return <Motorbike size={16} style={{ color: "var(--primary)" }} />
     return <Motorbike size={16} style={{ color: '#d97706' }} />
   }
 
@@ -310,7 +317,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
             const IconComp = tab.icon
             const isActive = activeTab === tab.id
             return (
-              <button aria-pressed={isActive}
+              <Button aria-pressed={isActive}
                 key={tab.id}
                 type="button"
                 className={`admin-subtab-btn ${isActive ? 'is-active' : ''}`}
@@ -318,7 +325,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
               >
                 <IconComp size={17} color={isActive ? 'var(--text-main)' : 'var(--text-muted)'} />
                 <span>{tab.label}</span>
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -327,18 +334,13 @@ export function AdminShipperPanel({ branchOptions = [] }) {
       {/* TAB 1: CRUD & LIST */}
       {activeTab === 'crud' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="admin-section-intro" style={{ marginBottom: '1.25rem' }}>
-            <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>Danh sách nhân viên giao hàng</h2>
-              <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>Quản lý và tra cứu thông tin nhân viên giao vận theo chi nhánh, trạng thái hoạt động.</p>
-            </div>
-          </div>
+
           {/* Filter & Search */}
-          <div className="admin-surface admin-delivery-filters" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', marginBottom: '1rem' }}>
+          <Card className="admin-surface admin-delivery-filters" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: "10px", border: "1px solid var(--border-light)", boxShadow: "none", marginBottom: '1rem' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', alignItems: 'center' }}>
               {/* Search Input Box */}
               <div className="delivery-input-wrapper" style={{ flex: '1 1 240px', minWidth: '220px' }}>
-                <input className="ui-input"
+                <Input className="ui-input"
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
                   placeholder="Tìm theo username, họ tên, số điện thoại..."
@@ -377,12 +379,12 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                 </SearchableSelect>
               </div>
 
-              <button className="admin-button-primary"
+              <Button className="admin-button-primary"
                 type="button"
                 onClick={loadShippers}
                 style={{
                   height: '42px',
-                  background: '#2563eb',
+                  background: "var(--primary)",
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '10px',
@@ -395,73 +397,73 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   padding: '0 1.5rem',
                   cursor: 'pointer',
                   flexShrink: 0,
-                  boxShadow: '0 2px 6px rgba(37,99,235,0.3)',
+                  boxShadow: "none",
                 }}
               >
                 <Search size={16} /> Lọc dữ liệu
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
           {/* Form Edit */}
           {notice && <p role="status">{notice}</p>}
-          {editingId && <WorkspaceDialog title="Cập nhật nhân viên giao hàng" onClose={closeEditor} busy={saving}><div className="admin-surface admin-shipper-editor" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }}>
+          {editingId && <WorkspaceDialog title="Cập nhật nhân viên giao hàng" onClose={closeEditor} busy={saving}><Card data-modal-body="true" className="admin-surface admin-shipper-editor" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: "none" }}>
             {formError && <p className="workspace-form-error" role="alert">{formError}</p>}
             <div className="admin-responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60718a' }}>Tên đăng nhập (Username) *</span>
-                <input className="ui-input"
+                <Input className="ui-input"
                   value={form.username || ''}
                   onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
                   placeholder="Ví dụ: shipper01"
                   style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-light)', fontSize: '0.875rem' }}
                 />
-              </label>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60718a' }}>Họ và tên đầy đủ *</span>
-                <input className="ui-input"
+                <Input className="ui-input"
                   value={form.full_name || ''}
                   onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))}
                   placeholder="Ví dụ: Nguyễn Văn A"
                   style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-light)', fontSize: '0.875rem' }}
                 />
-              </label>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60718a' }}>Email liên hệ</span>
-                <input className="ui-input"
+                <Input className="ui-input"
                   value={form.email || ''}
                   onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                   placeholder="shipper@avengers.coffee"
                   style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-light)', fontSize: '0.875rem' }}
                 />
-              </label>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60718a' }}>Số điện thoại</span>
-                <input className="ui-input"
+                <Input className="ui-input"
                   value={form.phone_number || ''}
                   onChange={e => setForm(p => ({ ...p, phone_number: e.target.value }))}
                   placeholder="0901234567"
                   style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-light)', fontSize: '0.875rem' }}
                 />
-              </label>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60718a' }}>Biển số xe</span>
-                <input className="ui-input"
+                <Input className="ui-input"
                   value={form.vehicle_plate || ''}
                   onChange={e => setForm(p => ({ ...p, vehicle_plate: e.target.value }))}
                   placeholder="59B1 234.56"
                   style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-light)', fontSize: '0.875rem' }}
                 />
-              </label>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60718a' }}>Mật khẩu {editingId ? '(Bỏ trống nếu không đổi)' : '*'}</span>
                 <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
-                  <input
+                  <Input
                     className="ui-input"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
@@ -478,7 +480,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       boxSizing: 'border-box'
                     }}
                   />
-                  <button
+                  <Button
                     className="admin-password-toggle"
                     type="button"
                     aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
@@ -503,36 +505,36 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                     }}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                  </Button>
                 </div>
-              </label>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60718a' }}>Phương tiện giao hàng</span>
-                <select
+                <SearchableSelect
                   value={form.vehicle_type}
                   onChange={e => setForm(p => ({ ...p, vehicle_type: e.target.value }))}
                   style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-light)', fontSize: '0.875rem', background: '#fff' }}
                 >
                   <option value="MOTORBIKE">Xe máy</option>
                   <option value="CAR">Ô tô</option>
-                </select>
-              </label>
+                </SearchableSelect>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60718a' }}>Chi nhánh phụ trách</span>
                 <SearchableBranchSelect
                   branches={effectiveBranches}
                   value={form.branch_code}
                   onChange={val => setForm(p => ({ ...p, branch_code: val }))}
                 />
-              </label>
+              </Label>
             </div>
 
             {/* Form Actions */}
             <div className="admin-editor-actions">
               {(
-                <button
+                <Button data-intent="danger"
                   type="button"
                   disabled={saving} className="btn-cancel" onClick={closeEditor}
                   style={{
@@ -547,13 +549,13 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                     alignItems: 'center',
                     gap: '0.4rem',
                     cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(220,38,38,0.2)',
+                    boxShadow: "none",
                   }}
                 >
                   <X size={16} /> Hủy bỏ
-                </button>
+                </Button>
               )}
-              <button
+              <Button data-intent="success"
                 type="button"
                 className="btn-save" onClick={handleSave}
                 disabled={saving}
@@ -570,13 +572,13 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   gap: '0.4rem',
                   cursor: 'pointer',
                   opacity: saving ? 0.7 : 1,
-                  boxShadow: '0 2px 6px rgba(5,150,105,0.25)',
+                  boxShadow: "none",
                 }}
               >
                 <Save size={16} /> {saving ? 'Đang xử lý...' : editingId ? 'Cập nhật thông tin' : 'Tạo tài khoản'}
-              </button>
+              </Button>
             </div>
-          </div></WorkspaceDialog>}
+          </Card></WorkspaceDialog>}
 
           {/* Table List */}
           {shippersLoading && shippers.length === 0 ? (
@@ -589,58 +591,61 @@ export function AdminShipperPanel({ branchOptions = [] }) {
               <p style={{ margin: 0, fontWeight: '600' }}>Lỗi tải dữ liệu: {shippersError}</p>
             </div>
           ) : (
-            <div className="admin-surface" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', overflowX: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+            <Card className="admin-surface" style={{ background: '#ffffff', borderRadius: "10px", border: "1px solid var(--border-light)", overflowX: 'auto', boxShadow: "none" }}>
+              <Table className="admin-shipper-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+                <colgroup>
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '17%' }} />
+                  <col style={{ width: '14%' }} />
+                  <col style={{ width: '8%' }} />
+                  <col style={{ width: '10%' }} />
+                  <col style={{ width: '9%' }} />
+                </colgroup>
                 <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    <th style={{ padding: '0.9rem 1.15rem' }}>Nhân viên</th>
-                    <th style={{ padding: '0.9rem 1.15rem' }}>Thông tin liên hệ</th>
-                    <th style={{ padding: '0.9rem 1.15rem' }}>Phương tiện</th>
-                    <th style={{ padding: '0.9rem 1.15rem' }}>Chi nhánh</th>
-                    <th style={{ padding: '0.9rem 1.15rem' }}>Trạng thái</th>
-                    <th style={{ padding: '0.9rem 1.15rem' }}>Đánh giá</th>
-                    <th style={{ padding: '0.9rem 1.15rem' }}>Ngày gia nhập</th>
-                    <th style={{ padding: '0.9rem 1.15rem', textAlign: 'right', minWidth: '190px' }}>Thao tác</th>
+                  <tr style={{ background: "var(--surface-low)", borderBottom: "1px solid var(--border-light)", color: "var(--text-body)", fontWeight: "600", fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <th style={{ padding: '0.9rem 0.75rem' }}>Nhân viên</th>
+                    <th style={{ padding: '0.9rem 0.75rem' }}>Thông tin liên hệ</th>
+                    <th style={{ padding: '0.9rem 0.75rem', whiteSpace: 'nowrap' }}>Biển số xe</th>
+                    <th style={{ padding: '0.9rem 0.75rem' }}>Chi nhánh</th>
+                    <th style={{ padding: '0.9rem 0.75rem', whiteSpace: 'nowrap', minWidth: '130px' }}>Trạng thái</th>
+                    <th style={{ padding: '0.9rem 0.75rem', whiteSpace: 'nowrap' }}>Đánh giá</th>
+                    <th style={{ padding: '0.9rem 0.75rem', whiteSpace: 'nowrap', minWidth: '95px' }}>Ngày gia nhập</th>
+                    <th style={{ padding: '0.9rem 0.75rem', textAlign: 'right', whiteSpace: 'nowrap' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   <PaginatedList items={shippers} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab,createdId])} layout="table" columns={8}>{s => {
                     const st = SHIPPER_STATUS_CONFIG[s.status] || SHIPPER_STATUS_CONFIG.INACTIVE
                     return (
-                      <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}>
-                        <td style={{ padding: '0.85rem 1.15rem' }}>
-                          <div style={{ fontWeight: '700', color: 'var(--text-main)' }}>{s.full_name}</div>
+                      <tr key={s.id} style={{ borderBottom: "1px solid var(--border-subtle)", transition: 'background 0.15s' }}>
+                        <td style={{ padding: '0.85rem 0.75rem' }}>
+                          <div style={{ fontWeight: "600", color: 'var(--text-main)', fontSize: '0.84rem' }}>{s.full_name}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{s.username}</div>
                         </td>
-                        <td style={{ padding: '0.85rem 1.15rem' }}>
-                          <div style={{ color: '#414743' }}>{s.email || '—'}</div>
+                        <td style={{ padding: '0.85rem 0.75rem' }}>
+                          <div style={{ color: '#414743', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={s.email}>{s.email || '—'}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.phone || s.phone_number || '—'}</div>
                         </td>
-                        <td style={{ padding: '0.85rem 1.15rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                             {getVehicleIcon(s.vehicle_type)}
-                            <span style={{ fontWeight: '600', color: '#414743' }}>{s.vehicle_plate || 'Chưa cập nhật'}</span>
+                            <span style={{ fontWeight: '600', color: '#334155', fontSize: '0.8125rem' }}>
+                              {s.vehicle_plate || '—'}
+                            </span>
                           </div>
                         </td>
-                        <td style={{ padding: '0.85rem 1.15rem', color: '#414743' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', color: '#414743', fontSize: '0.8125rem' }}>
                           {effectiveBranches.find(b => (b.code || b.id) === s.branch_code)?.name || s.branch_name || s.branch_code || 'Toàn hệ thống'}
                         </td>
-                        <td style={{ padding: '0.85rem 1.15rem' }}>
-                          <span className="workspace-inline-label" style={{
-                            display: 'inline-block',
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem',
-                            fontWeight: '700',
-                            backgroundColor: st.bg,
-                            color: st.color,
-                            border: `1px solid ${st.border}`,
-                          }}>
+                        <td style={{ padding: '0.85rem 0.75rem', whiteSpace: 'nowrap' }}>
+                          <StatusBadge status={s.status} className="workspace-inline-label" style={{ whiteSpace: 'nowrap' }}>
                             {st.label}
-                          </span>
+                          </StatusBadge>
                         </td>
-                        <td style={{ padding: '0.85rem 1.15rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#d97706', fontWeight: '700' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#d97706', fontWeight: "600" }}>
                             {s.rating ? (
                               <>
                                 <Star size={14} fill="#d97706" /> {Number(s.rating).toFixed(1)}
@@ -650,15 +655,15 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                             )}
                           </div>
                         </td>
-                        <td style={{ padding: '0.85rem 1.15rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '500', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
                           {fmtDate(s.created_at)}
                         </td>
-                        <td style={{ padding: '0.85rem 1.15rem', textAlign: 'right', minWidth: '190px', whiteSpace: 'nowrap' }}>
-                          <div style={{ display: 'inline-flex', gap: '0.4rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                             {/* Edit Button */}
-                            <button className="admin-button-secondary"
+                            <Button className="admin-button-secondary"
                               type="button"
-                              title="Chỉnh sửa thông tin"
+                              title="Chỉnh sửa thông tin" aria-label="Chỉnh sửa thông tin"
                               onClick={() => {
                                 setForm({
                                   username: s.username,
@@ -673,82 +678,82 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                 setEditingId(s.id)
                               }}
                               style={{
-                                padding: '0.4rem 0.75rem',
-                                background: '#eff6ff',
-                                color: '#2563eb',
-                                border: '1px solid #bfdbfe',
-                                borderRadius: '8px',
-                                fontSize: '0.8rem',
-                                fontWeight: '600',
+                                width: '32px',
+                                height: '32px',
+                                padding: 0,
+                                background: "var(--primary-light)",
+                                color: "var(--primary)",
+                                border: "1px solid var(--border-light)",
+                                borderRadius: '6px',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '0.3rem',
-                                whiteSpace: 'nowrap',
+                                justifyContent: 'center',
+                                flexShrink: 0
                               }}
                             >
-                              <Edit2 size={13} /> Sửa
-                            </button>
+                              <Edit2 size={15} />
+                            </Button>
 
                             {/* Toggle Status Button */}
-                            <button className="admin-button-secondary" aria-label={s.status === 'ACTIVE' ? 'Tắt hoạt động' : 'Kích hoạt'}
+                            <Button className="admin-button-secondary" aria-label={s.status === 'ACTIVE' ? 'Tắt hoạt động' : 'Kích hoạt'}
                               type="button"
                               title={s.status === 'ACTIVE' ? 'Tắt hoạt động' : 'Kích hoạt'}
-                              onClick={() => handleToggleStatus(s)}
+                              data-intent={s.status === 'ACTIVE' ? 'danger' : 'success'} onClick={() => handleToggleStatus(s)}
                               style={{
-                                padding: '0.4rem 0.75rem',
+                                width: '32px',
+                                height: '32px',
+                                padding: 0,
                                 background: s.status === 'ACTIVE' ? '#fff1f2' : '#f0fdf4',
                                 color: s.status === 'ACTIVE' ? '#e11d48' : '#16a34a',
                                 border: s.status === 'ACTIVE' ? '1px solid #fecdd3' : '1px solid #bbf7d0',
-                                borderRadius: '8px',
-                                fontSize: '0.8rem',
-                                fontWeight: '600',
+                                borderRadius: '6px',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '0.3rem',
-                                whiteSpace: 'nowrap',
+                                justifyContent: 'center',
+                                flexShrink: 0
                               }}
                             >
-                              <Power size={13} /> {s.status === 'ACTIVE' ? 'Tắt' : 'Bật'}
-                            </button>
+                              <Power size={15} />
+                            </Button>
 
                             {/* Delete Button */}
-                            <button className="admin-button-danger"
+                            <Button data-intent="danger" className="admin-button-danger"
                               type="button"
-                              title="Xóa hồ sơ"
+                              title="Xóa hồ sơ" aria-label="Xóa hồ sơ"
                               onClick={() => handleDelete(s.id, s.full_name)}
                               style={{
-                                padding: '0.4rem 0.75rem',
+                                width: '32px',
+                                height: '32px',
+                                padding: 0,
                                 background: '#fef2f2',
                                 color: '#dc2626',
                                 border: '1px solid #fecaca',
-                                borderRadius: '8px',
-                                fontSize: '0.8rem',
-                                fontWeight: '600',
+                                borderRadius: '6px',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '0.3rem',
-                                whiteSpace: 'nowrap',
+                                justifyContent: 'center',
+                                flexShrink: 0
                               }}
                             >
-                              <Trash2 size={13} /> Xóa
-                            </button>
+                              <Trash2 size={15} />
+                            </Button>
                           </div>
                         </td>
                       </tr>
                     )
                   }}</PaginatedList>
                 </tbody>
-              </table>
+              </Table>
               {shippers.length === 0 && !shippersLoading && (
                 <div style={{ padding: '3rem', textAlign: 'center', color: '#8c9bb2' }}>
                   <Users size={32} style={{ margin: '0 auto 0.5rem auto', color: 'var(--border-light)' }} />
                   <p style={{ margin: 0, fontWeight: '500' }}>Chưa tìm thấy nhân viên giao hàng nào.</p>
                 </div>
               )}
-            </div>
+            </Card>
           )}
         </div>
       )}
@@ -762,7 +767,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
               <h2>Quy tắc điều phối giao hàng</h2>
               <p>Thiết lập cơ chế tự động phân bổ đơn hàng và quản lý định mức nhận đơn cho đội ngũ giao hàng.</p>
             </div>
-            <button
+            <Button data-intent="success"
               type="button"
               className="btn-save"
               onClick={handleSaveConfig}
@@ -784,11 +789,11 @@ export function AdminShipperPanel({ branchOptions = [] }) {
             >
               <CheckCircle2 size={16} color="#ffffff" />
               <span>{savingConfig ? 'Đang lưu quy tắc...' : 'Lưu quy tắc điều phối'}</span>
-            </button>
+            </Button>
           </div>
 
           {/* Section 1: Chế độ điều phối (Auto vs Manual) */}
-          <div className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+          <Card className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
             <div style={{ marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 0.25rem 0' }}>
                 1. Chế độ điều phối đơn
@@ -803,8 +808,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
               <div
                 onClick={() => setConfig(p => ({ ...p, auto_assign: true }))}
                 style={{
-                  border: config.auto_assign ? '2px solid #2563eb' : '1px solid var(--border-light)',
-                  backgroundColor: config.auto_assign ? '#eff6ff' : '#ffffff',
+                  border: config.auto_assign ? "2px solid var(--primary)" : '1px solid var(--border-light)',
+                  backgroundColor: config.auto_assign ? "var(--primary-light)" : '#ffffff',
                   borderRadius: '10px',
                   padding: '1.1rem',
                   cursor: 'pointer',
@@ -818,8 +823,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       width: '32px',
                       height: '32px',
                       borderRadius: '8px',
-                      backgroundColor: config.auto_assign ? '#2563eb' : '#f1f5f9',
-                      color: config.auto_assign ? '#ffffff' : '#64748b',
+                      backgroundColor: config.auto_assign ? "var(--primary)" : "var(--border-subtle)",
+                      color: config.auto_assign ? '#ffffff' : "var(--text-muted)",
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -827,7 +832,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       <TrendingUp size={16} />
                     </div>
                     <div>
-                      <span style={{ fontWeight: '600', fontSize: '0.9rem', color: config.auto_assign ? '#1e3a8a' : '#1e293b' }}>
+                      <span style={{ fontWeight: '600', fontSize: '0.9rem', color: config.auto_assign ? '#1e3a8a' : "var(--text-body)" }}>
                         Tự động điều phối (Khuyên dùng)
                       </span>
                     </div>
@@ -836,11 +841,11 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                     width: '18px',
                     height: '18px',
                     borderRadius: '50%',
-                    border: config.auto_assign ? '5px solid #2563eb' : '2px solid #cbd5e1',
+                    border: config.auto_assign ? "5px solid var(--primary)" : "2px solid var(--border-light)",
                     backgroundColor: '#ffffff'
                   }} />
                 </div>
-                <p style={{ fontSize: '0.8125rem', color: config.auto_assign ? '#1e40af' : '#64748b', margin: 0, lineHeight: 1.45 }}>
+                <p style={{ fontSize: '0.8125rem', color: config.auto_assign ? "var(--primary-hover)" : "var(--text-muted)", margin: 0, lineHeight: 1.45 }}>
                   Hệ thống tự động tìm và gán đơn ngay khi chi nhánh chuẩn bị xong đồ uống, tối ưu hóa thời gian giao.
                 </p>
               </div>
@@ -849,8 +854,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
               <div
                 onClick={() => setConfig(p => ({ ...p, auto_assign: false }))}
                 style={{
-                  border: !config.auto_assign ? '2px solid #2563eb' : '1px solid var(--border-light)',
-                  backgroundColor: !config.auto_assign ? '#eff6ff' : '#ffffff',
+                  border: !config.auto_assign ? "2px solid var(--primary)" : '1px solid var(--border-light)',
+                  backgroundColor: !config.auto_assign ? "var(--primary-light)" : '#ffffff',
                   borderRadius: '10px',
                   padding: '1.1rem',
                   cursor: 'pointer',
@@ -864,8 +869,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       width: '32px',
                       height: '32px',
                       borderRadius: '8px',
-                      backgroundColor: !config.auto_assign ? '#2563eb' : '#f1f5f9',
-                      color: !config.auto_assign ? '#ffffff' : '#64748b',
+                      backgroundColor: !config.auto_assign ? "var(--primary)" : "var(--border-subtle)",
+                      color: !config.auto_assign ? '#ffffff' : "var(--text-muted)",
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -873,7 +878,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       <Clock size={16} />
                     </div>
                     <div>
-                      <span style={{ fontWeight: '600', fontSize: '0.9rem', color: !config.auto_assign ? '#1e3a8a' : '#1e293b' }}>
+                      <span style={{ fontWeight: '600', fontSize: '0.9rem', color: !config.auto_assign ? '#1e3a8a' : "var(--text-body)" }}>
                         Điều phối thủ công
                       </span>
                     </div>
@@ -882,19 +887,19 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                     width: '18px',
                     height: '18px',
                     borderRadius: '50%',
-                    border: !config.auto_assign ? '5px solid #2563eb' : '2px solid #cbd5e1',
+                    border: !config.auto_assign ? "5px solid var(--primary)" : "2px solid var(--border-light)",
                     backgroundColor: '#ffffff'
                   }} />
                 </div>
-                <p style={{ fontSize: '0.8125rem', color: !config.auto_assign ? '#1e40af' : '#64748b', margin: 0, lineHeight: 1.45 }}>
+                <p style={{ fontSize: '0.8125rem', color: !config.auto_assign ? "var(--primary-hover)" : "var(--text-muted)", margin: 0, lineHeight: 1.45 }}>
                   Quản lý hoặc điều phối viên tại cửa hàng chủ động chọn và chỉ định nhân viên giao hàng cho từng đơn.
                 </p>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Section 2: Phương thức phân chia đơn (Dispatch Method) */}
-          <div className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-light)', opacity: config.auto_assign ? 1 : 0.65 }}>
+          <Card className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-light)', opacity: config.auto_assign ? 1 : 0.65 }}>
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <h3 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 0.25rem 0' }}>
@@ -919,8 +924,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                     key={opt.id}
                     onClick={() => config.auto_assign && setConfig(p => ({ ...p, algorithm: opt.id }))}
                     style={{
-                      border: isSelected && config.auto_assign ? '2px solid #2563eb' : '1px solid var(--border-light)',
-                      backgroundColor: isSelected && config.auto_assign ? '#f8fafc' : '#ffffff',
+                      border: isSelected && config.auto_assign ? "2px solid var(--primary)" : '1px solid var(--border-light)',
+                      backgroundColor: isSelected && config.auto_assign ? "var(--surface-low)" : '#ffffff',
                       borderRadius: '10px',
                       padding: '1.1rem',
                       cursor: config.auto_assign ? 'pointer' : 'not-allowed',
@@ -933,42 +938,42 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
-                        <span style={{ fontWeight: '600', fontSize: '0.875rem', color: isSelected ? '#1e3a8a' : '#1e293b' }}>
+                        <span style={{ fontWeight: '600', fontSize: '0.875rem', color: isSelected ? '#1e3a8a' : "var(--text-body)" }}>
                           {opt.title}
                         </span>
                         <div style={{
                           width: '16px',
                           height: '16px',
                           borderRadius: '50%',
-                          border: isSelected && config.auto_assign ? '4.5px solid #2563eb' : '2px solid #cbd5e1',
+                          border: isSelected && config.auto_assign ? "4.5px solid var(--primary)" : "2px solid var(--border-light)",
                           backgroundColor: '#ffffff'
                         }} />
                       </div>
-                      <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: 0, lineHeight: 1.45 }}>
+                      <p style={{ fontSize: '0.8125rem', color: "var(--text-muted)", margin: 0, lineHeight: 1.45 }}>
                         {opt.desc}
                       </p>
                     </div>
                     {opt.badge && (
-                      <span style={{
+                      <Badge variant="outline" data-quiet-label="true" style={{
                         alignSelf: 'flex-start',
-                        fontSize: '0.71875rem',
+                        fontSize: "12px",
                         fontWeight: '500',
-                        color: isSelected ? '#1d4ed8' : '#64748b',
-                        backgroundColor: isSelected ? '#eff6ff' : '#f1f5f9',
+                        color: isSelected ? "var(--primary-hover)" : "var(--text-muted)",
+                        backgroundColor: isSelected ? "var(--primary-light)" : "var(--border-subtle)",
                         padding: '2px 8px',
                         borderRadius: '4px'
                       }}>
                         {opt.badge}
-                      </span>
+                      </Badge>
                     )}
                   </div>
                 )
               })}
             </div>
-          </div>
+          </Card>
 
           {/* Section 3: Giới hạn vận hành (Parameters) */}
-          <div className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+          <Card className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
             <div style={{ marginBottom: '1.1rem' }}>
               <h3 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 0.25rem 0' }}>
                 3. Định mức và giới hạn tải
@@ -981,22 +986,22 @@ export function AdminShipperPanel({ branchOptions = [] }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
               {/* Bán kính */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
+                <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
                   Bán kính quét nhân viên
-                </label>
+                </Label>
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     border: '1px solid var(--border-light)',
                     borderRadius: '8px',
-                    backgroundColor: config.auto_assign ? '#ffffff' : '#f8fafc',
+                    backgroundColor: config.auto_assign ? '#ffffff' : "var(--surface-low)",
                     overflow: 'hidden',
                     height: '38px',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)'
+                    boxShadow: "none"
                   }}
                 >
-                  <input
+                  <Input
                     type="number"
                     min="1"
                     max="30"
@@ -1011,10 +1016,10 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       height: '100%',
                       backgroundColor: 'transparent',
                       fontSize: '0.875rem',
-                      color: '#0f172a'
+                      color: "var(--text-main)"
                     }}
                   />
-                  <span
+                  <Badge variant="outline" data-quiet-label="true"
                     style={{
                       padding: '0 0.85rem',
                       height: '100%',
@@ -1022,26 +1027,26 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '0.8125rem',
-                      color: '#475569',
-                      backgroundColor: '#f1f5f9',
+                      color: "var(--text-body)",
+                      backgroundColor: "var(--border-subtle)",
                       fontWeight: '500',
                       borderLeft: '1px solid var(--border-light)',
                       userSelect: 'none'
                     }}
                   >
                     km
-                  </span>
+                  </Badge>
                 </div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                <span style={{ fontSize: '0.75rem', color: "var(--text-muted)" }}>
                   Quét nhân viên trực tuyến trong bán kính tối đa {config.search_radius_km} km tính từ chi nhánh.
                 </span>
               </div>
 
               {/* Tải tối đa */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
+                <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem' }}>
                   Số đơn tối đa nhận cùng lúc
-                </label>
+                </Label>
                 <div
                   style={{
                     display: 'flex',
@@ -1051,10 +1056,10 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                     backgroundColor: '#ffffff',
                     overflow: 'hidden',
                     height: '38px',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)'
+                    boxShadow: "none"
                   }}
                 >
-                  <input
+                  <Input
                     type="number"
                     min="1"
                     max="10"
@@ -1068,10 +1073,10 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       height: '100%',
                       backgroundColor: 'transparent',
                       fontSize: '0.875rem',
-                      color: '#0f172a'
+                      color: "var(--text-main)"
                     }}
                   />
-                  <span
+                  <Badge variant="outline" data-quiet-label="true"
                     style={{
                       padding: '0 0.85rem',
                       height: '100%',
@@ -1079,28 +1084,28 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '0.8125rem',
-                      color: '#475569',
-                      backgroundColor: '#f1f5f9',
+                      color: "var(--text-body)",
+                      backgroundColor: "var(--border-subtle)",
                       fontWeight: '500',
                       borderLeft: '1px solid var(--border-light)',
                       userSelect: 'none'
                     }}
                   >
                     đơn
-                  </span>
+                  </Badge>
                 </div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                <span style={{ fontSize: '0.75rem', color: "var(--text-muted)" }}>
                   Giới hạn số đơn đang giao song song (khuyến nghị 2 - 4 đơn để đảm bảo thời gian giao món).
                 </span>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Section 4: Live summary card */}
           <div style={{
             background: '#ffffff',
             border: '1px solid var(--border-light)',
-            borderLeft: '4px solid #2563eb',
+            borderLeft: "4px solid var(--primary)",
             borderRadius: '10px',
             padding: '1rem 1.25rem',
             display: 'flex',
@@ -1110,17 +1115,17 @@ export function AdminShipperPanel({ branchOptions = [] }) {
             gap: '1rem'
           }}>
             <div>
-              <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '0.875rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div style={{ fontWeight: '600', color: "var(--text-main)", fontSize: '0.875rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <CheckCircle2 size={16} color="#2563eb" /> Tóm tắt quy tắc điều phối hiện hành:
               </div>
-              <p style={{ margin: 0, fontSize: '0.8125rem', color: '#475569' }}>
+              <p style={{ margin: 0, fontSize: '0.8125rem', color: "var(--text-body)" }}>
                 Chế độ <strong>{config.auto_assign ? 'Tự động điều phối' : 'Thủ công'}</strong>
                 {config.auto_assign && <> • Phương thức: <strong>{ALGORITHM_OPTIONS.find(o => o.id === config.algorithm)?.title || config.algorithm}</strong></>}
                 {config.auto_assign && <> • Bán kính: <strong>{config.search_radius_km} km</strong></>}
                 <> • Tối đa: <strong>{config.max_orders_per_shipper} đơn/nhân viên</strong></>
               </p>
             </div>
-            <button
+            <Button data-intent="success"
               type="button"
               className="btn-save"
               onClick={handleSaveConfig}
@@ -1142,7 +1147,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
             >
               <CheckCircle2 size={15} color="#ffffff" />
               <span>{savingConfig ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -1160,9 +1165,9 @@ export function AdminShipperPanel({ branchOptions = [] }) {
             <div style={{
               display: 'inline-flex',
               padding: '3px',
-              backgroundColor: '#f1f5f9',
+              backgroundColor: "var(--border-subtle)",
               borderRadius: '8px',
-              border: '1px solid #e2e8f0',
+              border: "1px solid var(--border-light)",
               gap: '2px'
             }}>
               {[
@@ -1172,7 +1177,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
               ].map(r => {
                 const isSel = kpiRange === r.id
                 return (
-                  <button
+                  <Button
                     key={r.id}
                     type="button"
                     onClick={() => setKpiRange(r.id)}
@@ -1183,14 +1188,14 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       fontWeight: isSel ? '600' : '500',
                       border: 'none',
                       backgroundColor: isSel ? '#ffffff' : 'transparent',
-                      color: isSel ? '#0f172a' : '#64748b',
-                      boxShadow: isSel ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                      color: isSel ? "var(--text-main)" : "var(--text-muted)",
+                      boxShadow: isSel ? "none" : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease'
                     }}
                   >
                     {r.label}
-                  </button>
+                  </Button>
                 )
               })}
             </div>
@@ -1198,7 +1203,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
 
           {kpiLoading ? (
             <div style={{ background: '#fff', padding: '3rem', textAlign: 'center', borderRadius: '12px', border: '1px solid var(--border-light)', color: 'var(--text-muted)' }}>
-              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: '#2563eb' }} />
+              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: "var(--primary)" }} />
               <p style={{ margin: 0, fontSize: '0.875rem' }}>Đang tổng hợp dữ liệu hiệu suất...</p>
             </div>
           ) : (() => {
@@ -1232,84 +1237,84 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                 {/* Metric Cards - 4 Balanced Cards */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                   {/* 1: Đơn hoàn thành */}
-                  <div className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                  <Card className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: '500', color: '#64748b' }}>Đơn giao thành công</span>
-                      <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: '500', color: "var(--text-muted)" }}>Đơn giao thành công</span>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: "var(--primary-light)", color: "var(--primary)", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <CheckCircle2 size={18} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.625rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em' }}>
+                    <div style={{ fontSize: '1.625rem', fontWeight: "600", color: "var(--text-main)", letterSpacing: '-0.02em' }}>
                       {Number(totalDelivered || 0).toLocaleString('vi-VN')}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: '500', marginTop: '0.35rem' }}>
                       Đã chuyển đến tay khách hàng
                     </div>
-                  </div>
+                  </Card>
 
                   {/* 2: Đơn thất bại */}
-                  <div className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                  <Card className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: '500', color: '#64748b' }}>Đơn giao thất bại</span>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: '500', color: "var(--text-muted)" }}>Đơn giao thất bại</span>
                       <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <XCircle size={18} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.625rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em' }}>
+                    <div style={{ fontSize: '1.625rem', fontWeight: "600", color: "var(--text-main)", letterSpacing: '-0.02em' }}>
                       {Number(totalFailed || 0).toLocaleString('vi-VN')}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500', marginTop: '0.35rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: "var(--text-muted)", fontWeight: '500', marginTop: '0.35rem' }}>
                       Khách hủy hoặc không liên lạc được
                     </div>
-                  </div>
+                  </Card>
 
                   {/* 3: Tỷ lệ hoàn thành */}
-                  <div className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                  <Card className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: '500', color: '#64748b' }}>Tỷ lệ giao thành công</span>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: '500', color: "var(--text-muted)" }}>Tỷ lệ giao thành công</span>
                       <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <TrendingUp size={18} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.625rem', fontWeight: '700', color: '#16a34a', letterSpacing: '-0.02em' }}>
+                    <div style={{ fontSize: '1.625rem', fontWeight: "600", color: '#16a34a', letterSpacing: '-0.02em' }}>
                       {successRate}%
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500', marginTop: '0.35rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: "var(--text-muted)", fontWeight: '500', marginTop: '0.35rem' }}>
                       Trên tổng đơn điều phối
                     </div>
-                  </div>
+                  </Card>
 
                   {/* 4: Nhân sự hoạt động */}
-                  <div className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                  <Card className="admin-surface" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: '500', color: '#64748b' }}>Nhân sự có phát sinh đơn</span>
-                      <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#f5f3ff', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: '500', color: "var(--text-muted)" }}>Nhân sự có phát sinh đơn</span>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: "var(--primary-light)", color: "var(--primary)", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Users size={18} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.625rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em' }}>
+                    <div style={{ fontSize: '1.625rem', fontWeight: "600", color: "var(--text-main)", letterSpacing: '-0.02em' }}>
                       {activeShippersCount}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500', marginTop: '0.35rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: "var(--text-muted)", fontWeight: '500', marginTop: '0.35rem' }}>
                       Nhân viên giao vận tham gia giao
                     </div>
-                  </div>
+                  </Card>
                 </div>
 
                 {/* KPI Staff Breakdown Table */}
-                <div className="admin-surface" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-light)', overflow: 'hidden' }}>
+                <Card className="admin-surface" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-light)', overflow: 'hidden' }}>
                   <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontWeight: '600', fontSize: '0.9rem', color: 'var(--text-main)' }}>
                       Chi tiết hiệu suất từng nhân viên
                     </span>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                    <span style={{ fontSize: '0.75rem', color: "var(--text-muted)" }}>
                       Cập nhật tự động theo kỳ báo cáo ({activeShippersCount} nhân sự)
                     </span>
                   </div>
                   <div className="admin-table-scroll" style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8125rem' }}>
+                    <Table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8125rem' }}>
                       <thead>
-                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-light)', color: '#475569', fontWeight: '600' }}>
+                        <tr style={{ background: "var(--surface-low)", borderBottom: '1px solid var(--border-light)', color: "var(--text-body)", fontWeight: '600' }}>
                           <th style={{ padding: '0.85rem 1rem' }}>Nhân viên giao hàng</th>
                           <th style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>Đã giao</th>
                           <th style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>Thất bại</th>
@@ -1320,7 +1325,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       <tbody>
                         {displayKpiShippers.length === 0 ? (
                           <tr>
-                            <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+                            <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: "var(--text-muted)" }}>
                               Không có dữ liệu giao hàng trong khoảng thời gian đã chọn.
                             </td>
                           </tr>
@@ -1330,23 +1335,23 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                             const rate = total > 0 ? Math.round(s.delivered / total * 100) : 100
                             const rateColor = rate >= 90 ? '#16a34a' : rate >= 70 ? '#d97706' : '#dc2626'
                             return (
-                              <tr key={s.id || i} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.15s ease' }}>
+                              <tr key={s.id || i} style={{ borderBottom: "1px solid var(--border-subtle)", transition: 'background-color 0.15s ease' }}>
                                 <td style={{ padding: '0.85rem 1rem' }}>
-                                  <div style={{ fontWeight: '600', color: '#0f172a' }}>
+                                  <div style={{ fontWeight: '600', color: "var(--text-main)" }}>
                                     {s.full_name || s.username}
                                   </div>
-                                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                  <div style={{ fontSize: '0.75rem', color: "var(--text-muted)" }}>
                                     @{s.username}
                                   </div>
                                 </td>
                                 <td style={{ padding: '0.85rem 1rem', textAlign: 'center', color: '#16a34a', fontWeight: '600' }}>
                                   {s.delivered || 0}
                                 </td>
-                                <td style={{ padding: '0.85rem 1rem', textAlign: 'center', color: s.failed ? '#dc2626' : '#94a3b8' }}>
+                                <td style={{ padding: '0.85rem 1rem', textAlign: 'center', color: s.failed ? '#dc2626' : "var(--text-muted)" }}>
                                   {s.failed || 0}
                                 </td>
                                 <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
-                                  <span style={{
+                                  <Badge variant="outline" data-quiet-label="true" style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '4px',
@@ -1359,7 +1364,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                     border: `1px solid ${rate >= 90 ? '#bbf7d0' : rate >= 70 ? '#fde68a' : '#fecaca'}`
                                   }}>
                                     {rate}%
-                                  </span>
+                                  </Badge>
                                 </td>
                                 <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                                   {s.rating ? (
@@ -1367,7 +1372,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                       <Star size={13} fill="#d97706" color="#d97706" /> {Number(s.rating).toFixed(1)}
                                     </span>
                                   ) : (
-                                    <span style={{ color: '#94a3b8' }}>Chưa có</span>
+                                    <span style={{ color: "var(--text-muted)" }}>Chưa có</span>
                                   )}
                                 </td>
                               </tr>
@@ -1375,9 +1380,9 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                           }}</PaginatedList>
                         )}
                       </tbody>
-                    </table>
+                    </Table>
                   </div>
-                </div>
+                </Card>
               </>
             )
           })()}

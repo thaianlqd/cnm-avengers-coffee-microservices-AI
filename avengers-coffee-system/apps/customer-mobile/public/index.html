@@ -1,5 +1,19 @@
 <!DOCTYPE html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#b22830"><title>%WEB_TITLE%</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="preload" as="image" href="/splash-logo.png">
-<style>html,body{height:100%;margin:0}body{overflow:hidden;background:#e5e7eb}#root{display:flex;height:100%;flex:1}.startup{width:100%;max-width:480px;height:100%;margin:auto;display:flex;align-items:center;justify-content:center;background:#b22830}.startup img{width:200px;max-width:70%;height:auto}.startup span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}</style></head>
-<body><noscript>Vui lòng bật JavaScript để dùng Avengers Coffee.</noscript><div id="root"><div class="startup" role="status"><img src="/splash-logo.png" alt="Avengers Coffee"><span>Đang mở Avengers Coffee…</span></div></div></body></html>
+<style>html,body{height:100%;margin:0}body{overflow:hidden;background:#e5e7eb}#root{display:flex;height:100%;flex:1}.startup{width:100%;max-width:480px;height:100%;margin:auto;display:flex;align-items:center;justify-content:center;background:#b22830}.startup img{width:200px;max-width:70%;height:auto}.startup span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}.startup-error{padding:24px;color:#fff;text-align:center;max-width:360px}.startup-error p{line-height:1.6}.startup-error button{padding:12px 20px;border:1px solid #fff;border-radius:8px;background:#fff;color:#8c1f25;font:inherit;cursor:pointer}</style></head>
+<body><noscript>Vui lòng bật JavaScript để dùng Avengers Coffee.</noscript><div id="root"><div class="startup" role="status"><img src="/splash-logo.png" alt="Avengers Coffee"><span>Đang mở Avengers Coffee…</span></div></div><script>
+(function(){
+  function showRecovery(){
+    var startup=document.querySelector('.startup');
+    if(!startup||startup.querySelector('.startup-error'))return;
+    var message=document.createElement('div');message.className='startup-error';message.setAttribute('role','alert');
+    var title=document.createElement('strong');title.textContent='Chưa mở được ứng dụng';
+    var text=document.createElement('p');text.textContent='Ứng dụng chưa tải xong. Kiểm tra kết nối rồi thử tải lại.';
+    var button=document.createElement('button');button.type='button';button.textContent='Tải lại ứng dụng';button.onclick=function(){window.location.reload()};
+    message.append(title,text,button);startup.replaceChildren(message);
+  }
+  window.addEventListener('error',function(event){if(event.target&&event.target.tagName==='SCRIPT')showRecovery()},true);
+  setTimeout(showRecovery,15000);
+})();
+</script></body></html>

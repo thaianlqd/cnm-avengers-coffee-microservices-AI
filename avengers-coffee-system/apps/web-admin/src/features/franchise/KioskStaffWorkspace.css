@@ -1,0 +1,111 @@
+/* Staff pages use the same navy controls, white records and spacing as the shared workspace. */
+.kiosk-staff-header-location { display:flex; align-items:center; gap:10px; min-height:44px; padding:6px 10px; border:1px solid #b8d1e1; border-radius:7px; background:#eef7fc; color:#16354d; }
+.kiosk-staff-header-location > svg { flex-shrink:0; }
+.kiosk-staff-header-location > span { min-width:0; display:grid; gap:3px; }
+.kiosk-staff-header-location small { font-size:11px; line-height:1.3; color:#0f4d70; }
+.kiosk-staff-header-location strong { font-size:12px; line-height:1.4; font-weight:600; overflow-wrap:anywhere; }
+.kiosk-staff-schedule,.kiosk-staff-shift-management { display:grid; gap:24px; min-width:0; }
+.kiosk-staff-registration-layout { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr); align-items:start; gap:24px; }
+.kiosk-staff-registration,.kiosk-staff-requests,.kiosk-staff-calendar,.kiosk-staff-shift-workbench,.kiosk-staff-shift-history,.kiosk-staff-account { border:1px solid #e2e8f0; border-radius:12px; background:#fff; min-width:0; }
+.kiosk-staff-registration,.kiosk-staff-requests,.kiosk-staff-calendar,.kiosk-staff-shift-history { padding:24px; }
+.kiosk-staff-panel-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+.kiosk-staff-panel-heading h2 { margin:0; color:#142b3e; font-size:16px; font-weight:600; line-height:1.5; }
+.kiosk-staff-panel-heading p { margin:5px 0 0; color:#526174; font-size:12px; line-height:1.6; }
+.kiosk-staff-register-form { display:grid; gap:20px; }
+.kiosk-staff-register-form fieldset { border:0; padding:0; margin:0; min-width:0; }
+.kiosk-staff-register-form legend,.kiosk-staff-field > label { padding:0; color:#263c50; font-size:13px; font-weight:500; margin-bottom:8px; }
+.kiosk-staff-date-options { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; }
+:is(#root,body) .console-shell .kiosk-staff-date-options > button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-height:60px; height:auto; padding:8px 3px; border:1px solid #d5e0ea; border-radius:6px; background:#fff; color:#263c50; line-height:1.3; font-size:11px; }
+.kiosk-staff-date-options button strong { font-weight:600; font-variant-numeric:tabular-nums; }
+:is(#root,body) .console-shell .kiosk-staff-date-options button[aria-pressed="true"] { color:#fff; background:#16354d; border-color:#16354d; }
+.kiosk-staff-slot-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.kiosk-staff-slot-options > label { display:flex; align-items:center; gap:9px; padding:12px; border:1px solid #d5e0ea; border-radius:7px; color:#263c50; cursor:pointer; min-width:0; }
+.kiosk-staff-slot-options > label.is-selected { background:#eef7fc; border-color:#8cb7d0; color:#16354d; }
+.kiosk-staff-slot-options > label:focus-within { outline:2px solid #0284c7; outline-offset:2px; }
+.kiosk-staff-slot-options input { flex-shrink:0; width:15px; height:15px; accent-color:#16354d; margin:0; }
+.kiosk-staff-slot-options > label > span { display:grid; gap:5px; }
+.kiosk-staff-slot-options strong { font-size:13px; font-weight:600; }
+.kiosk-staff-slot-options small { font-size:11px; color:#526174; font-variant-numeric:tabular-nums; }
+.kiosk-staff-field { display:grid; gap:0; min-width:0; }
+.kiosk-staff-field > label > span { font-weight:400; color:#526174; }
+:is(#root,body) .console-shell .kiosk-staff-field :is(input:not([type="radio"]),textarea) { width:100%; padding:10px 12px !important; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; color:#142b3e; background:#fff; }
+:is(#root,body) .console-shell .kiosk-staff-field textarea { resize:vertical; min-height:70px; }
+.kiosk-staff-form-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-top:16px; border-top:1px solid #edf1f5; }
+.kiosk-staff-form-footer > span { flex:1; min-width:150px; color:#526174; font-size:12px; line-height:1.5; max-width:40ch; }
+:is(#root,body) .console-shell .kiosk-staff-form-footer > button { min-height:42px; height:auto; padding:10px 16px; gap:8px; white-space:normal; }
+.kiosk-staff-inline-note { margin:0; padding:12px; color:#526174; background:#f6f8fa; border-radius:6px; font-size:12px; line-height:1.6; }
+.kiosk-staff-registration > .kiosk-staff-inline-note { margin-bottom:16px; }
+.kiosk-staff-empty { padding:32px 12px; display:flex; flex-direction:column; align-items:center; gap:12px; color:#526174; text-align:center; }
+.kiosk-staff-empty p { font-size:13px; margin:0; }
+.kiosk-staff-request { display:grid; grid-template-columns:minmax(0,1fr) auto 28px; align-items:center; gap:10px; padding:14px 0; border-bottom:1px solid #edf1f5; }
+.kiosk-staff-request:first-child { padding-top:0; }
+.kiosk-staff-request:last-child { border-bottom:0; }
+.kiosk-staff-request > div:first-child { display:grid; gap:5px; }
+.kiosk-staff-request strong { font-size:12px; font-weight:600; color:#263c50; }
+.kiosk-staff-request small { font-size:11px; color:#526174; }
+.kiosk-staff-request > p { grid-column:1/-1; font-size:12px; line-height:1.5; margin:0; color:#526174; overflow-wrap:anywhere; }
+:is(#root,body) .console-shell .kiosk-staff-request > button { width:28px; min-height:28px; height:28px; padding:0; color:#b91c1c; }
+.kiosk-staff-calendar-navigation { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+:is(#root,body) .console-shell .kiosk-staff-calendar-navigation button { min-height:34px; height:34px; padding:6px 10px; font-size:12px; }
+.kiosk-staff-registration { scroll-margin-top:92px; }
+.kiosk-staff-shift-workbench { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr); align-items:start; }
+.kiosk-staff-counting { padding:26px; }
+.kiosk-staff-count-form { display:grid; gap:20px; }
+:is(#root,body) .console-shell .kiosk-staff-count-form .kiosk-staff-field > input { min-height:60px; font-size:24px; font-weight:500; font-variant-numeric:tabular-nums; }
+.kiosk-staff-cash-difference { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px; font-size:13px; border-radius:6px; background:#eff8f0; color:#226b36; }
+.kiosk-staff-cash-difference.has-difference { background:#fff5e6; color:#854d0e; }
+.kiosk-staff-cash-difference strong { font-variant-numeric:tabular-nums; }
+.kiosk-staff-shift-summary { padding:26px; border-left:1px solid #edf1f5; background:#fbfcfd; border-radius:0 12px 12px 0; align-self:stretch; }
+.kiosk-staff-shift-summary h3 { font-size:14px; font-weight:600; color:#142b3e; margin:0 0 16px; }
+.kiosk-staff-shift-summary > p { font-size:13px; color:#526174; line-height:1.6; margin:0 0 10px; }
+.kiosk-staff-shift-summary .kiosk-staff-cashier { font-size:14px; color:#263c50; font-weight:500; margin-bottom:4px; }
+.kiosk-staff-shift-summary .kiosk-staff-shift-start { font-size:12px; }
+.kiosk-staff-shift-summary dl { margin:20px 0; }
+.kiosk-staff-shift-summary dl > div { display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:13px; margin:0 0 14px; }
+.kiosk-staff-shift-summary dt { color:#526174; }
+.kiosk-staff-shift-summary dd { margin:0; color:#263c50; font-weight:500; font-variant-numeric:tabular-nums; }
+.kiosk-staff-shift-summary .kiosk-staff-expected { padding-top:16px; margin-top:16px; border-top:1px solid #e2e8f0; }
+.kiosk-staff-shift-summary .kiosk-staff-expected dd { font-size:20px; color:#16354d; }
+:is(#root,body) .console-shell .kiosk-staff-shift-summary > button { display:flex; width:100%; margin-top:12px; }
+.kiosk-staff-history-table { overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px; }
+.kiosk-staff-history-table table { width:100%; min-width:760px; table-layout:fixed; }
+.kiosk-staff-history-table :is(th,td) { padding:14px; text-align:left; font-size:12px; line-height:1.6; color:#263c50; vertical-align:middle; overflow-wrap:anywhere; }
+.kiosk-staff-history-table th { color:#526174; font-weight:500; background:#f6f8fa; }
+.kiosk-staff-history-table td { border-top:1px solid #edf1f5; }
+.kiosk-staff-history-table td strong { font-weight:500; }
+.kiosk-staff-history-table td small { display:block; margin-top:5px; font-size:11px; color:#526174; }
+.kiosk-staff-history-table th:first-child { width:24%; }
+.kiosk-staff-history-table th:last-child { width:18%; }
+.kiosk-staff-history-table .kiosk-staff-difference-text { color:#b91c1c; font-weight:500; }
+.kiosk-staff-load-error { padding:16px; border:1px solid #fecaca; border-radius:8px; background:#fff; color:#b91c1c; }
+.kiosk-staff-load-error p { margin:0 0 10px; font-size:13px; }
+.kiosk-staff-account { padding:28px; width:100%; }
+.kiosk-staff-account > header { display:flex; align-items:center; flex-wrap:wrap; gap:16px; }
+.kiosk-staff-avatar { display:grid; place-items:center; width:56px; height:56px; flex-shrink:0; background:#eef7fc; color:#16354d; border-radius:12px; font-size:19px; font-weight:500; }
+.kiosk-staff-account > header > div:nth-child(2) { flex:1; min-width:180px; }
+.kiosk-staff-account h2 { margin:0; font-size:20px; font-weight:600; color:#142b3e; }
+.kiosk-staff-account header p { margin:5px 0 0; font-size:13px; color:#526174; }
+.kiosk-staff-account-contacts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin:28px 0; }
+.kiosk-staff-account-contacts dt { font-size:12px; color:#526174; margin-bottom:8px; }
+.kiosk-staff-account-contacts dd { font-size:14px; color:#263c50; margin:0; overflow-wrap:anywhere; }
+.kiosk-staff-account-security { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px; border-top:1px solid #edf1f5; padding-top:24px; }
+.kiosk-staff-account-security > div { display:flex; align-items:center; gap:12px; color:#16354d; }
+.kiosk-staff-account-security h3 { font-size:14px; font-weight:500; margin:0; color:#263c50; }
+.kiosk-staff-account-security p { margin:5px 0 0; color:#526174; font-size:12px; }
+.kiosk-staff-shift-management button[data-ui="button"],.kiosk-staff-schedule button,.kiosk-staff-account button { border-style:solid; }
+@media(max-width:1150px) { .kiosk-staff-registration-layout { grid-template-columns:minmax(0,1fr); } .kiosk-staff-request { grid-template-columns:minmax(0,1fr) auto 28px; } .kiosk-staff-shift-workbench { grid-template-columns:minmax(0,1.45fr) minmax(240px,1fr); } }
+@media(max-width:760px) { .kiosk-staff-registration,.kiosk-staff-requests,.kiosk-staff-calendar,.kiosk-staff-shift-history,.kiosk-staff-account,.kiosk-staff-counting { padding:18px; } .kiosk-staff-shift-workbench { grid-template-columns:minmax(0,1fr); } .kiosk-staff-shift-summary { border-left:0; border-top:1px solid #edf1f5; border-radius:0 0 12px 12px; padding:18px; } .kiosk-staff-account-contacts { grid-template-columns:minmax(0,1fr); gap:18px; } .kiosk-staff-slot-options > label { padding:10px 7px; gap:6px; } .kiosk-staff-slot-options strong { font-size:12px; } }
+@media(max-width:480px) { .kiosk-staff-date-options { grid-template-columns:repeat(4,minmax(0,1fr)); } .kiosk-staff-slot-options { grid-template-columns:minmax(0,1fr); } .kiosk-staff-slot-options > label > span { display:flex; flex:1; justify-content:space-between; align-items:center; } .kiosk-staff-form-footer > button { width:100%; } }
+.kiosk-staff-feedback { display:flex; align-items:center; gap:12px; position:fixed; top:86px; right:24px; z-index:10050; width:min(420px,calc(100vw - 32px)); padding:14px 16px; border:1px solid #cbded1; border-radius:10px; background:#fff; color:#263c50; box-shadow:0 10px 28px #142b3e1a; font-size:13px; line-height:1.6; }
+.kiosk-staff-feedback > svg { color:#22833d; flex-shrink:0; }
+.kiosk-staff-feedback.is-error { border-color:#fecaca; }
+.kiosk-staff-feedback.is-error > svg { color:#b91c1c; }
+.kiosk-staff-feedback > span { flex:1; }
+:is(#root,body) .console-shell .kiosk-staff-feedback > button { width:26px; min-height:26px; height:26px; padding:0; }
+
+.personal-contact-dialog { width:min(520px,calc(100vw - 32px)); }
+.personal-contact-form { display:grid; gap:20px; padding:24px; }
+.personal-contact-field { display:grid; gap:8px; }
+.personal-contact-field label { font-size:13px; font-weight:500; color:#263c50; }
+:is(#root,body) .console-shell .personal-contact-field input { padding:10px 12px !important; height:44px; background:#fff; color:#142b3e; }
+.personal-contact-field .workspace-form-error { margin:0; font-size:12px; }

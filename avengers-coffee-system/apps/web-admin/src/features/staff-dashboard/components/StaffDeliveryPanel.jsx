@@ -1,3 +1,12 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import { Popover, PopoverTrigger, PopoverContent } from '../../../components/ui/popover'
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { Input } from '../../../components/ui/input'
+import { Table } from '../../../components/ui/table'
+import { Label } from '../../../components/ui/label'
+import SearchableSelect from '../../../components/console/SearchableSelect'
 import { Star as WorkspaceSymbolStar } from '../../../components/console/WorkspaceIcons'
 import { PaginatedList } from '../../../components/console/CompactPagination'
 import { getAdminSession } from '../../../lib/adminFetch'
@@ -11,7 +20,6 @@ import {
   Clock,
   MapPin,
   ExternalLink,
-  RefreshCw,
   AlertCircle,
   Package,
   Check,
@@ -34,7 +42,13 @@ import {
   XCircle,
 } from '../../../components/console/WorkspaceIcons';
 
-export default function StaffDeliveryPanel() {
+function DriverRating({ value }) {
+  const rating = Number(value || 0)
+  if (!rating) return <small className="driver-rating-empty">Chưa có đánh giá</small>
+  return <span className="driver-rating" aria-label={`Đánh giá ${rating.toFixed(1)} trên 5 sao`}><span aria-hidden="true">{Array.from({ length: 5 }, (_, index) => <WorkspaceSymbolStar key={index} size={13} fill={rating >= index + 0.5 ? 'currentColor' : 'none'} />)}</span><strong>{rating.toFixed(1)}</strong></span>
+}
+
+export default function StaffDeliveryPanel({ session: providedSession } = {}) {
   // Navigation State
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'cod' | 'shippers'
 
@@ -83,7 +97,7 @@ export default function StaffDeliveryPanel() {
   // Helpers to read session info
   const getSession = () => {
     try {
-      return getAdminSession() || {};
+      return providedSession || getAdminSession() || {};
     } catch {
       return {};
     }
@@ -138,22 +152,18 @@ export default function StaffDeliveryPanel() {
 
       setDeliveries(deliveryOrders);
 
-      // Fetch tracking info for DANG_GIAO orders to get assigned shipper
-      const dangGiaoOrders = deliveryOrders.filter((o) => String(o.trang_thai_don_hang || '').trim().toUpperCase() === 'DANG_GIAO');
-      const shipperMap = { ...assignedShipperInfo };
-      await Promise.all(dangGiaoOrders.map(async (o) => {
+      // Check all active deliveries so orders already claimed during preparation cannot be reassigned.
+      const ordersToCheck = deliveryOrders;
+      const shipperMap = {};
+      await Promise.all(ordersToCheck.map(async (o) => {
         try {
           const tRes = await fetch(`${API_BASE_URL}/shippers/delivery/tracking/${o.ma_don_hang}`);
           if (tRes.ok) {
             const tData = await tRes.json();
-            if (tData.shipper_id) {
-              shipperMap[o.ma_don_hang] = {
-                id: tData.shipper_id,
-                name: tData.shipper_name,
-                phone: tData.shipper_phone,
-                vehicle_plate: tData.vehicle_plate
-              };
-            }
+            const accepted = ['CONFIRMED','PICKING_UP','IN_TRANSIT','DELIVERED'].includes(tData.assignment_status);
+            if (accepted && tData.shipper?.id) shipperMap[o.ma_don_hang] = { id:tData.shipper.id,name:tData.shipper.full_name,accepted:true };
+            else if (tData.assignment_status==='PENDING' && tData.assigned_shipper_id) shipperMap[o.ma_don_hang] = { id:tData.assigned_shipper_id,accepted:false };
+
           }
         } catch (e) {
           console.warn('[fetchTracking] Error:', e);
@@ -259,7 +269,7 @@ export default function StaffDeliveryPanel() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || `Lỗi ${res.status}`);
 
-      alert(`Đã giao đơn cho tài xế ${shipperName} thành công!`);
+      alert(`Đã phân công cho ${shipperName}. Tài xế cần nhận đơn trên ứng dụng.`);
       setAssignPickerOrderId(null);
       fetchDeliveries();
     } catch (err) {
@@ -641,10 +651,10 @@ export default function StaffDeliveryPanel() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem 1.5rem', backgroundColor: '#f8f9f6', minHeight: '100vh' }}>
+    <div className="manager-delivery" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem 1.5rem', backgroundColor: '#f8f9f6', minHeight: '100vh' }}>
 
       {/* ─── HEADER CHÍNH ──────────────────────────────────────────────────────── */}
-      <div style={{
+      <div className="delivery-panel-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -655,7 +665,7 @@ export default function StaffDeliveryPanel() {
         boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <WorkspacePanelIntro><div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Truck size={22} color="var(--primary)" />
             </div>
@@ -670,70 +680,14 @@ export default function StaffDeliveryPanel() {
                 Mã: <code style={{ backgroundColor: '#f4f5f2', padding: '1px 6px', borderRadius: '4px', color: 'var(--primary)', fontWeight: '600' }}>{getBranchCode()}</code>
               </p>
             </div>
-          </div>
+          </div></WorkspacePanelIntro>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          {activeTab === 'shippers' && isManager() && (
-            <button
-              type="button"
-              onClick={() => setIsAddShipperOpen(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                height: '38px',
-                padding: '0 1.1rem',
-                borderRadius: '10px',
-                backgroundColor: "var(--primary)",
-                color: '#FFFFFF',
-                border: 'none',
-                fontSize: '0.82rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
-            >
-              <UserPlus size={16} /> Thêm tài xế mới
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              if (activeTab === 'orders') fetchDeliveries();
-              else if (activeTab === 'cod') fetchCodRemits();
-              else fetchBranchShippers();
-            }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              height: '38px',
-              padding: '0 0.95rem',
-              borderRadius: '10px',
-              backgroundColor: '#FFFFFF',
-              color: '#414743',
-              border: '1px solid #ccd3c7',
-              fontSize: '0.82rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9f6')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
-          >
-            <RefreshCw size={15} color="#69736a" /> Làm mới
-          </button>
-        </div>
       </div>
 
       {/* ─── THANH ĐIỀU HƯỚNG TABS (SEGMENTED PILL HIỆN ĐẠI) ────────────────── */}
-      <div style={{
+      <div className="delivery-nav-row">
+      <div className="operation-tabs delivery-tabs" style={{
         display: 'flex',
         gap: '0.5rem',
         backgroundColor: "#f4f5f2",
@@ -742,7 +696,7 @@ export default function StaffDeliveryPanel() {
         width: 'fit-content'
       }}>
         {/* Tab 1: Đơn Đang Giao */}
-        <button
+        <Button data-selected={activeTab === 'orders'}
           type="button"
           onClick={() => setActiveTab('orders')}
           style={{
@@ -764,7 +718,7 @@ export default function StaffDeliveryPanel() {
           <Package size={17} color={activeTab === 'orders' ? 'var(--primary)' : '#69736a'} />
           Đơn Đang Giao
           {deliveries.length > 0 && (
-            <span className="workspace-inline-label" style={{
+            <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{
               backgroundColor: activeTab === 'orders' ? 'var(--primary-light)' : "#f4f5f2",
               color: activeTab === 'orders' ? 'var(--primary)' : '#414743',
               padding: '0.1rem 0.5rem',
@@ -773,12 +727,12 @@ export default function StaffDeliveryPanel() {
               fontWeight: '600'
             }}>
               {deliveries.length}
-            </span>
+            </Badge>
           )}
-        </button>
+        </Button>
 
         {/* Tab 2: Đối Soát COD */}
-        <button
+        <Button data-selected={activeTab === 'cod'}
           type="button"
           onClick={() => setActiveTab('cod')}
           style={{
@@ -800,7 +754,7 @@ export default function StaffDeliveryPanel() {
           <Receipt size={17} color={activeTab === 'cod' ? 'var(--primary)' : '#69736a'} />
           Đối Soát Tiền Thu Hộ COD
           {pendingCodCount > 0 && (
-            <span className="workspace-inline-label" style={{
+            <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{
               backgroundColor: "#f4f5f2",
               color: '#B45309',
               padding: '0.1rem 0.55rem',
@@ -810,13 +764,13 @@ export default function StaffDeliveryPanel() {
               border: '1px solid #FDE68A'
             }}>
               {pendingCodCount} chờ duyệt
-            </span>
+            </Badge>
           )}
-        </button>
+        </Button>
 
         {/* Tab 3: Tài Xế Cơ Sở (CHỈ DÀNH RIÊNG CHO QUẢN LÝ / MANAGER) */}
         {isManager() && (
-          <button
+          <Button data-selected={activeTab === 'shippers'}
             type="button"
             onClick={() => setActiveTab('shippers')}
             style={{
@@ -838,7 +792,7 @@ export default function StaffDeliveryPanel() {
             <Bike size={17} color={activeTab === 'shippers' ? 'var(--primary)' : '#69736a'} />
             Đội Ngũ Tài Xế Cơ Sở
             {branchShippers.length > 0 && (
-              <span className="workspace-inline-label" style={{
+              <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{
                 backgroundColor: activeTab === 'shippers' ? 'var(--primary-light)' : "#f4f5f2",
                 color: activeTab === 'shippers' ? 'var(--primary)' : '#414743',
                 padding: '0.1rem 0.5rem',
@@ -847,10 +801,12 @@ export default function StaffDeliveryPanel() {
                 fontWeight: '600'
               }}>
                 {branchShippers.length}
-              </span>
+              </Badge>
             )}
-          </button>
+          </Button>
         )}
+      </div>
+      {activeTab === 'shippers' && isManager() && <Button className="admin-button-primary delivery-add-driver" type="button" onClick={() => setIsAddShipperOpen(true)}><UserPlus size={16} />Thêm tài xế</Button>}
       </div>
 
       {/* ───────────────────────────────────────────────────────────────────────── */}
@@ -859,37 +815,7 @@ export default function StaffDeliveryPanel() {
       {activeTab === 'orders' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Thẻ Thống Kê Nhanh (KPIs) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-            <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e4df', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: "#f4f5f2", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Clock size={24} color="#D97706" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.78rem', color: '#69736a', fontWeight: '600' }}>Đang Chuẩn Bị</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#252927' }}>{ordersPreparingCount} đơn</div>
-              </div>
-            </div>
 
-            <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e4df', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: "#f4f5f2", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Bike size={24} color="#0284C7" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.78rem', color: '#69736a', fontWeight: '600' }}>Đang Giao Hàng</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#252927' }}>{ordersDeliveringCount} đơn</div>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e4df', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: "#f4f5f2", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Receipt size={24} color="#2563eb" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.78rem', color: '#69736a', fontWeight: '600' }}>Tổng Thu Hộ COD</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#2563eb' }}>{totalCodInTransit.toLocaleString()} đ</div>
-              </div>
-            </div>
-          </div>
 
           {/* Bộ lọc và Tìm kiếm */}
           <div style={{
@@ -909,7 +835,7 @@ export default function StaffDeliveryPanel() {
                 { id: 'DANG_CHUAN_BI', label: 'Đang chuẩn bị' },
                 { id: 'DANG_GIAO', label: 'Đang giao' },
               ].map((tab) => (
-                <button
+                <Button data-selected={orderStatusFilter === tab.id}
                   key={tab.id}
                   type="button"
                   onClick={() => setOrderStatusFilter(tab.id)}
@@ -927,13 +853,13 @@ export default function StaffDeliveryPanel() {
                   }}
                 >
                   {tab.label}
-                </button>
+                </Button>
               ))}
             </div>
 
             <div style={{ position: 'relative', width: '280px' }}>
               <Search size={15} color="#85907d" style={{ position: 'absolute', left: '10px', top: '10px' }} />
-              <input
+              <Input data-input-prefix="true"
                 type="text"
                 placeholder="Tìm mã đơn, tên khách, địa chỉ..."
                 value={orderSearch}
@@ -988,78 +914,11 @@ export default function StaffDeliveryPanel() {
                 const isLalamove = order.phuong_thuc_giao_hang === 'LALAMOVE';
 
                 return (
-                  <div
-                    key={order.ma_don_hang}
-                    style={{
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #e2e4df',
-                      borderRadius: '14px',
-                      padding: '1.15rem 1.35rem',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                      display: 'grid',
-                      gridTemplateColumns: '1.4fr 1fr 1fr',
-                      gap: '1.25rem',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {/* Cột 1: Thông tin Đơn hàng & Khách hàng */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                        <strong style={{ fontSize: '0.92rem', color: 'var(--primary)', fontWeight: '600', letterSpacing: '0.5px' }}>
-                          #{order.ma_don_hang.slice(0, 8).toUpperCase()}
-                        </strong>
-                        <span style={{
-                          fontSize: '0.7rem',
-                          fontWeight: '700',
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '6px',
-                          backgroundColor: isLalamove ? "#f4f5f2" : 'var(--primary-light)',
-                          color: isLalamove ? '#C2410C' : 'var(--primary-hover)',
-                          border: `1px solid ${isLalamove ? '#FFEDD5' : '#e8cdbb'}`,
-                        }}>
-                          {isLalamove ? 'Dịch vụ Lalamove' : 'Shipper Nội Bộ'}
-                        </span>
-                      </div>
-
-                      <div style={{ fontSize: '0.82rem', color: '#252927', fontWeight: '700' }}>
-                        Khách: {order.ten_khach_hang || order.ma_nguoi_dung || 'Khách Hàng'}
-                      </div>
-
-                      <div style={{ fontSize: '0.78rem', color: '#69736a', display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
-                        <MapPin size={14} color="#69736a" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        <span>{order.dia_chi_giao_hang || 'Tại quán'}</span>
-                      </div>
-                    </div>
-
-                    {/* Cột 2: Tiền COD & Trạng Thái Đơn */}
-                    <div style={{ borderLeft: '1px solid #f4f5f2', paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#69736a', fontWeight: '600' }}>TIỀN THU HỘ COD</span>
-                      <span style={{ fontSize: '1.05rem', color: '#252927', fontWeight: '600' }}>
-                        {Number(order.tong_tien || 0).toLocaleString()} đ
-                      </span>
-                      <span className="workspace-inline-label" style={{
-                        fontSize: '0.72rem',
-                        fontWeight: '700',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        width: 'fit-content',
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '9999px',
-                        backgroundColor: isDelivering ? "#f4f5f2" : "#f4f5f2",
-                        color: isDelivering ? '#0369A1' : '#B45309',
-                        border: `1px solid ${isDelivering ? '#BAE6FD' : '#FDE68A'}`,
-                      }}>
-                        {isDelivering ? <Bike size={12} /> : <Clock size={12} />}
-                        {isDelivering ? 'Đang giao hàng' : 'Đang chuẩn bị'}
-                      </span>
-                    </div>
-
-                    {/* Cột 3: Nút Hành Động Điều Phối */}
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                  <article key={order.ma_don_hang} className="delivery-order-row"><div className="delivery-order-identity"><strong>#{order.ma_don_hang.slice(0, 8).toUpperCase()} · {order.ten_khach_hang || order.ma_nguoi_dung || 'Khách hàng'}</strong><span>{order.dia_chi_giao_hang || 'Chưa cập nhật địa chỉ'}</span><small>{isLalamove ? 'Dịch vụ Lalamove' : 'Đội giao hàng cửa hàng'}</small></div><div className="delivery-order-amount"><span>{order.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG' ? 'Thu hộ COD' : 'Giá trị đơn'}</span><strong>{Number(order.tong_tien || 0).toLocaleString('vi-VN')} đ</strong></div><StatusBadge status={assignedShipperInfo[order.ma_don_hang]?.accepted ? 'DANG_GIAO' : 'PENDING'}>{assignedShipperInfo[order.ma_don_hang]?.accepted ? 'Tài xế đã nhận' : isDelivering ? 'Chờ tài xế nhận' : 'Đang chuẩn bị'}</StatusBadge>
+                  {lalamoveLinks[order.ma_don_hang] ? <a className="delivery-track-link" href={lalamoveLinks[order.ma_don_hang]} target="_blank" rel="noreferrer"><ExternalLink size={15} />Theo dõi Lalamove</a> : assignedShipperInfo[order.ma_don_hang]?.accepted ? <div className="delivery-assignment-status"><Bike size={15} /><span>{assignedShipperInfo[order.ma_don_hang] ? `Đã nhận bởi ${assignedShipperInfo[order.ma_don_hang].name || assignedShipperInfo[order.ma_don_hang].id}` : 'Đơn đã có tài xế · không thể chỉ định lại'}</span></div> : <Popover><PopoverTrigger asChild><Button variant="outline"><Truck size={15} />{assignedShipperInfo[order.ma_don_hang] ? 'Đổi tài xế · chờ nhận' : 'Điều phối'}<ChevronDown size={13} /></Button></PopoverTrigger><PopoverContent align="end" className="workspace-action-popover delivery-action-panel"><p>Chọn tài xế hoặc dịch vụ giao hàng</p><div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                       {lalamoveLinks[order.ma_don_hang] ? (
                         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                          <span style={{
+                          <Badge variant="outline" data-quiet-label="true" style={{
                             backgroundColor: "#f4f5f2",
                             color: '#2563eb',
                             border: '1px solid #bfdbfe',
@@ -1072,7 +931,7 @@ export default function StaffDeliveryPanel() {
                             gap: '0.35rem',
                           }}>
                             <CheckCircle2 size={14} /> Đã gọi Lalamove
-                          </span>
+                          </Badge>
                           <a
                             href={lalamoveLinks[order.ma_don_hang]}
                             target="_blank"
@@ -1112,13 +971,13 @@ export default function StaffDeliveryPanel() {
                                 <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                                   <Bike size={14} /> Chọn tài xế cơ sở
                                 </span>
-                                <button
+                                <Button
                                   type="button"
                                   onClick={() => setAssignPickerOrderId(null)}
                                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
                                 >
                                   <X size={14} color="#69736a" />
-                                </button>
+                                </Button>
                               </div>
 
                               {branchShippers.filter((s) => s.status === 'ACTIVE').length === 0 ? (
@@ -1129,7 +988,7 @@ export default function StaffDeliveryPanel() {
                                 branchShippers
                                   .filter((s) => s.status === 'ACTIVE')
                                   .map((s) => (
-                                    <button
+                                    <Button
                                       key={s.id}
                                       type="button"
                                       disabled={assigningOrderId === order.ma_don_hang}
@@ -1160,11 +1019,11 @@ export default function StaffDeliveryPanel() {
                                         </div>
                                       </div>
                                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2563eb', flexShrink: 0 }} />
-                                    </button>
+                                    </Button>
                                   ))
                               )}
 
-                              <button
+                              <Button
                                 type="button"
                                 onClick={() => {
                                   setAssignPickerOrderId(null);
@@ -1183,9 +1042,9 @@ export default function StaffDeliveryPanel() {
                                 }}
                               >
                                 Đưa vào kho để shipper tự nhận
-                              </button>
+                              </Button>
                             </div>
-                          ) : assignedShipperInfo[order.ma_don_hang] ? (
+                          ) : assignedShipperInfo[order.ma_don_hang]?.accepted ? (
                             <div style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -1206,7 +1065,7 @@ export default function StaffDeliveryPanel() {
                               </div>
                             </div>
                           ) : (
-                            <button
+                            <Button
                               type="button"
                               onClick={() => setAssignPickerOrderId(order.ma_don_hang)}
                               style={{
@@ -1226,10 +1085,10 @@ export default function StaffDeliveryPanel() {
                               }}
                             >
                               <Bike size={15} /> Chỉ định tài xế
-                            </button>
+                            </Button>
                           )}
 
-                          <button
+                          <Button
                             type="button"
                             onClick={() => handleCallLalamove(order)}
                             style={{
@@ -1249,11 +1108,10 @@ export default function StaffDeliveryPanel() {
                             }}
                           >
                             <Navigation size={15} /> Gọi Lalamove
-                          </button>
+                          </Button>
                         </>
                       )}
-                    </div>
-                  </div>
+                    </div></PopoverContent></Popover>}</article>
                 );
               }}</PaginatedList>
             </div>
@@ -1267,46 +1125,7 @@ export default function StaffDeliveryPanel() {
       {activeTab === 'cod' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Thẻ Thống Kê COD (KPIs) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-            <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e4df', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: "#f4f5f2", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Clock size={24} color="#D97706" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.78rem', color: '#69736a', fontWeight: '600' }}>Chờ Quản Lý Duyệt</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#D97706' }}>
-                  {totalCodPendingAmount.toLocaleString()} đ
-                </div>
-                <span style={{ fontSize: '0.72rem', color: '#85907d' }}>{pendingCodCount} phiếu nộp</span>
-              </div>
-            </div>
 
-            <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e4df', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: "#f4f5f2", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle2 size={24} color="#2563eb" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.78rem', color: '#69736a', fontWeight: '600' }}>Đã Xác Nhận Đủ</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#2563eb' }}>
-                  {totalCodConfirmedToday.toLocaleString()} đ
-                </div>
-                <span style={{ fontSize: '0.72rem', color: '#85907d' }}>Đã nộp vào quỹ cơ sở</span>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e4df', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Receipt size={24} color="var(--primary)" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.78rem', color: '#69736a', fontWeight: '600' }}>Tổng Số Phiếu Ghi Nhận</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#252927' }}>
-                  {codRemits.length} phiếu
-                </div>
-                <span style={{ fontSize: '0.72rem', color: '#85907d' }}>Theo lịch sử đối soát</span>
-              </div>
-            </div>
-          </div>
 
           {/* Bộ lọc trạng thái nộp COD (Không dùng icon emoji) */}
           <div style={{
@@ -1330,7 +1149,7 @@ export default function StaffDeliveryPanel() {
                 const IconComponent = filter.icon;
                 const isSelected = codStatusFilter === filter.id;
                 return (
-                  <button
+                  <Button data-selected={isSelected}
                     key={filter.id}
                     type="button"
                     onClick={() => setCodStatusFilter(filter.id)}
@@ -1353,7 +1172,7 @@ export default function StaffDeliveryPanel() {
                     {IconComponent && <IconComponent size={14} />}
                     {filter.label}
                     {filter.count > 0 && (
-                      <span className="workspace-inline-label" style={{
+                      <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{
                         backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : "#f4f5f2",
                         color: isSelected ? '#FFFFFF' : '#B45309',
                         padding: '0.1rem 0.45rem',
@@ -1361,9 +1180,9 @@ export default function StaffDeliveryPanel() {
                         fontSize: '0.7rem',
                       }}>
                         {filter.count}
-                      </span>
+                      </Badge>
                     )}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -1396,7 +1215,7 @@ export default function StaffDeliveryPanel() {
             </div>
           ) : (
             <div style={{ overflowX: 'auto', backgroundColor: '#FFFFFF', border: '1px solid #e2e4df', borderRadius: '14px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
+              <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f8f9f6', borderBottom: '2px solid #e2e4df' }}>
                     <th style={{ padding: '0.85rem 1rem', textAlign: 'left', fontWeight: '700', color: '#596255', fontSize: '0.78rem' }}>Thời Gian Nộp</th>
@@ -1436,26 +1255,12 @@ export default function StaffDeliveryPanel() {
                           {r.note || '—'}
                         </td>
                         <td style={{ padding: '0.85rem 1rem' }}>
-                          <span className="workspace-inline-label" style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.3rem',
-                            padding: '0.2rem 0.65rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.74rem',
-                            fontWeight: '700',
-                            backgroundColor: isPending ? "#f4f5f2" : isConfirmed ? "#f4f5f2" : "#f4f5f2",
-                            color: isPending ? '#B45309' : isConfirmed ? '#1d4ed8' : '#DC2626',
-                            border: `1px solid ${isPending ? '#FDE68A' : isConfirmed ? '#93c5fd' : '#FECACA'}`,
-                          }}>
-                            {isPending ? <Clock size={12} /> : isConfirmed ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                            {isPending ? 'Chờ xác nhận' : isConfirmed ? 'Đã nhận tiền' : 'Đã từ chối'}
-                          </span>
+                          <StatusBadge status={r.status}>{isPending ? 'Chờ xác nhận' : isConfirmed ? 'Đã nhận tiền' : 'Đã từ chối'}</StatusBadge>
                         </td>
                         <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
                           {isPending ? (
                             <div style={{ display: 'flex', gap: '0.45rem', justifyContent: 'center' }}>
-                              <button
+                              <Button data-intent="success"
                                 type="button"
                                 onClick={() => handleConfirmCod(r.id, 'CONFIRMED')}
                                 disabled={codConfirming === r.id + 'CONFIRMED'}
@@ -1475,8 +1280,8 @@ export default function StaffDeliveryPanel() {
                                 }}
                               >
                                 <Check size={13} /> Xác nhận đã thu
-                              </button>
-                              <button
+                              </Button>
+                              <Button data-intent="danger"
                                 type="button"
                                 onClick={() => handleConfirmCod(r.id, 'REJECTED')}
                                 disabled={codConfirming === r.id + 'REJECTED'}
@@ -1496,7 +1301,7 @@ export default function StaffDeliveryPanel() {
                                 }}
                               >
                                 <X size={13} /> Từ chối
-                              </button>
+                              </Button>
                             </div>
                           ) : (
                             <span style={{ fontSize: '0.76rem', color: '#85907d', fontWeight: '600' }}>
@@ -1508,7 +1313,7 @@ export default function StaffDeliveryPanel() {
                     );
                   }}</PaginatedList>
                 </tbody>
-              </table>
+              </Table>
             </div>
           )}
         </div>
@@ -1520,42 +1325,7 @@ export default function StaffDeliveryPanel() {
       {activeTab === 'shippers' && isManager() && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Thẻ Thống Kê Tài Xế (KPIs) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-            <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e4df', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Users size={24} color="var(--primary)" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.78rem', color: '#69736a', fontWeight: '600' }}>Tổng Đội Ngũ Tài Xế</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#252927' }}>{branchShippers.length} tài xế</div>
-                <span style={{ fontSize: '0.72rem', color: '#85907d' }}>Phân quyền trực thuộc cơ sở</span>
-              </div>
-            </div>
 
-            <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e4df', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: "#f4f5f2", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Bike size={24} color="#2563eb" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.78rem', color: '#69736a', fontWeight: '600' }}>Sẵn Sàng Nhận Đơn</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#2563eb' }}>{activeShippersCount} tài xế</div>
-                <span style={{ fontSize: '0.72rem', color: '#85907d' }}>Đang trực tuyến trên ứng dụng</span>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e4df', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#f4f5f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Clock size={24} color="#69736a" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.78rem', color: '#69736a', fontWeight: '600' }}>Ngoại Tuyến / Tạm Nghỉ</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#69736a' }}>
-                  {branchShippers.length - activeShippersCount} tài xế
-                </div>
-                <span style={{ fontSize: '0.72rem', color: '#85907d' }}>Chưa mở ứng dụng</span>
-              </div>
-            </div>
-          </div>
 
           {/* Thanh công cụ tìm kiếm và lọc */}
           <div style={{
@@ -1575,7 +1345,7 @@ export default function StaffDeliveryPanel() {
                 { id: 'ACTIVE', label: 'Đang hoạt động' },
                 { id: 'INACTIVE', label: 'Tạm ngưng' },
               ].map((tab) => (
-                <button
+                <Button data-selected={shipperStatusFilter === tab.id}
                   key={tab.id}
                   type="button"
                   onClick={() => setShipperStatusFilter(tab.id)}
@@ -1593,13 +1363,13 @@ export default function StaffDeliveryPanel() {
                   }}
                 >
                   {tab.label}
-                </button>
+                </Button>
               ))}
             </div>
 
             <div style={{ position: 'relative', width: '280px' }}>
               <Search size={15} color="#85907d" style={{ position: 'absolute', left: '10px', top: '10px' }} />
-              <input
+              <Input data-input-prefix="true"
                 type="text"
                 placeholder="Tìm tên, tài khoản, số điện thoại..."
                 value={shipperSearch}
@@ -1648,182 +1418,7 @@ export default function StaffDeliveryPanel() {
               </p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1rem' }}>
-              <PaginatedList items={filteredShippers} resetKey={JSON.stringify([activeTab,orderSearch,orderStatusFilter,codStatusFilter,shipperSearch,shipperStatusFilter])}>{(s) => {
-                const isActive = s.status === 'ACTIVE';
-                const vehicleName =
-                  s.vehicle_type === 'CAR'
-                    ? 'Ô tô'
-                    : s.vehicle_type === 'ELECTRIC_BIKE'
-                    ? 'Xe máy điện'
-                    : 'Xe máy';
-
-                return (
-                  <div
-                    key={s.id}
-                    style={{
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #e2e4df',
-                      borderRadius: '14px',
-                      padding: '1.25rem',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.85rem',
-                      position: 'relative',
-                    }}
-                  >
-                    {/* Header Thẻ: Avatar, Tên & Trạng Thái */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ position: 'relative' }}>
-                          <div style={{
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '22px',
-                            backgroundColor: 'var(--primary-light)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                            <Bike size={22} color="var(--primary)" />
-                          </div>
-                          <span style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            right: '0',
-                            width: '12px',
-                            height: '12px',
-                            borderRadius: '6px',
-                            backgroundColor: isActive ? '#2563eb' : '#85907d',
-                            border: '2px solid #FFFFFF',
-                          }} />
-                        </div>
-
-                        <div>
-                          <div style={{ fontSize: '0.98rem', fontWeight: '600', color: '#252927' }}>
-                            {s.full_name}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: '#69736a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <span>@{s.username}</span>
-                            <span>•</span>
-                            <span style={{ color: '#D97706', fontWeight: '700' }}><WorkspaceSymbolStar size="1.1em" aria-hidden="true" /> {Number(s.rating || 4.8).toFixed(1)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <span className="workspace-inline-label" style={{
-                        padding: '0.2rem 0.65rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.72rem',
-                        fontWeight: '700',
-                        backgroundColor: isActive ? "#f4f5f2" : '#f4f5f2',
-                        color: isActive ? '#1d4ed8' : '#69736a',
-                        border: `1px solid ${isActive ? '#93c5fd' : '#e2e4df'}`,
-                      }}>
-                        {isActive ? 'Đang hoạt động' : 'Tạm ngưng'}
-                      </span>
-                    </div>
-
-                    {/* Chi Tiết Phương Tiện & Liên Hệ */}
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.45rem',
-                      fontSize: '0.8rem',
-                      backgroundColor: '#f8f9f6',
-                      padding: '0.75rem 0.85rem',
-                      borderRadius: '10px',
-                      border: '1px solid #f4f5f2',
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#69736a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <Phone size={13} color="#69736a" /> Số điện thoại:
-                        </span>
-                        <strong style={{ color: '#252927' }}>{s.phone || 'Chưa cập nhật'}</strong>
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#69736a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <Truck size={13} color="#69736a" /> Phương tiện:
-                        </span>
-                        <span style={{ fontWeight: '700', color: '#414743' }}>
-                          {vehicleName} ({s.vehicle_plate || 'Chưa có biển số'})
-                        </span>
-                      </div>
-
-                      {s.email && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ color: '#69736a' }}>Email:</span>
-                          <span style={{ color: '#596255' }}>{s.email}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Bộ Nút Quản Lý Cho Manager */}
-                    <div style={{
-                      display: 'flex',
-                      gap: '0.5rem',
-                      borderTop: '1px solid #f4f5f2',
-                      paddingTop: '0.75rem',
-                      marginTop: 'auto',
-                    }}>
-                      {/* Nút Cập Nhật Thông Tin */}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditShipper(s)}
-                        style={{
-                          flex: 1,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.4rem',
-                          height: '34px',
-                          borderRadius: '8px',
-                          backgroundColor: 'var(--primary-light)',
-                          color: 'var(--primary)',
-                          border: '1px solid #e8cdbb',
-                          fontSize: '0.78rem',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-subtle)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-light)')}
-                      >
-                        <Edit3 size={14} /> Sửa thông tin
-                      </button>
-
-                      {/* Nút Reset Tài Khoản */}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenResetAccount(s)}
-                        style={{
-                          flex: 1,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.4rem',
-                          height: '34px',
-                          borderRadius: '8px',
-                          backgroundColor: "#f4f5f2",
-                          color: '#DC2626',
-                          border: '1px solid #FECACA',
-                          fontSize: '0.78rem',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#FEE2E2')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FEF2F2')}
-                      >
-                        <RotateCcw size={14} /> Reset tài khoản
-                      </button>
-                    </div>
-                  </div>
-                );
-              }}</PaginatedList>
-            </div>
+            <div className="operation-table-frame manager-driver-table"><Table><thead><tr><th style={{width:'24%'}}>Tài xế</th><th style={{width:'24%'}}>Liên hệ</th><th style={{width:'21%'}}>Phương tiện</th><th style={{width:'16%'}}>Trạng thái</th><th style={{width:'15%'}}>Thao tác</th></tr></thead><tbody><PaginatedList items={filteredShippers} resetKey={JSON.stringify([shipperSearch,shipperStatusFilter])} layout="table" columns={5}>{s => <tr key={s.id}><td><strong>{s.full_name || s.username}</strong><small>@{s.username}</small><DriverRating value={s.rating} /></td><td>{s.phone || 'Chưa cập nhật'}<small>{s.email || ''}</small></td><td>{s.vehicle_type === 'CAR' ? 'Ô tô' : s.vehicle_type === 'ELECTRIC_BIKE' ? 'Xe máy điện' : 'Xe máy'}<small>{s.vehicle_plate || 'Chưa có biển số'}</small></td><td><StatusBadge status={s.status}>{s.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm ngưng'}</StatusBadge></td><td><div className="operation-row-actions"><Button variant="outline" size="icon" aria-label={`Sửa tài xế ${s.full_name || s.username}`} title="Sửa thông tin" onClick={() => handleOpenEditShipper(s)}><Edit3 size={15} /></Button><Button variant="outline" size="icon" aria-label={`Đặt lại tài khoản ${s.full_name || s.username}`} title="Đặt lại tài khoản" data-intent="danger" onClick={() => handleOpenResetAccount(s)}><RotateCcw size={15} /></Button></div></td></tr>}</PaginatedList></tbody></Table></div>
           )}
         </div>
       )}
@@ -1871,22 +1466,22 @@ export default function StaffDeliveryPanel() {
                   Tài khoản: @{editingShipper.username}
                 </span>
               </div>
-              <button
+              <Button
                 type="button"
                 onClick={() => setEditingShipper(null)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
               >
                 <X size={18} color="#69736a" />
-              </button>
+              </Button>
             </div>
 
             {/* Modal Form */}
             <form className="workspace-form" onSubmit={handleSaveEditShipper} style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                   Họ và tên tài xế *
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   required
                   value={editingShipper.full_name}
@@ -1897,10 +1492,10 @@ export default function StaffDeliveryPanel() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Số điện thoại *
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="tel"
                     required
                     value={editingShipper.phone}
@@ -1909,10 +1504,10 @@ export default function StaffDeliveryPanel() {
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Email
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="email"
                     value={editingShipper.email}
                     onChange={(e) => setEditingShipper({ ...editingShipper, email: e.target.value })}
@@ -1923,10 +1518,10 @@ export default function StaffDeliveryPanel() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Loại phương tiện
-                  </label>
-                  <select
+                  </Label>
+                  <SearchableSelect
                     value={editingShipper.vehicle_type}
                     onChange={(e) => setEditingShipper({ ...editingShipper, vehicle_type: e.target.value })}
                     style={{ width: '100%', height: '38px', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.85rem', boxSizing: 'border-box', backgroundColor: '#FFFFFF' }}
@@ -1934,13 +1529,13 @@ export default function StaffDeliveryPanel() {
                     <option value="MOTORBIKE">Xe máy</option>
                     <option value="ELECTRIC_BIKE">Xe máy điện</option>
                     <option value="CAR">Ô tô</option>
-                  </select>
+                  </SearchableSelect>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Biển số xe
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     placeholder="VD: 59X1-12345"
                     value={editingShipper.vehicle_plate}
@@ -1951,10 +1546,10 @@ export default function StaffDeliveryPanel() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                   Trạng thái hoạt động
-                </label>
-                <select
+                </Label>
+                <SearchableSelect
                   value={editingShipper.status}
                   onChange={(e) => setEditingShipper({ ...editingShipper, status: e.target.value })}
                   style={{ width: '100%', height: '38px', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.85rem', boxSizing: 'border-box', backgroundColor: '#FFFFFF' }}
@@ -1962,14 +1557,14 @@ export default function StaffDeliveryPanel() {
                   <option value="ACTIVE">Đang hoạt động (Cho phép nhận đơn)</option>
                   <option value="INACTIVE">Tạm ngưng (Không nhận đơn)</option>
                   <option value="ON_BREAK">Đang nghỉ</option>
-                </select>
+                </SearchableSelect>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                   Đổi mật khẩu mới (Để trống nếu không đổi)
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   placeholder="Nhập mật khẩu mới nếu cần đổi"
                   value={editingShipper.new_password}
@@ -1979,8 +1574,8 @@ export default function StaffDeliveryPanel() {
               </div>
 
               {/* Modal Actions */}
-              <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button
+              <div data-modal-actions="true" style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <Button data-intent="danger"
                   type="button"
                   onClick={() => setEditingShipper(null)}
                   style={{
@@ -1995,8 +1590,8 @@ export default function StaffDeliveryPanel() {
                   }}
                 >
                   Hủy bỏ
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={submittingAction}
                   style={{
@@ -2013,7 +1608,7 @@ export default function StaffDeliveryPanel() {
                   }}
                 >
                   {submittingAction ? 'Đang lưu...' : 'Lưu Thay Đổi'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -2061,10 +1656,10 @@ export default function StaffDeliveryPanel() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                   Mật khẩu mặc định sau khi reset
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   value={resetPassInput}
                   onChange={(e) => setResetPassInput(e.target.value)}
@@ -2072,8 +1667,8 @@ export default function StaffDeliveryPanel() {
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button
+              <div data-modal-actions="true" style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <Button data-intent="danger"
                   type="button"
                   onClick={() => setResetTargetShipper(null)}
                   style={{
@@ -2088,8 +1683,8 @@ export default function StaffDeliveryPanel() {
                   }}
                 >
                   Hủy bỏ
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   disabled={submittingAction}
                   onClick={handleConfirmResetAccount}
@@ -2107,7 +1702,7 @@ export default function StaffDeliveryPanel() {
                   }}
                 >
                   {submittingAction ? 'Đang reset...' : 'Xác Nhận Reset'}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -2177,7 +1772,7 @@ export default function StaffDeliveryPanel() {
               </div>
 
               <div style={{ display: 'flex', gap: '0.65rem' }}>
-                <button
+                <Button
                   type="button"
                   onClick={() => copyToClipboard(`Tài khoản: @${resetResult.username}\nMật khẩu: ${resetResult.password}`)}
                   style={{
@@ -2198,8 +1793,8 @@ export default function StaffDeliveryPanel() {
                 >
                   {copiedKey ? <CheckCheck size={16} color="#2563eb" /> : <Copy size={16} />}
                   {copiedKey ? 'Đã sao chép!' : 'Sao chép thông tin'}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setResetResult(null)}
                   style={{
@@ -2215,7 +1810,7 @@ export default function StaffDeliveryPanel() {
                   }}
                 >
                   Hoàn tất
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -2264,22 +1859,22 @@ export default function StaffDeliveryPanel() {
                   Cơ sở tiếp nhận: {getBranchDisplayName()}
                 </span>
               </div>
-              <button
+              <Button
                 type="button"
                 onClick={() => setIsAddShipperOpen(false)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
               >
                 <X size={18} color="#69736a" />
-              </button>
+              </Button>
             </div>
 
             <form className="workspace-form" onSubmit={handleCreateNewShipper} style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Tên đăng nhập *
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     required
                     placeholder="VD: shipper_bd02"
@@ -2289,10 +1884,10 @@ export default function StaffDeliveryPanel() {
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Mật khẩu ban đầu
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     required
                     value={newShipperForm.password}
@@ -2303,10 +1898,10 @@ export default function StaffDeliveryPanel() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                   Họ và tên tài xế *
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   required
                   placeholder="VD: Trần Hoàng Nam"
@@ -2318,10 +1913,10 @@ export default function StaffDeliveryPanel() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Số điện thoại *
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="tel"
                     required
                     placeholder="VD: 0909123456"
@@ -2331,10 +1926,10 @@ export default function StaffDeliveryPanel() {
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Email (Tùy chọn)
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="email"
                     placeholder="VD: shipper@gmail.com"
                     value={newShipperForm.email}
@@ -2346,10 +1941,10 @@ export default function StaffDeliveryPanel() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Loại phương tiện
-                  </label>
-                  <select
+                  </Label>
+                  <SearchableSelect
                     value={newShipperForm.vehicle_type}
                     onChange={(e) => setNewShipperForm({ ...newShipperForm, vehicle_type: e.target.value })}
                     style={{ width: '100%', height: '38px', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid #ccd3c7', fontSize: '0.85rem', boxSizing: 'border-box', backgroundColor: '#FFFFFF' }}
@@ -2357,13 +1952,13 @@ export default function StaffDeliveryPanel() {
                     <option value="MOTORBIKE">Xe máy</option>
                     <option value="ELECTRIC_BIKE">Xe máy điện</option>
                     <option value="CAR">Ô tô</option>
-                  </select>
+                  </SearchableSelect>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
+                  <Label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#414743', marginBottom: '0.35rem' }}>
                     Biển số xe
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     placeholder="VD: 59X1-99999"
                     value={newShipperForm.vehicle_plate}
@@ -2373,8 +1968,8 @@ export default function StaffDeliveryPanel() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button
+              <div data-modal-actions="true" style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <Button data-intent="danger"
                   type="button"
                   onClick={() => setIsAddShipperOpen(false)}
                   style={{
@@ -2389,8 +1984,8 @@ export default function StaffDeliveryPanel() {
                   }}
                 >
                   Hủy bỏ
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={submittingAction}
                   style={{
@@ -2407,7 +2002,7 @@ export default function StaffDeliveryPanel() {
                   }}
                 >
                   {submittingAction ? 'Đang tạo...' : 'Tạo Tài Xế'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

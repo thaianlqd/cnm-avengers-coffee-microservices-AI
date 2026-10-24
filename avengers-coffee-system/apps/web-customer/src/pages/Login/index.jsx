@@ -66,7 +66,7 @@ function OrderFooter() {
       <div className="mx-auto max-w-[1380px] px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <img src="/images/brand/logo-red.png" alt="Avengers Coffee" className="h-14 sm:h-16 object-contain mb-4" />
+            <img src="/images/brand/logo.svg" alt="Avengers Coffee" className="h-14 sm:h-16 object-contain mb-4" />
             <p className="text-[12px] text-gray-500 leading-relaxed">{ui("Công Ty Cổ Phần Avengers Coffee")}</p>
 
           </div>

@@ -54,7 +54,7 @@ export function WorkspaceSidebar({ groups, activeTab, onSelect, session, label, 
     <button type="button" className="workspace-mobile-toggle" aria-label="Mở điều hướng" aria-expanded={mobileOpen} onClick={() => setMobileOpen(value => !value)}><FiMenu size={20} /></button>
     {mobileOpen && <div className="workspace-sidebar-backdrop" onClick={() => setMobileOpen(false)} />}
     <aside className={'console-sidebar workspace-sidebar' + (mobileOpen ? ' is-open' : '')}>
-      <div className="console-brand"><span className="console-brand-icon"><img src="/images/highlands-logo-red.svg" onError={(e) => { e.currentTarget.src = '/images/logo-red.png' }} alt="Avengers Coffee" style={{ width: 26, height: 26, objectFit: 'contain' }} /></span><div><b>Avengers Coffee</b></div></div>
+      <div className="console-brand"><span className="console-brand-icon"><img src="/images/brand/logo-white.svg"  alt="Avengers Coffee" style={{ width: 26, height: 26, objectFit: 'contain' }} /></span><div><b>Avengers Coffee</b></div></div>
       {extra}
       <nav aria-label={'Điều hướng ' + label}>
         {groups.map(group => <section className="workspace-nav-group" key={group.label}>

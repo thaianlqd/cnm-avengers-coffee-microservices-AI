@@ -59,7 +59,7 @@ function Launcher() {
   return (
     <div className="page">
       <div className="card hero">
-        <div className="brand">Avengers Delivery</div>
+        <div className="brand"><img src="/images/brand/logo.svg" alt="" style={{width:48,height:38,objectFit:"contain",verticalAlign:"middle",marginRight:12}}/>Avengers Delivery</div>
         <h1>Shipper Mobile Launcher</h1>
         <p>
           Ban co the demo ngay tren laptop, khong can dien thoai. Sau khi chay <code>docker-compose up -d</code>, bam nut duoi day de vao ban shipper web.

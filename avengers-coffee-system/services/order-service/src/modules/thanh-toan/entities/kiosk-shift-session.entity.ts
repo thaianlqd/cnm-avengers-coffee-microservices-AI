@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { AfterLoad, BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 const orderSchema = process.env.DB_SCHEMA || 'orders';
 
@@ -10,6 +10,9 @@ export class KioskShiftSession {
   @Column({ type: 'varchar', length: 50 })
   co_so_ma: string;
 
+  @Column({ type: 'varchar', length: 24, default: 'FRANCHISE_KIOSK' })
+  session_scope: 'FRANCHISE_KIOSK' | 'STORE_BRANCH';
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   staff_username: string | null;
 
@@ -17,7 +20,7 @@ export class KioskShiftSession {
   staff_name: string | null;
 
   @Column({ type: 'varchar', length: 30, default: 'OPEN' })
-  trang_thai: 'OPEN' | 'CLOSED' | 'FORCE_CLOSED';
+  trang_thai: 'OPEN' | 'CLOSE_PENDING' | 'CLOSED' | 'FORCE_CLOSED' | 'CLOSE_REJECTED';
 
   @Column({ type: 'timestamptz' })
   thoi_gian_mo_ca: Date;
@@ -55,14 +58,53 @@ export class KioskShiftSession {
   @Column({ type: 'varchar', length: 100, nullable: true })
   dong_ca_boi: string | null;
 
+  close_requested_at: Date | null;
+
+  close_requested_by: string | null;
+
+  close_approved_by: string | null;
+
+  close_approved_at: Date | null;
+
+  close_approval_note: string | null;
+
   @Column({ type: 'jsonb', default: () => "'{}'::jsonb" })
   du_lieu_chi_tiet: {
+    close_review?: { requested_at?: string | null; requested_by?: string | null; approved_at?: string | null; approved_by?: string | null; note?: string | null };
     non_cash_revenue?: number;
     cash_in_gross?: number;
     cash_change_out?: number;
     online_revenue?: number;
     in_store_revenue?: number;
   };
+
+  // Review metadata lives in the existing JSON journal. No extra database columns
+  // are required to read active sessions or review a completed session.
+  @AfterLoad()
+  restoreCloseReview() {
+    const review = this.du_lieu_chi_tiet?.close_review;
+    this.close_requested_at = review?.requested_at ? new Date(review.requested_at) : null;
+    this.close_requested_by = review?.requested_by || null;
+    this.close_approved_at = review?.approved_at ? new Date(review.approved_at) : null;
+    this.close_approved_by = review?.approved_by || null;
+    this.close_approval_note = review?.note || null;
+  }
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  storeCloseReview() {
+    if (!this.close_requested_at && !this.close_approved_at && !this.du_lieu_chi_tiet?.close_review) return;
+    this.du_lieu_chi_tiet = {
+      ...this.du_lieu_chi_tiet,
+      close_review: {
+        requested_at: this.close_requested_at?.toISOString() || null,
+        requested_by: this.close_requested_by || null,
+        approved_at: this.close_approved_at?.toISOString() || null,
+        approved_by: this.close_approved_by || null,
+        note: this.close_approval_note || null,
+      },
+    };
+  }
 
   @CreateDateColumn({ type: 'timestamptz' })
   ngay_tao: Date;

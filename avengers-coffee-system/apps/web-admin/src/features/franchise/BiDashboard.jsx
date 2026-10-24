@@ -1,3 +1,4 @@
+import { Table } from '../../components/ui/table'
 import { money, number } from "../../components/console/chartModel";
 import { Store, Package, Wallet, CircleAlert } from '../../components/console/WorkspaceIcons';
 import {
@@ -12,16 +13,6 @@ export default function BiDashboard({ data }) {
   const regions = data.doanh_thu_theo_khu_vuc || [];
   return (
     <section className="console-dashboard">
-      <div className="console-page-heading">
-        <div>
-          <span className="console-eyebrow">TÀI CHÍNH NHƯỢNG QUYỀN</span>
-          <h1>Báo cáo tài chính tổng hợp</h1>
-          <p>
-            Tổng quan mạng lưới, khoản đã thu và công nợ theo dữ liệu báo cáo
-            hiện có.
-          </p>
-        </div>
-      </div>
       <div className="console-kpis">
         <Metric
           label="Kiosk đang hoạt động"
@@ -35,7 +26,7 @@ export default function BiDashboard({ data }) {
           tone="amber"
         />
         <Metric
-          label="Royalty đã thu"
+          label="Chia sẻ doanh thu đã thu"
           value={money(data.tong_royalty_da_thu)}
           icon={Wallet}
           tone="teal"
@@ -58,7 +49,7 @@ export default function BiDashboard({ data }) {
           }))}
         />
         <Chart
-          title="Royalty theo tháng"
+          title="Chia sẻ doanh thu theo tháng"
           format={money}
           rows={trend.map((row) => ({
             label: row.thang,
@@ -83,7 +74,7 @@ export default function BiDashboard({ data }) {
       <article className="console-card">
         <h3>Chi tiết đóng góp theo khu vực</h3>
         <div className="console-table-scroll">
-          <table>
+          <Table>
             <thead>
               <tr>
                 <th>Khu vực</th>
@@ -100,7 +91,7 @@ export default function BiDashboard({ data }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Table>
           {!regions.length && (
             <p className="console-muted">Chưa có số liệu theo khu vực.</p>
           )}

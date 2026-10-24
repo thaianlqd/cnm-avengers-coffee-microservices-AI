@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CartItem } from './cart.entity';
 import { quoteDeliveryFee } from './delivery-pricing';
+import { resolveMenuProduct, repriceCartLines } from './menu-pricing';
 import { VoucherService } from '../voucher/voucher.service';
 import { isGuestCartId } from '../../auth/cart-auth.guard';
 import { DonHang } from '../thanh-toan/entities/don-hang.entity';
@@ -415,65 +416,8 @@ export class CartService {
     };
   }
 
-  private async resolveAuthoritativeProduct(dto: any) {
-    dto = this.canonicalOptions(dto);
-    const productId = Number(dto?.ma_san_pham);
-    if (!Number.isInteger(productId) || productId <= 0) {
-      throw new BadRequestException('Ma san pham khong hop le');
-    }
-
-    const rows = await this.dataSource.query(
-      `SELECT ma_san_pham, ten_san_pham, gia_ban, hinh_anh_url, trang_thai
-       FROM menu.san_pham WHERE ma_san_pham = $1 LIMIT 1`,
-      [productId],
-    );
-    const product = rows?.[0];
-    if (!product || product.trang_thai === false) {
-      throw new NotFoundException('San pham khong ton tai hoac dang ngung ban');
-    }
-
-    const variantRows = await this.dataSource.query(
-      `SELECT tt.ten_thuoc_tinh, bt.gia_tri, bt.phu_thu
-         FROM menu.bien_the_san_pham bt
-         JOIN menu.thuoc_tinh tt ON tt.ma_thuoc_tinh = bt.ma_thuoc_tinh
-        WHERE bt.ma_san_pham = $1`,
-      [productId],
-    );
-
-    const selectedValues: unknown[] = [...(dto?.toppings || []), dto?.loai_sua, dto?.luong_da, dto?.do_ngot];
-    for (const value of Object.values(dto?.custom_attributes || {})) {
-      if (Array.isArray(value)) selectedValues.push(...value);
-      else selectedValues.push(value);
-    }
-    const selectedExtras = new Set(
-      selectedValues.map((value) => this.normalizeValue(value)).filter(Boolean),
-    );
-    const selectedSize = this.normalizeValue(dto?.size);
-    const normalizedVariants = (variantRows || []).map((row) => {
-      const attribute = this.normalizeValue(row.ten_thuoc_tinh);
-      return {
-        value: this.normalizeValue(row.gia_tri),
-        amount: Number(row.phu_thu || 0),
-        isSize: attribute.includes('size') || attribute.includes('kich thuoc'),
-      };
-    });
-    const sizeVariant = normalizedVariants.find(
-      (row) => row.isSize && selectedSize && row.value === selectedSize,
-    );
-    // Size rows store the complete selling price. Other rows store a
-    // surcharge. This mirrors the menu and AI pricing contract.
-    const unitPrice =
-      (sizeVariant?.amount ?? Number(product.gia_ban || 0)) +
-      normalizedVariants
-        .filter((row) => !row.isSize && selectedExtras.has(row.value))
-        .reduce((sum, row) => sum + row.amount, 0);
-
-    return {
-      productId,
-      productName: String(product.ten_san_pham),
-      imageUrl: String(product.hinh_anh_url || ''),
-      unitPrice,
-    };
+  private resolveAuthoritativeProduct(dto: any) {
+    return resolveMenuProduct(this.dataSource.query.bind(this.dataSource), dto);
   }
 
   async layGiỏHàng(ma_nguoi_dung: string) {
@@ -706,8 +650,9 @@ export class CartService {
 
   async quote(maNguoiDung: string, voucherCode?: string, deliveryMode?: string, deliveryMethod?: string) {
     const cart = await this.layGiỏHàng(maNguoiDung);
-    const items = cart.items;
-    const subtotal = cart.subtotal;
+    const priced = await repriceCartLines(this.dataSource.query.bind(this.dataSource), cart.items);
+    const items = priced.map(line => ({ ...line, unit_price: line.gia_ban, line_total: line.gia_ban * line.quantity }));
+    const subtotal = items.reduce((sum, line) => sum + line.line_total, 0);
     let discountAmount = 0;
     let appliedVoucher: string | null = null;
     if (voucherCode?.trim()) {

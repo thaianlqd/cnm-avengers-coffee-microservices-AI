@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InventoryItem } from './inventory-item.entity';
@@ -56,6 +56,22 @@ export class InventoryService {
       dang_kinh_doanh: payload.dang_kinh_doanh ?? true,
     });
     return this.inventoryRepo.save(created);
+  }
+
+  async updateSelling(productId: number, payload: { branch_code: string; dang_kinh_doanh: boolean }) {
+    if (!Number.isSafeInteger(productId) || productId <= 0 || !String(payload?.branch_code || '').trim() || typeof payload?.dang_kinh_doanh !== 'boolean') {
+      throw new BadRequestException('Cần mã sản phẩm, kiosk và trạng thái bán hợp lệ');
+    }
+    // An atomic upsert changes only this flag. A concurrent sale or receipt keeps
+    // its current stock quantity; missing branch rows use the database defaults.
+    const result = await this.inventoryRepo.createQueryBuilder()
+      .insert()
+      .into(InventoryItem)
+      .values({co_so_ma: this.normalizeBranchCode(payload.branch_code), ma_san_pham: productId, dang_kinh_doanh: payload.dang_kinh_doanh})
+      .orUpdate(['dang_kinh_doanh'], ['co_so_ma', 'ma_san_pham'])
+      .returning('*')
+      .execute();
+    return result.raw[0];
   }
 
   async adjustStock(maSanPham: number, delta: number, branchCode?: string) {

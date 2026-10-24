@@ -1,3 +1,4 @@
+import { apiClient } from '../../lib/apiClient';
 import ChristmasBanner from '../../components/layout/ChristmasBanner';
 import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -51,18 +52,13 @@ const MENU_ICONS = [
 ];
 
 function BannerSlider() { return <ChristmasBanner compact />; }
-function SaleCountdown({ copy }) {
-  const [timeLeft, setTimeLeft] = useState({ hours: 22, minutes: 9, seconds: 47 });
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (document.visibilityState !== 'visible') return;
-      setTimeLeft(({ hours, minutes, seconds }) => {
-        const remaining = Math.max(0, hours * 3600 + minutes * 60 + seconds - 1);
-        return { hours: Math.floor(remaining / 3600), minutes: Math.floor(remaining / 60) % 60, seconds: remaining % 60 };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+function SaleCountdown({ copy, endsAt }) {
+  const getRemaining=()=>{
+    const remaining=Math.max(0,Math.floor((new Date(endsAt).getTime()-Date.now())/1000));
+    return {hours:Math.floor(remaining/3600),minutes:Math.floor(remaining/60)%60,seconds:remaining%60};
+  };
+  const [timeLeft,setTimeLeft]=useState(getRemaining);
+  useEffect(()=>{setTimeLeft(getRemaining());const timer=setInterval(()=>setTimeLeft(getRemaining()),1000);return()=>clearInterval(timer)},[endsAt]);
   return <div className="flex gap-2.5 md:ml-6 items-center" aria-label={copy('Thời gian còn lại', 'Time remaining')}>
     {Object.entries(timeLeft).map(([key,value],i) => <React.Fragment key={key}>{i > 0 && <span className="text-[#b22830] font-bold">:</span>}<div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white"><span className="text-sm font-bold leading-none">{String(value).padStart(2,'0')}</span><span className="text-[8px] font-bold">{copy({hours:'Giờ',minutes:'Phút',seconds:'Giây'}[key],key)}</span></div></React.Fragment>)}
   </div>;
@@ -142,52 +138,22 @@ export default function OrderPage({
   const [isSearchBoxOpen, setIsSearchBoxOpen] = useState(false);
   const [copiedVoucherCode, setCopiedVoucherCode] = useState(null);
 
-  const flashSaleProducts = [
-    {
-      id: 1,
-      tag: "-16%",
-      img: "https://bizweb.dktcdn.net/thumb/large/100/487/455/products/banh-trung-thu-ca-phe-lava-1784082250814.png?v=1784082254223",
-      category: "BÁNH TRUNG THU",
-      name: "Bánh Trung Thu Cà Phê Lava",
-      price: "99.000đ",
-      oldPrice: "119.000đ",
-      sold: 260,
-      total: 300
-    },
-    {
-      id: 2,
-      tag: "-16%",
-      img: "https://bizweb.dktcdn.net/thumb/large/100/487/455/products/banh-trung-thu-matcha-1784082289723.png?v=1784082293030",
-      category: "BÁNH TRUNG THU",
-      name: "Bánh Trung Thu Matcha",
-      price: "99.000đ",
-      oldPrice: "119.000đ",
-      sold: 256,
-      total: 300
-    },
-    {
-      id: 3,
-      tag: "-16%",
-      img: "https://bizweb.dktcdn.net/thumb/large/100/487/455/products/banh-trung-thu-dau-xanh-1784082184234.png?v=1784082187197",
-      category: "BÁNH TRUNG THU",
-      name: "Bánh Trung Thu Đậu Xanh",
-      price: "99.000đ",
-      oldPrice: "119.000đ",
-      sold: 244,
-      total: 300
-    },
-    {
-      id: 4,
-      tag: "-14%",
-      img: "https://bizweb.dktcdn.net/thumb/large/100/487/455/products/banh-trung-thu-thap-cam-bat-buu-1784082355367.png?v=1784082358597",
-      category: "BÁNH TRUNG THU",
-      name: "Bánh Trung Thu Thập Cẩm Bát Bửu",
-      price: "119.000đ",
-      oldPrice: "139.000đ",
-      sold: 316,
-      total: 400
-    }
-  ];
+  const [flashSales,setFlashSales]=useState([]);
+  const [rankedProducts,setRankedProducts]=useState([]);
+  useEffect(()=>{
+    let mounted=true;
+    const load=()=>{
+      apiClient.get('/products/flash-sales/active').then(({data})=>{if(mounted)setFlashSales(data.items||[])}).catch(()=>{if(mounted)setFlashSales([])});
+      apiClient.get('/products/recommendations').then(({data})=>{if(mounted)setRankedProducts(data.items||[])}).catch(()=>{if(mounted)setRankedProducts([])});
+    };
+    load();const timer=setInterval(load,60000);return()=>{mounted=false;clearInterval(timer)};
+  },[]);
+  const flashSaleProducts=flashSales.filter(sale=>new Date(sale.ends_at)>new Date()).map(sale=>({
+    id:sale.id,product_id:sale.product_id,name:sale.ten_san_pham,img:sale.hinh_anh_url,category:sale.title,
+    price:Number(sale.sale_price).toLocaleString('vi-VN')+'đ',oldPrice:Number(sale.original_price).toLocaleString('vi-VN')+'đ',
+    tag:'-'+Math.round((1-Number(sale.sale_price)/Number(sale.original_price))*100)+'%',ends_at:sale.ends_at
+  }));
+  const visibleRecommendations=rankedProducts.map(row=>products.find(p=>Number(p.ma_san_pham)===Number(row.ma_san_pham))||row);
 
   const [recentProducts, setRecentProducts] = useState(() => {
     try {
@@ -627,9 +593,9 @@ export default function OrderPage({
           </button>
 
           <div className="flex-shrink-0 h-full flex items-center lg:ml-6 lg:w-[220px] xl:w-[280px]">
-            {isScrolled && <img src="/images/brand/logo-red.png" alt="Avengers Coffee" className="lg:hidden h-[54px] w-auto object-contain" />}
+            {isScrolled && <img src="/images/brand/logo.svg" alt="Avengers Coffee" className="lg:hidden h-[54px] w-auto object-contain" />}
             {!isScrolled ? (
-              <img loading="lazy" decoding="async" src="/images/brand/logo-red.png" alt="Avengers Coffee"
+              <img loading="lazy" decoding="async" src="/images/brand/logo.svg" alt="Avengers Coffee"
                 className="h-[48px] sm:h-[56px] w-auto object-contain cursor-pointer transition-transform hover:scale-105"
                 onClick={() => {
                   handleCategorySelect('all');
@@ -974,7 +940,7 @@ export default function OrderPage({
                 )}
 
                 {/* FLASH SALE SECTION (MOVED TO TOP) */}
-                {viewCategory === 'all' && (
+                {viewCategory === 'all' && flashSaleProducts.length > 0 && (
                   <div className="mb-10 w-full bg-[#fffcf5] border border-amber-200 rounded-2xl p-5 shadow-sm">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                       <h2 className="text-2xl font-bold flex items-center gap-2 italic">
@@ -982,7 +948,7 @@ export default function OrderPage({
                         Flash Sale
                         <span className="text-[#f5a623]">⚡⚡</span>
                       </h2>
-                      <SaleCountdown copy={copy} />
+                      <SaleCountdown copy={copy} endsAt={flashSaleProducts.reduce((min,p)=>!min||new Date(p.ends_at)<new Date(min)?p.ends_at:min,null)} />
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
@@ -991,7 +957,7 @@ export default function OrderPage({
                           key={item.id}
                           className="bg-white rounded-xl border border-gray-100 p-4 relative group cursor-pointer hover:shadow-lg transition-all duration-300 flex flex-col"
                           onClick={() => {
-                            const dbProduct = products.find(p => p.ten_san_pham === item.name);
+                            const dbProduct = products.find(p => Number(p.ma_san_pham) === Number(item.product_id));
                             if (dbProduct) {
                               handleProductClick(dbProduct);
                             }
@@ -1018,15 +984,6 @@ export default function OrderPage({
                               <div className="flex items-end gap-2 mb-3">
                                 <span className="text-[#b22830] font-bold text-[16px] leading-none">{item.price}</span>
                                 <span className="text-gray-400 text-[12px] line-through leading-none mb-0.5">{item.oldPrice}</span>
-                              </div>
-                              <div className="w-full bg-[#fce4e4] rounded-full h-[18px] relative overflow-hidden flex items-center justify-center">
-                                <div
-                                  className="absolute top-0 left-0 h-full bg-[#b22830] rounded-full transition-all duration-1000"
-                                  style={{ width: `${(item.sold / item.total) * 100}%` }}
-                                ></div>
-                                <span className="relative z-10 text-[10px] text-white font-bold whitespace-nowrap">
-                                  {item.sold} {copy('sản phẩm đã bán', 'sold')}
-                                </span>
                               </div>
                             </div>
                           </div>
@@ -1069,29 +1026,29 @@ export default function OrderPage({
                 )}
 
                 {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
-                {viewCategory === 'all' && aiRecommendedProducts && aiRecommendedProducts.length > 0 && (
+                {viewCategory === 'all' && visibleRecommendations.length > 0 && (
                   <div className="mb-10 w-full">
                     <div className="bg-white rounded-3xl border border-rose-100 p-6 md:p-8 shadow-2xs relative overflow-hidden">
                       {/* Section Top Header */}
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
                         <div>
                           <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold  tracking-[0.2em] text-[#c41230] bg-red-50 px-3 py-1 rounded-full border border-red-100/80 mb-2">
-                            <SparklesIcon className="w-3.5 h-3.5 text-[#c41230]" /> smart recommendation </div>
+                            <SparklesIcon className="w-3.5 h-3.5 text-[#c41230]" /> Gợi ý từ dữ liệu cửa hàng </div>
                           <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-gray-900 font-sans">
-                            {t('order.top5Favs')}
+                            {copy('5 món được gợi ý cho bạn','5 recommended picks')}
                           </h2>
                           <p className="mt-1 text-xs md:text-sm font-medium text-gray-500">
-                            {t('order.aiDesc')}
+                            {copy('Dựa trên lượt mua, voucher, đánh giá và yêu thích trong 90 ngày qua.','Based on purchases, vouchers, reviews and favorites over the past 90 days.')}
                           </p>
                         </div>
 
                         <div className="self-start md:self-center inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-amber-300 bg-amber-50 text-xs font-semibold text-amber-800  tracking-wider shadow-2xs shrink-0">
-                          <SparklesIcon className="w-4 h-4 text-amber-600" /> ai personal </div>
+                          <SparklesIcon className="w-4 h-4 text-amber-600" /> Top 5 món </div>
                       </div>
 
                       {/* Unified Product Cards Grid */}
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
-                        {aiRecommendedProducts.slice(0, 5).map((product) => {
+                        {visibleRecommendations.slice(0, 5).map((product) => {
                           const isFav = isFavoriteProduct ? isFavoriteProduct(product) : false;
                           const categoryName = product?.danhMuc?.ten_danh_muc || 'Avengers Coffee';
 

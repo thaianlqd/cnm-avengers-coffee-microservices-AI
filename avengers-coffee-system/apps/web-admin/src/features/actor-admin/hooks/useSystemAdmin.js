@@ -49,6 +49,8 @@ const DEFAULT_BRANCH_FORM = {
   gio_mo_cua: '07:00',
   gio_dong_cua: '22:00',
   map_url: '',
+  vi_do: null,
+  kinh_do: null,
   trang_thai: 'ACTIVE',
 }
 
@@ -109,7 +111,7 @@ function parseBranchAddress(address) {
       const normWard = normalizeText(w.name)
       const shortWard = normalizeText(w.name.replace(/^(Phường|Xã|Thị trấn)\s+/i, ''))
       return normalizedParts.some(
-        (part) => part.includes(normWard) || normWard.includes(part) || (shortWard && part.includes(shortWard))
+        (part) => part === normWard || (shortWard && part === shortWard)
       )
     })?.name || ''
   } else {
@@ -148,6 +150,7 @@ function parseBranchAddress(address) {
 }
 
 function composeBranchAddress(form) {
+  if (form?.dia_chi_ban_do && form.vi_do != null && form.kinh_do != null) return form.dia_chi_ban_do
   const cityLabel = resolveCityLabel(form?.thanh_pho) || form?.thanh_pho || ''
   const parts = [form?.dia_chi_chi_tiet, form?.phuong_xa, cityLabel]
     .map((item) => String(item || '').trim())
@@ -490,7 +493,15 @@ export function useSystemAdmin() {
   const branchAddressPreview = useMemo(() => composeBranchAddress(branchForm), [branchForm])
 
   const branchOptions = useMemo(() => {
-    const rows = (branchesState.items || []).filter((item) => item.trang_thai === 'ACTIVE')
+    const rows = (branchesState.items || []).filter((item) => {
+      if (item.trang_thai !== 'ACTIVE') return false
+      if (item.loai_diem_ban && item.loai_diem_ban !== 'CHI_NHANH_CHINH') return false
+      const name = String(item.ten_chi_nhanh || item.name || '').toLowerCase()
+      const code = String(item.ma_chi_nhanh || item.code || '').toUpperCase()
+      if (/^kiosk\b/i.test(name) || /nhượng quyền/i.test(name)) return false
+      if (/^(KSK|KVT|KIOSK)([-_]|$)/i.test(code)) return false
+      return true
+    })
     return rows.map((item) => ({ code: item.ma_chi_nhanh, name: item.ten_chi_nhanh, loai_diem_ban: item.loai_diem_ban, thanh_pho: item.thanh_pho }))
   }, [branchesState.items])
 
@@ -822,7 +833,7 @@ export function useSystemAdmin() {
 
   const startEditBranch = (item) => {
     const parsedAddress = parseBranchAddress(item.dia_chi)
-    const matchedCity = PROVINCES_DATA.find(
+    const matchedCity = item.thanh_pho && PROVINCES_DATA.find(
       (p) => normalizeText(p.name) === normalizeText(item.thanh_pho || '') || normalizeText(p.name).includes(normalizeText(item.thanh_pho || ''))
     )
     const cityKey = matchedCity ? matchedCity.name : (parsedAddress.thanh_pho || DEFAULT_BRANCH_FORM.thanh_pho)
@@ -841,6 +852,9 @@ export function useSystemAdmin() {
       gio_mo_cua: item.gio_mo_cua || '07:00',
       gio_dong_cua: item.gio_dong_cua || '22:00',
       map_url: item.map_url || '',
+      dia_chi_ban_do: item.dia_chi || '',
+      vi_do: item.vi_do == null ? null : Number(item.vi_do),
+      kinh_do: item.kinh_do == null ? null : Number(item.kinh_do),
       trang_thai: item.trang_thai || 'ACTIVE',
     })
   }
@@ -854,6 +868,9 @@ export function useSystemAdmin() {
   const saveBranch = async () => {
     setSavingBranch(true)
     try {
+      if (branchForm.vi_do == null || branchForm.kinh_do == null || !Number.isFinite(branchForm.vi_do) || !Number.isFinite(branchForm.kinh_do)) {
+        throw new Error('Vui lòng chọn một địa chỉ gợi ý trên bản đồ trước khi lưu chi nhánh.');
+      }
       const fullAddress = composeBranchAddress(branchForm)
       const payload = {
         ma_chi_nhanh: branchForm.ma_chi_nhanh,
@@ -864,7 +881,9 @@ export function useSystemAdmin() {
         hinh_anh_url: branchForm.hinh_anh_url || undefined,
         gio_mo_cua: branchForm.gio_mo_cua || undefined,
         gio_dong_cua: branchForm.gio_dong_cua || undefined,
-        map_url: branchForm.map_url || undefined,
+        map_url: `https://www.google.com/maps/search/?api=1&query=${branchForm.vi_do},${branchForm.kinh_do}`,
+        vi_do: branchForm.vi_do,
+        kinh_do: branchForm.kinh_do,
         trang_thai: branchForm.trang_thai,
       }
 
@@ -883,6 +902,8 @@ export function useSystemAdmin() {
             gio_mo_cua: payload.gio_mo_cua,
             gio_dong_cua: payload.gio_dong_cua,
             map_url: payload.map_url,
+            vi_do: payload.vi_do,
+            kinh_do: payload.kinh_do,
             trang_thai: payload.trang_thai,
           }
         : payload

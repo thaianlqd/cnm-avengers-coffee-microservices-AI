@@ -475,7 +475,7 @@ export default function StoresPage() {
             <div className="bg-white p-8 shadow-sm rounded-2xl flex flex-col md:flex-row gap-10 border border-gray-100">
               <div className="bg-[#b22830] flex-1 flex items-center justify-center p-10 min-h-[260px] rounded-2xl">
                 <img
-                  src="/images/brand/logo-white.png"
+                  src="/images/brand/logo-white.svg"
                   alt="Avengers Coffee"
                   className="w-[80%] max-w-[240px] max-h-[180px] object-contain drop-shadow-sm"
                   onError={(e) => (e.currentTarget.style.display = 'none')}

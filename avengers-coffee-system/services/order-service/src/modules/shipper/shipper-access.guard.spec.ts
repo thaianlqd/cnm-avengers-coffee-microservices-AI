@@ -25,6 +25,12 @@ describe('shipper access boundary', () => {
     await expect(guard.canActivate(ctx(request('POST', '/shippers/assign-order')))).rejects.toBeInstanceOf(ForbiddenException);
     await expect(guard.canActivate(ctx(request('GET', '/shippers/driver-1/deliveries')))).resolves.toBe(true);
   });
+  it('manager assignment cannot impersonate driver acceptance',async()=>{
+    jwt.verifyAsync.mockResolvedValue({sub:'manager',role:'MANAGER'});
+    await expect(guard.canActivate(ctx(request('POST','/shippers/driver-1/accept/order-1')))).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(guard.canActivate(ctx(request('POST','/shippers/driver-1/batch-orders/batch-1/accept')))).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(guard.canActivate(ctx(request('POST','/shippers/assign-order')))).resolves.toBe(true);
+  });
   it('hashes passwords and verifies only the matching secret', () => {
     const saved = hashShipperPassword('secret-pass');
     expect(saved).not.toContain('secret-pass');

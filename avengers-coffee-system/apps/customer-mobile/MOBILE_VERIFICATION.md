@@ -85,3 +85,9 @@ Kiểm tra cuối:
 Local: đã restart Metro customer 8090 để nhận env mới và giao diện. Image identity đã build và nạp riêng container local; rollback image `avengers-identity:before-mobile-auth-20261013` giữ nguyên. Không triển khai production hoặc gửi build EAS/store. Hướng dẫn cấu hình và build: `AUTH_SETUP.md`, `.env.example`, `eas.json`.
 
 Giới hạn còn lại: local đã có Web client ID, chưa có client iOS/Android/signing credentials. Cần cấu hình Google Cloud origins/audiences/package/SHA-1 và build native trước test Google thật; Google native không chạy trong Expo Go. Chưa xác minh OTP với SMTP/hộp thư thật, OAuth consent trên domain production hoặc thiết bị iOS/Android. Fixture success không được coi là bằng chứng các bước live này đã pass.
+
+## Startup repair — 24/10/2026
+
+Expo web was serving `UnableToResolveError` for `@stomp/stompjs`, imported by the shared realtime tracking module. The dependency was already declared in package.json/package-lock.json but missing from the installed node_modules. Running `npm install --ignore-scripts --no-audit --no-fund` restored it without changing the lockfile. The running Metro server then generated its JavaScript bundle, and Expo web and iOS exports completed successfully. This verifies bundling, not an on-device visual pass.
+
+The static web startup now offers a reload action when its script fails to load or remains unmounted for 15 seconds. It never replaces an app that has already mounted. When dependencies have changed, install from the existing lockfile before starting Expo.

@@ -34,6 +34,9 @@ export class SurveyForm {
   @Column({ type: 'varchar', nullable: true })
   nguoi_tao: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  co_so_ma: string | null;
+
   @CreateDateColumn()
   ngay_tao: Date;
 

@@ -1,3 +1,9 @@
+import { WorkspacePanelIntro } from '../../../components/console/OperationalPageFrame'
+import { Input } from '../../../components/ui/input'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { Label } from '../../../components/ui/label'
+import { Textarea } from '../../../components/ui/textarea'
 import { PageNumbers } from '../../../components/console/CompactPagination'
 import React, { useMemo, useState } from 'react'
 import {
@@ -150,7 +156,7 @@ export function ManagerCustomerCarePanel({
   }
 
   return (
-    <div className="panel-container" style={{
+    <div className="panel-container manager-customer-care" style={{
       padding: '1.75rem',
       background: '#f8f9f6',
       borderRadius: '20px',
@@ -166,7 +172,7 @@ export function ManagerCustomerCarePanel({
         gap: '1rem',
         marginBottom: '1.5rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <WorkspacePanelIntro><div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
             width: '42px',
             height: '42px',
@@ -188,92 +194,11 @@ export function ManagerCustomerCarePanel({
               Quản lý và phản hồi trực tiếp các đánh giá sản phẩm từ khách hàng để cải thiện chất lượng dịch vụ
             </span>
           </div>
-        </div>
+        </div></WorkspacePanelIntro>
       </div>
 
       {/* Summary KPI Cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: '1rem',
-        marginBottom: '1.5rem'
-      }}>
-        <div style={{
-          background: '#ffffff',
-          padding: '1.1rem 1.25rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.85rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <MessageCircle size={20} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Tổng đánh giá</span>
-            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#30382e', display: 'block' }}>{stats.total} lượt</strong>
-          </div>
-        </div>
 
-        <div style={{
-          background: '#ffffff',
-          padding: '1.1rem 1.25rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.85rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: "#f4f5f2", color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Clock size={20} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Chờ phản hồi</span>
-            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#d97706', display: 'block' }}>{stats.unreplied} đánh giá</strong>
-          </div>
-        </div>
-
-        <div style={{
-          background: '#ffffff',
-          padding: '1.1rem 1.25rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.85rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: "#f4f5f2", color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle2 size={20} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Đã phản hồi</span>
-            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#2563eb', display: 'block' }}>{stats.replied} đánh giá</strong>
-          </div>
-        </div>
-
-        <div style={{
-          background: '#ffffff',
-          padding: '1.1rem 1.25rem',
-          borderRadius: '14px',
-          border: '1px solid #e2e4df',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.85rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: "#f4f5f2", color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertTriangle size={20} />
-          </div>
-          <div>
-            <span style={{ fontSize: '0.775rem', color: '#69736a', fontWeight: '500' }}>Đánh giá 1-3 sao</span>
-            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#ef4444', display: 'block' }}>{stats.lowRating} đánh giá</strong>
-          </div>
-        </div>
-      </div>
 
       {/* Toolbar Search & Filter Chips */}
       <div style={{
@@ -289,7 +214,7 @@ export function ManagerCustomerCarePanel({
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '420px' }}>
             <Search size={18} color="#85907d" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-            <input
+            <Input data-input-prefix="true"
               type="text"
               value={keyword}
               onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
@@ -305,7 +230,7 @@ export function ManagerCustomerCarePanel({
               }}
             />
             {keyword && (
-              <button
+              <Button
                 type="button"
                 onClick={() => setKeyword('')}
                 style={{
@@ -320,7 +245,7 @@ export function ManagerCustomerCarePanel({
                 }}
               >
                 <X size={16} />
-              </button>
+              </Button>
             )}
           </div>
 
@@ -328,7 +253,7 @@ export function ManagerCustomerCarePanel({
             {FILTERS.map((item) => {
               const isActive = activeFilter === item.id
               return (
-                <button
+                <Button data-selected={isActive}
                   key={item.id}
                   type="button"
                   onClick={() => { setActiveFilter(item.id); setPage(1); }}
@@ -346,7 +271,7 @@ export function ManagerCustomerCarePanel({
                   }}
                 >
                   {item.label}
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -433,7 +358,7 @@ export function ManagerCustomerCarePanel({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <StarRating rating={review.so_sao} />
 
-                    <span className="workspace-inline-label" style={{
+                    <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label" style={{
                       fontSize: '0.75rem',
                       fontWeight: '700',
                       padding: '0.25rem 0.65rem',
@@ -447,7 +372,7 @@ export function ManagerCustomerCarePanel({
                     }}>
                       {hasManagerReply ? <CheckCircle2 size={12} /> : <Clock size={12} />}
                       {hasManagerReply ? 'Đã phản hồi' : 'Chờ phản hồi'}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
 
@@ -494,7 +419,7 @@ export function ManagerCustomerCarePanel({
 
                 {/* Actions Row */}
                 <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid #f4f5f2' }}>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => {
                       setExpandedReplyId(isExpanded ? null : review.id)
@@ -520,10 +445,10 @@ export function ManagerCustomerCarePanel({
                   >
                     {isExpanded ? <X size={14} /> : hasManagerReply ? <Edit3 size={14} /> : <MessageSquare size={14} />}
                     {isExpanded ? 'Đóng ô nhập' : (hasManagerReply ? 'Sửa phản hồi' : 'Viết phản hồi')}
-                  </button>
+                  </Button>
 
                   {hasManagerReply && (
-                    <button
+                    <Button data-intent="danger"
                       type="button"
                       onClick={() => handleDeleteReply(review.id)}
                       disabled={replyingReviewId === String(review.id)}
@@ -544,7 +469,7 @@ export function ManagerCustomerCarePanel({
                       }}
                     >
                       <Trash2 size={14} /> Xóa phản hồi
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -560,10 +485,10 @@ export function ManagerCustomerCarePanel({
                     flexDirection: 'column',
                     gap: '0.75rem'
                   }}>
-                    <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#252927' }}>
+                    <Label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#252927' }}>
                       Nội dung phản hồi cho khách hàng:
-                    </label>
-                    <textarea
+                    </Label>
+                    <Textarea
                       rows={3}
                       value={draft}
                       onChange={(e) => setDraftReplies((prev) => ({ ...prev, [review.id]: e.target.value }))}
@@ -579,7 +504,7 @@ export function ManagerCustomerCarePanel({
                       }}
                     />
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                      <button
+                      <Button
                         type="button"
                         onClick={() => (hasManagerReply ? handleSaveReplyEdit(review) : onReplyReview(review.id, draft))}
                         disabled={replyingReviewId === String(review.id) || !draft.trim()}
@@ -600,7 +525,7 @@ export function ManagerCustomerCarePanel({
                       >
                         <Send size={14} />
                         {replyingReviewId === String(review.id) ? 'Đang gửi...' : (hasManagerReply ? 'Lưu cập nhật' : 'Gửi phản hồi ngay')}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -627,7 +552,7 @@ export function ManagerCustomerCarePanel({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
+            <Button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
@@ -646,13 +571,13 @@ export function ManagerCustomerCarePanel({
               }}
             >
               <ChevronLeft size={16} /> Trước
-            </button>
+            </Button>
 
             <div style={{ display: 'flex', gap: '0.25rem' }}>
               <PageNumbers page={safePage} totalPages={totalPages} onChange={setPage} />
             </div>
 
-            <button
+            <Button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
@@ -671,7 +596,7 @@ export function ManagerCustomerCarePanel({
               }}
             >
               Tiếp <ChevronRight size={16} />
-            </button>
+            </Button>
           </div>
         </div>
       )}

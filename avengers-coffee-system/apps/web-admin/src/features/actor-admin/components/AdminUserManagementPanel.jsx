@@ -1,3 +1,11 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import { useWorkspacePage } from '../../../components/console/WorkspacePageContext'
+import { Button } from '../../../components/ui/button'
+import { Card } from '../../../components/ui/card'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Badge } from '../../../components/ui/badge'
+import { Table } from '../../../components/ui/table'
 import { Check as WorkspaceSymbolCheck } from '../../../components/console/WorkspaceIcons'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
@@ -26,8 +34,9 @@ import {
   Building,
   UserCog,
   CheckCircle2,
+  XCircle,
+  ShieldAlert,
   MoreVertical,
-  RefreshCw,
   MapPin,
   ArrowLeft,
   Eye,
@@ -80,19 +89,19 @@ function Pagination({ pageData, onPageChange }) {
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', fontSize: '0.8125rem', color: 'var(--text-muted)', paddingTop: '0.85rem', marginTop: '0.5rem', borderTop: '1px solid #f7f9fd' }}>
       <span>Hiển thị <strong>{pageData.from || 1} - {pageData.to || pageData.total}</strong> trên tổng số <strong>{pageData.total}</strong> nhân viên</span>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-        <button type="button" className="admin-pg-btn" onClick={() => onPageChange(1)} disabled={pageData.page <= 1} title="Trang đầu">
+        <Button type="button" className="admin-pg-btn" onClick={() => onPageChange(1)} disabled={pageData.page <= 1} title="Trang đầu">
           <ChevronsLeft size={16} />
-        </button>
-        <button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page - 1)} disabled={pageData.page <= 1} title="Trang trước">
+        </Button>
+        <Button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page - 1)} disabled={pageData.page <= 1} title="Trang trước">
           <ChevronLeft size={16} />
-        </button>
+        </Button>
         <span style={{ margin: '0 0.5rem', fontWeight: '500', color: '#414743', fontSize: '0.8125rem' }}>Trang {pageData.page || 1} / {pageData.totalPages || 1}</span>
-        <button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page + 1)} disabled={pageData.page >= pageData.totalPages} title="Trang sau">
+        <Button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.page + 1)} disabled={pageData.page >= pageData.totalPages} title="Trang sau">
           <ChevronRight size={16} />
-        </button>
-        <button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.totalPages)} disabled={pageData.page >= pageData.totalPages} title="Trang cuối">
+        </Button>
+        <Button type="button" className="admin-pg-btn" onClick={() => onPageChange(pageData.totalPages)} disabled={pageData.page >= pageData.totalPages} title="Trang cuối">
           <ChevronsRight size={16} />
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -132,6 +141,7 @@ export function AdminUserManagementPanel({
   const firstInputRef = useRef(null)
   const [selectedCityFilter, setSelectedCityFilter] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
+  useWorkspacePage(selectedUser ? (selectedUser.ho_ten || selectedUser.ten_dang_nhap) : '', 'Hồ sơ nhân viên, vai trò và quyền truy cập hệ thống.')
 
   // Reset password modal state
   const [resetPasswordModalUser, setResetPasswordModalUser] = useState(null)
@@ -145,7 +155,15 @@ export function AdminUserManagementPanel({
   const safeUserFilters = userFilters || { q: '', role: '', branch_code: '' }
   const safeUsersState = usersState || { loading: false, error: '', items: [] }
   const safePageData = usersPageData || { rows: [], total: 0, totalPages: 1, page: 1 }
-  const safeBranchOptions = (branchOptions || []).filter(b => b && (b.code || b.ma_chi_nhanh))
+  const safeBranchOptions = (branchOptions || []).filter(b => {
+    if (!b || !(b.code || b.ma_chi_nhanh)) return false
+    if (b.loai_diem_ban && b.loai_diem_ban !== 'CHI_NHANH_CHINH') return false
+    const name = String(b.name || b.ten_chi_nhanh || '').toLowerCase()
+    const code = String(b.code || b.ma_chi_nhanh || '').toUpperCase()
+    if (/^kiosk\b/i.test(name) || /nhượng quyền/i.test(name)) return false
+    if (/^(KSK|KVT|KIOSK)([-_]|$)/i.test(code)) return false
+    return true
+  })
 
   const cityList = Array.from(new Set(safeBranchOptions.map(b => b.thanh_pho).filter(Boolean))).sort()
 
@@ -316,7 +334,7 @@ export function AdminUserManagementPanel({
       {formOpen && (
         <WorkspaceDialog label={editingUserId ? 'Chỉnh sửa tài khoản' : 'Thêm tài khoản'} onClose={handleCloseForm} busy={savingUser}>
           {formError && <p className="workspace-form-error" role="alert">{formError}</p>}
-        <div
+        <Card
           ref={formRef}
           className="system-admin-card admin-surface"
           aria-label={editingUserId ? 'Chỉnh sửa tài khoản' : 'Thêm tài khoản'}
@@ -324,22 +342,22 @@ export function AdminUserManagementPanel({
             backgroundColor: '#ffffff',
             border: '1px solid var(--border-light)',
             borderRadius: '12px',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            boxShadow: "none",
             transition: 'all 0.25s ease'
           }}
         >
           {/* Form Header */}
-          <div className="admin-card-header" style={{ padding: '1.1rem 1.5rem', backgroundColor: '#ffffff', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTopLeftRadius: '11px', borderTopRightRadius: '11px' }}>
+          <div data-modal-body="true" className="admin-card-header" style={{ padding: '1.1rem 1.5rem', backgroundColor: '#ffffff', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTopLeftRadius: '11px', borderTopRightRadius: '11px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div className="admin-icon-tile" style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#f1f5fb', color: 'var(--text-main)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {editingUserId ? <Edit3 size={19} /> : <UserPlus size={19} />}
+              <div className="admin-icon-tile workspace-dialog-icon-badge" style={{ width: '38px', height: '38px', borderRadius: '8px', backgroundColor: '#f1f5f9', color: 'var(--text-main)', border: '1px solid var(--border-light)', display: 'grid', placeItems: 'center', lineHeight: 1 }}>
+                {editingUserId ? <Edit3 size={18} style={{ display: 'block', margin: 'auto' }} /> : <UserPlus size={18} style={{ display: 'block', margin: 'auto' }} />}
               </div>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '500', color: 'var(--text-main)' }}>
                 {editingUserId ? 'Chỉnh sửa thông tin nhân viên' : 'Thêm nhân viên mới'}
               </h3>
             </div>
 
-            <button className="admin-icon-button" aria-label="Đóng form"
+            <Button data-intent="danger" className="admin-icon-button" aria-label="Đóng form"
               type="button"
               onClick={handleCloseForm}
               style={{
@@ -358,19 +376,19 @@ export function AdminUserManagementPanel({
               title="Đóng form"
             >
               <X size={16} />
-            </button>
+            </Button>
           </div>
 
           {/* Form Body - 2 Column Balanced Grid */}
-          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div data-modal-body="true" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div className="admin-responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
 
               {/* Field: Username */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label htmlFor="usermanagementpanel-8845" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                <Label htmlFor="usermanagementpanel-8845" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                   Tên đăng nhập (Username) <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input id="usermanagementpanel-8845"
+                </Label>
+                <Input id="usermanagementpanel-8845"
                   ref={firstInputRef}
                   type="text"
                   className="shadcn-input ui-input"
@@ -382,10 +400,10 @@ export function AdminUserManagementPanel({
 
               {/* Field: Full Name */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label htmlFor="usermanagementpanel-9580" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                <Label htmlFor="usermanagementpanel-9580" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                   Họ và tên nhân viên <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input id="usermanagementpanel-9580"
+                </Label>
+                <Input id="usermanagementpanel-9580"
                   type="text"
                   className="shadcn-input ui-input"
                   value={safeUserForm.ho_ten || ''}
@@ -396,10 +414,10 @@ export function AdminUserManagementPanel({
 
               {/* Field: Email */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label htmlFor="usermanagementpanel-10212" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                <Label htmlFor="usermanagementpanel-10212" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                   Địa chỉ email
-                </label>
-                <input id="usermanagementpanel-10212"
+                </Label>
+                <Input id="usermanagementpanel-10212"
                   type="email"
                   className="shadcn-input ui-input"
                   value={safeUserForm.email || ''}
@@ -410,11 +428,11 @@ export function AdminUserManagementPanel({
 
               {/* Field: Password */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label htmlFor="usermanagementpanel-10895" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                <Label htmlFor="usermanagementpanel-10895" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                   {editingUserId ? 'Đặt lại mật khẩu (để trống nếu giữ nguyên)' : 'Mật khẩu khởi tạo *'}
-                </label>
+                </Label>
                 <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
-                  <input id="usermanagementpanel-10895"
+                  <Input id="usermanagementpanel-10895"
                     type={showUserPassword ? "text" : "password"}
                     className="shadcn-input ui-input"
                     value={safeUserForm.mat_khau || ''}
@@ -422,7 +440,7 @@ export function AdminUserManagementPanel({
                     placeholder={editingUserId ? 'Nhập mật khẩu mới nếu muốn đặt lại...' : '••••••••'}
                     style={{ width: '100%', height: '40px', paddingRight: '42px', boxSizing: 'border-box' }}
                   />
-                  <button
+                  <Button
                     type="button"
                     className="admin-password-toggle"
                     onClick={() => setShowUserPassword(!showUserPassword)}
@@ -443,54 +461,54 @@ export function AdminUserManagementPanel({
                       padding: 0,
                       margin: 0,
                       cursor: 'pointer',
-                      color: '#64748b',
+                      color: "var(--text-muted)",
                       zIndex: 3
                     }}
                   >
                     {showUserPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               {/* Field: Role */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label htmlFor="usermanagementpanel-11570" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                <Label htmlFor="usermanagementpanel-11570" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                   Phân quyền vai trò <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <select id="usermanagementpanel-11570"
+                </Label>
+                <SearchableSelect id="usermanagementpanel-11570"
                   className="shadcn-select"
                   value={safeUserForm.vai_tro || 'STAFF'}
                   onChange={(e) => setUserForm((p) => ({ ...p, vai_tro: e.target.value }))}
                 >
                   <option value="STAFF">Nhân viên cửa hàng chính thức (Staff)</option>
                   <option value="MANAGER">Quản lý cửa hàng (Manager)</option>
-                  <option value="FRANCHISEE">Đối tác nhượng quyền Kiosk (Franchisee)</option>
-                  <option value="FRANCHISE_STAFF">Nhân viên Kiosk nhượng quyền</option>
-                  <option value="ACCOUNTANT">Quản lý nhượng quyền</option>
+                  <option value="DATA_ANALYST">Chuyên viên phân tích dữ liệu (Analyst)</option>
+                  <option value="ACCOUNTANT">Quản lý nhượng quyền (Accountant)</option>
+                  <option value="SHIPPER">Nhân viên giao hàng (Shipper)</option>
                   <option value="ADMIN">Quản trị viên hệ thống (Admin)</option>
-                </select>
+                </SearchableSelect>
               </div>
 
               {/* Field: Status */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label htmlFor="usermanagementpanel-12662" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                <Label htmlFor="usermanagementpanel-12662" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                   Trạng thái tài khoản
-                </label>
-                <select id="usermanagementpanel-12662"
+                </Label>
+                <SearchableSelect id="usermanagementpanel-12662"
                   className="shadcn-select"
                   value={safeUserForm.trang_thai || 'ACTIVE'}
                   onChange={(e) => setUserForm((p) => ({ ...p, trang_thai: e.target.value }))}
                 >
                   <option value="ACTIVE">Hoạt động</option>
                   <option value="INACTIVE">Tạm khóa tài khoản</option>
-                </select>
+                </SearchableSelect>
               </div>
 
               {/* Field: City Filter */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label htmlFor="usermanagementpanel-13393" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                <Label htmlFor="usermanagementpanel-13393" style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                   Lọc theo thành phố
-                </label>
+                </Label>
                 <SearchableSelect id="usermanagementpanel-13393"
                   className="shadcn-select"
                   value={selectedCityFilter}
@@ -508,9 +526,9 @@ export function AdminUserManagementPanel({
 
               {/* Field: Branch */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                <Label style={{ color: '#414743', fontWeight: '500', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                   Chi nhánh làm việc
-                </label>
+                </Label>
                 <SearchableBranchSelect
                   branches={filteredBranchOptions}
                   value={safeUserForm.co_so_ma || ''}
@@ -521,16 +539,16 @@ export function AdminUserManagementPanel({
             </div>
 
             {/* Form Footer Actions */}
-            <div className="admin-editor-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid #e2e4df', paddingTop: '1.25rem' }}>
-              <button
+            <div data-modal-footer="inset" data-modal-actions="true" className="admin-editor-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid #e2e4df', paddingTop: '1.25rem' }}>
+              <Button data-intent="danger"
                 type="button"
                 onClick={handleCloseForm}
                 className="btn-cancel" style={{ height: '38px', padding: '0 1.25rem', borderRadius: '6px', fontSize: '0.8125rem', fontWeight: '500', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
               >
                 <X size={15} /> Hủy bỏ
-              </button>
+              </Button>
 
-              <button
+              <Button data-intent="success"
                 type="button"
                 className="btn-save"
                 onClick={handleSaveUser}
@@ -539,10 +557,10 @@ export function AdminUserManagementPanel({
               >
                 <CheckCircle2 size={17} color="#ffffff" />
                 <span>{savingUser ? 'Đang lưu tài khoản...' : (editingUserId ? 'Cập nhật tài khoản' : 'Lưu thông tin tài khoản')}</span>
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </Card>
         </WorkspaceDialog>
       )}
 
@@ -552,8 +570,8 @@ export function AdminUserManagementPanel({
            ========================================================================= */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Top Navigation & Breadcrumbs */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <button
+          <div className="record-page-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <Button
               type="button"
               onClick={() => setSelectedUser(null)}
               style={{
@@ -562,59 +580,59 @@ export function AdminUserManagementPanel({
                 gap: '0.45rem',
                 padding: '0.55rem 0.95rem',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
+                border: "1px solid var(--border-light)",
                 background: '#ffffff',
-                color: '#1e293b',
+                color: "var(--text-body)",
                 fontWeight: '600',
                 fontSize: '0.8125rem',
                 cursor: 'pointer',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                boxShadow: "none",
                 transition: 'all 0.15s ease'
               }}
             >
               <ArrowLeft size={16} /> Quay lại danh sách nhân viên
-            </button>
+            </Button>
 
-            <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-              <span>Danh sách nhân viên</span> <span style={{ margin: '0 0.35rem' }}>/</span> <strong style={{ color: '#0f172a' }}>{selectedUser.ho_ten || selectedUser.ten_dang_nhap}</strong>
+            <div style={{ fontSize: '0.8125rem', color: "var(--text-muted)" }}>
+              <span>Danh sách nhân viên</span> <span style={{ margin: '0 0.35rem' }}>/</span> <strong style={{ color: "var(--text-main)" }}>{selectedUser.ho_ten || selectedUser.ten_dang_nhap}</strong>
             </div>
           </div>
 
           {/* UNIFIED DETAIL CARD */}
           <div
-            className="admin-surface user-detail-unified-section"
+            className="record-detail-layout"
             style={{
               background: '#ffffff',
-              borderRadius: '14px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 2px 8px -2px rgba(15, 23, 42, 0.05), 0 1px 4px -1px rgba(15, 23, 42, 0.03)',
+              borderRadius: "10px",
+              border: "1px solid var(--border-light)",
+              boxShadow: "none",
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column'
             }}
           >
             {/* Header Banner with Profile Summary & Action Buttons */}
-            <div
+            <Card className="record-summary-header"
               style={{
-                padding: '1rem 1.5rem',
-                borderBottom: '1px solid #e2e8f0',
+                padding: '1.35rem 1.75rem',
+                borderBottom: "1px solid var(--border-subtle)",
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 flexWrap: 'wrap',
                 gap: '1rem',
-                background: '#f8fafc'
+                background: '#fafbfd'
               }}
             >
               {/* Profile Identity */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 {(() => {
                   const av = getAvatarProps(selectedUser)
                   return (
                     <div
                       style={{
-                        width: '42px',
-                        height: '42px',
+                        width: '46px',
+                        height: '46px',
                         borderRadius: '50%',
                         backgroundColor: av.bg,
                         color: av.color,
@@ -622,8 +640,8 @@ export function AdminUserManagementPanel({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontWeight: '600',
-                        fontSize: '1rem',
+                        fontWeight: '700',
+                        fontSize: '1.15rem',
                         flexShrink: 0
                       }}
                     >
@@ -632,138 +650,147 @@ export function AdminUserManagementPanel({
                   )
                 })()}
 
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: '#0f172a', letterSpacing: '-0.01em' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: "700", color: "var(--text-main)", letterSpacing: '-0.015em' }}>
                       {selectedUser.ho_ten || 'Chưa cập nhật họ tên'}
                     </h2>
                     {(() => {
                       const b = getRoleBadge(selectedUser.vai_tro)
                       return (
-                        <span
+                        <Badge variant="outline" data-quiet-label="true"
                           style={{
-                            padding: '0.15rem 0.55rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0.2rem 0.65rem',
                             borderRadius: '9999px',
-                            fontSize: '0.72rem',
-                            fontWeight: '500',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
                             backgroundColor: b.bg,
                             color: b.color,
                             border: `1px solid ${b.border}`
                           }}
                         >
                           {b.label}
-                        </span>
+                        </Badge>
                       )
                     })()}
 
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        padding: '0.15rem 0.55rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.72rem',
-                        fontWeight: '500',
-                        backgroundColor: selectedUser.trang_thai === 'ACTIVE' ? '#f0fdf4' : '#fef2f2',
-                        color: selectedUser.trang_thai === 'ACTIVE' ? '#15803d' : '#b91c1c',
-                        border: `1px solid ${selectedUser.trang_thai === 'ACTIVE' ? '#bbf7d0' : '#fecaca'}`
-                      }}
-                    >
-                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: selectedUser.trang_thai === 'ACTIVE' ? '#16a34a' : '#dc2626' }}></span>
+                    <StatusBadge status={selectedUser.trang_thai}>
+
                       {selectedUser.trang_thai === 'ACTIVE' ? 'Hoạt động' : 'Tạm khóa'}
-                    </span>
+                    </StatusBadge>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                    <div>
-                      <span>Tài khoản: </span>
-                      <strong style={{ color: '#0f172a', fontFamily: 'monospace', fontWeight: '500' }}>@{selectedUser.ten_dang_nhap}</strong>
+
+                  {/* Natural, uncluttered metadata line without badge abuse */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.45rem', flexWrap: 'wrap', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span>Tài khoản:</span>
+                      <strong style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: '600' }}>@{selectedUser.ten_dang_nhap}</strong>
                     </div>
-                    <div>
-                      <span>Mã ID: </span>
-                      <strong style={{ color: '#475569', fontFamily: 'monospace', fontWeight: '500', wordBreak: 'break-all' }}>{selectedUser.ma_nguoi_dung || selectedUser.id}</strong>
+                    <span style={{ color: 'var(--border-light)', userSelect: 'none' }}>•</span>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span>Mã ID:</span>
+                      <strong style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: '600', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={selectedUser.ma_nguoi_dung || selectedUser.id}>
+                        {selectedUser.ma_nguoi_dung || selectedUser.id}
+                      </strong>
+                    </div>
+                    <span style={{ color: 'var(--border-light)', userSelect: 'none' }}>•</span>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span>Khởi tạo:</span>
+                      <span style={{ color: 'var(--text-body)', fontWeight: '500' }}>{fmtDateTime(selectedUser.ngay_tao)}</span>
+                    </div>
+                    <span style={{ color: 'var(--border-light)', userSelect: 'none' }}>•</span>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span>Cập nhật:</span>
+                      <span style={{ color: 'var(--text-body)', fontWeight: '500' }}>{selectedUser.ngay_cap_nhat ? fmtDateTime(selectedUser.ngay_cap_nhat) : 'Chưa cập nhật'}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Quick Action Toolbar (Dời sang bên phải) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginLeft: 'auto', flexShrink: 0 }}>
-                {/* Đặt lại mật khẩu */}
-                <button
+              {/* Quick Action Toolbar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <Button
                   type="button"
+                  className="admin-button-secondary"
                   onClick={(e) => handleOpenResetPassword(selectedUser, e)}
                   style={{
+                    height: '36px',
+                    padding: '0 0.95rem',
+                    borderRadius: '8px',
+                    border: "1px solid var(--border-light)",
+                    background: '#ffffff',
+                    color: "var(--text-main)",
+                    fontWeight: '600',
+                    fontSize: '0.8125rem',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.4rem',
-                    height: '34px',
-                    padding: '0 0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    background: '#ffffff',
-                    color: '#1e293b',
-                    fontWeight: '500',
-                    fontSize: '0.78125rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                    transition: 'all 0.15s ease'
+                    gap: '0.45rem',
+                    cursor: 'pointer'
                   }}
                   title="Đặt lại mật khẩu cho nhân viên này"
                 >
-                  <KeyRound size={14} color="#ea580c" /> Đặt lại mật khẩu
-                </button>
+                  <KeyRound size={15} color="#ea580c" /> Đặt lại mật khẩu
+                </Button>
 
-                {/* Chỉnh sửa */}
-                <button
+                <Button
                   type="button"
+                  className="admin-button-secondary"
                   onClick={() => handleStartEdit(selectedUser)}
                   style={{
+                    height: '36px',
+                    padding: '0 0.95rem',
+                    borderRadius: '8px',
+                    border: "1px solid var(--border-light)",
+                    background: '#ffffff',
+                    color: "var(--text-main)",
+                    fontWeight: '600',
+                    fontSize: '0.8125rem',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.4rem',
-                    height: '34px',
-                    padding: '0 0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid #bfdbfe',
-                    background: '#eff6ff',
-                    color: '#1d4ed8',
-                    fontWeight: '500',
-                    fontSize: '0.78125rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
+                    gap: '0.45rem',
+                    cursor: 'pointer'
                   }}
                   title="Chỉnh sửa thông tin nhân viên"
                 >
-                  <Edit3 size={14} /> Chỉnh sửa
-                </button>
+                  <Edit3 size={15} color="#2563eb" /> Chỉnh sửa
+                </Button>
 
-                {/* Khóa / Mở khóa */}
-                <button
+                <Button
                   type="button"
                   onClick={(e) => handleToggleUserStatus(selectedUser, e)}
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    height: '34px',
-                    padding: '0 0.85rem',
+                    height: '36px',
+                    padding: '0 0.95rem',
                     borderRadius: '8px',
                     border: selectedUser.trang_thai === 'ACTIVE' ? '1px solid #fed7aa' : '1px solid #bbf7d0',
                     background: selectedUser.trang_thai === 'ACTIVE' ? '#fff7ed' : '#f0fdf4',
                     color: selectedUser.trang_thai === 'ACTIVE' ? '#c2410c' : '#15803d',
-                    fontWeight: '500',
-                    fontSize: '0.78125rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
+                    fontWeight: '600',
+                    fontSize: '0.8125rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    cursor: 'pointer'
                   }}
+                  title={selectedUser.trang_thai === 'ACTIVE' ? 'Tạm khóa quyền truy cập' : 'Kích hoạt lại tài khoản'}
                 >
-                  <ShieldCheck size={14} /> {selectedUser.trang_thai === 'ACTIVE' ? 'Tạm khóa tài khoản' : 'Kích hoạt tài khoản'}
-                </button>
+                  {selectedUser.trang_thai === 'ACTIVE' ? (
+                    <>
+                      <ShieldAlert size={15} /> Tạm khóa tài khoản
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck size={15} /> Kích hoạt tài khoản
+                    </>
+                  )}
+                </Button>
 
-                {/* Xóa */}
-                <button
+                <Button data-intent="danger"
                   type="button"
+                  className="admin-button-danger"
                   disabled={selectedUser.vai_tro === 'ADMIN'}
                   onClick={() => {
                     if (selectedUser.vai_tro === 'ADMIN') return
@@ -771,189 +798,216 @@ export function AdminUserManagementPanel({
                     setSelectedUser(null)
                   }}
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    height: '34px',
+                    height: '36px',
                     padding: '0 0.85rem',
                     borderRadius: '8px',
                     border: '1px solid #fecaca',
                     background: '#fef2f2',
                     color: '#dc2626',
-                    fontWeight: '500',
-                    fontSize: '0.78125rem',
+                    fontWeight: '600',
+                    fontSize: '0.8125rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
                     cursor: selectedUser.vai_tro === 'ADMIN' ? 'not-allowed' : 'pointer',
-                    opacity: selectedUser.vai_tro === 'ADMIN' ? 0.4 : 1,
-                    transition: 'all 0.15s ease'
+                    opacity: selectedUser.vai_tro === 'ADMIN' ? 0.4 : 1
                   }}
                   title={selectedUser.vai_tro === 'ADMIN' ? 'Không thể xóa tài khoản Quản trị viên' : 'Xóa tài khoản nhân viên'}
                 >
-                  <Trash2 size={14} /> Xóa
-                </button>
+                  <Trash2 size={15} /> Xóa
+                </Button>
               </div>
-            </div>
+            </Card>
 
-            {/* 3-Column Info Matrix with Faint Vertical Dividers */}
+            {/* BLOCK 1: 3-COLUMN INFORMATION MATRIX */}
             <div
-              className="admin-detail-matrix"
+              className="record-facts-grid grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/70 p-6 gap-6 lg:gap-0"
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                background: '#ffffff',
-                padding: '1.25rem 1.5rem',
-                gap: '0'
+                background: '#ffffff'
               }}
             >
               {/* Column 1: Định danh & Tài khoản */}
-              <div
-                className="admin-detail-col col-1"
-                style={{
-                  paddingRight: '1.5rem',
-                  borderRight: '1px solid #e2e8f0',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.85rem'
-                }}
-              >
-                <div style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                  <User size={15} color="#2563eb" /> Định danh &amp; Tài khoản
+              <Card data-record-card="true" className="flex flex-col gap-3 lg:pr-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: "1px solid var(--border-subtle)" }}>
+                  <User size={17} color="#2563eb" /> Thông tin Định danh &amp; Tài khoản
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Họ và tên đầy đủ</span>
-                    <span style={{ fontWeight: '500', color: '#0f172a', fontSize: '0.8125rem', display: 'block' }}>{selectedUser.ho_ten || '---'}</span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem', fontSize: '0.8125rem' }}>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Họ và tên đầy đủ</div>
+                    <div style={{ fontWeight: '600', color: "var(--text-main)", fontSize: '0.875rem' }}>{selectedUser.ho_ten || '---'}</div>
                   </div>
-
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Tên đăng nhập hệ thống</span>
-                    <span style={{ fontWeight: '500', color: '#1d4ed8', fontFamily: 'monospace', fontSize: '0.8125rem', display: 'block' }}>@{selectedUser.ten_dang_nhap}</span>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Tên đăng nhập hệ thống</div>
+                    <div style={{ fontWeight: '600', color: "var(--primary-hover)", fontFamily: 'monospace' }}>@{selectedUser.ten_dang_nhap}</div>
                   </div>
-
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Vai trò hệ thống</span>
-                    <div style={{ marginTop: '0.1rem' }}>
-                      <span
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Vai trò hệ thống</div>
+                    <div>
+                      <Badge variant="outline" data-quiet-label="true"
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          padding: '0.2rem 0.6rem',
+                          padding: '0.15rem 0.55rem',
                           borderRadius: '9999px',
                           fontSize: '0.75rem',
-                          fontWeight: '500',
+                          fontWeight: '600',
                           backgroundColor: getRoleBadge(selectedUser.vai_tro).bg,
                           color: getRoleBadge(selectedUser.vai_tro).color,
                           border: `1px solid ${getRoleBadge(selectedUser.vai_tro).border}`
                         }}
                       >
                         {getRoleBadge(selectedUser.vai_tro).label}
-                      </span>
+                      </Badge>
                     </div>
                   </div>
-
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Mã định danh (ID)</span>
-                    <span style={{ fontWeight: '500', color: '#334155', fontFamily: 'monospace', fontSize: '0.75rem', wordBreak: 'break-all', display: 'block' }}>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Mã định danh (ID)</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-body)", fontFamily: 'monospace', fontSize: '0.75rem', wordBreak: 'break-all' }}>
                       {selectedUser.ma_nguoi_dung || selectedUser.id || '---'}
-                    </span>
+                    </div>
                   </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.55rem' }}>
-                    <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Ngày khởi tạo</span>
-                      <span style={{ fontWeight: '500', color: '#334155', fontSize: '0.75rem', display: 'block' }}>{fmtDateTime(selectedUser.ngay_tao)}</span>
-                    </div>
-                    <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Cập nhật gần nhất</span>
-                      <span style={{ fontWeight: '500', color: '#334155', fontSize: '0.75rem', display: 'block' }}>{fmtDateTime(selectedUser.ngay_cap_nhat)}</span>
-                    </div>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Ngày khởi tạo</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-body)" }}>{fmtDateTime(selectedUser.ngay_tao)}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Cập nhật gần nhất</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-body)" }}>{fmtDateTime(selectedUser.ngay_cap_nhat)}</div>
                   </div>
                 </div>
-              </div>
+              </Card>
 
               {/* Column 2: Cơ sở & Nơi làm việc */}
-              <div
-                className="admin-detail-col col-2"
-                style={{
-                  paddingLeft: '1.5rem',
-                  paddingRight: '1.5rem',
-                  borderRight: '1px solid #e2e8f0',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.85rem'
-                }}
-              >
-                <div style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                  <Store size={15} color="#059669" /> Cơ sở &amp; Nơi làm việc
+              <Card data-record-card="true" className="flex flex-col gap-3 pt-6 lg:pt-0 lg:px-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: "1px solid var(--border-subtle)" }}>
+                  <Store size={17} color="#059669" /> Cơ sở &amp; Nơi làm việc
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Chi nhánh làm việc</span>
-                    <span style={{ fontWeight: '500', color: '#0f172a', fontSize: '0.8125rem', lineHeight: '1.4', display: 'block' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.8125rem' }}>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Chi nhánh làm việc</div>
+                    <div style={{ fontWeight: '600', color: "var(--text-main)", lineHeight: '1.4' }}>
                       {selectedUser.co_so_ten || 'Tất cả chi nhánh (Toàn hệ thống)'}
-                    </span>
+                    </div>
                   </div>
-
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Mã cơ sở</span>
-                    <span style={{ fontWeight: '500', color: '#334155', fontFamily: 'monospace', fontSize: '0.8125rem', display: 'block' }}>
-                      {selectedUser.co_so_ma || 'ALL'}
-                    </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>
+                    <div>
+                      <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Mã cơ sở</div>
+                      <div style={{ fontWeight: '600', color: "var(--text-body)", fontFamily: 'monospace' }}>
+                        {selectedUser.co_so_ma || 'ALL'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Loại cơ sở</div>
+                      <div style={{ fontWeight: '500', color: "var(--text-body)" }}>
+                        {selectedUser.co_so_ma ? 'Điểm Kiosk / Chi nhánh' : 'Trụ sở điều hành'}
+                      </div>
+                    </div>
                   </div>
-
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Quyền hạn truy cập</span>
-                    <span style={{ fontWeight: '500', color: '#0f172a', fontSize: '0.8125rem', display: 'block' }}>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Quyền hạn truy cập</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-main)" }}>
                       {selectedUser.vai_tro === 'ADMIN' ? 'Toàn quyền Quản trị hệ thống (HQ)' : 'Phân quyền theo phạm vi chi nhánh'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Phạm vi phụ trách</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', lineHeight: '1.4' }}>
+                      {selectedUser.vai_tro === 'ADMIN'
+                        ? 'Có toàn quyền kiểm soát nhân sự, tài chính, thực đơn và mạng lưới Kiosk.'
+                        : 'Truy cập giới hạn theo các tính năng được phân bổ cho vai trò và cơ sở tương ứng.'}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Column 3: Bảo mật & Đăng nhập */}
+              <Card data-record-card="true" className="flex flex-col gap-3 pt-6 lg:pt-0 lg:pl-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: "1px solid var(--border-subtle)" }}>
+                  <ShieldCheck size={17} color="#7c3aed" /> Bảo mật &amp; Đăng nhập
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.8125rem' }}>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Email nhận thông báo &amp; OTP</div>
+                    <div style={{ fontWeight: '600', color: selectedUser.email ? "var(--text-main)" : "var(--text-muted)", wordBreak: 'break-all', fontStyle: selectedUser.email ? 'normal' : 'italic' }}>
+                      {selectedUser.email || 'Chưa cập nhật email'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Mật khẩu tài khoản</div>
+                    <div style={{ fontFamily: 'monospace', fontWeight: '600', color: "var(--text-body)", letterSpacing: '0.2em' }}>
+                      ••••••••
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Trạng thái tài khoản</div>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.8125rem',
+                        fontWeight: '600',
+                        color: selectedUser.trang_thai === 'ACTIVE' ? '#15803d' : '#dc2626'
+                      }}
+                    >
+                      {selectedUser.trang_thai === 'ACTIVE' ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
+                      {selectedUser.trang_thai === 'ACTIVE' ? 'Cho phép đăng nhập bình thường' : 'Tài khoản đang bị tạm khóa'}
                     </span>
+                  </div>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Phương thức xác thực</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-body)" }}>
+                      Mật khẩu mã hóa Bcrypt + Phiên JWT
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* BLOCK 2: CHÍNH SÁCH BẢO MẬT & NHẬT KÝ */}
+            <div data-record-finance="true"
+              className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/70 p-5 gap-6 lg:gap-0"
+              style={{
+                borderTop: "1px solid var(--border-subtle)",
+                background: '#fafbfd'
+              }}
+            >
+              {/* Security policy */}
+              <div className="flex flex-col gap-3 lg:pr-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <ShieldCheck size={16} color="#d97706" /> Chính sách an toàn tài khoản &amp; Phiên đăng nhập
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', fontSize: '0.8125rem' }}>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Thời hạn phiên (JWT)</div>
+                    <div style={{ fontWeight: "600", color: '#0284c7' }}>8 giờ làm việc</div>
+                  </div>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Xác thực 2 lớp (2FA)</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-body)" }}>{selectedUser.vai_tro === 'ADMIN' ? 'Bắt buộc' : 'Tùy chọn'}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Chính sách mật khẩu</div>
+                    <div style={{ fontWeight: '500', color: "var(--text-body)" }}>Chu kỳ 90 ngày</div>
                   </div>
                 </div>
               </div>
 
-              {/* Column 3: Bảo mật & Mật khẩu */}
-              <div
-                className="admin-detail-col col-3"
-                style={{
-                  paddingLeft: '1.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.85rem'
-                }}
-              >
-                <div style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                  <ShieldCheck size={15} color="#7c3aed" /> Bảo mật &amp; Đăng nhập
+              {/* Activity log / Account history */}
+              <div className="flex flex-col gap-3 pt-5 lg:pt-0 lg:pl-6" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ fontWeight: "600", fontSize: '0.875rem', color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <Clock size={16} color="#059669" /> Nhật ký truy cập &amp; Trạng thái hoạt động
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Email nhận thông báo &amp; OTP</span>
-                    <span style={{ fontWeight: '500', color: selectedUser.email ? '#0f172a' : '#94a3b8', fontSize: '0.8125rem', wordBreak: 'break-all', display: 'block', fontStyle: selectedUser.email ? 'normal' : 'italic' }}>
-                      {selectedUser.email || 'Chưa cập nhật email'}
-                    </span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', fontSize: '0.8125rem' }}>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Thiết bị đăng nhập gần nhất</div>
+                    <div style={{ fontWeight: "600", color: "var(--text-main)" }}>Web Admin Enterprise</div>
                   </div>
-
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Mật khẩu tài khoản</span>
-                    <span style={{ fontFamily: 'monospace', fontWeight: '500', color: '#475569', letterSpacing: '0.2em', fontSize: '0.85rem', display: 'block' }}>
-                      ••••••••
-                    </span>
-                  </div>
-
-                  <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '0.2rem' }}>Trạng thái tài khoản</span>
-                    <div style={{ marginTop: '0.1rem' }}>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          fontSize: '0.78125rem',
-                          fontWeight: '500',
-                          color: selectedUser.trang_thai === 'ACTIVE' ? '#15803d' : '#dc2626'
-                        }}
-                      >
-                        {selectedUser.trang_thai === 'ACTIVE' ? <CheckCircle2 size={14} /> : <X size={14} />}
-                        {selectedUser.trang_thai === 'ACTIVE' ? 'Cho phép đăng nhập bình thường' : 'Tài khoản đang bị tạm khóa'}
-                      </span>
-                    </div>
+                  <div>
+                    <div style={{ color: "var(--text-muted)", fontSize: '0.75rem', marginBottom: '0.2rem' }}>Nhật ký kiểm toán (Audit)</div>
+                    <div style={{ fontWeight: "600", color: '#16a34a' }}>Đã ghi nhận đầy đủ</div>
                   </div>
                 </div>
               </div>
@@ -962,14 +1016,12 @@ export function AdminUserManagementPanel({
         </div>
       ) : (
         /* USER DATA TABLE CARD */
-        <div className="admin-surface admin-users-directory" style={{ backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <Card className="admin-surface admin-users-directory" style={{ backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: "none" }}>
           {/* Table Header: Title on Left, Add Button on Right */}
           <div className="admin-card-header" style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff' }}>
-            <h2 style={{ fontSize: '1rem', fontWeight: '500', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-              <UsersIcon size={18} color="var(--text-muted)" /> Danh sách nhân viên hệ thống
-            </h2>
+            <span className="workspace-record-count">{safePageData.total || 0} nhân viên</span>
 
-            <button
+            <Button data-intent="success"
               type="button"
               className="btn-save"
               onClick={handleStartCreateNew}
@@ -977,7 +1029,7 @@ export function AdminUserManagementPanel({
             >
               <UserPlus size={16} color="#ffffff" />
               <span>Thêm nhân viên</span>
-            </button>
+            </Button>
           </div>
 
           {/* Filters Toolbar Row */}
@@ -1002,28 +1054,31 @@ export function AdminUserManagementPanel({
               }}
             >
               <Search
-                size={15}
+                size={16}
                 style={{
                   position: 'absolute',
-                  left: '11px',
+                  left: '12px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: 'var(--text-muted, #94a3b8)',
+                  color: "#64748b",
                   pointerEvents: 'none',
                   zIndex: 2
                 }}
               />
-              <input
+              <Input data-input-prefix="true"
+                className="admin-directory-search !pl-11"
+                id="system-admin-user-search"
+                aria-label="Tìm nhân viên"
                 style={{
                   width: '100%',
                   height: '38px',
                   borderRadius: '8px',
-                  border: '1px solid var(--border-light, #cbd5e1)',
+                  border: "1px solid var(--border-light)",
                   backgroundColor: '#ffffff',
-                  paddingLeft: '34px',
+                  paddingLeft: '44px',
                   paddingRight: safeUserFilters.q ? '32px' : '12px',
                   fontSize: '0.8125rem',
-                  color: 'var(--text-main, #0f172a)',
+                  color: "var(--text-main)",
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
@@ -1032,7 +1087,8 @@ export function AdminUserManagementPanel({
                 onChange={(e) => setUserFilters((prev) => ({ ...prev, q: e.target.value }))}
               />
               {safeUserFilters.q && (
-                <button
+                <Button data-intent="danger"
+                  className="admin-directory-search-clear"
                   type="button"
                   onClick={() => setUserFilters((prev) => ({ ...prev, q: '' }))}
                   style={{
@@ -1047,13 +1103,13 @@ export function AdminUserManagementPanel({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--text-muted, #94a3b8)',
+                    color: "var(--text-muted)",
                     zIndex: 2
                   }}
                   title="Xóa tìm kiếm"
                 >
                   <X size={14} />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -1073,9 +1129,9 @@ export function AdminUserManagementPanel({
                 <option value="ADMIN">Quản trị viên HQ</option>
                 <option value="MANAGER">Quản lý cửa hàng</option>
                 <option value="STAFF">Nhân viên cửa hàng</option>
-                <option value="FRANCHISEE">Đối tác Kiosk</option>
-                <option value="FRANCHISE_STAFF">Nhân viên Kiosk</option>
+                <option value="DATA_ANALYST">Phân tích dữ liệu (Analyst)</option>
                 <option value="ACCOUNTANT">Quản lý nhượng quyền</option>
+                <option value="SHIPPER">Nhân viên giao hàng (Shipper)</option>
               </SearchableSelect>
             </div>
 
@@ -1099,31 +1155,6 @@ export function AdminUserManagementPanel({
                 ))}
               </SearchableSelect>
             </div>
-
-            {/* Refresh Action Button */}
-            <button
-              className="admin-button-secondary"
-              type="button"
-              onClick={() => loadUsers && loadUsers()}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                height: '38px',
-                padding: '0 0.85rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-light)',
-                backgroundColor: '#ffffff',
-                fontSize: '0.8125rem',
-                color: '#3f3f46',
-                cursor: 'pointer',
-                fontWeight: '500',
-                flexShrink: 0,
-                marginLeft: 'auto'
-              }}
-            >
-              <RefreshCw size={14} color="var(--text-muted)" /> Làm mới
-            </button>
           </div>
 
           {/* EMPLOYEE TABLE VIEW */}
@@ -1133,15 +1164,15 @@ export function AdminUserManagementPanel({
               <div style={{ padding: '3rem', textAlign: 'center', color: '#ef4444', fontWeight: '500' }}>{safeUsersState.error}</div>
             ) : (
               <div className="admin-table-scroll" style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                <Table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
-                      <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#1e293b', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '25%' }}>Họ tên &amp; tài khoản</th>
-                      <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#1e293b', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '22%' }}>Email liên hệ</th>
-                      <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#1e293b', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '15%' }}>Vai trò</th>
-                      <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#1e293b', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '12%' }}>Trạng thái</th>
-                      <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#1e293b', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '16%' }}>Chi nhánh gán</th>
-                      <th style={{ padding: '0.85rem 1rem', background: '#f1f5f9', color: '#1e293b', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '10%', textAlign: 'center' }}>Chi tiết</th>
+                    <tr style={{ backgroundColor: "var(--border-subtle)", borderBottom: "1px solid var(--border-light)" }}>
+                      <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '24%' }}>Họ tên &amp; tài khoản</th>
+                      <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '19%' }}>Email liên hệ</th>
+                      <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '14%' }}>Vai trò</th>
+                      <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '13%' }}>Trạng thái</th>
+                      <th style={{ padding: '0.85rem 1rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '16%' }}>Chi nhánh gán</th>
+                      <th style={{ padding: '0.85rem 0.5rem', background: "var(--border-subtle)", color: "var(--text-body)", fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', width: '14%', minWidth: '95px', textAlign: 'center', whiteSpace: 'nowrap' }}>Chi tiết</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1149,7 +1180,7 @@ export function AdminUserManagementPanel({
                       <tr>
                         <td colSpan={6} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
-                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: "var(--border-subtle)", display: 'flex', alignItems: 'center', justifyContent: 'center', color: "var(--text-muted)" }}>
                               <Search size={22} />
                             </div>
                             <strong style={{ fontSize: '0.925rem', color: 'var(--text-main)', fontWeight: '600' }}>
@@ -1161,14 +1192,14 @@ export function AdminUserManagementPanel({
                                 : 'Không có dữ liệu nhân viên phù hợp với bộ lọc hiện tại.'}
                             </span>
                             {safeUserFilters.q && (
-                              <button
+                              <Button data-intent="danger"
                                 type="button"
                                 onClick={() => setUserFilters && setUserFilters((prev) => ({ ...prev, q: '' }))}
                                 className="btn-cancel"
                                 style={{ height: '32px', fontSize: '0.75rem', padding: '0 0.85rem', marginTop: '0.25rem' }}
                               >
                                 Xóa bộ lọc tìm kiếm
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </td>
@@ -1185,7 +1216,7 @@ export function AdminUserManagementPanel({
                             className="user-table-row"
                             onClick={() => setSelectedUser(item)}
                             style={{
-                              borderBottom: '1px solid #f1f5f9',
+                              borderBottom: "1px solid var(--border-subtle)",
                               transition: 'background-color 0.15s ease',
                               cursor: 'pointer'
                             }}
@@ -1204,7 +1235,7 @@ export function AdminUserManagementPanel({
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    fontWeight: '700',
+                                    fontWeight: "600",
                                     fontSize: '0.875rem',
                                     flexShrink: 0
                                   }}
@@ -1212,10 +1243,10 @@ export function AdminUserManagementPanel({
                                   {av.letter}
                                 </div>
                                 <div style={{ minWidth: 0 }}>
-                                  <strong style={{ fontSize: '0.84rem', color: '#0f172a', display: 'block', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  <strong style={{ fontSize: '0.84rem', color: "var(--text-main)", display: 'block', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {item?.ho_ten || '---'}
                                   </strong>
-                                  <span style={{ fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace' }}>
+                                  <span style={{ fontSize: '0.75rem', color: "var(--text-muted)", fontFamily: 'monospace' }}>
                                     @{item?.ten_dang_nhap || 'user'}
                                   </span>
                                 </div>
@@ -1228,7 +1259,7 @@ export function AdminUserManagementPanel({
                                 <span
                                   style={{
                                     fontSize: '0.8125rem',
-                                    color: '#334155',
+                                    color: "var(--text-body)",
                                     display: 'inline-block',
                                     maxWidth: '190px',
                                     overflow: 'hidden',
@@ -1240,13 +1271,13 @@ export function AdminUserManagementPanel({
                                   {item.email}
                                 </span>
                               ) : (
-                                <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.75rem' }}>Chưa cập nhật</span>
+                                <span style={{ color: "var(--text-muted)", fontStyle: 'italic', fontSize: '0.75rem' }}>Chưa cập nhật</span>
                               )}
                             </td>
 
                             {/* Role */}
                             <td style={{ padding: '0.85rem 1rem', verticalAlign: 'middle' }}>
-                              <span
+                              <Badge variant="outline" data-quiet-label="true"
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -1261,29 +1292,15 @@ export function AdminUserManagementPanel({
                                 }}
                               >
                                 {roleBadge.label}
-                              </span>
+                              </Badge>
                             </td>
 
                             {/* Status */}
                             <td style={{ padding: '0.85rem 1rem', verticalAlign: 'middle' }}>
-                              <span
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.35rem',
-                                  padding: '0.2rem 0.55rem',
-                                  borderRadius: '9999px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: '600',
-                                  backgroundColor: item?.trang_thai === 'ACTIVE' ? '#f0fdf4' : '#fef2f2',
-                                  color: item?.trang_thai === 'ACTIVE' ? '#15803d' : '#b91c1c',
-                                  border: `1px solid ${item?.trang_thai === 'ACTIVE' ? '#bbf7d0' : '#fecaca'}`,
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: item?.trang_thai === 'ACTIVE' ? '#16a34a' : '#dc2626' }}></span>
+                              <StatusBadge status={item?.trang_thai}>
+
                                 {item?.trang_thai === 'ACTIVE' ? 'Hoạt động' : 'Tạm khóa'}
-                              </span>
+                              </StatusBadge>
                             </td>
 
                             {/* Branch Name */}
@@ -1293,7 +1310,7 @@ export function AdminUserManagementPanel({
                                 <span
                                   style={{
                                     fontSize: '0.8125rem',
-                                    color: item?.co_so_ten ? '#0f172a' : '#64748b',
+                                    color: item?.co_so_ten ? "var(--text-main)" : "var(--text-muted)",
                                     fontWeight: item?.co_so_ten ? '600' : '400',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
@@ -1307,8 +1324,8 @@ export function AdminUserManagementPanel({
                             </td>
 
                             {/* Chi tiết button */}
-                            <td style={{ padding: '0.85rem 1rem', textAlign: 'center', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
-                              <button
+                            <td style={{ padding: '0.85rem 0.5rem', textAlign: 'center', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+                              <Button
                                 type="button"
                                 className="admin-button-secondary"
                                 onClick={(e) => {
@@ -1319,15 +1336,18 @@ export function AdminUserManagementPanel({
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: '0.4rem',
+                                  justifyContent: 'center',
+                                  gap: '0.35rem',
                                   height: '30px',
-                                  padding: '0 0.85rem',
+                                  padding: '0 0.65rem',
                                   borderRadius: '6px',
-                                  border: '1px solid #bfdbfe',
-                                  background: '#eff6ff',
-                                  color: '#1d4ed8',
+                                  border: "1px solid var(--border-light)",
+                                  background: "var(--primary-light)",
+                                  color: "var(--primary-hover)",
                                   fontSize: '0.785rem',
                                   fontWeight: '600',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
                                   cursor: 'pointer',
                                   transition: 'all 0.15s ease'
                                 }}
@@ -1340,16 +1360,16 @@ export function AdminUserManagementPanel({
                                   e.currentTarget.style.backgroundColor = '#eff6ff'
                                 }}
                               >
-                                <Eye size={14} color="#1d4ed8" />
-                                <span>Chi tiết</span>
-                              </button>
+                                <Eye size={14} color="#1d4ed8" style={{ flexShrink: 0 }} />
+                                <span style={{ whiteSpace: 'nowrap' }}>Chi tiết</span>
+                              </Button>
                             </td>
                           </tr>
                         )
                       })
                     )}
                   </tbody>
-                </table>
+                </Table>
               </div>
             )}
 
@@ -1357,7 +1377,7 @@ export function AdminUserManagementPanel({
             <div style={{ padding: '0.85rem 1.25rem', backgroundColor: '#ffffff', borderTop: '1px solid var(--border-light)' }}>
               <Pagination pageData={safePageData} onPageChange={setUsersPage} />
             </div>
-          </div>
+          </Card>
         )}
 
       {/* =========================================================================
@@ -1370,8 +1390,8 @@ export function AdminUserManagementPanel({
           title="Đặt lại mật khẩu nhân viên"
           style={{ width: '460px', maxWidth: '95vw' }}
         >
-          <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+          <div data-modal-body="true" style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1rem', background: "var(--surface-low)", borderRadius: '10px', border: "1px solid var(--border-light)" }}>
               {(() => {
                 const av = getAvatarProps(resetPasswordModalUser)
                 return (
@@ -1386,7 +1406,7 @@ export function AdminUserManagementPanel({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: '700',
+                      fontWeight: "600",
                       fontSize: '1rem',
                       flexShrink: 0
                     }}
@@ -1396,10 +1416,10 @@ export function AdminUserManagementPanel({
                 )
               })()}
               <div>
-                <strong style={{ fontSize: '0.875rem', color: '#0f172a', display: 'block' }}>
+                <strong style={{ fontSize: '0.875rem', color: "var(--text-main)", display: 'block' }}>
                   {resetPasswordModalUser.ho_ten || resetPasswordModalUser.ten_dang_nhap}
                 </strong>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                <span style={{ fontSize: '0.75rem', color: "var(--text-muted)" }}>
                   @{resetPasswordModalUser.ten_dang_nhap} • {getRoleBadge(resetPasswordModalUser.vai_tro).label}
                 </span>
               </div>
@@ -1413,16 +1433,16 @@ export function AdminUserManagementPanel({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label style={{ fontSize: '0.8125rem', fontWeight: '500', color: '#334155' }}>
+                <Label style={{ fontSize: '0.8125rem', fontWeight: '500', color: "var(--text-body)" }}>
                   Mật khẩu mới <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <button
+                </Label>
+                <Button
                   type="button"
                   onClick={handleGenerateRandomPassword}
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#2563eb',
+                    color: "var(--primary)",
                     fontSize: '0.75rem',
                     fontWeight: '600',
                     cursor: 'pointer',
@@ -1430,11 +1450,11 @@ export function AdminUserManagementPanel({
                   }}
                 >
                   Tạo mật khẩu ngẫu nhiên
-                </button>
+                </Button>
               </div>
 
               <div style={{ position: 'relative' }}>
-                <input
+                <Input
                   type="text"
                   className="shadcn-input ui-input"
                   value={newPasswordInput}
@@ -1444,13 +1464,13 @@ export function AdminUserManagementPanel({
                   autoFocus
                 />
               </div>
-              <span style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: '1.4' }}>
+              <span style={{ fontSize: '0.75rem', color: "var(--text-muted)", lineHeight: '1.4' }}>
                 Mật khẩu sẽ có hiệu lực ngay lập tức. Nhân viên sẽ dùng mật khẩu này cho lần đăng nhập tới.
               </span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9' }}>
-              <button
+            <div data-modal-footer="inset" data-modal-actions="true" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', paddingTop: '0.75rem', borderTop: "1px solid var(--border-subtle)" }}>
+              <Button data-intent="danger"
                 type="button"
                 className="btn-cancel"
                 onClick={handleCloseResetPassword}
@@ -1458,8 +1478,8 @@ export function AdminUserManagementPanel({
                 style={{ height: '36px', padding: '0 1rem', fontSize: '0.8125rem' }}
               >
                 Hủy bỏ
-              </button>
-              <button
+              </Button>
+              <Button data-intent="success"
                 type="button"
                 className="btn-save"
                 onClick={handleResetPasswordSubmit}
@@ -1468,7 +1488,7 @@ export function AdminUserManagementPanel({
               >
                 <KeyRound size={15} color="#ffffff" />
                 <span>{isResettingPassword ? 'Đang đặt lại...' : 'Xác nhận đặt lại'}</span>
-              </button>
+              </Button>
             </div>
           </div>
         </WorkspaceDialog>

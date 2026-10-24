@@ -1,3 +1,5 @@
+import { Button } from '../../../components/ui/button'
+import StatusBadge from '../../../components/console/StatusBadge'
 import React, { Fragment } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, User, Clock, CheckCircle2, AlertTriangle, ShieldCheck } from '../../../components/console/WorkspaceIcons'
 import { getAttendanceInsight, getAttendanceToneClass, getMonday, toDateOnlyLocal } from '../../workforce/attendance'
@@ -51,7 +53,7 @@ export function WorkforceCalendar({
   const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index))
 
   return (
-    <section style={{
+    <section className="workforce-calendar" style={{
       background: '#ffffff',
       borderRadius: '16px',
       border: '1px solid #e2e4df',
@@ -80,7 +82,7 @@ export function WorkforceCalendar({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <button
+          <Button
             type="button"
             onClick={() => onChangeWeek(-1)}
             style={{
@@ -98,9 +100,9 @@ export function WorkforceCalendar({
             }}
           >
             <ChevronLeft size={16} /> Tuần trước
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             onClick={onResetWeek}
             style={{
@@ -118,9 +120,9 @@ export function WorkforceCalendar({
             }}
           >
             <Calendar size={14} /> Hiện tại
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             onClick={() => onChangeWeek(1)}
             style={{
@@ -138,14 +140,14 @@ export function WorkforceCalendar({
             }}
           >
             Tuần sau <ChevronRight size={16} />
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Grid Layout */}
-      <div style={{
+      <div className="operation-calendar-scroll" role="region" aria-label="Lịch làm theo tuần" tabIndex={0}><div className="operation-calendar-grid" style={{
         display: 'grid',
-        gridTemplateColumns: '110px repeat(7, minmax(130px, 1fr))',
+        gridTemplateColumns: '128px repeat(7, minmax(120px, 1fr))',
         gap: '1px',
         background: "#f4f5f2",
         borderRadius: '12px',
@@ -204,7 +206,7 @@ export function WorkforceCalendar({
               borderRight: '1px solid #e2e4df'
             }}>
               <strong style={{ fontSize: '0.85rem', color: '#252927' }}>{SLOT_LABEL[slot]}</strong>
-              <span style={{ fontSize: '0.7rem', color: '#69736a', textAlign: 'center', marginTop: '0.15rem' }}>
+              <span className="workforce-slot-time" style={{ fontSize: '0.7rem', color: '#69736a', textAlign: 'center', marginTop: '0.15rem' }}>
                 {slot === 'SANG' ? '07:00 - 12:00' : slot === 'CHIEU' ? '12:00 - 17:00' : '17:00 - 22:00'}
               </span>
             </div>
@@ -236,7 +238,7 @@ export function WorkforceCalendar({
                       const isSelected = selectedItemId === item.ma_ca_lam_viec
 
                       return (
-                        <button
+                        <Button data-selected={isSelected}
                           key={item.ma_ca_lam_viec}
                           type="button"
                           onClick={() => onSelectItem?.(item)}
@@ -259,28 +261,14 @@ export function WorkforceCalendar({
                             {mode === 'manager' ? item.staff_name || item.staff_username : item.ten_ca}
                           </strong>
 
-                          {mode === 'manager' && (
-                            <span style={{ fontSize: '0.7rem', color: '#596255' }}>
-                              {item.staff_username} • {roleLabel(item)}
-                            </span>
-                          )}
 
-                          <span style={{ fontSize: '0.725rem', color: '#69736a', fontWeight: '500' }}>
+
+                          <span className="workforce-slot-time" style={{ fontSize: '0.725rem', color: '#69736a', fontWeight: '500' }}>
                             {item.gio_bat_dau} - {item.gio_ket_thuc}
                           </span>
 
-                          <span style={{
-                            fontSize: '0.675rem',
-                            fontWeight: '700',
-                            padding: '0.1rem 0.4rem',
-                            borderRadius: '4px',
-                            background: insight.isLate || insight.leftEarly ? "#f4f5f2" : "#f4f5f2",
-                            color: insight.isLate || insight.leftEarly ? '#b45309' : '#1d4ed8',
-                            width: 'fit-content'
-                          }}>
-                            {insight.shortLabel}
-                          </span>
-                        </button>
+                          <StatusBadge tone={insight.isLate || insight.leftEarly ? 'warning' : insight.isCheckedIn || insight.isCheckedOut ? 'success' : 'secondary'}>{insight.shortLabel}</StatusBadge>
+                        </Button>
                       )
                     })
                   )}
@@ -289,7 +277,7 @@ export function WorkforceCalendar({
             })}
           </Fragment>
         ))}
-      </div>
+      </div></div>
     </section>
   )
 }

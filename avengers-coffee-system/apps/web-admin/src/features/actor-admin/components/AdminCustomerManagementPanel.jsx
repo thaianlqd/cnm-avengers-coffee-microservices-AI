@@ -1,3 +1,10 @@
+import StatusBadge from '../../../components/console/StatusBadge'
+import { Badge } from '../../../components/ui/badge'
+import { Card } from '../../../components/ui/card'
+import { Button } from '../../../components/ui/button'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Table } from '../../../components/ui/table'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import CurrencyInput from '../../../components/console/CurrencyInput'
@@ -25,7 +32,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   UserPlus,
-  RefreshCw,
   User,
   Mail,
   Lock,
@@ -84,15 +90,15 @@ export function AdminCustomerManagementPanel({
     const score = Number(diem || 0)
     if (score >= 5000) {
       return (
-        <span className="workspace-inline-label"
+        <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label"
           style={{
             backgroundColor: "#f7f9fd",
             color: '#0284c7',
             border: '1px solid #bae6fd',
             padding: '0.25rem 0.6rem',
             borderRadius: '9999px',
-            fontSize: '0.72rem',
-            fontWeight: '700',
+            fontSize: "12px",
+            fontWeight: "600",
             whiteSpace: 'nowrap',
             display: 'inline-flex',
             alignItems: 'center',
@@ -100,20 +106,20 @@ export function AdminCustomerManagementPanel({
           }}
         >
           <Award size={15} aria-hidden="true" /> Kim Cương
-        </span>
+        </Badge>
       )
     }
     if (score >= 3000) {
       return (
-        <span className="workspace-inline-label"
+        <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label"
           style={{
             backgroundColor: "#f7f9fd",
             color: '#d97706',
             border: '1px solid #fde68a',
             padding: '0.25rem 0.6rem',
             borderRadius: '9999px',
-            fontSize: '0.72rem',
-            fontWeight: '700',
+            fontSize: "12px",
+            fontWeight: "600",
             whiteSpace: 'nowrap',
             display: 'inline-flex',
             alignItems: 'center',
@@ -121,20 +127,20 @@ export function AdminCustomerManagementPanel({
           }}
         >
           <Award size={15} aria-hidden="true" /> Vàng
-        </span>
+        </Badge>
       )
     }
     if (score >= 1000) {
       return (
-        <span className="workspace-inline-label"
+        <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label"
           style={{
             backgroundColor: '#f7f9fd',
             color: '#60718a',
             border: '1px solid var(--border-light)',
             padding: '0.25rem 0.6rem',
             borderRadius: '9999px',
-            fontSize: '0.72rem',
-            fontWeight: '700',
+            fontSize: "12px",
+            fontWeight: "600",
             whiteSpace: 'nowrap',
             display: 'inline-flex',
             alignItems: 'center',
@@ -142,18 +148,18 @@ export function AdminCustomerManagementPanel({
           }}
         >
           <Award size={15} aria-hidden="true" /> Bạc
-        </span>
+        </Badge>
       )
     }
     return (
-      <span className="workspace-inline-label"
+      <Badge variant="outline" data-quiet-label="true" className="workspace-inline-label"
         style={{
           backgroundColor: '#f7f9fd',
           color: 'var(--text-muted)',
           border: '1px solid var(--border-light)',
           padding: '0.25rem 0.6rem',
           borderRadius: '9999px',
-          fontSize: '0.72rem',
+          fontSize: "12px",
           fontWeight: '600',
           whiteSpace: 'nowrap',
           display: 'inline-flex',
@@ -162,7 +168,7 @@ export function AdminCustomerManagementPanel({
         }}
       >
         <Award size={15} aria-hidden="true" /> Thành viên
-      </span>
+      </Badge>
     )
   }
 
@@ -179,19 +185,19 @@ export function AdminCustomerManagementPanel({
       {isFormActive && (
         <WorkspaceDialog label={editingCustomerId ? 'Chỉnh sửa khách hàng' : 'Thêm khách hàng'} onClose={closeCustomerForm} busy={savingCustomer}>
           {formError && <p className="workspace-form-error" role="alert">{formError}</p>}
-        <div
+        <Card
           className="system-admin-card workspace-edit-form admin-surface"
           style={{
             backgroundColor: '#ffffff',
             border: '1px solid var(--border-light)',
             borderRadius: '10px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            boxShadow: "none",
             overflow: 'hidden',
             transition: 'all 0.2s ease'
           }}
         >
           {/* Form Header */}
-          <div className="workspace-form-heading admin-card-header"
+          <div  className="workspace-form-heading admin-card-header"
             style={{
               padding: '1rem 1.5rem',
               backgroundColor: '#ffffff',
@@ -204,24 +210,26 @@ export function AdminCustomerManagementPanel({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
               <div
+                className="workspace-dialog-icon-badge"
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '6px',
-                  backgroundColor: '#f1f5fb',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '8px',
+                  backgroundColor: '#f1f5f9',
                   color: 'var(--text-main)',
                   border: '1px solid var(--border-light)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justify: 'center',
+                  display: 'grid',
+                  placeItems: 'center',
+                  lineHeight: 1,
                   flexShrink: 0
                 }}
               >
-                {editingCustomerId ? <UserCog size={20} /> : <UserPlus size={20} />}
+                {editingCustomerId ? <UserCog size={18} style={{ display: 'block', margin: 'auto' }} /> : <UserPlus size={18} style={{ display: 'block', margin: 'auto' }} />}
               </div>
+
               <div>
                 <h2 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: '500', color: 'var(--text-main)' }}>
-                  {editingCustomerId ? `Cập nhật thông tin Khách hàng #${editingCustomerId}` : 'Tạo tài khoản Khách hàng mới'}
+                  {editingCustomerId ? 'Chỉnh sửa khách hàng' : 'Tạo tài khoản Khách hàng mới'}
                 </h2>
                 <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   {editingCustomerId
@@ -231,7 +239,7 @@ export function AdminCustomerManagementPanel({
               </div>
             </div>
 
-            <button className="admin-icon-button" type="button" aria-label="Đóng cửa sổ" disabled={savingCustomer}
+            <Button data-intent="danger" className="admin-icon-button" type="button" aria-label="Đóng cửa sổ" disabled={savingCustomer}
               onClick={closeCustomerForm}
               style={{
                 cursor: 'pointer',
@@ -244,24 +252,24 @@ export function AdminCustomerManagementPanel({
                 transition: 'all 0.15s ease',
                 backgroundColor: '#ffffff',
                 border: '1px solid var(--border-light)',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                boxShadow: "none",
                 flexShrink: 0
               }}
               title="Đóng form"
             >
               <X size={18} color="var(--text-muted)" />
-            </button>
+            </Button>
           </div>
 
           {/* Form Body - Balanced 2-Column Grid */}
-          <div style={{ padding: '1.5rem' }}>
+          <div data-modal-body="true" style={{ padding: '1.5rem' }}>
             <div className="admin-responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
               {/* Field 1: Username */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="customermanagementpanel-8702" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
+                <Label htmlFor="customermanagementpanel-8702" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
                   Tên đăng nhập <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input id="customermanagementpanel-8702"
+                </Label>
+                <Input id="customermanagementpanel-8702"
                   type="text"
                   className="shadcn-input ui-input"
                   value={customerForm.ten_dang_nhap || ''}
@@ -272,10 +280,10 @@ export function AdminCustomerManagementPanel({
 
               {/* Field 2: Full Name */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="customermanagementpanel-9389" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
+                <Label htmlFor="customermanagementpanel-9389" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
                   Họ tên đầy đủ <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input id="customermanagementpanel-9389"
+                </Label>
+                <Input id="customermanagementpanel-9389"
                   type="text"
                   className="shadcn-input ui-input"
                   value={customerForm.ho_ten || ''}
@@ -286,10 +294,10 @@ export function AdminCustomerManagementPanel({
 
               {/* Field 3: Email */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="customermanagementpanel-10016" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
+                <Label htmlFor="customermanagementpanel-10016" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
                   Địa chỉ Email
-                </label>
-                <input id="customermanagementpanel-10016"
+                </Label>
+                <Input id="customermanagementpanel-10016"
                   type="email"
                   className="shadcn-input ui-input"
                   value={customerForm.email || ''}
@@ -300,11 +308,11 @@ export function AdminCustomerManagementPanel({
 
               {/* Field 4: Password */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="customermanagementpanel-10723" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
+                <Label htmlFor="customermanagementpanel-10723" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
                   Mật khẩu {editingCustomerId ? '(bỏ trống nếu giữ nguyên)' : <span style={{ color: '#ef4444' }}>*</span>}
-                </label>
+                </Label>
                 <div className="admin-password-field" style={{ position: 'relative', width: '100%', height: '40px' }}>
-                  <input id="customermanagementpanel-10723"
+                  <Input id="customermanagementpanel-10723"
                     type={showCustomerPassword ? "text" : "password"}
                     className="shadcn-input ui-input"
                     value={customerForm.mat_khau || ''}
@@ -312,7 +320,7 @@ export function AdminCustomerManagementPanel({
                     placeholder="••••••••"
                     style={{ width: '100%', height: '40px', paddingRight: '42px', boxSizing: 'border-box' }}
                   />
-                  <button
+                  <Button
                     type="button"
                     className="admin-password-toggle"
                     onClick={() => setShowCustomerPassword(!showCustomerPassword)}
@@ -333,28 +341,28 @@ export function AdminCustomerManagementPanel({
                       padding: 0,
                       margin: 0,
                       cursor: 'pointer',
-                      color: '#64748b',
+                      color: "var(--text-muted)",
                       zIndex: 3
                     }}
                   >
                     {showCustomerPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               {/* Field 5: Status */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label htmlFor="customermanagementpanel-11341" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
+                <Label htmlFor="customermanagementpanel-11341" style={{ color: '#3f3f46', fontWeight: '500', fontSize: '0.8125rem' }}>
                   Trạng thái tài khoản
-                </label>
-                <select id="customermanagementpanel-11341"
+                </Label>
+                <SearchableSelect id="customermanagementpanel-11341"
                   className="shadcn-select"
                   value={customerForm.trang_thai || 'ACTIVE'}
                   onChange={(e) => setCustomerForm((p) => ({ ...p, trang_thai: e.target.value }))}
                 >
                   <option value="ACTIVE">ACTIVE - Hoạt động bình thường</option>
                   <option value="INACTIVE">INACTIVE - Tạm khóa tài khoản</option>
-                </select>
+                </SearchableSelect>
               </div>
 
               {/* Field 6 / Info Tip Box */}
@@ -383,18 +391,18 @@ export function AdminCustomerManagementPanel({
           </div>
 
           {/* Form Action Footer */}
-          <div
+          <div data-modal-footer="edge" data-modal-actions="true"
             style={{
               padding: '1rem 1.5rem',
               backgroundColor: '#ffffff',
               borderTop: '1px solid var(--border-light)',
               display: 'flex',
               alignItems: 'center',
-              justify: 'flex-end',
+              justifyContent: 'flex-end',
               gap: '0.75rem'
             }}
           >
-            <button
+            <Button data-intent="danger"
               type="button"
               className="btn-cancel"
               onClick={closeCustomerForm}
@@ -416,9 +424,9 @@ export function AdminCustomerManagementPanel({
             >
               <X size={15} color="var(--text-main)" />
               <span>Hủy bỏ</span>
-            </button>
+            </Button>
 
-            <button
+            <Button data-intent="success"
               type="button"
               className="btn-save"
               onClick={async () => {
@@ -442,24 +450,24 @@ export function AdminCustomerManagementPanel({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+                boxShadow: "none",
                 transition: 'all 0.15s ease'
               }}
             >
               <UserCheck size={15} color="#ffffff" />
               <span>{savingCustomer ? 'Đang lưu khách hàng...' : 'Lưu khách hàng'}</span>
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
         </WorkspaceDialog>
       )}
 
       {/* Filter & Search Bar */}
-      <div className="admin-surface" style={{ backgroundColor: '#ffffff', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <Card className="admin-surface" style={{ backgroundColor: '#ffffff', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', flexGrow: 1 }}>
           <div className="customer-search-box" style={{ position: 'relative', minWidth: '260px', flexGrow: 1, height: '40px', display: 'flex', alignItems: 'center' }}>
 
-            <input className="ui-input"
+            <Input data-input-prefix="true" className="ui-input"
               style={{
                 width: '100%',
                 paddingLeft: '38px',
@@ -477,7 +485,7 @@ export function AdminCustomerManagementPanel({
               placeholder="Tìm theo họ tên, tên đăng nhập, email khách hàng..."
             />
             {customerFilters.q && (
-              <button
+              <Button data-intent="danger"
                 type="button"
                 className="admin-search-clear-btn"
                 onClick={() => setCustomerFilters((prev) => ({ ...prev, q: '' }))}
@@ -507,7 +515,7 @@ export function AdminCustomerManagementPanel({
                 title="Xóa tìm kiếm"
               >
                 <X size={14} />
-              </button>
+              </Button>
             )}
           </div>
 
@@ -526,35 +534,9 @@ export function AdminCustomerManagementPanel({
               <option value="INACTIVE">INACTIVE - Tạm khóa</option>
             </SearchableSelect>
           </div>
-
-          <button
-            type="button"
-            className="admin-button-secondary"
-            onClick={() => loadCustomers && loadCustomers()}
-            title="Tải lại danh sách"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              height: '40px',
-              minHeight: '40px',
-              padding: '0 15px',
-              borderRadius: '8px',
-              border: '1px solid #cbd5e1',
-              backgroundColor: '#ffffff',
-              color: '#334155',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              flexShrink: 0,
-              margin: 0
-            }}
-          >
-            <RefreshCw size={14} /> <span>Tải lại</span>
-          </button>
         </div>
 
-        <button
+        <Button
           type="button"
           className={isFormActive ? 'btn-cancel' : 'btn-save'}
           onClick={() => {
@@ -589,15 +571,15 @@ export function AdminCustomerManagementPanel({
               <UserPlus size={15} /> Tạo tài khoản khách hàng
             </>
           )}
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       {customersState.loading ? <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>Đang tải danh sách khách hàng...</p> : null}
       {customersState.error ? <p className="error-text" style={{ margin: 0 }}>{customersState.error}</p> : null}
 
       {/* Customers Data Table */}
       <div className="system-admin-table-wrap" style={{ overflow: 'visible', maxWidth: '100%', boxSizing: 'border-box' }}>
-        <table className="admin-fit-table system-admin-table" style={{ width: '100%', tableLayout: 'fixed', maxWidth: '100%' }}>
+        <Table className="admin-fit-table system-admin-table" style={{ width: '100%', tableLayout: 'fixed', maxWidth: '100%' }}>
           <thead>
             <tr>
               <th style={{ width: '22%', whiteSpace: 'nowrap' }}>Khách hàng</th>
@@ -613,7 +595,7 @@ export function AdminCustomerManagementPanel({
               <tr>
                 <td colSpan={6} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: "var(--border-subtle)", display: 'flex', alignItems: 'center', justifyContent: 'center', color: "var(--text-muted)" }}>
                       <Search size={22} />
                     </div>
                     <strong style={{ fontSize: '0.925rem', color: 'var(--text-main)', fontWeight: '600' }}>
@@ -625,14 +607,14 @@ export function AdminCustomerManagementPanel({
                         : 'Không có dữ liệu khách hàng phù hợp với điều kiện lọc hiện tại.'}
                     </span>
                     {customerFilters.q && (
-                      <button
+                      <Button data-intent="danger"
                         type="button"
                         onClick={() => setCustomerFilters && setCustomerFilters((prev) => ({ ...prev, q: '' }))}
                         className="btn-cancel"
                         style={{ height: '32px', fontSize: '0.75rem', padding: '0 0.85rem', marginTop: '0.25rem' }}
                       >
                         Xóa bộ lọc tìm kiếm
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </td>
@@ -666,59 +648,45 @@ export function AdminCustomerManagementPanel({
                     <td style={{ whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
                         <strong style={{ color: 'var(--primary)', fontSize: '0.8125rem' }}>{fmtNumber(item.diem_kha_dung)} pt khả dụng</strong>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>({fmtNumber(item.diem_loyalty)} pt tích lũy)</span>
+                        <span style={{ fontSize: "12px", color: 'var(--text-muted)' }}>({fmtNumber(item.diem_loyalty)} pt tích lũy)</span>
                       </div>
                     </td>
 
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      <span className="workspace-inline-label"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          padding: '0.12rem 0.55rem',
-                          borderRadius: '9999px',
-                          fontSize: '0.72rem',
-                          fontWeight: '600',
-                          backgroundColor: item.trang_thai === 'ACTIVE' ? "#f7f9fd" : "#f7f9fd",
-                          color: item.trang_thai === 'ACTIVE' ? '#2563eb' : '#dc2626',
-                          border: item.trang_thai === 'ACTIVE' ? '1px solid #bfdbfe' : '1px solid #fee2e2',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: item.trang_thai === 'ACTIVE' ? '#3b82f6' : '#ef4444' }}></span>
+                      <StatusBadge status={item.trang_thai} className="workspace-inline-label">
+
                         {item.trang_thai === 'ACTIVE' ? 'Hoạt động' : 'Tạm khóa'}
-                      </span>
+                      </StatusBadge>
                     </td>
 
                     <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
-                        <button
+                        <Button
                           type="button"
                           className="admin-table-action-btn btn-edit"
                           onClick={() => startEditCustomer(item)}
                           title="Chỉnh sửa thông tin khách hàng"
                         >
                           <Edit3 size={15} />
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                           type="button"
                           className="admin-table-action-btn btn-special"
                           onClick={() => startEditCustomerMembership(item)}
                           title="Sửa Hạng thành viên & Điểm thưởng"
                         >
                           <Award size={15} />
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button data-intent="danger"
                           type="button"
                           className="admin-table-action-btn btn-delete"
                           onClick={() => deleteCustomer(item.ma_nguoi_dung)}
                           title="Xóa tài khoản khách hàng"
                         >
                           <Trash2 size={15} />
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -726,7 +694,7 @@ export function AdminCustomerManagementPanel({
               })
             )}
           </tbody>
-        </table>
+        </Table>
 
         {/* Pagination Bar */}
         {(() => {
@@ -744,7 +712,7 @@ export function AdminCustomerManagementPanel({
               </span>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <button
+                <Button
                   type="button"
                   className="btn-icon-more"
                   onClick={() => setCustomersPage && setCustomersPage(1)}
@@ -752,8 +720,8 @@ export function AdminCustomerManagementPanel({
                   title="Trang đầu"
                 >
                   <ChevronsLeft size={16} />
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   className="btn-icon-more"
                   onClick={() => setCustomersPage && setCustomersPage(pg - 1)}
@@ -761,11 +729,11 @@ export function AdminCustomerManagementPanel({
                   title="Trang trước"
                 >
                   <ChevronLeft size={16} />
-                </button>
+                </Button>
                 <span style={{ fontSize: '0.8125rem', color: '#414743', margin: '0 0.5rem', fontWeight: '600' }}>
-                  Trang {pg} / {totPages}
+                  Trang {pg} trên {totPages}
                 </span>
-                <button
+                <Button
                   type="button"
                   className="btn-icon-more"
                   onClick={() => setCustomersPage && setCustomersPage(pg + 1)}
@@ -773,8 +741,8 @@ export function AdminCustomerManagementPanel({
                   title="Trang sau"
                 >
                   <ChevronRight size={16} />
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   className="admin-pg-btn"
                   onClick={() => setCustomersPage && setCustomersPage(totPages)}
@@ -782,7 +750,7 @@ export function AdminCustomerManagementPanel({
                   title="Trang cuối"
                 >
                   <ChevronsRight size={16} />
-                </button>
+                </Button>
               </div>
             </div>
           )
@@ -792,26 +760,26 @@ export function AdminCustomerManagementPanel({
       {/* Modern Modal Sửa Membership & Điểm */}
       {editingCustomerMembershipId && (
         <WorkspaceDialog label="Cập nhật Membership & Điểm tích lũy" onClose={cancelEditCustomerMembership} busy={savingCustomerMembership}>
-          <div className="admin-modal admin-surface" style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '16px', width: '460px', maxWidth: '92vw', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid var(--border-light)' }}>
-            <div className="workspace-form-heading" style={{ marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f7f9fd', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Card data-modal-body="true" className="admin-modal admin-surface" style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: "10px", width: '460px', maxWidth: '92vw', boxShadow: "none", border: '1px solid var(--border-light)' }}>
+            <div  className="workspace-form-heading" style={{ marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f7f9fd', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Award size={22} color="var(--primary)" />
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: "600", color: 'var(--text-main)' }}>
                   Cập nhật Membership &amp; Điểm tích lũy
                 </h3>
               </div>
-              <button className="admin-icon-button" aria-label="Đóng"
+              <Button data-intent="danger" className="admin-icon-button" aria-label="Đóng"
                 type="button"
                 onClick={cancelEditCustomerMembership}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.25rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}
                 title="Đóng"
               >
                 <X size={18} />
-              </button>
+              </Button>
             </div>
 
             {/* Summary info box */}
-            <div className="admin-surface" style={{ backgroundColor: '#ffffff', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '0.85rem 1rem', marginBottom: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+            <Card className="admin-surface" style={{ backgroundColor: '#ffffff', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '0.85rem 1rem', marginBottom: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
                 <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', backgroundColor: '#f1f5fb', color: 'var(--text-main)', fontWeight: '600', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, border: '1px solid var(--border-light)', flexShrink: 0 }}>
                   <span style={{ display: 'inline-block', lineHeight: 1, margin: 0, padding: 0 }}>
@@ -826,12 +794,12 @@ export function AdminCustomerManagementPanel({
                 </div>
               </div>
               <div>{getCustomerRankBadge(customerMembershipForm.diem_loyalty)}</div>
-            </div>
+            </Card>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#414743' }}>Điểm Loyalty (Tích lũy xét hạng thành viên)</span>
-                <input className="ui-input"
+                <Input className="ui-input"
                   type="number"
                   style={{ height: '36px', borderRadius: '6px', border: '1px solid var(--border-light)', padding: '0 0.75rem', fontSize: '0.8125rem' }}
                   value={customerMembershipForm.diem_loyalty || 0}
@@ -839,11 +807,11 @@ export function AdminCustomerManagementPanel({
                   min="0"
                   placeholder="VD: 1500"
                 />
-              </label>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#414743' }}>Điểm khả dụng (Dùng quay thưởng / đổi voucher)</span>
-                <input className="ui-input"
+                <Input className="ui-input"
                   type="number"
                   style={{ height: '36px', borderRadius: '6px', border: '1px solid var(--border-light)', padding: '0 0.75rem', fontSize: '0.8125rem' }}
                   value={customerMembershipForm.diem_kha_dung || 0}
@@ -851,9 +819,9 @@ export function AdminCustomerManagementPanel({
                   min="0"
                   placeholder="VD: 500"
                 />
-              </label>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#414743' }}>Tổng chi tiêu tích lũy (VNĐ)</span>
                 <CurrencyInput
                   style={{ height: '36px', borderRadius: '6px', border: '1px solid var(--border-light)', padding: '0 0.75rem', fontSize: '0.8125rem' }}
@@ -861,21 +829,21 @@ export function AdminCustomerManagementPanel({
                   onChange={(e) => setCustomerMembershipForm((prev) => ({ ...prev, tong_chi_tieu: Number(e.target.value) }))}
                   placeholder="VD: 2.500.000"
                 />
-              </label>
+              </Label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <Label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#414743' }}>Ngày sinh khách hàng</span>
-                <input className="ui-input"
+                <Input className="ui-input"
                   type="date"
                   style={{ height: '36px', borderRadius: '6px', border: '1px solid var(--border-light)', padding: '0 0.75rem', fontSize: '0.8125rem' }}
                   value={customerMembershipForm.ngay_sinh || ''}
                   onChange={(e) => setCustomerMembershipForm((prev) => ({ ...prev, ngay_sinh: e.target.value }))}
                 />
-              </label>
+              </Label>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.35rem', justifyContent: 'flex-end' }}>
-              <button
+            <div data-modal-footer="inset" data-modal-actions="true" style={{ display: 'flex', gap: '0.75rem', marginTop: '1.35rem', justifyContent: 'flex-end' }}>
+              <Button data-intent="danger"
                 type="button"
                 className="btn-cancel"
                 onClick={cancelEditCustomerMembership}
@@ -897,9 +865,9 @@ export function AdminCustomerManagementPanel({
               >
                 <X size={15} color="var(--text-main)" />
                 <span>Hủy bỏ</span>
-              </button>
+              </Button>
 
-              <button
+              <Button data-intent="success"
                 type="button"
                 className="btn-save"
                 onClick={saveCustomerMembership}
@@ -907,9 +875,9 @@ export function AdminCustomerManagementPanel({
               >
                 <Save size={15} />
                 {savingCustomerMembership ? 'Đang lưu...' : 'Lưu điểm thành viên'}
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         </WorkspaceDialog>
       )}
     </section>

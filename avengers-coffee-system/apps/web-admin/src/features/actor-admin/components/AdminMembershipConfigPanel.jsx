@@ -1,3 +1,8 @@
+import { Card } from '../../../components/ui/card'
+import { Button } from '../../../components/ui/button'
+import { Label } from '../../../components/ui/label'
+import { Input } from '../../../components/ui/input'
+import { Badge } from '../../../components/ui/badge'
 import WorkspaceDialog from '../../../components/console/WorkspaceDialog'
 import SearchableSelect from '../../../components/console/SearchableSelect'
 import CurrencyInput from '../../../components/console/CurrencyInput'
@@ -58,7 +63,7 @@ function LuckyWheelSvgPreview({ prizes = [], selectedPrizeId, onSelectPrize }) {
   const defaultColors = PRESET_WHEEL_COLORS;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: "none" }}>
       <div style={{ position: 'relative', width: '240px', height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <svg width="240" height="240" viewBox="0 0 300 300" style={{ overflow: 'visible', filter: 'drop-shadow(0 4px 14px rgba(0, 0, 0, 0.08))' }}>
           {/* Outer Rim */}
@@ -108,7 +113,7 @@ function LuckyWheelSvgPreview({ prizes = [], selectedPrizeId, onSelectPrize }) {
                     fill="#ffffff"
                     fontSize="11"
                     fontWeight="700"
-                    style={{ textShadow: '0 1px 2px rgba(0,0,0,0.7)', pointerEvents: 'none', userSelect: 'none' }}
+                    style={{ textShadow: "none", pointerEvents: 'none', userSelect: 'none' }}
                   >
                     #{prize.id}
                   </text>
@@ -119,7 +124,7 @@ function LuckyWheelSvgPreview({ prizes = [], selectedPrizeId, onSelectPrize }) {
                     fill="#ffffff"
                     fontSize="9.5"
                     fontWeight="600"
-                    style={{ textShadow: '0 1px 2px rgba(0,0,0,0.7)', pointerEvents: 'none', userSelect: 'none' }}
+                    style={{ textShadow: "none", pointerEvents: 'none', userSelect: 'none' }}
                   >
                     {String(prize.ten || '').slice(0, 11)}
                   </text>
@@ -145,7 +150,7 @@ function LuckyWheelSvgPreview({ prizes = [], selectedPrizeId, onSelectPrize }) {
           />
         </svg>
       </div>
-      <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', textAlign: 'center' }}>
+      <span style={{ fontSize: "12px", color: 'var(--text-muted)', textAlign: 'center' }}>
         Nhấp trực tiếp vào ô trên vòng quay hoặc danh sách để chỉnh sửa
       </span>
     </div>
@@ -420,15 +425,15 @@ export function AdminMembershipConfigPanel({
     const days = found.so_ngay_hieu_luc || 30;
 
     return (
-      <div className="admin-surface" style={{ marginTop: '0.35rem', padding: '0.45rem 0.65rem', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e5e7eb', fontSize: '0.76rem', color: '#4b5563', lineHeight: 1.4 }}>
-        <div style={{ fontWeight: '700', color: '#1a1a1a' }}>{found.ten_khuyen_mai || found.ten_voucher} ({found.ma_khuyen_mai || found.ma_voucher})</div>
+      <Card className="admin-surface" style={{ marginTop: '0.35rem', padding: '0.45rem 0.65rem', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e5e7eb', fontSize: '0.76rem', color: '#4b5563', lineHeight: 1.4 }}>
+        <div style={{ fontWeight: "600", color: '#1a1a1a' }}>{found.ten_khuyen_mai || found.ten_voucher} ({found.ma_khuyen_mai || found.ma_voucher})</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
           <span>• <strong>Mức giảm:</strong> <span style={{ color: 'var(--primary)', fontWeight: '600' }}>{valStr}</span></span>
           <span>• <strong>Giảm tối đa:</strong> {maxDiscount}</span>
           <span>• <strong>Đơn tối thiểu:</strong> {minOrder > 0 ? `${minOrder.toLocaleString('vi-VN')}đ` : '0đ (Không giới hạn)'}</span>
           <span>• <strong>Hạn dùng cấp:</strong> {days} ngày</span>
         </div>
-      </div>
+      </Card>
     );
   };
 
@@ -484,7 +489,7 @@ export function AdminMembershipConfigPanel({
       {/* High-Impact Selected Sub Tabs Navigation Bar with Action Button */}
       <div className="admin-page-tools">
         <div className="admin-subtabs">
-          <button
+          <Button
             aria-pressed={activeSubTab === 'ranks'}
             type="button"
             className={`admin-subtab-btn ${activeSubTab === 'ranks' ? 'is-active' : ''}`}
@@ -492,9 +497,9 @@ export function AdminMembershipConfigPanel({
           >
             <Award size={18} />
             <span>Cấu hình Hạng &amp; Quà Tặng ({tiers.length})</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
             aria-pressed={activeSubTab === 'wheel'}
             type="button"
             className={`admin-subtab-btn ${activeSubTab === 'wheel' ? 'is-active' : ''}`}
@@ -502,11 +507,11 @@ export function AdminMembershipConfigPanel({
           >
             <Gift size={18} />
             <span>Vòng Quay May Mắn (8 Ô)</span>
-          </button>
+          </Button>
         </div>
 
         {activeSubTab === 'ranks' && (
-          <button
+          <Button
             type="button"
             className={showTierForm ? 'workspace-back-button' : 'btn-save'}
             onClick={() => {
@@ -538,7 +543,7 @@ export function AdminMembershipConfigPanel({
                 <UserPlus size={16} /> <span>Tạo hạng thành viên mới</span>
               </>
             )}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -552,14 +557,14 @@ export function AdminMembershipConfigPanel({
 
           {/* DETAIL & EDIT TIER VIEW */}
           {showTierForm && (
-            <div
+            <Card
               ref={formRef}
               className="system-admin-card workspace-edit-form admin-surface membership-editor"
               style={{
                 backgroundColor: '#ffffff',
                 border: '1px solid var(--border-light)',
                 borderRadius: '12px',
-                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+                boxShadow: "none",
                 overflow: 'hidden'
               }}
             >
@@ -606,7 +611,7 @@ export function AdminMembershipConfigPanel({
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {editingTierCode && editingTierCode !== 'MEMBER' && (
-                    <button
+                    <Button data-intent="danger"
                       type="button"
                       className="membership-editor-delete"
                       onClick={() => handleDeleteTier(editingTierCode)}
@@ -627,7 +632,7 @@ export function AdminMembershipConfigPanel({
                     >
                       <Trash2 size={14} />
                       <span>Xóa hạng</span>
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -652,10 +657,10 @@ export function AdminMembershipConfigPanel({
                   <div className="admin-responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
                     {/* Mã Hạng */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <label htmlFor="membershipconfigpanel-18716" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="membershipconfigpanel-18716" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Mã định danh hạng <span style={{ color: '#ef4444' }}>*</span>
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         id="membershipconfigpanel-18716"
                         type="text"
                         className="shadcn-input ui-input"
@@ -668,10 +673,10 @@ export function AdminMembershipConfigPanel({
 
                     {/* Tên Hạng */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <label htmlFor="membershipconfigpanel-19494" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="membershipconfigpanel-19494" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Tên hiển thị hạng <span style={{ color: '#ef4444' }}>*</span>
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         id="membershipconfigpanel-19494"
                         type="text"
                         className="shadcn-input ui-input"
@@ -683,9 +688,9 @@ export function AdminMembershipConfigPanel({
 
                     {/* Màu Nhận Diện */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <label htmlFor="membershipconfigpanel-color-hex" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="membershipconfigpanel-color-hex" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Màu sắc đại diện
-                      </label>
+                      </Label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <input
                           type="color"
@@ -694,7 +699,7 @@ export function AdminMembershipConfigPanel({
                           onChange={(e) => setTierForm((p) => ({ ...p, mau_sac: e.target.value }))}
                           title="Bấm để chọn màu sắc đại diện"
                         />
-                        <input
+                        <Input
                           id="membershipconfigpanel-color-hex"
                           type="text"
                           className="shadcn-input ui-input"
@@ -722,10 +727,10 @@ export function AdminMembershipConfigPanel({
                   <div className="admin-responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
                     {/* Mốc Điểm Xét Hạng */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <label htmlFor="membershipconfigpanel-21859" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="membershipconfigpanel-21859" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Mốc điểm tích lũy xét hạng (pt)
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         id="membershipconfigpanel-21859"
                         type="number"
                         min="0"
@@ -738,9 +743,9 @@ export function AdminMembershipConfigPanel({
 
                     {/* Chi tiêu duy trì tháng */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <label htmlFor="membershipconfigpanel-22601" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="membershipconfigpanel-22601" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Chi tiêu duy trì / Tháng (đ)
-                      </label>
+                      </Label>
                       <CurrencyInput
                         id="membershipconfigpanel-22601"
                         className="shadcn-input"
@@ -753,10 +758,10 @@ export function AdminMembershipConfigPanel({
 
                     {/* Hệ Số Điểm */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <label htmlFor="membershipconfigpanel-23431" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="membershipconfigpanel-23431" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Hệ số tích điểm (VD: 1.2x)
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         id="membershipconfigpanel-23431"
                         type="number"
                         step="0.1"
@@ -769,10 +774,10 @@ export function AdminMembershipConfigPanel({
 
                     {/* Lượt quay tháng */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <label htmlFor="membershipconfigpanel-24125" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="membershipconfigpanel-24125" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Lượt quay may mắn / Tháng
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         id="membershipconfigpanel-24125"
                         type="number"
                         min="1"
@@ -784,9 +789,9 @@ export function AdminMembershipConfigPanel({
 
                     {/* Ưu đãi phí ship */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <label htmlFor="membershipconfigpanel-24792" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="membershipconfigpanel-24792" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Mức giảm phí ship (đ)
-                      </label>
+                      </Label>
                       <CurrencyInput
                         id="membershipconfigpanel-24792"
                         className="shadcn-input"
@@ -815,9 +820,9 @@ export function AdminMembershipConfigPanel({
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
                     {/* Quà thăng hạng */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                      <label htmlFor="tier-voucher-thang-hang-select" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="tier-voucher-thang-hang-select" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Quà Thăng Hạng (Voucher Template)
-                      </label>
+                      </Label>
                       <SearchableSelect
                         id="tier-voucher-thang-hang-select"
                         value={tierForm.ma_voucher_thang_hang || ''}
@@ -839,9 +844,9 @@ export function AdminMembershipConfigPanel({
 
                     {/* Quà sinh nhật */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                      <label htmlFor="tier-voucher-sinh-nhat-select" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
+                      <Label htmlFor="tier-voucher-sinh-nhat-select" style={{ color: '#344563', fontWeight: '500', fontSize: '13px' }}>
                         Quà Sinh Nhật (Voucher Template)
-                      </label>
+                      </Label>
                       <SearchableSelect
                         id="tier-voucher-sinh-nhat-select"
                         value={tierForm.ma_voucher_sinh_nhat || ''}
@@ -877,7 +882,7 @@ export function AdminMembershipConfigPanel({
                   gap: '0.75rem'
                 }}
               >
-                <button
+                <Button data-intent="success"
                   type="button"
                   className="btn-save"
                   onClick={handleSaveTierForm}
@@ -895,18 +900,18 @@ export function AdminMembershipConfigPanel({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.45rem',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    boxShadow: "none"
                   }}
                 >
                   <UserCheck size={16} color="#ffffff" />
                   <span>{savingMembershipConfig ? 'Đang lưu...' : 'Lưu hạng thành viên'}</span>
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {!showTierForm && <>
-            <div className="membership-intro"><div><span>QUYỀN LỢI THÀNH VIÊN</span><h2>Thiết kế trải nghiệm cho từng hạng</h2><p>So sánh điều kiện, điểm thưởng và quà tặng. Chọn “Chi tiết” để cập nhật từng hạng.</p></div><div className="membership-total"><Award size={24} /><strong>{tiers.length}</strong><span>hạng thành viên</span></div></div>
+            <div className="membership-intro"><div><h2>Quyền lợi theo hạng thành viên</h2><p>So sánh điều kiện, điểm thưởng và quà tặng. Chọn “Chi tiết” để cập nhật từng hạng.</p></div><div className="membership-total"><Award size={24} /><strong>{tiers.length}</strong><span>hạng thành viên</span></div></div>
             <div className="membership-tier-grid">
               {tiers.map(tier => <article key={tier.ma_hang} className="membership-tier" style={{ '--tier-color': tier.mau_sac || '#2563eb' }}>
                 <header><div className="membership-tier-emblem"><Award size={26} /></div><div><small>#{tier.ma_hang}</small><h3>Hạng {tier.ten_hang}</h3></div>{tier.ma_hang === 'MEMBER' && <span className="membership-default">Mặc định</span>}</header>
@@ -917,7 +922,7 @@ export function AdminMembershipConfigPanel({
                 </div>
                 <dl className="membership-conditions"><div><dt>Chi tiêu / tháng</dt><dd>{tier.chi_tieu_toi_thieu_thang ? `${fmtNumber(tier.chi_tieu_toi_thieu_thang)}đ` : 'Không bắt buộc'}</dd></div><div><dt>Giảm phí ship</dt><dd>{tier.freeship_value ? `${fmtNumber(tier.freeship_value)}đ` : 'Không áp dụng'}</dd></div></dl>
                 <div className="membership-gifts"><div><Tag size={17} /><span>Quà thăng hạng<strong>{tier.ma_voucher_thang_hang ? `Voucher ${tier.ma_voucher_thang_hang}` : 'Tự động tạo'}</strong></span></div><div><Gift size={17} /><span>Quà sinh nhật<strong>{tier.ma_voucher_sinh_nhat ? `Voucher ${tier.ma_voucher_sinh_nhat}` : 'Tự động tạo'}</strong></span></div></div>
-                <footer>{tier.ma_hang !== 'MEMBER' && <button type="button" className="membership-delete" onClick={() => handleDeleteTier(tier.ma_hang)} aria-label={`Xóa hạng ${tier.ten_hang}`}><Trash2 size={16} />Xóa hạng</button>}<button type="button" className="membership-edit" onClick={() => openEditTierForm(tier)}><Edit3 size={16} />Chi tiết</button></footer>
+                <footer>{tier.ma_hang !== 'MEMBER' && <Button data-intent="danger" type="button" className="membership-delete" onClick={() => handleDeleteTier(tier.ma_hang)} aria-label={`Xóa hạng ${tier.ten_hang}`}><Trash2 size={16} />Xóa hạng</Button>}<Button type="button" className="membership-edit" onClick={() => openEditTierForm(tier)}><Edit3 size={16} />Chi tiết</Button></footer>
               </article>)}
             </div>
           </>}
@@ -932,14 +937,14 @@ export function AdminMembershipConfigPanel({
           <div className="admin-responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 360px) 1fr', gap: '1.25rem', alignItems: 'stretch' }}>
 
             {/* Card 1: Spin Cost (Chi phí quay) */}
-            <div
+            <Card
               className="admin-surface"
               style={{
                 padding: '1.15rem 1.35rem',
                 backgroundColor: '#ffffff',
                 border: '1px solid var(--border-light)',
                 borderRadius: '12px',
-                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+                boxShadow: "none",
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -952,9 +957,9 @@ export function AdminMembershipConfigPanel({
                     width: '38px',
                     height: '38px',
                     borderRadius: '8px',
-                    backgroundColor: '#eff6ff',
-                    color: '#2563eb',
-                    border: '1px solid #dbeafe',
+                    backgroundColor: "var(--primary-light)",
+                    color: "var(--primary)",
+                    border: "1px solid var(--primary-subtle)",
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -964,10 +969,10 @@ export function AdminMembershipConfigPanel({
                   <Coins size={18} color="#2563eb" />
                 </div>
                 <div>
-                  <label htmlFor="wheel-cost-input" style={{ margin: 0, fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', display: 'block' }}>
+                  <Label htmlFor="wheel-cost-input" style={{ margin: 0, fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', display: 'block' }}>
                     Chi phí mỗi lượt quay
-                  </label>
-                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                  </Label>
+                  <span style={{ fontSize: "12px", color: 'var(--text-muted)' }}>
                     Điểm khả dụng trừ của khách cho 1 lần quay
                   </span>
                 </div>
@@ -985,17 +990,17 @@ export function AdminMembershipConfigPanel({
                 </div>
                 <span style={{ fontSize: '12.5px', color: 'var(--text-muted)', fontWeight: '600' }}>pt / lượt</span>
               </div>
-            </div>
+            </Card>
 
             {/* Card 2: Probability Allocation (Phân bổ xác suất 8 ô) */}
-            <div
+            <Card
               className="admin-surface"
               style={{
                 padding: '1.15rem 1.35rem',
                 backgroundColor: '#ffffff',
                 border: '1px solid var(--border-light)',
                 borderRadius: '12px',
-                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+                boxShadow: "none",
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -1007,7 +1012,7 @@ export function AdminMembershipConfigPanel({
                   <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', display: 'block' }}>
                     Phân bổ xác suất 8 ô trên vòng quay
                   </span>
-                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                  <span style={{ fontSize: "12px", color: 'var(--text-muted)' }}>
                     Tổng tỷ lệ các múi thưởng phải đạt chính xác 100%
                   </span>
                 </div>
@@ -1034,7 +1039,7 @@ export function AdminMembershipConfigPanel({
                   </div>
 
                   {!isWheelProbabilityValid && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => {
                         setPrizes(prizes.map((p) => ({ ...p, xac_suat: 12.5 })));
@@ -1049,7 +1054,7 @@ export function AdminMembershipConfigPanel({
                         border: '1px solid var(--border-light)',
                         backgroundColor: '#ffffff',
                         color: 'var(--primary)',
-                        fontSize: '11.5px',
+                        fontSize: "12px",
                         fontWeight: '500',
                         cursor: 'pointer'
                       }}
@@ -1057,14 +1062,14 @@ export function AdminMembershipConfigPanel({
                     >
                       <RefreshCw size={12} />
                       <span>Cân bằng 12.5%</span>
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
 
               {/* Segmented multi-color progress bar */}
               <div>
-                <div style={{ width: '100%', height: '8px', borderRadius: '4px', overflow: 'hidden', display: 'flex', backgroundColor: '#e2e8f0' }}>
+                <div style={{ width: '100%', height: '8px', borderRadius: '4px', overflow: 'hidden', display: 'flex', backgroundColor: "var(--border-light)" }}>
                   {prizes.map((p, i) => (
                     <div
                       key={p.id || i}
@@ -1080,14 +1085,14 @@ export function AdminMembershipConfigPanel({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
                   {prizes.map((p, i) => (
-                    <span key={p.id || i} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#64748b' }}>
+                    <span key={p.id || i} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: "12px", color: "var(--text-muted)" }}>
                       <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: p.mau || PRESET_WHEEL_COLORS[i % PRESET_WHEEL_COLORS.length] }} />
-                      #{p.id}: <strong style={{ color: '#1e293b' }}>{p.xac_suat}%</strong>
+                      #{p.id}: <strong style={{ color: "var(--text-body)" }}>{p.xac_suat}%</strong>
                     </span>
                   ))}
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* MASTER-DETAIL LAYOUT: WHEEL PREVIEW & 8-SLOT LIST (LEFT) + DETAIL EDITOR (RIGHT) */}
@@ -1108,7 +1113,7 @@ export function AdminMembershipConfigPanel({
                   backgroundColor: '#ffffff',
                   border: '1px solid var(--border-light)',
                   borderRadius: '12px',
-                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+                  boxShadow: "none",
                   padding: '1rem',
                   display: 'flex',
                   flexDirection: 'column',
@@ -1119,7 +1124,7 @@ export function AdminMembershipConfigPanel({
                   <h3 style={{ margin: 0, fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Layers size={15} color="var(--primary)" /> Danh sách 8 Ô Thưởng
                   </h3>
-                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Bấm để chỉnh sửa</span>
+                  <span style={{ fontSize: "12px", color: 'var(--text-muted)' }}>Bấm để chỉnh sửa</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.25rem' }}>
@@ -1138,13 +1143,13 @@ export function AdminMembershipConfigPanel({
                         style={{
                           padding: '0.55rem 0.75rem',
                           borderRadius: '8px',
-                          border: isSelected ? '2px solid #2563eb' : '1px solid var(--border-light)',
-                          backgroundColor: isSelected ? '#eff6ff' : '#ffffff',
+                          border: isSelected ? "2px solid var(--primary)" : '1px solid var(--border-light)',
+                          backgroundColor: isSelected ? "var(--primary-light)" : '#ffffff',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          boxShadow: isSelected ? '0 1px 4px rgba(37,99,235,0.1)' : 'none',
+                          boxShadow: isSelected ? "none" : 'none',
                           transition: 'all 0.15s ease',
                           textAlign: 'left',
                           width: '100%',
@@ -1162,38 +1167,38 @@ export function AdminMembershipConfigPanel({
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '11px',
-                              fontWeight: '700',
+                              fontSize: "12px",
+                              fontWeight: "600",
                               flexShrink: 0,
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
+                              boxShadow: "none"
                             }}
                           >
                             #{prize.id}
                           </div>
                           <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'left' }}>
-                            <div style={{ fontWeight: isSelected ? '700' : '600', fontSize: '12.5px', color: isSelected ? '#1e40af' : 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                            <div style={{ fontWeight: isSelected ? "600" : '600', fontSize: '12.5px', color: isSelected ? "var(--primary-hover)" : 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>
                               {prize.ten}
                             </div>
-                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textAlign: 'left' }}>
+                            <span style={{ fontSize: "12px", color: 'var(--text-muted)', display: 'block', textAlign: 'left' }}>
                               {prize.loai === 'POINTS' ? `+${fmtNumber(prize.gia_tri)} điểm khả dụng` : prize.loai === 'VOUCHER' ? 'Voucher giảm giá' : prize.loai === 'FREE_TOPPING' ? 'Free 1 Topping' : `Free ${prize.ten_san_pham_tang || 'món'}`}
                             </span>
                           </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, marginLeft: '0.5rem' }}>
-                          <span
+                          <Badge variant="outline" data-quiet-label="true"
                             style={{
-                              fontWeight: '700',
-                              fontSize: '11.5px',
-                              color: isSelected ? '#2563eb' : 'var(--text-muted)',
+                              fontWeight: "600",
+                              fontSize: "12px",
+                              color: isSelected ? "var(--primary)" : 'var(--text-muted)',
                               backgroundColor: isSelected ? '#ffffff' : '#f1f5fb',
                               padding: '0.15rem 0.5rem',
                               borderRadius: '5px',
-                              border: isSelected ? '1px solid #bfdbfe' : 'none'
+                              border: isSelected ? "1px solid var(--border-light)" : 'none'
                             }}
                           >
                             {prize.xac_suat}%
-                          </span>
+                          </Badge>
                         </div>
                       </div>
                     );
@@ -1204,13 +1209,13 @@ export function AdminMembershipConfigPanel({
 
             {/* COLUMN 2: DETAIL CONFIG FORM FOR SELECTED PRIZE */}
             {activePrize && activePrize.id ? (
-              <div
+              <Card
                 className="system-admin-card admin-surface membership-prize-editor"
                 style={{
                   backgroundColor: '#ffffff',
                   border: '1px solid var(--border-light)',
                   borderRadius: '12px',
-                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+                  boxShadow: "none",
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column'
@@ -1241,10 +1246,10 @@ export function AdminMembershipConfigPanel({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontWeight: '700',
+                        fontWeight: "600",
                         fontSize: '13px',
                         flexShrink: 0,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.15)'
+                        boxShadow: "none"
                       }}
                     >
                       #{activePrize.id}
@@ -1268,9 +1273,9 @@ export function AdminMembershipConfigPanel({
                   <div className="admin-responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 250px) 1fr', gap: '1.25rem' }}>
                     {/* Loại phần thưởng */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <label htmlFor="prize-type-select" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
+                      <Label htmlFor="prize-type-select" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
                         Loại phần thưởng <span style={{ color: '#ef4444' }}>*</span>
-                      </label>
+                      </Label>
                       <SearchableSelect
                         id="prize-type-select"
                         value={activePrize.loai}
@@ -1289,9 +1294,9 @@ export function AdminMembershipConfigPanel({
                     {/* MATCHED REWARD SPECIFIC FIELD */}
                     {activePrize.loai === 'POINTS' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <label htmlFor="prize-points-input" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
+                        <Label htmlFor="prize-points-input" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
                           Số điểm thưởng cộng cho khách <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
+                        </Label>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                           <div style={{ flex: 1, maxWidth: '240px' }}>
                             <CurrencyInput
@@ -1305,23 +1310,23 @@ export function AdminMembershipConfigPanel({
                           <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600' }}>pt</span>
                           <div style={{ display: 'flex', gap: '4px' }}>
                             {[50, 100, 200, 500].map((pt) => (
-                              <button
+                              <Button
                                 key={pt}
                                 type="button"
                                 onClick={() => handleActivePrizeChange('gia_tri', pt)}
                                 style={{
                                   padding: '3px 7px',
-                                  fontSize: '11px',
+                                  fontSize: "12px",
                                   fontWeight: '600',
                                   borderRadius: '4px',
-                                  border: activePrize.gia_tri === pt ? '1px solid #2563eb' : '1px solid var(--border-light)',
-                                  backgroundColor: activePrize.gia_tri === pt ? '#eff6ff' : '#ffffff',
-                                  color: activePrize.gia_tri === pt ? '#2563eb' : '#64748b',
+                                  border: activePrize.gia_tri === pt ? "1px solid var(--primary)" : '1px solid var(--border-light)',
+                                  backgroundColor: activePrize.gia_tri === pt ? "var(--primary-light)" : '#ffffff',
+                                  color: activePrize.gia_tri === pt ? "var(--primary)" : "var(--text-muted)",
                                   cursor: 'pointer'
                                 }}
                               >
                                 +{pt}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         </div>
@@ -1330,9 +1335,9 @@ export function AdminMembershipConfigPanel({
 
                     {activePrize.loai === 'VOUCHER' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <label htmlFor="prize-voucher-select" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
+                        <Label htmlFor="prize-voucher-select" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
                           Chọn Mẫu Voucher vòng quay <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
+                        </Label>
                         <SearchableSelect
                           id="prize-voucher-select"
                           value={activePrize.ma_voucher || ''}
@@ -1354,9 +1359,9 @@ export function AdminMembershipConfigPanel({
 
                     {activePrize.loai === 'FREE_ITEM' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <label htmlFor="prize-product-select" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
+                        <Label htmlFor="prize-product-select" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
                           Sản phẩm Menu tặng kèm <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
+                        </Label>
                         {menuProducts.length > 0 ? (
                           <SearchableSelect
                             id="prize-product-select"
@@ -1373,7 +1378,7 @@ export function AdminMembershipConfigPanel({
                             ))}
                           </SearchableSelect>
                         ) : (
-                          <input
+                          <Input
                             id="prize-product-select"
                             type="text"
                             className="shadcn-input ui-input"
@@ -1387,10 +1392,10 @@ export function AdminMembershipConfigPanel({
 
                     {activePrize.loai === 'FREE_TOPPING' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <label style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
+                        <Label style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
                           Quy cách phần thưởng
-                        </label>
-                        <div style={{ height: '38px', display: 'flex', alignItems: 'center', padding: '0 0.85rem', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '12.5px', color: '#1d4ed8', fontWeight: '500' }}>
+                        </Label>
+                        <div style={{ height: '38px', display: 'flex', alignItems: 'center', padding: '0 0.85rem', backgroundColor: "var(--primary-light)", border: "1px solid var(--border-light)", borderRadius: '6px', fontSize: '12.5px', color: "var(--primary-hover)", fontWeight: '500' }}>
                           ✨ Tặng 1 phần Topping miễn phí cho đơn hàng tiếp theo
                         </div>
                       </div>
@@ -1400,12 +1405,12 @@ export function AdminMembershipConfigPanel({
                   {/* ROW 2: TÊN HIỂN THỊ TRÊN VÒNG QUAY */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <label htmlFor="prize-name-input" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
+                      <Label htmlFor="prize-name-input" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
                         Tên hiển thị trên vòng quay <span style={{ color: '#ef4444' }}>*</span>
-                      </label>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Tên ngắn hiển thị trên múi của vòng quay</span>
+                      </Label>
+                      <span style={{ fontSize: "12px", color: 'var(--text-muted)' }}>Tên ngắn hiển thị trên múi của vòng quay</span>
                     </div>
-                    <input
+                    <Input
                       id="prize-name-input"
                       type="text"
                       className="shadcn-input ui-input"
@@ -1420,9 +1425,9 @@ export function AdminMembershipConfigPanel({
 
                     {/* Màu sắc ô quay */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <label style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
+                      <Label style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
                         Màu sắc múi quay
-                      </label>
+                      </Label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                         {/* 8 Preset Swatches */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1453,7 +1458,7 @@ export function AdminMembershipConfigPanel({
                             title="Bấm để chọn màu tùy biến"
                           />
                           <div style={{ width: '100px' }}>
-                            <input
+                            <Input
                               type="text"
                               className="shadcn-input ui-input"
                               value={activePrize.mau || '#ef4444'}
@@ -1473,9 +1478,9 @@ export function AdminMembershipConfigPanel({
 
                     {/* Xác suất (%) với slider + standard input (no wrapper box) */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <label htmlFor="prize-prob-input" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
+                      <Label htmlFor="prize-prob-input" style={{ color: '#344563', fontWeight: '600', fontSize: '13px' }}>
                         Tỉ lệ xác suất trúng (%) <span style={{ color: '#ef4444' }}>*</span>
-                      </label>
+                      </Label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                         <input className="ui-input"
                           type="range"
@@ -1487,7 +1492,7 @@ export function AdminMembershipConfigPanel({
                           style={{ flex: 1, accentColor: 'var(--primary)' }}
                         />
                         <div style={{ width: '85px' }}>
-                          <input
+                          <Input
                             id="prize-prob-input"
                             type="number"
                             className="shadcn-input ui-input"
@@ -1510,7 +1515,7 @@ export function AdminMembershipConfigPanel({
                       {renderVoucherDetailBadge(activePrize.ma_voucher)}
 
                       {!activePrize.ma_voucher && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', padding: '0.85rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', padding: '0.85rem', backgroundColor: "var(--surface-low)", borderRadius: '8px', border: '1px solid var(--border-light)' }}>
                           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Hoặc nhập số tiền giảm trực tiếp (khi không chọn Voucher mẫu):</span>
                           <div style={{ maxWidth: '240px' }}>
                             <CurrencyInput
@@ -1526,7 +1531,7 @@ export function AdminMembershipConfigPanel({
                   )}
 
                   {activePrize.loai === 'FREE_TOPPING' && (
-                    <div style={{ backgroundColor: "#f1f5fb", padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #bfdbfe', fontSize: '12.5px', color: '#1e40af', lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div style={{ backgroundColor: "#f1f5fb", padding: '0.85rem 1rem', borderRadius: '8px', border: "1px solid var(--border-light)", fontSize: '12.5px', color: "var(--primary-hover)", lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                       <Sparkles size={18} color="#2563eb" style={{ flexShrink: 0 }} />
                       <div>
                         <strong>Quy tắc tự động:</strong> Khi khách quay trúng ô này, hệ thống sẽ tự sinh 1 voucher miễn phí 1 topping bất kỳ vào ví voucher của khách hàng.
@@ -1561,7 +1566,7 @@ export function AdminMembershipConfigPanel({
                     )}
                   </div>
 
-                  <button
+                  <Button data-intent="success"
                     type="button"
                     className="btn-save"
                     onClick={saveWheelConfig}
@@ -1580,14 +1585,14 @@ export function AdminMembershipConfigPanel({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.45rem',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                      boxShadow: "none"
                     }}
                   >
                     <CheckCircle2 size={16} color="#ffffff" />
                     <span>{savingMembershipConfig ? 'Đang lưu...' : 'Lưu Cấu Hình Vòng Quay'}</span>
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
             ) : null}
           </div>
         </div>

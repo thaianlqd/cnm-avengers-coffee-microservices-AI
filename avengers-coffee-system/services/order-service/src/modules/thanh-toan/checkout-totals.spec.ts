@@ -15,7 +15,7 @@ describe('checkout amount across all payment paths', () => {
     const transactions = new Map();
     s.cartRepo = { find: jest.fn(async () => [{ ma_san_pham: 1, ten_san_pham: 'Nước + bánh', gia_ban: 313000, so_luong: 1 }]), delete: jest.fn() };
     const runner = { connect: jest.fn(), query: jest.fn(async () => [{locked:true}]), release: jest.fn() };
-    const rootManager: any = { connection: { createQueryRunner: () => runner }, query: jest.fn(async () => []) };
+    const rootManager: any = { connection: { createQueryRunner: () => runner }, query: jest.fn(async (sql: string) => sql.includes('FROM menu.san_pham') ? [{ ma_san_pham: 1, ten_san_pham: 'Nước + bánh', gia_ban: 313000, effective_price: 313000, trang_thai: true }] : []) };
     s.donHangRepo = { create: (v: any) => v, save: jest.fn(async (v: any) => { orders.set(v.ma_don_hang, v); return v; }), findOne: jest.fn(async ({where}: any) => orders.get(where.ma_don_hang)), manager: rootManager };
     s.chiTietRepo = { create: (v: any) => v, save: jest.fn(async (v: any) => v) };
     s.giaoDichRepo = { create: (v: any) => v, save: jest.fn(async (v: any) => { transactions.set(v.ma_don_hang, v); return v; }), findOne: jest.fn(async ({where}: any) => transactions.get(where.ma_don_hang)) };
@@ -166,6 +166,12 @@ describe('checkout amount across all payment paths', () => {
     expect(runner.release).toHaveBeenCalledTimes(3);
     expect(s.chiTietRepo.save).toHaveBeenCalledTimes(1);
     expect(s.walletVoucherClaims.schedule).toHaveBeenCalledTimes(2);
+  });
+  it('rejects an expired flash sale total before creating an order', async () => {
+    const { s } = service();
+    s.cartRepo.find.mockResolvedValue([{ ma_san_pham: 1, gia_ban: 200000, so_luong: 1 }]);
+    await expect(s.khoiTaoThanhToan('user', { phuong_thuc_thanh_toan: 'THANH_TOAN_KHI_NHAN_HANG', delivery_mode: 'LAY_TAI_QUAN', dia_chi_giao_hang: 'Quầy', expected_final_total: 200000 })).rejects.toThrow('Tong tien');
+    expect(s.donHangRepo.save).not.toHaveBeenCalled();
   });
   it('rejects changed totals before any order write', async () => {
     const {s} = service();

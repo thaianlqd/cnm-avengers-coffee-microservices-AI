@@ -292,6 +292,7 @@ export function useAdminDashboard() {
         return {
           ma_san_pham: productId,
           name: item.name,
+          image: item.image || item.image_url || item.hinh_anh || '',
           category: item.category,
           price: Number(item.price || 0),
           so_luong_ton: soLuongTon,
@@ -539,7 +540,9 @@ export function useAdminDashboard() {
   const taiCaKioskDaMo = useCallback(async () => {
     if (!sessionBranchCode) return null
     try {
-      const response = await fetch(`${API_BASE_URL}/staff/kiosk-shifts/active?branch_code=${encodeURIComponent(sessionBranchCode)}`)
+      const isKioskSession = ['KIOSK_STAFF', 'FRANCHISE_STAFF', 'FRANCHISEE'].includes(String(sessionRole).toUpperCase())
+      const sessionPath = isKioskSession ? 'kiosk-shifts' : 'branch-shifts'
+      const response = await fetch(`${API_BASE_URL}/staff/${sessionPath}/active?branch_code=${encodeURIComponent(sessionBranchCode)}`)
       const payload = await response.json().catch(() => ({}))
       if (response.ok && payload?.has_open_shift) {
         setActiveKioskShift(payload.active_shift)
@@ -552,11 +555,13 @@ export function useAdminDashboard() {
       setActiveKioskShift(null)
       return null
     }
-  }, [sessionBranchCode])
+  }, [sessionBranchCode, sessionRole])
 
   const moCaKiosk = async ({ cash_open, note }) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/staff/kiosk-shifts/open`, {
+      const isKioskSession = ['KIOSK_STAFF', 'FRANCHISE_STAFF', 'FRANCHISEE'].includes(String(sessionRole).toUpperCase())
+      const sessionPath = isKioskSession ? 'kiosk-shifts' : 'branch-shifts'
+      const response = await fetch(`${API_BASE_URL}/staff/${sessionPath}/open`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -570,12 +575,10 @@ export function useAdminDashboard() {
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.message || 'Lỗi mở ca')
       
-      alert('Mở ca làm việc thành công!')
       await taiCaKioskDaMo()
-      return true
+      return { ok: true }
     } catch (err) {
-      alert(err.message)
-      return false
+      return { ok: false, error: err.message }
     }
   }
 
@@ -849,7 +852,27 @@ export function useAdminDashboard() {
         throw new Error(payload?.message || 'Chot ca that bai')
       }
 
-      setShiftStatus((prev) => ({ ...prev, success: 'Chot ca thanh cong, da luu bien ban doi soat.' }))
+      let posSessionCloseWarning = ''
+      if (activeKioskShift && ['STAFF', 'MANAGER'].includes(String(sessionRole).toUpperCase())) {
+        try {
+          const posCloseResponse = await fetch(`${API_BASE_URL}/staff/branch-shifts/close`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              branch_code: sessionBranchCode,
+              cash_close: Number(shiftInput.cashClose || 0),
+              note: shiftInput.note?.trim() || undefined,
+            }),
+          })
+          const posClosePayload = await posCloseResponse.json().catch(() => ({}))
+          if (!posCloseResponse.ok) throw new Error(posClosePayload?.message || 'Không thể đóng phiên POS')
+          await taiCaKioskDaMo()
+        } catch (error) {
+          posSessionCloseWarning = ` Biên bản đã lưu nhưng phiên POS chưa đóng: ${error.message}`
+        }
+      }
+
+      setShiftStatus((prev) => ({ ...prev, success: `Chốt ca thành công, đã lưu biên bản đối soát.${posSessionCloseWarning}` }))
       await Promise.all([
         taiLichSuChotCa(),
         xemTruocDoiSoatCa({
@@ -2082,6 +2105,20 @@ export function useAdminDashboard() {
     }
   }
 
+  const taoNhanVienCuaHang = async (payload) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/manager/staff`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.token}` },
+        body: JSON.stringify({ ten_dang_nhap: payload.ten_dang_nhap, mat_khau: payload.mat_khau, ho_ten: payload.ho_ten, email: payload.email }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data?.message || 'Không tạo được nhân viên cửa hàng')
+      await taiDanhSachNhanSu()
+      return { ok: true, message: data.message || 'Đã thêm nhân viên' }
+    } catch (error) { return { ok: false, message: error.message || 'Lỗi kết nối' } }
+  }
+
   const taoKioskStaff = async (payload) => {
     try {
       const response = await fetch(`${API_BASE_URL}/users/manager/kiosk-staff`, {
@@ -2203,5 +2240,6 @@ export function useAdminDashboard() {
     taiDanhSachBieuMau,
     taiDanhSachPhanHoi,
     taoKioskStaff,
+    taoNhanVienCuaHang,
   }
 }

@@ -123,7 +123,7 @@ export class ShipperController {
    */
   @Post('orders/:orderId/mark-ready')
   async markOrderReadyForDelivery(@Param('orderId') orderId: string, @Req() request: any) {
-    return this.shipperService.markOrderReadyForDelivery(orderId, request.user?.role === 'STAFF' ? request.user.branchCode : undefined);
+    return this.shipperService.markOrderReadyForDelivery(orderId, ['STAFF','MANAGER'].includes(request.user?.role) ? request.user.branchCode || '__UNASSIGNED__' : undefined);
   }
 
   @Post('assign-order')
@@ -131,7 +131,7 @@ export class ShipperController {
     @Body() body: { ma_don_hang: string; shipper_id: string; manager_id?: string },
     @Req() request: any,
   ) {
-    return this.shipperService.assignOrderToShipper(body.ma_don_hang, body.shipper_id, body.manager_id || 'system', request.user?.role === 'STAFF' ? request.user.branchCode : undefined);
+    return this.shipperService.assignOrderToShipper(body.ma_don_hang, body.shipper_id, body.manager_id || 'system', ['STAFF','MANAGER'].includes(request.user?.role) ? request.user.branchCode || '__UNASSIGNED__' : undefined);
   }
 
   // ============ SHIPPER CRUD ============

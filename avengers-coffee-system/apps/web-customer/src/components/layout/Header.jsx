@@ -270,7 +270,7 @@ export default function Header({
           }}
         >
           <img
-            src="/hc-assets/logo-white.png"
+            src="/images/brand/logo-white.svg"
             alt="Avengers Coffee"
             className="h-[76px] sm:h-[82px] lg:h-[88px] w-auto object-contain drop-shadow-md py-0.5"
           />
